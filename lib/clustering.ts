@@ -65,18 +65,38 @@ export function dbscan(
   const labels = new Array<number>(n).fill(UNVISITED);
   let clusterId = 0;
 
-  // Precompute neighbor lists (O(n²) but n is small — typically <1000)
+  // Grid-based spatial index for fast neighbor lookups
+  // Cell size ~epsMeters in degrees (rough: 1 degree lat ≈ 111km)
+  const cellSize = epsMeters / 111000;
+  const grid = new Map<string, number[]>();
+  for (let i = 0; i < n; i++) {
+    const cx = Math.floor(points[i].latitude / cellSize);
+    const cy = Math.floor(points[i].longitude / cellSize);
+    const key = `${cx},${cy}`;
+    if (!grid.has(key)) grid.set(key, []);
+    grid.get(key)!.push(i);
+  }
+
+  // Only compare points in same or adjacent grid cells
   const neighbors: number[][] = new Array(n);
   for (let i = 0; i < n; i++) {
     neighbors[i] = [];
-    for (let j = 0; j < n; j++) {
-      if (i === j) continue;
-      const d = haversineDistance(
-        points[i].latitude, points[i].longitude,
-        points[j].latitude, points[j].longitude,
-      );
-      if (d <= epsMeters) {
-        neighbors[i].push(j);
+    const cx = Math.floor(points[i].latitude / cellSize);
+    const cy = Math.floor(points[i].longitude / cellSize);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const cell = grid.get(`${cx + dx},${cy + dy}`);
+        if (!cell) continue;
+        for (const j of cell) {
+          if (i === j) continue;
+          const d = haversineDistance(
+            points[i].latitude, points[i].longitude,
+            points[j].latitude, points[j].longitude,
+          );
+          if (d <= epsMeters) {
+            neighbors[i].push(j);
+          }
+        }
       }
     }
   }

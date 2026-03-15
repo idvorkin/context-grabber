@@ -758,18 +758,14 @@ export default function App() {
     if (!snapshot) return;
     setSharing(true);
     try {
-      const allMetrics = await Promise.all([
-        grabWeeklyData("steps"),
-        grabWeeklyData("heartRate"),
-        grabWeeklyData("sleep"),
-        grabWeeklyData("activeEnergy"),
-        grabWeeklyData("walkingDistance"),
-        grabWeeklyData("weight"),
-        grabWeeklyData("meditation"),
-        grabWeeklyData("hrv"),
-        grabWeeklyData("restingHeartRate"),
-        grabWeeklyData("exerciseMinutes"),
-      ]);
+      // Use cached weekly data when available, only fetch what's missing
+      const metricKeys: MetricKey[] = [
+        "steps", "heartRate", "sleep", "activeEnergy", "walkingDistance",
+        "weight", "meditation", "hrv", "restingHeartRate", "exerciseMinutes",
+      ];
+      const allMetrics = await Promise.all(
+        metricKeys.map((key) => weeklyCache[key] ? Promise.resolve(weeklyCache[key]!) : grabWeeklyData(key)),
+      );
       const weeklyData: WeeklyDataMap = {
         steps: allMetrics[0] as DailyValue[],
         heartRate: allMetrics[1] as HeartRateDaily[],
