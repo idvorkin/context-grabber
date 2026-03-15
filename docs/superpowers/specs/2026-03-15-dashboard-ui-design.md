@@ -121,9 +121,34 @@ Follows existing dark theme:
 - No new dependencies — just React Native StyleSheet + View/Text
 - This is a visual restructure of the existing snapshot display, not new data
 
+## Testing
+
+Test infra (Jest + ts-jest) is already in place. Add tests for the summary builder.
+
+### `__tests__/summary.test.ts`
+
+- `buildSummary(health, locationCount)` → string
+- All data present: includes steps, sleep, heart rate, location count
+- Null steps: omits steps from summary
+- Null sleep: omits sleep section
+- All null health: returns minimal summary (just location count or empty)
+- Zero location count: omits location from summary
+- Formats numbers with commas (e.g., "8,241 steps" not "8241 steps")
+- Formats sleep times as short form ("11pm" not "23:00:00")
+- Rounds sleep hours to 1 decimal
+
+### Extractable Pure Functions
+
+Add to `lib/summary.ts`:
+- `buildSummary(health: HealthData, locationCount: number): string`
+- `formatTime(isoString: string): string` — "2026-03-15T23:00:00Z" → "11pm"
+- `formatNumber(n: number): string` — 8241 → "8,241"
+
 ## File Changes
 
 - `App.tsx` — replace the current `{snapshot && ...}` card section with dashboard layout
+- `lib/summary.ts` — summary builder pure functions
+- `__tests__/summary.test.ts` — new
 - No dependency changes
 - No permission changes
 

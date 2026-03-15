@@ -166,11 +166,48 @@ Existing `NSLocationWhenInUseUsageDescription` and `NSHealthShareUsageDescriptio
 - Sleep sample edge cases (no data, single sample): return null for bedtime/wakeTime
 - Missing settings rows: default to tracking_enabled=false, retention_days=30
 
+## Testing
+
+Test infra (Jest + ts-jest) is already in place. Add tests in `__tests__/` for new pure logic.
+
+### `__tests__/sleep.test.ts`
+
+- `extractSleepDetails(samples)` → `{ bedtime, wakeTime }`
+- Samples sorted by startDate before extraction
+- Single sample: bedtime = startDate, wakeTime = endDate
+- Multiple samples: bedtime = first startDate, wakeTime = last endDate
+- Empty samples: returns `{ bedtime: null, wakeTime: null }`
+- Unsorted input: still returns correct min/max
+
+### `__tests__/location.test.ts`
+
+- Pruning logic: `pruneThreshold(retentionDays, now)` returns correct UTC cutoff timestamp
+- Retention 30 days: threshold is exactly 30 * 86400000 ms before now
+- Retention 0 days: prunes everything
+- Retention change downward: immediate prune applies
+
+### `__tests__/health.test.ts` (extend existing)
+
+- Weight: null when no sample, returns kg value when present
+- Meditation: null when no sessions, sums multiple sessions to minutes
+
+### Extractable Pure Functions
+
+Add to `lib/health.ts` (or new `lib/location.ts`, `lib/sleep.ts`):
+- `extractSleepDetails(samples: SleepSample[]): { bedtime: string | null; wakeTime: string | null }`
+- `pruneThreshold(retentionDays: number, now: number): number`
+- Extend `buildHealthData` to handle weight + meditation results
+
 ## File Changes
 
 - `App.tsx` — all changes (background task at module scope, SQLite setup, sleep extraction, UI additions)
 - `app.json` — permission descriptions, UIBackgroundModes, expo-task-manager plugin
 - `package.json` — add expo-task-manager dependency
+- `lib/health.ts` or `lib/sleep.ts` — extracted pure functions
+- `lib/location.ts` — pruning logic
+- `__tests__/sleep.test.ts` — new
+- `__tests__/location.test.ts` — new
+- `__tests__/health.test.ts` — extend with weight/meditation tests
 - `CLAUDE.md` — update to reflect new capabilities
 
 ## Platform Note
