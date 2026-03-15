@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, act } from "@testing-library/react-native";
+import { render, act } from "@testing-library/react-native";
 import * as SQLite from "expo-sqlite";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import * as Location from "expo-location";
@@ -9,7 +9,7 @@ import App from "../App";
 // Helper to flush all pending promises
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-// Render app and let initial effects settle
+// Render app and let initial effects settle (auto-grab fires on mount)
 async function renderApp() {
   const result = render(<App />);
   await act(async () => {
@@ -34,27 +34,25 @@ describe("App rendering", () => {
     ).toBeTruthy();
   });
 
-  it("shows Grab Context button", async () => {
-    const { getByText } = await renderApp();
-    expect(getByText("Grab Context")).toBeTruthy();
+  it("shows refresh button in header", async () => {
+    const { getByLabelText } = await renderApp();
+    expect(getByLabelText("Refresh")).toBeTruthy();
   });
 
-  it("shows Share JSON button after auto-grab on startup", async () => {
-    const { getByText } = await renderApp();
-    expect(getByText("Share JSON")).toBeTruthy();
+  it("shows settings button in header", async () => {
+    const { getByLabelText } = await renderApp();
+    expect(getByLabelText("Settings")).toBeTruthy();
   });
 
-  it("shows tracking settings card with toggle and retention input", async () => {
-    const { getByText, getByDisplayValue } = await renderApp();
-    expect(getByText("Location Tracking")).toBeTruthy();
-    expect(getByText("Background Tracking")).toBeTruthy();
-    expect(getByText("Retention (days)")).toBeTruthy();
-    expect(getByDisplayValue("30")).toBeTruthy();
+  it("shows about button in header", async () => {
+    const { getByLabelText } = await renderApp();
+    expect(getByLabelText("About")).toBeTruthy();
   });
 
-  it("shows location count text", async () => {
+  it("shows share buttons after auto-grab on startup", async () => {
     const { getByText } = await renderApp();
-    expect(getByText("0 locations tracked")).toBeTruthy();
+    expect(getByText(/Summary/)).toBeTruthy();
+    expect(getByText(/Raw/)).toBeTruthy();
   });
 });
 
@@ -64,7 +62,6 @@ describe("App interactions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Reset mock implementations to defaults
     (SQLite.openDatabaseAsync as jest.Mock).mockResolvedValue({
       execAsync: jest.fn().mockResolvedValue(undefined),
       getFirstAsync: jest.fn().mockResolvedValue(null),
@@ -88,47 +85,8 @@ describe("App interactions", () => {
     });
   });
 
-  it("shows Grabbing... while loading", async () => {
-    // Make health request hang so we can see the loading state (auto-grab triggers on mount)
-    let resolveAuth: () => void;
-    const authPromise = new Promise<void>((resolve) => {
-      resolveAuth = resolve;
-    });
-    (HealthKit.requestAuthorization as jest.Mock).mockReturnValue(authPromise);
-
-    const result = render(<App />);
-
-    // Auto-grab fires on mount, so we should see Grabbing...
-    await act(async () => {
-      await flushPromises();
-    });
-
-    expect(result.getByText("Grabbing...")).toBeTruthy();
-
-    // Resolve to clean up
-    await act(async () => {
-      resolveAuth!();
-      await flushPromises();
-    });
-  });
-
-  it("shows snapshot data after grabbing", async () => {
-    (HealthKit.queryStatisticsForQuantity as jest.Mock)
-      .mockResolvedValueOnce({ sumQuantity: { quantity: 8432 } }) // steps
-      .mockResolvedValueOnce({ sumQuantity: { quantity: 312 } }) // active energy
-      .mockResolvedValueOnce({ sumQuantity: { quantity: 5.67 } }); // distance
-    (HealthKit.getMostRecentQuantitySample as jest.Mock)
-      .mockResolvedValueOnce({ quantity: 72 }) // heart rate
-      .mockResolvedValueOnce({ quantity: 75.5 }); // weight
-
+  it("shows metric cards after auto-grab", async () => {
     const { getByText } = await renderApp();
-
-    await act(async () => {
-      fireEvent.press(getByText("Grab Context"));
-      await flushPromises();
-    });
-
-    // After grabbing, metric cards should appear
     expect(getByText("Steps")).toBeTruthy();
     expect(getByText("Heart Rate")).toBeTruthy();
     expect(getByText("Sleep")).toBeTruthy();
@@ -136,23 +94,20 @@ describe("App interactions", () => {
     expect(getByText("Walking Distance")).toBeTruthy();
     expect(getByText("Weight")).toBeTruthy();
     expect(getByText("Meditation")).toBeTruthy();
+    expect(getByText("HRV")).toBeTruthy();
+    expect(getByText("Resting HR")).toBeTruthy();
+    expect(getByText("Exercise")).toBeTruthy();
   });
 
-  it("shows Share JSON button after auto-grab", async () => {
+  it("shows share buttons after auto-grab", async () => {
     const { getByText } = await renderApp();
-    expect(getByText("Share JSON")).toBeTruthy();
+    expect(getByText(/Summary/)).toBeTruthy();
+    expect(getByText(/Raw/)).toBeTruthy();
   });
 
-  it("shows location coordinates after grabbing", async () => {
+  it("shows location coordinates after auto-grab", async () => {
     const { getByText } = await renderApp();
-
-    await act(async () => {
-      fireEvent.press(getByText("Grab Context"));
-      await flushPromises();
-    });
-
     expect(getByText("Location")).toBeTruthy();
-    // Coordinates formatted to 4 decimal places
     expect(getByText(/47\.6062/)).toBeTruthy();
     expect(getByText(/-122\.3321/)).toBeTruthy();
   });
@@ -182,21 +137,13 @@ describe("MetricCard rendering after grab", () => {
   });
 
   it("shows em dash for null health values", async () => {
-    // All health queries return empty/null results
     (HealthKit.queryStatisticsForQuantity as jest.Mock).mockResolvedValue({
       sumQuantity: { quantity: 0 },
     });
     (HealthKit.getMostRecentQuantitySample as jest.Mock).mockResolvedValue(null);
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
-    const { getByText, getAllByText } = await renderApp();
-
-    await act(async () => {
-      fireEvent.press(getByText("Grab Context"));
-      await flushPromises();
-    });
-
-    // Heart rate, sleep, weight, meditation should show em dash
+    const { getAllByText } = await renderApp();
     const dashes = getAllByText("\u2014");
     expect(dashes.length).toBeGreaterThanOrEqual(3);
   });
@@ -210,12 +157,6 @@ describe("MetricCard rendering after grab", () => {
 
     const { getByText, getAllByText } = await renderApp();
 
-    await act(async () => {
-      fireEvent.press(getByText("Grab Context"));
-      await flushPromises();
-    });
-
-    // Check labels
     expect(getByText("Steps")).toBeTruthy();
     expect(getByText("Heart Rate")).toBeTruthy();
     expect(getByText("Sleep")).toBeTruthy();
@@ -223,15 +164,17 @@ describe("MetricCard rendering after grab", () => {
     expect(getByText("Walking Distance")).toBeTruthy();
     expect(getByText("Weight")).toBeTruthy();
     expect(getByText("Meditation")).toBeTruthy();
+    expect(getByText("HRV")).toBeTruthy();
+    expect(getByText("Resting HR")).toBeTruthy();
+    expect(getByText("Exercise")).toBeTruthy();
 
-    // Check sublabels
     const todaySublabels = getAllByText("today");
     expect(todaySublabels.length).toBe(5); // steps, active energy, walking distance, meditation, exercise
     const latestSublabels = getAllByText("latest");
     expect(latestSublabels.length).toBe(4); // heart rate, weight, hrv, resting hr
   });
 
-  it("shows all 7 metric cards after grab", async () => {
+  it("shows all 10 metric cards after grab", async () => {
     (HealthKit.queryStatisticsForQuantity as jest.Mock).mockResolvedValue({
       sumQuantity: { quantity: 1000 },
     });
@@ -247,19 +190,10 @@ describe("MetricCard rendering after grab", () => {
 
     const { getByText } = await renderApp();
 
-    await act(async () => {
-      fireEvent.press(getByText("Grab Context"));
-      await flushPromises();
-    });
-
     const metricLabels = [
-      "Steps",
-      "Heart Rate",
-      "Sleep",
-      "Active Energy",
-      "Walking Distance",
-      "Weight",
-      "Meditation",
+      "Steps", "Heart Rate", "Sleep", "Active Energy",
+      "Walking Distance", "Weight", "Meditation",
+      "HRV", "Resting HR", "Exercise",
     ];
 
     for (const label of metricLabels) {
@@ -292,7 +226,6 @@ describe("Dashboard display after grab", () => {
   });
 
   it("shows summary banner with step count", async () => {
-    // Set up mocks before render so auto-grab picks them up
     (HealthKit.queryStatisticsForQuantity as jest.Mock)
       .mockResolvedValueOnce({ sumQuantity: { quantity: 8432 } }) // steps
       .mockResolvedValueOnce({ sumQuantity: { quantity: 312 } }) // active energy
@@ -303,8 +236,6 @@ describe("Dashboard display after grab", () => {
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
     const { getByText } = await renderApp();
-
-    // Auto-grab should have completed with the mocked data
     expect(getByText(/8,432 steps/)).toBeTruthy();
   });
 
@@ -319,12 +250,6 @@ describe("Dashboard display after grab", () => {
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
     const { getByText } = await renderApp();
-
-    await act(async () => {
-      fireEvent.press(getByText("Grab Context"));
-      await flushPromises();
-    });
-
     expect(getByText("Unavailable")).toBeTruthy();
   });
 });

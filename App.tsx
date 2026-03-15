@@ -353,6 +353,7 @@ export default function App() {
   const [locationStorageBytes, setLocationStorageBytes] = useState(0);
   const [dbReady, setDbReady] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   // Initialize database on mount
   useEffect(() => {
@@ -514,13 +515,15 @@ export default function App() {
     const now = new Date();
     const startOfDay = new Date(now);
     startOfDay.setHours(0, 0, 0, 0);
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
     const dateFilter = {
       date: { startDate: startOfDay, endDate: now },
     };
+    // Noon-to-noon window captures exactly one night of sleep
+    const todayNoon = new Date(now);
+    todayNoon.setHours(12, 0, 0, 0);
+    const yesterdayNoon = new Date(todayNoon.getTime() - 24 * 60 * 60 * 1000);
     const sleepDateFilter = {
-      date: { startDate: yesterday, endDate: now },
+      date: { startDate: yesterdayNoon, endDate: todayNoon },
     };
 
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -789,6 +792,15 @@ export default function App() {
     }
   }
 
+  async function shareRaw() {
+    if (!snapshot) return;
+    const json = JSON.stringify(snapshot, null, 2);
+    await Share.share({
+      message: json,
+      title: "Context Grabber - Raw Data",
+    });
+  }
+
   const summaryText = snapshot
     ? buildSummary(snapshot.health, locationCount)
     : "";
@@ -887,13 +899,30 @@ export default function App() {
               Grab your iPhone context for your AI life coach
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.aboutButton}
-            onPress={() => setAboutVisible(true)}
-            accessibilityLabel="About"
-          >
-            <Text style={styles.aboutButtonText}>i</Text>
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={[styles.headerIconButton, loading && { opacity: 0.5 }]}
+              onPress={grabContext}
+              disabled={loading}
+              accessibilityLabel="Refresh"
+            >
+              <Text style={styles.headerIconText}>{"\u21BB"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => setSettingsVisible(true)}
+              accessibilityLabel="Settings"
+            >
+              <Text style={styles.headerIconText}>{"\u2699"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => setAboutVisible(true)}
+              accessibilityLabel="About"
+            >
+              <Text style={[styles.headerIconText, { fontStyle: "italic" }]}>i</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -901,6 +930,57 @@ export default function App() {
         visible={aboutVisible}
         onClose={() => setAboutVisible(false)}
       />
+
+      <Modal
+        visible={settingsVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Settings</Text>
+            <TouchableOpacity onPress={() => setSettingsVisible(false)} style={styles.modalCloseButton}>
+              <Text style={styles.modalCloseText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.aboutCard}>
+              <Text style={styles.metricLabel}>Location Tracking</Text>
+              <View style={styles.settingRow}>
+                <Text style={styles.settingText}>Background Tracking</Text>
+                <Switch
+                  value={trackingEnabled}
+                  onValueChange={handleTrackingToggle}
+                  trackColor={{ false: "#555", true: "#4361ee" }}
+                  thumbColor="#fff"
+                />
+              </View>
+              <View style={styles.settingRow}>
+                <Text style={styles.settingText}>Retention (days)</Text>
+                <TextInput
+                  style={styles.retentionInput}
+                  value={retentionDays}
+                  onChangeText={handleRetentionChange}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  selectTextOnFocus
+                />
+              </View>
+              <Text style={styles.locationCountText}>
+                {locationCount} location{locationCount !== 1 ? "s" : ""} tracked
+                {locationStorageBytes > 0
+                  ? ` (${locationStorageBytes > 1024 * 1024
+                      ? `${(locationStorageBytes / (1024 * 1024)).toFixed(1)} MB`
+                      : locationStorageBytes > 1024
+                        ? `${(locationStorageBytes / 1024).toFixed(1)} KB`
+                        : `${locationStorageBytes} B`})`
+                  : ""}
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
       <ScrollView
         style={styles.content}
@@ -911,41 +991,6 @@ export default function App() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-
-        {/* Tracking Settings */}
-        <View style={styles.settingsCard}>
-          <Text style={styles.metricLabel}>Location Tracking</Text>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingText}>Background Tracking</Text>
-            <Switch
-              value={trackingEnabled}
-              onValueChange={handleTrackingToggle}
-              trackColor={{ false: "#555", true: "#4361ee" }}
-              thumbColor="#fff"
-            />
-          </View>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingText}>Retention (days)</Text>
-            <TextInput
-              style={styles.retentionInput}
-              value={retentionDays}
-              onChangeText={handleRetentionChange}
-              keyboardType="number-pad"
-              maxLength={4}
-              selectTextOnFocus
-            />
-          </View>
-          <Text style={styles.locationCountText}>
-            {locationCount} location{locationCount !== 1 ? "s" : ""} tracked
-            {locationStorageBytes > 0
-              ? ` (${locationStorageBytes > 1024 * 1024
-                  ? `${(locationStorageBytes / (1024 * 1024)).toFixed(1)} MB`
-                  : locationStorageBytes > 1024
-                    ? `${(locationStorageBytes / 1024).toFixed(1)} KB`
-                    : `${locationStorageBytes} B`})`
-              : ""}
-          </Text>
-        </View>
 
         {snapshot && (
           <>
@@ -994,29 +1039,27 @@ export default function App() {
         )}
       </ScrollView>
 
-      <View style={styles.buttons}>
-        <TouchableOpacity
-          style={[styles.button, styles.grabButton]}
-          onPress={grabContext}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? "Grabbing..." : "Grab Context"}
-          </Text>
-        </TouchableOpacity>
-
-        {snapshot && (
-          <TouchableOpacity
-            style={[styles.button, styles.shareButton]}
-            onPress={shareSnapshot}
-            disabled={sharing}
-          >
-            <Text style={styles.buttonText}>
-              {sharing ? "Preparing..." : "Share JSON"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {snapshot && (
+        <View style={styles.buttons}>
+          <View style={styles.shareRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.shareButton, styles.shareButtonHalf]}
+              onPress={shareSnapshot}
+              disabled={sharing}
+            >
+              <Text style={styles.buttonText}>
+                {sharing ? "Preparing..." : "\u2197 Summary"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.rawButton, styles.shareButtonHalf]}
+              onPress={shareRaw}
+            >
+              <Text style={styles.buttonText}>{"\u2197"} Raw</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
       {selectedMetric && (
         <MetricDetailSheet
           metricKey={selectedMetric}
@@ -1176,9 +1219,6 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
   },
-  grabButton: {
-    backgroundColor: "#4361ee",
-  },
   shareButton: {
     backgroundColor: "#2d6a4f",
   },
@@ -1195,20 +1235,34 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
-  aboutButton: {
+  headerButtons: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  headerIconButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: "#16213e",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 4,
   },
-  aboutButtonText: {
+  headerIconText: {
     color: "#4cc9f0",
     fontSize: 16,
     fontWeight: "700",
-    fontStyle: "italic",
+  },
+  shareRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  shareButtonHalf: {
+    flex: 1,
+  },
+  rawButton: {
+    backgroundColor: "#3d405b",
   },
   modalContainer: {
     flex: 1,
