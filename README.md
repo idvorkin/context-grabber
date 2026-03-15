@@ -1,5 +1,7 @@
 # Context Grabber
 
+<img src="assets/icon.png" alt="Context Grabber icon" width="128" align="right">
+
 An iOS app that extracts health and location data from your iPhone and exports it as JSON — designed to give your AI life coach the context it needs.
 
 <p align="center">
