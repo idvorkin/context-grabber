@@ -39,7 +39,7 @@ export function calculateSleepHours(samples: SleepSample[] | undefined): number 
   const totalMs = samples.reduce((acc, sample) => {
     const start = new Date(sample.startDate).getTime();
     const end = new Date(sample.endDate).getTime();
-    return acc + (end - start);
+    return acc + Math.max(0, end - start);
   }, 0);
   return Math.round((totalMs / (1000 * 60 * 60)) * 10) / 10;
 }
@@ -47,6 +47,7 @@ export function calculateSleepHours(samples: SleepSample[] | undefined): number 
 /**
  * Calculate total meditation minutes from an array of mindful session samples.
  * Returns null if sessions is empty or undefined.
+ * Clamps negative durations (corrupted data) to zero.
  */
 export function calculateMeditationMinutes(
   sessions: MindfulSession[] | undefined,
@@ -57,13 +58,13 @@ export function calculateMeditationMinutes(
   const totalMs = sessions.reduce((acc, session) => {
     const start = new Date(session.startDate).getTime();
     const end = new Date(session.endDate).getTime();
-    return acc + (end - start);
+    return acc + Math.max(0, end - start);
   }, 0);
   return Math.round((totalMs / (1000 * 60)) * 10) / 10;
 }
 
 /**
- * Extract weight in kg from a weight sample.
+ * Extract weight value from a weight sample (unit depends on HealthKit configuration).
  * Returns null if sample is null/undefined.
  */
 export function extractWeight(
@@ -105,8 +106,8 @@ export function buildHealthData(results: HealthQueryResults): HealthData {
 
   return {
     steps:
-      steps.status === "fulfilled"
-        ? Math.round(steps.value.sumQuantity?.quantity ?? 0)
+      steps.status === "fulfilled" && steps.value.sumQuantity?.quantity != null
+        ? Math.round(steps.value.sumQuantity.quantity)
         : null,
     heartRate:
       heartRate.status === "fulfilled" && heartRate.value
@@ -116,14 +117,12 @@ export function buildHealthData(results: HealthQueryResults): HealthData {
     bedtime: sleepDetails.bedtime,
     wakeTime: sleepDetails.wakeTime,
     activeEnergy:
-      activeEnergy.status === "fulfilled"
-        ? Math.round(activeEnergy.value.sumQuantity?.quantity ?? 0)
+      activeEnergy.status === "fulfilled" && activeEnergy.value.sumQuantity?.quantity != null
+        ? Math.round(activeEnergy.value.sumQuantity.quantity)
         : null,
     walkingDistance:
-      walkingDistance.status === "fulfilled"
-        ? Math.round(
-            (walkingDistance.value.sumQuantity?.quantity ?? 0) * 100
-          ) / 100
+      walkingDistance.status === "fulfilled" && walkingDistance.value.sumQuantity?.quantity != null
+        ? Math.round(walkingDistance.value.sumQuantity.quantity * 100) / 100
         : null,
     weight:
       weight.status === "fulfilled"

@@ -9,6 +9,7 @@ Main UI in `App.tsx` with pure functions extracted into `lib/` modules. Press "G
 - `lib/health.ts` — HealthKit data processing (sleep hours, weight, meditation, buildHealthData)
 - `lib/sleep.ts` — Sleep detail extraction (bedtime/wake time from sleep samples)
 - `lib/location.ts` — Location pruning logic (pruneThreshold)
+- `lib/summary.ts` — Summary text and number formatting (buildSummary, formatNumber, formatTime)
 
 ## Tech Stack
 
@@ -41,6 +42,8 @@ Tests live in `__tests__/` and cover pure functions only (no device/HealthKit mo
 - `sleep.test.ts` — bedtime/wake time extraction
 - `location.test.ts` — pruning threshold calculations
 - `snapshot.test.ts` — context snapshot shape validation
+- `summary.test.ts` — summary builder, formatTime, formatNumber
+- `App.test.tsx` — component rendering, interactions, metric cards
 
 ## Key Patterns
 
@@ -58,7 +61,7 @@ Tests live in `__tests__/` and cover pure functions only (no device/HealthKit mo
 - Weight (most recent, in kg, from HealthKit)
 - Meditation minutes (today's total, from HealthKit)
 - Single GPS coordinate (from expo-location foreground)
-- Location history trail (from background significant-change tracking, stored in SQLite)
+- Location history trail (from background location tracking with balanced accuracy, stored in SQLite)
 - NOT collected: workout sessions, workout routes
 
 ## Settings (SQLite)

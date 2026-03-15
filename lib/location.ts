@@ -12,5 +12,6 @@
  * @returns Cutoff timestamp in UTC unix milliseconds.
  */
 export function pruneThreshold(retentionDays: number, now: number): number {
-  return now - retentionDays * 86400000;
+  const safeDays = Math.max(0, retentionDays);
+  return now - safeDays * 86400000;
 }

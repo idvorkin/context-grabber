@@ -12,20 +12,30 @@ type LocationData = {
   timestamp: number;
 } | null;
 
+type LocationHistoryItem = {
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  timestamp: number;
+};
+
 type ContextSnapshot = {
   timestamp: string;
   health: ReturnType<typeof buildHealthData>;
   location: LocationData;
+  locationHistory: LocationHistoryItem[];
 };
 
 function buildSnapshot(
   healthResults: HealthQueryResults,
   location: LocationData,
+  locationHistory: LocationHistoryItem[] = [],
 ): ContextSnapshot {
   return {
     timestamp: new Date().toISOString(),
     health: buildHealthData(healthResults),
     location,
+    locationHistory,
   };
 }
 
@@ -47,6 +57,7 @@ describe("ContextSnapshot shape", () => {
     expect(snapshot).toHaveProperty("timestamp");
     expect(snapshot).toHaveProperty("health");
     expect(snapshot).toHaveProperty("location");
+    expect(snapshot).toHaveProperty("locationHistory");
   });
 
   it("timestamp is a valid ISO 8601 string", () => {

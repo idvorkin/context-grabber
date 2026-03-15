@@ -49,6 +49,22 @@ export function buildSummary(health: HealthData, locationCount: number): string 
     parts.push(`${health.heartRate} bpm`);
   }
 
+  if (health.activeEnergy != null) {
+    parts.push(`${formatNumber(health.activeEnergy)} kcal`);
+  }
+
+  if (health.walkingDistance != null) {
+    parts.push(`${health.walkingDistance} km`);
+  }
+
+  if (health.weight != null) {
+    parts.push(`${health.weight} kg`);
+  }
+
+  if (health.meditationMinutes != null) {
+    parts.push(`${health.meditationMinutes} min meditation`);
+  }
+
   if (locationCount > 0) {
     parts.push(`${formatNumber(locationCount)} locations`);
   }

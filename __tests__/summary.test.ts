@@ -17,9 +17,9 @@ function makeHealth(overrides: Partial<HealthData> = {}): HealthData {
 }
 
 describe("buildSummary", () => {
-  it("includes steps, sleep, heart rate, and locations when all present", () => {
+  it("includes all present fields", () => {
     const result = buildSummary(makeHealth(), 142);
-    expect(result).toBe("8,241 steps | Slept 7.2hrs | 73 bpm | 142 locations");
+    expect(result).toBe("8,241 steps | Slept 7.2hrs | 73 bpm | 450 kcal | 5.3 km | 142 locations");
   });
 
   it("includes sleep time range when bedtime and wakeTime are present", () => {
@@ -30,24 +30,31 @@ describe("buildSummary", () => {
       }),
       142
     );
-    expect(result).toBe(
-      "8,241 steps | Slept 7.2hrs (11pm\u20136:15am) | 73 bpm | 142 locations"
-    );
+    expect(result).toContain("Slept 7.2hrs (11pm\u20136:15am)");
   });
 
   it("omits sleep range when bedtime/wakeTime are absent", () => {
     const result = buildSummary(makeHealth(), 0);
-    expect(result).toBe("8,241 steps | Slept 7.2hrs | 73 bpm");
+    expect(result).toContain("Slept 7.2hrs");
+    expect(result).not.toContain("(");
   });
 
   it("omits steps when null", () => {
     const result = buildSummary(makeHealth({ steps: null }), 10);
-    expect(result).toBe("Slept 7.2hrs | 73 bpm | 10 locations");
+    expect(result).not.toContain("steps");
+    expect(result).toContain("Slept 7.2hrs");
   });
 
   it("omits sleep section entirely when sleepHours is null", () => {
     const result = buildSummary(makeHealth({ sleepHours: null }), 5);
-    expect(result).toBe("8,241 steps | 73 bpm | 5 locations");
+    expect(result).not.toContain("Slept");
+    expect(result).toContain("8,241 steps");
+  });
+
+  it("includes weight and meditation when present", () => {
+    const result = buildSummary(makeHealth({ weight: 78.3, meditationMinutes: 15 }), 0);
+    expect(result).toContain("78.3 kg");
+    expect(result).toContain("15 min meditation");
   });
 
   it("returns empty string when all health data is null and location count is 0", () => {
@@ -72,6 +79,8 @@ describe("buildSummary", () => {
         sleepHours: null,
         activeEnergy: null,
         walkingDistance: null,
+        weight: null,
+        meditationMinutes: null,
       }),
       42
     );

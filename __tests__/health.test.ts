@@ -154,7 +154,7 @@ describe("buildHealthData", () => {
     expect(data.meditationMinutes).toBeNull();
   });
 
-  it("handles missing sumQuantity gracefully (defaults to 0)", () => {
+  it("returns null when sumQuantity is missing (no data, not zero)", () => {
     const results: HealthQueryResults = [
       fulfilled({ sumQuantity: null }),
       rejected(),
@@ -165,9 +165,9 @@ describe("buildHealthData", () => {
       rejected(),
     ];
     const data = buildHealthData(results);
-    expect(data.steps).toBe(0);
-    expect(data.activeEnergy).toBe(0);
-    expect(data.walkingDistance).toBe(0);
+    expect(data.steps).toBeNull();
+    expect(data.activeEnergy).toBeNull();
+    expect(data.walkingDistance).toBeNull();
   });
 
   it("mixes fulfilled and rejected results correctly", () => {

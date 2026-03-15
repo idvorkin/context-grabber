@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -20,7 +20,7 @@ import type {
   QuantityTypeIdentifier,
   CategoryTypeIdentifier,
 } from "@kingstinct/react-native-healthkit";
-import { buildHealthData, type HealthData } from "./lib/health";
+import { buildHealthData, type HealthData, type HealthQueryResults } from "./lib/health";
 import { pruneThreshold } from "./lib/location";
 import { buildSummary, formatNumber } from "./lib/summary";
 
@@ -159,22 +159,24 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     console.error("Background location task error:", error.message);
     return;
   }
-  if (data) {
-    const { locations } = data as { locations: Location.LocationObject[] };
-    try {
-      const db = await openDB();
-      for (const loc of locations) {
-        await insertLocation(
-          db,
-          loc.coords.latitude,
-          loc.coords.longitude,
-          loc.coords.accuracy,
-          loc.timestamp,
-        );
-      }
-    } catch (e) {
-      console.error("Failed to store background location:", e);
+  if (!data) return;
+  const locationData = data as { locations?: Location.LocationObject[] };
+  const locations = locationData.locations;
+  if (!Array.isArray(locations)) return;
+  try {
+    const db = await openDB();
+    await initDB(db);
+    for (const loc of locations) {
+      await insertLocation(
+        db,
+        loc.coords.latitude,
+        loc.coords.longitude,
+        loc.coords.accuracy,
+        loc.timestamp,
+      );
     }
+  } catch (e) {
+    console.error("Failed to store background location:", e);
   }
 });
 
@@ -232,8 +234,9 @@ export default function App() {
         await pruneLocations(database, parseInt(days, 10) || 30);
         const countAfterPrune = await getLocationCount(database);
         setLocationCount(countAfterPrune);
-      } catch (e) {
+      } catch (e: any) {
         console.error("DB init error:", e);
+        setError("Database unavailable. Location tracking and history won't work.");
       }
     })();
   }, []);
@@ -289,43 +292,69 @@ export default function App() {
     }
   }, []);
 
-  const stopTracking = useCallback(async () => {
+  const stopTracking = useCallback(async (): Promise<boolean> => {
     try {
       const hasStarted =
         await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
       if (hasStarted) {
         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
       }
-    } catch (e) {
-      console.error("Failed to stop tracking:", e);
+      return true;
+    } catch (e: any) {
+      setError(e.message ?? "Failed to stop tracking");
+      return false;
     }
   }, []);
 
   async function handleTrackingToggle(enabled: boolean) {
-    if (!db) return;
-
-    if (enabled) {
-      const started = await startTracking();
-      if (!started) return;
-    } else {
-      await stopTracking();
+    if (!db) {
+      setError("Database not available. Please restart the app.");
+      return;
     }
 
-    setTrackingEnabled(enabled);
-    await setSetting(db, "tracking_enabled", enabled ? "true" : "false");
+    try {
+      if (enabled) {
+        const started = await startTracking();
+        if (!started) return;
+      } else {
+        const stopped = await stopTracking();
+        if (!stopped) return;
+      }
+
+      setTrackingEnabled(enabled);
+      await setSetting(db, "tracking_enabled", enabled ? "true" : "false");
+    } catch (e: any) {
+      setError(e.message ?? "Failed to update tracking setting");
+    }
   }
 
-  async function handleRetentionChange(text: string) {
-    setRetentionDays(text);
-    if (!db) return;
+  // Track pending retention value for debounced save
+  const retentionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const days = parseInt(text, 10);
-    if (!isNaN(days) && days >= 0) {
-      await setSetting(db, "retention_days", String(days));
-      await pruneLocations(db, days);
-      const count = await getLocationCount(db);
-      setLocationCount(count);
+  function handleRetentionChange(text: string) {
+    setRetentionDays(text);
+
+    if (retentionTimerRef.current) {
+      clearTimeout(retentionTimerRef.current);
     }
+
+    retentionTimerRef.current = setTimeout(async () => {
+      if (!db) {
+        setError("Database not available. Please restart the app.");
+        return;
+      }
+      const days = parseInt(text, 10);
+      if (!isNaN(days) && days >= 0) {
+        try {
+          await setSetting(db, "retention_days", String(days));
+          await pruneLocations(db, days);
+          const count = await getLocationCount(db);
+          setLocationCount(count);
+        } catch (e: any) {
+          setError(e.message ?? "Failed to update retention setting");
+        }
+      }
+    }, 1000);
   }
 
   async function grabHealthData(): Promise<HealthData> {
@@ -365,7 +394,7 @@ export default function App() {
       }),
     ]);
 
-    return buildHealthData(results as any);
+    return buildHealthData(results as HealthQueryResults);
   }
 
   async function grabLocation(): Promise<LocationData> {
