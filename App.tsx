@@ -37,7 +37,8 @@ import {
   aggregateMeditation,
   pickLatestPerDay,
 } from "./lib/weekly";
-import { buildDailyExport, type WeeklyDataMap } from "./lib/share";
+import { buildSummaryExport, type WeeklyDataMap, type LocationSummary } from "./lib/share";
+import { clusterLocations } from "./lib/clustering";
 import MetricDetailSheet from "./components/MetricDetailSheet";
 
 // --- Constants ---
@@ -548,7 +549,7 @@ export default function App() {
         limit: 0,
         filter: sleepDateFilter,
       }),
-      HealthKit.getMostRecentQuantitySample(QTI.bodyMass),
+      HealthKit.getMostRecentQuantitySample(QTI.bodyMass, "kg"),
       HealthKit.queryCategorySamples(CTI.mindfulSession, {
         limit: 0,
         filter: dateFilter,
@@ -556,6 +557,7 @@ export default function App() {
       HealthKit.queryQuantitySamples(QTI.bodyMass, {
         limit: 0,
         filter: weightWeekFilter,
+        unit: "kg",
       }),
       HealthKit.getMostRecentQuantitySample(QTI.hrv),
       HealthKit.getMostRecentQuantitySample(QTI.restingHeartRate),
@@ -644,6 +646,7 @@ export default function App() {
         const samples = await HealthKit.queryQuantitySamples(QTI.bodyMass, {
           limit: 0,
           filter: dateFilter,
+          unit: "kg",
         });
         const mapped = samples.map((s: any) => ({
           startDate: new Date(s.startDate),
@@ -779,8 +782,14 @@ export default function App() {
         restingHeartRate: allMetrics[8] as DailyValue[],
         exerciseMinutes: allMetrics[9] as DailyValue[],
       };
-      const dailyExport = buildDailyExport(weeklyData);
-      const json = JSON.stringify(dailyExport, null, 2);
+      // Cluster location history instead of sharing raw points
+      let locationSummary: LocationSummary | null = null;
+      if (snapshot.locationHistory.length > 0) {
+        const { clusters, summary } = clusterLocations(snapshot.locationHistory);
+        locationSummary = { clusters, summary };
+      }
+      const summaryExport = buildSummaryExport(weeklyData, locationSummary);
+      const json = JSON.stringify(summaryExport, null, 2);
       await Share.share({
         message: json,
         title: "Context Grabber - 7 Day Summary",
@@ -794,8 +803,19 @@ export default function App() {
 
   async function shareRaw() {
     if (!snapshot) return;
-    const { locationHistory, ...rawData } = snapshot;
-    const json = JSON.stringify(rawData, null, 2);
+    // Cluster location history instead of sharing raw points
+    let locationClusters: LocationSummary | null = null;
+    if (snapshot.locationHistory.length > 0) {
+      const { clusters, summary } = clusterLocations(snapshot.locationHistory);
+      locationClusters = { clusters, summary };
+    }
+    const rawExport = {
+      timestamp: snapshot.timestamp,
+      health: snapshot.health,
+      location: snapshot.location,
+      locationClusters,
+    };
+    const json = JSON.stringify(rawExport, null, 2);
     await Share.share({
       message: json,
       title: "Context Grabber - Raw Data",

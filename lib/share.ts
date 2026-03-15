@@ -4,6 +4,7 @@
  */
 
 import type { DailyValue, HeartRateDaily } from "./weekly";
+import type { PlaceCluster } from "./clustering";
 
 export type DailyExportEntry = {
   date: string; // "YYYY-MM-DD"
@@ -18,6 +19,23 @@ export type DailyExportEntry = {
   hrvMs: number | null;
   restingHeartRate: number | null;
   exerciseMinutes: number | null;
+};
+
+export type LocationSummary = {
+  clusters: PlaceCluster[];
+  summary: string;
+};
+
+export type SummaryExport = {
+  days: DailyExportEntry[];
+  locationSummary: LocationSummary | null;
+};
+
+export type RawExport = {
+  timestamp: string;
+  health: Record<string, unknown>;
+  location: { latitude: number; longitude: number; timestamp: number } | null;
+  locationClusters: LocationSummary | null;
 };
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -50,6 +68,19 @@ export type WeeklyDataMap = {
  * Build an array of 7 daily export entries from weekly metric data.
  * Each entry combines all metrics for that day.
  */
+/**
+ * Build a summary export: 7-day daily health data + location clusters.
+ */
+export function buildSummaryExport(
+  data: WeeklyDataMap,
+  locationSummary: LocationSummary | null,
+): SummaryExport {
+  return {
+    days: buildDailyExport(data),
+    locationSummary,
+  };
+}
+
 export function buildDailyExport(data: WeeklyDataMap): DailyExportEntry[] {
   // Use steps dates as the canonical date list (all metrics should have same dates)
   return data.steps.map((stepDay, i) => {

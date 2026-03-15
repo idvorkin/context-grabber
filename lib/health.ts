@@ -46,7 +46,21 @@ export function countWeightDays(samples: WeightSample[] | undefined): number | n
 export type SleepSample = {
   startDate: string | Date;
   endDate: string | Date;
+  value?: number; // 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
 };
+
+// Sleep values that count as actual sleep (exclude InBed=0 and Awake=2)
+const SLEEP_VALUES = new Set([1, 3, 4, 5]);
+
+/**
+ * Filter sleep samples to only actual sleep (not InBed or Awake).
+ * If no samples have a value field (older data), returns all samples as-is.
+ */
+export function filterActualSleep(samples: SleepSample[]): SleepSample[] {
+  const hasValues = samples.some((s) => s.value !== undefined);
+  if (!hasValues) return samples;
+  return samples.filter((s) => s.value !== undefined && SLEEP_VALUES.has(s.value));
+}
 
 export type MindfulSession = {
   startDate: string | Date;
@@ -62,7 +76,9 @@ export function calculateSleepHours(samples: SleepSample[] | undefined): number 
   if (!samples || samples.length === 0) {
     return null;
   }
-  const intervals = samples
+  const sleepOnly = filterActualSleep(samples);
+  if (sleepOnly.length === 0) return null;
+  const intervals = sleepOnly
     .map((s) => ({
       start: new Date(s.startDate).getTime(),
       end: new Date(s.endDate).getTime(),

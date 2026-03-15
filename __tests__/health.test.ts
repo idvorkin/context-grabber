@@ -1,5 +1,6 @@
 import {
   calculateSleepHours,
+  filterActualSleep,
   calculateMeditationMinutes,
   extractWeight,
   countWeightDays,
@@ -121,6 +122,68 @@ describe("calculateSleepHours", () => {
       },
     ];
     expect(calculateSleepHours(samples)).toBe(0);
+  });
+
+  it("filters out InBed and Awake samples when value field present", () => {
+    const samples: SleepSample[] = [
+      // InBed: 10pm-7am (9hrs) — should be excluded
+      { startDate: "2026-03-14T22:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z", value: 0 },
+      // Awake: 3am-3:15am — should be excluded
+      { startDate: "2026-03-15T03:00:00.000Z", endDate: "2026-03-15T03:15:00.000Z", value: 2 },
+      // Core: 10:30pm-1am (2.5hrs)
+      { startDate: "2026-03-14T22:30:00.000Z", endDate: "2026-03-15T01:00:00.000Z", value: 3 },
+      // Deep: 1am-3am (2hrs)
+      { startDate: "2026-03-15T01:00:00.000Z", endDate: "2026-03-15T03:00:00.000Z", value: 4 },
+      // REM: 3:15am-5am (1.75hrs)
+      { startDate: "2026-03-15T03:15:00.000Z", endDate: "2026-03-15T05:00:00.000Z", value: 5 },
+      // Core: 5am-6:30am (1.5hrs)
+      { startDate: "2026-03-15T05:00:00.000Z", endDate: "2026-03-15T06:30:00.000Z", value: 3 },
+    ];
+    // Without filtering: would be ~9hrs (InBed covers everything)
+    // With filtering: Core+Deep+REM+Core = 10:30pm-6:30am with 15min gap at 3am = ~7.75hrs
+    const hours = calculateSleepHours(samples);
+    expect(hours).toBeLessThan(9);
+    expect(hours).toBeGreaterThan(7);
+  });
+
+  it("keeps all samples when no value field present (legacy data)", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T22:00:00.000Z", endDate: "2026-03-15T06:00:00.000Z" },
+    ];
+    expect(calculateSleepHours(samples)).toBe(8);
+  });
+});
+
+describe("filterActualSleep", () => {
+  it("filters out InBed (0) and Awake (2)", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-15T00:00:00.000Z", endDate: "2026-03-15T08:00:00.000Z", value: 0 },
+      { startDate: "2026-03-15T01:00:00.000Z", endDate: "2026-03-15T03:00:00.000Z", value: 3 },
+      { startDate: "2026-03-15T03:00:00.000Z", endDate: "2026-03-15T03:15:00.000Z", value: 2 },
+      { startDate: "2026-03-15T04:00:00.000Z", endDate: "2026-03-15T06:00:00.000Z", value: 5 },
+    ];
+    const filtered = filterActualSleep(samples);
+    expect(filtered).toHaveLength(2);
+    expect(filtered[0].value).toBe(3);
+    expect(filtered[1].value).toBe(5);
+  });
+
+  it("keeps Asleep (1), Core (3), Deep (4), REM (5)", () => {
+    const samples: SleepSample[] = [
+      { startDate: "a", endDate: "b", value: 1 },
+      { startDate: "a", endDate: "b", value: 3 },
+      { startDate: "a", endDate: "b", value: 4 },
+      { startDate: "a", endDate: "b", value: 5 },
+    ];
+    expect(filterActualSleep(samples)).toHaveLength(4);
+  });
+
+  it("returns all samples when no value field present", () => {
+    const samples: SleepSample[] = [
+      { startDate: "a", endDate: "b" },
+      { startDate: "c", endDate: "d" },
+    ];
+    expect(filterActualSleep(samples)).toHaveLength(2);
   });
 });
 
