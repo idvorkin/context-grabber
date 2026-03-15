@@ -14,7 +14,10 @@ export type MetricKey =
   | "activeEnergy"
   | "walkingDistance"
   | "weight"
-  | "meditation";
+  | "meditation"
+  | "hrv"
+  | "restingHeartRate"
+  | "exerciseMinutes";
 
 export type ChartType = "bar" | "line";
 
@@ -34,6 +37,9 @@ export const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
   walkingDistance: { label: "Walking Distance", unit: "km", color: "#06d6a0", chartType: "bar", sublabel: "today" },
   weight: { label: "Weight", unit: "kg", color: "#4895ef", chartType: "line", sublabel: "latest" },
   meditation: { label: "Meditation", unit: "min", color: "#e0aaff", chartType: "bar", sublabel: "today" },
+  hrv: { label: "HRV", unit: "ms", color: "#48bfe3", chartType: "line", sublabel: "latest" },
+  restingHeartRate: { label: "Resting HR", unit: "bpm", color: "#f4845f", chartType: "line", sublabel: "latest" },
+  exerciseMinutes: { label: "Exercise", unit: "min", color: "#57cc99", chartType: "bar", sublabel: "today" },
 };
 
 /** A single-value day bucket (used by most metrics). */

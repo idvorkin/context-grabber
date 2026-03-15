@@ -37,6 +37,7 @@ import {
   aggregateMeditation,
   pickLatestPerDay,
 } from "./lib/weekly";
+import { buildDailyExport, type WeeklyDataMap } from "./lib/share";
 import MetricDetailSheet from "./components/MetricDetailSheet";
 
 // --- Constants ---
@@ -73,6 +74,9 @@ const QTI = {
   distance:
     "HKQuantityTypeIdentifierDistanceWalkingRunning" as QuantityTypeIdentifier,
   bodyMass: "HKQuantityTypeIdentifierBodyMass" as QuantityTypeIdentifier,
+  hrv: "HKQuantityTypeIdentifierHeartRateVariabilitySDNN" as QuantityTypeIdentifier,
+  restingHeartRate: "HKQuantityTypeIdentifierRestingHeartRate" as QuantityTypeIdentifier,
+  exerciseTime: "HKQuantityTypeIdentifierAppleExerciseTime" as QuantityTypeIdentifier,
 };
 
 const CTI = {
@@ -549,6 +553,13 @@ export default function App() {
         limit: 0,
         filter: weightWeekFilter,
       }),
+      HealthKit.getMostRecentQuantitySample(QTI.hrv),
+      HealthKit.getMostRecentQuantitySample(QTI.restingHeartRate),
+      HealthKit.queryStatisticsForQuantity(
+        QTI.exerciseTime,
+        ["cumulativeSum"],
+        { filter: dateFilter },
+      ),
     ]);
 
     return buildHealthData(results as HealthQueryResults);
@@ -575,10 +586,12 @@ export default function App() {
     switch (metric) {
       case "steps":
       case "activeEnergy":
-      case "walkingDistance": {
+      case "walkingDistance":
+      case "exerciseMinutes": {
         const identifier =
           metric === "steps" ? QTI.stepCount
           : metric === "activeEnergy" ? QTI.activeEnergy
+          : metric === "exerciseMinutes" ? QTI.exerciseTime
           : QTI.distance;
         const dayPromises = Array.from({ length: 7 }, (_, idx) => {
           const i = 6 - idx;
@@ -641,6 +654,28 @@ export default function App() {
         });
         return aggregateMeditation([...sessions], now);
       }
+      case "hrv": {
+        const samples = await HealthKit.queryQuantitySamples(QTI.hrv, {
+          limit: 0,
+          filter: dateFilter,
+        });
+        const mapped = samples.map((s: any) => ({
+          startDate: new Date(s.startDate),
+          quantity: s.quantity,
+        }));
+        return pickLatestPerDay(mapped, now);
+      }
+      case "restingHeartRate": {
+        const samples = await HealthKit.queryQuantitySamples(QTI.restingHeartRate, {
+          limit: 0,
+          filter: dateFilter,
+        });
+        const mapped = samples.map((s: any) => ({
+          startDate: new Date(s.startDate),
+          quantity: s.quantity,
+        }));
+        return pickLatestPerDay(mapped, now);
+      }
     }
   }
 
@@ -672,6 +707,9 @@ export default function App() {
           QTI.activeEnergy,
           QTI.distance,
           QTI.bodyMass,
+          QTI.hrv,
+          QTI.restingHeartRate,
+          QTI.exerciseTime,
           CTI.sleep,
           CTI.mindfulSession,
         ],
@@ -711,12 +749,40 @@ export default function App() {
 
   async function shareSnapshot() {
     if (!snapshot) return;
-    const { location, locationHistory, ...shareData } = snapshot;
-    const json = JSON.stringify(shareData, null, 2);
-    await Share.share({
-      message: json,
-      title: "Context Grabber Snapshot",
-    });
+    try {
+      const allMetrics = await Promise.all([
+        grabWeeklyData("steps"),
+        grabWeeklyData("heartRate"),
+        grabWeeklyData("sleep"),
+        grabWeeklyData("activeEnergy"),
+        grabWeeklyData("walkingDistance"),
+        grabWeeklyData("weight"),
+        grabWeeklyData("meditation"),
+        grabWeeklyData("hrv"),
+        grabWeeklyData("restingHeartRate"),
+        grabWeeklyData("exerciseMinutes"),
+      ]);
+      const weeklyData: WeeklyDataMap = {
+        steps: allMetrics[0] as DailyValue[],
+        heartRate: allMetrics[1] as HeartRateDaily[],
+        sleep: allMetrics[2] as DailyValue[],
+        activeEnergy: allMetrics[3] as DailyValue[],
+        walkingDistance: allMetrics[4] as DailyValue[],
+        weight: allMetrics[5] as DailyValue[],
+        meditation: allMetrics[6] as DailyValue[],
+        hrv: allMetrics[7] as DailyValue[],
+        restingHeartRate: allMetrics[8] as DailyValue[],
+        exerciseMinutes: allMetrics[9] as DailyValue[],
+      };
+      const dailyExport = buildDailyExport(weeklyData);
+      const json = JSON.stringify(dailyExport, null, 2);
+      await Share.share({
+        message: json,
+        title: "Context Grabber - 7 Day Summary",
+      });
+    } catch (e: any) {
+      setError(e.message ?? "Failed to build share data");
+    }
   }
 
   const summaryText = snapshot
@@ -779,6 +845,27 @@ export default function App() {
           metricKey: "meditation" as MetricKey,
           label: "Meditation",
           value: h?.meditationMinutes != null ? `${h.meditationMinutes} min` : "\u2014",
+          sublabel: "today",
+          onPress: handleMetricPress,
+        },
+        {
+          metricKey: "hrv" as MetricKey,
+          label: "HRV",
+          value: h?.hrv != null ? `${h.hrv} ms` : "\u2014",
+          sublabel: "latest",
+          onPress: handleMetricPress,
+        },
+        {
+          metricKey: "restingHeartRate" as MetricKey,
+          label: "Resting HR",
+          value: h?.restingHeartRate != null ? `${h.restingHeartRate} bpm` : "\u2014",
+          sublabel: "latest",
+          onPress: handleMetricPress,
+        },
+        {
+          metricKey: "exerciseMinutes" as MetricKey,
+          label: "Exercise",
+          value: h?.exerciseMinutes != null ? `${h.exerciseMinutes} min` : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
         },

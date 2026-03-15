@@ -143,6 +143,9 @@ describe("buildHealthData", () => {
       rejected(),
       rejected(),
       rejected(),
+      rejected(),
+      rejected(),
+      rejected(),
     ];
     expect(buildHealthData(results)).toEqual({
       steps: null,
@@ -155,6 +158,9 @@ describe("buildHealthData", () => {
       weight: null,
       weightDaysLast7: null,
       meditationMinutes: null,
+      hrv: null,
+      restingHeartRate: null,
+      exerciseMinutes: null,
     });
   });
 
@@ -182,6 +188,9 @@ describe("buildHealthData", () => {
         { startDate: "2026-03-13T08:00:00.000Z", quantity: 75.4 },
         { startDate: "2026-03-11T08:00:00.000Z", quantity: 75.3 },
       ]),
+      fulfilled({ quantity: 42.5 }),
+      fulfilled({ quantity: 58 }),
+      fulfilled({ sumQuantity: { quantity: 32 } }),
     ];
     const data = buildHealthData(results);
     expect(data.steps).toBe(8433);
@@ -194,6 +203,9 @@ describe("buildHealthData", () => {
     expect(data.weight).toBe(75.5);
     expect(data.weightDaysLast7).toBe(3);
     expect(data.meditationMinutes).toBe(15);
+    expect(data.hrv).toBe(42.5);
+    expect(data.restingHeartRate).toBe(58);
+    expect(data.exerciseMinutes).toBe(32);
   });
 
   it("returns null heartRate when value is null (no recent sample)", () => {
@@ -206,6 +218,9 @@ describe("buildHealthData", () => {
       fulfilled(null),
       fulfilled([]),
       fulfilled([]),
+      fulfilled(null),
+      fulfilled(null),
+      fulfilled({ sumQuantity: { quantity: 0 } }),
     ];
     const data = buildHealthData(results);
     expect(data.heartRate).toBeNull();
@@ -221,6 +236,9 @@ describe("buildHealthData", () => {
       rejected(),
       fulfilled({}),
       fulfilled({ sumQuantity: undefined }),
+      rejected(),
+      rejected(),
+      rejected(),
       rejected(),
       rejected(),
       rejected(),
@@ -249,6 +267,9 @@ describe("buildHealthData", () => {
       fulfilled([
         { startDate: "2026-03-15T08:00:00.000Z", quantity: 80.123 },
       ]),
+      rejected(),
+      rejected(),
+      rejected(),
     ];
     const data = buildHealthData(results);
     expect(data.steps).toBe(5000);

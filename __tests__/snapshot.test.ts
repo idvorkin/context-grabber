@@ -48,7 +48,7 @@ function rejected(reason = "error"): PromiseRejectedResult {
 }
 
 function allRejected(): HealthQueryResults {
-  return [rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected()];
+  return [rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected(), rejected()];
 }
 
 describe("ContextSnapshot shape", () => {
@@ -72,8 +72,11 @@ describe("ContextSnapshot shape", () => {
     expect(keys).toEqual([
       "activeEnergy",
       "bedtime",
+      "exerciseMinutes",
       "heartRate",
+      "hrv",
       "meditationMinutes",
+      "restingHeartRate",
       "sleepHours",
       "steps",
       "wakeTime",
@@ -124,6 +127,9 @@ describe("ContextSnapshot shape", () => {
         { startDate: "2026-03-14T08:00:00.000Z", quantity: 72.5 },
         { startDate: "2026-03-12T08:00:00.000Z", quantity: 72.3 },
       ]),
+      fulfilled({ quantity: 38.2 }),
+      fulfilled({ quantity: 55 }),
+      fulfilled({ sumQuantity: { quantity: 25 } }),
     ];
     const location = {
       latitude: 47.6062,
@@ -142,6 +148,9 @@ describe("ContextSnapshot shape", () => {
     expect(snapshot.health.weight).toBe(72.5);
     expect(snapshot.health.weightDaysLast7).toBe(2);
     expect(snapshot.health.meditationMinutes).toBe(20);
+    expect(snapshot.health.hrv).toBe(38.2);
+    expect(snapshot.health.restingHeartRate).toBe(55);
+    expect(snapshot.health.exerciseMinutes).toBe(25);
     expect(snapshot.location).toEqual(location);
     expect(typeof snapshot.timestamp).toBe("string");
   });
@@ -160,6 +169,9 @@ describe("ContextSnapshot shape", () => {
     expect(parsed.health.weight).toBeNull();
     expect(parsed.health.weightDaysLast7).toBeNull();
     expect(parsed.health.meditationMinutes).toBeNull();
+    expect(parsed.health.hrv).toBeNull();
+    expect(parsed.health.restingHeartRate).toBeNull();
+    expect(parsed.health.exerciseMinutes).toBeNull();
     expect(parsed.location).toBeNull();
   });
 });

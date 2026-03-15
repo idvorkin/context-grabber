@@ -226,9 +226,9 @@ describe("MetricCard rendering after grab", () => {
 
     // Check sublabels
     const todaySublabels = getAllByText("today");
-    expect(todaySublabels.length).toBe(4); // steps, active energy, walking distance, meditation
+    expect(todaySublabels.length).toBe(5); // steps, active energy, walking distance, meditation, exercise
     const latestSublabels = getAllByText("latest");
-    expect(latestSublabels.length).toBe(2); // heart rate, weight
+    expect(latestSublabels.length).toBe(4); // heart rate, weight, hrv, resting hr
   });
 
   it("shows all 7 metric cards after grab", async () => {

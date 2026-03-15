@@ -16,6 +16,9 @@ export type HealthData = {
   weight: number | null;
   weightDaysLast7: number | null;
   meditationMinutes: number | null;
+  hrv: number | null;
+  restingHeartRate: number | null;
+  exerciseMinutes: number | null;
 };
 
 export type WeightSample = {
@@ -130,6 +133,9 @@ export type HealthQueryResults = [
   PromiseSettledResult<{ quantity: number } | null>,
   PromiseSettledResult<MindfulSession[]>,
   PromiseSettledResult<WeightSample[]>,
+  PromiseSettledResult<{ quantity: number } | null>,
+  PromiseSettledResult<{ quantity: number } | null>,
+  PromiseSettledResult<{ sumQuantity?: { quantity: number } | null }>,
 ];
 
 /**
@@ -137,7 +143,7 @@ export type HealthQueryResults = [
  * Rejected promises produce null for that metric — never throws.
  */
 export function buildHealthData(results: HealthQueryResults): HealthData {
-  const [steps, heartRate, activeEnergy, walkingDistance, sleep, weight, meditation, weightSamples] = results;
+  const [steps, heartRate, activeEnergy, walkingDistance, sleep, weight, meditation, weightSamples, hrv, restingHeartRate, exerciseTime] = results;
 
   const sleepSamples =
     sleep.status === "fulfilled" ? sleep.value : undefined;
@@ -175,6 +181,18 @@ export function buildHealthData(results: HealthQueryResults): HealthData {
     meditationMinutes:
       meditation.status === "fulfilled"
         ? calculateMeditationMinutes(meditation.value)
+        : null,
+    hrv:
+      hrv.status === "fulfilled" && hrv.value
+        ? Math.round(hrv.value.quantity * 10) / 10
+        : null,
+    restingHeartRate:
+      restingHeartRate.status === "fulfilled" && restingHeartRate.value
+        ? Math.round(restingHeartRate.value.quantity)
+        : null,
+    exerciseMinutes:
+      exerciseTime.status === "fulfilled" && exerciseTime.value.sumQuantity?.quantity != null
+        ? Math.round(exerciseTime.value.sumQuantity.quantity)
         : null,
   };
 }
