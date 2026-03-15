@@ -1,8 +1,8 @@
-# Background Location Tracking + Sleep Details
+# Background Location Tracking + Health Enhancements
 
 ## Summary
 
-Add background geolocation tracking over time to context-grabber, stored locally in SQLite, and include the location trail in the JSON export. Also extract bedtime/wake-up time from existing sleep data.
+Add background geolocation tracking over time to context-grabber, stored locally in SQLite, and include the location trail in the JSON export. Also extract bedtime/wake-up time from existing sleep data, and add weight and meditation metrics.
 
 ## Goals
 
@@ -10,6 +10,7 @@ Add background geolocation tracking over time to context-grabber, stored locally
 - Store location history locally with configurable retention (default 30 days)
 - Include location trail in the "Grab Context" JSON export
 - Extract bedtime and wake-up time from HealthKit sleep samples
+- Add weight (most recent) and meditation minutes (today) to health export
 - All timestamps stored in UTC (unix milliseconds)
 
 ## Non-Goals
@@ -46,6 +47,11 @@ Derive bedtime and wake-up time from existing `HKCategoryTypeIdentifierSleepAnal
 - **Bedtime**: `startDate` of first `inBed` or `asleep` sample in the sleep window
 - **Wake time**: `endDate` of last sample in the sleep window
 - No new HealthKit queries needed — uses same data we already fetch
+
+### 3. New Health Metrics
+
+- **Weight**: `getMostRecentQuantitySample(HKQuantityTypeIdentifierBodyMass)` — most recent reading in kg
+- **Meditation**: `queryCategorySamples(HKCategoryTypeIdentifierMindfulSession)` — today's sessions, sum duration to minutes
 
 ## Storage
 
@@ -88,6 +94,8 @@ type ContextSnapshot = {
     wakeTime: string | null;            // NEW — ISO 8601 UTC
     activeEnergy: number | null;
     walkingDistance: number | null;
+    weight: number | null;              // NEW — kg, most recent
+    meditationMinutes: number | null;   // NEW — today's total
   };
   location: {
     latitude: number;
@@ -124,6 +132,10 @@ type ContextSnapshot = {
 ```
 
 **Runtime**: Request `Location.requestBackgroundPermissionsAsync()` when user enables tracking.
+
+**HealthKit authorization** updated to include new read types:
+- `HKQuantityTypeIdentifierBodyMass`
+- `HKCategoryTypeIdentifierMindfulSession`
 
 ## UI Changes
 
