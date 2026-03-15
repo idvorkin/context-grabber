@@ -52,18 +52,34 @@ export type MindfulSession = {
 
 /**
  * Calculate total sleep hours from an array of sleep category samples.
- * Each sample has a startDate and endDate; we sum the durations and convert to hours.
+ * Merges overlapping intervals (e.g. Watch + Phone both reporting) before summing.
  * Returns null if samples is empty or undefined.
  */
 export function calculateSleepHours(samples: SleepSample[] | undefined): number | null {
   if (!samples || samples.length === 0) {
     return null;
   }
-  const totalMs = samples.reduce((acc, sample) => {
-    const start = new Date(sample.startDate).getTime();
-    const end = new Date(sample.endDate).getTime();
-    return acc + Math.max(0, end - start);
-  }, 0);
+  const intervals = samples
+    .map((s) => ({
+      start: new Date(s.startDate).getTime(),
+      end: new Date(s.endDate).getTime(),
+    }))
+    .filter((i) => i.end > i.start)
+    .sort((a, b) => a.start - b.start);
+
+  if (intervals.length === 0) return 0;
+
+  const merged: { start: number; end: number }[] = [intervals[0]];
+  for (let i = 1; i < intervals.length; i++) {
+    const last = merged[merged.length - 1];
+    if (intervals[i].start <= last.end) {
+      last.end = Math.max(last.end, intervals[i].end);
+    } else {
+      merged.push(intervals[i]);
+    }
+  }
+
+  const totalMs = merged.reduce((acc, i) => acc + (i.end - i.start), 0);
   return Math.round((totalMs / (1000 * 60 * 60)) * 10) / 10;
 }
 

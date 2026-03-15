@@ -64,6 +64,55 @@ describe("calculateSleepHours", () => {
     expect(calculateSleepHours(samples)).toBe(8);
   });
 
+  it("merges overlapping samples from multiple sources", () => {
+    // Watch: 23:00-07:00, Phone: 23:30-06:30 (fully overlapping)
+    const samples: SleepSample[] = [
+      {
+        startDate: "2026-03-14T23:00:00.000Z",
+        endDate: "2026-03-15T07:00:00.000Z",
+      },
+      {
+        startDate: "2026-03-14T23:30:00.000Z",
+        endDate: "2026-03-15T06:30:00.000Z",
+      },
+    ];
+    expect(calculateSleepHours(samples)).toBe(8); // not 15
+  });
+
+  it("merges partially overlapping samples", () => {
+    // 23:00-03:00 and 02:00-07:00 overlap by 1 hour
+    const samples: SleepSample[] = [
+      {
+        startDate: "2026-03-14T23:00:00.000Z",
+        endDate: "2026-03-15T03:00:00.000Z",
+      },
+      {
+        startDate: "2026-03-15T02:00:00.000Z",
+        endDate: "2026-03-15T07:00:00.000Z",
+      },
+    ];
+    expect(calculateSleepHours(samples)).toBe(8); // not 9
+  });
+
+  it("handles multiple overlapping sources correctly", () => {
+    // Three sources all reporting the same ~8h sleep
+    const samples: SleepSample[] = [
+      {
+        startDate: "2026-03-14T23:00:00.000Z",
+        endDate: "2026-03-15T07:00:00.000Z",
+      },
+      {
+        startDate: "2026-03-14T23:00:00.000Z",
+        endDate: "2026-03-15T07:00:00.000Z",
+      },
+      {
+        startDate: "2026-03-14T23:15:00.000Z",
+        endDate: "2026-03-15T06:45:00.000Z",
+      },
+    ];
+    expect(calculateSleepHours(samples)).toBe(8); // not 24
+  });
+
   it("returns 0 when start equals end", () => {
     const samples: SleepSample[] = [
       {
