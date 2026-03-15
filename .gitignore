@@ -39,3 +39,9 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# worktrees
+.worktrees/
+
+# generated version file
+lib/generated_version.ts

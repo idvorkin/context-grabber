@@ -11,6 +11,9 @@ import {
   Switch,
   TextInput,
   AppState,
+  Modal,
+  Linking,
+  Pressable,
 } from "react-native";
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
@@ -23,6 +26,7 @@ import type {
 import { buildHealthData, type HealthData, type HealthQueryResults } from "./lib/health";
 import { pruneThreshold } from "./lib/location";
 import { buildSummary, formatNumber } from "./lib/summary";
+import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
 
 // --- Constants ---
 
@@ -202,6 +206,89 @@ function MetricCard({ label, value, sublabel, fullWidth }: MetricCardProps) {
   );
 }
 
+// --- About Modal ---
+
+function AboutModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const buildInfo = getBuildInfo();
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>About</Text>
+          <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
+            <Text style={styles.modalCloseText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.modalContent}>
+          <View style={styles.aboutCard}>
+            <Text style={styles.aboutAppName}>Context Grabber</Text>
+            <Text style={styles.aboutTagline}>
+              Export HealthKit, GPS & location data for AI life coaching
+            </Text>
+          </View>
+
+          <View style={styles.aboutCard}>
+            <Text style={styles.metricLabel}>Build Info</Text>
+
+            <View style={styles.aboutRow}>
+              <Text style={styles.aboutRowLabel}>Version</Text>
+              <Text style={styles.aboutRowValue}>
+                {buildInfo.shortSha} ({buildInfo.branch})
+              </Text>
+            </View>
+
+            {buildInfo.timestamp ? (
+              <View style={styles.aboutRow}>
+                <Text style={styles.aboutRowLabel}>Built</Text>
+                <Text style={styles.aboutRowValue}>
+                  {formatBuildTimestamp(buildInfo.timestamp)}
+                </Text>
+              </View>
+            ) : null}
+
+            {buildInfo.commitUrl ? (
+              <TouchableOpacity
+                style={styles.aboutRow}
+                onPress={() => Linking.openURL(buildInfo.commitUrl)}
+              >
+                <Text style={styles.aboutRowLabel}>Commit</Text>
+                <Text style={[styles.aboutRowValue, styles.aboutLink]}>
+                  View on GitHub
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {buildInfo.repoUrl ? (
+              <TouchableOpacity
+                style={styles.aboutRow}
+                onPress={() => Linking.openURL(buildInfo.repoUrl)}
+              >
+                <Text style={styles.aboutRowLabel}>Repository</Text>
+                <Text style={[styles.aboutRowValue, styles.aboutLink]}>
+                  View on GitHub
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
 // --- App Component ---
 
 export default function App() {
@@ -212,6 +299,7 @@ export default function App() {
   const [retentionDays, setRetentionDays] = useState("30");
   const [locationCount, setLocationCount] = useState(0);
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
+  const [aboutVisible, setAboutVisible] = useState(false);
 
   // Initialize database on mount
   useEffect(() => {
@@ -530,11 +618,27 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.title}>Context Grabber</Text>
-        <Text style={styles.subtitle}>
-          Grab your iPhone context for your AI life coach
-        </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>Context Grabber</Text>
+            <Text style={styles.subtitle}>
+              Grab your iPhone context for your AI life coach
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.aboutButton}
+            onPress={() => setAboutVisible(true)}
+            accessibilityLabel="About"
+          >
+            <Text style={styles.aboutButtonText}>i</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <AboutModal
+        visible={aboutVisible}
+        onClose={() => setAboutVisible(false)}
+      />
 
       <ScrollView
         style={styles.content}
@@ -793,5 +897,94 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  headerText: {
+    flex: 1,
+  },
+  aboutButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#16213e",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  aboutButtonText: {
+    color: "#4cc9f0",
+    fontSize: 16,
+    fontWeight: "700",
+    fontStyle: "italic",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#1a1a2e",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: Platform.OS === "ios" ? 16 : 20,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#16213e",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#e0e0e0",
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalCloseText: {
+    color: "#4361ee",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  aboutCard: {
+    backgroundColor: "#16213e",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+  },
+  aboutAppName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#e0e0e0",
+    marginBottom: 4,
+  },
+  aboutTagline: {
+    fontSize: 14,
+    color: "#888",
+  },
+  aboutRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#1a1a2e",
+  },
+  aboutRowLabel: {
+    fontSize: 14,
+    color: "#888",
+  },
+  aboutRowValue: {
+    fontSize: 14,
+    color: "#e0e0e0",
+  },
+  aboutLink: {
+    color: "#4361ee",
   },
 });
