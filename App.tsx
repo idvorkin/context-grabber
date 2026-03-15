@@ -15,14 +15,7 @@ import type {
   QuantityTypeIdentifier,
   CategoryTypeIdentifier,
 } from "@kingstinct/react-native-healthkit";
-
-type HealthData = {
-  steps: number | null;
-  heartRate: number | null;
-  sleepHours: number | null;
-  activeEnergy: number | null;
-  walkingDistance: number | null;
-};
+import { buildHealthData, type HealthData } from "./lib/health";
 
 type LocationData = {
   latitude: number;
@@ -67,57 +60,26 @@ export default function App() {
       date: { startDate: yesterday, endDate: now },
     };
 
-    const [steps, heartRate, activeEnergy, walkingDistance, sleep] =
-      await Promise.allSettled([
-        HealthKit.queryStatisticsForQuantity(QTI.stepCount, ["cumulativeSum"], {
-          filter: dateFilter,
-        }),
-        HealthKit.getMostRecentQuantitySample(QTI.heartRate),
-        HealthKit.queryStatisticsForQuantity(
-          QTI.activeEnergy,
-          ["cumulativeSum"],
-          { filter: dateFilter }
-        ),
-        HealthKit.queryStatisticsForQuantity(QTI.distance, ["cumulativeSum"], {
-          filter: dateFilter,
-        }),
-        HealthKit.queryCategorySamples(CTI.sleep, {
-          limit: 0,
-          filter: sleepDateFilter,
-        }),
-      ]);
+    const results = await Promise.allSettled([
+      HealthKit.queryStatisticsForQuantity(QTI.stepCount, ["cumulativeSum"], {
+        filter: dateFilter,
+      }),
+      HealthKit.getMostRecentQuantitySample(QTI.heartRate),
+      HealthKit.queryStatisticsForQuantity(
+        QTI.activeEnergy,
+        ["cumulativeSum"],
+        { filter: dateFilter }
+      ),
+      HealthKit.queryStatisticsForQuantity(QTI.distance, ["cumulativeSum"], {
+        filter: dateFilter,
+      }),
+      HealthKit.queryCategorySamples(CTI.sleep, {
+        limit: 0,
+        filter: sleepDateFilter,
+      }),
+    ]);
 
-    let sleepHours: number | null = null;
-    if (sleep.status === "fulfilled" && sleep.value.length > 0) {
-      const totalMs = sleep.value.reduce((acc, sample) => {
-        const start = new Date(sample.startDate).getTime();
-        const end = new Date(sample.endDate).getTime();
-        return acc + (end - start);
-      }, 0);
-      sleepHours = Math.round((totalMs / (1000 * 60 * 60)) * 10) / 10;
-    }
-
-    return {
-      steps:
-        steps.status === "fulfilled"
-          ? Math.round(steps.value.sumQuantity?.quantity ?? 0)
-          : null,
-      heartRate:
-        heartRate.status === "fulfilled" && heartRate.value
-          ? Math.round(heartRate.value.quantity)
-          : null,
-      activeEnergy:
-        activeEnergy.status === "fulfilled"
-          ? Math.round(activeEnergy.value.sumQuantity?.quantity ?? 0)
-          : null,
-      walkingDistance:
-        walkingDistance.status === "fulfilled"
-          ? Math.round(
-              (walkingDistance.value.sumQuantity?.quantity ?? 0) * 100
-            ) / 100
-          : null,
-      sleepHours,
-    };
+    return buildHealthData(results as any);
   }
 
   async function grabLocation(): Promise<LocationData> {

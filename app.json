@@ -41,6 +41,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LAUNCH",
+      "fallbackToCacheTimeout": 5000
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
