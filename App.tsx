@@ -18,6 +18,7 @@ import {
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SQLite from "expo-sqlite";
+import * as Updates from "expo-updates";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type {
   QuantityTypeIdentifier,
@@ -232,6 +233,9 @@ function AboutModal({
   onClose: () => void;
 }) {
   const buildInfo = getBuildInfo();
+  const updateChannel = Updates.channel ?? "N/A";
+  const runtimeVersion = Updates.runtimeVersion ?? "N/A";
+  const updateId = Updates.updateId ?? "embedded";
 
   return (
     <Modal
@@ -286,6 +290,21 @@ function AboutModal({
                 </Text>
               </TouchableOpacity>
             ) : null}
+
+            <View style={styles.aboutRow}>
+              <Text style={styles.aboutRowLabel}>Channel</Text>
+              <Text style={styles.aboutRowValue}>{updateChannel}</Text>
+            </View>
+
+            <View style={styles.aboutRow}>
+              <Text style={styles.aboutRowLabel}>Runtime</Text>
+              <Text style={styles.aboutRowValue}>{runtimeVersion}</Text>
+            </View>
+
+            <View style={styles.aboutRow}>
+              <Text style={styles.aboutRowLabel}>Update</Text>
+              <Text style={styles.aboutRowValue}>{updateId}</Text>
+            </View>
 
             {buildInfo.repoUrl ? (
               <TouchableOpacity

@@ -40,6 +40,13 @@ jest.mock('@kingstinct/react-native-healthkit', () => ({
   },
 }));
 
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+  channel: 'development',
+  runtimeVersion: '1.0.0',
+  updateId: null,
+}));
+
 // Mock expo-status-bar
 jest.mock('expo-status-bar', () => ({
   StatusBar: 'StatusBar',
