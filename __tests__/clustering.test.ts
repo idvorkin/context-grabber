@@ -1,6 +1,7 @@
 import {
   haversineDistance,
   dbscan,
+  downsample,
   clusterLocations,
   formatClusterSummary,
   type LocationPoint,
@@ -246,6 +247,95 @@ describe("clusterLocations", () => {
     const result = clusterLocations(points, 500, 3);
     expect(result.summary).toContain("Place 1:");
     expect(result.summary).toContain("h");
+  });
+});
+
+// ─── Performance ─────────────────────────────────────────────────────────────
+
+describe("clustering performance", () => {
+  it("clusters 10,000 points in under 2 seconds", () => {
+    // Simulate 30 days of tracking: 3 dense clusters (home, work, gym) + noise
+    const points: LocationPoint[] = [];
+    const hourMs = 60 * 60 * 1000;
+    let ts = Date.UTC(2026, 1, 13, 0, 0, 0);
+
+    // Home: ~4000 points clustered tightly
+    for (let i = 0; i < 4000; i++) {
+      points.push({
+        latitude: 47.6062 + (Math.random() - 0.5) * 0.0003,
+        longitude: -122.3321 + (Math.random() - 0.5) * 0.0003,
+        accuracy: 10,
+        timestamp: ts + i * 5 * 60 * 1000, // every 5 min
+      });
+    }
+
+    // Work: ~4000 points, 2km away
+    for (let i = 0; i < 4000; i++) {
+      points.push({
+        latitude: 47.6200 + (Math.random() - 0.5) * 0.0003,
+        longitude: -122.3500 + (Math.random() - 0.5) * 0.0003,
+        accuracy: 10,
+        timestamp: ts + i * 5 * 60 * 1000,
+      });
+    }
+
+    // Gym: ~1000 points, 1km away from home
+    for (let i = 0; i < 1000; i++) {
+      points.push({
+        latitude: 47.6100 + (Math.random() - 0.5) * 0.0003,
+        longitude: -122.3400 + (Math.random() - 0.5) * 0.0003,
+        accuracy: 10,
+        timestamp: ts + i * 10 * 60 * 1000,
+      });
+    }
+
+    // Noise: 1000 random scattered points
+    for (let i = 0; i < 1000; i++) {
+      points.push({
+        latitude: 47.5 + Math.random() * 0.3,
+        longitude: -122.2 + Math.random() * 0.3,
+        accuracy: 50,
+        timestamp: ts + i * hourMs,
+      });
+    }
+
+    const start = Date.now();
+    const result = clusterLocations(points, 50, 3);
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(2000); // Must complete in under 2 seconds
+    expect(result.clusters.length).toBeGreaterThanOrEqual(3); // Home, Work, Gym
+    expect(result.noiseCount).toBeGreaterThan(0);
+    console.log(`10,000 points clustered in ${elapsed}ms, found ${result.clusters.length} clusters, ${result.noiseCount} noise`);
+  });
+});
+
+// ─── downsample ──────────────────────────────────────────────────────────────
+
+describe("downsample", () => {
+  it("returns all points when under limit", () => {
+    const points = [
+      { latitude: 1, longitude: 1, accuracy: null, timestamp: 1 },
+      { latitude: 2, longitude: 2, accuracy: null, timestamp: 2 },
+    ];
+    expect(downsample(points, 500)).toHaveLength(2);
+  });
+
+  it("reduces to maxPoints", () => {
+    const points = Array.from({ length: 1000 }, (_, i) => ({
+      latitude: i, longitude: i, accuracy: null, timestamp: i,
+    }));
+    const result = downsample(points, 100);
+    expect(result).toHaveLength(100);
+  });
+
+  it("keeps first and last point", () => {
+    const points = Array.from({ length: 1000 }, (_, i) => ({
+      latitude: i, longitude: i, accuracy: null, timestamp: i,
+    }));
+    const result = downsample(points, 100);
+    expect(result[0]).toBe(points[0]);
+    expect(result[result.length - 1]).toBe(points[points.length - 1]);
   });
 });
 
