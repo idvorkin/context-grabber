@@ -39,6 +39,7 @@ import {
 } from "./lib/weekly";
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary } from "./lib/share";
 import { clusterLocations } from "./lib/clustering";
+import { type KnownPlace } from "./lib/places";
 import MetricDetailSheet from "./components/MetricDetailSheet";
 
 // --- Constants ---
@@ -106,6 +107,13 @@ async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS known_places (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      radius_meters REAL NOT NULL DEFAULT 100
+    );
     INSERT OR IGNORE INTO settings (key, value) VALUES ('schema_version', '1');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('retention_days', '30');
@@ -168,6 +176,45 @@ async function getLocationStorageBytes(db: SQLite.SQLiteDatabase): Promise<numbe
     "SELECT SUM(LENGTH(latitude) + LENGTH(longitude) + LENGTH(accuracy) + LENGTH(timestamp) + 20) as size FROM locations",
   );
   return row?.size ?? 0;
+}
+
+async function getKnownPlaces(
+  db: SQLite.SQLiteDatabase,
+): Promise<KnownPlace[]> {
+  const rows = await db.getAllAsync<{
+    id: number;
+    name: string;
+    latitude: number;
+    longitude: number;
+    radius_meters: number;
+  }>("SELECT id, name, latitude, longitude, radius_meters FROM known_places ORDER BY name ASC");
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    radiusMeters: r.radius_meters,
+  }));
+}
+
+async function addKnownPlace(
+  db: SQLite.SQLiteDatabase,
+  name: string,
+  latitude: number,
+  longitude: number,
+  radiusMeters: number,
+): Promise<void> {
+  await db.runAsync(
+    "INSERT INTO known_places (name, latitude, longitude, radius_meters) VALUES (?, ?, ?, ?)",
+    [name, latitude, longitude, radiusMeters],
+  );
+}
+
+async function deleteKnownPlace(
+  db: SQLite.SQLiteDatabase,
+  id: number,
+): Promise<void> {
+  await db.runAsync("DELETE FROM known_places WHERE id = ?", [id]);
 }
 
 async function getLocationHistory(
@@ -356,6 +403,11 @@ export default function App() {
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
+  const [newPlaceName, setNewPlaceName] = useState("");
+  const [newPlaceLat, setNewPlaceLat] = useState("");
+  const [newPlaceLng, setNewPlaceLng] = useState("");
+  const [newPlaceRadius, setNewPlaceRadius] = useState("100");
 
   // Initialize database on mount
   useEffect(() => {
@@ -373,6 +425,9 @@ export default function App() {
 
         const count = await getLocationCount(database);
         setLocationCount(count);
+
+        const places = await getKnownPlaces(database);
+        setKnownPlaces(places);
 
         // Prune on startup
         await pruneLocations(database, parseInt(days, 10) || 30);
@@ -511,6 +566,54 @@ export default function App() {
         }
       }
     }, 1000);
+  }
+
+  async function handleAddPlace() {
+    if (!db) {
+      setError("Database not available. Please restart the app.");
+      return;
+    }
+    const name = newPlaceName.trim();
+    const lat = parseFloat(newPlaceLat);
+    const lng = parseFloat(newPlaceLng);
+    const radius = parseFloat(newPlaceRadius) || 100;
+    if (!name) {
+      setError("Place name is required");
+      return;
+    }
+    if (isNaN(lat) || isNaN(lng)) {
+      setError("Valid latitude and longitude are required");
+      return;
+    }
+    try {
+      await addKnownPlace(db, name, lat, lng, radius);
+      const places = await getKnownPlaces(db);
+      setKnownPlaces(places);
+      setNewPlaceName("");
+      setNewPlaceLat("");
+      setNewPlaceLng("");
+      setNewPlaceRadius("100");
+    } catch (e: any) {
+      setError(e.message ?? "Failed to add place");
+    }
+  }
+
+  async function handleDeletePlace(id: number) {
+    if (!db) return;
+    try {
+      await deleteKnownPlace(db, id);
+      const places = await getKnownPlaces(db);
+      setKnownPlaces(places);
+    } catch (e: any) {
+      setError(e.message ?? "Failed to delete place");
+    }
+  }
+
+  function handleUseCurrentLocation() {
+    if (snapshot?.location) {
+      setNewPlaceLat(snapshot.location.latitude.toFixed(6));
+      setNewPlaceLng(snapshot.location.longitude.toFixed(6));
+    }
   }
 
   async function grabHealthData(): Promise<HealthData> {
@@ -784,7 +887,7 @@ export default function App() {
         setShareStatus(`Clustering ${snapshot.locationHistory.length} locations...`);
         // Yield to UI before heavy computation
         await new Promise((r) => setTimeout(r, 0));
-        const { clusters, timeline, summary } = clusterLocations(snapshot.locationHistory);
+        const { clusters, timeline, summary } = clusterLocations(snapshot.locationHistory, 50, 3, knownPlaces);
         locationSummary = { clusters, timeline, summary };
       }
       setShareStatus("Sharing...");
@@ -807,7 +910,7 @@ export default function App() {
     // Cluster location history instead of sharing raw points
     let locationClusters: LocationSummary | null = null;
     if (snapshot.locationHistory.length > 0) {
-      const { clusters, timeline, summary } = clusterLocations(snapshot.locationHistory);
+      const { clusters, timeline, summary } = clusterLocations(snapshot.locationHistory, 50, 3, knownPlaces);
       locationClusters = { clusters, timeline, summary };
     }
     const rawExport = {
@@ -999,6 +1102,81 @@ export default function App() {
                         : `${locationStorageBytes} B`})`
                   : ""}
               </Text>
+            </View>
+
+            <View style={styles.aboutCard}>
+              <Text style={styles.metricLabel}>Known Places</Text>
+              <Text style={styles.locationCountText}>
+                GPS points within radius will use these names instead of generic "Place N" labels
+              </Text>
+
+              {knownPlaces.map((place) => (
+                <View key={place.id} style={styles.knownPlaceRow}>
+                  <View style={styles.knownPlaceInfo}>
+                    <Text style={styles.knownPlaceName}>{place.name}</Text>
+                    <Text style={styles.knownPlaceDetail}>
+                      {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)} ({place.radiusMeters}m)
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handleDeletePlace(place.id)}
+                    style={styles.knownPlaceDelete}
+                  >
+                    <Text style={styles.knownPlaceDeleteText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+
+              <View style={styles.addPlaceForm}>
+                <TextInput
+                  style={styles.addPlaceInput}
+                  placeholder="Name"
+                  placeholderTextColor="#666"
+                  value={newPlaceName}
+                  onChangeText={setNewPlaceName}
+                />
+                <View style={styles.addPlaceCoordRow}>
+                  <TextInput
+                    style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
+                    placeholder="Latitude"
+                    placeholderTextColor="#666"
+                    value={newPlaceLat}
+                    onChangeText={setNewPlaceLat}
+                    keyboardType="decimal-pad"
+                  />
+                  <TextInput
+                    style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
+                    placeholder="Longitude"
+                    placeholderTextColor="#666"
+                    value={newPlaceLng}
+                    onChangeText={setNewPlaceLng}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+                <View style={styles.addPlaceCoordRow}>
+                  <TextInput
+                    style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
+                    placeholder="Radius (m)"
+                    placeholderTextColor="#666"
+                    value={newPlaceRadius}
+                    onChangeText={setNewPlaceRadius}
+                    keyboardType="number-pad"
+                  />
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, { backgroundColor: "#3d405b" }]}
+                    onPress={handleUseCurrentLocation}
+                    disabled={!snapshot?.location}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Use Current</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={styles.addPlaceButton}
+                  onPress={handleAddPlace}
+                >
+                  <Text style={styles.addPlaceButtonText}>Add Place</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -1351,5 +1529,73 @@ const styles = StyleSheet.create({
   },
   aboutLink: {
     color: "#4361ee",
+  },
+  knownPlaceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#1a1a2e",
+    marginTop: 4,
+  },
+  knownPlaceInfo: {
+    flex: 1,
+  },
+  knownPlaceName: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#e0e0e0",
+  },
+  knownPlaceDetail: {
+    fontSize: 12,
+    color: "#888",
+    marginTop: 2,
+  },
+  knownPlaceDelete: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#3d1f1f",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  knownPlaceDeleteText: {
+    color: "#ff6b6b",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  addPlaceForm: {
+    marginTop: 12,
+    gap: 8,
+  },
+  addPlaceInput: {
+    backgroundColor: "#1a1a2e",
+    color: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  addPlaceCoordRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  addPlaceCoordInput: {
+    flex: 1,
+  },
+  addPlaceButton: {
+    backgroundColor: "#2d6a4f",
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  addPlaceButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
