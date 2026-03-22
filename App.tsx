@@ -32,6 +32,7 @@ import {
   type MetricKey,
   type DailyValue,
   type HeartRateDaily,
+  METRIC_CONFIG,
   aggregateHeartRate,
   aggregateSleep,
   aggregateMeditation,
@@ -40,7 +41,9 @@ import {
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary } from "./lib/share";
 import { clusterLocations } from "./lib/clustering";
 import { type KnownPlace } from "./lib/places";
+import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
 import MetricDetailSheet from "./components/MetricDetailSheet";
+import BoxPlot from "./components/BoxPlot";
 
 // --- Constants ---
 
@@ -263,9 +266,11 @@ type MetricCardProps = {
   sublabel: string;
   fullWidth?: boolean;
   onPress: (key: MetricKey) => void;
+  boxPlotStats?: BoxPlotStats | null;
+  color?: string;
 };
 
-function MetricCard({ metricKey, label, value, sublabel, fullWidth, onPress }: MetricCardProps) {
+function MetricCard({ metricKey, label, value, sublabel, fullWidth, onPress, boxPlotStats, color }: MetricCardProps) {
   const isNull = value === "\u2014";
   return (
     <TouchableOpacity
@@ -277,7 +282,11 @@ function MetricCard({ metricKey, label, value, sublabel, fullWidth, onPress }: M
       <Text style={[styles.metricValue, isNull && styles.metricValueNull]}>
         {value}
       </Text>
-      <Text style={styles.metricSublabel}>{sublabel}</Text>
+      {boxPlotStats && color ? (
+        <BoxPlot stats={boxPlotStats} color={color} />
+      ) : (
+        <Text style={styles.metricSublabel}>{sublabel}</Text>
+      )}
     </TouchableOpacity>
   );
 }
@@ -398,6 +407,7 @@ export default function App() {
   const [weeklyCache, setWeeklyCache] = useState<Partial<Record<MetricKey, DailyValue[] | HeartRateDaily[]>>>({});
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyError, setWeeklyError] = useState<string | null>(null);
+  const [statsCache, setStatsCache] = useState<Partial<Record<MetricKey, BoxPlotStats | null>>>({});
   const [locationStorageBytes, setLocationStorageBytes] = useState(0);
   const [dbReady, setDbReady] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -790,6 +800,17 @@ export default function App() {
     }
   }
 
+  function computeStatsForMetric(key: MetricKey, data: DailyValue[] | HeartRateDaily[]): BoxPlotStats | null {
+    if ("avg" in (data[0] ?? {})) {
+      // HeartRateDaily: use avg values
+      const vals = (data as HeartRateDaily[])
+        .filter((d) => d.avg !== null)
+        .map((d) => d.avg as number);
+      return computeBoxPlotStats(vals);
+    }
+    return computeBoxPlotStats(extractValues(data as DailyValue[]));
+  }
+
   async function handleMetricPress(key: MetricKey) {
     setSelectedMetric(key);
     setWeeklyError(null);
@@ -798,6 +819,7 @@ export default function App() {
     try {
       const data = await grabWeeklyData(key);
       setWeeklyCache((prev) => ({ ...prev, [key]: data }));
+      setStatsCache((prev) => ({ ...prev, [key]: computeStatsForMetric(key, data) }));
     } catch (e: any) {
       setWeeklyError(e.message ?? "Failed to load weekly data");
     } finally {
@@ -809,6 +831,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     setWeeklyCache({});
+    setStatsCache({});
     setWeeklyError(null);
     try {
       await HealthKit.requestAuthorization({
@@ -882,6 +905,12 @@ export default function App() {
         restingHeartRate: allMetrics[8] as DailyValue[],
         exerciseMinutes: allMetrics[9] as DailyValue[],
       };
+      // Compute and cache stats for all metrics during share
+      const newStats: Partial<Record<MetricKey, BoxPlotStats | null>> = {};
+      metricKeys.forEach((key, i) => {
+        newStats[key] = computeStatsForMetric(key, allMetrics[i]);
+      });
+      setStatsCache((prev) => ({ ...prev, ...newStats }));
       let locationSummary: LocationSummary | null = null;
       if (snapshot.locationHistory.length > 0) {
         setShareStatus(`Clustering ${snapshot.locationHistory.length} locations...`);
@@ -940,6 +969,8 @@ export default function App() {
           value: h?.steps != null ? formatNumber(h.steps) : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.steps,
+          color: METRIC_CONFIG.steps.color,
         },
         {
           metricKey: "heartRate" as MetricKey,
@@ -947,6 +978,8 @@ export default function App() {
           value: h?.heartRate != null ? `${h.heartRate} bpm` : "\u2014",
           sublabel: "latest",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.heartRate,
+          color: METRIC_CONFIG.heartRate.color,
         },
         {
           metricKey: "sleep" as MetricKey,
@@ -957,6 +990,8 @@ export default function App() {
               ? `${h.bedtime} \u2013 ${h.wakeTime}`
               : "last night",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.sleep,
+          color: METRIC_CONFIG.sleep.color,
         },
         {
           metricKey: "activeEnergy" as MetricKey,
@@ -964,6 +999,8 @@ export default function App() {
           value: h?.activeEnergy != null ? `${formatNumber(h.activeEnergy)} kcal` : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.activeEnergy,
+          color: METRIC_CONFIG.activeEnergy.color,
         },
         {
           metricKey: "walkingDistance" as MetricKey,
@@ -971,6 +1008,8 @@ export default function App() {
           value: h?.walkingDistance != null ? `${h.walkingDistance} km` : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.walkingDistance,
+          color: METRIC_CONFIG.walkingDistance.color,
         },
         {
           metricKey: "weight" as MetricKey,
@@ -981,6 +1020,8 @@ export default function App() {
               ? `${h.weightDaysLast7}/7 days weighed`
               : "latest",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.weight,
+          color: METRIC_CONFIG.weight.color,
         },
         {
           metricKey: "meditation" as MetricKey,
@@ -988,6 +1029,8 @@ export default function App() {
           value: h?.meditationMinutes != null ? `${h.meditationMinutes} min` : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.meditation,
+          color: METRIC_CONFIG.meditation.color,
         },
         {
           metricKey: "hrv" as MetricKey,
@@ -995,6 +1038,8 @@ export default function App() {
           value: h?.hrv != null ? `${h.hrv} ms` : "\u2014",
           sublabel: "latest",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.hrv,
+          color: METRIC_CONFIG.hrv.color,
         },
         {
           metricKey: "restingHeartRate" as MetricKey,
@@ -1002,6 +1047,8 @@ export default function App() {
           value: h?.restingHeartRate != null ? `${h.restingHeartRate} bpm` : "\u2014",
           sublabel: "latest",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.restingHeartRate,
+          color: METRIC_CONFIG.restingHeartRate.color,
         },
         {
           metricKey: "exerciseMinutes" as MetricKey,
@@ -1009,6 +1056,8 @@ export default function App() {
           value: h?.exerciseMinutes != null ? `${h.exerciseMinutes} min` : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
+          boxPlotStats: statsCache.exerciseMinutes,
+          color: METRIC_CONFIG.exerciseMinutes.color,
         },
       ]
     : [];
@@ -1210,6 +1259,8 @@ export default function App() {
                   sublabel={m.sublabel}
                   fullWidth={metrics.length % 2 === 1 && i === metrics.length - 1}
                   onPress={handleMetricPress}
+                  boxPlotStats={m.boxPlotStats}
+                  color={m.color}
                 />
               ))}
             </View>
