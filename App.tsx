@@ -418,6 +418,7 @@ export default function App() {
   const [newPlaceLat, setNewPlaceLat] = useState("");
   const [newPlaceLng, setNewPlaceLng] = useState("");
   const [newPlaceRadius, setNewPlaceRadius] = useState("100");
+  const [importJson, setImportJson] = useState("");
 
   // Initialize database on mount
   useEffect(() => {
@@ -623,6 +624,37 @@ export default function App() {
     if (snapshot?.location) {
       setNewPlaceLat(snapshot.location.latitude.toFixed(6));
       setNewPlaceLng(snapshot.location.longitude.toFixed(6));
+    }
+  }
+
+  async function handleImportPlacesJson(json: string) {
+    if (!db) {
+      setError("Database not available. Please restart the app.");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(json);
+      const items = Array.isArray(parsed) ? parsed : parsed.knownPlaces ?? parsed.places;
+      if (!Array.isArray(items)) {
+        setError("JSON must be an array or have a knownPlaces/places array");
+        return;
+      }
+      let added = 0;
+      for (const p of items) {
+        const name = String(p.name ?? "").trim();
+        const lat = Number(p.lat ?? p.latitude);
+        const lng = Number(p.lon ?? p.lng ?? p.longitude);
+        const radius = Number(p.radiusMeters ?? p.radius_meters ?? p.radius ?? 100);
+        if (!name || isNaN(lat) || isNaN(lng)) continue;
+        await addKnownPlace(db, name, lat, lng, radius);
+        added++;
+      }
+      const places = await getKnownPlaces(db);
+      setKnownPlaces(places);
+      setImportJson("");
+      if (added === 0) setError("No valid places found in JSON");
+    } catch (e: any) {
+      setError(e.message ?? "Invalid JSON");
     }
   }
 
@@ -1236,6 +1268,22 @@ export default function App() {
                   <Text style={styles.addPlaceButtonText}>Add Place</Text>
                 </TouchableOpacity>
               </View>
+
+              <Text style={[styles.knownPlaceName, { marginTop: 16 }]}>Import JSON</Text>
+              <TextInput
+                style={[styles.addPlaceInput, { height: 80, textAlignVertical: "top" }]}
+                placeholder='[{"name":"Home","lat":47.64,"lon":-122.30,"radiusMeters":100}]'
+                placeholderTextColor="#555"
+                value={importJson}
+                onChangeText={setImportJson}
+                multiline
+              />
+              <TouchableOpacity
+                style={styles.addPlaceButton}
+                onPress={() => handleImportPlacesJson(importJson)}
+              >
+                <Text style={styles.addPlaceButtonText}>Import Places</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </View>
