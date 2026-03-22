@@ -5,6 +5,7 @@
 
 import type { DailyValue, HeartRateDaily } from "./weekly";
 import type { PlaceCluster, PlaceVisit } from "./clustering";
+import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./stats";
 
 export type DailyExportEntry = {
   date: string; // "YYYY-MM-DD"
@@ -27,8 +28,33 @@ export type LocationSummary = {
   summary: string;
 };
 
+/** Statistical summary for a single metric (omits the raw values array for brevity). */
+export type MetricStatsExport = {
+  min: number;
+  p5: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  p95: number;
+  max: number;
+};
+
+export type WeeklyStatsExport = {
+  steps: MetricStatsExport | null;
+  heartRate: MetricStatsExport | null;
+  sleepHours: MetricStatsExport | null;
+  activeEnergy: MetricStatsExport | null;
+  walkingDistanceKm: MetricStatsExport | null;
+  weightKg: MetricStatsExport | null;
+  meditationMinutes: MetricStatsExport | null;
+  hrvMs: MetricStatsExport | null;
+  restingHeartRate: MetricStatsExport | null;
+  exerciseMinutes: MetricStatsExport | null;
+};
+
 export type SummaryExport = {
   days: DailyExportEntry[];
+  weeklyStats: WeeklyStatsExport;
   locationSummary: LocationSummary | null;
 };
 
@@ -66,11 +92,45 @@ export type WeeklyDataMap = {
 };
 
 /**
- * Build an array of 7 daily export entries from weekly metric data.
- * Each entry combines all metrics for that day.
+ * Convert BoxPlotStats to the leaner export format (drops raw values array).
  */
+function toStatsExport(stats: BoxPlotStats | null): MetricStatsExport | null {
+  if (!stats) return null;
+  return {
+    min: stats.min,
+    p5: stats.p5,
+    p25: stats.p25,
+    p50: stats.p50,
+    p75: stats.p75,
+    p95: stats.p95,
+    max: stats.max,
+  };
+}
+
 /**
- * Build a summary export: 7-day daily health data + location clusters.
+ * Compute 7-day statistical summaries for all metrics.
+ */
+export function buildWeeklyStats(data: WeeklyDataMap): WeeklyStatsExport {
+  const hrValues = (data.heartRate as HeartRateDaily[])
+    .filter((d) => d.avg !== null)
+    .map((d) => d.avg as number);
+
+  return {
+    steps: toStatsExport(computeBoxPlotStats(extractValues(data.steps))),
+    heartRate: toStatsExport(computeBoxPlotStats(hrValues)),
+    sleepHours: toStatsExport(computeBoxPlotStats(extractValues(data.sleep))),
+    activeEnergy: toStatsExport(computeBoxPlotStats(extractValues(data.activeEnergy))),
+    walkingDistanceKm: toStatsExport(computeBoxPlotStats(extractValues(data.walkingDistance))),
+    weightKg: toStatsExport(computeBoxPlotStats(extractValues(data.weight))),
+    meditationMinutes: toStatsExport(computeBoxPlotStats(extractValues(data.meditation))),
+    hrvMs: toStatsExport(computeBoxPlotStats(extractValues(data.hrv))),
+    restingHeartRate: toStatsExport(computeBoxPlotStats(extractValues(data.restingHeartRate))),
+    exerciseMinutes: toStatsExport(computeBoxPlotStats(extractValues(data.exerciseMinutes))),
+  };
+}
+
+/**
+ * Build a summary export: 7-day daily health data + stats + location clusters.
  */
 export function buildSummaryExport(
   data: WeeklyDataMap,
@@ -78,6 +138,7 @@ export function buildSummaryExport(
 ): SummaryExport {
   return {
     days: buildDailyExport(data),
+    weeklyStats: buildWeeklyStats(data),
     locationSummary,
   };
 }

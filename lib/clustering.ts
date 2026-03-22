@@ -4,6 +4,8 @@
  * Pure functions — no device access, fully testable.
  */
 
+import { type KnownPlace, labelPointsWithKnownPlaces, buildKnownPlaceClusters } from "./places";
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type LocationPoint = {
@@ -40,22 +42,10 @@ export type ClusterResult = {
 
 // ─── Haversine Distance ──────────────────────────────────────────────────────
 
-const DEG_TO_RAD = Math.PI / 180;
-const EARTH_RADIUS_M = 6371000;
+export { haversineDistance } from "./geo";
+import { haversineDistance } from "./geo";
 
-/** Haversine distance between two lat/lng points in meters. */
-export function haversineDistance(
-  lat1: number, lng1: number,
-  lat2: number, lng2: number,
-): number {
-  const dLat = (lat2 - lat1) * DEG_TO_RAD;
-  const dLng = (lng2 - lng1) * DEG_TO_RAD;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * DEG_TO_RAD) * Math.cos(lat2 * DEG_TO_RAD) *
-    Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
-}
+const DEG_TO_RAD = Math.PI / 180;
 
 // ─── Union-Find ──────────────────────────────────────────────────────────────
 
@@ -355,50 +345,105 @@ export function downsample(points: LocationPoint[], maxPoints = MAX_CLUSTER_POIN
 
 /**
  * Cluster location history into places.
- * Uses grid-based union-find: O(n) complexity.
+ * When knownPlaces are provided, GPS points are matched against them first
+ * (by distance within configured radius). Unmatched points fall through to
+ * generic grid-based clustering.
+ *
  * @param points Raw GPS points from SQLite
- * @param epsMeters Distance threshold (default 50m)
+ * @param epsMeters Distance threshold for generic clustering (default 50m)
  * @param minPts Minimum points per cluster (default 3)
+ * @param knownPlaces Optional array of user-defined known places
  */
 export function clusterLocations(
   points: LocationPoint[],
   epsMeters = 50,
   minPts = 3,
+  knownPlaces: KnownPlace[] = [],
 ): ClusterResult {
   if (points.length === 0) {
     return { clusters: [], timeline: [], noiseCount: 0, summary: "" };
   }
 
-  const labels = dbscan(points, epsMeters, minPts);
+  // Step 1: Match points against known places
+  const knownLabels = knownPlaces.length > 0
+    ? labelPointsWithKnownPlaces(points, knownPlaces)
+    : points.map(() => -1);
 
-  // Group points by cluster label
+  // Separate matched and unmatched points
+  const unmatchedPoints: LocationPoint[] = [];
+  const unmatchedOriginalIndices: number[] = [];
+  for (let i = 0; i < points.length; i++) {
+    if (knownLabels[i] === -1) {
+      unmatchedPoints.push(points[i]);
+      unmatchedOriginalIndices.push(i);
+    }
+  }
+
+  // Step 2: Run generic clustering on unmatched points only
+  const genericLabels = unmatchedPoints.length > 0
+    ? dbscan(unmatchedPoints, epsMeters, minPts)
+    : [];
+
+  // Group unmatched points by cluster label
   const groups = new Map<number, LocationPoint[]>();
   let noiseCount = 0;
 
-  for (let i = 0; i < labels.length; i++) {
-    if (labels[i] === -1) {
+  for (let i = 0; i < genericLabels.length; i++) {
+    if (genericLabels[i] === -1) {
       noiseCount++;
       continue;
     }
-    if (!groups.has(labels[i])) groups.set(labels[i], []);
-    groups.get(labels[i])!.push(points[i]);
+    if (!groups.has(genericLabels[i])) groups.set(genericLabels[i], []);
+    groups.get(genericLabels[i])!.push(unmatchedPoints[i]);
   }
 
-  // Build clusters, sorted by dwell time descending
-  const clusters: PlaceCluster[] = [];
+  // Build generic clusters with "place_N" IDs
+  const genericClusters: PlaceCluster[] = [];
   let cIdx = 1;
   for (const [, cPoints] of groups) {
-    clusters.push(buildCluster(`place_${cIdx++}`, cPoints));
+    genericClusters.push(buildCluster(`place_${cIdx++}`, cPoints));
   }
-  clusters.sort((a, b) => b.dwellTimeHours - a.dwellTimeHours);
+  genericClusters.sort((a, b) => b.dwellTimeHours - a.dwellTimeHours);
+  genericClusters.forEach((c, i) => { c.id = `place_${i + 1}`; });
 
-  // Renumber IDs after sorting
-  clusters.forEach((c, i) => { c.id = `place_${i + 1}`; });
+  // Step 3: Build known place clusters
+  const knownClusters = knownPlaces.length > 0
+    ? buildKnownPlaceClusters(points, knownLabels, knownPlaces)
+    : [];
 
-  const timeline = buildTimeline(points, labels, clusters);
+  // Combine: known place clusters first, then generic
+  const allClusters = [...knownClusters, ...genericClusters];
+
+  // Step 4: Build combined labels for timeline
+  // We need a single label array across all points that maps to allClusters
+  // Use negative numbers offset for known place clusters to avoid collision with generic labels
+  const KNOWN_LABEL_OFFSET = 1000000; // large offset to avoid collision
+  const combinedLabels: number[] = new Array(points.length);
+
+  // Build reverse lookup: original index → unmatched index (O(n) instead of O(n^2))
+  const originalToUnmatched = new Map<number, number>();
+  for (let i = 0; i < unmatchedOriginalIndices.length; i++) {
+    originalToUnmatched.set(unmatchedOriginalIndices[i], i);
+  }
+
+  for (let i = 0; i < points.length; i++) {
+    if (knownLabels[i] !== -1) {
+      // Point matched a known place — use offset label
+      combinedLabels[i] = KNOWN_LABEL_OFFSET + knownLabels[i];
+    } else {
+      const unmatchedIdx = originalToUnmatched.get(i) ?? -1;
+      if (unmatchedIdx !== -1 && genericLabels[unmatchedIdx] !== -1) {
+        combinedLabels[i] = genericLabels[unmatchedIdx];
+      } else {
+        combinedLabels[i] = -1;
+      }
+    }
+  }
+
+  const timeline = buildTimeline(points, combinedLabels, allClusters);
   const summary = formatTimelineSummary(timeline);
 
-  return { clusters, timeline, noiseCount, summary };
+  return { clusters: allClusters, timeline, noiseCount, summary };
 }
 
 // ─── Summary Formatting ──────────────────────────────────────────────────────

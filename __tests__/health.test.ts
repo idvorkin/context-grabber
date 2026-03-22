@@ -1,11 +1,14 @@
 import {
   calculateSleepHours,
   filterActualSleep,
+  sleepCategoryName,
+  buildSleepBySource,
   calculateMeditationMinutes,
   extractWeight,
   countWeightDays,
   buildHealthData,
   type SleepSample,
+  type SourceSleepSummary,
   type MindfulSession,
   type WeightSample,
   type HealthQueryResults,
@@ -187,6 +190,98 @@ describe("filterActualSleep", () => {
   });
 });
 
+describe("sleepCategoryName", () => {
+  it("maps known sleep values to category names", () => {
+    expect(sleepCategoryName(0)).toBe("InBed");
+    expect(sleepCategoryName(1)).toBe("Asleep");
+    expect(sleepCategoryName(2)).toBe("Awake");
+    expect(sleepCategoryName(3)).toBe("Core");
+    expect(sleepCategoryName(4)).toBe("Deep");
+    expect(sleepCategoryName(5)).toBe("REM");
+  });
+
+  it("returns 'Asleep' for undefined (legacy data)", () => {
+    expect(sleepCategoryName(undefined)).toBe("Asleep");
+  });
+
+  it("returns 'Unknown' for unrecognized values", () => {
+    expect(sleepCategoryName(99)).toBe("Unknown");
+  });
+});
+
+describe("buildSleepBySource", () => {
+  it("returns null for undefined input", () => {
+    expect(buildSleepBySource(undefined)).toBeNull();
+  });
+
+  it("returns null for empty array", () => {
+    expect(buildSleepBySource([])).toBeNull();
+  });
+
+  it("groups samples by source with stage breakdown", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T22:30:00.000Z", endDate: "2026-03-15T01:00:00.000Z", value: 3, source: "Apple Watch" },
+      { startDate: "2026-03-15T01:00:00.000Z", endDate: "2026-03-15T03:00:00.000Z", value: 4, source: "Apple Watch" },
+      { startDate: "2026-03-15T03:15:00.000Z", endDate: "2026-03-15T05:00:00.000Z", value: 5, source: "Apple Watch" },
+      { startDate: "2026-03-15T03:00:00.000Z", endDate: "2026-03-15T03:15:00.000Z", value: 2, source: "Apple Watch" },
+    ];
+    const result = buildSleepBySource(samples)!;
+    expect(result["Apple Watch"]).toBeDefined();
+    expect(result["Apple Watch"].bedtime).toBe("2026-03-14T22:30:00.000Z");
+    expect(result["Apple Watch"].wakeTime).toBe("2026-03-15T05:00:00.000Z");
+    expect(result["Apple Watch"].coreHours).toBe(2.5);
+    expect(result["Apple Watch"].deepHours).toBe(2);
+    expect(result["Apple Watch"].remHours).toBe(1.8);
+    expect(result["Apple Watch"].awakeHours).toBe(0.3);
+  });
+
+  it("separates multiple sources", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T23:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z", value: 3, source: "Apple Watch" },
+      { startDate: "2026-03-14T22:45:00.000Z", endDate: "2026-03-15T06:50:00.000Z", value: 4, source: "AutoSleep" },
+    ];
+    const result = buildSleepBySource(samples)!;
+    expect(Object.keys(result)).toHaveLength(2);
+    expect(result["Apple Watch"]).toBeDefined();
+    expect(result["AutoSleep"]).toBeDefined();
+    expect(result["Apple Watch"].bedtime).toBe("2026-03-14T23:00:00.000Z");
+    expect(result["AutoSleep"].bedtime).toBe("2026-03-14T22:45:00.000Z");
+  });
+
+  it("defaults to 'Unknown' source when not provided", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T23:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z", value: 3 },
+    ];
+    const result = buildSleepBySource(samples)!;
+    expect(result["Unknown"]).toBeDefined();
+    expect(result["Unknown"].coreHours).toBe(8);
+  });
+
+  it("handles Date objects", () => {
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date("2026-03-14T23:00:00.000Z"),
+        endDate: new Date("2026-03-15T07:00:00.000Z"),
+        value: 4,
+        source: "Apple Watch",
+      },
+    ];
+    const result = buildSleepBySource(samples)!;
+    expect(result["Apple Watch"].bedtime).toBe("2026-03-14T23:00:00.000Z");
+    expect(result["Apple Watch"].wakeTime).toBe("2026-03-15T07:00:00.000Z");
+    expect(result["Apple Watch"].deepHours).toBe(8);
+  });
+
+  it("rounds hours to 1 decimal", () => {
+    // 7h 20m = 7.333... → 7.3
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T23:00:00.000Z", endDate: "2026-03-15T06:20:00.000Z", value: 5, source: "Watch" },
+    ];
+    const result = buildSleepBySource(samples)!;
+    expect(result["Watch"].remHours).toBe(7.3);
+  });
+});
+
 describe("buildHealthData", () => {
   function fulfilled<T>(value: T): PromiseFulfilledResult<T> {
     return { status: "fulfilled", value };
@@ -216,6 +311,7 @@ describe("buildHealthData", () => {
       sleepHours: null,
       bedtime: null,
       wakeTime: null,
+      sleepBySource: null,
       activeEnergy: null,
       walkingDistance: null,
       weight: null,
@@ -263,6 +359,14 @@ describe("buildHealthData", () => {
     expect(data.sleepHours).toBe(8);
     expect(data.bedtime).toBe("2026-03-14T23:00:00.000Z");
     expect(data.wakeTime).toBe("2026-03-15T07:00:00.000Z");
+    // No source on test samples, so groups under "Unknown"
+    expect(data.sleepBySource).toEqual({
+      Unknown: {
+        bedtime: "2026-03-14T23:00:00.000Z",
+        wakeTime: "2026-03-15T07:00:00.000Z",
+        coreHours: 0, deepHours: 0, remHours: 0, awakeHours: 0,
+      },
+    });
     expect(data.weight).toBe(75.5);
     expect(data.weightDaysLast7).toBe(3);
     expect(data.meditationMinutes).toBe(15);
@@ -288,6 +392,7 @@ describe("buildHealthData", () => {
     const data = buildHealthData(results);
     expect(data.heartRate).toBeNull();
     expect(data.sleepHours).toBeNull();
+    expect(data.sleepBySource).toBeNull();
     expect(data.weight).toBeNull();
     expect(data.weightDaysLast7).toBeNull();
     expect(data.meditationMinutes).toBeNull();
@@ -340,6 +445,13 @@ describe("buildHealthData", () => {
     expect(data.activeEnergy).toBe(200);
     expect(data.walkingDistance).toBeNull();
     expect(data.sleepHours).toBe(3.5);
+    expect(data.sleepBySource).toEqual({
+      Unknown: {
+        bedtime: "2026-03-15T01:00:00.000Z",
+        wakeTime: "2026-03-15T04:30:00.000Z",
+        coreHours: 0, deepHours: 0, remHours: 0, awakeHours: 0,
+      },
+    });
     expect(data.weight).toBe(80.12);
     expect(data.weightDaysLast7).toBe(1);
     expect(data.meditationMinutes).toBeNull();

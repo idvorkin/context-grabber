@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -7,10 +7,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
   ActivityIndicator,
 } from "react-native";
+import type { SourceSleepSummary } from "../lib/health";
 import {
   METRIC_CONFIG,
   computeAverage,
@@ -31,6 +33,7 @@ type MetricDetailSheetProps = {
   data: DailyValue[] | HeartRateDaily[] | null; // null = loading
   error: string | null;
   onClose: () => void;
+  sleepBySource?: Record<string, SourceSleepSummary> | null;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -77,6 +80,16 @@ function formatDailyValue(item: DailyValue, unit: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/** Format UTC ISO timestamp as local 12-hour time (intentional: users see sleep times in their timezone). */
+function formatSleepTime(iso: string): string {
+  const d = new Date(iso);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+
 export default function MetricDetailSheet({
   metricKey,
   currentValue,
@@ -84,9 +97,22 @@ export default function MetricDetailSheet({
   data,
   error,
   onClose,
+  sleepBySource,
 }: MetricDetailSheetProps): React.ReactElement {
   const screenHeight = Dimensions.get("window").height;
   const config = METRIC_CONFIG[metricKey];
+  const sourceNames = useMemo(
+    () => (sleepBySource ? Object.keys(sleepBySource) : []),
+    [sleepBySource],
+  );
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+
+  // Update selected source when sleepBySource data arrives
+  useEffect(() => {
+    if (sourceNames.length > 0 && selectedSource === null) {
+      setSelectedSource(sourceNames[0]);
+    }
+  }, [sourceNames, selectedSource]);
 
   // Single animated value drives translateY (0 = visible) and overlay opacity.
   const animValue = useRef(new Animated.Value(0)).current;
@@ -275,6 +301,44 @@ export default function MetricDetailSheet({
             <Text style={styles.currentSublabel}>{currentSublabel}</Text>
           </View>
 
+          {/* Sleep source tabs */}
+          {metricKey === "sleep" && sourceNames.length > 0 && (
+            <View style={styles.sourceSection}>
+              <View style={styles.sourceTabs}>
+                {sourceNames.map((name) => (
+                  <TouchableOpacity
+                    key={name}
+                    style={[
+                      styles.sourceTab,
+                      selectedSource === name && { backgroundColor: config.color + "33", borderColor: config.color },
+                    ]}
+                    onPress={() => setSelectedSource(name)}
+                  >
+                    <Text style={[styles.sourceTabText, selectedSource === name && { color: config.color }]}>
+                      {name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {selectedSource && sleepBySource?.[selectedSource] && (() => {
+                const s = sleepBySource[selectedSource];
+                return (
+                  <View style={styles.sourceDetail}>
+                    <Text style={styles.sourceDetailRow}>
+                      {formatSleepTime(s.bedtime)} → {formatSleepTime(s.wakeTime)}
+                    </Text>
+                    <View style={styles.stageRow}>
+                      {s.deepHours > 0 && <Text style={styles.stagePill}>Deep {s.deepHours}h</Text>}
+                      {s.coreHours > 0 && <Text style={styles.stagePill}>Core {s.coreHours}h</Text>}
+                      {s.remHours > 0 && <Text style={styles.stagePill}>REM {s.remHours}h</Text>}
+                      {s.awakeHours > 0 && <Text style={[styles.stagePill, { color: "#f4845f" }]}>Awake {s.awakeHours}h</Text>}
+                    </View>
+                  </View>
+                );
+              })()}
+            </View>
+          )}
+
           {/* Chart */}
           <View style={styles.chartContainer}>{chartContent}</View>
 
@@ -407,5 +471,48 @@ const styles = StyleSheet.create({
   dayRowValue: {
     fontSize: 15,
     color: "#aaa",
+  },
+  sourceSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  sourceTabs: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10,
+  },
+  sourceTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  sourceTabText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#888",
+  },
+  sourceDetail: {
+    paddingVertical: 4,
+  },
+  sourceDetailRow: {
+    fontSize: 15,
+    color: "#e0e0e0",
+    marginBottom: 8,
+  },
+  stageRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  stagePill: {
+    fontSize: 13,
+    color: "#aaa",
+    backgroundColor: "#222",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: "hidden",
   },
 });

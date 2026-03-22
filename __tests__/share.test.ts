@@ -1,4 +1,4 @@
-import { dayOfWeek, buildDailyExport, type WeeklyDataMap } from "../lib/share";
+import { dayOfWeek, buildDailyExport, buildSummaryExport, buildWeeklyStats, type WeeklyDataMap } from "../lib/share";
 
 describe("dayOfWeek", () => {
   it("returns correct day names", () => {
@@ -115,5 +115,93 @@ describe("buildDailyExport", () => {
       expect(entry).not.toHaveProperty("location");
       expect(entry).not.toHaveProperty("locationHistory");
     }
+  });
+});
+
+describe("buildWeeklyStats", () => {
+  const dates = [
+    "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12",
+    "2026-03-13", "2026-03-14", "2026-03-15",
+  ];
+
+  const makeData = (overrides?: Partial<WeeklyDataMap>): WeeklyDataMap => ({
+    steps: dates.map((d) => ({ date: d, value: null })),
+    heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null })),
+    sleep: dates.map((d) => ({ date: d, value: null })),
+    activeEnergy: dates.map((d) => ({ date: d, value: null })),
+    walkingDistance: dates.map((d) => ({ date: d, value: null })),
+    weight: dates.map((d) => ({ date: d, value: null })),
+    meditation: dates.map((d) => ({ date: d, value: null })),
+    hrv: dates.map((d) => ({ date: d, value: null })),
+    restingHeartRate: dates.map((d) => ({ date: d, value: null })),
+    exerciseMinutes: dates.map((d) => ({ date: d, value: null })),
+    ...overrides,
+  });
+
+  it("returns null stats when all values are null", () => {
+    const stats = buildWeeklyStats(makeData());
+    expect(stats.steps).toBeNull();
+    expect(stats.heartRate).toBeNull();
+    expect(stats.sleepHours).toBeNull();
+    expect(stats.activeEnergy).toBeNull();
+    expect(stats.walkingDistanceKm).toBeNull();
+    expect(stats.weightKg).toBeNull();
+    expect(stats.meditationMinutes).toBeNull();
+    expect(stats.hrvMs).toBeNull();
+    expect(stats.restingHeartRate).toBeNull();
+    expect(stats.exerciseMinutes).toBeNull();
+  });
+
+  it("computes stats for steps with data", () => {
+    const steps = dates.map((d, i) => ({
+      date: d,
+      value: [5000, 8000, 12000, 7500, 9000, 6000, 11000][i],
+    }));
+    const stats = buildWeeklyStats(makeData({ steps }));
+    expect(stats.steps).not.toBeNull();
+    expect(stats.steps!.min).toBe(5000);
+    expect(stats.steps!.max).toBe(12000);
+    expect(stats.steps!.p50).toBe(8000);
+    // Stats export should not have a values array
+    expect(stats.steps).not.toHaveProperty("values");
+  });
+
+  it("computes stats for heart rate using avg values", () => {
+    const heartRate = dates.map((d, i) => ({
+      date: d,
+      avg: [65, 70, 72, 68, 75, 71, 69][i],
+      min: 50,
+      max: 120,
+    }));
+    const stats = buildWeeklyStats(makeData({ heartRate }));
+    expect(stats.heartRate).not.toBeNull();
+    expect(stats.heartRate!.p50).toBe(70);
+  });
+});
+
+describe("buildSummaryExport", () => {
+  const dates = [
+    "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12",
+    "2026-03-13", "2026-03-14", "2026-03-15",
+  ];
+
+  const makeData = (): WeeklyDataMap => ({
+    steps: dates.map((d) => ({ date: d, value: null })),
+    heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null })),
+    sleep: dates.map((d) => ({ date: d, value: null })),
+    activeEnergy: dates.map((d) => ({ date: d, value: null })),
+    walkingDistance: dates.map((d) => ({ date: d, value: null })),
+    weight: dates.map((d) => ({ date: d, value: null })),
+    meditation: dates.map((d) => ({ date: d, value: null })),
+    hrv: dates.map((d) => ({ date: d, value: null })),
+    restingHeartRate: dates.map((d) => ({ date: d, value: null })),
+    exerciseMinutes: dates.map((d) => ({ date: d, value: null })),
+  });
+
+  it("includes weeklyStats in export", () => {
+    const result = buildSummaryExport(makeData(), null);
+    expect(result).toHaveProperty("days");
+    expect(result).toHaveProperty("weeklyStats");
+    expect(result).toHaveProperty("locationSummary");
   });
 });

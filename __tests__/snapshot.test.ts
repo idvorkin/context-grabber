@@ -77,6 +77,7 @@ describe("ContextSnapshot shape", () => {
       "hrv",
       "meditationMinutes",
       "restingHeartRate",
+      "sleepBySource",
       "sleepHours",
       "steps",
       "wakeTime",
@@ -145,6 +146,13 @@ describe("ContextSnapshot shape", () => {
     expect(snapshot.health.sleepHours).toBe(8);
     expect(snapshot.health.bedtime).toBe("2026-03-14T23:00:00.000Z");
     expect(snapshot.health.wakeTime).toBe("2026-03-15T07:00:00.000Z");
+    expect(snapshot.health.sleepBySource).toEqual({
+      Unknown: {
+        bedtime: "2026-03-14T23:00:00.000Z",
+        wakeTime: "2026-03-15T07:00:00.000Z",
+        coreHours: 0, deepHours: 0, remHours: 0, awakeHours: 0,
+      },
+    });
     expect(snapshot.health.weight).toBe(72.5);
     expect(snapshot.health.weightDaysLast7).toBe(2);
     expect(snapshot.health.meditationMinutes).toBe(20);
@@ -164,6 +172,7 @@ describe("ContextSnapshot shape", () => {
     expect(parsed.health.sleepHours).toBeNull();
     expect(parsed.health.bedtime).toBeNull();
     expect(parsed.health.wakeTime).toBeNull();
+    expect(parsed.health.sleepBySource).toBeNull();
     expect(parsed.health.activeEnergy).toBeNull();
     expect(parsed.health.walkingDistance).toBeNull();
     expect(parsed.health.weight).toBeNull();
