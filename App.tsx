@@ -1384,6 +1384,7 @@ export default function App() {
             setSelectedMetric(null);
             setWeeklyError(null);
           }}
+          sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
         />
       )}
     </View>
