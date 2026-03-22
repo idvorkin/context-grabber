@@ -42,22 +42,10 @@ export type ClusterResult = {
 
 // ─── Haversine Distance ──────────────────────────────────────────────────────
 
-const DEG_TO_RAD = Math.PI / 180;
-const EARTH_RADIUS_M = 6371000;
+export { haversineDistance } from "./geo";
+import { haversineDistance } from "./geo";
 
-/** Haversine distance between two lat/lng points in meters. */
-export function haversineDistance(
-  lat1: number, lng1: number,
-  lat2: number, lng2: number,
-): number {
-  const dLat = (lat2 - lat1) * DEG_TO_RAD;
-  const dLng = (lng2 - lng1) * DEG_TO_RAD;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * DEG_TO_RAD) * Math.cos(lat2 * DEG_TO_RAD) *
-    Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
-}
+const DEG_TO_RAD = Math.PI / 180;
 
 // ─── Union-Find ──────────────────────────────────────────────────────────────
 
@@ -432,13 +420,18 @@ export function clusterLocations(
   const KNOWN_LABEL_OFFSET = 1000000; // large offset to avoid collision
   const combinedLabels: number[] = new Array(points.length);
 
+  // Build reverse lookup: original index → unmatched index (O(n) instead of O(n^2))
+  const originalToUnmatched = new Map<number, number>();
+  for (let i = 0; i < unmatchedOriginalIndices.length; i++) {
+    originalToUnmatched.set(unmatchedOriginalIndices[i], i);
+  }
+
   for (let i = 0; i < points.length; i++) {
     if (knownLabels[i] !== -1) {
       // Point matched a known place — use offset label
       combinedLabels[i] = KNOWN_LABEL_OFFSET + knownLabels[i];
     } else {
-      // Find this point's index in unmatchedPoints
-      const unmatchedIdx = unmatchedOriginalIndices.indexOf(i);
+      const unmatchedIdx = originalToUnmatched.get(i) ?? -1;
       if (unmatchedIdx !== -1 && genericLabels[unmatchedIdx] !== -1) {
         combinedLabels[i] = genericLabels[unmatchedIdx];
       } else {

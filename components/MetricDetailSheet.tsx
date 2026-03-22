@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -80,6 +80,7 @@ function formatDailyValue(item: DailyValue, unit: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/** Format UTC ISO timestamp as local 12-hour time (intentional: users see sleep times in their timezone). */
 function formatSleepTime(iso: string): string {
   const d = new Date(iso);
   const h = d.getHours();
@@ -100,10 +101,18 @@ export default function MetricDetailSheet({
 }: MetricDetailSheetProps): React.ReactElement {
   const screenHeight = Dimensions.get("window").height;
   const config = METRIC_CONFIG[metricKey];
-  const sourceNames = sleepBySource ? Object.keys(sleepBySource) : [];
-  const [selectedSource, setSelectedSource] = useState<string | null>(
-    sourceNames[0] ?? null,
+  const sourceNames = useMemo(
+    () => (sleepBySource ? Object.keys(sleepBySource) : []),
+    [sleepBySource],
   );
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+
+  // Update selected source when sleepBySource data arrives
+  useEffect(() => {
+    if (sourceNames.length > 0 && selectedSource === null) {
+      setSelectedSource(sourceNames[0]);
+    }
+  }, [sourceNames, selectedSource]);
 
   // Single animated value drives translateY (0 = visible) and overlay opacity.
   const animValue = useRef(new Animated.Value(0)).current;

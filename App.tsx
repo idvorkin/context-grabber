@@ -13,7 +13,6 @@ import {
   AppState,
   Modal,
   Linking,
-  Pressable,
 } from "react-native";
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
@@ -24,7 +23,7 @@ import type {
   QuantityTypeIdentifier,
   CategoryTypeIdentifier,
 } from "@kingstinct/react-native-healthkit";
-import { buildHealthData, type HealthData, type HealthQueryResults } from "./lib/health";
+import { buildHealthData, type HealthData, type HealthQueryResults, type SleepSample } from "./lib/health";
 import { pruneThreshold } from "./lib/location";
 import { buildSummary, formatNumber } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
@@ -592,8 +591,8 @@ export default function App() {
       setError("Place name is required");
       return;
     }
-    if (isNaN(lat) || isNaN(lng)) {
-      setError("Valid latitude and longitude are required");
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      setError("Valid latitude (-90 to 90) and longitude (-180 to 180) required");
       return;
     }
     try {
@@ -645,7 +644,7 @@ export default function App() {
         const lat = Number(p.lat ?? p.latitude);
         const lng = Number(p.lon ?? p.lng ?? p.longitude);
         const radius = Number(p.radiusMeters ?? p.radius_meters ?? p.radius ?? 100);
-        if (!name || isNaN(lat) || isNaN(lng)) continue;
+        if (!name || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
         await addKnownPlace(db, name, lat, lng, radius);
         added++;
       }
@@ -714,17 +713,31 @@ export default function App() {
       ),
     ]);
 
-    // Map source names onto sleep samples for per-source summary
+    // Map source names onto sleep samples for per-source summary (new array, no mutation)
     const sleepResult = results[4];
+    let mappedSleep: PromiseSettledResult<SleepSample[]>;
     if (sleepResult.status === "fulfilled" && sleepResult.value) {
-      const mapped = (sleepResult.value as any[]).map((s: any) => ({
-        ...s,
-        source: s.sourceRevision?.source?.name ?? "Unknown",
-      }));
-      (results[4] as any) = { status: "fulfilled", value: mapped };
+      mappedSleep = {
+        status: "fulfilled" as const,
+        value: (sleepResult.value as any[]).map((s: any) => ({
+          startDate: s.startDate,
+          endDate: s.endDate,
+          value: s.value,
+          source: s.sourceRevision?.source?.name ?? "Unknown",
+        })),
+      };
+    } else {
+      mappedSleep = sleepResult.status === "fulfilled"
+        ? { status: "fulfilled" as const, value: [] }
+        : { status: "rejected" as const, reason: (sleepResult as PromiseRejectedResult).reason };
     }
+    const healthResults: HealthQueryResults = [
+      results[0], results[1], results[2], results[3],
+      mappedSleep,
+      results[5], results[6], results[7], results[8], results[9], results[10],
+    ] as HealthQueryResults;
 
-    return buildHealthData(results as HealthQueryResults);
+    return buildHealthData(healthResults);
   }
 
   async function grabLocation(): Promise<LocationData> {
