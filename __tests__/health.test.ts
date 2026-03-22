@@ -1,11 +1,14 @@
 import {
   calculateSleepHours,
   filterActualSleep,
+  sleepCategoryName,
+  formatSleepSamples,
   calculateMeditationMinutes,
   extractWeight,
   countWeightDays,
   buildHealthData,
   type SleepSample,
+  type RawSleepSample,
   type MindfulSession,
   type WeightSample,
   type HealthQueryResults,
@@ -187,6 +190,94 @@ describe("filterActualSleep", () => {
   });
 });
 
+describe("sleepCategoryName", () => {
+  it("maps known sleep values to category names", () => {
+    expect(sleepCategoryName(0)).toBe("InBed");
+    expect(sleepCategoryName(1)).toBe("Asleep");
+    expect(sleepCategoryName(2)).toBe("Awake");
+    expect(sleepCategoryName(3)).toBe("Core");
+    expect(sleepCategoryName(4)).toBe("Deep");
+    expect(sleepCategoryName(5)).toBe("REM");
+  });
+
+  it("returns 'Asleep' for undefined (legacy data)", () => {
+    expect(sleepCategoryName(undefined)).toBe("Asleep");
+  });
+
+  it("returns 'Unknown' for unrecognized values", () => {
+    expect(sleepCategoryName(99)).toBe("Unknown");
+  });
+});
+
+describe("formatSleepSamples", () => {
+  it("returns null for undefined input", () => {
+    expect(formatSleepSamples(undefined)).toBeNull();
+  });
+
+  it("returns null for empty array", () => {
+    expect(formatSleepSamples([])).toBeNull();
+  });
+
+  it("formats samples with category names and ISO timestamps", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T22:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z", value: 0 },
+      { startDate: "2026-03-14T22:30:00.000Z", endDate: "2026-03-15T01:00:00.000Z", value: 3 },
+      { startDate: "2026-03-15T01:00:00.000Z", endDate: "2026-03-15T03:00:00.000Z", value: 4 },
+      { startDate: "2026-03-15T03:15:00.000Z", endDate: "2026-03-15T05:00:00.000Z", value: 5 },
+    ];
+    const result = formatSleepSamples(samples);
+    expect(result).toEqual([
+      { startDate: "2026-03-14T22:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z", category: "InBed" },
+      { startDate: "2026-03-14T22:30:00.000Z", endDate: "2026-03-15T01:00:00.000Z", category: "Core" },
+      { startDate: "2026-03-15T01:00:00.000Z", endDate: "2026-03-15T03:00:00.000Z", category: "Deep" },
+      { startDate: "2026-03-15T03:15:00.000Z", endDate: "2026-03-15T05:00:00.000Z", category: "REM" },
+    ]);
+  });
+
+  it("sorts samples by startDate ascending", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-15T03:00:00.000Z", endDate: "2026-03-15T05:00:00.000Z", value: 5 },
+      { startDate: "2026-03-14T22:00:00.000Z", endDate: "2026-03-15T01:00:00.000Z", value: 3 },
+    ];
+    const result = formatSleepSamples(samples)!;
+    expect(result[0].startDate).toBe("2026-03-14T22:00:00.000Z");
+    expect(result[1].startDate).toBe("2026-03-15T03:00:00.000Z");
+  });
+
+  it("handles Date objects and converts to ISO strings", () => {
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date("2026-03-14T23:00:00.000Z"),
+        endDate: new Date("2026-03-15T07:00:00.000Z"),
+        value: 1,
+      },
+    ];
+    const result = formatSleepSamples(samples)!;
+    expect(result[0].startDate).toBe("2026-03-14T23:00:00.000Z");
+    expect(result[0].endDate).toBe("2026-03-15T07:00:00.000Z");
+    expect(result[0].category).toBe("Asleep");
+  });
+
+  it("defaults to 'Asleep' when value is undefined (legacy data)", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T23:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z" },
+    ];
+    const result = formatSleepSamples(samples)!;
+    expect(result[0].category).toBe("Asleep");
+  });
+
+  it("includes ALL samples (InBed, Awake, etc.) in raw output", () => {
+    const samples: SleepSample[] = [
+      { startDate: "2026-03-14T22:00:00.000Z", endDate: "2026-03-15T07:00:00.000Z", value: 0 },
+      { startDate: "2026-03-15T03:00:00.000Z", endDate: "2026-03-15T03:15:00.000Z", value: 2 },
+      { startDate: "2026-03-14T22:30:00.000Z", endDate: "2026-03-15T01:00:00.000Z", value: 3 },
+    ];
+    const result = formatSleepSamples(samples)!;
+    expect(result).toHaveLength(3);
+    expect(result.map((s) => s.category)).toEqual(["InBed", "Core", "Awake"]);
+  });
+});
+
 describe("buildHealthData", () => {
   function fulfilled<T>(value: T): PromiseFulfilledResult<T> {
     return { status: "fulfilled", value };
@@ -216,6 +307,7 @@ describe("buildHealthData", () => {
       sleepHours: null,
       bedtime: null,
       wakeTime: null,
+      sleepSamples: null,
       activeEnergy: null,
       walkingDistance: null,
       weight: null,
@@ -263,6 +355,13 @@ describe("buildHealthData", () => {
     expect(data.sleepHours).toBe(8);
     expect(data.bedtime).toBe("2026-03-14T23:00:00.000Z");
     expect(data.wakeTime).toBe("2026-03-15T07:00:00.000Z");
+    expect(data.sleepSamples).toEqual([
+      {
+        startDate: "2026-03-14T23:00:00.000Z",
+        endDate: "2026-03-15T07:00:00.000Z",
+        category: "Asleep",
+      },
+    ]);
     expect(data.weight).toBe(75.5);
     expect(data.weightDaysLast7).toBe(3);
     expect(data.meditationMinutes).toBe(15);
@@ -288,6 +387,7 @@ describe("buildHealthData", () => {
     const data = buildHealthData(results);
     expect(data.heartRate).toBeNull();
     expect(data.sleepHours).toBeNull();
+    expect(data.sleepSamples).toBeNull();
     expect(data.weight).toBeNull();
     expect(data.weightDaysLast7).toBeNull();
     expect(data.meditationMinutes).toBeNull();
@@ -340,6 +440,13 @@ describe("buildHealthData", () => {
     expect(data.activeEnergy).toBe(200);
     expect(data.walkingDistance).toBeNull();
     expect(data.sleepHours).toBe(3.5);
+    expect(data.sleepSamples).toEqual([
+      {
+        startDate: "2026-03-15T01:00:00.000Z",
+        endDate: "2026-03-15T04:30:00.000Z",
+        category: "Asleep",
+      },
+    ]);
     expect(data.weight).toBe(80.12);
     expect(data.weightDaysLast7).toBe(1);
     expect(data.meditationMinutes).toBeNull();

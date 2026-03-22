@@ -5,12 +5,19 @@
 
 import { extractSleepDetails } from "./sleep";
 
+export type RawSleepSample = {
+  startDate: string; // ISO 8601 UTC
+  endDate: string;   // ISO 8601 UTC
+  category: string;  // "InBed", "Asleep", "Awake", "Core", "Deep", "REM"
+};
+
 export type HealthData = {
   steps: number | null;
   heartRate: number | null;
   sleepHours: number | null;
   bedtime: string | null;
   wakeTime: string | null;
+  sleepSamples: RawSleepSample[] | null;
   activeEnergy: number | null;
   walkingDistance: number | null;
   weight: number | null;
@@ -51,6 +58,43 @@ export type SleepSample = {
 
 // Sleep values that count as actual sleep (exclude InBed=0 and Awake=2)
 const SLEEP_VALUES = new Set([1, 3, 4, 5]);
+
+// Map HealthKit sleep value to readable category name
+const SLEEP_CATEGORY_NAMES: Record<number, string> = {
+  0: "InBed",
+  1: "Asleep",
+  2: "Awake",
+  3: "Core",
+  4: "Deep",
+  5: "REM",
+};
+
+/**
+ * Map a HealthKit sleep value number to a readable category name.
+ * Returns "Unknown" for unrecognized values.
+ */
+export function sleepCategoryName(value: number | undefined): string {
+  if (value === undefined) return "Asleep";
+  return SLEEP_CATEGORY_NAMES[value] ?? "Unknown";
+}
+
+/**
+ * Convert raw HealthKit sleep samples to the export format.
+ * Returns null if samples is empty or undefined.
+ * Samples are sorted by startDate ascending, with ISO 8601 UTC timestamps.
+ */
+export function formatSleepSamples(
+  samples: SleepSample[] | undefined,
+): RawSleepSample[] | null {
+  if (!samples || samples.length === 0) return null;
+  return [...samples]
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .map((s) => ({
+      startDate: new Date(s.startDate).toISOString(),
+      endDate: new Date(s.endDate).toISOString(),
+      category: sleepCategoryName(s.value),
+    }));
+}
 
 /**
  * Filter sleep samples to only actual sleep (not InBed or Awake).
@@ -163,10 +207,10 @@ export type HealthQueryResults = [
 export function buildHealthData(results: HealthQueryResults): HealthData {
   const [steps, heartRate, activeEnergy, walkingDistance, sleep, weight, meditation, weightSamples, hrv, restingHeartRate, exerciseTime] = results;
 
-  const sleepSamples =
+  const rawSleepSamples =
     sleep.status === "fulfilled" ? sleep.value : undefined;
-  const sleepHours = calculateSleepHours(sleepSamples);
-  const sleepDetails = extractSleepDetails(sleepSamples);
+  const sleepHours = calculateSleepHours(rawSleepSamples);
+  const sleepDetails = extractSleepDetails(rawSleepSamples);
 
   return {
     steps:
@@ -180,6 +224,7 @@ export function buildHealthData(results: HealthQueryResults): HealthData {
     sleepHours,
     bedtime: sleepDetails.bedtime,
     wakeTime: sleepDetails.wakeTime,
+    sleepSamples: formatSleepSamples(rawSleepSamples),
     activeEnergy:
       activeEnergy.status === "fulfilled" && activeEnergy.value.sumQuantity?.quantity != null
         ? Math.round(activeEnergy.value.sumQuantity.quantity)
