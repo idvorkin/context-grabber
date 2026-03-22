@@ -682,6 +682,16 @@ export default function App() {
       ),
     ]);
 
+    // Map source names onto sleep samples for per-source summary
+    const sleepResult = results[4];
+    if (sleepResult.status === "fulfilled" && sleepResult.value) {
+      const mapped = (sleepResult.value as any[]).map((s: any) => ({
+        ...s,
+        source: s.sourceRevision?.source?.name ?? "Unknown",
+      }));
+      (results[4] as any) = { status: "fulfilled", value: mapped };
+    }
+
     return buildHealthData(results as HealthQueryResults);
   }
 

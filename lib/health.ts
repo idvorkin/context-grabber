@@ -5,10 +5,13 @@
 
 import { extractSleepDetails } from "./sleep";
 
-export type RawSleepSample = {
-  startDate: string; // ISO 8601 UTC
-  endDate: string;   // ISO 8601 UTC
-  category: string;  // "InBed", "Asleep", "Awake", "Core", "Deep", "REM"
+export type SourceSleepSummary = {
+  bedtime: string;   // ISO 8601 UTC
+  wakeTime: string;  // ISO 8601 UTC
+  coreHours: number;
+  deepHours: number;
+  remHours: number;
+  awakeHours: number;
 };
 
 export type HealthData = {
@@ -17,7 +20,7 @@ export type HealthData = {
   sleepHours: number | null;
   bedtime: string | null;
   wakeTime: string | null;
-  sleepSamples: RawSleepSample[] | null;
+  sleepBySource: Record<string, SourceSleepSummary> | null;
   activeEnergy: number | null;
   walkingDistance: number | null;
   weight: number | null;
@@ -54,6 +57,7 @@ export type SleepSample = {
   startDate: string | Date;
   endDate: string | Date;
   value?: number; // 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
+  source?: string; // e.g. "Apple Watch", "AutoSleep"
 };
 
 // Sleep values that count as actual sleep (exclude InBed=0 and Awake=2)
@@ -78,22 +82,63 @@ export function sleepCategoryName(value: number | undefined): string {
   return SLEEP_CATEGORY_NAMES[value] ?? "Unknown";
 }
 
+// Stage value to hours-field mapping
+const STAGE_HOURS_KEY: Record<number, keyof Pick<SourceSleepSummary, "coreHours" | "deepHours" | "remHours" | "awakeHours">> = {
+  2: "awakeHours",
+  3: "coreHours",
+  4: "deepHours",
+  5: "remHours",
+};
+
 /**
- * Convert raw HealthKit sleep samples to the export format.
+ * Build a per-source sleep summary from HealthKit samples.
+ * Groups samples by source, computes bedtime/wakeTime and hours per stage.
  * Returns null if samples is empty or undefined.
- * Samples are sorted by startDate ascending, with ISO 8601 UTC timestamps.
  */
-export function formatSleepSamples(
+export function buildSleepBySource(
   samples: SleepSample[] | undefined,
-): RawSleepSample[] | null {
+): Record<string, SourceSleepSummary> | null {
   if (!samples || samples.length === 0) return null;
-  return [...samples]
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-    .map((s) => ({
-      startDate: new Date(s.startDate).toISOString(),
-      endDate: new Date(s.endDate).toISOString(),
-      category: sleepCategoryName(s.value),
-    }));
+
+  const bySource = new Map<string, SleepSample[]>();
+  for (const s of samples) {
+    const src = s.source ?? "Unknown";
+    const arr = bySource.get(src);
+    if (arr) arr.push(s);
+    else bySource.set(src, [s]);
+  }
+
+  const result: Record<string, SourceSleepSummary> = {};
+  for (const [source, sourceSamples] of bySource) {
+    const sorted = [...sourceSamples].sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+    );
+
+    const bedtime = new Date(sorted[0].startDate).toISOString();
+    const wakeTime = new Date(sorted[sorted.length - 1].endDate).toISOString();
+
+    const summary: SourceSleepSummary = { bedtime, wakeTime, coreHours: 0, deepHours: 0, remHours: 0, awakeHours: 0 };
+
+    for (const s of sorted) {
+      const ms = Math.max(0, new Date(s.endDate).getTime() - new Date(s.startDate).getTime());
+      const hours = ms / (1000 * 60 * 60);
+      const key = s.value !== undefined ? STAGE_HOURS_KEY[s.value] : undefined;
+      if (key) {
+        summary[key] += hours;
+      }
+      // InBed (0), Asleep (1), and unknown values don't get their own bucket
+    }
+
+    // Round to 1 decimal
+    summary.coreHours = Math.round(summary.coreHours * 10) / 10;
+    summary.deepHours = Math.round(summary.deepHours * 10) / 10;
+    summary.remHours = Math.round(summary.remHours * 10) / 10;
+    summary.awakeHours = Math.round(summary.awakeHours * 10) / 10;
+
+    result[source] = summary;
+  }
+
+  return result;
 }
 
 /**
@@ -224,7 +269,7 @@ export function buildHealthData(results: HealthQueryResults): HealthData {
     sleepHours,
     bedtime: sleepDetails.bedtime,
     wakeTime: sleepDetails.wakeTime,
-    sleepSamples: formatSleepSamples(rawSleepSamples),
+    sleepBySource: buildSleepBySource(rawSleepSamples),
     activeEnergy:
       activeEnergy.status === "fulfilled" && activeEnergy.value.sumQuantity?.quantity != null
         ? Math.round(activeEnergy.value.sumQuantity.quantity)
