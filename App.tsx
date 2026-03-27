@@ -19,7 +19,7 @@ import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SQLite from "expo-sqlite";
 import * as Updates from "expo-updates";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type {
@@ -326,18 +326,20 @@ function AboutModal({
       const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
       const info = await FileSystem.getInfoAsync(dbPath);
       if (!info.exists) {
-        setDbExportStatus("Database not found");
+        setDbExportStatus("DB not found at path");
         return;
       }
+      const sizeKB = info.size ? Math.round(info.size / 1024) : 0;
+      setDbExportStatus(`Sharing ${sizeKB}KB...`);
       // Copy to a temp location so share sheet can access it
       const exportPath = `${FileSystem.cacheDirectory}${DB_NAME}`;
       await FileSystem.copyAsync({ from: dbPath, to: exportPath });
-      setDbExportStatus(null);
       await Sharing.shareAsync(exportPath, {
         mimeType: "application/x-sqlite3",
         dialogTitle: "Export Database",
         UTI: "public.database",
       });
+      setDbExportStatus("Exported!");
     } catch (e: any) {
       setDbExportStatus(e.message ?? "Export failed");
     }
@@ -439,8 +441,9 @@ function AboutModal({
             <TouchableOpacity
               style={[styles.addPlaceButton, { marginTop: 8 }]}
               onPress={handleDownloadDatabase}
+              testID="export-db-button"
             >
-              <Text style={styles.addPlaceButtonText}>
+              <Text style={styles.addPlaceButtonText} testID="export-db-status">
                 {dbExportStatus ?? "Export Database"}
               </Text>
             </TouchableOpacity>
