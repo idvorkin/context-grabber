@@ -157,14 +157,18 @@ export function dbscan(
 // ─── Cluster Statistics ──────────────────────────────────────────────────────
 
 function buildCluster(id: string, points: LocationPoint[]): PlaceCluster {
-  const avgLat = points.reduce((s, p) => s + p.latitude, 0) / points.length;
-  const avgLng = points.reduce((s, p) => s + p.longitude, 0) / points.length;
+  // Use median for center (robust to outliers)
+  const lats = points.map((p) => p.latitude).sort((a, b) => a - b);
+  const lngs = points.map((p) => p.longitude).sort((a, b) => a - b);
+  const medianLat = lats[Math.floor(lats.length / 2)];
+  const medianLng = lngs[Math.floor(lngs.length / 2)];
 
-  let maxDist = 0;
-  for (const p of points) {
-    const d = haversineDistance(avgLat, avgLng, p.latitude, p.longitude);
-    if (d > maxDist) maxDist = d;
-  }
+  // Compute distances from median center, use p90 as radius (trims GPS outliers)
+  const distances = points
+    .map((p) => haversineDistance(medianLat, medianLng, p.latitude, p.longitude))
+    .sort((a, b) => a - b);
+  const p90Index = Math.min(Math.floor(distances.length * 0.9), distances.length - 1);
+  const radius = distances[p90Index];
 
   const timestamps = points.map((p) => p.timestamp).sort((a, b) => a - b);
   const firstVisit = timestamps[0];
@@ -180,8 +184,8 @@ function buildCluster(id: string, points: LocationPoint[]): PlaceCluster {
 
   return {
     id,
-    center: { latitude: Math.round(avgLat * 10000) / 10000, longitude: Math.round(avgLng * 10000) / 10000 },
-    radiusMeters: Math.round(maxDist),
+    center: { latitude: Math.round(medianLat * 10000) / 10000, longitude: Math.round(medianLng * 10000) / 10000 },
+    radiusMeters: Math.round(radius),
     pointCount: points.length,
     dwellTimeHours: Math.round((dwellMs / (1000 * 60 * 60)) * 10) / 10,
     firstVisit,
@@ -344,6 +348,57 @@ export function downsample(points: LocationPoint[], maxPoints = MAX_CLUSTER_POIN
 }
 
 /**
+ * Split oversized clusters by gridding points into maxRadius-sized cells.
+ * Each cell with >= minPts points becomes its own cluster.
+ * O(n) — single pass, no recursion, guaranteed to produce sub-maxRadius groups.
+ */
+function splitOversized(
+  points: LocationPoint[],
+  maxRadius: number,
+  _eps: number,
+  minPts: number,
+  out: LocationPoint[][],
+): void {
+  if (points.length < minPts) return;
+
+  // Check if splitting is needed (p90 radius from median center)
+  const lats = points.map((p) => p.latitude).sort((a, b) => a - b);
+  const lngs = points.map((p) => p.longitude).sort((a, b) => a - b);
+  const medLat = lats[Math.floor(lats.length / 2)];
+  const medLng = lngs[Math.floor(lngs.length / 2)];
+  const dists = points
+    .map((p) => haversineDistance(medLat, medLng, p.latitude, p.longitude))
+    .sort((a, b) => a - b);
+  const p90 = dists[Math.min(Math.floor(dists.length * 0.9), dists.length - 1)];
+
+  if (p90 <= maxRadius) {
+    out.push(points);
+    return;
+  }
+
+  // Grid points into maxRadius-sized cells
+  const cellSize = maxRadius; // in meters
+  const latCell = cellSize / 111000;
+  const lngCell = cellSize / (111000 * Math.cos(medLat * DEG_TO_RAD));
+
+  const cells = new Map<string, LocationPoint[]>();
+  for (const p of points) {
+    const cx = Math.floor(p.latitude / latCell);
+    const cy = Math.floor(p.longitude / lngCell);
+    const key = `${cx},${cy}`;
+    if (!cells.has(key)) cells.set(key, []);
+    cells.get(key)!.push(p);
+  }
+
+  for (const [, cellPoints] of cells) {
+    if (cellPoints.length >= minPts) {
+      out.push(cellPoints);
+    }
+    // Points in cells with < minPts are dropped as noise
+  }
+}
+
+/**
  * Cluster location history into places.
  * When knownPlaces are provided, GPS points are matched against them first
  * (by distance within configured radius). Unmatched points fall through to
@@ -397,10 +452,17 @@ export function clusterLocations(
     groups.get(genericLabels[i])!.push(unmatchedPoints[i]);
   }
 
+  // Split any oversized groups (> maxRadiusMeters) by re-clustering with tighter eps
+  const MAX_CLUSTER_RADIUS = 500;
+  const finalGroups: LocationPoint[][] = [];
+  for (const [, cPoints] of groups) {
+    splitOversized(cPoints, MAX_CLUSTER_RADIUS, epsMeters, minPts, finalGroups);
+  }
+
   // Build generic clusters with "place_N" IDs
   const genericClusters: PlaceCluster[] = [];
   let cIdx = 1;
-  for (const [, cPoints] of groups) {
+  for (const cPoints of finalGroups) {
     genericClusters.push(buildCluster(`place_${cIdx++}`, cPoints));
   }
   genericClusters.sort((a, b) => b.dwellTimeHours - a.dwellTimeHours);
@@ -466,7 +528,7 @@ export function formatClusterSummary(clusters: PlaceCluster[]): string {
 export function formatTimelineSummary(timeline: PlaceVisit[]): string {
   if (timeline.length === 0) return "";
   return timeline
-    .filter((v) => v.durationHours > 0)
+    .filter((v) => v.durationHours >= 0.5)
     .map((v) => {
       const label = v.placeId === "transit" ? "Transit" : v.placeId.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
       return `${label} ${v.startTime}\u2013${v.endTime} (${v.durationHours}h)`;
