@@ -13,11 +13,14 @@ import {
   AppState,
   Modal,
   Linking,
+
 } from "react-native";
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SQLite from "expo-sqlite";
 import * as Updates from "expo-updates";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type {
   QuantityTypeIdentifier,
@@ -36,11 +39,21 @@ import {
   aggregateSleep,
   aggregateMeditation,
   pickLatestPerDay,
+  formatDateKey,
 } from "./lib/weekly";
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary } from "./lib/share";
 import { clusterLocations } from "./lib/clustering";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
+import {
+  initCacheTables,
+  getComputedCachedBatch,
+  getRawCachedBatch,
+  putComputedCached,
+  putRawCached,
+  buildDateKeys,
+  partitionDays,
+} from "./lib/healthCache";
 import MetricDetailSheet from "./components/MetricDetailSheet";
 import BoxPlot from "./components/BoxPlot";
 
@@ -120,6 +133,7 @@ async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
     INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('retention_days', '30');
   `);
+  await initCacheTables(db);
 }
 
 async function getSetting(
@@ -303,6 +317,46 @@ function AboutModal({
   const updateChannel = Updates.channel ?? "N/A";
   const runtimeVersion = Updates.runtimeVersion ?? "N/A";
   const updateId = Updates.updateId ?? "embedded";
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
+
+  async function handleDownloadDatabase() {
+    try {
+      setDbExportStatus("Exporting...");
+      const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
+      const info = await FileSystem.getInfoAsync(dbPath);
+      if (!info.exists) {
+        setDbExportStatus("Database not found");
+        return;
+      }
+      // Copy to a temp location so share sheet can access it
+      const exportPath = `${FileSystem.cacheDirectory}${DB_NAME}`;
+      await FileSystem.copyAsync({ from: dbPath, to: exportPath });
+      setDbExportStatus(null);
+      await Sharing.shareAsync(exportPath, {
+        mimeType: "application/x-sqlite3",
+        dialogTitle: "Export Database",
+        UTI: "public.database",
+      });
+    } catch (e: any) {
+      setDbExportStatus(e.message ?? "Export failed");
+    }
+  }
+
+  async function handleCheckForUpdate() {
+    try {
+      setUpdateStatus("Checking...");
+      const result = await Updates.fetchUpdateAsync();
+      if (result.isNew) {
+        setUpdateStatus("Reloading...");
+        await Updates.reloadAsync();
+      } else {
+        setUpdateStatus("Already up to date");
+      }
+    } catch (e: any) {
+      setUpdateStatus(e.message ?? "Update failed");
+    }
+  }
 
   return (
     <Modal
@@ -373,6 +427,24 @@ function AboutModal({
               <Text style={styles.aboutRowValue}>{updateId}</Text>
             </View>
 
+            <TouchableOpacity
+              style={[styles.addPlaceButton, { marginTop: 8 }]}
+              onPress={handleCheckForUpdate}
+            >
+              <Text style={styles.addPlaceButtonText}>
+                {updateStatus ?? "Check for Updates"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.addPlaceButton, { marginTop: 8 }]}
+              onPress={handleDownloadDatabase}
+            >
+              <Text style={styles.addPlaceButtonText}>
+                {dbExportStatus ?? "Export Database"}
+              </Text>
+            </TouchableOpacity>
+
             {buildInfo.repoUrl ? (
               <TouchableOpacity
                 style={styles.aboutRow}
@@ -418,6 +490,10 @@ export default function App() {
   const [newPlaceLng, setNewPlaceLng] = useState("");
   const [newPlaceRadius, setNewPlaceRadius] = useState("100");
   const [importJson, setImportJson] = useState("");
+  const [debugSleepData, setDebugSleepData] = useState<string | null>(null);
+  const [trackingExpanded, setTrackingExpanded] = useState(false);
+  const [placesExpanded, setPlacesExpanded] = useState(false);
+  const [debugExpanded, setDebugExpanded] = useState(false);
 
   // Initialize database on mount
   useEffect(() => {
@@ -619,10 +695,60 @@ export default function App() {
     }
   }
 
-  function handleUseCurrentLocation() {
-    if (snapshot?.location) {
-      setNewPlaceLat(snapshot.location.latitude.toFixed(6));
-      setNewPlaceLng(snapshot.location.longitude.toFixed(6));
+  const [gpsStatus, setGpsStatus] = useState<string | null>(null);
+
+  async function handleUseCurrentLocation() {
+    try {
+      setGpsStatus("Getting fresh GPS fix...");
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setGpsStatus("Location permission denied");
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+      });
+      const age = Date.now() - loc.timestamp;
+      if (age > 30000) {
+        setGpsStatus(`GPS reading is ${Math.round(age / 1000)}s old — try again outdoors`);
+        return;
+      }
+      const accuracy = Math.round(loc.coords.accuracy ?? 0);
+      setNewPlaceLat(loc.coords.latitude.toFixed(6));
+      setNewPlaceLng(loc.coords.longitude.toFixed(6));
+      setGpsStatus(`Got fix: ±${accuracy}m accuracy`);
+    } catch (e: any) {
+      setGpsStatus(`GPS error: ${e.message}`);
+    }
+  }
+
+  async function handleFetchDebugSleep() {
+    try {
+      setDebugSleepData("Loading...");
+      const now = new Date();
+      const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+      const CTI = { sleep: "HKCategoryTypeIdentifierSleepAnalysis" as any };
+      const samples = await HealthKit.queryCategorySamples(CTI.sleep, {
+        limit: 0,
+        filter: { date: { startDate: twoDaysAgo, endDate: now } },
+      });
+      const raw = (samples as any[]).map((s: any) => {
+        const src = s.sourceRevision?.source;
+        const srcName = src?.toJSON?.()?.name ?? src?.name ?? "Unknown";
+        const srcBundle = src?.toJSON?.()?.bundleIdentifier ?? src?.bundleIdentifier ?? "?";
+        return {
+          start: new Date(s.startDate).toISOString(),
+          end: new Date(s.endDate).toISOString(),
+          value: s.value,
+          source: srcName,
+          bundle: srcBundle,
+          device: s.device?.name ?? null,
+          sourceRaw: String(src),
+        };
+      });
+      setDebugSleepData(JSON.stringify(raw, null, 2));
+    } catch (e: any) {
+      setDebugSleepData(`Error: ${e.message}`);
     }
   }
 
@@ -723,7 +849,7 @@ export default function App() {
           startDate: s.startDate,
           endDate: s.endDate,
           value: s.value,
-          source: s.sourceRevision?.source?.name ?? "Unknown",
+          source: s.sourceRevision?.source?.toJSON?.()?.name ?? s.sourceRevision?.source?.name ?? "Unknown",
         })),
       };
     } else {
@@ -753,10 +879,14 @@ export default function App() {
     };
   }
 
-  async function grabWeeklyData(metric: MetricKey): Promise<DailyValue[] | HeartRateDaily[]> {
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const dateFilter = { date: { startDate: sevenDaysAgo, endDate: now } };
+  /** Fetch a single day's data from HealthKit (no cache). */
+  async function fetchDayFromHealthKit(
+    metric: MetricKey,
+    dateKey: string,
+  ): Promise<{ computed: DailyValue | HeartRateDaily; raw: any[] }> {
+    const dayStart = new Date(dateKey + "T00:00:00");
+    const dayEnd = new Date(dateKey + "T23:59:59.999");
+    const dayFilter = { date: { startDate: dayStart, endDate: dayEnd } };
 
     switch (metric) {
       case "steps":
@@ -768,91 +898,181 @@ export default function App() {
           : metric === "activeEnergy" ? QTI.activeEnergy
           : metric === "exerciseMinutes" ? QTI.exerciseTime
           : QTI.distance;
-        const dayPromises = Array.from({ length: 7 }, (_, idx) => {
-          const i = 6 - idx;
-          const dayStart = new Date(now);
-          dayStart.setDate(dayStart.getDate() - i);
-          dayStart.setHours(0, 0, 0, 0);
-          const dayEnd = new Date(dayStart);
-          dayEnd.setHours(23, 59, 59, 999);
-          const dateKey = `${dayStart.getFullYear()}-${String(dayStart.getMonth() + 1).padStart(2, "0")}-${String(dayStart.getDate()).padStart(2, "0")}`;
-          return HealthKit.queryStatisticsForQuantity(
-            identifier,
-            ["cumulativeSum"],
-            { filter: { date: { startDate: dayStart, endDate: dayEnd } } },
-          )
-            .then((result) => ({
-              date: dateKey,
-              value: result?.sumQuantity?.quantity != null
-                ? Math.round(result.sumQuantity.quantity * 100) / 100
-                : null,
-            }))
-            .catch(() => ({ date: dateKey, value: null }));
-        });
-        return Promise.all(dayPromises);
+        const result = await HealthKit.queryStatisticsForQuantity(
+          identifier,
+          ["cumulativeSum"],
+          { filter: dayFilter },
+        ).catch(() => null);
+        const value = result?.sumQuantity?.quantity != null
+          ? Math.round(result.sumQuantity.quantity * 100) / 100
+          : null;
+        return {
+          computed: { date: dateKey, value },
+          raw: [{ date: dateKey, value, source: "statistics" }],
+        };
       }
-      case "heartRate": {
-        const samples = await HealthKit.queryQuantitySamples(QTI.heartRate, {
+      case "heartRate":
+      case "hrv":
+      case "restingHeartRate": {
+        const identifier =
+          metric === "heartRate" ? QTI.heartRate
+          : metric === "hrv" ? QTI.hrv
+          : QTI.restingHeartRate;
+        const samples = await HealthKit.queryQuantitySamples(identifier, {
           limit: 0,
-          filter: dateFilter,
+          filter: dayFilter,
         });
         const mapped = samples.map((s: any) => ({
-          startDate: new Date(s.startDate),
+          startDate: new Date(s.startDate).toISOString(),
           quantity: s.quantity,
         }));
-        return aggregateHeartRate(mapped, now);
+        // Aggregate just this one day
+        const buckets = aggregateHeartRate(
+          mapped.map((m) => ({ startDate: m.startDate, quantity: m.quantity })),
+          dayEnd, 1,
+        );
+        return { computed: buckets[0], raw: mapped };
       }
       case "sleep": {
-        // Query 8 days back to capture overnight sessions starting before the 7-day window
-        const eightDaysAgo = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000);
+        // Sleep needs wider window for overnight sessions
+        const prevDay = new Date(dayStart.getTime() - 12 * 60 * 60 * 1000);
         const samples = await HealthKit.queryCategorySamples(CTI.sleep, {
           limit: 0,
-          filter: { date: { startDate: eightDaysAgo, endDate: now } },
+          filter: { date: { startDate: prevDay, endDate: dayEnd } },
         });
-        return aggregateSleep([...samples], now);
+        const mapped = [...samples].map((s: any) => ({
+          startDate: new Date(s.startDate).toISOString(),
+          endDate: new Date(s.endDate).toISOString(),
+          value: s.value,
+        }));
+        const buckets = aggregateSleep(mapped as any, dayEnd, 1);
+        return { computed: buckets[0], raw: mapped };
       }
       case "weight": {
         const samples = await HealthKit.queryQuantitySamples(QTI.bodyMass, {
           limit: 0,
-          filter: dateFilter,
+          filter: dayFilter,
           unit: "kg",
         });
         const mapped = samples.map((s: any) => ({
-          startDate: new Date(s.startDate),
+          startDate: new Date(s.startDate).toISOString(),
           quantity: s.quantity,
         }));
-        return pickLatestPerDay(mapped, now);
+        const buckets = pickLatestPerDay(
+          mapped.map((m) => ({ startDate: m.startDate, quantity: m.quantity })),
+          dayEnd, 1,
+        );
+        return { computed: buckets[0], raw: mapped };
       }
       case "meditation": {
         const sessions = await HealthKit.queryCategorySamples(CTI.mindfulSession, {
           limit: 0,
-          filter: dateFilter,
+          filter: dayFilter,
         });
-        return aggregateMeditation([...sessions], now);
-      }
-      case "hrv": {
-        const samples = await HealthKit.queryQuantitySamples(QTI.hrv, {
-          limit: 0,
-          filter: dateFilter,
-        });
-        const mapped = samples.map((s: any) => ({
-          startDate: new Date(s.startDate),
-          quantity: s.quantity,
+        const mapped = [...sessions].map((s: any) => ({
+          startDate: new Date(s.startDate).toISOString(),
+          endDate: new Date(s.endDate).toISOString(),
         }));
-        return pickLatestPerDay(mapped, now);
-      }
-      case "restingHeartRate": {
-        const samples = await HealthKit.queryQuantitySamples(QTI.restingHeartRate, {
-          limit: 0,
-          filter: dateFilter,
-        });
-        const mapped = samples.map((s: any) => ({
-          startDate: new Date(s.startDate),
-          quantity: s.quantity,
-        }));
-        return pickLatestPerDay(mapped, now);
+        const buckets = aggregateMeditation(mapped as any, dayEnd, 1);
+        return { computed: buckets[0], raw: mapped };
       }
     }
+  }
+
+  // Metrics that are infrequent or span overnight — query full 7-day range, not per-day
+  const RANGE_QUERY_METRICS: MetricKey[] = ["weight", "sleep"];
+
+  async function grabWeeklyRangeQuery(metric: MetricKey): Promise<DailyValue[] | HeartRateDaily[]> {
+    const now = new Date();
+    const todayKey = formatDateKey(now);
+    const sevenDaysAgo = new Date(now.getTime() - (metric === "sleep" ? 8 : 7) * 24 * 60 * 60 * 1000);
+    const dateFilter = { date: { startDate: sevenDaysAgo, endDate: now } };
+
+    let results: DailyValue[];
+    let rawSamples: any[];
+
+    if (metric === "weight") {
+      const samples = await HealthKit.queryQuantitySamples(QTI.bodyMass, {
+        limit: 0,
+        filter: dateFilter,
+        unit: "kg",
+      });
+      rawSamples = samples.map((s: any) => ({
+        startDate: new Date(s.startDate).toISOString(),
+        quantity: s.quantity,
+      }));
+      results = pickLatestPerDay(
+        rawSamples.map((m: any) => ({ startDate: m.startDate, quantity: m.quantity })),
+        now,
+      );
+    } else {
+      // sleep
+      const samples = await HealthKit.queryCategorySamples(CTI.sleep, {
+        limit: 0,
+        filter: dateFilter,
+      });
+      rawSamples = [...samples].map((s: any) => ({
+        startDate: new Date(s.startDate).toISOString(),
+        endDate: new Date(s.endDate).toISOString(),
+        value: s.value,
+      }));
+      results = aggregateSleep(rawSamples as any, now);
+    }
+
+    // Cache past days
+    if (db) {
+      for (const bucket of results) {
+        if (bucket.date !== todayKey) {
+          await putComputedCached(db, metric, bucket.date, bucket);
+          // Store raw samples that fall on this day
+          const dayRaw = rawSamples.filter((s: any) => {
+            const sDate = formatDateKey(new Date(s.startDate));
+            return sDate === bucket.date;
+          });
+          if (dayRaw.length > 0) {
+            await putRawCached(db, metric, bucket.date, dayRaw);
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  async function grabWeeklyData(metric: MetricKey): Promise<DailyValue[] | HeartRateDaily[]> {
+    // Range-query metrics: use full 7-day query (weight is infrequent, sleep spans overnight)
+    if (RANGE_QUERY_METRICS.includes(metric)) {
+      return grabWeeklyRangeQuery(metric);
+    }
+
+    const now = new Date();
+    const todayKey = formatDateKey(now);
+    const dateKeys = buildDateKeys(now, 7);
+
+    // Check computed cache
+    const cached = db
+      ? await getComputedCachedBatch(db, metric, dateKeys)
+      : new Map<string, any>();
+    const { cachedDays, fetchDays } = partitionDays(todayKey, dateKeys, cached);
+
+    // Fetch uncached days from HealthKit
+    const freshResults = await Promise.all(
+      fetchDays.map(async (dateKey) => {
+        const result = await fetchDayFromHealthKit(metric, dateKey);
+        // Cache past days (not today) — both raw and computed
+        if (db && dateKey !== todayKey) {
+          await putComputedCached(db, metric, dateKey, result.computed);
+          await putRawCached(db, metric, dateKey, result.raw);
+        }
+        return { dateKey, computed: result.computed };
+      }),
+    );
+
+    // Merge cached + fresh, ordered by dateKeys
+    const merged = new Map<string, any>(cachedDays);
+    for (const { dateKey, computed } of freshResults) {
+      merged.set(dateKey, computed);
+    }
+    return dateKeys.map((key) => merged.get(key) ?? { date: key, value: null });
   }
 
   function computeStatsForMetric(key: MetricKey, data: DailyValue[] | HeartRateDaily[]): BoxPlotStats | null {
@@ -956,8 +1176,8 @@ export default function App() {
         walkingDistance: allMetrics[4] as DailyValue[],
         weight: allMetrics[5] as DailyValue[],
         meditation: allMetrics[6] as DailyValue[],
-        hrv: allMetrics[7] as DailyValue[],
-        restingHeartRate: allMetrics[8] as DailyValue[],
+        hrv: allMetrics[7] as HeartRateDaily[],
+        restingHeartRate: allMetrics[8] as HeartRateDaily[],
         exerciseMinutes: allMetrics[9] as DailyValue[],
       };
       // Compute and cache stats for all metrics during share
@@ -1069,7 +1289,7 @@ export default function App() {
         {
           metricKey: "weight" as MetricKey,
           label: "Weight",
-          value: h?.weight != null ? `${h.weight} kg` : "\u2014",
+          value: h?.weight != null ? `${h.weight} kg (${Math.round(h.weight * 2.20462)} lbs)` : "\u2014",
           sublabel:
             h?.weightDaysLast7 != null
               ? `${h.weightDaysLast7}/7 days weighed`
@@ -1173,130 +1393,181 @@ export default function App() {
               <Text style={styles.modalCloseText}>Done</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
+          <ScrollView style={styles.modalContent} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 300 }}>
             <View style={styles.aboutCard}>
-              <Text style={styles.metricLabel}>Location Tracking</Text>
-              <View style={styles.settingRow}>
-                <Text style={styles.settingText}>Background Tracking</Text>
-                <Switch
-                  value={trackingEnabled}
-                  onValueChange={handleTrackingToggle}
-                  trackColor={{ false: "#555", true: "#4361ee" }}
-                  thumbColor="#fff"
-                />
-              </View>
-              <View style={styles.settingRow}>
-                <Text style={styles.settingText}>Retention (days)</Text>
-                <TextInput
-                  style={styles.retentionInput}
-                  value={retentionDays}
-                  onChangeText={handleRetentionChange}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                  selectTextOnFocus
-                />
-              </View>
-              <Text style={styles.locationCountText}>
-                {locationCount} location{locationCount !== 1 ? "s" : ""} tracked
-                {locationStorageBytes > 0
-                  ? ` (${locationStorageBytes > 1024 * 1024
-                      ? `${(locationStorageBytes / (1024 * 1024)).toFixed(1)} MB`
-                      : locationStorageBytes > 1024
-                        ? `${(locationStorageBytes / 1024).toFixed(1)} KB`
-                        : `${locationStorageBytes} B`})`
-                  : ""}
-              </Text>
+              <TouchableOpacity onPress={() => setTrackingExpanded(!trackingExpanded)} style={styles.settingRow}>
+                <Text style={styles.metricLabel}>Location Tracking</Text>
+                <Text style={{ color: "#888", fontSize: 16 }}>{trackingExpanded ? "\u25B2" : "\u25BC"}</Text>
+              </TouchableOpacity>
+              {trackingExpanded && (
+                <>
+                  <View style={styles.settingRow}>
+                    <Text style={styles.settingText}>Background Tracking</Text>
+                    <Switch
+                      value={trackingEnabled}
+                      onValueChange={handleTrackingToggle}
+                      trackColor={{ false: "#555", true: "#4361ee" }}
+                      thumbColor="#fff"
+                    />
+                  </View>
+                  <View style={styles.settingRow}>
+                    <Text style={styles.settingText}>Retention (days)</Text>
+                    <TextInput
+                      style={styles.retentionInput}
+                      value={retentionDays}
+                      onChangeText={handleRetentionChange}
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      selectTextOnFocus
+                    />
+                  </View>
+                  <Text style={styles.locationCountText}>
+                    {locationCount} location{locationCount !== 1 ? "s" : ""} tracked
+                    {locationStorageBytes > 0
+                      ? ` (${locationStorageBytes > 1024 * 1024
+                          ? `${(locationStorageBytes / (1024 * 1024)).toFixed(1)} MB`
+                          : locationStorageBytes > 1024
+                            ? `${(locationStorageBytes / 1024).toFixed(1)} KB`
+                            : `${locationStorageBytes} B`})`
+                      : ""}
+                  </Text>
+                </>
+              )}
             </View>
 
             <View style={styles.aboutCard}>
-              <Text style={styles.metricLabel}>Known Places</Text>
-              <Text style={styles.locationCountText}>
-                GPS points within radius will use these names instead of generic "Place N" labels
-              </Text>
-
-              {knownPlaces.map((place) => (
-                <View key={place.id} style={styles.knownPlaceRow}>
-                  <View style={styles.knownPlaceInfo}>
-                    <Text style={styles.knownPlaceName}>{place.name}</Text>
-                    <Text style={styles.knownPlaceDetail}>
-                      {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)} ({place.radiusMeters}m)
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleDeletePlace(place.id)}
-                    style={styles.knownPlaceDelete}
-                  >
-                    <Text style={styles.knownPlaceDeleteText}>X</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-
-              <View style={styles.addPlaceForm}>
-                <TextInput
-                  style={styles.addPlaceInput}
-                  placeholder="Name"
-                  placeholderTextColor="#666"
-                  value={newPlaceName}
-                  onChangeText={setNewPlaceName}
-                />
-                <View style={styles.addPlaceCoordRow}>
-                  <TextInput
-                    style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
-                    placeholder="Latitude"
-                    placeholderTextColor="#666"
-                    value={newPlaceLat}
-                    onChangeText={setNewPlaceLat}
-                    keyboardType="decimal-pad"
-                  />
-                  <TextInput
-                    style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
-                    placeholder="Longitude"
-                    placeholderTextColor="#666"
-                    value={newPlaceLng}
-                    onChangeText={setNewPlaceLng}
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-                <View style={styles.addPlaceCoordRow}>
-                  <TextInput
-                    style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
-                    placeholder="Radius (m)"
-                    placeholderTextColor="#666"
-                    value={newPlaceRadius}
-                    onChangeText={setNewPlaceRadius}
-                    keyboardType="number-pad"
-                  />
-                  <TouchableOpacity
-                    style={[styles.addPlaceButton, { backgroundColor: "#3d405b" }]}
-                    onPress={handleUseCurrentLocation}
-                    disabled={!snapshot?.location}
-                  >
-                    <Text style={styles.addPlaceButtonText}>Use Current</Text>
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  style={styles.addPlaceButton}
-                  onPress={handleAddPlace}
-                >
-                  <Text style={styles.addPlaceButtonText}>Add Place</Text>
-                </TouchableOpacity>
-              </View>
-
-              <Text style={[styles.knownPlaceName, { marginTop: 16 }]}>Import JSON</Text>
-              <TextInput
-                style={[styles.addPlaceInput, { height: 80, textAlignVertical: "top" }]}
-                placeholder='[{"name":"Home","lat":47.64,"lon":-122.30,"radiusMeters":100}]'
-                placeholderTextColor="#555"
-                value={importJson}
-                onChangeText={setImportJson}
-                multiline
-              />
-              <TouchableOpacity
-                style={styles.addPlaceButton}
-                onPress={() => handleImportPlacesJson(importJson)}
-              >
-                <Text style={styles.addPlaceButtonText}>Import Places</Text>
+              <TouchableOpacity onPress={() => setPlacesExpanded(!placesExpanded)} style={styles.settingRow}>
+                <Text style={styles.metricLabel}>Known Places ({knownPlaces.length})</Text>
+                <Text style={{ color: "#888", fontSize: 16 }}>{placesExpanded ? "\u25B2" : "\u25BC"}</Text>
               </TouchableOpacity>
+              {placesExpanded && (
+                <>
+                  <Text style={styles.locationCountText}>
+                    GPS points within radius will use these names instead of generic "Place N" labels
+                  </Text>
+
+                  {knownPlaces.map((place) => (
+                    <View key={place.id} style={styles.knownPlaceRow}>
+                      <View style={styles.knownPlaceInfo}>
+                        <Text style={styles.knownPlaceName}>{place.name}</Text>
+                        <Text style={styles.knownPlaceDetail}>
+                          {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)} ({place.radiusMeters}m)
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => handleDeletePlace(place.id)}
+                        style={styles.knownPlaceDelete}
+                      >
+                        <Text style={styles.knownPlaceDeleteText}>X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  <View style={styles.addPlaceForm}>
+                    <TextInput
+                      style={styles.addPlaceInput}
+                      placeholder="Name"
+                      placeholderTextColor="#666"
+                      value={newPlaceName}
+                      onChangeText={setNewPlaceName}
+                    />
+                    <View style={styles.addPlaceCoordRow}>
+                      <TextInput
+                        style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
+                        placeholder="Latitude"
+                        placeholderTextColor="#666"
+                        value={newPlaceLat}
+                        onChangeText={setNewPlaceLat}
+                        keyboardType="decimal-pad"
+                      />
+                      <TextInput
+                        style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
+                        placeholder="Longitude"
+                        placeholderTextColor="#666"
+                        value={newPlaceLng}
+                        onChangeText={setNewPlaceLng}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                    <View style={styles.addPlaceCoordRow}>
+                      <TextInput
+                        style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
+                        placeholder="Radius (m)"
+                        placeholderTextColor="#666"
+                        value={newPlaceRadius}
+                        onChangeText={setNewPlaceRadius}
+                        keyboardType="number-pad"
+                      />
+                      <TouchableOpacity
+                        style={[styles.addPlaceButton, { backgroundColor: "#3d405b" }]}
+                        onPress={handleUseCurrentLocation}
+                      >
+                        <Text style={styles.addPlaceButtonText}>Use Current</Text>
+                      </TouchableOpacity>
+                    </View>
+                    {gpsStatus && (
+                      <Text style={styles.locationCountText}>{gpsStatus}</Text>
+                    )}
+                    <TouchableOpacity
+                      style={styles.addPlaceButton}
+                      onPress={handleAddPlace}
+                    >
+                      <Text style={styles.addPlaceButtonText}>Add Place</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={[styles.knownPlaceName, { marginTop: 16 }]}>Import JSON</Text>
+                  <TextInput
+                    style={[styles.addPlaceInput, { height: 80, textAlignVertical: "top" }]}
+                    placeholder='[{"name":"Home","lat":47.64,"lon":-122.30,"radiusMeters":100}]'
+                    placeholderTextColor="#555"
+                    value={importJson}
+                    onChangeText={setImportJson}
+                    multiline
+                  />
+                  <TouchableOpacity
+                    style={styles.addPlaceButton}
+                    onPress={() => handleImportPlacesJson(importJson)}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Import Places</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+
+            <View style={styles.aboutCard}>
+              <TouchableOpacity onPress={() => setDebugExpanded(!debugExpanded)} style={styles.settingRow}>
+                <Text style={styles.metricLabel}>Debug: Raw Sleep Data</Text>
+                <Text style={{ color: "#888", fontSize: 16 }}>{debugExpanded ? "\u25B2" : "\u25BC"}</Text>
+              </TouchableOpacity>
+              {debugExpanded && (
+                <>
+                  <Text style={styles.locationCountText}>
+                    Last 2 days of raw HealthKit sleep samples with source info
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, { marginTop: 8 }]}
+                    onPress={handleFetchDebugSleep}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Fetch Raw Sleep</Text>
+                  </TouchableOpacity>
+                  {debugSleepData && debugSleepData !== "Loading..." && (
+                    <TouchableOpacity
+                      style={[styles.addPlaceButton, { marginTop: 8, backgroundColor: "#3d405b" }]}
+                      onPress={() => Share.share({ message: debugSleepData })}
+                    >
+                      <Text style={styles.addPlaceButtonText}>Copy / Share</Text>
+                    </TouchableOpacity>
+                  )}
+                  {debugSleepData && (
+                    <ScrollView style={{ maxHeight: 400, marginTop: 8 }} nestedScrollEnabled>
+                      <Text style={{ color: "#ccc", fontSize: 11, fontFamily: "Courier" }}>
+                        {debugSleepData}
+                      </Text>
+                    </ScrollView>
+                  )}
+                </>
+              )}
             </View>
           </ScrollView>
         </View>
@@ -1398,6 +1669,16 @@ export default function App() {
             setWeeklyError(null);
           }}
           sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
+          fetchRawCache={db ? async () => {
+            const dateKeys = buildDateKeys(new Date(), 7);
+            const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);
+            if (raw.size === 0) return "No raw cache entries found";
+            const result: Record<string, any> = {};
+            for (const key of dateKeys) {
+              result[key] = raw.get(key) ?? null;
+            }
+            return JSON.stringify(result, null, 2);
+          } : undefined}
         />
       )}
     </View>

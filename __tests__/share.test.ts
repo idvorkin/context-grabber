@@ -1,4 +1,5 @@
 import { dayOfWeek, buildDailyExport, buildSummaryExport, buildWeeklyStats, type WeeklyDataMap } from "../lib/share";
+import type { HeartRateDaily } from "../lib/weekly";
 
 describe("dayOfWeek", () => {
   it("returns correct day names", () => {
@@ -22,7 +23,7 @@ describe("buildDailyExport", () => {
     ];
     return {
       steps: dates.map((d) => ({ date: d, value: null })),
-      heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null })),
+      heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
       sleep: dates.map((d) => ({ date: d, value: null })),
       activeEnergy: dates.map((d) => ({ date: d, value: null })),
       walkingDistance: dates.map((d) => ({ date: d, value: null })),
@@ -76,10 +77,10 @@ describe("buildDailyExport", () => {
       "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12",
       "2026-03-13", "2026-03-14", "2026-03-15",
     ];
-    const heartRate = dates.map((d, i) =>
+    const heartRate: HeartRateDaily[] = dates.map((d, i) =>
       i === 6
-        ? { date: d, avg: 72, min: 55, max: 120 }
-        : { date: d, avg: null, min: null, max: null }
+        ? { date: d, avg: 72, min: 55, max: 120, q1: 60, median: 70, q3: 85, count: 10, raw: [{value:55,time:"T"},{value:60,time:"T"},{value:70,time:"T"},{value:85,time:"T"},{value:120,time:"T"}] }
+        : { date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] }
     );
     const result = buildDailyExport(makeData({ heartRate }));
     expect(result[6].heartRate).toEqual({ avg: 72, min: 55, max: 120 });
@@ -126,7 +127,7 @@ describe("buildWeeklyStats", () => {
 
   const makeData = (overrides?: Partial<WeeklyDataMap>): WeeklyDataMap => ({
     steps: dates.map((d) => ({ date: d, value: null })),
-    heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null })),
+    heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
     sleep: dates.map((d) => ({ date: d, value: null })),
     activeEnergy: dates.map((d) => ({ date: d, value: null })),
     walkingDistance: dates.map((d) => ({ date: d, value: null })),
@@ -167,11 +168,16 @@ describe("buildWeeklyStats", () => {
   });
 
   it("computes stats for heart rate using avg values", () => {
-    const heartRate = dates.map((d, i) => ({
+    const heartRate: HeartRateDaily[] = dates.map((d, i) => ({
       date: d,
       avg: [65, 70, 72, 68, 75, 71, 69][i],
       min: 50,
       max: 120,
+      q1: 60,
+      median: [65, 70, 72, 68, 75, 71, 69][i],
+      q3: 85,
+      count: 10,
+      raw: [],
     }));
     const stats = buildWeeklyStats(makeData({ heartRate }));
     expect(stats.heartRate).not.toBeNull();
@@ -187,7 +193,7 @@ describe("buildSummaryExport", () => {
 
   const makeData = (): WeeklyDataMap => ({
     steps: dates.map((d) => ({ date: d, value: null })),
-    heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null })),
+    heartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
     sleep: dates.map((d) => ({ date: d, value: null })),
     activeEnergy: dates.map((d) => ({ date: d, value: null })),
     walkingDistance: dates.map((d) => ({ date: d, value: null })),

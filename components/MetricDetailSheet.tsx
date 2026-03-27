@@ -3,8 +3,10 @@ import {
   Animated,
   Dimensions,
   Easing,
+  Modal,
   PanResponder,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -34,6 +36,8 @@ type MetricDetailSheetProps = {
   error: string | null;
   onClose: () => void;
   sleepBySource?: Record<string, SourceSleepSummary> | null;
+  /** Callback to fetch raw cached samples for debug view */
+  fetchRawCache?: () => Promise<string>;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -98,6 +102,7 @@ export default function MetricDetailSheet({
   error,
   onClose,
   sleepBySource,
+  fetchRawCache,
 }: MetricDetailSheetProps): React.ReactElement {
   const screenHeight = Dimensions.get("window").height;
   const config = METRIC_CONFIG[metricKey];
@@ -106,6 +111,37 @@ export default function MetricDetailSheet({
     [sleepBySource],
   );
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [debugVisible, setDebugVisible] = useState(false);
+  const [rawCacheJson, setRawCacheJson] = useState<string | null>(null);
+
+  const isWhiskerChart = data && data.length > 0 && "avg" in data[0];
+
+  // Get raw values for the selected day
+  const selectedDayData = useMemo(() => {
+    if (!selectedDay || !isWhiskerChart) return null;
+    const dayItem = (data as HeartRateDaily[]).find((d) => d.date === selectedDay);
+    return dayItem ?? null;
+  }, [selectedDay, data, isWhiskerChart]);
+
+  // Build debug JSON for all metric types
+  const debugJson = useMemo(() => {
+    if (!data || data.length === 0) return "";
+    if (isWhiskerChart) {
+      return JSON.stringify(
+        (data as HeartRateDaily[]).map((d) => ({
+          date: d.date, count: d.count,
+          min: d.min, q1: d.q1, median: d.median, q3: d.q3, max: d.max, avg: d.avg,
+          raw: d.raw,
+        })),
+        null, 2,
+      );
+    }
+    return JSON.stringify(
+      (data as DailyValue[]).map((d) => ({ date: d.date, value: d.value })),
+      null, 2,
+    );
+  }, [data, isWhiskerChart]);
 
   // Update selected source when sleepBySource data arrives
   useEffect(() => {
@@ -258,7 +294,13 @@ export default function MetricDetailSheet({
     );
   } else {
     chartContent = (
-      <LineChart data={data} color={config.color} unit={config.unit} />
+      <LineChart
+        data={data}
+        color={config.color}
+        unit={config.unit}
+        onDayPress={(date) => setSelectedDay(selectedDay === date ? null : date)}
+        selectedDay={selectedDay}
+      />
     );
   }
 
@@ -356,8 +398,91 @@ export default function MetricDetailSheet({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Selected day raw values */}
+          {selectedDayData && selectedDayData.raw.length > 0 && (
+            <View style={styles.rawSection}>
+              <Text style={[styles.rawTitle, { color: config.color }]}>
+                {formatDayRow(selectedDayData.date)} — {selectedDayData.count} readings
+              </Text>
+              <Text style={styles.rawValues}>
+                {selectedDayData.raw.map((r) => `${r.value} (${new Date(r.time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})`).join(", ")}
+              </Text>
+              <View style={styles.rawStats}>
+                <Text style={styles.rawStatPill}>Min {selectedDayData.min}</Text>
+                <Text style={styles.rawStatPill}>Q1 {selectedDayData.q1}</Text>
+                <Text style={styles.rawStatPill}>Med {selectedDayData.median}</Text>
+                <Text style={styles.rawStatPill}>Q3 {selectedDayData.q3}</Text>
+                <Text style={styles.rawStatPill}>Max {selectedDayData.max}</Text>
+              </View>
+            </View>
+          )}
+
           {dailyRows}
+
+          {/* Debug button — available for all metrics */}
+          {data && data.length > 0 && (
+            <View style={styles.debugSection}>
+              <TouchableOpacity
+                onPress={() => {
+                  setDebugVisible(true);
+                  if (fetchRawCache) {
+                    setRawCacheJson("Loading...");
+                    fetchRawCache().then(setRawCacheJson).catch((e) => setRawCacheJson(`Error: ${e.message}`));
+                  }
+                }}
+                style={styles.debugToggle}
+              >
+                <Text style={styles.debugToggleText}>Debug</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
+
+        {/* Debug full-screen modal */}
+        <Modal
+          visible={debugVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setDebugVisible(false)}
+        >
+          <View style={styles.debugModal}>
+            <View style={styles.debugModalHeader}>
+              <Text style={[styles.debugModalTitle, { color: config.color }]}>
+                {config.label} — Raw Data
+              </Text>
+              <TouchableOpacity onPress={() => setDebugVisible(false)}>
+                <Text style={styles.debugModalClose}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.debugModalActions}>
+              <TouchableOpacity
+                style={styles.debugShareButton}
+                onPress={() => {
+                  const full = rawCacheJson
+                    ? `=== COMPUTED ===\n${debugJson}\n\n=== RAW CACHE ===\n${rawCacheJson}`
+                    : debugJson;
+                  Share.share({ message: full });
+                }}
+              >
+                <Text style={styles.debugShareText}>Copy / Share</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.debugModalScroll}>
+              <Text style={[styles.debugModalTitle, { marginBottom: 8 }]}>Computed</Text>
+              <Text style={styles.debugJson} selectable>
+                {debugJson}
+              </Text>
+              {rawCacheJson && (
+                <>
+                  <Text style={[styles.debugModalTitle, { marginTop: 16, marginBottom: 8 }]}>Raw Cache</Text>
+                  <Text style={styles.debugJson} selectable>
+                    {rawCacheJson}
+                  </Text>
+                </>
+              )}
+            </ScrollView>
+          </View>
+        </Modal>
       </Animated.View>
     </View>
   );
@@ -514,5 +639,100 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     overflow: "hidden",
+  },
+  rawSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#222",
+    backgroundColor: "#1a1f2e",
+  },
+  rawTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  rawValues: {
+    fontSize: 12,
+    color: "#aaa",
+    fontFamily: "Courier",
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  rawStats: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  rawStatPill: {
+    fontSize: 11,
+    color: "#ccc",
+    backgroundColor: "#2a2f3e",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  debugSection: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
+    alignItems: "center",
+  },
+  debugToggle: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  debugToggleText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  debugModal: {
+    flex: 1,
+    backgroundColor: "#111828",
+  },
+  debugModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#333",
+  },
+  debugModalTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  debugModalClose: {
+    fontSize: 16,
+    color: "#4cc9f0",
+    fontWeight: "600",
+  },
+  debugModalActions: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  debugModalScroll: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  debugShareButton: {
+    backgroundColor: "#2a2f3e",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  debugShareText: {
+    fontSize: 13,
+    color: "#aaa",
+  },
+  debugJson: {
+    fontSize: 11,
+    color: "#aaa",
+    fontFamily: "Courier",
+    lineHeight: 16,
   },
 });

@@ -285,6 +285,37 @@ describe("clusterLocations with known places", () => {
     expect(result.clusters[0].id).toBe("place_1");
   });
 
+  it("known place points are excluded from generic clusters (no double-counting)", () => {
+    const hourMs = 60 * 60 * 1000;
+    const ts = Date.UTC(2026, 2, 15, 8, 0, 0);
+    const points: LocationPoint[] = [];
+
+    // 10 points near Home (known place)
+    for (let i = 0; i < 10; i++) {
+      points.push(pt(47.6062 + i * 0.00001, -122.3321, ts + i * hourMs));
+    }
+    // 10 points in an unknown area (should become a generic cluster)
+    for (let i = 0; i < 10; i++) {
+      points.push(pt(48.0000 + i * 0.00001, -121.0000, ts + (20 + i) * hourMs));
+    }
+
+    const result = clusterLocations(points, 500, 3, places);
+
+    // Total points across all clusters + noise should not exceed input points
+    const totalClusteredPoints = result.clusters.reduce((sum, c) => sum + c.pointCount, 0);
+    expect(totalClusteredPoints + result.noiseCount).toBeLessThanOrEqual(points.length);
+
+    // Home should have exactly 10 points
+    const homeCluster = result.clusters.find((c) => c.id === "Home");
+    expect(homeCluster).toBeDefined();
+    expect(homeCluster!.pointCount).toBe(10);
+
+    // Generic cluster should have exactly 10 points (not 20)
+    const genericClusters = result.clusters.filter((c) => c.id.startsWith("place_"));
+    const genericTotal = genericClusters.reduce((sum, c) => sum + c.pointCount, 0);
+    expect(genericTotal).toBe(10);
+  });
+
   it("returns empty result for empty input with known places", () => {
     const result = clusterLocations([], 50, 3, places);
     expect(result.clusters).toEqual([]);

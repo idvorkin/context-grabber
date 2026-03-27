@@ -36,7 +36,8 @@
           "locationAlwaysAndWhenInUsePermission": "Context Grabber uses your location to provide context for your AI life coach."
         }
       ],
-      "expo-task-manager"
+      "expo-task-manager",
+      "expo-sharing"
     ],
     "android": {
       "adaptiveIcon": {

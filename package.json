@@ -12,7 +12,9 @@
   "dependencies": {
     "@kingstinct/react-native-healthkit": "^13.3.1",
     "expo": "~55.0.6",
+    "expo-file-system": "~55.0.11",
     "expo-location": "^55.1.2",
+    "expo-sharing": "~55.0.14",
     "expo-sqlite": "^55.0.10",
     "expo-status-bar": "~55.0.4",
     "expo-task-manager": "~55.0.9",

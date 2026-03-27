@@ -48,12 +48,21 @@ export type DailyValue = {
   value: number | null;
 };
 
-/** Heart-rate day bucket with avg/min/max. */
+/** Single timestamped reading. */
+export type TimedReading = { value: number; time: string };
+
+/** Heart-rate day bucket with box-and-whisker stats. */
 export type HeartRateDaily = {
   date: string;
   avg: number | null;
   min: number | null;
   max: number | null;
+  q1: number | null;
+  median: number | null;
+  q3: number | null;
+  count: number;
+  /** All individual readings for the day (sorted by value ascending). */
+  raw: TimedReading[];
 };
 
 // ─── formatDateKey ────────────────────────────────────────────────────────────
@@ -139,7 +148,7 @@ export function computeAverage(values: DailyValue[]): number | null {
 type HRSample = { startDate: Date | string; quantity: number };
 
 /**
- * Compute daily avg/min/max heart rate over a `days`-day window ending at `endDate`.
+ * Compute daily box-and-whisker stats over a `days`-day window ending at `endDate`.
  */
 export function aggregateHeartRate(
   samples: HRSample[],
@@ -151,31 +160,49 @@ export function aggregateHeartRate(
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(endDate);
     d.setDate(d.getDate() - i);
-    results.push({ date: formatDateKey(d), avg: null, min: null, max: null });
+    results.push({ date: formatDateKey(d), avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] });
   }
 
   const keySet = new Set(results.map((r) => r.date));
 
   // Group samples by day.
-  const grouped = new Map<string, number[]>();
+  const grouped = new Map<string, TimedReading[]>();
   for (const sample of samples) {
-    const key = formatDateKey(new Date(sample.startDate));
+    const dt = new Date(sample.startDate);
+    const key = formatDateKey(dt);
     if (!keySet.has(key)) continue;
     if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(sample.quantity);
+    grouped.get(key)!.push({ value: sample.quantity, time: dt.toISOString() });
   }
 
-  // Fill in avg/min/max.
+  // Fill in stats.
   for (const bucket of results) {
-    const vals = grouped.get(bucket.date);
-    if (!vals || vals.length === 0) continue;
+    const readings = grouped.get(bucket.date);
+    if (!readings || readings.length === 0) continue;
+    const sorted = [...readings].sort((a, b) => a.value - b.value);
+    const vals = sorted.map((r) => r.value);
     const sum = vals.reduce((a, v) => a + v, 0);
+    bucket.count = vals.length;
     bucket.avg = Math.round((sum / vals.length) * 10) / 10;
-    bucket.min = Math.min(...vals);
-    bucket.max = Math.max(...vals);
+    bucket.min = vals[0];
+    bucket.max = vals[vals.length - 1];
+    bucket.median = quantile(vals, 0.5);
+    bucket.q1 = quantile(vals, 0.25);
+    bucket.q3 = quantile(vals, 0.75);
+    bucket.raw = sorted;
   }
 
   return results;
+}
+
+/** Linear interpolation percentile (R-7 method). */
+function quantile(sorted: number[], p: number): number {
+  if (sorted.length === 1) return sorted[0];
+  const idx = p * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return Math.round((sorted[lo] + (idx - lo) * (sorted[hi] - sorted[lo])) * 10) / 10;
 }
 
 // ─── aggregateSleep ───────────────────────────────────────────────────────────
