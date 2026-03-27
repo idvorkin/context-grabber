@@ -1,0 +1,9 @@
+appId: com.idvorkin.contextgrabber
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    id: "about-button"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: /tmp/maestro_about

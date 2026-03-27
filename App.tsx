@@ -1368,6 +1368,7 @@ export default function App() {
               style={styles.headerIconButton}
               onPress={() => setAboutVisible(true)}
               accessibilityLabel="About"
+              testID="about-button"
             >
               <Text style={[styles.headerIconText, { fontStyle: "italic" }]}>i</Text>
             </TouchableOpacity>
