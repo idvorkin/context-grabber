@@ -860,12 +860,10 @@ export default function App() {
     switch (metric) {
       case "steps":
       case "activeEnergy":
-      case "walkingDistance":
-      case "exerciseMinutes": {
+      case "walkingDistance": {
         const identifier =
           metric === "steps" ? QTI.stepCount
           : metric === "activeEnergy" ? QTI.activeEnergy
-          : metric === "exerciseMinutes" ? QTI.exerciseTime
           : QTI.distance;
         const result = await HealthKit.queryStatisticsForQuantity(
           identifier,
@@ -878,6 +876,24 @@ export default function App() {
         return {
           computed: { date: dateKey, value },
           raw: [{ date: dateKey, value, source: "statistics" }],
+        };
+      }
+      case "exerciseMinutes": {
+        const samples = await HealthKit.queryQuantitySamples(QTI.exerciseTime, {
+          limit: 0,
+          filter: dayFilter,
+        });
+        const mapped = samples.map((s: any) => ({
+          startDate: new Date(s.startDate).toISOString(),
+          endDate: s.endDate ? new Date(s.endDate).toISOString() : undefined,
+          quantity: s.quantity,
+          source: s.sourceRevision?.source?.name ?? "unknown",
+        }));
+        const totalMinutes = mapped.reduce((sum: number, s: any) => sum + (s.quantity ?? 0), 0);
+        const value = totalMinutes > 0 ? Math.round(totalMinutes) : null;
+        return {
+          computed: { date: dateKey, value },
+          raw: mapped,
         };
       }
       case "heartRate":
