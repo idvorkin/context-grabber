@@ -3,7 +3,12 @@ appId: com.idvorkin.contextgrabber
 - launchApp
 - waitForAnimationToEnd
 - tapOn:
-    id: "about-button"
+    label: "Refresh"
+- waitForAnimationToEnd:
+    timeout: 10000
+- scroll
+- tapOn:
+    id: "location-card"
 - waitForAnimationToEnd:
     timeout: 3000
 - tapOn:

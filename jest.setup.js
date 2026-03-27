@@ -51,3 +51,16 @@ jest.mock('expo-updates', () => ({
 jest.mock('expo-status-bar', () => ({
   StatusBar: 'StatusBar',
 }));
+
+// Mock expo-file-system/legacy
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///mock/',
+  cacheDirectory: 'file:///mock-cache/',
+  getInfoAsync: jest.fn().mockResolvedValue({ exists: false }),
+  copyAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Mock expo-sharing
+jest.mock('expo-sharing', () => ({
+  shareAsync: jest.fn().mockResolvedValue(undefined),
+}));

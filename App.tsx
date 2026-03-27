@@ -463,6 +463,7 @@ export default function App() {
   const [placesExpanded, setPlacesExpanded] = useState(false);
   const [locationExpanded, setLocationExpanded] = useState(false);
   const [debugExpanded, setDebugExpanded] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState<string | null>(null);
 
   // Initialize database on mount
   useEffect(() => {
@@ -664,7 +665,6 @@ export default function App() {
     }
   }
 
-  const [gpsStatus, setGpsStatus] = useState<string | null>(null);
 
   async function handleUseCurrentLocation() {
     try {
@@ -696,7 +696,6 @@ export default function App() {
       setDebugSleepData("Loading...");
       const now = new Date();
       const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-      const CTI = { sleep: "HKCategoryTypeIdentifierSleepAnalysis" as any };
       const samples = await HealthKit.queryCategorySamples(CTI.sleep, {
         limit: 0,
         filter: { date: { startDate: twoDaysAgo, endDate: now } },
