@@ -318,32 +318,6 @@ function AboutModal({
   const runtimeVersion = Updates.runtimeVersion ?? "N/A";
   const updateId = Updates.updateId ?? "embedded";
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
-  const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
-
-  async function handleDownloadDatabase() {
-    try {
-      setDbExportStatus("Exporting...");
-      const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
-      const info = await FileSystem.getInfoAsync(dbPath);
-      if (!info.exists) {
-        setDbExportStatus("DB not found at path");
-        return;
-      }
-      const sizeKB = info.size ? Math.round(info.size / 1024) : 0;
-      setDbExportStatus(`Sharing ${sizeKB}KB...`);
-      // Copy to a temp location so share sheet can access it
-      const exportPath = `${FileSystem.cacheDirectory}${DB_NAME}`;
-      await FileSystem.copyAsync({ from: dbPath, to: exportPath });
-      await Sharing.shareAsync(exportPath, {
-        mimeType: "application/x-sqlite3",
-        dialogTitle: "Export Database",
-        UTI: "public.database",
-      });
-      setDbExportStatus("Exported!");
-    } catch (e: any) {
-      setDbExportStatus(e.message ?? "Export failed");
-    }
-  }
 
   async function handleCheckForUpdate() {
     try {
@@ -438,16 +412,6 @@ function AboutModal({
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.addPlaceButton, { marginTop: 8 }]}
-              onPress={handleDownloadDatabase}
-              testID="export-db-button"
-            >
-              <Text style={styles.addPlaceButtonText} testID="export-db-status">
-                {dbExportStatus ?? "Export Database"}
-              </Text>
-            </TouchableOpacity>
-
             {buildInfo.repoUrl ? (
               <TouchableOpacity
                 style={styles.aboutRow}
@@ -476,6 +440,7 @@ export default function App() {
   const [retentionDays, setRetentionDays] = useState("30");
   const [locationCount, setLocationCount] = useState(0);
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
+  const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
   const [weeklyCache, setWeeklyCache] = useState<Partial<Record<MetricKey, DailyValue[] | HeartRateDaily[]>>>({});
@@ -496,6 +461,7 @@ export default function App() {
   const [debugSleepData, setDebugSleepData] = useState<string | null>(null);
   const [trackingExpanded, setTrackingExpanded] = useState(false);
   const [placesExpanded, setPlacesExpanded] = useState(false);
+  const [locationExpanded, setLocationExpanded] = useState(false);
   const [debugExpanded, setDebugExpanded] = useState(false);
 
   // Initialize database on mount
@@ -1233,6 +1199,30 @@ export default function App() {
     });
   }
 
+  async function handleDownloadDatabase() {
+    try {
+      setDbExportStatus("Exporting...");
+      const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
+      const info = await FileSystem.getInfoAsync(dbPath);
+      if (!info.exists) {
+        setDbExportStatus("DB not found at path");
+        return;
+      }
+      const sizeKB = info.size ? Math.round(info.size / 1024) : 0;
+      setDbExportStatus(`Sharing ${sizeKB}KB...`);
+      const exportPath = `${FileSystem.cacheDirectory}${DB_NAME}`;
+      await FileSystem.copyAsync({ from: dbPath, to: exportPath });
+      await Sharing.shareAsync(exportPath, {
+        mimeType: "application/x-sqlite3",
+        dialogTitle: "Export Database",
+        UTI: "public.database",
+      });
+      setDbExportStatus("Exported!");
+    } catch (e: any) {
+      setDbExportStatus(e.message ?? "Export failed");
+    }
+  }
+
   const summaryText = snapshot
     ? buildSummary(snapshot.health, locationCount)
     : "";
@@ -1440,11 +1430,124 @@ export default function App() {
             </View>
 
             <View style={styles.aboutCard}>
-              <TouchableOpacity onPress={() => setPlacesExpanded(!placesExpanded)} style={styles.settingRow}>
-                <Text style={styles.metricLabel}>Known Places ({knownPlaces.length})</Text>
-                <Text style={{ color: "#888", fontSize: 16 }}>{placesExpanded ? "\u25B2" : "\u25BC"}</Text>
+              <TouchableOpacity onPress={() => setDebugExpanded(!debugExpanded)} style={styles.settingRow}>
+                <Text style={styles.metricLabel}>Debug: Raw Sleep Data</Text>
+                <Text style={{ color: "#888", fontSize: 16 }}>{debugExpanded ? "\u25B2" : "\u25BC"}</Text>
               </TouchableOpacity>
-              {placesExpanded && (
+              {debugExpanded && (
+                <>
+                  <Text style={styles.locationCountText}>
+                    Last 2 days of raw HealthKit sleep samples with source info
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, { marginTop: 8 }]}
+                    onPress={handleFetchDebugSleep}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Fetch Raw Sleep</Text>
+                  </TouchableOpacity>
+                  {debugSleepData && debugSleepData !== "Loading..." && (
+                    <TouchableOpacity
+                      style={[styles.addPlaceButton, { marginTop: 8, backgroundColor: "#3d405b" }]}
+                      onPress={() => Share.share({ message: debugSleepData })}
+                    >
+                      <Text style={styles.addPlaceButtonText}>Copy / Share</Text>
+                    </TouchableOpacity>
+                  )}
+                  {debugSleepData && (
+                    <ScrollView style={{ maxHeight: 400, marginTop: 8 }} nestedScrollEnabled>
+                      <Text style={{ color: "#ccc", fontSize: 11, fontFamily: "Courier" }}>
+                        {debugSleepData}
+                      </Text>
+                    </ScrollView>
+                  )}
+                </>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+      >
+        {error && (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        {snapshot && (
+          <>
+            {summaryText.length > 0 && (
+              <View style={styles.summaryBanner}>
+                <Text style={styles.summaryText}>{summaryText}</Text>
+              </View>
+            )}
+
+            <View style={styles.metricGrid}>
+              {metrics.map((m, i) => (
+                <MetricCard
+                  key={m.label}
+                  metricKey={m.metricKey}
+                  label={m.label}
+                  value={m.value}
+                  sublabel={m.sublabel}
+                  fullWidth={metrics.length % 2 === 1 && i === metrics.length - 1}
+                  onPress={handleMetricPress}
+                  boxPlotStats={m.boxPlotStats}
+                  color={m.color}
+                />
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.locationCard}
+              onPress={() => setLocationExpanded(!locationExpanded)}
+              testID="location-card"
+            >
+              <View style={styles.settingRow}>
+                <Text style={styles.metricLabel}>Location</Text>
+                <Text style={{ color: "#888", fontSize: 16 }}>{locationExpanded ? "\u25B2" : "\u25BC"}</Text>
+              </View>
+              {snapshot.location ? (
+                <Text style={styles.metricValue}>
+                  {snapshot.location.latitude.toFixed(4)},{" "}
+                  {snapshot.location.longitude.toFixed(4)}
+                </Text>
+              ) : (
+                <Text style={[styles.metricValue, styles.metricValueNull]}>
+                  Unavailable
+                </Text>
+              )}
+              {snapshot.locationHistory.length > 0 && (
+                <Text style={styles.locationCountText}>
+                  {snapshot.locationHistory.length} point
+                  {snapshot.locationHistory.length !== 1 ? "s" : ""} in trail
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {locationExpanded && (
+              <View style={styles.locationCard}>
+                <TouchableOpacity
+                  style={styles.addPlaceButton}
+                  onPress={handleDownloadDatabase}
+                  testID="export-db-button"
+                >
+                  <Text style={styles.addPlaceButtonText} testID="export-db-status">
+                    {dbExportStatus ?? "Export Database"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setPlacesExpanded(!placesExpanded)}
+                  style={[styles.settingRow, { marginTop: 12 }]}
+                >
+                  <Text style={styles.metricLabel}>Known Places ({knownPlaces.length})</Text>
+                  <Text style={{ color: "#888", fontSize: 16 }}>{placesExpanded ? "\u25B2" : "\u25BC"}</Text>
+                </TouchableOpacity>
+                {placesExpanded && (
                 <>
                   <Text style={styles.locationCountText}>
                     GPS points within radius will use these names instead of generic "Place N" labels
@@ -1537,99 +1640,8 @@ export default function App() {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
-
-            <View style={styles.aboutCard}>
-              <TouchableOpacity onPress={() => setDebugExpanded(!debugExpanded)} style={styles.settingRow}>
-                <Text style={styles.metricLabel}>Debug: Raw Sleep Data</Text>
-                <Text style={{ color: "#888", fontSize: 16 }}>{debugExpanded ? "\u25B2" : "\u25BC"}</Text>
-              </TouchableOpacity>
-              {debugExpanded && (
-                <>
-                  <Text style={styles.locationCountText}>
-                    Last 2 days of raw HealthKit sleep samples with source info
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.addPlaceButton, { marginTop: 8 }]}
-                    onPress={handleFetchDebugSleep}
-                  >
-                    <Text style={styles.addPlaceButtonText}>Fetch Raw Sleep</Text>
-                  </TouchableOpacity>
-                  {debugSleepData && debugSleepData !== "Loading..." && (
-                    <TouchableOpacity
-                      style={[styles.addPlaceButton, { marginTop: 8, backgroundColor: "#3d405b" }]}
-                      onPress={() => Share.share({ message: debugSleepData })}
-                    >
-                      <Text style={styles.addPlaceButtonText}>Copy / Share</Text>
-                    </TouchableOpacity>
-                  )}
-                  {debugSleepData && (
-                    <ScrollView style={{ maxHeight: 400, marginTop: 8 }} nestedScrollEnabled>
-                      <Text style={{ color: "#ccc", fontSize: 11, fontFamily: "Courier" }}>
-                        {debugSleepData}
-                      </Text>
-                    </ScrollView>
-                  )}
-                </>
-              )}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentInner}
-      >
-        {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {snapshot && (
-          <>
-            {summaryText.length > 0 && (
-              <View style={styles.summaryBanner}>
-                <Text style={styles.summaryText}>{summaryText}</Text>
               </View>
             )}
-
-            <View style={styles.metricGrid}>
-              {metrics.map((m, i) => (
-                <MetricCard
-                  key={m.label}
-                  metricKey={m.metricKey}
-                  label={m.label}
-                  value={m.value}
-                  sublabel={m.sublabel}
-                  fullWidth={metrics.length % 2 === 1 && i === metrics.length - 1}
-                  onPress={handleMetricPress}
-                  boxPlotStats={m.boxPlotStats}
-                  color={m.color}
-                />
-              ))}
-            </View>
-
-            <View style={styles.locationCard}>
-              <Text style={styles.metricLabel}>Location</Text>
-              {snapshot.location ? (
-                <Text style={styles.metricValue}>
-                  {snapshot.location.latitude.toFixed(4)},{" "}
-                  {snapshot.location.longitude.toFixed(4)}
-                </Text>
-              ) : (
-                <Text style={[styles.metricValue, styles.metricValueNull]}>
-                  Unavailable
-                </Text>
-              )}
-              {snapshot.locationHistory.length > 0 && (
-                <Text style={styles.locationCountText}>
-                  {snapshot.locationHistory.length} point
-                  {snapshot.locationHistory.length !== 1 ? "s" : ""} in trail
-                </Text>
-              )}
-            </View>
 
             <Text style={styles.timestamp}>{snapshot.timestamp}</Text>
           </>

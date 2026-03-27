@@ -1,0 +1,13 @@
+appId: com.idvorkin.contextgrabber
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn:
+    label: "Refresh"
+- waitForAnimationToEnd:
+    timeout: 10000
+- tapOn:
+    id: "location-card"
+- waitForAnimationToEnd
+- scroll
+- takeScreenshot: /tmp/maestro_location_expanded
