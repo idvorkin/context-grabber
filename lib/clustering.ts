@@ -197,16 +197,36 @@ function buildCluster(id: string, points: LocationPoint[]): PlaceCluster {
 
 const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/** Format a UTC timestamp as local time: "Mon 10:00pm" */
+const MONTH_NAMES_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Format a UTC timestamp as local time: "Fri Mar 29 10:00pm" */
 export function formatLocalTime(ts: number): string {
   const d = new Date(ts);
-  const day = DAY_NAMES_SHORT[d.getDay()];
+  return `${_formatDate(d)} ${_formatTime(d)}`;
+}
+
+/** Format a time range: date on start, end is time-only unless it's a different day.
+ *  "Fri Mar 29 10:58am–11:11am" or "Fri Mar 29 11pm–Sat Mar 30 6am" */
+export function formatTimeRange(startTs: number, endTs: number): string {
+  const s = new Date(startTs);
+  const e = new Date(endTs);
+  const sameDay = s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth() && s.getDate() === e.getDate();
+  if (sameDay) {
+    return `${_formatDate(s)} ${_formatTime(s)}\u2013${_formatTime(e)}`;
+  }
+  return `${_formatDate(s)} ${_formatTime(s)}\u2013${_formatDate(e)} ${_formatTime(e)}`;
+}
+
+function _formatDate(d: Date): string {
+  return `${DAY_NAMES_SHORT[d.getDay()]} ${MONTH_NAMES_SHORT[d.getMonth()]} ${d.getDate()}`;
+}
+
+function _formatTime(d: Date): string {
   let h = d.getHours();
   const m = d.getMinutes();
   const period = h >= 12 ? "pm" : "am";
   h = h % 12 || 12;
-  const time = m === 0 ? `${h}${period}` : `${h}:${String(m).padStart(2, "0")}${period}`;
-  return `${day} ${time}`;
+  return m === 0 ? `${h}${period}` : `${h}:${String(m).padStart(2, "0")}${period}`;
 }
 
 /**

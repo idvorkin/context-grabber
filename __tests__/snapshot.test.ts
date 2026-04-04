@@ -84,6 +84,7 @@ describe("ContextSnapshot shape", () => {
       "walkingDistance",
       "weight",
       "weightDaysLast7",
+      "workouts",
     ]);
   });
 

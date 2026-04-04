@@ -29,8 +29,8 @@ describe("buildDailyExport", () => {
       walkingDistance: dates.map((d) => ({ date: d, value: null })),
       weight: dates.map((d) => ({ date: d, value: null })),
       meditation: dates.map((d) => ({ date: d, value: null })),
-      hrv: dates.map((d) => ({ date: d, value: null })),
-      restingHeartRate: dates.map((d) => ({ date: d, value: null })),
+      hrv: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
+      restingHeartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
       exerciseMinutes: dates.map((d) => ({ date: d, value: null })),
       ...overrides,
     };
@@ -53,7 +53,7 @@ describe("buildDailyExport", () => {
       expect(entry.sleepHours).toBeNull();
       expect(entry.activeEnergy).toBeNull();
       expect(entry.walkingDistanceKm).toBeNull();
-      expect(entry.weightKg).toBeNull();
+      expect(entry.weightLbs).toBeNull();
       expect(entry.meditationMinutes).toBeNull();
       expect(entry.hrvMs).toBeNull();
       expect(entry.restingHeartRate).toBeNull();
@@ -87,6 +87,28 @@ describe("buildDailyExport", () => {
     expect(result[0].heartRate).toBeNull();
   });
 
+  it("maps HRV and resting heart rate using avg from HeartRateDaily", () => {
+    const dates = [
+      "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12",
+      "2026-03-13", "2026-03-14", "2026-03-15",
+    ];
+    const hrv: HeartRateDaily[] = dates.map((d, i) =>
+      i === 6
+        ? { date: d, avg: 42, min: 30, max: 65, q1: 35, median: 42, q3: 50, count: 5, raw: [] }
+        : { date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] }
+    );
+    const restingHeartRate: HeartRateDaily[] = dates.map((d, i) =>
+      i === 6
+        ? { date: d, avg: 58, min: 55, max: 62, q1: 56, median: 58, q3: 60, count: 5, raw: [] }
+        : { date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] }
+    );
+    const result = buildDailyExport(makeData({ hrv, restingHeartRate }));
+    expect(result[6].hrvMs).toBe(42);
+    expect(result[6].restingHeartRate).toBe(58);
+    expect(result[0].hrvMs).toBeNull();
+    expect(result[0].restingHeartRate).toBeNull();
+  });
+
   it("maps all metric types into a single entry", () => {
     const dates = [
       "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12",
@@ -97,7 +119,7 @@ describe("buildDailyExport", () => {
       sleep: dates.map((d, i) => ({ date: d, value: i === 6 ? 7.5 : null })),
       activeEnergy: dates.map((d, i) => ({ date: d, value: i === 6 ? 350 : null })),
       walkingDistance: dates.map((d, i) => ({ date: d, value: i === 6 ? 5.2 : null })),
-      weight: dates.map((d, i) => ({ date: d, value: i === 6 ? 75.5 : null })),
+      weight: dates.map((d, i) => ({ date: d, value: i === 6 ? 166 : null })),
       meditation: dates.map((d, i) => ({ date: d, value: i === 6 ? 15 : null })),
     });
     const result = buildDailyExport(data);
@@ -106,7 +128,7 @@ describe("buildDailyExport", () => {
     expect(today.sleepHours).toBe(7.5);
     expect(today.activeEnergy).toBe(350);
     expect(today.walkingDistanceKm).toBe(5.2);
-    expect(today.weightKg).toBe(75.5);
+    expect(today.weightLbs).toBe(166);
     expect(today.meditationMinutes).toBe(15);
   });
 
@@ -133,8 +155,8 @@ describe("buildWeeklyStats", () => {
     walkingDistance: dates.map((d) => ({ date: d, value: null })),
     weight: dates.map((d) => ({ date: d, value: null })),
     meditation: dates.map((d) => ({ date: d, value: null })),
-    hrv: dates.map((d) => ({ date: d, value: null })),
-    restingHeartRate: dates.map((d) => ({ date: d, value: null })),
+    hrv: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
+    restingHeartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
     exerciseMinutes: dates.map((d) => ({ date: d, value: null })),
     ...overrides,
   });
@@ -146,7 +168,7 @@ describe("buildWeeklyStats", () => {
     expect(stats.sleepHours).toBeNull();
     expect(stats.activeEnergy).toBeNull();
     expect(stats.walkingDistanceKm).toBeNull();
-    expect(stats.weightKg).toBeNull();
+    expect(stats.weightLbs).toBeNull();
     expect(stats.meditationMinutes).toBeNull();
     expect(stats.hrvMs).toBeNull();
     expect(stats.restingHeartRate).toBeNull();
@@ -183,6 +205,24 @@ describe("buildWeeklyStats", () => {
     expect(stats.heartRate).not.toBeNull();
     expect(stats.heartRate!.p50).toBe(70);
   });
+
+  it("computes stats for HRV and resting heart rate using avg values", () => {
+    const hrv: HeartRateDaily[] = dates.map((d, i) => ({
+      date: d,
+      avg: [35, 40, 42, 38, 45, 41, 39][i],
+      min: 20, max: 60, q1: 30, median: [35, 40, 42, 38, 45, 41, 39][i], q3: 50, count: 5, raw: [],
+    }));
+    const restingHeartRate: HeartRateDaily[] = dates.map((d, i) => ({
+      date: d,
+      avg: [55, 58, 60, 57, 62, 59, 56][i],
+      min: 50, max: 70, q1: 53, median: [55, 58, 60, 57, 62, 59, 56][i], q3: 65, count: 5, raw: [],
+    }));
+    const stats = buildWeeklyStats(makeData({ hrv, restingHeartRate }));
+    expect(stats.hrvMs).not.toBeNull();
+    expect(stats.hrvMs!.p50).toBe(40);
+    expect(stats.restingHeartRate).not.toBeNull();
+    expect(stats.restingHeartRate!.p50).toBe(58);
+  });
 });
 
 describe("buildSummaryExport", () => {
@@ -199,8 +239,8 @@ describe("buildSummaryExport", () => {
     walkingDistance: dates.map((d) => ({ date: d, value: null })),
     weight: dates.map((d) => ({ date: d, value: null })),
     meditation: dates.map((d) => ({ date: d, value: null })),
-    hrv: dates.map((d) => ({ date: d, value: null })),
-    restingHeartRate: dates.map((d) => ({ date: d, value: null })),
+    hrv: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
+    restingHeartRate: dates.map((d) => ({ date: d, avg: null, min: null, max: null, q1: null, median: null, q3: null, count: 0, raw: [] })),
     exerciseMinutes: dates.map((d) => ({ date: d, value: null })),
   });
 

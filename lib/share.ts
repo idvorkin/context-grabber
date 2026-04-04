@@ -5,6 +5,7 @@
 
 import type { DailyValue, HeartRateDaily } from "./weekly";
 import type { PlaceCluster, PlaceVisit } from "./clustering";
+import type { WorkoutEntry } from "./health";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./stats";
 
 export type DailyExportEntry = {
@@ -15,7 +16,7 @@ export type DailyExportEntry = {
   sleepHours: number | null;
   activeEnergy: number | null;
   walkingDistanceKm: number | null;
-  weightKg: number | null;
+  weightLbs: number | null;
   meditationMinutes: number | null;
   hrvMs: number | null;
   restingHeartRate: number | null;
@@ -45,7 +46,7 @@ export type WeeklyStatsExport = {
   sleepHours: MetricStatsExport | null;
   activeEnergy: MetricStatsExport | null;
   walkingDistanceKm: MetricStatsExport | null;
-  weightKg: MetricStatsExport | null;
+  weightLbs: MetricStatsExport | null;
   meditationMinutes: MetricStatsExport | null;
   hrvMs: MetricStatsExport | null;
   restingHeartRate: MetricStatsExport | null;
@@ -55,6 +56,7 @@ export type WeeklyStatsExport = {
 export type SummaryExport = {
   days: DailyExportEntry[];
   weeklyStats: WeeklyStatsExport;
+  todayWorkouts: WorkoutEntry[];
   locationSummary: LocationSummary | null;
 };
 
@@ -86,8 +88,8 @@ export type WeeklyDataMap = {
   walkingDistance: DailyValue[];
   weight: DailyValue[];
   meditation: DailyValue[];
-  hrv: DailyValue[];
-  restingHeartRate: DailyValue[];
+  hrv: HeartRateDaily[];
+  restingHeartRate: HeartRateDaily[];
   exerciseMinutes: DailyValue[];
 };
 
@@ -121,10 +123,14 @@ export function buildWeeklyStats(data: WeeklyDataMap): WeeklyStatsExport {
     sleepHours: toStatsExport(computeBoxPlotStats(extractValues(data.sleep))),
     activeEnergy: toStatsExport(computeBoxPlotStats(extractValues(data.activeEnergy))),
     walkingDistanceKm: toStatsExport(computeBoxPlotStats(extractValues(data.walkingDistance))),
-    weightKg: toStatsExport(computeBoxPlotStats(extractValues(data.weight))),
+    weightLbs: toStatsExport(computeBoxPlotStats(extractValues(data.weight))),
     meditationMinutes: toStatsExport(computeBoxPlotStats(extractValues(data.meditation))),
-    hrvMs: toStatsExport(computeBoxPlotStats(extractValues(data.hrv))),
-    restingHeartRate: toStatsExport(computeBoxPlotStats(extractValues(data.restingHeartRate))),
+    hrvMs: toStatsExport(computeBoxPlotStats(
+      (data.hrv as HeartRateDaily[]).filter((d) => d.avg !== null).map((d) => d.avg as number)
+    )),
+    restingHeartRate: toStatsExport(computeBoxPlotStats(
+      (data.restingHeartRate as HeartRateDaily[]).filter((d) => d.avg !== null).map((d) => d.avg as number)
+    )),
     exerciseMinutes: toStatsExport(computeBoxPlotStats(extractValues(data.exerciseMinutes))),
   };
 }
@@ -135,10 +141,12 @@ export function buildWeeklyStats(data: WeeklyDataMap): WeeklyStatsExport {
 export function buildSummaryExport(
   data: WeeklyDataMap,
   locationSummary: LocationSummary | null,
+  todayWorkouts: WorkoutEntry[] = [],
 ): SummaryExport {
   return {
     days: buildDailyExport(data),
     weeklyStats: buildWeeklyStats(data),
+    todayWorkouts,
     locationSummary,
   };
 }
@@ -158,10 +166,10 @@ export function buildDailyExport(data: WeeklyDataMap): DailyExportEntry[] {
       sleepHours: data.sleep[i]?.value ?? null,
       activeEnergy: data.activeEnergy[i]?.value ?? null,
       walkingDistanceKm: data.walkingDistance[i]?.value ?? null,
-      weightKg: data.weight[i]?.value ?? null,
+      weightLbs: data.weight[i]?.value ?? null,
       meditationMinutes: data.meditation[i]?.value ?? null,
-      hrvMs: data.hrv[i]?.value ?? null,
-      restingHeartRate: data.restingHeartRate[i]?.value ?? null,
+      hrvMs: data.hrv[i]?.avg ?? null,
+      restingHeartRate: data.restingHeartRate[i]?.avg ?? null,
       exerciseMinutes: data.exerciseMinutes[i]?.value ?? null,
     };
   });

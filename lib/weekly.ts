@@ -35,7 +35,7 @@ export const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
   sleep: { label: "Sleep", unit: "hrs", color: "#7b2cbf", chartType: "bar", sublabel: "last night" },
   activeEnergy: { label: "Active Energy", unit: "kcal", color: "#ff9e00", chartType: "bar", sublabel: "today" },
   walkingDistance: { label: "Walking Distance", unit: "km", color: "#06d6a0", chartType: "bar", sublabel: "today" },
-  weight: { label: "Weight", unit: "kg", color: "#4895ef", chartType: "line", sublabel: "latest" },
+  weight: { label: "Weight", unit: "lbs", color: "#4895ef", chartType: "line", sublabel: "latest" },
   meditation: { label: "Meditation", unit: "min", color: "#e0aaff", chartType: "bar", sublabel: "today" },
   hrv: { label: "HRV", unit: "ms", color: "#48bfe3", chartType: "line", sublabel: "latest" },
   restingHeartRate: { label: "Resting HR", unit: "bpm", color: "#f4845f", chartType: "line", sublabel: "latest" },

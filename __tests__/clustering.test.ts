@@ -392,17 +392,17 @@ describe("formatClusterSummary", () => {
 describe("formatLocalTime", () => {
   it("formats midnight", () => {
     const ts = new Date(2026, 2, 15, 0, 0, 0).getTime();
-    expect(formatLocalTime(ts)).toBe("Sun 12am");
+    expect(formatLocalTime(ts)).toBe("Sun Mar 15 12am");
   });
 
   it("formats noon", () => {
     const ts = new Date(2026, 2, 15, 12, 0, 0).getTime();
-    expect(formatLocalTime(ts)).toBe("Sun 12pm");
+    expect(formatLocalTime(ts)).toBe("Sun Mar 15 12pm");
   });
 
   it("formats time with minutes", () => {
     const ts = new Date(2026, 2, 15, 22, 30, 0).getTime();
-    expect(formatLocalTime(ts)).toBe("Sun 10:30pm");
+    expect(formatLocalTime(ts)).toBe("Sun Mar 15 10:30pm");
   });
 });
 

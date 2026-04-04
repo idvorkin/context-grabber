@@ -14,7 +14,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
-import type { SourceSleepSummary } from "../lib/health";
+import type { SourceSleepSummary, WorkoutEntry } from "../lib/health";
 import {
   METRIC_CONFIG,
   computeAverage,
@@ -36,6 +36,8 @@ type MetricDetailSheetProps = {
   error: string | null;
   onClose: () => void;
   sleepBySource?: Record<string, SourceSleepSummary> | null;
+  workouts?: WorkoutEntry[];
+  workoutsByDay?: Record<string, WorkoutEntry[]>;
   /** Callback to fetch raw cached samples for debug view */
   fetchRawCache?: () => Promise<string>;
 };
@@ -102,6 +104,8 @@ export default function MetricDetailSheet({
   error,
   onClose,
   sleepBySource,
+  workouts,
+  workoutsByDay,
   fetchRawCache,
 }: MetricDetailSheetProps): React.ReactElement {
   const screenHeight = Dimensions.get("window").height;
@@ -260,14 +264,30 @@ export default function MetricDetailSheet({
       const valueLabel = isHR
         ? formatHeartRateRow(item as HeartRateDaily)
         : formatDailyValue(item as DailyValue, config.unit);
+      const dayWorkouts = metricKey === "exerciseMinutes" ? workoutsByDay?.[item.date] : undefined;
 
       return (
-        <View
-          key={item.date}
-          style={[styles.dayRow, index > 0 && styles.dayRowDivider]}
-        >
-          <Text style={styles.dayRowLabel}>{dayLabel}</Text>
-          <Text style={styles.dayRowValue}>{valueLabel}</Text>
+        <View key={item.date}>
+          <View
+            style={[styles.dayRow, index > 0 && styles.dayRowDivider]}
+          >
+            <Text style={styles.dayRowLabel}>{dayLabel}</Text>
+            <Text style={styles.dayRowValue}>{valueLabel}</Text>
+          </View>
+          {dayWorkouts && dayWorkouts.length > 0 && (
+            <View style={styles.dayWorkouts}>
+              {dayWorkouts.map((w, wi) => (
+                <View key={wi} style={styles.dayWorkoutRow}>
+                  <Text style={styles.dayWorkoutName}>{w.activityType}</Text>
+                  <View style={styles.workoutDetails}>
+                    <Text style={styles.workoutPill}>{w.durationMinutes}m</Text>
+                    {w.energyBurned != null && <Text style={styles.workoutPill}>{w.energyBurned} kcal</Text>}
+                    {w.distanceKm != null && <Text style={styles.workoutPill}>{w.distanceKm} km</Text>}
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       );
     });
@@ -391,6 +411,23 @@ export default function MetricDetailSheet({
             </Text>
           )}
         </View>
+
+        {/* Workout breakdown for exercise metric */}
+        {metricKey === "exerciseMinutes" && workouts && workouts.length > 0 && (
+          <View style={styles.workoutSection}>
+            <Text style={[styles.workoutTitle, { color: config.color }]}>Today's Workouts</Text>
+            {workouts.map((w, i) => (
+              <View key={i} style={styles.workoutRow}>
+                <Text style={styles.workoutName}>{w.activityType}</Text>
+                <View style={styles.workoutDetails}>
+                  <Text style={styles.workoutPill}>{w.durationMinutes} min</Text>
+                  {w.energyBurned != null && <Text style={styles.workoutPill}>{w.energyBurned} kcal</Text>}
+                  {w.distanceKm != null && <Text style={styles.workoutPill}>{w.distanceKm} km</Text>}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Daily breakdown — separate from PanResponder */}
         <ScrollView
@@ -672,6 +709,56 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
     overflow: "hidden",
+  },
+  workoutSection: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  workoutTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  workoutRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#333",
+  },
+  workoutName: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  workoutDetails: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  workoutPill: {
+    color: "#aaa",
+    fontSize: 13,
+    backgroundColor: "#2a2f3e",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  dayWorkouts: {
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  dayWorkoutRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 3,
+  },
+  dayWorkoutName: {
+    color: "#aaa",
+    fontSize: 13,
   },
   debugSection: {
     paddingHorizontal: 20,

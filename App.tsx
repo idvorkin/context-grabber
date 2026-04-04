@@ -19,15 +19,18 @@ import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SQLite from "expo-sqlite";
 import * as Updates from "expo-updates";
-import * as FileSystem from "expo-file-system/legacy";
-import * as Sharing from "expo-sharing";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type {
   QuantityTypeIdentifier,
   CategoryTypeIdentifier,
 } from "@kingstinct/react-native-healthkit";
-import { buildHealthData, type HealthData, type HealthQueryResults, type SleepSample } from "./lib/health";
-import { pruneThreshold } from "./lib/location";
+import { buildHealthData, workoutActivityName, type HealthData, type HealthQueryResults, type SleepSample, type WorkoutEntry } from "./lib/health";
+import {
+  DB_NAME, openDB, initDB, getSetting, setSetting,
+  insertLocation, pruneLocations, getLocationCount, getLocationStorageBytes,
+  getKnownPlaces, addKnownPlace, deleteKnownPlace, getLocationHistory,
+  type LocationHistoryItem,
+} from "./lib/db";
 import { buildSummary, formatNumber } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
 import {
@@ -46,7 +49,6 @@ import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
 import {
-  initCacheTables,
   getComputedCachedBatch,
   getRawCachedBatch,
   putComputedCached,
@@ -56,19 +58,12 @@ import {
 } from "./lib/healthCache";
 import MetricDetailSheet from "./components/MetricDetailSheet";
 import BoxPlot from "./components/BoxPlot";
+import SettingsModal from "./components/SettingsModal";
+import LocationDetailSheet from "./components/LocationDetailSheet";
 
 // --- Constants ---
 
 const LOCATION_TASK_NAME = "background-location-task";
-
-const DB_NAME = "context-grabber.db";
-
-type LocationHistoryItem = {
-  latitude: number;
-  longitude: number;
-  accuracy: number | null;
-  timestamp: number;
-};
 
 type LocationData = {
   latitude: number;
@@ -101,146 +96,6 @@ const CTI = {
   mindfulSession:
     "HKCategoryTypeIdentifierMindfulSession" as CategoryTypeIdentifier,
 };
-
-// --- SQLite helpers (module-level for use by background task) ---
-
-async function openDB(): Promise<SQLite.SQLiteDatabase> {
-  return SQLite.openDatabaseAsync(DB_NAME);
-}
-
-async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS locations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      latitude REAL NOT NULL,
-      longitude REAL NOT NULL,
-      accuracy REAL,
-      timestamp INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_locations_timestamp ON locations(timestamp);
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS known_places (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      latitude REAL NOT NULL,
-      longitude REAL NOT NULL,
-      radius_meters REAL NOT NULL DEFAULT 100
-    );
-    INSERT OR IGNORE INTO settings (key, value) VALUES ('schema_version', '1');
-    INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
-    INSERT OR IGNORE INTO settings (key, value) VALUES ('retention_days', '30');
-  `);
-  await initCacheTables(db);
-}
-
-async function getSetting(
-  db: SQLite.SQLiteDatabase,
-  key: string,
-  defaultValue: string,
-): Promise<string> {
-  const row = await db.getFirstAsync<{ value: string }>(
-    "SELECT value FROM settings WHERE key = ?",
-    [key],
-  );
-  return row?.value ?? defaultValue;
-}
-
-async function setSetting(
-  db: SQLite.SQLiteDatabase,
-  key: string,
-  value: string,
-): Promise<void> {
-  await db.runAsync(
-    "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-    [key, value],
-  );
-}
-
-async function insertLocation(
-  db: SQLite.SQLiteDatabase,
-  latitude: number,
-  longitude: number,
-  accuracy: number | null,
-  timestamp: number,
-): Promise<void> {
-  await db.runAsync(
-    "INSERT INTO locations (latitude, longitude, accuracy, timestamp) VALUES (?, ?, ?, ?)",
-    [latitude, longitude, accuracy, timestamp],
-  );
-}
-
-async function pruneLocations(
-  db: SQLite.SQLiteDatabase,
-  retentionDays: number,
-): Promise<void> {
-  const threshold = pruneThreshold(retentionDays, Date.now());
-  await db.runAsync("DELETE FROM locations WHERE timestamp < ?", [threshold]);
-}
-
-async function getLocationCount(db: SQLite.SQLiteDatabase): Promise<number> {
-  const row = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM locations",
-  );
-  return row?.count ?? 0;
-}
-
-async function getLocationStorageBytes(db: SQLite.SQLiteDatabase): Promise<number> {
-  const row = await db.getFirstAsync<{ size: number }>(
-    "SELECT SUM(LENGTH(latitude) + LENGTH(longitude) + LENGTH(accuracy) + LENGTH(timestamp) + 20) as size FROM locations",
-  );
-  return row?.size ?? 0;
-}
-
-async function getKnownPlaces(
-  db: SQLite.SQLiteDatabase,
-): Promise<KnownPlace[]> {
-  const rows = await db.getAllAsync<{
-    id: number;
-    name: string;
-    latitude: number;
-    longitude: number;
-    radius_meters: number;
-  }>("SELECT id, name, latitude, longitude, radius_meters FROM known_places ORDER BY name ASC");
-  return rows.map((r) => ({
-    id: r.id,
-    name: r.name,
-    latitude: r.latitude,
-    longitude: r.longitude,
-    radiusMeters: r.radius_meters,
-  }));
-}
-
-async function addKnownPlace(
-  db: SQLite.SQLiteDatabase,
-  name: string,
-  latitude: number,
-  longitude: number,
-  radiusMeters: number,
-): Promise<void> {
-  await db.runAsync(
-    "INSERT INTO known_places (name, latitude, longitude, radius_meters) VALUES (?, ?, ?, ?)",
-    [name, latitude, longitude, radiusMeters],
-  );
-}
-
-async function deleteKnownPlace(
-  db: SQLite.SQLiteDatabase,
-  id: number,
-): Promise<void> {
-  await db.runAsync("DELETE FROM known_places WHERE id = ?", [id]);
-}
-
-async function getLocationHistory(
-  db: SQLite.SQLiteDatabase,
-): Promise<LocationHistoryItem[]> {
-  const rows = await db.getAllAsync<LocationHistoryItem>(
-    "SELECT latitude, longitude, accuracy, timestamp FROM locations ORDER BY timestamp ASC",
-  );
-  return rows;
-}
 
 // --- Background Location Task (MUST be at module scope) ---
 
@@ -440,31 +295,21 @@ export default function App() {
   const [retentionDays, setRetentionDays] = useState("30");
   const [locationCount, setLocationCount] = useState(0);
   const [db, setDb] = useState<SQLite.SQLiteDatabase | null>(null);
-  const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
   const [aboutVisible, setAboutVisible] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
   const [weeklyCache, setWeeklyCache] = useState<Partial<Record<MetricKey, DailyValue[] | HeartRateDaily[]>>>({});
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyError, setWeeklyError] = useState<string | null>(null);
   const [statsCache, setStatsCache] = useState<Partial<Record<MetricKey, BoxPlotStats | null>>>({});
+  const [workoutsByDay, setWorkoutsByDay] = useState<Record<string, WorkoutEntry[]>>({});
   const [locationStorageBytes, setLocationStorageBytes] = useState(0);
   const [dbReady, setDbReady] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
-  const [newPlaceName, setNewPlaceName] = useState("");
-  const [newPlaceLat, setNewPlaceLat] = useState("");
-  const [newPlaceLng, setNewPlaceLng] = useState("");
-  const [newPlaceRadius, setNewPlaceRadius] = useState("100");
-  const [importJson, setImportJson] = useState("");
-  const [debugSleepData, setDebugSleepData] = useState<string | null>(null);
-  const [trackingExpanded, setTrackingExpanded] = useState(false);
-  const [placesExpanded, setPlacesExpanded] = useState(false);
   const [locationExpanded, setLocationExpanded] = useState(false);
   const [locationSummaryText, setLocationSummaryText] = useState<string | null>(null);
-  const [debugExpanded, setDebugExpanded] = useState(false);
-  const [gpsStatus, setGpsStatus] = useState<string | null>(null);
 
   // Initialize database on mount
   useEffect(() => {
@@ -574,183 +419,6 @@ export default function App() {
     }
   }, []);
 
-  async function handleTrackingToggle(enabled: boolean) {
-    if (!db) {
-      setError("Database not available. Please restart the app.");
-      return;
-    }
-
-    try {
-      if (enabled) {
-        const started = await startTracking();
-        if (!started) return;
-      } else {
-        const stopped = await stopTracking();
-        if (!stopped) return;
-      }
-
-      setTrackingEnabled(enabled);
-      await setSetting(db, "tracking_enabled", enabled ? "true" : "false");
-    } catch (e: any) {
-      setError(e.message ?? "Failed to update tracking setting");
-    }
-  }
-
-  // Track pending retention value for debounced save
-  const retentionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function handleRetentionChange(text: string) {
-    setRetentionDays(text);
-
-    if (retentionTimerRef.current) {
-      clearTimeout(retentionTimerRef.current);
-    }
-
-    retentionTimerRef.current = setTimeout(async () => {
-      if (!db) {
-        setError("Database not available. Please restart the app.");
-        return;
-      }
-      const days = parseInt(text, 10);
-      if (!isNaN(days) && days >= 0) {
-        try {
-          await setSetting(db, "retention_days", String(days));
-          await pruneLocations(db, days);
-          const count = await getLocationCount(db);
-          setLocationCount(count);
-        } catch (e: any) {
-          setError(e.message ?? "Failed to update retention setting");
-        }
-      }
-    }, 1000);
-  }
-
-  async function handleAddPlace() {
-    if (!db) {
-      setError("Database not available. Please restart the app.");
-      return;
-    }
-    const name = newPlaceName.trim();
-    const lat = parseFloat(newPlaceLat);
-    const lng = parseFloat(newPlaceLng);
-    const radius = parseFloat(newPlaceRadius) || 100;
-    if (!name) {
-      setError("Place name is required");
-      return;
-    }
-    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      setError("Valid latitude (-90 to 90) and longitude (-180 to 180) required");
-      return;
-    }
-    try {
-      await addKnownPlace(db, name, lat, lng, radius);
-      const places = await getKnownPlaces(db);
-      setKnownPlaces(places);
-      setNewPlaceName("");
-      setNewPlaceLat("");
-      setNewPlaceLng("");
-      setNewPlaceRadius("100");
-    } catch (e: any) {
-      setError(e.message ?? "Failed to add place");
-    }
-  }
-
-  async function handleDeletePlace(id: number) {
-    if (!db) return;
-    try {
-      await deleteKnownPlace(db, id);
-      const places = await getKnownPlaces(db);
-      setKnownPlaces(places);
-    } catch (e: any) {
-      setError(e.message ?? "Failed to delete place");
-    }
-  }
-
-
-  async function handleUseCurrentLocation() {
-    try {
-      setGpsStatus("Getting fresh GPS fix...");
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setGpsStatus("Location permission denied");
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-      });
-      const age = Date.now() - loc.timestamp;
-      if (age > 30000) {
-        setGpsStatus(`GPS reading is ${Math.round(age / 1000)}s old — try again outdoors`);
-        return;
-      }
-      const accuracy = Math.round(loc.coords.accuracy ?? 0);
-      setNewPlaceLat(loc.coords.latitude.toFixed(6));
-      setNewPlaceLng(loc.coords.longitude.toFixed(6));
-      setGpsStatus(`Got fix: ±${accuracy}m accuracy`);
-    } catch (e: any) {
-      setGpsStatus(`GPS error: ${e.message}`);
-    }
-  }
-
-  async function handleFetchDebugSleep() {
-    try {
-      setDebugSleepData("Loading...");
-      const now = new Date();
-      const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-      const samples = await HealthKit.queryCategorySamples(CTI.sleep, {
-        limit: 0,
-        filter: { date: { startDate: twoDaysAgo, endDate: now } },
-      });
-      const raw = (samples as any[]).map((s: any) => {
-        const src = s.sourceRevision?.source;
-        const srcName = src?.toJSON?.()?.name ?? src?.name ?? "Unknown";
-        const srcBundle = src?.toJSON?.()?.bundleIdentifier ?? src?.bundleIdentifier ?? "?";
-        return {
-          start: new Date(s.startDate).toISOString(),
-          end: new Date(s.endDate).toISOString(),
-          value: s.value,
-          source: srcName,
-          bundle: srcBundle,
-          device: s.device?.name ?? null,
-          sourceRaw: String(src),
-        };
-      });
-      setDebugSleepData(JSON.stringify(raw, null, 2));
-    } catch (e: any) {
-      setDebugSleepData(`Error: ${e.message}`);
-    }
-  }
-
-  async function handleImportPlacesJson(json: string) {
-    if (!db) {
-      setError("Database not available. Please restart the app.");
-      return;
-    }
-    try {
-      const parsed = JSON.parse(json);
-      const items = Array.isArray(parsed) ? parsed : parsed.knownPlaces ?? parsed.places;
-      if (!Array.isArray(items)) {
-        setError("JSON must be an array or have a knownPlaces/places array");
-        return;
-      }
-      let added = 0;
-      for (const p of items) {
-        const name = String(p.name ?? "").trim();
-        const lat = Number(p.lat ?? p.latitude);
-        const lng = Number(p.lon ?? p.lng ?? p.longitude);
-        const radius = Number(p.radiusMeters ?? p.radius_meters ?? p.radius ?? 100);
-        if (!name || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
-        await addKnownPlace(db, name, lat, lng, radius);
-        added++;
-      }
-      const places = await getKnownPlaces(db);
-      setKnownPlaces(places);
-      setImportJson("");
-      if (added === 0) setError("No valid places found in JSON");
-    } catch (e: any) {
-      setError(e.message ?? "Invalid JSON");
-    }
-  }
 
   async function grabHealthData(): Promise<HealthData> {
     const now = new Date();
@@ -832,7 +500,34 @@ export default function App() {
       results[5], results[6], results[7], results[8], results[9], results[10],
     ] as HealthQueryResults;
 
-    return buildHealthData(healthResults);
+    const health = buildHealthData(healthResults);
+
+    // Query today's workouts for rich activity data
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const workoutSamples = await HealthKit.queryWorkoutSamples({
+        limit: 0,
+        filter: { date: { startDate: startOfDay, endDate: now } },
+      });
+      health.workouts = workoutSamples.map((w: any) => {
+        const json = w.toJSON ? w.toJSON() : w;
+        return {
+          activityType: workoutActivityName(json.workoutActivityType),
+          durationMinutes: Math.round((json.duration?.quantity ?? 0) / 60),
+          energyBurned: json.totalEnergyBurned?.quantity
+            ? Math.round(json.totalEnergyBurned.quantity)
+            : null,
+          distanceKm: json.totalDistance?.quantity
+            ? Math.round(json.totalDistance.quantity * 100) / 100
+            : null,
+        } as WorkoutEntry;
+      });
+    } catch {
+      // Workout query failed — keep empty array
+    }
+
+    return health;
   }
 
   async function grabLocation(): Promise<LocationData> {
@@ -967,6 +662,10 @@ export default function App() {
   // Metrics that are infrequent or span overnight — query full 7-day range, not per-day
   const RANGE_QUERY_METRICS: MetricKey[] = ["weight", "sleep"];
 
+  function kgToLbs(data: DailyValue[]): DailyValue[] {
+    return data.map(d => ({ ...d, value: d.value != null ? Math.round(d.value * 2.20462) : null }));
+  }
+
   async function grabWeeklyRangeQuery(metric: MetricKey): Promise<DailyValue[] | HeartRateDaily[]> {
     const now = new Date();
     const todayKey = formatDateKey(now);
@@ -1020,6 +719,7 @@ export default function App() {
         }
       }
     }
+    if (metric === "weight") return kgToLbs(results);
     return results;
   }
 
@@ -1057,7 +757,9 @@ export default function App() {
     for (const { dateKey, computed } of freshResults) {
       merged.set(dateKey, computed);
     }
-    return dateKeys.map((key) => merged.get(key) ?? { date: key, value: null });
+    const result = dateKeys.map((key) => merged.get(key) ?? { date: key, value: null });
+    if (metric === "weight") return kgToLbs(result as DailyValue[]);
+    return result;
   }
 
   function computeStatsForMetric(key: MetricKey, data: DailyValue[] | HeartRateDaily[]): BoxPlotStats | null {
@@ -1071,15 +773,49 @@ export default function App() {
     return computeBoxPlotStats(extractValues(data as DailyValue[]));
   }
 
+  async function fetchWorkoutsByDay(): Promise<Record<string, WorkoutEntry[]>> {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    try {
+      const samples = await HealthKit.queryWorkoutSamples({
+        limit: 0,
+        filter: { date: { startDate: sevenDaysAgo, endDate: now } },
+      });
+      const byDay: Record<string, WorkoutEntry[]> = {};
+      for (const w of samples) {
+        const json = (w as any).toJSON ? (w as any).toJSON() : w;
+        const dayKey = formatDateKey(new Date(json.startDate));
+        if (!byDay[dayKey]) byDay[dayKey] = [];
+        byDay[dayKey].push({
+          activityType: workoutActivityName(json.workoutActivityType),
+          durationMinutes: Math.round((json.duration?.quantity ?? 0) / 60),
+          energyBurned: json.totalEnergyBurned?.quantity ? Math.round(json.totalEnergyBurned.quantity) : null,
+          distanceKm: json.totalDistance?.quantity ? Math.round(json.totalDistance.quantity * 100) / 100 : null,
+        });
+      }
+      return byDay;
+    } catch {
+      return {};
+    }
+  }
+
   async function handleMetricPress(key: MetricKey) {
     setSelectedMetric(key);
     setWeeklyError(null);
-    if (weeklyCache[key]) return;
+    if (weeklyCache[key]) {
+      if (key === "exerciseMinutes" && Object.keys(workoutsByDay).length === 0) {
+        fetchWorkoutsByDay().then(setWorkoutsByDay);
+      }
+      return;
+    }
     setWeeklyLoading(true);
     try {
       const data = await grabWeeklyData(key);
       setWeeklyCache((prev) => ({ ...prev, [key]: data }));
       setStatsCache((prev) => ({ ...prev, [key]: computeStatsForMetric(key, data) }));
+      if (key === "exerciseMinutes") {
+        fetchWorkoutsByDay().then(setWorkoutsByDay);
+      }
     } catch (e: any) {
       setWeeklyError(e.message ?? "Failed to load weekly data");
     } finally {
@@ -1106,6 +842,7 @@ export default function App() {
           QTI.exerciseTime,
           CTI.sleep,
           CTI.mindfulSession,
+          "HKWorkoutTypeIdentifier" as any,
         ],
       });
 
@@ -1180,7 +917,7 @@ export default function App() {
         locationSummary = { clusters, timeline, summary };
       }
       setShareStatus("Sharing...");
-      const summaryExport = buildSummaryExport(weeklyData, locationSummary);
+      const summaryExport = buildSummaryExport(weeklyData, locationSummary, snapshot.health.workouts);
       const json = JSON.stringify(summaryExport, null, 2);
       await Share.share({
         message: json,
@@ -1213,30 +950,6 @@ export default function App() {
       message: json,
       title: "Context Grabber - Raw Data",
     });
-  }
-
-  async function handleDownloadDatabase() {
-    try {
-      setDbExportStatus("Exporting...");
-      const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
-      const info = await FileSystem.getInfoAsync(dbPath);
-      if (!info.exists) {
-        setDbExportStatus("DB not found at path");
-        return;
-      }
-      const sizeKB = info.size ? Math.round(info.size / 1024) : 0;
-      setDbExportStatus(`Sharing ${sizeKB}KB...`);
-      const exportPath = `${FileSystem.cacheDirectory}${DB_NAME}`;
-      await FileSystem.copyAsync({ from: dbPath, to: exportPath });
-      await Sharing.shareAsync(exportPath, {
-        mimeType: "application/x-sqlite3",
-        dialogTitle: "Export Database",
-        UTI: "public.database",
-      });
-      setDbExportStatus("Exported!");
-    } catch (e: any) {
-      setDbExportStatus(e.message ?? "Export failed");
-    }
   }
 
   const summaryText = snapshot
@@ -1298,7 +1011,7 @@ export default function App() {
         {
           metricKey: "weight" as MetricKey,
           label: "Weight",
-          value: h?.weight != null ? `${h.weight} kg (${Math.round(h.weight * 2.20462)} lbs)` : "\u2014",
+          value: h?.weight != null ? `${Math.round(h.weight * 2.20462)} lbs` : "\u2014",
           sublabel:
             h?.weightDaysLast7 != null
               ? `${h.weightDaysLast7}/7 days weighed`
@@ -1338,7 +1051,9 @@ export default function App() {
           metricKey: "exerciseMinutes" as MetricKey,
           label: "Exercise",
           value: h?.exerciseMinutes != null ? `${h.exerciseMinutes} min` : "\u2014",
-          sublabel: "today",
+          sublabel: h?.workouts && h.workouts.length > 0
+            ? h.workouts.map(w => `${w.activityType} ${w.durationMinutes}m`).join(", ")
+            : "today",
           onPress: handleMetricPress,
           boxPlotStats: statsCache.exerciseMinutes,
           color: METRIC_CONFIG.exerciseMinutes.color,
@@ -1390,98 +1105,21 @@ export default function App() {
         onClose={() => setAboutVisible(false)}
       />
 
-      <Modal
+      <SettingsModal
         visible={settingsVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSettingsVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Settings</Text>
-            <TouchableOpacity onPress={() => setSettingsVisible(false)} style={styles.modalCloseButton}>
-              <Text style={styles.modalCloseText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.modalContent} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 300 }}>
-            <View style={styles.aboutCard}>
-              <TouchableOpacity onPress={() => setTrackingExpanded(!trackingExpanded)} style={styles.settingRow}>
-                <Text style={styles.metricLabel}>Location Tracking</Text>
-                <Text style={{ color: "#888", fontSize: 16 }}>{trackingExpanded ? "\u25B2" : "\u25BC"}</Text>
-              </TouchableOpacity>
-              {trackingExpanded && (
-                <>
-                  <View style={styles.settingRow}>
-                    <Text style={styles.settingText}>Background Tracking</Text>
-                    <Switch
-                      value={trackingEnabled}
-                      onValueChange={handleTrackingToggle}
-                      trackColor={{ false: "#555", true: "#4361ee" }}
-                      thumbColor="#fff"
-                    />
-                  </View>
-                  <View style={styles.settingRow}>
-                    <Text style={styles.settingText}>Retention (days)</Text>
-                    <TextInput
-                      style={styles.retentionInput}
-                      value={retentionDays}
-                      onChangeText={handleRetentionChange}
-                      keyboardType="number-pad"
-                      maxLength={4}
-                      selectTextOnFocus
-                    />
-                  </View>
-                  <Text style={styles.locationCountText}>
-                    {locationCount} location{locationCount !== 1 ? "s" : ""} tracked
-                    {locationStorageBytes > 0
-                      ? ` (${locationStorageBytes > 1024 * 1024
-                          ? `${(locationStorageBytes / (1024 * 1024)).toFixed(1)} MB`
-                          : locationStorageBytes > 1024
-                            ? `${(locationStorageBytes / 1024).toFixed(1)} KB`
-                            : `${locationStorageBytes} B`})`
-                      : ""}
-                  </Text>
-                </>
-              )}
-            </View>
-
-            <View style={styles.aboutCard}>
-              <TouchableOpacity onPress={() => setDebugExpanded(!debugExpanded)} style={styles.settingRow}>
-                <Text style={styles.metricLabel}>Debug: Raw Sleep Data</Text>
-                <Text style={{ color: "#888", fontSize: 16 }}>{debugExpanded ? "\u25B2" : "\u25BC"}</Text>
-              </TouchableOpacity>
-              {debugExpanded && (
-                <>
-                  <Text style={styles.locationCountText}>
-                    Last 2 days of raw HealthKit sleep samples with source info
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.addPlaceButton, { marginTop: 8 }]}
-                    onPress={handleFetchDebugSleep}
-                  >
-                    <Text style={styles.addPlaceButtonText}>Fetch Raw Sleep</Text>
-                  </TouchableOpacity>
-                  {debugSleepData && debugSleepData !== "Loading..." && (
-                    <TouchableOpacity
-                      style={[styles.addPlaceButton, { marginTop: 8, backgroundColor: "#3d405b" }]}
-                      onPress={() => Share.share({ message: debugSleepData })}
-                    >
-                      <Text style={styles.addPlaceButtonText}>Copy / Share</Text>
-                    </TouchableOpacity>
-                  )}
-                  {debugSleepData && (
-                    <ScrollView style={{ maxHeight: 400, marginTop: 8 }} nestedScrollEnabled>
-                      <Text style={{ color: "#ccc", fontSize: 11, fontFamily: "Courier" }}>
-                        {debugSleepData}
-                      </Text>
-                    </ScrollView>
-                  )}
-                </>
-              )}
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
+        onClose={() => setSettingsVisible(false)}
+        db={db}
+        trackingEnabled={trackingEnabled}
+        setTrackingEnabled={setTrackingEnabled}
+        retentionDays={retentionDays}
+        setRetentionDays={setRetentionDays}
+        locationCount={locationCount}
+        setLocationCount={setLocationCount}
+        locationStorageBytes={locationStorageBytes}
+        setError={setError}
+        startTracking={startTracking}
+        stopTracking={stopTracking}
+      />
 
       <ScrollView
         style={styles.content}
@@ -1547,153 +1185,17 @@ export default function App() {
               )}
             </TouchableOpacity>
 
-            <Modal
+            <LocationDetailSheet
               visible={locationExpanded}
-              animationType="slide"
-              presentationStyle="pageSheet"
-              onRequestClose={() => setLocationExpanded(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Location</Text>
-                  <TouchableOpacity onPress={() => setLocationExpanded(false)} style={styles.modalCloseButton}>
-                    <Text style={styles.modalCloseText}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <ScrollView style={styles.modalContent} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 300 }}>
-                  <View style={styles.aboutCard}>
-                    <Text style={styles.metricLabel}>Current Location</Text>
-                    {snapshot.location ? (
-                      <Text style={styles.metricValue}>
-                        {snapshot.location.latitude.toFixed(4)}, {snapshot.location.longitude.toFixed(4)}
-                      </Text>
-                    ) : (
-                      <Text style={[styles.metricValue, styles.metricValueNull]}>Unavailable</Text>
-                    )}
-                    {snapshot.locationHistory.length > 0 && (
-                      <Text style={styles.locationCountText}>
-                        {snapshot.locationHistory.length} point{snapshot.locationHistory.length !== 1 ? "s" : ""} in trail
-                      </Text>
-                    )}
-                    {locationSummaryText && (
-                      <Text style={{ color: "#ccc", fontSize: 12, fontFamily: "Courier", marginTop: 12 }}>
-                        {locationSummaryText}
-                      </Text>
-                    )}
-
-                    <TouchableOpacity
-                      style={[styles.addPlaceButton, { marginTop: 12 }]}
-                      onPress={handleDownloadDatabase}
-                      testID="export-db-button"
-                    >
-                      <Text style={styles.addPlaceButtonText} testID="export-db-status">
-                        {dbExportStatus ?? "Export Database"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.aboutCard}>
-                    <TouchableOpacity onPress={() => setPlacesExpanded(!placesExpanded)} style={styles.settingRow}>
-                      <Text style={styles.metricLabel}>Known Places ({knownPlaces.length})</Text>
-                      <Text style={{ color: "#888", fontSize: 16 }}>{placesExpanded ? "\u25B2" : "\u25BC"}</Text>
-                    </TouchableOpacity>
-                    {placesExpanded && (
-                      <>
-                        <Text style={styles.locationCountText}>
-                          GPS points within radius will use these names instead of generic "Place N" labels
-                        </Text>
-
-                        {knownPlaces.map((place) => (
-                          <View key={place.id} style={styles.knownPlaceRow}>
-                            <View style={styles.knownPlaceInfo}>
-                              <Text style={styles.knownPlaceName}>{place.name}</Text>
-                              <Text style={styles.knownPlaceDetail}>
-                                {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)} ({place.radiusMeters}m)
-                              </Text>
-                            </View>
-                            <TouchableOpacity
-                              onPress={() => handleDeletePlace(place.id)}
-                              style={styles.knownPlaceDelete}
-                            >
-                              <Text style={styles.knownPlaceDeleteText}>X</Text>
-                            </TouchableOpacity>
-                          </View>
-                        ))}
-
-                        <View style={styles.addPlaceForm}>
-                          <TextInput
-                            style={styles.addPlaceInput}
-                            placeholder="Name"
-                            placeholderTextColor="#666"
-                            value={newPlaceName}
-                            onChangeText={setNewPlaceName}
-                          />
-                          <View style={styles.addPlaceCoordRow}>
-                            <TextInput
-                              style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
-                              placeholder="Latitude"
-                              placeholderTextColor="#666"
-                              value={newPlaceLat}
-                              onChangeText={setNewPlaceLat}
-                              keyboardType="decimal-pad"
-                            />
-                            <TextInput
-                              style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
-                              placeholder="Longitude"
-                              placeholderTextColor="#666"
-                              value={newPlaceLng}
-                              onChangeText={setNewPlaceLng}
-                              keyboardType="decimal-pad"
-                            />
-                          </View>
-                          <View style={styles.addPlaceCoordRow}>
-                            <TextInput
-                              style={[styles.addPlaceInput, styles.addPlaceCoordInput]}
-                              placeholder="Radius (m)"
-                              placeholderTextColor="#666"
-                              value={newPlaceRadius}
-                              onChangeText={setNewPlaceRadius}
-                              keyboardType="number-pad"
-                            />
-                            <TouchableOpacity
-                              style={[styles.addPlaceButton, { backgroundColor: "#3d405b" }]}
-                              onPress={handleUseCurrentLocation}
-                            >
-                              <Text style={styles.addPlaceButtonText}>Use Current</Text>
-                            </TouchableOpacity>
-                          </View>
-                          {gpsStatus && (
-                            <Text style={styles.locationCountText}>{gpsStatus}</Text>
-                          )}
-                          <TouchableOpacity
-                            style={styles.addPlaceButton}
-                            onPress={handleAddPlace}
-                          >
-                            <Text style={styles.addPlaceButtonText}>Add Place</Text>
-                          </TouchableOpacity>
-                        </View>
-
-                        <Text style={[styles.knownPlaceName, { marginTop: 16 }]}>Import JSON</Text>
-                        <TextInput
-                          style={[styles.addPlaceInput, { height: 80, textAlignVertical: "top" }]}
-                          placeholder='[{"name":"Home","lat":47.64,"lon":-122.30,"radiusMeters":100}]'
-                          placeholderTextColor="#555"
-                          value={importJson}
-                          onChangeText={setImportJson}
-                          multiline
-                        />
-                        <TouchableOpacity
-                          style={styles.addPlaceButton}
-                          onPress={() => handleImportPlacesJson(importJson)}
-                        >
-                          <Text style={styles.addPlaceButtonText}>Import Places</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                  </View>
-                </ScrollView>
-              </View>
-            </Modal>
+              onClose={() => setLocationExpanded(false)}
+              db={db}
+              location={snapshot.location}
+              locationHistory={snapshot.locationHistory}
+              knownPlaces={knownPlaces}
+              setKnownPlaces={setKnownPlaces}
+              setError={setError}
+              locationSummaryText={locationSummaryText}
+            />
 
             <Text style={styles.timestamp}>{snapshot.timestamp}</Text>
           </>
@@ -1737,6 +1239,8 @@ export default function App() {
             setWeeklyError(null);
           }}
           sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
+          workouts={selectedMetric === "exerciseMinutes" ? snapshot?.health.workouts : undefined}
+          workoutsByDay={selectedMetric === "exerciseMinutes" ? workoutsByDay : undefined}
           fetchRawCache={db ? async () => {
             const dateKeys = buildDateKeys(new Date(), 7);
             const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);

@@ -58,7 +58,19 @@ export function buildSummary(health: HealthData, locationCount: number): string 
   }
 
   if (health.weight != null) {
-    parts.push(`${health.weight} kg`);
+    parts.push(`${Math.round(health.weight * 2.20462)} lbs`);
+  }
+
+  if (health.workouts && health.workouts.length > 0) {
+    const workoutParts = health.workouts.map(w => {
+      let s = `${w.activityType} ${w.durationMinutes}min`;
+      if (w.energyBurned) s += ` ${w.energyBurned}kcal`;
+      if (w.distanceKm) s += ` ${w.distanceKm}km`;
+      return s;
+    });
+    parts.push(workoutParts.join(", "));
+  } else if (health.exerciseMinutes != null) {
+    parts.push(`${health.exerciseMinutes} min exercise`);
   }
 
   if (health.meditationMinutes != null) {

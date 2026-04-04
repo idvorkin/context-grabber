@@ -13,16 +13,21 @@ test:
     npx jest
 
 # Build release and deploy to physical iPhone (supports OTA updates)
-# Uses xcodebuild directly because expo run:ios doesn't support -allowProvisioningUpdates
+# Runs prebuild to sync app.json -> native config, then builds and installs.
+# Uses platform+name destination (works over Wi-Fi, not just USB).
 deploy device="Igor iPhone 17" udid="00008150-000A31D10CF2401C": generate-version
     #!/usr/bin/env bash
     set -euo pipefail
+    echo "==> Syncing native config from app.json..."
+    npx expo prebuild --platform ios
+    echo "==> Building release..."
     DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
     xcodebuild -workspace ios/ContextGrabber.xcworkspace \
         -configuration Release \
         -scheme ContextGrabber \
-        -destination "id={{udid}}" \
+        -destination "platform=iOS,name={{device}}" \
         -allowProvisioningUpdates
+    echo "==> Installing on {{device}}..."
     APP=$(find "$DERIVED_DATA" -path "*/ContextGrabber-*/Build/Products/Release-iphoneos/ContextGrabber.app" -maxdepth 5 | head -1)
     xcrun devicectl device install app --device "{{udid}}" "$APP"
 

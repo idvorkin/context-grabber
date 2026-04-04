@@ -7,7 +7,7 @@
  */
 
 import type { LocationPoint } from "./clustering";
-import { formatLocalTime } from "./clustering";
+import { formatLocalTime, formatTimeRange } from "./clustering";
 import type { KnownPlace } from "./places";
 import { labelPointsWithKnownPlaces } from "./places";
 import { haversineDistance } from "./geo";
@@ -352,11 +352,10 @@ function buildSummaryRecent(stays: Stay[], transit: TransitSegment[], now: numbe
 
     for (const s of group.stays) {
       if (s.durationMinutes === 0) continue;
-      const start = formatLocalTime(s.startTime);
-      const end = formatLocalTime(s.endTime);
+      const range = formatTimeRange(s.startTime, s.endTime);
       events.push({
         time: s.startTime,
-        text: `${s.placeId} ${start}\u2013${end} (${formatDuration(s.durationMinutes)})`,
+        text: `${s.placeId} ${range} (${formatDuration(s.durationMinutes)})`,
       });
     }
 
@@ -518,9 +517,12 @@ export function clusterLocations(
     }));
 
   // Build summary in v1 format (flat timeline string)
-  const summary = timeline
-    .filter((v) => v.durationHours >= 0.5)
-    .map((v) => `${v.placeId} ${v.startTime}\u2013${v.endTime} (${v.durationHours}h)`)
+  const staysForSummary = v2.stays.filter((s) => s.durationMinutes >= 30);
+  const summary = staysForSummary
+    .map((s) => {
+      const hours = Math.round(s.durationMinutes / 6) / 10;
+      return `${s.placeId} ${formatTimeRange(s.startTime, s.endTime)} (${hours}h)`;
+    })
     .join(", ");
 
   return { clusters, timeline, noiseCount: 0, summary };

@@ -17,6 +17,7 @@ function makeHealth(overrides: Partial<HealthData> = {}): HealthData {
     hrv: null,
     restingHeartRate: null,
     exerciseMinutes: null,
+    workouts: [],
     ...overrides,
   };
 }
@@ -58,7 +59,7 @@ describe("buildSummary", () => {
 
   it("includes weight and meditation when present", () => {
     const result = buildSummary(makeHealth({ weight: 78.3, meditationMinutes: 15 }), 0);
-    expect(result).toContain("78.3 kg");
+    expect(result).toContain("173 lbs");
     expect(result).toContain("15 min meditation");
   });
 
@@ -90,6 +91,23 @@ describe("buildSummary", () => {
       42
     );
     expect(result).toBe("42 locations");
+  });
+
+  it("includes workout breakdown when present", () => {
+    const result = buildSummary(makeHealth({
+      workouts: [
+        { activityType: "Running", durationMinutes: 30, energyBurned: 250, distanceKm: 4.5 },
+        { activityType: "Yoga", durationMinutes: 20, energyBurned: null, distanceKm: null },
+      ],
+    }), 0);
+    expect(result).toContain("Running 30min 250kcal 4.5km");
+    expect(result).toContain("Yoga 20min");
+    expect(result).not.toContain("exercise");
+  });
+
+  it("falls back to exercise minutes when no workouts", () => {
+    const result = buildSummary(makeHealth({ exerciseMinutes: 45 }), 0);
+    expect(result).toContain("45 min exercise");
   });
 
   it("omits locations when count is 0", () => {

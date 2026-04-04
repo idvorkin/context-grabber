@@ -14,6 +14,13 @@ export type SourceSleepSummary = {
   awakeHours: number;
 };
 
+export type WorkoutEntry = {
+  activityType: string;   // human-readable name like "Running"
+  durationMinutes: number;
+  energyBurned: number | null;  // kcal
+  distanceKm: number | null;
+};
+
 export type HealthData = {
   steps: number | null;
   heartRate: number | null;
@@ -29,6 +36,7 @@ export type HealthData = {
   hrv: number | null;
   restingHeartRate: number | null;
   exerciseMinutes: number | null;
+  workouts: WorkoutEntry[];
 };
 
 export type WeightSample = {
@@ -302,5 +310,37 @@ export function buildHealthData(results: HealthQueryResults): HealthData {
       exerciseTime.status === "fulfilled" && exerciseTime.value.sumQuantity?.quantity != null
         ? Math.round(exerciseTime.value.sumQuantity.quantity)
         : null,
+    workouts: [],
   };
+}
+
+/** Map WorkoutActivityType enum value to a human-readable name. */
+const WORKOUT_NAMES: Record<number, string> = {
+  1: "Football", 2: "Archery", 3: "Australian Football", 4: "Badminton",
+  5: "Baseball", 6: "Basketball", 7: "Bowling", 8: "Boxing", 9: "Climbing",
+  10: "Cricket", 11: "Cross Training", 12: "Curling", 13: "Cycling",
+  14: "Dance", 15: "Dance Training", 16: "Elliptical", 17: "Equestrian",
+  18: "Fencing", 19: "Fishing", 20: "Functional Strength", 21: "Golf",
+  22: "Gymnastics", 23: "Handball", 24: "Hiking", 25: "Hockey",
+  26: "Hunting", 27: "Lacrosse", 28: "Martial Arts", 29: "Mind & Body",
+  30: "Mixed Cardio", 31: "Paddle Sports", 32: "Play",
+  33: "Stretching", 34: "Racquetball", 35: "Rowing", 36: "Rugby",
+  37: "Running", 38: "Sailing", 39: "Skating", 40: "Snow Sports",
+  41: "Soccer", 42: "Softball", 43: "Squash", 44: "Stair Climbing",
+  45: "Surfing", 46: "Swimming", 47: "Table Tennis", 48: "Tennis",
+  49: "Track & Field", 50: "Strength Training", 51: "Volleyball",
+  52: "Walking", 53: "Water Fitness", 54: "Water Polo", 55: "Water Sports",
+  56: "Wrestling", 57: "Yoga", 58: "Barre", 59: "Core Training",
+  60: "Cross-Country Skiing", 61: "Downhill Skiing", 62: "Flexibility",
+  63: "HIIT", 64: "Jump Rope", 65: "Kickboxing", 66: "Pilates",
+  67: "Snowboarding", 68: "Stairs", 69: "Step Training",
+  70: "Wheelchair Walk", 71: "Wheelchair Run", 72: "Tai Chi",
+  73: "Mixed Cardio", 74: "Hand Cycling", 75: "Disc Sports",
+  76: "Fitness Gaming", 77: "Cardio Dance", 78: "Social Dance",
+  79: "Pickleball", 80: "Cooldown", 82: "Triathlon", 83: "Transition",
+  84: "Underwater Diving", 3000: "Other",
+};
+
+export function workoutActivityName(typeValue: number): string {
+  return WORKOUT_NAMES[typeValue] ?? `Workout ${typeValue}`;
 }

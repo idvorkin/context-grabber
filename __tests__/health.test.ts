@@ -320,6 +320,7 @@ describe("buildHealthData", () => {
       hrv: null,
       restingHeartRate: null,
       exerciseMinutes: null,
+      workouts: [],
     });
   });
 
