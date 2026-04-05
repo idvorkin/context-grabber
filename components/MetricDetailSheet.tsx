@@ -26,6 +26,7 @@ import { formatNumber } from "../lib/summary";
 import BarChart from "./BarChart";
 import LineChart from "./LineChart";
 import ActivityTimelineChart from "./ActivityTimeline";
+import HourlyBoxPlot from "./HourlyBoxPlot";
 import type { ActivityTimeline } from "../lib/activity";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -318,7 +319,7 @@ export default function MetricDetailSheet({
         data={data as DailyValue[]}
         color={config.color}
         unit={config.unit}
-        onDayPress={activityTimelineByDay ? (date) => setSelectedDay(selectedDay === date ? null : date) : undefined}
+        onDayPress={(date) => setSelectedDay(selectedDay === date ? null : date)}
         selectedDay={selectedDay}
       />
     );
@@ -423,6 +424,17 @@ export default function MetricDetailSheet({
             ) : null;
           })()}
 
+          {/* Hourly box plot for whisker-chart metrics when a day is selected */}
+          {isWhiskerChart && selectedDayData && selectedDayData.raw.length > 0 && (
+            <View style={styles.chartContainer}>
+              <HourlyBoxPlot
+                raw={selectedDayData.raw}
+                color={config.color}
+                label={`${formatDayRow(selectedDayData.date)} by Hour`}
+              />
+            </View>
+          )}
+
           {/* Chart */}
           <View style={styles.chartContainer}>{chartContent}</View>
 
@@ -464,7 +476,7 @@ export default function MetricDetailSheet({
                 {formatDayRow(selectedDayData.date)} — {selectedDayData.count} readings
               </Text>
               <Text style={styles.rawValues}>
-                {selectedDayData.raw.map((r) => `${r.value} (${new Date(r.time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})`).join(", ")}
+                {[...selectedDayData.raw].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()).map((r) => `${Math.round(r.value)} (${new Date(r.time).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})`).join(", ")}
               </Text>
               <View style={styles.rawStats}>
                 <Text style={styles.rawStatPill}>Min {selectedDayData.min}</Text>
