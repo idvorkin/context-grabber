@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { type DailyValue, formatDateKey } from "../lib/weekly";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -17,11 +17,13 @@ type Props = {
   data: DailyValue[];
   color: string;
   unit: string;
+  onDayPress?: (date: string) => void;
+  selectedDay?: string | null;
 };
 
 // ─── BarChart ─────────────────────────────────────────────────────────────────
 
-export default function BarChart({ data, color, unit }: Props): React.JSX.Element {
+export default function BarChart({ data, color, unit, onDayPress, selectedDay }: Props): React.JSX.Element {
   const today = formatDateKey(new Date());
 
   // Compute the max value across the week (non-null only).
@@ -39,53 +41,43 @@ export default function BarChart({ data, color, unit }: Props): React.JSX.Elemen
       <View style={[styles.chartArea, { height: CHART_HEIGHT }]}>
         {data.map((day) => {
           const isToday = day.date === today;
-          const barColor = isToday ? color : dimColor;
+          const isSelected = day.date === selectedDay;
+          const barColor = isSelected ? color : isToday ? color : dimColor;
 
           // Determine the day-of-week label by parsing date as UTC midnight.
           const parsed = new Date(`${day.date}T00:00:00Z`);
           const dayLabel = DAY_LABELS[parsed.getUTCDay()];
 
+          const Wrapper = onDayPress ? TouchableOpacity : View;
+          const wrapperProps = onDayPress ? { onPress: () => onDayPress(day.date), activeOpacity: 0.7 } : {};
+
           if (day.value === null) {
-            // Null day: render a small dash centred at the bottom of the chart area.
             return (
-              <View key={day.date} style={styles.barColumn}>
+              <Wrapper key={day.date} style={styles.barColumn} {...wrapperProps}>
                 <View style={styles.barWrapper}>
-                  <View
-                    style={[
-                      styles.dash,
-                      { backgroundColor: barColor },
-                    ]}
-                  />
+                  <View style={[styles.dash, { backgroundColor: barColor }]} />
                 </View>
-                <Text style={[styles.dayLabel, isToday && { color }]}>
+                <Text style={[styles.dayLabel, (isToday || isSelected) && { color }]}>
                   {dayLabel}
                 </Text>
-              </View>
+                {isSelected && <View style={[styles.selectedDot, { backgroundColor: color }]} />}
+              </Wrapper>
             );
           }
 
-          // Height proportional to maxValue; guard against divide-by-zero.
           const heightFraction = maxValue > 0 ? day.value / maxValue : 0;
           const barHeight = Math.max(4, Math.round(heightFraction * CHART_HEIGHT));
 
           return (
-            <View key={day.date} style={styles.barColumn}>
+            <Wrapper key={day.date} style={styles.barColumn} {...wrapperProps}>
               <View style={styles.barWrapper}>
-                <View
-                  style={[
-                    styles.bar,
-                    {
-                      height: barHeight,
-                      backgroundColor: barColor,
-                      borderRadius: BAR_RADIUS,
-                    },
-                  ]}
-                />
+                <View style={[styles.bar, { height: barHeight, backgroundColor: barColor, borderRadius: BAR_RADIUS }]} />
               </View>
-              <Text style={[styles.dayLabel, isToday && { color }]}>
+              <Text style={[styles.dayLabel, (isToday || isSelected) && { color }]}>
                 {dayLabel}
               </Text>
-            </View>
+              {isSelected && <View style={[styles.selectedDot, { backgroundColor: color }]} />}
+            </Wrapper>
           );
         })}
       </View>
@@ -133,6 +125,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     height: LABEL_HEIGHT,
     lineHeight: LABEL_HEIGHT,
+  },
+  selectedDot: {
+    position: "absolute",
+    bottom: 22,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
   unitLabel: {
     fontSize: 11,

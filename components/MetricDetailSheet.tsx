@@ -25,6 +25,8 @@ import {
 import { formatNumber } from "../lib/summary";
 import BarChart from "./BarChart";
 import LineChart from "./LineChart";
+import ActivityTimelineChart from "./ActivityTimeline";
+import type { ActivityTimeline } from "../lib/activity";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +40,7 @@ type MetricDetailSheetProps = {
   sleepBySource?: Record<string, SourceSleepSummary> | null;
   workouts?: WorkoutEntry[];
   workoutsByDay?: Record<string, WorkoutEntry[]>;
+  activityTimelineByDay?: Record<string, ActivityTimeline>;
   /** Callback to fetch raw cached samples for debug view */
   fetchRawCache?: () => Promise<string>;
 };
@@ -106,6 +109,7 @@ export default function MetricDetailSheet({
   sleepBySource,
   workouts,
   workoutsByDay,
+  activityTimelineByDay,
   fetchRawCache,
 }: MetricDetailSheetProps): React.ReactElement {
   const screenHeight = Dimensions.get("window").height;
@@ -310,7 +314,13 @@ export default function MetricDetailSheet({
     );
   } else if (config.chartType === "bar") {
     chartContent = (
-      <BarChart data={data as DailyValue[]} color={config.color} unit={config.unit} />
+      <BarChart
+        data={data as DailyValue[]}
+        color={config.color}
+        unit={config.unit}
+        onDayPress={activityTimelineByDay ? (date) => setSelectedDay(selectedDay === date ? null : date) : undefined}
+        selectedDay={selectedDay}
+      />
     );
   } else {
     chartContent = (
@@ -400,6 +410,18 @@ export default function MetricDetailSheet({
               })()}
             </View>
           )}
+
+          {/* Activity timeline for exercise — shows selected day or today */}
+          {metricKey === "exerciseMinutes" && activityTimelineByDay && Object.keys(activityTimelineByDay).length > 0 && (() => {
+            const todayKey = data ? data[data.length - 1]?.date : null;
+            const dayKey = selectedDay ?? todayKey;
+            const timeline = dayKey ? activityTimelineByDay[dayKey] : null;
+            return timeline ? (
+              <View style={styles.chartContainer}>
+                <ActivityTimelineChart timeline={timeline} color={config.color} />
+              </View>
+            ) : null;
+          })()}
 
           {/* Chart */}
           <View style={styles.chartContainer}>{chartContent}</View>

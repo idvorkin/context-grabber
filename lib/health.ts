@@ -19,6 +19,8 @@ export type WorkoutEntry = {
   durationMinutes: number;
   energyBurned: number | null;  // kcal
   distanceKm: number | null;
+  startTime?: string;   // ISO 8601
+  endTime?: string;     // ISO 8601
 };
 
 export type HealthData = {

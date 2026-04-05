@@ -31,6 +31,7 @@ import {
   getKnownPlaces, addKnownPlace, deleteKnownPlace, getLocationHistory,
   type LocationHistoryItem,
 } from "./lib/db";
+import { buildActivityTimeline, type ActivityTimeline } from "./lib/activity";
 import { buildSummary, formatNumber } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
 import {
@@ -302,6 +303,7 @@ export default function App() {
   const [weeklyError, setWeeklyError] = useState<string | null>(null);
   const [statsCache, setStatsCache] = useState<Partial<Record<MetricKey, BoxPlotStats | null>>>({});
   const [workoutsByDay, setWorkoutsByDay] = useState<Record<string, WorkoutEntry[]>>({});
+  const [activityTimelineByDay, setActivityTimelineByDay] = useState<Record<string, ActivityTimeline>>({});
   const [locationStorageBytes, setLocationStorageBytes] = useState(0);
   const [dbReady, setDbReady] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -519,8 +521,10 @@ export default function App() {
             ? Math.round(json.totalEnergyBurned.quantity)
             : null,
           distanceKm: json.totalDistance?.quantity
-            ? Math.round(json.totalDistance.quantity * 100) / 100
+            ? Math.round(json.totalDistance.quantity / 10) / 100
             : null,
+          startTime: new Date(json.startDate).toISOString(),
+          endTime: new Date(new Date(json.startDate).getTime() + (json.duration?.quantity ?? 0) * 1000).toISOString(),
         } as WorkoutEntry;
       });
     } catch {
@@ -790,10 +794,76 @@ export default function App() {
           activityType: workoutActivityName(json.workoutActivityType),
           durationMinutes: Math.round((json.duration?.quantity ?? 0) / 60),
           energyBurned: json.totalEnergyBurned?.quantity ? Math.round(json.totalEnergyBurned.quantity) : null,
-          distanceKm: json.totalDistance?.quantity ? Math.round(json.totalDistance.quantity * 100) / 100 : null,
+          distanceKm: json.totalDistance?.quantity ? Math.round(json.totalDistance.quantity / 10) / 100 : null,
+          startTime: new Date(json.startDate).toISOString(),
+          endTime: new Date(new Date(json.startDate).getTime() + (json.duration?.quantity ?? 0) * 1000).toISOString(),
         });
       }
       return byDay;
+    } catch {
+      return {};
+    }
+  }
+
+  async function fetchActivityTimelines(): Promise<Record<string, ActivityTimeline>> {
+    try {
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekFilter = { date: { startDate: sevenDaysAgo, endDate: now } };
+      const [exerciseSamples, hrSamples, workoutSamples] = await Promise.all([
+        HealthKit.queryQuantitySamples(QTI.exerciseTime, { limit: 0, filter: weekFilter }),
+        HealthKit.queryQuantitySamples(QTI.heartRate, { limit: 0, filter: weekFilter }),
+        HealthKit.queryWorkoutSamples({ limit: 0, filter: weekFilter }),
+      ]);
+      // Bucket samples by day
+      const exerciseByDay = new Map<string, any[]>();
+      const hrByDay = new Map<string, any[]>();
+      const workoutsByDayMap = new Map<string, WorkoutEntry[]>();
+
+      for (const s of exerciseSamples as any[]) {
+        const key = formatDateKey(new Date(s.startDate));
+        if (!exerciseByDay.has(key)) exerciseByDay.set(key, []);
+        exerciseByDay.get(key)!.push({
+          startDate: new Date(s.startDate).toISOString(),
+          endDate: s.endDate ? new Date(s.endDate).toISOString() : undefined,
+          quantity: s.quantity ?? 0,
+        });
+      }
+      for (const s of hrSamples as any[]) {
+        const key = formatDateKey(new Date(s.startDate));
+        if (!hrByDay.has(key)) hrByDay.set(key, []);
+        hrByDay.get(key)!.push({
+          startDate: new Date(s.startDate).toISOString(),
+          quantity: s.quantity ?? 0,
+        });
+      }
+      for (const w of workoutSamples as any[]) {
+        const json = w.toJSON ? w.toJSON() : w;
+        const key = formatDateKey(new Date(json.startDate));
+        if (!workoutsByDayMap.has(key)) workoutsByDayMap.set(key, []);
+        workoutsByDayMap.get(key)!.push({
+          activityType: workoutActivityName(json.workoutActivityType),
+          durationMinutes: Math.round((json.duration?.quantity ?? 0) / 60),
+          energyBurned: json.totalEnergyBurned?.quantity ? Math.round(json.totalEnergyBurned.quantity) : null,
+          distanceKm: json.totalDistance?.quantity ? Math.round(json.totalDistance.quantity / 10) / 100 : null,
+          startTime: new Date(json.startDate).toISOString(),
+          endTime: new Date(new Date(json.startDate).getTime() + (json.duration?.quantity ?? 0) * 1000).toISOString(),
+        });
+      }
+
+      // Build timeline for each day that has data
+      const result: Record<string, ActivityTimeline> = {};
+      const allKeys = new Set([...exerciseByDay.keys(), ...hrByDay.keys(), ...workoutsByDayMap.keys()]);
+      for (const key of allKeys) {
+        const dayDate = new Date(key + "T12:00:00");
+        result[key] = buildActivityTimeline(
+          exerciseByDay.get(key) ?? [],
+          hrByDay.get(key) ?? [],
+          workoutsByDayMap.get(key) ?? [],
+          dayDate,
+        );
+      }
+      return result;
     } catch {
       return {};
     }
@@ -803,8 +873,9 @@ export default function App() {
     setSelectedMetric(key);
     setWeeklyError(null);
     if (weeklyCache[key]) {
-      if (key === "exerciseMinutes" && Object.keys(workoutsByDay).length === 0) {
-        fetchWorkoutsByDay().then(setWorkoutsByDay);
+      if (key === "exerciseMinutes") {
+        if (Object.keys(workoutsByDay).length === 0) fetchWorkoutsByDay().then(setWorkoutsByDay);
+        if (Object.keys(activityTimelineByDay).length === 0) fetchActivityTimelines().then(setActivityTimelineByDay);
       }
       return;
     }
@@ -815,6 +886,7 @@ export default function App() {
       setStatsCache((prev) => ({ ...prev, [key]: computeStatsForMetric(key, data) }));
       if (key === "exerciseMinutes") {
         fetchWorkoutsByDay().then(setWorkoutsByDay);
+        fetchActivityTimelines().then(setActivityTimelineByDay);
       }
     } catch (e: any) {
       setWeeklyError(e.message ?? "Failed to load weekly data");
@@ -1241,6 +1313,7 @@ export default function App() {
           sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
           workouts={selectedMetric === "exerciseMinutes" ? snapshot?.health.workouts : undefined}
           workoutsByDay={selectedMetric === "exerciseMinutes" ? workoutsByDay : undefined}
+          activityTimelineByDay={selectedMetric === "exerciseMinutes" ? activityTimelineByDay : undefined}
           fetchRawCache={db ? async () => {
             const dateKeys = buildDateKeys(new Date(), 7);
             const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);
