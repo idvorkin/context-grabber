@@ -1164,7 +1164,7 @@ export default function App() {
               onPress={() => setGymTimerVisible(true)}
               accessibilityLabel="Gym Timer"
             >
-              <Text style={styles.headerIconText}>{"\u23F1"}</Text>
+              <Text style={styles.headerIconText}>{"🏋️"}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIconButton}
