@@ -65,10 +65,21 @@ jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-// Mock expo-audio
-jest.mock('expo-audio', () => ({
-  useAudioPlayer: jest.fn().mockReturnValue({
-    play: jest.fn(),
-    seekTo: jest.fn(),
-  }),
+// Mock react-native-audio-api
+jest.mock('react-native-audio-api', () => ({
+  AudioContext: jest.fn().mockImplementation(() => ({
+    currentTime: 0,
+    destination: {},
+    createOscillator: jest.fn().mockReturnValue({
+      frequency: { value: 0 },
+      type: 'sine',
+      connect: jest.fn(),
+      start: jest.fn(),
+      stop: jest.fn(),
+    }),
+    createGain: jest.fn().mockReturnValue({
+      gain: { value: 0 },
+      connect: jest.fn(),
+    }),
+  })),
 }));

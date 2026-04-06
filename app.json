@@ -38,7 +38,7 @@
       ],
       "expo-task-manager",
       "expo-sharing",
-      "expo-audio"
+      "react-native-audio-api"
     ],
     "android": {
       "adaptiveIcon": {
