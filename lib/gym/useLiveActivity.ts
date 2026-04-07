@@ -20,8 +20,24 @@ export function useLiveActivity() {
   const activityIdRef = useRef<string | null>(null);
   const isAvailable = Platform.OS === "ios";
 
+  const stop = useCallback((title = "Done", subtitle = "") => {
+    if (!isAvailable || !activityIdRef.current) return;
+    try {
+      LiveActivity.stopActivity(activityIdRef.current, {
+        title,
+        subtitle,
+        progressBar: { progress: 1 },
+      });
+    } catch {
+      // fail silently
+    }
+    activityIdRef.current = null;
+  }, [isAvailable]);
+
   const start = useCallback((title: string, subtitle: string, endTimeMs: number) => {
     if (!isAvailable) return;
+    // Stop any existing activity before starting a new one
+    if (activityIdRef.current) stop();
     try {
       const id = LiveActivity.startActivity(
         { title, subtitle, progressBar: { date: endTimeMs } },
@@ -31,7 +47,7 @@ export function useLiveActivity() {
     } catch {
       // Live Activity not supported on this device
     }
-  }, [isAvailable]);
+  }, [isAvailable, stop]);
 
   const update = useCallback((title: string, subtitle: string, endTimeMs?: number, progress?: number) => {
     if (!isAvailable || !activityIdRef.current) return;
@@ -43,20 +59,6 @@ export function useLiveActivity() {
         state.progressBar = { progress };
       }
       LiveActivity.updateActivity(activityIdRef.current, state);
-    } catch {
-      // fail silently
-    }
-  }, [isAvailable]);
-
-  const stop = useCallback((title = "Done", subtitle = "") => {
-    if (!isAvailable || !activityIdRef.current) return;
-    try {
-      LiveActivity.stopActivity(activityIdRef.current, {
-        title,
-        subtitle,
-        progressBar: { progress: 1 },
-      });
-      activityIdRef.current = null;
     } catch {
       // fail silently
     }
