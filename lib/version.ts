@@ -3,6 +3,7 @@ import {
   GIT_COMMIT_URL,
   GIT_CURRENT_URL,
   GIT_BRANCH,
+  GIT_COMMIT_MESSAGE,
   BUILD_TIMESTAMP,
 } from "./generated_version";
 
@@ -13,6 +14,7 @@ export type BuildInfo = {
   timestamp: string;
   commitUrl: string;
   repoUrl: string;
+  commitMessage: string;
 };
 
 export function getBuildInfo(): BuildInfo {
@@ -23,6 +25,7 @@ export function getBuildInfo(): BuildInfo {
     timestamp: BUILD_TIMESTAMP,
     commitUrl: GIT_COMMIT_URL,
     repoUrl: GIT_CURRENT_URL,
+    commitMessage: GIT_COMMIT_MESSAGE,
   };
 }
 

@@ -9,6 +9,7 @@ const repoUrl = execSync("git remote get-url origin")
 	.trim()
 	.replace(/\.git$/, "")
 	.replace(/git@github\.com:/, "https://github.com/");
+const commitMsg = execSync("git log -1 --format=%s").toString().trim().replace(/"/g, '\\"');
 const buildTime = new Date().toISOString();
 
 const content = `// Auto-generated at build time - DO NOT EDIT
@@ -16,6 +17,7 @@ export const GIT_SHA = "${sha}";
 export const GIT_COMMIT_URL = "${repoUrl}/commit/${sha}";
 export const GIT_CURRENT_URL = "${repoUrl}/tree/${branch}";
 export const GIT_BRANCH = "${branch}";
+export const GIT_COMMIT_MESSAGE = "${commitMsg}";
 export const BUILD_TIMESTAMP = "${buildTime}";
 `;
 

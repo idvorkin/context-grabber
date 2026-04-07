@@ -175,11 +175,7 @@ function AboutModal({
   const runtimeVersion = Updates.runtimeVersion ?? "N/A";
   const updateId = Updates.updateId ?? "embedded";
   const updateCreatedAt = Updates.createdAt;
-  const manifest = Updates.manifest as any;
-  const updateMessage = manifest?.metadata?.updateMessage
-    ?? manifest?.metadata?.message
-    ?? manifest?.extra?.expoClient?.extra?.message
-    ?? (manifest?.metadata ? JSON.stringify(manifest.metadata).slice(0, 80) : null);
+  const commitMessage = buildInfo.commitMessage;
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   async function handleCheckForUpdate() {
@@ -274,9 +270,9 @@ function AboutModal({
                 {updateCreatedAt ? ` · ${updateCreatedAt.toLocaleDateString()}` : ""}
               </Text>
             </View>
-            {updateMessage && (
-              <Text style={{ color: "#ccc", fontSize: 12, fontFamily: "Courier", marginTop: 4 }}>
-                {updateMessage}
+            {commitMessage && (
+              <Text style={{ color: "#ccc", fontSize: 12, marginTop: 4 }}>
+                {commitMessage}
               </Text>
             )}
 
