@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import { useTimer, type TimerProfile, type Phase } from "../lib/gym/useTimer";
 import { useStopwatch, formatStopwatchTime } from "../lib/gym/useStopwatch";
 import { useSets } from "../lib/gym/useSets";
+import { useLiveActivity } from "../lib/gym/useLiveActivity";
 
 // --- Types ---
 
@@ -59,6 +60,42 @@ function phaseLabel(phase: Phase): string {
 
 function RoundsMode({ profile, onReset }: { profile: TimerProfile; onReset: () => void }) {
   const { state, toggle, reset } = useTimer(profile);
+  const liveActivity = useLiveActivity();
+  const prevPhaseRef = useRef(state.phase);
+
+  // Start Live Activity when timer begins
+  useEffect(() => {
+    if (state.isRunning && prevPhaseRef.current === "idle" && state.phase === "prep") {
+      liveActivity.start(
+        "GET READY",
+        `Round ${state.currentRound} of ${state.totalRounds}`,
+        Date.now() + state.timeLeft * 1000,
+      );
+    }
+    prevPhaseRef.current = state.phase;
+  }, [state.phase, state.isRunning]);
+
+  // Update Live Activity on phase change or each tick
+  useEffect(() => {
+    if (!state.isRunning || state.phase === "idle") return;
+    const label = phaseLabel(state.phase);
+    if (label) {
+      liveActivity.update(
+        label,
+        `${formatTime(state.timeLeft)} — Round ${state.currentRound}/${state.totalRounds}`,
+        Date.now() + state.timeLeft * 1000,
+      );
+    }
+  }, [state.phase, state.timeLeft, state.currentRound]);
+
+  // Stop Live Activity on done or reset
+  useEffect(() => {
+    if (state.phase === "done") {
+      liveActivity.stop("DONE!", `${state.totalRounds} rounds completed`);
+    } else if (state.phase === "idle" && prevPhaseRef.current !== "idle") {
+      liveActivity.stop();
+    }
+  }, [state.phase]);
 
   return (
     <View style={styles.modeContainer}>

@@ -5,6 +5,7 @@
   },
   "exclude": [
     "vendor",
+    "tmp",
     "node_modules"
   ]
 }

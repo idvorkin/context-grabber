@@ -18,6 +18,7 @@
         "NSHealthShareUsageDescription": "Context Grabber reads your health data (steps, heart rate, sleep, weight, meditation) to provide context for your AI life coach.",
         "NSLocationWhenInUseUsageDescription": "Context Grabber uses your location to provide context for your AI life coach.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Context Grabber tracks your location in the background to build a location history for your AI life coach.",
+        "NSSupportsLiveActivities": true,
         "UIBackgroundModes": [
           "location"
         ]
@@ -38,7 +39,8 @@
       ],
       "expo-task-manager",
       "expo-sharing",
-      "react-native-audio-api"
+      "react-native-audio-api",
+      ["expo-live-activity", { "enablePushNotifications": false }]
     ],
     "android": {
       "adaptiveIcon": {

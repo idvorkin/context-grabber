@@ -65,6 +65,13 @@ jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
+// Mock expo-live-activity
+jest.mock('expo-live-activity', () => ({
+  startActivity: jest.fn().mockReturnValue('mock-activity-id'),
+  updateActivity: jest.fn(),
+  stopActivity: jest.fn(),
+}));
+
 // Mock expo-keep-awake
 jest.mock('expo-keep-awake', () => ({
   useKeepAwake: jest.fn(),
