@@ -271,19 +271,13 @@ function AboutModal({
               <Text style={styles.aboutRowLabel}>Update</Text>
               <Text style={styles.aboutRowValue}>
                 {updateId === "embedded" ? "embedded" : `...${updateId.slice(-8)}`}
+                {updateCreatedAt ? ` · ${updateCreatedAt.toLocaleDateString()}` : ""}
               </Text>
             </View>
             {updateMessage && (
-              <View style={styles.aboutRow}>
-                <Text style={styles.aboutRowLabel}>Message</Text>
-                <Text style={styles.aboutRowValue}>{updateMessage}</Text>
-              </View>
-            )}
-            {updateCreatedAt && (
-              <View style={styles.aboutRow}>
-                <Text style={styles.aboutRowLabel}>Updated</Text>
-                <Text style={styles.aboutRowValue}>{updateCreatedAt.toLocaleString()}</Text>
-              </View>
+              <Text style={{ color: "#ccc", fontSize: 12, fontFamily: "Courier", marginTop: 4 }}>
+                {updateMessage}
+              </Text>
             )}
 
             <TouchableOpacity
