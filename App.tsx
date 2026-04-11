@@ -39,6 +39,8 @@ import {
   type DailyValue,
   type HeartRateDaily,
   METRIC_CONFIG,
+  buildMovementOverlay,
+  type MovementOverlayData,
   aggregateHeartRate,
   aggregateSleep,
   aggregateMeditation,
@@ -678,6 +680,10 @@ export default function App() {
         const buckets = aggregateMeditation(mapped as any, dayEnd, 1);
         return { computed: buckets[0], raw: mapped };
       }
+      case "movement":
+        // Composite metric — handled by fetching its three underlying series
+        // (steps, walkingDistance, activeEnergy) in handleMetricPress.
+        throw new Error("movement is a composite metric and cannot be fetched directly");
     }
   }
 
@@ -890,6 +896,30 @@ export default function App() {
   async function handleMetricPress(key: MetricKey) {
     setSelectedMetric(key);
     setWeeklyError(null);
+
+    // Movement is a composite of steps + walkingDistance + activeEnergy.
+    // Fetch all three underlying series in parallel (using the shared
+    // weeklyCache) and let the useMemo below assemble the overlay.
+    if (key === "movement") {
+      const keys: MetricKey[] = ["steps", "walkingDistance", "activeEnergy"];
+      const missing = keys.filter((k) => !weeklyCache[k]);
+      if (missing.length === 0) return;
+      setWeeklyLoading(true);
+      try {
+        const fetched = await Promise.all(missing.map((k) => grabWeeklyData(k)));
+        setWeeklyCache((prev) => {
+          const next = { ...prev };
+          missing.forEach((k, i) => { next[k] = fetched[i]; });
+          return next;
+        });
+      } catch (e: any) {
+        setWeeklyError(e.message ?? "Failed to load movement data");
+      } finally {
+        setWeeklyLoading(false);
+      }
+      return;
+    }
+
     if (weeklyCache[key]) {
       if (key === "exerciseMinutes") {
         if (Object.keys(workoutsByDay).length === 0) fetchWorkoutsByDay().then(setWorkoutsByDay);
@@ -1048,36 +1078,24 @@ export default function App() {
 
   const h = snapshot?.health;
 
+  // Build the Movement card sublabel: "<distance> km · <energy> kcal"
+  const movementSublabel = (() => {
+    const distPart = h?.walkingDistance != null ? `${h.walkingDistance} km` : "\u2014 km";
+    const enPart = h?.activeEnergy != null ? `${formatNumber(h.activeEnergy)} kcal` : "\u2014 kcal";
+    return `${distPart} \u00b7 ${enPart}`;
+  })();
+
   const metrics: MetricCardProps[] = snapshot
     ? [
-        // Movement volume
+        // Movement: steps as the big headline, distance + energy as sublabel
         {
-          metricKey: "steps" as MetricKey,
-          label: "Steps",
+          metricKey: "movement" as MetricKey,
+          label: "Movement",
           value: h?.steps != null ? formatNumber(h.steps) : "\u2014",
-          sublabel: "today",
+          sublabel: movementSublabel,
           onPress: handleMetricPress,
           boxPlotStats: statsCache.steps,
-          color: METRIC_CONFIG.steps.color,
-        },
-        {
-          metricKey: "walkingDistance" as MetricKey,
-          label: "Walking Distance",
-          value: h?.walkingDistance != null ? `${h.walkingDistance} km` : "\u2014",
-          sublabel: "today",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.walkingDistance,
-          color: METRIC_CONFIG.walkingDistance.color,
-        },
-        // Movement intensity
-        {
-          metricKey: "activeEnergy" as MetricKey,
-          label: "Active Energy",
-          value: h?.activeEnergy != null ? `${formatNumber(h.activeEnergy)} kcal` : "\u2014",
-          sublabel: "today",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.activeEnergy,
-          color: METRIC_CONFIG.activeEnergy.color,
+          color: METRIC_CONFIG.movement.color,
         },
         {
           metricKey: "exerciseMinutes" as MetricKey,
@@ -1329,37 +1347,50 @@ export default function App() {
           </View>
         </View>
       )}
-      {selectedMetric && (
-        <MetricDetailSheet
-          metricKey={selectedMetric}
-          currentValue={
-            metrics.find((m) => m.metricKey === selectedMetric)?.value ?? "\u2014"
+      {selectedMetric && (() => {
+        // Movement overlay data derived from the three underlying cached series.
+        let movementData: MovementOverlayData | null = null;
+        if (selectedMetric === "movement") {
+          const steps = weeklyCache.steps as DailyValue[] | undefined;
+          const dist = weeklyCache.walkingDistance as DailyValue[] | undefined;
+          const energy = weeklyCache.activeEnergy as DailyValue[] | undefined;
+          if (steps && dist && energy) {
+            movementData = buildMovementOverlay(steps, dist, energy);
           }
-          currentSublabel={
-            metrics.find((m) => m.metricKey === selectedMetric)?.sublabel ?? ""
-          }
-          data={weeklyCache[selectedMetric] ?? null}
-          error={weeklyError}
-          onClose={() => {
-            setSelectedMetric(null);
-            setWeeklyError(null);
-          }}
-          sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
-          workouts={selectedMetric === "exerciseMinutes" ? snapshot?.health.workouts : undefined}
-          workoutsByDay={selectedMetric === "exerciseMinutes" ? workoutsByDay : undefined}
-          activityTimelineByDay={selectedMetric === "exerciseMinutes" ? activityTimelineByDay : undefined}
-          fetchRawCache={db ? async () => {
-            const dateKeys = buildDateKeys(new Date(), 7);
-            const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);
-            if (raw.size === 0) return "No raw cache entries found";
-            const result: Record<string, any> = {};
-            for (const key of dateKeys) {
-              result[key] = raw.get(key) ?? null;
+        }
+        return (
+          <MetricDetailSheet
+            metricKey={selectedMetric}
+            currentValue={
+              metrics.find((m) => m.metricKey === selectedMetric)?.value ?? "\u2014"
             }
-            return JSON.stringify(result, null, 2);
-          } : undefined}
-        />
-      )}
+            currentSublabel={
+              metrics.find((m) => m.metricKey === selectedMetric)?.sublabel ?? ""
+            }
+            data={selectedMetric === "movement" ? null : (weeklyCache[selectedMetric] ?? null)}
+            error={weeklyError}
+            onClose={() => {
+              setSelectedMetric(null);
+              setWeeklyError(null);
+            }}
+            sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
+            workouts={selectedMetric === "exerciseMinutes" ? snapshot?.health.workouts : undefined}
+            workoutsByDay={selectedMetric === "exerciseMinutes" ? workoutsByDay : undefined}
+            activityTimelineByDay={selectedMetric === "exerciseMinutes" ? activityTimelineByDay : undefined}
+            movementData={movementData}
+            fetchRawCache={db && selectedMetric !== "movement" ? async () => {
+              const dateKeys = buildDateKeys(new Date(), 7);
+              const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);
+              if (raw.size === 0) return "No raw cache entries found";
+              const result: Record<string, any> = {};
+              for (const key of dateKeys) {
+                result[key] = raw.get(key) ?? null;
+              }
+              return JSON.stringify(result, null, 2);
+            } : undefined}
+          />
+        );
+      })()}
     </View>
   );
 }

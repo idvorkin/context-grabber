@@ -21,6 +21,7 @@ import {
   type MetricKey,
   type DailyValue,
   type HeartRateDaily,
+  type MovementOverlayData,
 } from "../lib/weekly";
 import { formatNumber } from "../lib/summary";
 import BarChart from "./BarChart";
@@ -44,6 +45,8 @@ type MetricDetailSheetProps = {
   activityTimelineByDay?: Record<string, ActivityTimeline>;
   /** Callback to fetch raw cached samples for debug view */
   fetchRawCache?: () => Promise<string>;
+  /** Movement composite overlay (only used when metricKey === "movement") */
+  movementData?: MovementOverlayData | null;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -112,7 +115,9 @@ export default function MetricDetailSheet({
   workoutsByDay,
   activityTimelineByDay,
   fetchRawCache,
+  movementData,
 }: MetricDetailSheetProps): React.ReactElement {
+  const isMovement = metricKey === "movement";
   const screenHeight = Dimensions.get("window").height;
   const config = METRIC_CONFIG[metricKey];
   const sourceNames = useMemo(
@@ -235,7 +240,22 @@ export default function MetricDetailSheet({
   // ─── Average ────────────────────────────────────────────────────────────────
 
   let averageText: string | null = null;
-  if (data !== null && !error) {
+  // Movement: compute 7-day avg/max for each of the three series
+  type MovementStats = { avg: number | null; max: number | null };
+  let movementStats: { steps: MovementStats; distance: MovementStats; energy: MovementStats } | null = null;
+  if (isMovement && movementData && !error) {
+    const statsFor = (values: (number | null)[]): MovementStats => {
+      const nonNull = values.filter((v): v is number => v !== null);
+      if (nonNull.length === 0) return { avg: null, max: null };
+      const sum = nonNull.reduce((s, v) => s + v, 0);
+      return { avg: sum / nonNull.length, max: Math.max(...nonNull) };
+    };
+    movementStats = {
+      steps: statsFor(movementData.days.map((d) => d.steps)),
+      distance: statsFor(movementData.days.map((d) => d.distanceKm)),
+      energy: statsFor(movementData.days.map((d) => d.energyKcal)),
+    };
+  } else if (data !== null && !error) {
     if (isHeartRateData(data)) {
       // Build DailyValue array from avg values for computeAverage.
       const asDaily: DailyValue[] = data.map((d) => ({
@@ -260,7 +280,26 @@ export default function MetricDetailSheet({
   // ─── Daily rows (most recent first) ─────────────────────────────────────────
 
   let dailyRows: React.ReactElement[] | null = null;
-  if (data !== null && !error) {
+  if (isMovement && movementData && !error) {
+    // Movement: three values per day (steps, distance, energy)
+    const reversedDays = [...movementData.days].reverse();
+    dailyRows = reversedDays.map((d, index) => (
+      <View key={d.dateKey} style={[styles.dayRow, index > 0 && styles.dayRowDivider, { flexDirection: "column", alignItems: "flex-start" }]}>
+        <Text style={styles.dayRowLabel}>{formatDayRow(d.dateKey)}</Text>
+        <View style={styles.movementRowValues}>
+          <Text style={styles.movementValueText}>
+            Steps: <Text style={styles.movementValueNum}>{d.steps != null ? formatNumber(d.steps) : "\u2014"}</Text>
+          </Text>
+          <Text style={styles.movementValueText}>
+            Distance: <Text style={styles.movementValueNum}>{d.distanceKm != null ? `${d.distanceKm} km` : "\u2014"}</Text>
+          </Text>
+          <Text style={styles.movementValueText}>
+            Energy: <Text style={styles.movementValueNum}>{d.energyKcal != null ? `${formatNumber(d.energyKcal)} kcal` : "\u2014"}</Text>
+          </Text>
+        </View>
+      </View>
+    ));
+  } else if (data !== null && !error) {
     const reversed = [...data].reverse();
     const isHR = isHeartRateData(reversed as DailyValue[] | HeartRateDaily[]);
 
@@ -301,7 +340,43 @@ export default function MetricDetailSheet({
   // ─── Chart ──────────────────────────────────────────────────────────────────
 
   let chartContent: React.ReactElement;
-  if (data === null) {
+  if (isMovement) {
+    if (!movementData) {
+      chartContent = (
+        <View style={styles.chartPlaceholder}>
+          <ActivityIndicator color={config.color} size="large" />
+        </View>
+      );
+    } else {
+      chartContent = (
+        <LineChart
+          dates={movementData.days.map((d) => d.dateKey)}
+          series={[
+            {
+              label: "Steps",
+              color: METRIC_CONFIG.steps.color,
+              data: movementData.stepsNormalized,
+              maxLabel: movementData.stepsMax > 0 ? `max ${formatNumber(movementData.stepsMax)}` : undefined,
+            },
+            {
+              label: "Distance",
+              color: METRIC_CONFIG.walkingDistance.color,
+              data: movementData.distanceNormalized,
+              maxLabel: movementData.distanceMax > 0 ? `max ${movementData.distanceMax} km` : undefined,
+            },
+            {
+              label: "Energy",
+              color: METRIC_CONFIG.activeEnergy.color,
+              data: movementData.energyNormalized,
+              maxLabel: movementData.energyMax > 0 ? `max ${formatNumber(movementData.energyMax)} kcal` : undefined,
+            },
+          ]}
+          onDayPress={(date) => setSelectedDay(selectedDay === date ? null : date)}
+          selectedDay={selectedDay}
+        />
+      );
+    }
+  } else if (data === null) {
     chartContent = (
       <View style={styles.chartPlaceholder}>
         <ActivityIndicator color={config.color} size="large" />
@@ -443,6 +518,24 @@ export default function MetricDetailSheet({
             <Text style={[styles.averageText, { color: config.color }]}>
               {averageText}
             </Text>
+          )}
+
+          {/* Movement: 7-day stats for each of the three series */}
+          {isMovement && movementStats && (
+            <View style={styles.movementStatsBlock}>
+              <Text style={[styles.movementStatsRow, { color: METRIC_CONFIG.steps.color }]}>
+                Steps: avg {movementStats.steps.avg != null ? formatNumber(Math.round(movementStats.steps.avg)) : "\u2014"}
+                {movementStats.steps.max != null ? ` · max ${formatNumber(movementStats.steps.max)}` : ""}
+              </Text>
+              <Text style={[styles.movementStatsRow, { color: METRIC_CONFIG.walkingDistance.color }]}>
+                Distance: avg {movementStats.distance.avg != null ? `${(Math.round(movementStats.distance.avg * 10) / 10)} km` : "\u2014"}
+                {movementStats.distance.max != null ? ` · max ${movementStats.distance.max} km` : ""}
+              </Text>
+              <Text style={[styles.movementStatsRow, { color: METRIC_CONFIG.activeEnergy.color }]}>
+                Energy: avg {movementStats.energy.avg != null ? `${formatNumber(Math.round(movementStats.energy.avg))} kcal` : "\u2014"}
+                {movementStats.energy.max != null ? ` · max ${formatNumber(movementStats.energy.max)} kcal` : ""}
+              </Text>
+            </View>
           )}
         </View>
 
@@ -667,6 +760,27 @@ const styles = StyleSheet.create({
   dayRowValue: {
     fontSize: 15,
     color: "#aaa",
+  },
+  movementStatsBlock: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    gap: 4,
+  },
+  movementStatsRow: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  movementRowValues: {
+    marginTop: 6,
+    gap: 2,
+  },
+  movementValueText: {
+    fontSize: 13,
+    color: "#888",
+  },
+  movementValueNum: {
+    color: "#e0e0e0",
+    fontWeight: "600",
   },
   sourceSection: {
     paddingHorizontal: 20,

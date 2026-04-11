@@ -6,6 +6,7 @@ import {
   aggregateSleep,
   aggregateMeditation,
   pickLatestPerDay,
+  buildMovementOverlay,
   type DailyValue,
   type HeartRateDaily,
   type MetricKey,
@@ -413,5 +414,76 @@ describe("pickLatestPerDay", () => {
     expect(result.find((r) => r.date === "2026-03-13")!.value).toBe(74.5);
     expect(result.find((r) => r.date === "2026-03-14")!.value).toBe(75.0);
     expect(result.find((r) => r.date === "2026-03-15")!.value).toBe(75.5);
+  });
+});
+
+// ─── buildMovementOverlay ────────────────────────────────────────────────────
+
+describe("buildMovementOverlay", () => {
+  const mkDaily = (values: (number | null)[]): DailyValue[] =>
+    values.map((v, i) => ({ date: `2026-03-${String(10 + i).padStart(2, "0")}`, value: v }));
+
+  it("aligns by date and normalizes each series to its own max", () => {
+    const steps = mkDaily([5000, 8000, 10000]);
+    const distance = mkDaily([3, 5, 7]);
+    const energy = mkDaily([200, 350, 500]);
+
+    const result = buildMovementOverlay(steps, distance, energy);
+
+    expect(result.days).toHaveLength(3);
+    expect(result.stepsMax).toBe(10000);
+    expect(result.distanceMax).toBe(7);
+    expect(result.energyMax).toBe(500);
+
+    // Each series normalized to [0, 1]
+    expect(result.stepsNormalized).toEqual([0.5, 0.8, 1]);
+    expect(result.distanceNormalized![2]).toBe(1);
+    expect(result.energyNormalized![0]).toBe(200 / 500);
+  });
+
+  it("preserves null values as gaps in normalized series", () => {
+    const steps = mkDaily([5000, null, 10000]);
+    const distance = mkDaily([3, 5, 7]);
+    const energy = mkDaily([200, 350, 500]);
+
+    const result = buildMovementOverlay(steps, distance, energy);
+
+    expect(result.days[1].steps).toBeNull();
+    expect(result.stepsNormalized[1]).toBeNull();
+    expect(result.stepsNormalized[0]).toBe(0.5);
+    expect(result.stepsNormalized[2]).toBe(1);
+  });
+
+  it("handles all-null series without divide-by-zero", () => {
+    const steps = mkDaily([null, null, null]);
+    const distance = mkDaily([3, 5, 7]);
+    const energy = mkDaily([200, 350, 500]);
+
+    const result = buildMovementOverlay(steps, distance, energy);
+
+    expect(result.stepsMax).toBe(0);
+    expect(result.stepsNormalized).toEqual([null, null, null]);
+    expect(result.distanceNormalized[2]).toBe(1);
+  });
+
+  it("pulls distance/energy values from dateKey lookup (order-independent)", () => {
+    // distance and energy in different order — should still align by date
+    const steps: DailyValue[] = [
+      { date: "2026-03-10", value: 5000 },
+      { date: "2026-03-11", value: 8000 },
+    ];
+    const distance: DailyValue[] = [
+      { date: "2026-03-10", value: 3 },
+      { date: "2026-03-11", value: 5 },
+    ];
+    const energy: DailyValue[] = [
+      { date: "2026-03-10", value: 200 },
+      { date: "2026-03-11", value: 350 },
+    ];
+
+    const result = buildMovementOverlay(steps, distance, energy);
+    expect(result.days[0].steps).toBe(5000);
+    expect(result.days[0].distanceKm).toBe(3);
+    expect(result.days[0].energyKcal).toBe(200);
   });
 });

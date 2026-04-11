@@ -87,11 +87,9 @@ describe("App interactions", () => {
 
   it("shows metric cards after auto-grab", async () => {
     const { getByText } = await renderApp();
-    expect(getByText("Steps")).toBeTruthy();
+    expect(getByText("Movement")).toBeTruthy();
     expect(getByText("Heart Rate")).toBeTruthy();
     expect(getByText("Sleep")).toBeTruthy();
-    expect(getByText("Active Energy")).toBeTruthy();
-    expect(getByText("Walking Distance")).toBeTruthy();
     expect(getByText("Weight")).toBeTruthy();
     expect(getByText("Meditation")).toBeTruthy();
     expect(getByText("HRV")).toBeTruthy();
@@ -157,11 +155,9 @@ describe("MetricCard rendering after grab", () => {
 
     const { getByText, getAllByText } = await renderApp();
 
-    expect(getByText("Steps")).toBeTruthy();
+    expect(getByText("Movement")).toBeTruthy();
     expect(getByText("Heart Rate")).toBeTruthy();
     expect(getByText("Sleep")).toBeTruthy();
-    expect(getByText("Active Energy")).toBeTruthy();
-    expect(getByText("Walking Distance")).toBeTruthy();
     expect(getByText("Weight")).toBeTruthy();
     expect(getByText("Meditation")).toBeTruthy();
     expect(getByText("HRV")).toBeTruthy();
@@ -169,12 +165,12 @@ describe("MetricCard rendering after grab", () => {
     expect(getByText("Exercise")).toBeTruthy();
 
     const todaySublabels = getAllByText("today");
-    expect(todaySublabels.length).toBe(5); // steps, active energy, walking distance, meditation, exercise
+    expect(todaySublabels.length).toBe(2); // meditation, exercise (movement uses custom sublabel)
     const latestSublabels = getAllByText("latest");
     expect(latestSublabels.length).toBe(4); // heart rate, weight, hrv, resting hr
   });
 
-  it("shows all 10 metric cards after grab", async () => {
+  it("shows all metric cards after grab", async () => {
     (HealthKit.queryStatisticsForQuantity as jest.Mock).mockResolvedValue({
       sumQuantity: { quantity: 1000 },
     });
@@ -191,8 +187,7 @@ describe("MetricCard rendering after grab", () => {
     const { getByText } = await renderApp();
 
     const metricLabels = [
-      "Steps", "Heart Rate", "Sleep", "Active Energy",
-      "Walking Distance", "Weight", "Meditation",
+      "Movement", "Heart Rate", "Sleep", "Weight", "Meditation",
       "HRV", "Resting HR", "Exercise",
     ];
 

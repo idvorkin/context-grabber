@@ -17,7 +17,8 @@ export type MetricKey =
   | "meditation"
   | "hrv"
   | "restingHeartRate"
-  | "exerciseMinutes";
+  | "exerciseMinutes"
+  | "movement";
 
 export type ChartType = "bar" | "line";
 
@@ -40,6 +41,10 @@ export const METRIC_CONFIG: Record<MetricKey, MetricConfig> = {
   hrv: { label: "HRV", unit: "ms", color: "#48bfe3", chartType: "line", sublabel: "latest" },
   restingHeartRate: { label: "Resting HR", unit: "bpm", color: "#f4845f", chartType: "line", sublabel: "latest" },
   exerciseMinutes: { label: "Exercise", unit: "min", color: "#57cc99", chartType: "bar", sublabel: "today" },
+  // Composite metric: merges steps + walkingDistance + activeEnergy. The card
+  // shows steps as the big number with a "<distance> · <energy>" subtext; the
+  // detail sheet renders a normalized 3-series overlay line chart.
+  movement: { label: "Movement", unit: "", color: "#4cc9f0", chartType: "line", sublabel: "today" },
 };
 
 /** A single-value day bucket (used by most metrics). */
@@ -299,4 +304,91 @@ export function pickLatestPerDay(
   }
 
   return results;
+}
+
+// ─── Movement (composite) ─────────────────────────────────────────────────────
+
+/** Per-day absolute values for the three movement metrics. */
+export type MovementSeriesDay = {
+  dateKey: string; // "YYYY-MM-DD"
+  steps: number | null;
+  distanceKm: number | null;
+  energyKcal: number | null;
+};
+
+/**
+ * Normalized overlay data for the Movement metric's detail chart. Each series
+ * is scaled to its own 7-day max so all three fit on a shared 0–1 Y axis.
+ */
+export type MovementOverlayData = {
+  days: MovementSeriesDay[]; // sorted ascending by date (oldest first)
+  stepsMax: number;
+  distanceMax: number;
+  energyMax: number;
+  /** Same order as `days`. Values in [0, 1] or null. */
+  stepsNormalized: (number | null)[];
+  distanceNormalized: (number | null)[];
+  energyNormalized: (number | null)[];
+};
+
+function seriesMax(values: (number | null)[]): number {
+  let max = 0;
+  for (const v of values) {
+    if (v !== null && v > max) max = v;
+  }
+  return max;
+}
+
+function normalizeSeries(values: (number | null)[], max: number): (number | null)[] {
+  const denom = max > 0 ? max : 1;
+  return values.map((v) => (v === null ? null : v / denom));
+}
+
+/**
+ * Build a normalized 3-series overlay from the three underlying daily arrays.
+ *
+ * All three inputs are expected to cover the same date range in the same
+ * order (the existing `bucketByDay` pipeline produces them in aligned order).
+ * Missing days in any series stay null and render as gaps in the line.
+ */
+export function buildMovementOverlay(
+  stepsDaily: DailyValue[],
+  distanceDaily: DailyValue[],
+  energyDaily: DailyValue[],
+): MovementOverlayData {
+  // Align by date key. Use steps as the source of truth for the date list
+  // (all three should be same length from bucketByDay, but be defensive).
+  const dateKeys = stepsDaily.map((d) => d.date);
+  const byDate = <T extends DailyValue>(series: T[]): Map<string, number | null> => {
+    const m = new Map<string, number | null>();
+    for (const d of series) m.set(d.date, d.value);
+    return m;
+  };
+  const distMap = byDate(distanceDaily);
+  const energyMap = byDate(energyDaily);
+
+  const days: MovementSeriesDay[] = dateKeys.map((dateKey, i) => ({
+    dateKey,
+    steps: stepsDaily[i].value,
+    distanceKm: distMap.get(dateKey) ?? null,
+    energyKcal: energyMap.get(dateKey) ?? null,
+  }));
+
+  const stepsValues = days.map((d) => d.steps);
+  const distanceValues = days.map((d) => d.distanceKm);
+  const energyValues = days.map((d) => d.energyKcal);
+
+  const stepsMax = seriesMax(stepsValues);
+  const distanceMax = seriesMax(distanceValues);
+  const energyMax = seriesMax(energyValues);
+
+  return {
+    days,
+    stepsMax,
+    distanceMax,
+    energyMax,
+    stepsNormalized: normalizeSeries(stepsValues, stepsMax),
+    distanceNormalized: normalizeSeries(distanceValues, distanceMax),
+    energyNormalized: normalizeSeries(energyValues, energyMax),
+  };
 }

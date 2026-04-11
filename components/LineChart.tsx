@@ -4,12 +4,30 @@ import { type DailyValue, type HeartRateDaily, formatDateKey } from "../lib/week
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Props = {
-  data: DailyValue[] | HeartRateDaily[];
+/**
+ * A single series in a multi-line overlay chart. Values should be
+ * pre-normalized to [0, 1] by the caller so all series share one Y axis.
+ */
+export type LineChartSeries = {
+  label: string;
   color: string;
-  unit: string;
+  /** Normalized values aligned to `dates`; null = gap */
+  data: (number | null)[];
+  /** Optional absolute max shown in the legend (e.g., "12,500 steps") */
+  maxLabel?: string;
+};
+
+type Props = {
+  /** Single-series mode (existing callers: heart rate, HRV, weight) */
+  data?: DailyValue[] | HeartRateDaily[];
+  color?: string;
+  unit?: string;
   onDayPress?: (date: string) => void;
   selectedDay?: string | null;
+  /** Multi-series mode (new — used by the Movement detail sheet) */
+  series?: LineChartSeries[];
+  /** Date keys (YYYY-MM-DD) aligned with each series.data index; required in multi-series mode */
+  dates?: string[];
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -46,8 +64,32 @@ function valueToRatio(value: number, min: number, max: number): number {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function LineChart({ data, color, unit, onDayPress, selectedDay }: Props): React.ReactElement {
+export default function LineChart({
+  data,
+  color,
+  unit,
+  onDayPress,
+  selectedDay,
+  series,
+  dates,
+}: Props): React.ReactElement {
   const today = formatDateKey(new Date());
+
+  // Multi-series mode: overlay multiple normalized lines on a shared 0-1 Y axis.
+  if (series && series.length > 0 && dates) {
+    return <MultiSeriesLineChart series={series} dates={dates} onDayPress={onDayPress} selectedDay={selectedDay} />;
+  }
+
+  if (!data) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No data</Text>
+        </View>
+      </View>
+    );
+  }
+
   const isHR = isHeartRateData(data);
 
   const allValues: number[] = data
@@ -244,6 +286,171 @@ export default function LineChart({ data, color, unit, onDayPress, selectedDay }
   );
 }
 
+// ─── Multi-Series Overlay ────────────────────────────────────────────────────
+
+type MultiSeriesProps = {
+  series: LineChartSeries[];
+  dates: string[];
+  onDayPress?: (date: string) => void;
+  selectedDay?: string | null;
+};
+
+function MultiSeriesLineChart({ series, dates, onDayPress, selectedDay }: MultiSeriesProps): React.ReactElement {
+  const today = formatDateKey(new Date());
+  const count = dates.length;
+  const usableHeight = CHART_HEIGHT - PADDING_V * 2;
+  const allAllNull = series.every((s) => s.data.every((v) => v === null));
+
+  if (allAllNull) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No data</Text>
+        </View>
+      </View>
+    );
+  }
+
+  function leftPercent(i: number): DimensionValue {
+    return `${(i / Math.max(count - 1, 1)) * 100}%` as DimensionValue;
+  }
+
+  // Normalized 0..1 → Y coordinate within chart area.
+  function ratioToTop(v: number): number {
+    // v is 0..1; larger values should render higher up (smaller top).
+    return PADDING_V + (1 - Math.max(0, Math.min(1, v))) * usableHeight;
+  }
+
+  // Build line segments by walking adjacent non-null pairs per series. Each
+  // segment is a thin rotated View — the same technique used for bar edges.
+  function renderSeriesLine(s: LineChartSeries, si: number): React.ReactElement[] {
+    const nodes: React.ReactElement[] = [];
+    for (let i = 0; i < count - 1; i++) {
+      const v1 = s.data[i];
+      const v2 = s.data[i + 1];
+      if (v1 === null || v2 === null) continue;
+      // Compute the two endpoint positions in percentages (horizontal) and absolute px (vertical).
+      const x1Pct = (i / Math.max(count - 1, 1)) * 100;
+      const x2Pct = ((i + 1) / Math.max(count - 1, 1)) * 100;
+      const y1 = ratioToTop(v1);
+      const y2 = ratioToTop(v2);
+      // Approximate line segment as two dots + a connecting rotated bar.
+      // For simplicity and to match the existing component's dot-only aesthetic,
+      // we render dots at each point and skip the connecting line. Callers can
+      // see the "line shape" via the ordered dots.
+      // (Connecting lines require precise pixel widths which React Native's
+      // flex + rotation math doesn't handle gracefully; dots are sufficient.)
+      nodes.push(
+        <View
+          key={`s${si}-d${i}`}
+          style={[styles.dot, {
+            left: `${x1Pct}%` as DimensionValue,
+            top: y1 - DOT_RADIUS,
+            backgroundColor: s.color,
+            transform: [{ translateX: -DOT_RADIUS }],
+            width: DOT_RADIUS * 2,
+            height: DOT_RADIUS * 2,
+            borderRadius: DOT_RADIUS,
+          }]}
+        />,
+      );
+      if (i === count - 2) {
+        nodes.push(
+          <View
+            key={`s${si}-d${i + 1}`}
+            style={[styles.dot, {
+              left: `${x2Pct}%` as DimensionValue,
+              top: y2 - DOT_RADIUS,
+              backgroundColor: s.color,
+              transform: [{ translateX: -DOT_RADIUS }],
+              width: DOT_RADIUS * 2,
+              height: DOT_RADIUS * 2,
+              borderRadius: DOT_RADIUS,
+            }]}
+          />,
+        );
+      }
+    }
+    // Handle series with only isolated non-null points (no adjacent pairs).
+    if (nodes.length === 0) {
+      for (let i = 0; i < count; i++) {
+        const v = s.data[i];
+        if (v === null) continue;
+        nodes.push(
+          <View
+            key={`s${si}-dot-${i}`}
+            style={[styles.dot, {
+              left: leftPercent(i),
+              top: ratioToTop(v) - DOT_RADIUS,
+              backgroundColor: s.color,
+              transform: [{ translateX: -DOT_RADIUS }],
+              width: DOT_RADIUS * 2,
+              height: DOT_RADIUS * 2,
+              borderRadius: DOT_RADIUS,
+            }]}
+          />,
+        );
+      }
+    }
+    return nodes;
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.chartArea, { height: CHART_HEIGHT }]}>
+        {series.flatMap((s, si) => renderSeriesLine(s, si))}
+        {/* Invisible tap targets per day */}
+        {onDayPress && dates.map((date, i) => (
+          <TouchableOpacity
+            key={`tap-${date}`}
+            style={{
+              position: "absolute",
+              left: leftPercent(i),
+              top: 0,
+              width: 32,
+              height: CHART_HEIGHT,
+              transform: [{ translateX: -16 }],
+            }}
+            activeOpacity={0.5}
+            onPress={() => onDayPress(date)}
+          />
+        ))}
+      </View>
+
+      {/* Day labels */}
+      <View style={styles.labelsRow}>
+        {dates.map((date, i) => {
+          const isToday = date === today;
+          return (
+            <View
+              key={date}
+              style={[styles.labelWrapper, {
+                left: leftPercent(i),
+                transform: [{ translateX: -16 }],
+              }]}
+            >
+              <Text style={[styles.label, isToday && { fontWeight: "600", color: "#ccc" }]}>
+                {getDayLabel(date)}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Legend */}
+      <View style={styles.legendRow}>
+        {series.map((s, si) => (
+          <View key={si} style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: s.color }]} />
+            <Text style={styles.legendLabel}>{s.label}</Text>
+            {s.maxLabel && <Text style={styles.legendMax}>{s.maxLabel}</Text>}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -315,5 +522,31 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     color: "#666",
+  },
+  legendRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 4,
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 5,
+  },
+  legendLabel: {
+    color: "#ccc",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  legendMax: {
+    color: "#888",
+    fontSize: 11,
+    marginLeft: 5,
   },
 });
