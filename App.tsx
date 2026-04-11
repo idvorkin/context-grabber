@@ -893,6 +893,36 @@ export default function App() {
     }
   }
 
+  /**
+   * Background prefetch of 7-day weekly data for every card. Runs after the
+   * main grab so the UI renders immediately, then populates both weeklyCache
+   * and statsCache so box plots appear on all cards without the user having
+   * to tap each one. Past days hit the SQLite cache (lib/healthCache.ts)
+   * so the cost after the first populate is just today's HealthKit queries.
+   *
+   * Non-fatal on error: cards just keep showing em-dashes until the user
+   * taps them, which matches the pre-prefetch behavior.
+   */
+  async function prefetchAllWeeklyStats() {
+    const keys: MetricKey[] = [
+      "steps", "heartRate", "sleep", "activeEnergy", "walkingDistance",
+      "weight", "meditation", "hrv", "restingHeartRate", "exerciseMinutes",
+    ];
+    try {
+      const all = await Promise.all(keys.map((k) => grabWeeklyData(k)));
+      const nextWeekly: Partial<Record<MetricKey, DailyValue[] | HeartRateDaily[]>> = {};
+      const nextStats: Partial<Record<MetricKey, BoxPlotStats | null>> = {};
+      keys.forEach((k, i) => {
+        nextWeekly[k] = all[i];
+        nextStats[k] = computeStatsForMetric(k, all[i]);
+      });
+      setWeeklyCache((prev) => ({ ...prev, ...nextWeekly }));
+      setStatsCache((prev) => ({ ...prev, ...nextStats }));
+    } catch (e) {
+      console.warn("Background weekly prefetch failed:", e);
+    }
+  }
+
   async function handleMetricPress(key: MetricKey) {
     setSelectedMetric(key);
     setWeeklyError(null);
@@ -991,6 +1021,10 @@ export default function App() {
         locationHistory,
       };
       setSnapshot(result);
+      // Kick off 7-day prefetch in the background so box plots appear on
+      // every card without the user having to tap each one. Not awaited —
+      // the UI renders immediately with today's values.
+      void prefetchAllWeeklyStats();
     } catch (e: any) {
       setError(e.message ?? "Something went wrong");
     } finally {
