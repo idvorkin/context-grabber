@@ -87,6 +87,16 @@ Tests live in `__tests__/` and cover pure functions only (no device/HealthKit mo
 
 Real GPS fixture data: `__tests__/fixtures/locations.json` (36K+ points from real device)
 
+## Spec-First Workflow
+
+**Always update the spec before touching implementation, and check that the spec is still coherent.** Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; implementation plans (if needed) live alongside in `docs/superpowers/plans/`. If a user asks for a feature, the sequence is:
+
+1. Find or write the spec (summary, goals/non-goals, design, data model, acceptance criteria).
+2. Confirm the spec with the user — they can edit it independently of code.
+3. Only then touch code.
+
+When modifying an existing feature, re-read its spec first. If the spec no longer matches reality, update the spec in the same change as the code. Never let implementation drift silently from spec.
+
 ## Key Patterns
 
 - All HealthKit queries use `Promise.allSettled()` — individual metric failures return `null`, don't crash the grab
