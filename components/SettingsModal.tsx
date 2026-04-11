@@ -13,7 +13,7 @@ import {
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type { CategoryTypeIdentifier } from "@kingstinct/react-native-healthkit";
 import type * as SQLite from "expo-sqlite";
-import { setSetting, pruneLocations, getLocationCount } from "../lib/db";
+import { setSetting, pruneLocations, getLocationCount, setSleepTarget } from "../lib/db";
 
 const CTI_SLEEP =
   "HKCategoryTypeIdentifierSleepAnalysis" as CategoryTypeIdentifier;
@@ -32,6 +32,8 @@ type SettingsModalProps = {
   setError: (error: string) => void;
   startTracking: () => Promise<boolean>;
   stopTracking: () => Promise<boolean>;
+  sleepTargetHours: number;
+  setSleepTargetHours: (hours: number) => void;
 };
 
 export default function SettingsModal({
@@ -48,7 +50,10 @@ export default function SettingsModal({
   setError,
   startTracking,
   stopTracking,
+  sleepTargetHours,
+  setSleepTargetHours,
 }: SettingsModalProps) {
+  const [sleepExpanded, setSleepExpanded] = useState(false);
   const [trackingExpanded, setTrackingExpanded] = useState(false);
   const [debugExpanded, setDebugExpanded] = useState(false);
   const [debugSleepData, setDebugSleepData] = useState<string | null>(null);
@@ -118,6 +123,33 @@ export default function SettingsModal({
           </TouchableOpacity>
         </View>
         <ScrollView style={styles.modalContent} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 300 }}>
+          <View style={styles.card}>
+            <TouchableOpacity onPress={() => setSleepExpanded(!sleepExpanded)} style={styles.settingRow}>
+              <Text style={styles.sectionTitle}>Sleep</Text>
+              <Text style={{ color: "#888", fontSize: 16 }}>{sleepExpanded ? "\u25B2" : "\u25BC"}</Text>
+            </TouchableOpacity>
+            {sleepExpanded && (
+              <View style={styles.settingRow}>
+                <Text style={styles.settingText}>Target hours</Text>
+                <TextInput
+                  style={styles.retentionInput}
+                  value={String(sleepTargetHours)}
+                  onChangeText={(text) => {
+                    const n = parseFloat(text);
+                    if (Number.isFinite(n)) {
+                      const clamped = Math.max(4, Math.min(12, n));
+                      setSleepTargetHours(clamped);
+                      if (db) setSleepTarget(db, clamped).catch(() => {});
+                    }
+                  }}
+                  keyboardType="decimal-pad"
+                  maxLength={4}
+                  selectTextOnFocus
+                />
+              </View>
+            )}
+          </View>
+
           <View style={styles.card}>
             <TouchableOpacity onPress={() => setTrackingExpanded(!trackingExpanded)} style={styles.settingRow}>
               <Text style={styles.sectionTitle}>Location Tracking</Text>

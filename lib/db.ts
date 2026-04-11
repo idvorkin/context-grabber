@@ -42,6 +42,7 @@ export async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
     INSERT OR IGNORE INTO settings (key, value) VALUES ('schema_version', '1');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('retention_days', '30');
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('sleep_target_hours', '8');
   `);
   await initCacheTables(db);
 }
@@ -67,6 +68,23 @@ export async function setSetting(
     "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
     [key, value],
   );
+}
+
+// ─── Sleep target (hours/night) ──────────────────────────────────────────────
+
+export async function getSleepTarget(db: SQLite.SQLiteDatabase): Promise<number> {
+  const raw = await getSetting(db, "sleep_target_hours", "8");
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n) || n <= 0) return 8;
+  return n;
+}
+
+export async function setSleepTarget(
+  db: SQLite.SQLiteDatabase,
+  hours: number,
+): Promise<void> {
+  const clamped = Math.max(4, Math.min(12, hours));
+  await setSetting(db, "sleep_target_hours", String(clamped));
 }
 
 export async function insertLocation(

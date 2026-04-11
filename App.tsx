@@ -29,8 +29,10 @@ import {
   DB_NAME, openDB, initDB, getSetting, setSetting,
   insertLocation, pruneLocations, getLocationCount, getLocationStorageBytes,
   getKnownPlaces, addKnownPlace, deleteKnownPlace, getLocationHistory,
+  getSleepTarget, setSleepTarget,
   type LocationHistoryItem,
 } from "./lib/db";
+import { aggregateSleepDetailed, type SleepDaily } from "./lib/sleep";
 import { buildActivityTimeline, type ActivityTimeline } from "./lib/activity";
 import { buildSummary, formatNumber } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
@@ -341,6 +343,8 @@ export default function App() {
   const [aboutVisible, setAboutVisible] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
   const [weeklyCache, setWeeklyCache] = useState<Partial<Record<MetricKey, DailyValue[] | HeartRateDaily[]>>>({});
+  const [sleepDetailedCache, setSleepDetailedCache] = useState<SleepDaily[] | null>(null);
+  const [sleepTargetHours, setSleepTargetHoursState] = useState<number>(8);
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyError, setWeeklyError] = useState<string | null>(null);
   const [statsCache, setStatsCache] = useState<Partial<Record<MetricKey, BoxPlotStats | null>>>({});
@@ -369,6 +373,9 @@ export default function App() {
 
         const days = await getSetting(database, "retention_days", "30");
         setRetentionDays(days);
+
+        const target = await getSleepTarget(database);
+        setSleepTargetHoursState(target);
 
         const count = await getLocationCount(database);
         setLocationCount(count);
@@ -750,8 +757,13 @@ export default function App() {
         startDate: new Date(s.startDate).toISOString(),
         endDate: new Date(s.endDate).toISOString(),
         value: s.value,
+        source: s.sourceName,
       }));
       results = aggregateSleep(rawSamples as any, now);
+      // Also build the detailed per-night breakdown (stages, bedtime, wake, samples)
+      // for the sleep detail sheet.
+      const detailed = aggregateSleepDetailed(rawSamples as any, now);
+      setSleepDetailedCache(detailed);
     }
 
     // Cache past days
@@ -1309,6 +1321,8 @@ export default function App() {
         setError={setError}
         startTracking={startTracking}
         stopTracking={stopTracking}
+        sleepTargetHours={sleepTargetHours}
+        setSleepTargetHours={setSleepTargetHoursState}
       />
 
       <ScrollView
@@ -1445,6 +1459,8 @@ export default function App() {
             workoutsByDay={selectedMetric === "exerciseMinutes" ? workoutsByDay : undefined}
             activityTimelineByDay={selectedMetric === "exerciseMinutes" ? activityTimelineByDay : undefined}
             movementData={movementData}
+            sleepDetailed={selectedMetric === "sleep" ? sleepDetailedCache : null}
+            sleepTargetHours={selectedMetric === "sleep" ? sleepTargetHours : null}
             fetchRawCache={db && selectedMetric !== "movement" ? async () => {
               const dateKeys = buildDateKeys(new Date(), 7);
               const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);

@@ -23,11 +23,19 @@ import {
   type HeartRateDaily,
   type MovementOverlayData,
 } from "../lib/weekly";
+import {
+  computeSleepDebt,
+  computeConsistencyStats,
+  SLEEP_STAGE_COLORS,
+  type SleepDaily,
+} from "../lib/sleep";
 import { formatNumber } from "../lib/summary";
 import BarChart from "./BarChart";
 import LineChart from "./LineChart";
 import ActivityTimelineChart from "./ActivityTimeline";
 import HourlyBoxPlot from "./HourlyBoxPlot";
+import SleepStageStrip from "./SleepStageStrip";
+import SleepConsistencyChart from "./SleepConsistencyChart";
 import type { ActivityTimeline } from "../lib/activity";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,6 +55,10 @@ type MetricDetailSheetProps = {
   fetchRawCache?: () => Promise<string>;
   /** Movement composite overlay (only used when metricKey === "movement") */
   movementData?: MovementOverlayData | null;
+  /** Detailed sleep per-night data (only used when metricKey === "sleep") */
+  sleepDetailed?: SleepDaily[] | null;
+  /** Sleep target in hours (for the debt line) */
+  sleepTargetHours?: number | null;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -91,6 +103,21 @@ function formatDailyValue(item: DailyValue, unit: string): string {
   return `${formatted} ${unit}`;
 }
 
+function formatSleepDebt(debtHours: number, targetHours: number): string {
+  if (debtHours <= 0) return "Sleep debt: 0m (caught up!)";
+  const h = Math.floor(debtHours);
+  const m = Math.round((debtHours - h) * 60);
+  const debtStr = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+  return `Sleep debt: \u2212${debtStr} over 7 days (target ${targetHours}h)`;
+}
+
+function sleepDebtColor(debtHours: number): string {
+  if (debtHours <= 0) return "#8d99ae";
+  if (debtHours > 4) return "#e63946";
+  if (debtHours > 2) return "#f4845f";
+  return "#8d99ae";
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /** Format UTC ISO timestamp as local 12-hour time (intentional: users see sleep times in their timezone). */
@@ -116,8 +143,11 @@ export default function MetricDetailSheet({
   activityTimelineByDay,
   fetchRawCache,
   movementData,
+  sleepDetailed,
+  sleepTargetHours,
 }: MetricDetailSheetProps): React.ReactElement {
   const isMovement = metricKey === "movement";
+  const isSleep = metricKey === "sleep";
   const screenHeight = Dimensions.get("window").height;
   const config = METRIC_CONFIG[metricKey];
   const sourceNames = useMemo(
@@ -237,6 +267,41 @@ export default function MetricDetailSheet({
     }),
   ).current;
 
+  // ─── Sleep derived values ───────────────────────────────────────────────────
+
+  const sleepDebt = useMemo(() => {
+    if (!isSleep || !sleepDetailed || !sleepTargetHours) return null;
+    return computeSleepDebt(sleepDetailed, sleepTargetHours);
+  }, [isSleep, sleepDetailed, sleepTargetHours]);
+
+  const sleepConsistency = useMemo(() => {
+    if (!isSleep || !sleepDetailed) return null;
+    return computeConsistencyStats(sleepDetailed);
+  }, [isSleep, sleepDetailed]);
+
+  // Last-night stage percentages (from the most recent non-zero night)
+  const lastNightStages = useMemo(() => {
+    if (!isSleep || !sleepDetailed) return null;
+    // Find the most recent night with any stage data
+    for (let i = sleepDetailed.length - 1; i >= 0; i--) {
+      const n = sleepDetailed[i];
+      const total = n.coreHours + n.deepHours + n.remHours + n.awakeHours;
+      if (total > 0) {
+        return {
+          corePct: Math.round((n.coreHours / total) * 100),
+          deepPct: Math.round((n.deepHours / total) * 100),
+          remPct: Math.round((n.remHours / total) * 100),
+          awakePct: Math.round((n.awakeHours / total) * 100),
+          coreHours: n.coreHours,
+          deepHours: n.deepHours,
+          remHours: n.remHours,
+          awakeHours: n.awakeHours,
+        };
+      }
+    }
+    return null;
+  }, [isSleep, sleepDetailed]);
+
   // ─── Average ────────────────────────────────────────────────────────────────
 
   let averageText: string | null = null;
@@ -280,7 +345,25 @@ export default function MetricDetailSheet({
   // ─── Daily rows (most recent first) ─────────────────────────────────────────
 
   let dailyRows: React.ReactElement[] | null = null;
-  if (isMovement && movementData && !error) {
+  if (isSleep && sleepDetailed && !error) {
+    // Sleep: show row with total + per-night stage strip below
+    const reversedNights = [...sleepDetailed].reverse();
+    dailyRows = reversedNights.map((night, index) => (
+      <View key={night.date}>
+        <View style={[styles.dayRow, index > 0 && styles.dayRowDivider]}>
+          <Text style={styles.dayRowLabel}>{formatDayRow(night.date)}</Text>
+          <Text style={styles.dayRowValue}>
+            {night.totalHours != null ? `${night.totalHours}h` : "\u2014"}
+          </Text>
+        </View>
+        <SleepStageStrip
+          samples={night.samples}
+          bedtime={night.bedtime}
+          wakeTime={night.wakeTime}
+        />
+      </View>
+    ));
+  } else if (isMovement && movementData && !error) {
     // Movement: three values per day (steps, distance, energy)
     const reversedDays = [...movementData.days].reverse();
     dailyRows = reversedDays.map((d, index) => (
@@ -387,6 +470,18 @@ export default function MetricDetailSheet({
       <View style={styles.chartPlaceholder}>
         <Text style={styles.errorText}>{error}</Text>
       </View>
+    );
+  } else if (isSleep && sleepDetailed && sleepDetailed.length > 0) {
+    chartContent = (
+      <BarChart
+        data={[]}
+        color={config.color}
+        unit={config.unit}
+        onDayPress={(date) => setSelectedDay(selectedDay === date ? null : date)}
+        selectedDay={selectedDay}
+        stackedSleep={sleepDetailed}
+        goalLine={sleepTargetHours ?? null}
+      />
     );
   } else if (config.chartType === "bar") {
     chartContent = (
@@ -535,6 +630,48 @@ export default function MetricDetailSheet({
                 Energy: avg {movementStats.energy.avg != null ? `${formatNumber(Math.round(movementStats.energy.avg))} kcal` : "\u2014"}
                 {movementStats.energy.max != null ? ` · max ${formatNumber(movementStats.energy.max)} kcal` : ""}
               </Text>
+            </View>
+          )}
+
+          {/* Sleep: debt + stage percentages + consistency */}
+          {isSleep && sleepDetailed && sleepDetailed.length > 0 && (
+            <View style={styles.sleepStatsBlock}>
+              {sleepDebt !== null && sleepTargetHours != null && (
+                <Text style={[styles.sleepDebtLine, { color: sleepDebtColor(sleepDebt) }]}>
+                  {formatSleepDebt(sleepDebt, sleepTargetHours)}
+                </Text>
+              )}
+              {lastNightStages && (
+                <View style={styles.stagePercentRow}>
+                  {lastNightStages.coreHours > 0 && (
+                    <Text style={[styles.stagePercentItem, { color: SLEEP_STAGE_COLORS.Core }]}>
+                      Core {lastNightStages.corePct}%
+                    </Text>
+                  )}
+                  {lastNightStages.deepHours > 0 && (
+                    <Text style={[styles.stagePercentItem, { color: SLEEP_STAGE_COLORS.Deep }]}>
+                      Deep {lastNightStages.deepPct}%
+                    </Text>
+                  )}
+                  {lastNightStages.remHours > 0 && (
+                    <Text style={[styles.stagePercentItem, { color: SLEEP_STAGE_COLORS.REM }]}>
+                      REM {lastNightStages.remPct}%
+                    </Text>
+                  )}
+                  {lastNightStages.awakeHours > 0 && (
+                    <Text style={[styles.stagePercentItem, { color: SLEEP_STAGE_COLORS.Awake }]}>
+                      Awake {lastNightStages.awakePct}%
+                    </Text>
+                  )}
+                </View>
+              )}
+              {sleepConsistency && (
+                <SleepConsistencyChart
+                  nights={sleepDetailed}
+                  bedtimeStdevMin={sleepConsistency.bedtimeStdevMinutes}
+                  wakeStdevMin={sleepConsistency.wakeStdevMinutes}
+                />
+              )}
             </View>
           )}
         </View>
@@ -760,6 +897,25 @@ const styles = StyleSheet.create({
   dayRowValue: {
     fontSize: 15,
     color: "#aaa",
+  },
+  sleepStatsBlock: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    gap: 6,
+  },
+  sleepDebtLine: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  stagePercentRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginTop: 2,
+  },
+  stagePercentItem: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   movementStatsBlock: {
     marginTop: 12,
