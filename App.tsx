@@ -140,9 +140,23 @@ type MetricCardProps = {
   onPress: (key: MetricKey) => void;
   boxPlotStats?: BoxPlotStats | null;
   color?: string;
+  /** Multi-box-plot mode: used by composite metrics (Movement) to stack mini
+   *  box plots for each underlying series. When present, overrides
+   *  boxPlotStats and renders the sublabel above the stack. */
+  boxPlotStatsList?: Array<{ stats: BoxPlotStats; color: string }>;
 };
 
-function MetricCard({ metricKey, label, value, sublabel, fullWidth, onPress, boxPlotStats, color }: MetricCardProps) {
+function MetricCard({
+  metricKey,
+  label,
+  value,
+  sublabel,
+  fullWidth,
+  onPress,
+  boxPlotStats,
+  color,
+  boxPlotStatsList,
+}: MetricCardProps) {
   const isNull = value === "\u2014";
   return (
     <TouchableOpacity
@@ -154,7 +168,16 @@ function MetricCard({ metricKey, label, value, sublabel, fullWidth, onPress, box
       <Text style={[styles.metricValue, isNull && styles.metricValueNull]}>
         {value}
       </Text>
-      {boxPlotStats && color ? (
+      {boxPlotStatsList && boxPlotStatsList.length > 0 ? (
+        <>
+          <Text style={styles.metricSublabel}>{sublabel}</Text>
+          <View style={{ marginTop: 4 }}>
+            {boxPlotStatsList.map((item, i) => (
+              <BoxPlot key={i} stats={item.stats} color={item.color} compact />
+            ))}
+          </View>
+        </>
+      ) : boxPlotStats && color ? (
         <BoxPlot stats={boxPlotStats} color={color} />
       ) : (
         <Text style={styles.metricSublabel}>{sublabel}</Text>
@@ -1119,16 +1142,25 @@ export default function App() {
     return `${distPart} \u00b7 ${enPart}`;
   })();
 
+  // Movement card: three mini box plots stacked (steps / distance / energy),
+  // each in its own color so they're readable without labels.
+  const movementBoxPlotList = [
+    statsCache.steps ? { stats: statsCache.steps, color: METRIC_CONFIG.steps.color } : null,
+    statsCache.walkingDistance ? { stats: statsCache.walkingDistance, color: METRIC_CONFIG.walkingDistance.color } : null,
+    statsCache.activeEnergy ? { stats: statsCache.activeEnergy, color: METRIC_CONFIG.activeEnergy.color } : null,
+  ].filter((x): x is { stats: BoxPlotStats; color: string } => x !== null);
+
   const metrics: MetricCardProps[] = snapshot
     ? [
-        // Movement: steps as the big headline, distance + energy as sublabel
+        // Movement: steps as the big headline, distance + energy as sublabel,
+        // plus three stacked mini box plots (one per underlying series).
         {
           metricKey: "movement" as MetricKey,
           label: "Movement",
           value: h?.steps != null ? formatNumber(h.steps) : "\u2014",
           sublabel: movementSublabel,
           onPress: handleMetricPress,
-          boxPlotStats: statsCache.steps,
+          boxPlotStatsList: movementBoxPlotList.length > 0 ? movementBoxPlotList : undefined,
           color: METRIC_CONFIG.movement.color,
         },
         {
@@ -1308,6 +1340,7 @@ export default function App() {
                   fullWidth={metrics.length % 2 === 1 && i === metrics.length - 1}
                   onPress={handleMetricPress}
                   boxPlotStats={m.boxPlotStats}
+                  boxPlotStatsList={m.boxPlotStatsList}
                   color={m.color}
                 />
               ))}

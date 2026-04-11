@@ -5,6 +5,7 @@ import type { BoxPlotStats } from "../lib/stats";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PLOT_HEIGHT = 24;
+const PLOT_HEIGHT_COMPACT = 12;
 const DOT_SIZE = 4;
 const DOT_ROW_HEIGHT = 10;
 const WHISKER_WIDTH = 1;
@@ -15,6 +16,8 @@ const MEDIAN_WIDTH = 2;
 type Props = {
   stats: BoxPlotStats;
   color: string;
+  /** Compact variant: no dot row, slim plot row. Used when stacking multiple. */
+  compact?: boolean;
 };
 
 // ─── BoxPlot ──────────────────────────────────────────────────────────────────
@@ -28,23 +31,26 @@ type Props = {
  *
  * All positions are computed as percentages of the full range (min–max).
  */
-export default function BoxPlot({ stats, color }: Props): React.JSX.Element {
+export default function BoxPlot({ stats, color, compact = false }: Props): React.JSX.Element {
   const { min, max, p5, p25, p50, p75, p95, values } = stats;
   const range = max - min;
+  const plotHeight = compact ? PLOT_HEIGHT_COMPACT : PLOT_HEIGHT;
 
   // When all values are identical, show a single centered bar.
   if (range === 0) {
     return (
-      <View style={styles.container}>
-        <View style={styles.dotRow}>
-          <View
-            style={[
-              styles.dot,
-              { backgroundColor: color, left: "50%" },
-            ]}
-          />
-        </View>
-        <View style={[styles.plotRow, { height: PLOT_HEIGHT }]}>
+      <View style={compact ? styles.containerCompact : styles.container}>
+        {!compact && (
+          <View style={styles.dotRow}>
+            <View
+              style={[
+                styles.dot,
+                { backgroundColor: color, left: "50%" },
+              ]}
+            />
+          </View>
+        )}
+        <View style={[styles.plotRow, { height: plotHeight }]}>
           <View
             style={[
               styles.medianLine,
@@ -72,25 +78,27 @@ export default function BoxPlot({ stats, color }: Props): React.JSX.Element {
   const dimColor = `${color}4D`;
 
   return (
-    <View style={styles.container}>
-      {/* Dot row: individual data points */}
-      <View style={styles.dotRow}>
-        {values.map((v, i) => (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              {
-                backgroundColor: dimColor,
-                left: `${toPercent(v)}%`,
-              },
-            ]}
-          />
-        ))}
-      </View>
+    <View style={compact ? styles.containerCompact : styles.container}>
+      {/* Dot row: individual data points (hidden in compact mode) */}
+      {!compact && (
+        <View style={styles.dotRow}>
+          {values.map((v, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: dimColor,
+                  left: `${toPercent(v)}%`,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      )}
 
       {/* Box plot row */}
-      <View style={[styles.plotRow, { height: PLOT_HEIGHT }]}>
+      <View style={[styles.plotRow, { height: plotHeight }]}>
         {/* Left whisker: p5 to p25 */}
         <View
           style={[
@@ -99,6 +107,7 @@ export default function BoxPlot({ stats, color }: Props): React.JSX.Element {
               backgroundColor: dimColor,
               left: `${p5Pct}%`,
               width: `${boxLeft - p5Pct}%`,
+              top: (plotHeight - WHISKER_WIDTH) / 2,
             },
           ]}
         />
@@ -124,6 +133,7 @@ export default function BoxPlot({ stats, color }: Props): React.JSX.Element {
               backgroundColor: dimColor,
               left: `${p75Pct}%`,
               width: `${p95Pct - p75Pct}%`,
+              top: (plotHeight - WHISKER_WIDTH) / 2,
             },
           ]}
         />
@@ -149,6 +159,10 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     marginTop: 6,
+  },
+  containerCompact: {
+    width: "100%",
+    marginTop: 2,
   },
   dotRow: {
     height: DOT_ROW_HEIGHT,
