@@ -40,7 +40,12 @@ yarn-error.*
 *.tsbuildinfo
 
 # generated native folders
-/ios
+# ios/ is committed (see deploy recipe in justfile) — stops expo prebuild from
+# wiping DEVELOPMENT_TEAM and breaking expo-live-activity on every deploy.
+/ios/Pods/
+/ios/build/
+/ios/.xcode.env.local
+/ios/**/xcuserdata/
 /android
 
 # worktrees
