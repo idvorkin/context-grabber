@@ -131,17 +131,27 @@ Each `Place N` row gets a trailing `[+]` button (or `Name` text button) rendered
 Tap flow:
 
 1. Button handler is called with the stay's `centroid: { latitude, longitude }` and the `placeId` it replaces.
-2. Compute proximity to all `knownPlaces`: for each, compute `haversineDistance(centroid, place)`. Collect any where `distance <= place.radiusMeters + 50`.
-3. **Branch A — no nearby known place:** Show a name-input modal. Default name empty, default radius 100m (reusing the existing `addPlaceForm` styling). On submit → `addKnownPlace(name, lat, lng, radius)`.
-4. **Branch B — one or more nearby known places:** Show a confirmation modal listing the nearest one:
-   > "This is 45m from **Home** (radius 100m). Options:
-   > - Expand **Home** to cover this point (new radius 145m)
+2. Compute `haversineDistance(centroid, knownPlace)` for every known place. Collect any where `distance <= MERGE_SUGGEST_DISTANCE = 500m`. 500m is a deliberately generous bucket: it catches places across a parking lot, noisy known-place centroids that were originally set from a bad GPS fix, and repeat "Place N" clusters sitting just outside a known disc (all of which show up in the real-data fixture check).
+3. **Branch A — no known place within 500m:** Show a name-input modal. Default name empty, default radius 100m. On submit → `addKnownPlace(name, lat, lng, radius)`.
+4. **Branch B — one or more known places within 500m:** Show a merge-preview modal listing the nearest one. The modal **computes and displays the exact `mergePlaceCircle` result up front** so the user can see what accepting "Expand" would do:
+   > "**Place 3** is 168m from **Milstead & Co**.
+   >
+   > Expanding Milstead & Co would:
+   > - grow its radius from 50m → 159m
+   > - shift its center by 57m toward this stay
+   >
+   > Options:
+   > - Expand **Milstead & Co** to cover this point
    > - Create a new place here"
 
-   On "Expand": compute the minimum bounding circle of `(existing disc) ∪ (new centroid)`, then add a 50m buffer (see "Merge geometry" below). Update the existing known place's `latitude`, `longitude`, and `radiusMeters`. Requires new `updateKnownPlace(id, { latitude?, longitude?, radiusMeters? })` in `lib/db.ts`.
+   If multiple known places are within 500m, offer the nearest by default and show "(+N more)" — the user can cancel and reopen if they want to merge into a different one. Keep it simple; no multi-select.
+
+   On "Expand": call `updateKnownPlace(id, { latitude, longitude, radiusMeters })` with the precomputed result from step 4.
    On "Create new": fall through to the Branch A name-input modal.
 
-5. After success, the parent `LocationDetailSheet` refetches `knownPlaces` via `getKnownPlaces(db)`, which triggers `placesDailySummary` useMemo to recompute with the new known place. All matching `Place N` stays across all days are automatically re-labeled with the new name — no extra work needed.
+5. After success, the parent `LocationDetailSheet` refetches `knownPlaces` via `getKnownPlaces(db)`, which triggers `placesDailySummary` useMemo to recompute with the new known place. All matching `Place N` stays across all days are automatically re-labeled — the geometry self-heals other instances of the same repeat cluster.
+
+**Why 500m (not `radius + 50m`):** Against real data (`__tests__/fixtures/context-grabber.db` + `__tests__/fixtures/locations.json`), the tight `radius + 50m` gate caught 0 of 10 unmatched stays. The dominant near-miss is "Place 2" — a repeat visit clustered ~160m from "Milstead & Co" (stored radius 50m) across 3 different days. The user's mental model is "that's Milstead, just with a sloppy original centroid," but the tight gate would never offer the fix. 500m is wide enough to catch these without being so wide that unrelated places get offered. Showing the preview numbers up front lets the user reject the wrong suggestion in one tap when the gate is overgenerous.
 
 ### 5. Merge geometry
 
@@ -157,11 +167,13 @@ Two small modals, both rendered inline in `LocationDetailSheet.tsx` (no new comp
   - Buttons: Save / Cancel
   - Coordinates displayed readonly as "47.6062, -122.3321"
 
-- **Nearby known place modal** (Branch B):
-  - Title: "Nearby known place found"
-  - Body: "This is **45m from Home** (current radius 100m)."
-  - Buttons: "Expand Home to 145m" / "Create new place" / "Cancel"
-  - If multiple known places within buffer, pick the closest and mention the count ("(+2 more)") — no multi-select.
+- **Merge-preview modal** (Branch B):
+  - Title: "Nearby known place"
+  - Body lines (computed from `mergePlaceCircle`):
+    - `<Place N> is <distance>m from <Known>.`
+    - `Expanding would grow radius <r1>m → <r2>m and shift the center by <shift>m.`
+  - Buttons: `Expand <Known>` / `Create new place` / `Cancel`
+  - If multiple known places within 500m, pick the closest and show `(+N more)` — no multi-select.
 
 ### 7. UI for known vs unknown distinction
 
@@ -246,7 +258,7 @@ User names `Place 3` → "Home" but "Home" already exists. `addKnownPlace` will 
 4. A day with the phone off / tracking disabled reads as `no data`, not `loose`.
 5. Unknown `Place N` rows have a visually distinct bar color and a tappable naming button.
 6. Tapping the naming button on a stay far from all known places opens a name input, and saving adds a new known place at the stay's centroid.
-7. Tapping the button on a stay within `radius + 50m` of an existing known place offers an "Expand" option, and accepting it updates the existing place's center and radius via `mergePlaceCircle`.
+7. Tapping the button on a stay within **500m** of any existing known place shows a merge-preview modal with the precomputed new radius and center shift, and accepting it updates the existing place via `mergePlaceCircle` + `updateKnownPlace`.
 8. After any successful name/expand, the breakdown re-renders within one frame and the formerly-`Place N` row is now labeled with the new name.
 9. All existing tests in `__tests__/places_summary.test.ts` and `__tests__/clustering_v2.test.ts` continue to pass (after updating for renamed field and new args).
 
@@ -274,10 +286,11 @@ New cases (in addition to updated existing cases for the renamed field):
 
 ### Manual test plan
 
-1. Pick a day with at least one unnamed stay and some transit → observe three row types in breakdown.
-2. Tap `[+]` on a `Place N` row far from known places → name it "Test A" → row becomes "Test A".
-3. Tap `[+]` on a `Place N` row ~30m from "Home" → offered expand → accept → "Home"'s radius grows, row becomes "Home".
-4. Open Known Places list in the sheet → verify the new/updated entry is visible.
+1. Pick a day with at least one unnamed stay, some transit, some loose, some no-data → observe four non-stay row types in the breakdown.
+2. Tap `[+]` on a `Place N` row >500m from all known places → name it "Test A" → row becomes "Test A".
+3. Tap `[+]` on a `Place N` row ~160m from "Milstead & Co" (the real fixture case) → offered merge with preview showing `r 50m → 159m, shift 57m` → accept → row becomes "Milstead & Co", other instances of Place 2 also re-label on next render.
+4. Tap `[+]` on a `Place N` row ~250m from a known place → still offered merge under the 500m gate, preview shows larger radius growth → user can reject with "Create new".
+5. Open Known Places list in the sheet → verify the new/updated entry is visible with the new lat/lng/radius.
 
 ## File Changes
 
