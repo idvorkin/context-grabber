@@ -1050,6 +1050,7 @@ export default function App() {
 
   const metrics: MetricCardProps[] = snapshot
     ? [
+        // Movement volume
         {
           metricKey: "steps" as MetricKey,
           label: "Steps",
@@ -1060,6 +1061,37 @@ export default function App() {
           color: METRIC_CONFIG.steps.color,
         },
         {
+          metricKey: "walkingDistance" as MetricKey,
+          label: "Walking Distance",
+          value: h?.walkingDistance != null ? `${h.walkingDistance} km` : "\u2014",
+          sublabel: "today",
+          onPress: handleMetricPress,
+          boxPlotStats: statsCache.walkingDistance,
+          color: METRIC_CONFIG.walkingDistance.color,
+        },
+        // Movement intensity
+        {
+          metricKey: "activeEnergy" as MetricKey,
+          label: "Active Energy",
+          value: h?.activeEnergy != null ? `${formatNumber(h.activeEnergy)} kcal` : "\u2014",
+          sublabel: "today",
+          onPress: handleMetricPress,
+          boxPlotStats: statsCache.activeEnergy,
+          color: METRIC_CONFIG.activeEnergy.color,
+        },
+        {
+          metricKey: "exerciseMinutes" as MetricKey,
+          label: "Exercise",
+          value: h?.exerciseMinutes != null ? `${h.exerciseMinutes} min` : "\u2014",
+          sublabel: h?.workouts && h.workouts.length > 0
+            ? h.workouts.map(w => `${w.activityType} ${w.durationMinutes}m`).join(", ")
+            : "today",
+          onPress: handleMetricPress,
+          boxPlotStats: statsCache.exerciseMinutes,
+          color: METRIC_CONFIG.exerciseMinutes.color,
+        },
+        // Cardio: live vs baseline
+        {
           metricKey: "heartRate" as MetricKey,
           label: "Heart Rate",
           value: h?.heartRate != null ? `${h.heartRate} bpm` : "\u2014",
@@ -1067,6 +1099,25 @@ export default function App() {
           onPress: handleMetricPress,
           boxPlotStats: statsCache.heartRate,
           color: METRIC_CONFIG.heartRate.color,
+        },
+        {
+          metricKey: "restingHeartRate" as MetricKey,
+          label: "Resting HR",
+          value: h?.restingHeartRate != null ? `${h.restingHeartRate} bpm` : "\u2014",
+          sublabel: "latest",
+          onPress: handleMetricPress,
+          boxPlotStats: statsCache.restingHeartRate,
+          color: METRIC_CONFIG.restingHeartRate.color,
+        },
+        // Recovery
+        {
+          metricKey: "hrv" as MetricKey,
+          label: "HRV",
+          value: h?.hrv != null ? `${h.hrv} ms` : "\u2014",
+          sublabel: "latest",
+          onPress: handleMetricPress,
+          boxPlotStats: statsCache.hrv,
+          color: METRIC_CONFIG.hrv.color,
         },
         {
           metricKey: "sleep" as MetricKey,
@@ -1080,23 +1131,15 @@ export default function App() {
           boxPlotStats: statsCache.sleep,
           color: METRIC_CONFIG.sleep.color,
         },
+        // Wellness / body
         {
-          metricKey: "activeEnergy" as MetricKey,
-          label: "Active Energy",
-          value: h?.activeEnergy != null ? `${formatNumber(h.activeEnergy)} kcal` : "\u2014",
+          metricKey: "meditation" as MetricKey,
+          label: "Meditation",
+          value: h?.meditationMinutes != null ? `${h.meditationMinutes} min` : "\u2014",
           sublabel: "today",
           onPress: handleMetricPress,
-          boxPlotStats: statsCache.activeEnergy,
-          color: METRIC_CONFIG.activeEnergy.color,
-        },
-        {
-          metricKey: "walkingDistance" as MetricKey,
-          label: "Walking Distance",
-          value: h?.walkingDistance != null ? `${h.walkingDistance} km` : "\u2014",
-          sublabel: "today",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.walkingDistance,
-          color: METRIC_CONFIG.walkingDistance.color,
+          boxPlotStats: statsCache.meditation,
+          color: METRIC_CONFIG.meditation.color,
         },
         {
           metricKey: "weight" as MetricKey,
@@ -1109,44 +1152,6 @@ export default function App() {
           onPress: handleMetricPress,
           boxPlotStats: statsCache.weight,
           color: METRIC_CONFIG.weight.color,
-        },
-        {
-          metricKey: "meditation" as MetricKey,
-          label: "Meditation",
-          value: h?.meditationMinutes != null ? `${h.meditationMinutes} min` : "\u2014",
-          sublabel: "today",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.meditation,
-          color: METRIC_CONFIG.meditation.color,
-        },
-        {
-          metricKey: "hrv" as MetricKey,
-          label: "HRV",
-          value: h?.hrv != null ? `${h.hrv} ms` : "\u2014",
-          sublabel: "latest",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.hrv,
-          color: METRIC_CONFIG.hrv.color,
-        },
-        {
-          metricKey: "restingHeartRate" as MetricKey,
-          label: "Resting HR",
-          value: h?.restingHeartRate != null ? `${h.restingHeartRate} bpm` : "\u2014",
-          sublabel: "latest",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.restingHeartRate,
-          color: METRIC_CONFIG.restingHeartRate.color,
-        },
-        {
-          metricKey: "exerciseMinutes" as MetricKey,
-          label: "Exercise",
-          value: h?.exerciseMinutes != null ? `${h.exerciseMinutes} min` : "\u2014",
-          sublabel: h?.workouts && h.workouts.length > 0
-            ? h.workouts.map(w => `${w.activityType} ${w.durationMinutes}m`).join(", ")
-            : "today",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.exerciseMinutes,
-          color: METRIC_CONFIG.exerciseMinutes.color,
         },
       ]
     : [];
