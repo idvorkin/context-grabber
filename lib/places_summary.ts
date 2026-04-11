@@ -33,6 +33,13 @@ export type PlaceVisitDetail = {
   durationMinutes: number;
 };
 
+export type DayStripSegment = {
+  startOffsetMs: number; // offset from dayStart, within [0, DAY_MS]
+  endOffsetMs: number; // offset from dayStart, within [0, DAY_MS]
+  kind: "stay" | "transit" | "noData" | "future";
+  placeId?: string; // present when kind === "stay"
+};
+
 export type PlaceDaySummary = {
   dateKey: string; // "YYYY-MM-DD"
   places: {
@@ -44,6 +51,7 @@ export type PlaceDaySummary = {
   totalStayMinutes: number; // sum of top-10 places
   transitMinutes: number; // GPS evidence outside stays
   noDataMinutes: number; // no GPS evidence anywhere
+  stripSegments: DayStripSegment[]; // time-ordered full-24h strip
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -160,6 +168,72 @@ export function splitNonStay(
 }
 
 /**
+ * Segment-level version of `splitNonStay`. For a single non-stay interval,
+ * returns an ordered list of sub-segments tagged "transit" or "noData" that
+ * tile `[start, end]` contiguously with no gaps or overlaps.
+ *
+ * The logic mirrors `splitNonStay` exactly — but instead of summing minute
+ * totals, we emit the boundaries so the UI can draw a colored strip.
+ *
+ * @internal exported for testing
+ */
+export function segmentNonStay(
+  start: number,
+  end: number,
+  rawPoints: LocationPoint[],
+): Array<{ start: number; end: number; kind: "transit" | "noData" }> {
+  if (end <= start) return [];
+
+  // Collect points whose ±HALF_WINDOW could touch [start, end]
+  const candidates: number[] = [];
+  for (const p of rawPoints) {
+    const t = p.timestamp;
+    if (t < start - LOOSE_HALF_WINDOW) continue;
+    if (t > end + LOOSE_HALF_WINDOW) break;
+    candidates.push(t);
+  }
+
+  if (candidates.length === 0) {
+    return [{ start, end, kind: "noData" }];
+  }
+
+  // Build transit segments (runs of close-together points)
+  const transitRanges: Interval[] = [];
+  let runStart = candidates[0];
+  let runEnd = candidates[0];
+  for (let i = 1; i < candidates.length; i++) {
+    if (candidates[i] - runEnd <= LOOSE_MAX_GAP) {
+      runEnd = candidates[i];
+    } else {
+      transitRanges.push({ start: runStart - LOOSE_HALF_WINDOW, end: runEnd + LOOSE_HALF_WINDOW });
+      runStart = candidates[i];
+      runEnd = candidates[i];
+    }
+  }
+  transitRanges.push({ start: runStart - LOOSE_HALF_WINDOW, end: runEnd + LOOSE_HALF_WINDOW });
+
+  // Clamp to [start, end]
+  const clampedTransit = transitRanges
+    .map((r) => ({ start: Math.max(r.start, start), end: Math.min(r.end, end) }))
+    .filter((r) => r.end > r.start);
+
+  // Interleave noData fills with transit segments
+  const out: Array<{ start: number; end: number; kind: "transit" | "noData" }> = [];
+  let cursor = start;
+  for (const t of clampedTransit) {
+    if (t.start > cursor) {
+      out.push({ start: cursor, end: t.start, kind: "noData" });
+    }
+    out.push({ start: t.start, end: t.end, kind: "transit" });
+    cursor = t.end;
+  }
+  if (cursor < end) {
+    out.push({ start: cursor, end, kind: "noData" });
+  }
+  return out;
+}
+
+/**
  * Build a per-day summary of place visits from clustering stays + raw points.
  *
  * Returns the most recent `days` days (including today), sorted most-recent first.
@@ -222,6 +296,51 @@ export function buildPlacesDailySummary(
     );
     if (stayMsTotal === 0 && !hasRawPoints) continue;
 
+    // Sort visits by startTime so the strip builder can walk them in time order.
+    visits.sort((a, b) => a.startTime - b.startTime);
+
+    // Build strip segments — a time-ordered tiling of [0, DAY_MS].
+    // For today, the [elapsed, DAY_MS] portion is a single "future" segment.
+    const stripSegments: DayStripSegment[] = [];
+    {
+      let cursor = dayStart;
+      let vi = 0;
+      while (cursor < dayEnd) {
+        const nextVisit = visits[vi];
+        if (nextVisit && nextVisit.startTime <= cursor) {
+          stripSegments.push({
+            startOffsetMs: cursor - dayStart,
+            endOffsetMs: nextVisit.endTime - dayStart,
+            kind: "stay",
+            placeId: nextVisit.placeId,
+          });
+          cursor = nextVisit.endTime;
+          vi++;
+        } else {
+          // Non-stay gap until the next stay or dayEnd
+          const gapEnd = nextVisit ? nextVisit.startTime : dayEnd;
+          for (const sub of segmentNonStay(cursor, gapEnd, rawPoints)) {
+            stripSegments.push({
+              startOffsetMs: sub.start - dayStart,
+              endOffsetMs: sub.end - dayStart,
+              kind: sub.kind,
+            });
+          }
+          cursor = gapEnd;
+        }
+      }
+
+      // For today, fill the remaining [elapsed, DAY_MS] with a "future" segment.
+      const fullEnd = dayStart + DAY_MS;
+      if (dayEnd < fullEnd) {
+        stripSegments.push({
+          startOffsetMs: dayEnd - dayStart,
+          endOffsetMs: fullEnd - dayStart,
+          kind: "future",
+        });
+      }
+    }
+
     // Round to whole minutes.
     const elapsedMin = Math.round((dayEnd - dayStart) / 60000);
     let stayMin = Math.round(stayMsTotal / 60000);
@@ -256,7 +375,7 @@ export function buildPlacesDailySummary(
 
     const totalStayMinutes = places.reduce((sum, p) => sum + p.totalMinutes, 0);
 
-    visits.sort((a, b) => a.startTime - b.startTime);
+    // (visits already sorted above, before strip segment construction)
 
     summaries.push({
       dateKey,
@@ -266,6 +385,7 @@ export function buildPlacesDailySummary(
       totalStayMinutes,
       transitMinutes: transitMin,
       noDataMinutes: noDataMin,
+      stripSegments,
     });
   }
 

@@ -174,7 +174,61 @@ Two small modals, both rendered inline in `LocationDetailSheet.tsx` (no new comp
   - Buttons: `Expand <Known>` / `Create new place` / `Cancel`
   - If multiple known places within 500m, pick the closest and show `(+N more)` — no multi-select.
 
-### 7. UI for known vs unknown distinction
+### 7. Per-day 24-hour color-coded strip
+
+Each day card gets a thin horizontal strip directly below the date header, spanning the full width of the card. The strip represents elapsed time for that day, with each pixel colored by *what was happening at that minute*. It's a time-ordered, compressed view of the same data the rows below show as totals.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Thu Apr 9                                              24h   │
+│ ┌──────────────────────────────────────────────────────────┐ │
+│ │████████│░│██████████│░│████████│ ▒▒▒▒▒▒▒▒ │█│░│█│██████████│ │ ← 24h strip
+│ └──────────────────────────────────────────────────────────┘ │
+│                                                              │
+│ ████████████████████  Home                            10h    │
+│ ...                                                          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Contents.** Each segment represents contiguous time at one "state":
+- A **stay** segment → colored by the stay's placeId, reusing the colorMap the row bars already use (known places from the rotating palette, `Place N` in amber).
+- A **transit** segment → cyan at reduced opacity (`#4cc9f0` @ 55%), same as the transit row.
+- A **no-data** segment → grey (`#555`), same as the no-data row.
+
+No new colors. No new concepts. The strip is a time-ordered repackaging of the same inputs that produce the stay rows + transit row + no-data row below.
+
+**Derivation.** For each day, walk the interval `[dayStart, dayEnd]` in time order:
+1. Stays contribute their clamped `[max(startTime, dayStart), min(endTime, dayEnd)]` as `kind: "stay"` segments with their `placeId`.
+2. The gaps between stays + the head/tail of the day are the non-stay intervals.
+3. Each non-stay interval is split into transit vs no-data sub-segments using the same `splitNonStay` algorithm that already computes bucket totals — but instead of summing, we return the segment boundaries.
+4. All segments are sorted by start time.
+
+**Per-day, not a week view.** Every day card gets its own strip. There is no aggregated "last 7 days" consolidated strip.
+
+**Height and styling.** 14px tall, full-width, rounded corners (`borderRadius: 4`), sits between the date row and the first stay row. No tick marks, no axis labels — the day header already conveys elapsed time.
+
+**Today's strip.** The strip always spans the full 24h physical width regardless of which day is being shown. For today, the real segments (stays / transit / no-data) cover `[dayStart, now]`, and a single trailing `kind: "future"` segment covers `[now, dayStart + 24h]`, rendered very dim grey (`#2a2a40` — darker than the no-data grey so the distinction is visible). This keeps every day's strip the same physical width and gives an at-a-glance read of "how much of today has happened."
+
+Note: the strip's 24h coverage is the *only* place in the summary where today's math differs from elapsed-time math. The row bars, day header total, and bucket sums (`stay + transit + noData`) all still use elapsed-minutes (`min(24h, now − dayStart)`). Only the strip is full-width.
+
+**Interaction.** Tap behavior is unchanged — tapping anywhere in the card (including the strip) expands the day card's visit detail. The strip is not separately interactive.
+
+**Data model change.** `PlaceDaySummary` gains a `stripSegments: DayStripSegment[]` field:
+
+```typescript
+export type DayStripSegment = {
+  startOffsetMs: number;  // offset from dayStart, within [0, DAY_MS]
+  endOffsetMs: number;    // offset from dayStart, within [0, DAY_MS]
+  kind: "stay" | "transit" | "noData" | "future";
+  placeId?: string;       // present when kind === "stay"
+};
+```
+
+Segments are sorted by `startOffsetMs`, cover `[0, DAY_MS]` contiguously (no gaps, no overlaps), and the sum of `(endOffsetMs − startOffsetMs)` equals `DAY_MS` (24 × 60 × 60 × 1000). For past days there are no `future` segments. For today, a single trailing `future` segment covers `[elapsedMs, DAY_MS]`.
+
+**`splitNonStay` extension.** The existing `splitNonStay` returns totals. Add a sibling `splitNonStayWithSegments` (or extend the existing function to optionally return segment-level output) that returns an array of `{ start, end, kind }` entries. The totals derivation becomes `segments.filter(k === "transit").sum()`.
+
+### 8. UI for known vs unknown distinction
 
 A subtle visual cue so `Place N` rows read as "unnamed" rather than "noise":
 

@@ -1,6 +1,7 @@
 import {
   buildPlacesDailySummary,
   splitNonStay,
+  segmentNonStay,
 } from "../lib/places_summary";
 import type { Stay, TransitSegment } from "../lib/clustering_v2";
 import type { LocationPoint } from "../lib/clustering";
@@ -275,6 +276,111 @@ describe("buildPlacesDailySummary", () => {
     // Points span 0:60–0:72 = 12 min run, +5 each side = 22 min transit
     expect(d.transitMinutes).toBeGreaterThanOrEqual(20);
     expect(d.transitMinutes).toBeLessThanOrEqual(24);
+  });
+});
+
+describe("stripSegments", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  test("past day with one stay covers full 24h, no future segment", () => {
+    const dayStart = localMidnight("2026-03-14");
+    const stays = [makeStay("Home", dayStart + 8 * 60 * MIN, 60)]; // 8am-9am
+    const result = buildPlacesDailySummary(stays, [], [], 2, localNoon("2026-03-15"));
+    const d = result.find((x) => x.dateKey === "2026-03-14")!;
+    expect(d.stripSegments.length).toBeGreaterThan(0);
+    // First segment starts at offset 0
+    expect(d.stripSegments[0].startOffsetMs).toBe(0);
+    // Last segment ends at DAY_MS (full 24h)
+    expect(d.stripSegments[d.stripSegments.length - 1].endOffsetMs).toBe(DAY_MS);
+    // No future segment for past days
+    expect(d.stripSegments.every((s) => s.kind !== "future")).toBe(true);
+    // Contiguous tiling: each segment starts where the previous ends
+    for (let i = 1; i < d.stripSegments.length; i++) {
+      expect(d.stripSegments[i].startOffsetMs).toBe(d.stripSegments[i - 1].endOffsetMs);
+    }
+    // Stay segment carries the placeId
+    const stayseg = d.stripSegments.find((s) => s.kind === "stay")!;
+    expect(stayseg.placeId).toBe("Home");
+  });
+
+  test("today has trailing future segment covering [now, DAY_MS]", () => {
+    const dayStart = localMidnight("2026-03-15");
+    const now = dayStart + 6 * 60 * MIN; // 6am
+    const stays = [makeStay("Home", dayStart, 60)];
+    const result = buildPlacesDailySummary(stays, [], [], 1, now);
+    const d = result[0];
+    // Full 24h coverage
+    expect(d.stripSegments[0].startOffsetMs).toBe(0);
+    expect(d.stripSegments[d.stripSegments.length - 1].endOffsetMs).toBe(DAY_MS);
+    // Last segment is a "future" block starting at now offset
+    const last = d.stripSegments[d.stripSegments.length - 1];
+    expect(last.kind).toBe("future");
+    expect(last.startOffsetMs).toBe(6 * 60 * MIN);
+    expect(last.endOffsetMs).toBe(DAY_MS);
+  });
+
+  test("stay with scattered points produces stay + transit + noData segments", () => {
+    const dayStart = localMidnight("2026-03-15");
+    // Stay 0:00-1:00, scattered points 2:00-2:20, silence after
+    const stays = [makeStay("Home", dayStart, 60)];
+    const points: LocationPoint[] = [];
+    for (let i = 0; i <= 4; i++) {
+      points.push(makePoint(dayStart + 120 * MIN + i * 5 * MIN));
+    }
+    const result = buildPlacesDailySummary(stays, [], points, 1, localEndOfDay("2026-03-15"));
+    const d = result[0];
+    const kinds = d.stripSegments.map((s) => s.kind);
+    expect(kinds).toContain("stay");
+    expect(kinds).toContain("transit");
+    expect(kinds).toContain("noData");
+    // Time-ordered
+    for (let i = 1; i < d.stripSegments.length; i++) {
+      expect(d.stripSegments[i].startOffsetMs).toBeGreaterThanOrEqual(
+        d.stripSegments[i - 1].startOffsetMs,
+      );
+    }
+  });
+
+  test("full day with no stays and no points → single noData segment (future if today, not if past)", () => {
+    const dayStart = localMidnight("2026-03-15");
+    // Past day with no data is skipped, so test today which has at least elapsed time
+    const now = dayStart + 4 * 60 * MIN;
+    // Need raw points to avoid the "skip empty days" filter
+    const points = [makePoint(dayStart + 60 * MIN)];
+    const result = buildPlacesDailySummary([], [], points, 1, now);
+    const d = result[0];
+    // Today: should end with future
+    expect(d.stripSegments[d.stripSegments.length - 1].kind).toBe("future");
+    // Full 24h coverage
+    expect(d.stripSegments[0].startOffsetMs).toBe(0);
+    expect(d.stripSegments[d.stripSegments.length - 1].endOffsetMs).toBe(DAY_MS);
+  });
+});
+
+describe("segmentNonStay", () => {
+  test("no points → single noData segment", () => {
+    const segs = segmentNonStay(0, 60 * MIN, []);
+    expect(segs).toEqual([{ start: 0, end: 60 * MIN, kind: "noData" }]);
+  });
+
+  test("single point → transit sandwiched by noData", () => {
+    const segs = segmentNonStay(0, 60 * MIN, [makePoint(30 * MIN)]);
+    expect(segs).toHaveLength(3);
+    expect(segs[0].kind).toBe("noData");
+    expect(segs[1].kind).toBe("transit");
+    expect(segs[2].kind).toBe("noData");
+    // Tiling
+    expect(segs[0].end).toBe(segs[1].start);
+    expect(segs[1].end).toBe(segs[2].start);
+    expect(segs[0].start).toBe(0);
+    expect(segs[2].end).toBe(60 * MIN);
+  });
+
+  test("point at very start → leading transit, trailing noData", () => {
+    const segs = segmentNonStay(0, 60 * MIN, [makePoint(2 * MIN)]);
+    // Point window [−3, 7] clamped to [0, 7]
+    expect(segs[0]).toEqual({ start: 0, end: 7 * MIN, kind: "transit" });
+    expect(segs[1]).toEqual({ start: 7 * MIN, end: 60 * MIN, kind: "noData" });
   });
 });
 

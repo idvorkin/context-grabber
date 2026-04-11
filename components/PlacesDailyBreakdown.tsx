@@ -1,17 +1,19 @@
 import React, { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import type { PlaceDaySummary } from "../lib/places_summary";
+import type { DayStripSegment, PlaceDaySummary } from "../lib/places_summary";
 
 const COLORS = [
   "#4361ee", "#f72585", "#4cc9f0", "#7209b7", "#3a86a7",
   "#f77f00", "#06d6a0", "#e63946", "#a8dadc", "#fca311",
 ];
 
-// Color used for unnamed "Place N" rows AND loose-data rows — both signal
-// "tap-to-fix / unresolved data."
+// Color used for unnamed "Place N" rows — signals "tap-to-fix / unresolved."
 const UNKNOWN_COLOR = "#fca311";
 const TRANSIT_COLOR = "#4cc9f0";
 const NO_DATA_COLOR = "#555";
+const FUTURE_COLOR = "#2a2a40"; // darker than no-data so it reads as "not yet"
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const PLACE_N_PATTERN = /^Place \d+$/;
 
@@ -95,6 +97,23 @@ export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
             <View style={styles.dateRow}>
               <Text style={styles.dateHeader}>{formatDateLabel(day.dateKey)}</Text>
               <Text style={styles.totalText}>{formatHours(day.elapsedMinutes)}</Text>
+            </View>
+            <View style={styles.strip}>
+              {day.stripSegments.map((seg, i) => {
+                const widthPct = ((seg.endOffsetMs - seg.startOffsetMs) / DAY_MS) * 100;
+                const color = resolveStripColor(seg, colorMap);
+                return (
+                  <View
+                    key={i}
+                    style={{
+                      width: `${widthPct}%`,
+                      height: "100%",
+                      backgroundColor: color,
+                      opacity: seg.kind === "transit" ? 0.55 : 1,
+                    }}
+                  />
+                );
+              })}
             </View>
             {day.places.map((place) => {
               const isUnknown = PLACE_N_PATTERN.test(place.placeId);
@@ -200,6 +219,25 @@ export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
   );
 }
 
+function resolveStripColor(
+  seg: DayStripSegment,
+  colorMap: Map<string, string>,
+): string {
+  switch (seg.kind) {
+    case "stay": {
+      if (!seg.placeId) return COLORS[0];
+      if (PLACE_N_PATTERN.test(seg.placeId)) return UNKNOWN_COLOR;
+      return colorMap.get(seg.placeId) ?? COLORS[0];
+    }
+    case "transit":
+      return TRANSIT_COLOR;
+    case "noData":
+      return NO_DATA_COLOR;
+    case "future":
+      return FUTURE_COLOR;
+  }
+}
+
 function findLongestVisitIndex(
   visits: PlaceDaySummary["visits"],
   placeId: string,
@@ -227,6 +265,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
+  },
+  strip: {
+    flexDirection: "row",
+    width: "100%",
+    height: 14,
+    borderRadius: 4,
+    overflow: "hidden",
+    backgroundColor: "#1a1a2e",
+    marginBottom: 10,
   },
   dateHeader: {
     fontSize: 14,
