@@ -233,6 +233,37 @@ type ClusterResult = {
 };
 ```
 
+## Merging a new point into a known place
+
+When a user manually assigns a stay to an existing known place (e.g., via the "Name this place" flow in the Location Detail Sheet — see [`2026-04-11-places-breakdown-gaps-and-naming-design.md`](2026-04-11-places-breakdown-gaps-and-naming-design.md)), the known place's disc must grow to cover the new stay's centroid. Use the minimum bounding circle of `(existing disc) ∪ (new centroid)` plus a 50m buffer — strictly tighter than naively enlarging the radius by `distance + buffer`.
+
+```
+d = haversine(existing.center, newCentroid)  // meters
+if d <= existing.radiusMeters:
+    // new point already inside (shouldn't occur for an unmatched Place N, but guard anyway)
+    return existing unchanged
+
+shift     = (d - existing.radiusMeters) / 2                 // meters to slide center toward new point
+t         = shift / d                                       // fraction along the line, always in [0, 0.5)
+newCenter = lerp(existing.center, newCentroid, t)           // flat-plane OK at <1km distances
+newRadius = (d + existing.radiusMeters) / 2 + 50            // half the span + buffer
+```
+
+**Why this rule:**
+- Preserves all points in the old radius — the new circle is a superset of the old.
+- Self-corrects a sloppy original centroid: if the user's first "Home" coord was off, the first merge pulls it toward reality.
+- No visit-count or history weighting — the geometry handles it.
+- Pure function; lives in `lib/places.ts` as `mergePlaceCircle(existing, newCentroid, buffer=50)`.
+
+**Examples:**
+
+| existing.r | d (new distance) | shift | newRadius |
+|---|---|---|---|
+| 100m | 110m | 5m  | 155m |
+| 100m | 150m | 25m | 175m |
+| 100m | 200m | 50m | 200m |
+| 50m  | 120m | 35m | 135m |
+
 ## Parameters
 
 | Parameter | Value | Rationale |
