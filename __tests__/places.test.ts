@@ -2,6 +2,7 @@ import {
   matchPointToPlace,
   labelPointsWithKnownPlaces,
   buildKnownPlaceClusters,
+  mergePlaceCircle,
   type KnownPlace,
 } from "../lib/places";
 import { haversineDistance, clusterLocations, type LocationPoint } from "../lib/clustering";
@@ -340,5 +341,130 @@ describe("haversine distance for known places matching", () => {
     // A point ~200m away
     const dist = haversineDistance(47.6062, -122.3321, 47.608, -122.3321);
     expect(dist).toBeGreaterThan(100);
+  });
+});
+
+// ─── mergePlaceCircle ───────────────────────────────────────────────────────
+
+describe("mergePlaceCircle", () => {
+  // Seattle-area anchor so haversine actually runs.
+  const center = { latitude: 47.6062, longitude: -122.3321 };
+
+  // Earth radius (meters) — matches lib/geo.ts.
+  const EARTH_RADIUS_M = 6371000;
+
+  /**
+   * Offset a lat/lng by `meters` due north.
+   * Great-circle along a meridian, exact for latitude-only shifts.
+   */
+  function offsetNorth(
+    lat: number,
+    lng: number,
+    meters: number,
+  ): { latitude: number; longitude: number } {
+    const dLatRad = meters / EARTH_RADIUS_M;
+    const dLatDeg = (dLatRad * 180) / Math.PI;
+    return { latitude: lat + dLatDeg, longitude: lng };
+  }
+
+  const specCases = [
+    { r: 100, d: 110, expectedRadius: 155 },
+    { r: 100, d: 150, expectedRadius: 175 },
+    { r: 100, d: 200, expectedRadius: 200 },
+    { r: 50, d: 120, expectedRadius: 135 },
+  ];
+
+  for (const c of specCases) {
+    it(`matches spec example: r=${c.r}, d=${c.d} → newRadius ${c.expectedRadius}`, () => {
+      const existing = {
+        latitude: center.latitude,
+        longitude: center.longitude,
+        radiusMeters: c.r,
+      };
+      const newCentroid = offsetNorth(center.latitude, center.longitude, c.d);
+
+      const merged = mergePlaceCircle(existing, newCentroid);
+
+      // Radius within ±2m tolerance (haversine + lerp rounding).
+      expect(merged.radiusMeters).toBeGreaterThanOrEqual(c.expectedRadius - 2);
+      expect(merged.radiusMeters).toBeLessThanOrEqual(c.expectedRadius + 2);
+
+      // New center lies strictly on the line between old center and new centroid
+      // (due-north-only offsets → same longitude, latitude between the two).
+      expect(merged.longitude).toBeCloseTo(existing.longitude, 10);
+      expect(merged.latitude).toBeGreaterThan(existing.latitude);
+      expect(merged.latitude).toBeLessThan(newCentroid.latitude);
+
+      // New disc fully contains the old center.
+      const distToOldCenter = haversineDistance(
+        merged.latitude,
+        merged.longitude,
+        existing.latitude,
+        existing.longitude,
+      );
+      expect(distToOldCenter).toBeLessThanOrEqual(merged.radiusMeters);
+
+      // New disc fully contains the new centroid.
+      const distToNewCentroid = haversineDistance(
+        merged.latitude,
+        merged.longitude,
+        newCentroid.latitude,
+        newCentroid.longitude,
+      );
+      expect(distToNewCentroid).toBeLessThanOrEqual(merged.radiusMeters);
+
+      // The old disc must be a subset of the new disc:
+      //   distToOldCenter + existing.r <= merged.r
+      expect(distToOldCenter + existing.radiusMeters).toBeLessThanOrEqual(
+        merged.radiusMeters + 0.01,
+      );
+    });
+  }
+
+  it("returns existing unchanged when new point is inside radius", () => {
+    const existing = {
+      latitude: center.latitude,
+      longitude: center.longitude,
+      radiusMeters: 100,
+    };
+    // 40m north — well inside 100m radius.
+    const newCentroid = offsetNorth(center.latitude, center.longitude, 40);
+
+    const merged = mergePlaceCircle(existing, newCentroid);
+    expect(merged.latitude).toBe(existing.latitude);
+    expect(merged.longitude).toBe(existing.longitude);
+    expect(merged.radiusMeters).toBe(existing.radiusMeters);
+  });
+
+  it("respects a custom buffer=0 → exact minimum bounding circle", () => {
+    const existing = {
+      latitude: center.latitude,
+      longitude: center.longitude,
+      radiusMeters: 100,
+    };
+    const d = 150;
+    const newCentroid = offsetNorth(center.latitude, center.longitude, d);
+
+    const merged = mergePlaceCircle(existing, newCentroid, 0);
+
+    // With no buffer, new radius = (d + r) / 2 = 125.
+    const expectedRadius = (d + existing.radiusMeters) / 2;
+    expect(merged.radiusMeters).toBeGreaterThanOrEqual(expectedRadius - 1);
+    expect(merged.radiusMeters).toBeLessThanOrEqual(expectedRadius + 1);
+  });
+
+  it("is a no-op when merging a place with its own center", () => {
+    const existing = {
+      latitude: center.latitude,
+      longitude: center.longitude,
+      radiusMeters: 120,
+    };
+    const merged = mergePlaceCircle(existing, {
+      latitude: existing.latitude,
+      longitude: existing.longitude,
+    });
+    expect(merged.latitude).toBe(existing.latitude);
+    expect(merged.longitude).toBe(existing.longitude);
+    expect(merged.radiusMeters).toBe(existing.radiusMeters);
   });
 });

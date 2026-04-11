@@ -143,6 +143,46 @@ export async function deleteKnownPlace(
   await db.runAsync("DELETE FROM known_places WHERE id = ?", [id]);
 }
 
+export async function updateKnownPlace(
+  db: SQLite.SQLiteDatabase,
+  id: number,
+  fields: {
+    name?: string;
+    latitude?: number;
+    longitude?: number;
+    radiusMeters?: number;
+  },
+): Promise<void> {
+  const setClauses: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (fields.name !== undefined) {
+    setClauses.push("name = ?");
+    params.push(fields.name);
+  }
+  if (fields.latitude !== undefined) {
+    setClauses.push("latitude = ?");
+    params.push(fields.latitude);
+  }
+  if (fields.longitude !== undefined) {
+    setClauses.push("longitude = ?");
+    params.push(fields.longitude);
+  }
+  if (fields.radiusMeters !== undefined) {
+    setClauses.push("radius_meters = ?");
+    params.push(fields.radiusMeters);
+  }
+
+  if (setClauses.length === 0) {
+    // No fields to update — silent no-op.
+    return;
+  }
+
+  params.push(id);
+  const sql = `UPDATE known_places SET ${setClauses.join(", ")} WHERE id = ?`;
+  await db.runAsync(sql, params);
+}
+
 export async function getLocationHistory(
   db: SQLite.SQLiteDatabase,
 ): Promise<LocationHistoryItem[]> {

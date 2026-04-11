@@ -61,6 +61,58 @@ export function labelPointsWithKnownPlaces(
   );
 }
 
+// ─── Merge geometry ──────────────────────────────────────────────────────────
+
+/**
+ * Grow an existing known place's disc to cover a new centroid.
+ *
+ * Computes the minimum bounding circle of (existing disc ∪ new centroid)
+ * plus a safety buffer. See docs/superpowers/specs/2026-03-26-location-clustering-v2.md
+ * ("Merging a new point into a known place") for the derivation.
+ *
+ * The new center is linearly interpolated along the flat-plane segment from
+ * existing.center toward newCentroid. At the sub-kilometer distances this
+ * feature deals with, the great-circle vs straight-line error is <0.01m, so
+ * the flat lerp is fine.
+ *
+ * If the new centroid already lies inside the existing disc, returns the
+ * existing disc unchanged (defensive — shouldn't occur in the UI flow).
+ */
+export function mergePlaceCircle(
+  existing: { latitude: number; longitude: number; radiusMeters: number },
+  newCentroid: { latitude: number; longitude: number },
+  buffer: number = 50,
+): { latitude: number; longitude: number; radiusMeters: number } {
+  const d = haversineDistance(
+    existing.latitude,
+    existing.longitude,
+    newCentroid.latitude,
+    newCentroid.longitude,
+  );
+
+  if (d <= existing.radiusMeters) {
+    return {
+      latitude: existing.latitude,
+      longitude: existing.longitude,
+      radiusMeters: existing.radiusMeters,
+    };
+  }
+
+  const shift = (d - existing.radiusMeters) / 2;
+  const t = shift / d; // fraction along the line toward newCentroid, in [0, 0.5)
+  const newLat =
+    existing.latitude + (newCentroid.latitude - existing.latitude) * t;
+  const newLng =
+    existing.longitude + (newCentroid.longitude - existing.longitude) * t;
+  const newRadius = (d + existing.radiusMeters) / 2 + buffer;
+
+  return {
+    latitude: newLat,
+    longitude: newLng,
+    radiusMeters: newRadius,
+  };
+}
+
 /**
  * Build PlaceCluster objects from points matched to known places.
  * Groups points by their known place match, computes dwell time.
