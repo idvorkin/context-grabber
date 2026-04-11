@@ -1,6 +1,9 @@
 import {
   extractSleepDetails,
   aggregateSleepDetailed,
+  buildSleepDetailedBundle,
+  pickDefaultSleepSource,
+  SLEEP_ALL_SOURCES,
   computeSleepDebt,
   computeConsistencyStats,
   type SleepDaily,
@@ -225,5 +228,139 @@ describe("computeConsistencyStats", () => {
     const n2 = makeNight(new Date(2026, 2, 15, 7, 0, 0).toISOString(), new Date(2026, 2, 15, 7, 0, 0).toISOString());
     const stats = computeConsistencyStats([n1, n2]);
     expect(stats.bedtimeStdevMinutes).toBe(0); // only 1 valid → stdev 0
+  });
+});
+
+describe("buildSleepDetailedBundle", () => {
+  // Use 2026-03-15 at noon local as "end of window" anchor for deterministic bucketing.
+  const endDate = new Date(2026, 2, 15, 12, 0, 0);
+
+  it("returns empty bundle for no samples", () => {
+    const bundle = buildSleepDetailedBundle([], endDate, 7);
+    expect(bundle.merged).toHaveLength(7);
+    expect(bundle.merged.every((n) => n.totalHours === null)).toBe(true);
+    expect(Object.keys(bundle.bySource)).toEqual([]);
+  });
+
+  it("groups samples by source and produces independent SleepDaily arrays", () => {
+    // Watch reports stages; AutoSleep reports only generic "Asleep" (value 1).
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date(2026, 2, 14, 23, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 1, 0, 0).toISOString(),
+        value: 3, // Core
+        source: "Apple Watch",
+      },
+      {
+        startDate: new Date(2026, 2, 15, 1, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 2, 0, 0).toISOString(),
+        value: 4, // Deep
+        source: "Apple Watch",
+      },
+      {
+        startDate: new Date(2026, 2, 15, 2, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 6, 30, 0).toISOString(),
+        value: 1, // Asleep
+        source: "AutoSleep",
+      },
+    ];
+    const bundle = buildSleepDetailedBundle(samples, endDate, 7);
+
+    expect(Object.keys(bundle.bySource).sort()).toEqual([
+      "Apple Watch",
+      "AutoSleep",
+    ]);
+
+    const watchNight = bundle.bySource["Apple Watch"].find(
+      (n) => n.date === "2026-03-14",
+    );
+    expect(watchNight).toBeDefined();
+    expect(watchNight!.coreHours).toBe(2); // 23→01
+    expect(watchNight!.deepHours).toBe(1); // 01→02
+    expect(watchNight!.remHours).toBe(0);
+
+    const autoNight = bundle.bySource["AutoSleep"].find(
+      (n) => n.date === "2026-03-14",
+    );
+    expect(autoNight).toBeDefined();
+    expect(autoNight!.coreHours).toBe(0);
+    expect(autoNight!.deepHours).toBe(0);
+    // AutoSleep's sample is a generic "Asleep" (value 1), so stage hours stay
+    // at zero but totalHours is non-null (matches calculateSleepHours).
+    expect(autoNight!.totalHours).not.toBeNull();
+
+    // Merged view has all three samples collapsed.
+    const mergedNight = bundle.merged.find((n) => n.date === "2026-03-14");
+    expect(mergedNight).toBeDefined();
+    expect(mergedNight!.totalHours).not.toBeNull();
+  });
+
+  it("omits sources with no samples in the window", () => {
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date(2026, 2, 14, 23, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 6, 0, 0).toISOString(),
+        value: 1,
+        source: "Apple Watch",
+      },
+    ];
+    const bundle = buildSleepDetailedBundle(samples, endDate, 7);
+    expect(Object.keys(bundle.bySource)).toEqual(["Apple Watch"]);
+    expect(bundle.bySource["AutoSleep"]).toBeUndefined();
+  });
+});
+
+describe("pickDefaultSleepSource", () => {
+  const endDate = new Date(2026, 2, 15, 12, 0, 0);
+
+  it("picks the source with the most stage-detailed hours", () => {
+    const samples: SleepSample[] = [
+      // Watch: 2h Core + 1h Deep + 0.5h REM = 3.5 stage hours
+      {
+        startDate: new Date(2026, 2, 14, 23, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 1, 0, 0).toISOString(),
+        value: 3, // Core
+        source: "Apple Watch",
+      },
+      {
+        startDate: new Date(2026, 2, 15, 1, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 2, 0, 0).toISOString(),
+        value: 4, // Deep
+        source: "Apple Watch",
+      },
+      {
+        startDate: new Date(2026, 2, 15, 2, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 2, 30, 0).toISOString(),
+        value: 5, // REM
+        source: "Apple Watch",
+      },
+      // AutoSleep: generic Asleep only, zero stage detail
+      {
+        startDate: new Date(2026, 2, 15, 2, 30, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 6, 30, 0).toISOString(),
+        value: 1,
+        source: "AutoSleep",
+      },
+    ];
+    const bundle = buildSleepDetailedBundle(samples, endDate, 7);
+    expect(pickDefaultSleepSource(bundle)).toBe("Apple Watch");
+  });
+
+  it("falls back to 'All' when no source reports stages", () => {
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date(2026, 2, 14, 23, 0, 0).toISOString(),
+        endDate: new Date(2026, 2, 15, 7, 0, 0).toISOString(),
+        value: 1, // generic Asleep only
+        source: "AutoSleep",
+      },
+    ];
+    const bundle = buildSleepDetailedBundle(samples, endDate, 7);
+    expect(pickDefaultSleepSource(bundle)).toBe(SLEEP_ALL_SOURCES);
+  });
+
+  it("returns 'All' for empty bundle", () => {
+    const bundle = buildSleepDetailedBundle([], endDate, 7);
+    expect(pickDefaultSleepSource(bundle)).toBe(SLEEP_ALL_SOURCES);
   });
 });

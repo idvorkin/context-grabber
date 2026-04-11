@@ -7,17 +7,30 @@ type Props = {
   samples: SleepSample[];
   bedtime: string | null;
   wakeTime: string | null;
+  /** Strip height in px. Default 10 (daily rows). Daily rows use 18, zoom card 48. */
+  height?: number;
+  /** Font size of the bedtime/wake labels under the strip. Default 10. */
+  labelSize?: number;
+  /** Border radius of the strip. Default 4. */
+  radius?: number;
+  /** Render hour tick labels under the strip (every hour between bedtime and wake). */
+  showHourTicks?: boolean;
 };
 
 /**
- * Thin horizontal strip showing stage composition across a single sleep window.
+ * Horizontal strip showing stage composition across a single sleep window.
  * Spans [bedtime, wakeTime]. Each segment is colored by stage (Core, Deep, REM,
  * Awake, InBed). Renders bedtime/wake labels on each end.
- *
- * Not interactive — purely decorative, shown beneath each daily row in the
- * sleep detail sheet.
  */
-export default function SleepStageStrip({ samples, bedtime, wakeTime }: Props): React.JSX.Element | null {
+export default function SleepStageStrip({
+  samples,
+  bedtime,
+  wakeTime,
+  height = 10,
+  labelSize = 10,
+  radius = 4,
+  showHourTicks = false,
+}: Props): React.JSX.Element | null {
   if (!bedtime || !wakeTime || samples.length === 0) return null;
 
   const windowStart = new Date(bedtime).getTime();
@@ -35,9 +48,33 @@ export default function SleepStageStrip({ samples, bedtime, wakeTime }: Props): 
     .filter((i) => i.end > i.start)
     .sort((a, b) => a.start - b.start);
 
+  // Hour ticks: one label per whole hour between bedtime and wake time. Fall
+  // back to every 2 hours if the window is > 10h.
+  let tickPositions: { left: number; label: string }[] = [];
+  if (showHourTicks) {
+    const windowHours = windowMs / (1000 * 60 * 60);
+    const stepHours = windowHours > 10 ? 2 : 1;
+    const firstTick = new Date(windowStart);
+    firstTick.setMinutes(0, 0, 0);
+    firstTick.setHours(firstTick.getHours() + 1);
+    for (
+      let t = firstTick.getTime();
+      t < windowEnd;
+      t += stepHours * 60 * 60 * 1000
+    ) {
+      const left = ((t - windowStart) / windowMs) * 100;
+      tickPositions.push({ left, label: formatHourShort(new Date(t)) });
+    }
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.strip}>
+      <View
+        style={[
+          styles.strip,
+          { height, borderRadius: radius },
+        ]}
+      >
         {intervals.map((iv, i) => {
           const left = ((iv.start - windowStart) / windowMs) * 100;
           const width = ((iv.end - iv.start) / windowMs) * 100;
@@ -56,9 +93,28 @@ export default function SleepStageStrip({ samples, bedtime, wakeTime }: Props): 
           );
         })}
       </View>
+      {showHourTicks && tickPositions.length > 0 && (
+        <View style={styles.tickRow}>
+          {tickPositions.map((tp, i) => (
+            <Text
+              key={i}
+              style={[
+                styles.tickLabel,
+                { left: `${tp.left}%`, fontSize: Math.max(9, labelSize - 1) },
+              ]}
+            >
+              {tp.label}
+            </Text>
+          ))}
+        </View>
+      )}
       <View style={styles.timeRow}>
-        <Text style={styles.timeLabel}>{formatTime(bedtime)}</Text>
-        <Text style={styles.timeLabel}>{formatTime(wakeTime)}</Text>
+        <Text style={[styles.timeLabel, { fontSize: labelSize }]}>
+          {formatTime(bedtime)}
+        </Text>
+        <Text style={[styles.timeLabel, { fontSize: labelSize }]}>
+          {formatTime(wakeTime)}
+        </Text>
       </View>
     </View>
   );
@@ -85,6 +141,13 @@ function formatTime(iso: string): string {
   return m === 0 ? `${h}${ampm}` : `${h}:${String(m).padStart(2, "0")}${ampm}`;
 }
 
+function formatHourShort(d: Date): string {
+  let h = d.getHours();
+  const ampm = h >= 12 ? "p" : "a";
+  h = h % 12 || 12;
+  return `${h}${ampm}`;
+}
+
 const styles = StyleSheet.create({
   container: {
     marginTop: 4,
@@ -92,11 +155,20 @@ const styles = StyleSheet.create({
   },
   strip: {
     width: "100%",
-    height: 10,
-    borderRadius: 4,
     overflow: "hidden",
     backgroundColor: "#1a1a2e",
     position: "relative",
+  },
+  tickRow: {
+    position: "relative",
+    height: 14,
+    marginTop: 2,
+  },
+  tickLabel: {
+    position: "absolute",
+    top: 0,
+    color: "#666",
+    transform: [{ translateX: -8 }],
   },
   timeRow: {
     flexDirection: "row",
@@ -104,7 +176,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timeLabel: {
-    fontSize: 10,
     color: "#666",
   },
 });

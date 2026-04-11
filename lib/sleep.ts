@@ -202,6 +202,74 @@ function mergedHours(samples: SleepSample[]): number {
   return totalMs / (1000 * 60 * 60);
 }
 
+// ─── Multi-source bundle ──────────────────────────────────────────────────────
+
+export const SLEEP_ALL_SOURCES = "All";
+
+export type SleepDetailedBundle = {
+  /** Per-source SleepDaily arrays, keyed by SleepSample.source. */
+  bySource: Record<string, SleepDaily[]>;
+  /** All sources merged (overlaps deduped). Used for the "All" tab. */
+  merged: SleepDaily[];
+};
+
+/**
+ * Build a `SleepDetailedBundle` from raw sleep samples: one `SleepDaily[]` per
+ * distinct source plus one "merged" array with all sources combined.
+ *
+ * Sources that contribute zero samples in the window are omitted from
+ * `bySource` (their empty result is uninteresting as a tab).
+ */
+export function buildSleepDetailedBundle(
+  samples: SleepSample[] | undefined,
+  endDate: Date,
+  days = 7,
+): SleepDetailedBundle {
+  const merged = aggregateSleepDetailed(samples, endDate, days);
+  const bySource: Record<string, SleepDaily[]> = {};
+  if (!samples || samples.length === 0) return { bySource, merged };
+
+  const sourceGroups = new Map<string, SleepSample[]>();
+  for (const s of samples) {
+    const src = s.source ?? "Unknown";
+    const arr = sourceGroups.get(src);
+    if (arr) arr.push(s);
+    else sourceGroups.set(src, [s]);
+  }
+
+  for (const [source, sourceSamples] of sourceGroups) {
+    bySource[source] = aggregateSleepDetailed(sourceSamples, endDate, days);
+  }
+
+  return { bySource, merged };
+}
+
+/**
+ * Pick the default source tab for a bundle. Chooses the source with the most
+ * stage-detailed sleep (sum of core + deep + REM hours across all nights) on
+ * the theory that the sheet's purpose is stage visualization, so the default
+ * should be the source that actually reports stages. Falls back to
+ * `SLEEP_ALL_SOURCES` if no source reports any stage data.
+ *
+ * Ties break alphabetically by source name for stability.
+ */
+export function pickDefaultSleepSource(bundle: SleepDetailedBundle): string {
+  let best: { name: string; score: number } | null = null;
+  const names = Object.keys(bundle.bySource).sort();
+  for (const name of names) {
+    const nights = bundle.bySource[name];
+    const score = nights.reduce(
+      (acc, n) => acc + n.coreHours + n.deepHours + n.remHours,
+      0,
+    );
+    if (score <= 0) continue;
+    if (!best || score > best.score) {
+      best = { name, score };
+    }
+  }
+  return best ? best.name : SLEEP_ALL_SOURCES;
+}
+
 // ─── computeSleepDebt ─────────────────────────────────────────────────────────
 
 /**

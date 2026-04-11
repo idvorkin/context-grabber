@@ -32,7 +32,10 @@ import {
   getSleepTarget, setSleepTarget,
   type LocationHistoryItem,
 } from "./lib/db";
-import { aggregateSleepDetailed, type SleepDaily } from "./lib/sleep";
+import {
+  buildSleepDetailedBundle,
+  type SleepDetailedBundle,
+} from "./lib/sleep";
 import { buildActivityTimeline, type ActivityTimeline } from "./lib/activity";
 import { buildSummary, formatNumber } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
@@ -343,7 +346,7 @@ export default function App() {
   const [aboutVisible, setAboutVisible] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
   const [weeklyCache, setWeeklyCache] = useState<Partial<Record<MetricKey, DailyValue[] | HeartRateDaily[]>>>({});
-  const [sleepDetailedCache, setSleepDetailedCache] = useState<SleepDaily[] | null>(null);
+  const [sleepDetailedCache, setSleepDetailedCache] = useState<SleepDetailedBundle | null>(null);
   const [sleepTargetHours, setSleepTargetHoursState] = useState<number>(8);
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyError, setWeeklyError] = useState<string | null>(null);
@@ -760,10 +763,10 @@ export default function App() {
         source: s.sourceName,
       }));
       results = aggregateSleep(rawSamples as any, now);
-      // Also build the detailed per-night breakdown (stages, bedtime, wake, samples)
-      // for the sleep detail sheet.
-      const detailed = aggregateSleepDetailed(rawSamples as any, now);
-      setSleepDetailedCache(detailed);
+      // Also build the per-source detailed bundle (stages, bedtime, wake, samples)
+      // for the sleep detail sheet. Tabs in the sheet select a source or "All".
+      const bundle = buildSleepDetailedBundle(rawSamples as any, now);
+      setSleepDetailedCache(bundle);
     }
 
     // Cache past days
@@ -1454,12 +1457,11 @@ export default function App() {
               setSelectedMetric(null);
               setWeeklyError(null);
             }}
-            sleepBySource={selectedMetric === "sleep" ? snapshot?.health.sleepBySource : undefined}
             workouts={selectedMetric === "exerciseMinutes" ? snapshot?.health.workouts : undefined}
             workoutsByDay={selectedMetric === "exerciseMinutes" ? workoutsByDay : undefined}
             activityTimelineByDay={selectedMetric === "exerciseMinutes" ? activityTimelineByDay : undefined}
             movementData={movementData}
-            sleepDetailed={selectedMetric === "sleep" ? sleepDetailedCache : null}
+            sleepBundle={selectedMetric === "sleep" ? sleepDetailedCache : null}
             sleepTargetHours={selectedMetric === "sleep" ? sleepTargetHours : null}
             fetchRawCache={db && selectedMetric !== "movement" ? async () => {
               const dateKeys = buildDateKeys(new Date(), 7);

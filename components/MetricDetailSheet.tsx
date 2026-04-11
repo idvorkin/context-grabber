@@ -14,7 +14,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
-import type { SourceSleepSummary, WorkoutEntry } from "../lib/health";
+import type { WorkoutEntry } from "../lib/health";
 import {
   METRIC_CONFIG,
   computeAverage,
@@ -26,8 +26,11 @@ import {
 import {
   computeSleepDebt,
   computeConsistencyStats,
+  pickDefaultSleepSource,
+  SLEEP_ALL_SOURCES,
   SLEEP_STAGE_COLORS,
   type SleepDaily,
+  type SleepDetailedBundle,
 } from "../lib/sleep";
 import { formatNumber } from "../lib/summary";
 import BarChart from "./BarChart";
@@ -36,6 +39,7 @@ import ActivityTimelineChart from "./ActivityTimeline";
 import HourlyBoxPlot from "./HourlyBoxPlot";
 import SleepStageStrip from "./SleepStageStrip";
 import SleepConsistencyChart from "./SleepConsistencyChart";
+import ZoomedSleepDayCard from "./ZoomedSleepDayCard";
 import type { ActivityTimeline } from "../lib/activity";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,7 +51,6 @@ type MetricDetailSheetProps = {
   data: DailyValue[] | HeartRateDaily[] | null; // null = loading
   error: string | null;
   onClose: () => void;
-  sleepBySource?: Record<string, SourceSleepSummary> | null;
   workouts?: WorkoutEntry[];
   workoutsByDay?: Record<string, WorkoutEntry[]>;
   activityTimelineByDay?: Record<string, ActivityTimeline>;
@@ -55,8 +58,8 @@ type MetricDetailSheetProps = {
   fetchRawCache?: () => Promise<string>;
   /** Movement composite overlay (only used when metricKey === "movement") */
   movementData?: MovementOverlayData | null;
-  /** Detailed sleep per-night data (only used when metricKey === "sleep") */
-  sleepDetailed?: SleepDaily[] | null;
+  /** Detailed per-source sleep bundle (only used when metricKey === "sleep") */
+  sleepBundle?: SleepDetailedBundle | null;
   /** Sleep target in hours (for the debt line) */
   sleepTargetHours?: number | null;
 };
@@ -120,16 +123,6 @@ function sleepDebtColor(debtHours: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-/** Format UTC ISO timestamp as local 12-hour time (intentional: users see sleep times in their timezone). */
-function formatSleepTime(iso: string): string {
-  const d = new Date(iso);
-  const h = d.getHours();
-  const m = d.getMinutes();
-  const ampm = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
-}
-
 export default function MetricDetailSheet({
   metricKey,
   currentValue,
@@ -137,27 +130,47 @@ export default function MetricDetailSheet({
   data,
   error,
   onClose,
-  sleepBySource,
   workouts,
   workoutsByDay,
   activityTimelineByDay,
   fetchRawCache,
   movementData,
-  sleepDetailed,
+  sleepBundle,
   sleepTargetHours,
 }: MetricDetailSheetProps): React.ReactElement {
   const isMovement = metricKey === "movement";
   const isSleep = metricKey === "sleep";
   const screenHeight = Dimensions.get("window").height;
   const config = METRIC_CONFIG[metricKey];
-  const sourceNames = useMemo(
-    () => (sleepBySource ? Object.keys(sleepBySource) : []),
-    [sleepBySource],
-  );
+
+  // Sleep source tabs: "All" plus one per source in the bundle.
+  const sleepSourceTabs = useMemo(() => {
+    if (!sleepBundle) return [];
+    const sorted = Object.keys(sleepBundle.bySource).sort();
+    return [SLEEP_ALL_SOURCES, ...sorted];
+  }, [sleepBundle]);
+
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [debugVisible, setDebugVisible] = useState(false);
   const [rawCacheJson, setRawCacheJson] = useState<string | null>(null);
+
+  // Default source: pick the one with the most stage detail the first time a
+  // bundle arrives. "All" fallback handled by pickDefaultSleepSource.
+  useEffect(() => {
+    if (!isSleep || !sleepBundle) return;
+    if (selectedSource !== null) return;
+    setSelectedSource(pickDefaultSleepSource(sleepBundle));
+  }, [isSleep, sleepBundle, selectedSource]);
+
+  // Resolved SleepDaily[] for the currently selected source (or merged).
+  const sleepDetailed: SleepDaily[] | null = useMemo(() => {
+    if (!isSleep || !sleepBundle) return null;
+    if (selectedSource === null || selectedSource === SLEEP_ALL_SOURCES) {
+      return sleepBundle.merged;
+    }
+    return sleepBundle.bySource[selectedSource] ?? sleepBundle.merged;
+  }, [isSleep, sleepBundle, selectedSource]);
 
   const isWhiskerChart = data && data.length > 0 && "avg" in data[0];
 
@@ -186,13 +199,6 @@ export default function MetricDetailSheet({
       null, 2,
     );
   }, [data, isWhiskerChart]);
-
-  // Update selected source when sleepBySource data arrives
-  useEffect(() => {
-    if (sourceNames.length > 0 && selectedSource === null) {
-      setSelectedSource(sourceNames[0]);
-    }
-  }, [sourceNames, selectedSource]);
 
   // Single animated value drives translateY (0 = visible) and overlay opacity.
   const animValue = useRef(new Animated.Value(0)).current;
@@ -279,6 +285,12 @@ export default function MetricDetailSheet({
     return computeConsistencyStats(sleepDetailed);
   }, [isSleep, sleepDetailed]);
 
+  // Selected night (for the zoom card). Null when no day is selected.
+  const selectedSleepNight = useMemo(() => {
+    if (!isSleep || !sleepDetailed || !selectedDay) return null;
+    return sleepDetailed.find((n) => n.date === selectedDay) ?? null;
+  }, [isSleep, sleepDetailed, selectedDay]);
+
   // Last-night stage percentages (from the most recent non-zero night)
   const lastNightStages = useMemo(() => {
     if (!isSleep || !sleepDetailed) return null;
@@ -348,21 +360,37 @@ export default function MetricDetailSheet({
   if (isSleep && sleepDetailed && !error) {
     // Sleep: show row with total + per-night stage strip below
     const reversedNights = [...sleepDetailed].reverse();
-    dailyRows = reversedNights.map((night, index) => (
-      <View key={night.date}>
-        <View style={[styles.dayRow, index > 0 && styles.dayRowDivider]}>
-          <Text style={styles.dayRowLabel}>{formatDayRow(night.date)}</Text>
-          <Text style={styles.dayRowValue}>
-            {night.totalHours != null ? `${night.totalHours}h` : "\u2014"}
-          </Text>
-        </View>
-        <SleepStageStrip
-          samples={night.samples}
-          bedtime={night.bedtime}
-          wakeTime={night.wakeTime}
-        />
-      </View>
-    ));
+    dailyRows = reversedNights.map((night, index) => {
+      const isSelected = selectedDay === night.date;
+      return (
+        <TouchableOpacity
+          key={night.date}
+          activeOpacity={0.7}
+          onPress={() => setSelectedDay(isSelected ? null : night.date)}
+        >
+          <View
+            style={[
+              styles.dayRow,
+              index > 0 && styles.dayRowDivider,
+              isSelected && { backgroundColor: config.color + "11" },
+            ]}
+          >
+            <Text style={styles.dayRowLabel}>{formatDayRow(night.date)}</Text>
+            <Text style={styles.dayRowValue}>
+              {night.totalHours != null ? `${night.totalHours}h` : "\u2014"}
+            </Text>
+          </View>
+          <SleepStageStrip
+            samples={night.samples}
+            bedtime={night.bedtime}
+            wakeTime={night.wakeTime}
+            height={18}
+            labelSize={12}
+            radius={6}
+          />
+        </TouchableOpacity>
+      );
+    });
   } else if (isMovement && movementData && !error) {
     // Movement: three values per day (steps, distance, energy)
     const reversedDays = [...movementData.days].reverse();
@@ -521,7 +549,8 @@ export default function MetricDetailSheet({
           { transform: [{ translateY: combinedTranslateY }] },
         ]}
       >
-        {/* PanResponder zone: drag handle + header + current value + chart */}
+        {/* PanResponder zone: drag handle + header + current value only.
+            Everything else lives in the ScrollView below for more scroll room. */}
         <View {...panResponder.panHandlers}>
           {/* Drag handle */}
           <View style={styles.dragHandleRow}>
@@ -543,42 +572,39 @@ export default function MetricDetailSheet({
             <Text style={styles.currentValue}>{currentValue}</Text>
             <Text style={styles.currentSublabel}>{currentSublabel}</Text>
           </View>
+        </View>
 
+        {/* Everything below current value lives in the ScrollView */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Sleep source tabs */}
-          {metricKey === "sleep" && sourceNames.length > 0 && (
-            <View style={styles.sourceSection}>
-              <View style={styles.sourceTabs}>
-                {sourceNames.map((name) => (
-                  <TouchableOpacity
-                    key={name}
+          {isSleep && sleepSourceTabs.length > 1 && (
+            <View style={styles.sourceTabsRow}>
+              {sleepSourceTabs.map((name) => (
+                <TouchableOpacity
+                  key={name}
+                  style={[
+                    styles.sourceTab,
+                    selectedSource === name && {
+                      backgroundColor: config.color + "33",
+                      borderColor: config.color,
+                    },
+                  ]}
+                  onPress={() => setSelectedSource(name)}
+                >
+                  <Text
                     style={[
-                      styles.sourceTab,
-                      selectedSource === name && { backgroundColor: config.color + "33", borderColor: config.color },
+                      styles.sourceTabText,
+                      selectedSource === name && { color: config.color },
                     ]}
-                    onPress={() => setSelectedSource(name)}
                   >
-                    <Text style={[styles.sourceTabText, selectedSource === name && { color: config.color }]}>
-                      {name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {selectedSource && sleepBySource?.[selectedSource] && (() => {
-                const s = sleepBySource[selectedSource];
-                return (
-                  <View style={styles.sourceDetail}>
-                    <Text style={styles.sourceDetailRow}>
-                      {formatSleepTime(s.bedtime)} → {formatSleepTime(s.wakeTime)}
-                    </Text>
-                    <View style={styles.stageRow}>
-                      {s.deepHours > 0 && <Text style={styles.stagePill}>Deep {s.deepHours}h</Text>}
-                      {s.coreHours > 0 && <Text style={styles.stagePill}>Core {s.coreHours}h</Text>}
-                      {s.remHours > 0 && <Text style={styles.stagePill}>REM {s.remHours}h</Text>}
-                      {s.awakeHours > 0 && <Text style={[styles.stagePill, { color: "#f4845f" }]}>Awake {s.awakeHours}h</Text>}
-                    </View>
-                  </View>
-                );
-              })()}
+                    {name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
           )}
 
@@ -633,6 +659,11 @@ export default function MetricDetailSheet({
             </View>
           )}
 
+          {/* Sleep: zoom card when a day is selected (supersedes the last-night stage row) */}
+          {isSleep && selectedSleepNight && (
+            <ZoomedSleepDayCard night={selectedSleepNight} color={config.color} />
+          )}
+
           {/* Sleep: debt + stage percentages + consistency */}
           {isSleep && sleepDetailed && sleepDetailed.length > 0 && (
             <View style={styles.sleepStatsBlock}>
@@ -641,7 +672,8 @@ export default function MetricDetailSheet({
                   {formatSleepDebt(sleepDebt, sleepTargetHours)}
                 </Text>
               )}
-              {lastNightStages && (
+              {/* Hide last-night stage row while a day is zoomed — zoom card shows the same info */}
+              {lastNightStages && !selectedSleepNight && (
                 <View style={styles.stagePercentRow}>
                   {lastNightStages.coreHours > 0 && (
                     <Text style={[styles.stagePercentItem, { color: SLEEP_STAGE_COLORS.Core }]}>
@@ -674,31 +706,24 @@ export default function MetricDetailSheet({
               )}
             </View>
           )}
-        </View>
 
-        {/* Workout breakdown for exercise metric */}
-        {metricKey === "exerciseMinutes" && workouts && workouts.length > 0 && (
-          <View style={styles.workoutSection}>
-            <Text style={[styles.workoutTitle, { color: config.color }]}>Today's Workouts</Text>
-            {workouts.map((w, i) => (
-              <View key={i} style={styles.workoutRow}>
-                <Text style={styles.workoutName}>{w.activityType}</Text>
-                <View style={styles.workoutDetails}>
-                  <Text style={styles.workoutPill}>{w.durationMinutes} min</Text>
-                  {w.energyBurned != null && <Text style={styles.workoutPill}>{w.energyBurned} kcal</Text>}
-                  {w.distanceKm != null && <Text style={styles.workoutPill}>{w.distanceKm} km</Text>}
+          {/* Workout breakdown for exercise metric */}
+          {metricKey === "exerciseMinutes" && workouts && workouts.length > 0 && (
+            <View style={styles.workoutSection}>
+              <Text style={[styles.workoutTitle, { color: config.color }]}>Today's Workouts</Text>
+              {workouts.map((w, i) => (
+                <View key={i} style={styles.workoutRow}>
+                  <Text style={styles.workoutName}>{w.activityType}</Text>
+                  <View style={styles.workoutDetails}>
+                    <Text style={styles.workoutPill}>{w.durationMinutes} min</Text>
+                    {w.energyBurned != null && <Text style={styles.workoutPill}>{w.energyBurned} kcal</Text>}
+                    {w.distanceKm != null && <Text style={styles.workoutPill}>{w.distanceKm} km</Text>}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
-        )}
+              ))}
+            </View>
+          )}
 
-        {/* Daily breakdown — separate from PanResponder */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
           {/* Selected day raw values */}
           {selectedDayData && selectedDayData.raw.length > 0 && (
             <View style={styles.rawSection}>
@@ -883,19 +908,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 4,
   },
   dayRowDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: "#222",
   },
   dayRowLabel: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "600",
     color: "#e0e0e0",
   },
   dayRowValue: {
-    fontSize: 15,
+    fontSize: 17,
     color: "#aaa",
   },
   sleepStatsBlock: {
@@ -938,12 +964,9 @@ const styles = StyleSheet.create({
     color: "#e0e0e0",
     fontWeight: "600",
   },
-  sourceSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  sourceTabs: {
+  sourceTabsRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 10,
   },
@@ -958,28 +981,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#888",
-  },
-  sourceDetail: {
-    paddingVertical: 4,
-  },
-  sourceDetailRow: {
-    fontSize: 15,
-    color: "#e0e0e0",
-    marginBottom: 8,
-  },
-  stageRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  stagePill: {
-    fontSize: 13,
-    color: "#aaa",
-    backgroundColor: "#222",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    overflow: "hidden",
   },
   rawSection: {
     paddingHorizontal: 20,

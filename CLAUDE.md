@@ -89,13 +89,20 @@ Real GPS fixture data: `__tests__/fixtures/locations.json` (36K+ points from rea
 
 ## Spec-First Workflow
 
-**Always update the spec before touching implementation, and check that the spec is still coherent.** Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; implementation plans (if needed) live alongside in `docs/superpowers/plans/`. If a user asks for a feature, the sequence is:
+**ALWAYS UPDATE THE SPECS BEFORE UPDATING THE CODE.** No exceptions. This applies to new features, bug fixes that change visible behavior, UX tweaks, and refactors that alter contracts. If you catch yourself opening a `.tsx` or `.ts` file before a `.md` spec file, stop and go to the spec first.
 
-1. Find or write the spec (summary, goals/non-goals, design, data model, acceptance criteria).
+**Specs describe FUNCTIONALITY, not implementation.** A spec says what the user sees, what the feature does, and what the acceptance criteria are. It does NOT name files, prop shapes, type definitions, function signatures, cache keys, component hierarchies, or where code goes. Implementation details belong in a plan (`docs/superpowers/plans/`) or in the code itself, not the spec. If a reader could use the spec as a QA checklist without ever opening the codebase, it's at the right level. If it reads like a refactor diff, strip it.
+
+- **In the spec:** user-visible behavior, UX flows, edge cases, acceptance criteria, screenshots/mocks, goals/non-goals, rationale.
+- **NOT in the spec:** file paths, prop names, type definitions, component names, function signatures, state shapes, cache key names, "in `foo.tsx`, change X", or any sentence that only makes sense if you've read the code.
+
+Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; implementation plans (if needed) live alongside in `docs/superpowers/plans/`. The sequence for ANY change request is:
+
+1. Find or write the spec (summary, goals/non-goals, user-visible behavior, acceptance criteria).
 2. Confirm the spec with the user — they can edit it independently of code.
-3. Only then touch code.
+3. Only then touch code (and/or write a plan with the implementation details).
 
-When modifying an existing feature, re-read its spec first. If the spec no longer matches reality, update the spec in the same change as the code. Never let implementation drift silently from spec.
+When modifying an existing feature, re-read its spec first and check it's still coherent. If the spec no longer matches reality, update the spec in the same change as the code. Never let implementation drift silently from spec.
 
 ## Key Patterns
 

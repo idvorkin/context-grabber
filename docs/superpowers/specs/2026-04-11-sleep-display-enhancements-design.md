@@ -287,6 +287,78 @@ New describe `sleepConsistencyStats`:
 4. Verify an all-null night shows no strip in the daily rows.
 5. Verify a night with only Core (no Deep/REM/Awake) shows only Core in percentages + single-segment strip.
 
+## Phase 3 — Source filtering, layout fixes, day zoom (2026-04-11 revision)
+
+After Phases 1 + 2 shipped, four usability issues surfaced in the sleep detail sheet. Phase 3 addresses them.
+
+### 3.1 Source selection must switch the entire view
+
+**Today's behavior.** When the user has multiple sleep sources (e.g. Apple Watch and AutoSleep), tapping a source tab only changes a small summary pill row below the tabs. The chart, sleep debt line, stage percentages, consistency chart, and per-night daily rows all show a merged view regardless of which tab is selected. Switching tabs appears to do nothing.
+
+**New behavior.** Tapping a source tab switches the *entire* sleep sheet to that source's view. Every element that shows per-night data — chart, debt, stage %, consistency chart, day list, per-night strips — re-renders to show only that source's readings.
+
+**Tabs available:**
+- **"All"** — shows a merged view (overlaps between sources deduped, same as today's current behavior).
+- One tab per sleep source that has at least one sample in the 7-day window, in alphabetical order.
+
+**Default tab.** The source with the most stage detail is selected by default — meaning the source that reports the richest breakdown into Core / Deep / REM / Awake across the 7-day window. Apple Watch typically wins; AutoSleep and phone-only sources typically report coarser data and lose. If no source reports any stages (all nights are just "asleep"), fall back to "All". Rationale: the sheet's whole point is stage visualization; default to the source that actually has stages.
+
+**Out of scope.** Side-by-side comparison of two sources at once.
+
+### 3.2 Sheet layout — more room for the day list
+
+**Today's behavior.** On the sleep sheet, the top half of the sheet fills up with the current value, source tabs, chart, sleep debt line, stage percentage row, and the full consistency chart. The per-night day list at the bottom is squeezed into a small scroll strip that can't comfortably show all 7 nights.
+
+**New behavior.** The day list gets the room it needs. Everything below the current-value header becomes part of one continuous scroll: source tabs, chart, debt line, stage %, consistency chart, and the daily rows all live in the same scrollable area. The user can scroll through everything in one motion.
+
+**Trade-off accepted.** Swipe-to-dismiss by dragging on the chart area is lost. The drag handle at the top and the ✕ button still dismiss the sheet.
+
+This layout change applies to all metric detail sheets, not just sleep — everything benefits from more scroll room on short phones.
+
+### 3.3 Day click → zoomed day detail card
+
+**Today's behavior.** Tapping a day in the stacked sleep bar chart does nothing visible on the sleep sheet.
+
+**New behavior.** Tapping a day in the chart opens a "zoomed day" card that appears just below the chart. The card shows:
+- The date
+- Total sleep time and bedtime → wake time
+- A large, easy-to-read stage strip that visualizes the night — each stage (Core, Deep, REM, Awake) colored, spanning bedtime to wake time, with hour labels beneath
+- A stage percentage breakdown for that night
+
+Tapping the same day again closes the card. Tapping a different day switches the card to that night. Nights with no sleep data show a "No sleep data for this night" message inside the card.
+
+While a day is selected, the "last night" stage percentage row that normally sits under the chart hides (the zoomed card already shows the same info for the selected night, so we don't want duplicates).
+
+### 3.4 Per-night daily rows — bigger and easier to read
+
+**Today's behavior.** The daily row list uses small text and a thin stage strip. Rows feel cramped; the strip is hard to read without zooming into the screenshot.
+
+**New behavior.** Rows are taller, text is larger, and the per-night stage strip is thicker — enough to read the stage composition at a glance while scanning the list. This is a typography tune-up; the row structure (date label on the left, total hours on the right, strip beneath) is unchanged.
+
+### Phase 3 acceptance criteria
+
+1. Source tabs include an "All" option plus one tab per distinct sleep source that has samples in the last 7 days, in alphabetical order. The default selection is the source reporting the most stage detail (Core/Deep/REM/Awake coverage) across the 7-day window; "All" is the fallback when no source has stage data.
+2. Tapping a source tab re-renders the chart, debt line, stage percentages, consistency chart, and the daily row list to match that source's data. Nothing that shows per-night data ignores the selection.
+3. The sheet scrolls as one continuous area from the source tabs down through the daily rows. The day list can be scrolled to show all 7 nights without being squeezed.
+4. The sheet can still be dismissed by dragging the handle at the top or tapping ✕.
+5. Tapping a day in the chart opens a zoomed card just below the chart showing the date, total, bedtime → wake, a large stage strip with hour labels, and stage percentages for that night. Tapping the same day again closes the card. Tapping a different day switches it.
+6. Nights with no sleep data show a "no data" message inside the zoomed card.
+7. While a day is selected, the "last night" stage percentage row under the chart is hidden to avoid duplicated info.
+8. The per-night daily rows in the breakdown list are visibly larger and easier to read than before Phase 3 — both the text and the stage strip.
+9. All automated tests pass.
+
+### Phase 3 manual test plan
+
+1. Open sleep sheet → the source with the richest stage data (typically Apple Watch) is selected by default; chart and stats render from that source.
+2. Tap "All" → chart, debt, stage percentages, consistency chart, and daily rows all change to the merged view.
+3. Tap "AutoSleep" → everything switches again. Tap the Apple Watch tab → back to the default view.
+4. Scroll the sheet — the daily row list can be scrolled to show all 7 nights without being squeezed.
+5. Tap a day in the chart → zoomed card appears with that night's details; the "last night" stage row disappears.
+6. Tap the same day → card hides, last-night row returns.
+7. Tap a different day → card updates to that night.
+8. Drag the handle down → sheet dismisses.
+9. The per-night rows in the breakdown list feel visibly larger/clearer than before.
+
 ## File changes summary
 
 | File | Change |
@@ -304,3 +376,7 @@ New describe `sleepConsistencyStats`:
 | `__tests__/sleep.test.ts` | New cases |
 | `__tests__/weekly.test.ts` | New cases for `aggregateSleepDetailed` |
 | `docs/superpowers/specs/2026-04-11-sleep-display-enhancements-design.md` | This spec |
+
+### Phase 3 implementation
+
+Phase 3 engineering details (data shapes, component layout, file-level changes, rollout order, risks) live in [`docs/superpowers/plans/2026-04-11-sleep-display-phase-3-plan.md`](../plans/2026-04-11-sleep-display-phase-3-plan.md).
