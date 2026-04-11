@@ -101,6 +101,9 @@ Real GPS fixture data: `__tests__/fixtures/locations.json` (36K+ points from rea
 - Today's health data is always live; past days are cached in SQLite
 - Clustering is computed on-demand (when user opens Location sheet or shares), not on grab
 - Pure functions extracted to `lib/` for testability
+- **`expo-av` is removed in SDK 55.** Use `expo-audio` for file playback or `react-native-audio-api` (Web Audio API polyfill) for dynamic tones. Reinstalling `expo-av` fails with `EXEventEmitter.h not found`.
+- **OTA update `--message` is server-side only** — not in `Updates.manifest` at runtime. For in-app "what's running" display, bake `git log -1 --format=%s` into `lib/generated_version.ts` via `scripts/generate-version.js`.
+- **Set Apple development team in Xcode's Signing UI**, not `app.json`'s `appleTeamId`. The latter causes "No Account for Team" errors; the former writes `DEVELOPMENT_TEAM` to `project.pbxproj` where xcodebuild finds it.
 
 ## Data Collected
 
