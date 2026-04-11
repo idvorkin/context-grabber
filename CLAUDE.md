@@ -106,14 +106,18 @@ When modifying an existing feature, re-read its spec first. If the spec no longe
 - Pruning happens on app foreground and when retention days are reduced
 - All timestamps: UTC unix milliseconds in storage, ISO 8601 UTC in export
 - Day bucketing uses **local time** (not UTC) — "your Tuesday" means local Tuesday
-- Sleep window is **noon-to-noon** (not midnight) — captures overnight sessions correctly
+- Sleep bucketing is **noon-to-noon** — new code should use `aggregateSleepDetailed` (`lib/sleep.ts`), which attributes pre-noon samples to the PREVIOUS night. The older `aggregateSleep` uses `bucketByDay` with midnight cutoffs and is kept only for the scalar `weeklyCache.sleep` path.
 - Sleep merges overlapping intervals before summing (Watch + iPhone both report same period)
 - Today's health data is always live; past days are cached in SQLite
 - Clustering is computed on-demand (when user opens Location sheet or shares), not on grab
 - Pure functions extracted to `lib/` for testability
 - **`expo-av` is removed in SDK 55.** Use `expo-audio` for file playback or `react-native-audio-api` (Web Audio API polyfill) for dynamic tones. Reinstalling `expo-av` fails with `EXEventEmitter.h not found`.
 - **OTA update `--message` is server-side only** — not in `Updates.manifest` at runtime. For in-app "what's running" display, bake `git log -1 --format=%s` into `lib/generated_version.ts` via `scripts/generate-version.js`.
-- **Set Apple development team in Xcode's Signing UI**, not `app.json`'s `appleTeamId`. The latter causes "No Account for Team" errors; the former writes `DEVELOPMENT_TEAM` to `project.pbxproj` where xcodebuild finds it.
+- **`DEVELOPMENT_TEAM` is committed in `ios/ContextGrabber.xcodeproj/project.pbxproj`** — no need to set it manually each build. Do NOT add `appleTeamId` to `app.json` (causes "No Account for Team" errors). If Xcode loses the Apple ID session after an update, re-add it in Xcode → Settings → Accounts.
+- **iOS CoreLocation suppresses GPS updates when the phone is stationary** (motion-coprocessor confirmed). Multi-hour overnight gaps are normal — fix at the clustering layer (`mergeConsecutiveSamePlace` in `lib/clustering_v2.ts`), not by increasing collection frequency. `expo-location` doesn't expose Significant Location Changes API.
+- **`runtimeVersion` in `app.json` must be a literal string** (`"1.0.0"`) matching `EXUpdatesRuntimeVersion` in `ios/ContextGrabber/Supporting/Expo.plist`. The `{policy: "appVersion"}` form fails because `ios/` is committed and EAS treats the project as bare workflow — `just ota` will reject it.
+- **Never run `expo prebuild` in `just deploy`.** It wipes `DEVELOPMENT_TEAM` from `project.pbxproj` and creates duplicate file refs in LiveActivity's appex (asset catalog conflict). Use `just resync-native` only when native regeneration is intentional, and expect to re-commit `ios/` afterwards.
+- **Sanity-check geometry thresholds against `__tests__/fixtures/context-grabber.db` + `locations.json`** before shipping clustering / place-matching / distance rules. The fixture carries 36K real GPS points + 4 real known places — synthetic tests miss edge cases real data exposes. (Example: the place-merge gate moved from 50m → 500m because the tight gate caught 0/10 unmatched stays in the fixture.)
 
 ## Data Collected
 
