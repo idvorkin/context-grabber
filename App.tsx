@@ -362,6 +362,7 @@ export default function App() {
   const [locationExpanded, setLocationExpanded] = useState(false);
   const [locationSummaryText, setLocationSummaryText] = useState<string | null>(null);
   const [gymTimerVisible, setGymTimerVisible] = useState(false);
+  const [otaUpdateReady, setOtaUpdateReady] = useState(false);
 
   // Initialize database on mount
   useEffect(() => {
@@ -1011,12 +1012,27 @@ export default function App() {
     }
   }
 
+  async function checkForOtaInBackground() {
+    // Fire-and-forget. Never throws, never blocks grabContext. Silent on failure.
+    try {
+      if (!Updates.isEnabled) return;
+      const check = await Updates.checkForUpdateAsync();
+      if (!check.isAvailable) return;
+      const result = await Updates.fetchUpdateAsync();
+      if (result.isNew) setOtaUpdateReady(true);
+    } catch {
+      // Swallow — an update-check failure must not pollute the grab UX.
+    }
+  }
+
   async function grabContext() {
     setLoading(true);
     setError(null);
     setWeeklyCache({});
     setStatsCache({});
     setWeeklyError(null);
+    // Kick off an OTA check in parallel. Never awaited.
+    void checkForOtaInBackground();
     try {
       await HealthKit.requestAuthorization({
         toRead: [
@@ -1304,6 +1320,24 @@ export default function App() {
           </View>
         </View>
       </View>
+
+      {otaUpdateReady && (
+        <TouchableOpacity
+          style={styles.updateReadyBanner}
+          onPress={async () => {
+            try {
+              await Updates.reloadAsync();
+            } catch {
+              setOtaUpdateReady(false);
+            }
+          }}
+          accessibilityLabel="Reload with new update"
+        >
+          <Text style={styles.updateReadyText}>
+            {"\u2193"} Update ready — tap to reload
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <AboutModal
         visible={aboutVisible}
@@ -1652,6 +1686,22 @@ const styles = StyleSheet.create({
     color: "#4cc9f0",
     fontSize: 16,
     fontWeight: "700",
+  },
+  updateReadyBanner: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: "#1d4e4a",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#4cc9f0",
+    alignItems: "center",
+  },
+  updateReadyText: {
+    color: "#4cc9f0",
+    fontSize: 13,
+    fontWeight: "600",
   },
   shareRow: {
     flexDirection: "row",

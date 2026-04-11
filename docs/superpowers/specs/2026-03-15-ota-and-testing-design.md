@@ -60,6 +60,31 @@ Add over-the-air (OTA) JS bundle updates via `expo-updates` so the app can be up
 - `app.json` — updates config, runtimeVersion
 - `package.json` — expo-updates dependency (added by `npx expo install`)
 
+### Auto-check on Grab Context (2026-04-11 addition)
+
+**Today's behavior.** `expo-updates` checks for a new OTA bundle only on app launch. A user who keeps the app open for hours or days never sees a new update until they fully cold-start. They can manually tap "Check for update" in the About modal, but it's buried.
+
+**New behavior.** Every time the user taps **Grab Context**, the app kicks off a background OTA check in parallel with the health/location grab. The check is fire-and-forget:
+
+- Grab Context is never delayed by the update check. The data-refresh UX is unchanged.
+- If no update is available, nothing visible happens.
+- If a new update is available, the app downloads it silently in the background.
+- Once downloaded, a small non-blocking **"Update ready — tap to reload"** indicator appears near the Grab Context button (or in the status area at the top of the screen). Tapping it reloads the app with the new bundle.
+- If the user ignores the indicator, it stays visible but never forces a reload. The update will apply on the next cold start.
+- If the check fails (network error, server unreachable), it fails silently — no error banner, no modal. The user's grab already succeeded; an update check failure shouldn't pollute the refresh UX.
+
+**Why during Grab.** Grab Context is the primary interaction and happens often enough (multiple times a day) that tying the update check to it gives us a cheap, reliable refresh signal without adding a timer or a pull-to-refresh affordance anywhere else.
+
+**Acceptance criteria:**
+
+1. Tapping Grab Context starts an OTA check in the background.
+2. The grab completes in its normal time regardless of the OTA check's progress or success.
+3. When a new update is downloaded, a non-blocking indicator appears offering a reload.
+4. Tapping the indicator reloads the app with the new bundle.
+5. The indicator persists until the user reloads or leaves the app.
+6. OTA check failures are silent — they do not display errors or block the grab.
+7. The existing manual "Check for update" button in the About modal still works as before.
+
 ## Testing
 
 ### Framework
