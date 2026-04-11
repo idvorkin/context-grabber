@@ -3,12 +3,22 @@
  * Pure functions — no device access, fully testable.
  *
  * Produces a day-by-day accounting that splits every minute of elapsed time
- * into four buckets: stays (matched or unnamed place visits), transit (moving
- * between places), loose (GPS points exist but no stay formed), and no-data
- * (no GPS points — phone off, tracking disabled, signal lost).
+ * into three buckets:
+ *   stay     — matched (or auto-discovered Place N) for ≥5 min
+ *   transit  — GPS evidence exists, no stay formed (movement, brief stops, noise)
+ *   noData   — no GPS evidence (phone off / tracking disabled / signal lost)
  *
  * Invariant for each day:
- *   stayMinutes + transitMinutes + looseMinutes + noDataMinutes = elapsedMinutes ± 1
+ *   stayMinutes + transitMinutes + noDataMinutes = elapsedMinutes ± 1
+ *
+ * Notes on the "transit" bucket:
+ * - We do NOT trust clustering's TransitSegment output for accounting. That
+ *   function labels every gap between stays as transit regardless of whether
+ *   GPS was reporting (so an overnight "Home → Coffee" with a dead phone
+ *   would naively read as 8h transit).
+ * - Instead, we re-analyze every non-stay minute against the raw points and
+ *   call it transit only if there's actual GPS evidence (per the loose-gap
+ *   detection rules in `splitNonStay`).
  */
 
 import type { Stay, TransitSegment } from "./clustering_v2";
@@ -30,10 +40,10 @@ export type PlaceDaySummary = {
     totalMinutes: number;
   }[]; // sorted by totalMinutes descending, top 10 only
   visits: PlaceVisitDetail[]; // individual visits sorted by startTime
+  elapsedMinutes: number; // shown in the day header (24h or now - dayStart)
   totalStayMinutes: number; // sum of top-10 places
-  transitMinutes: number; // time moving between places
-  looseMinutes: number; // GPS points exist but no stay formed
-  noDataMinutes: number; // no GPS points at all (phone off / tracking disabled)
+  transitMinutes: number; // GPS evidence outside stays
+  noDataMinutes: number; // no GPS evidence anywhere
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -85,28 +95,28 @@ function computeUncovered(covered: Interval[], dayStart: number, dayEnd: number)
 }
 
 /**
- * Split `uncovered` time into loose (has GPS points nearby) vs no-data (silence).
+ * Split non-stay time into transit (has GPS evidence) vs no-data (silence).
  *
- * For each uncovered interval [start, end]:
+ * For each non-stay interval [start, end]:
  *   1. Collect raw points in [start - LOOSE_HALF_WINDOW, end + LOOSE_HALF_WINDOW].
- *   2. Group them into runs where consecutive points are <= LOOSE_MAX_GAP apart.
- *   3. Each run becomes a loose segment spanning [first - HALF, last + HALF].
+ *   2. Group into runs where consecutive points are <= LOOSE_MAX_GAP apart.
+ *   3. Each run becomes a transit segment spanning [first - HALF, last + HALF].
  *   4. Clamp segments to [start, end], sum their lengths.
- *   5. loose = Σ segments; noData = (end - start) - loose.
+ *   5. transit = Σ segments; noData = (end - start) - transit.
  *
  * @internal exported for testing
  */
-export function splitUncovered(
-  uncovered: Interval[],
+export function splitNonStay(
+  nonStay: Interval[],
   rawPoints: LocationPoint[],
-): { looseMs: number; noDataMs: number } {
-  let looseMs = 0;
+): { transitMs: number; noDataMs: number } {
+  let transitMs = 0;
   let totalMs = 0;
 
   // Pre-sort points once — callers may already have sorted them, but be defensive.
   const sortedPts = [...rawPoints].sort((a, b) => a.timestamp - b.timestamp);
 
-  for (const { start, end } of uncovered) {
+  for (const { start, end } of nonStay) {
     const ivMs = end - start;
     if (ivMs <= 0) continue;
     totalMs += ivMs;
@@ -121,7 +131,7 @@ export function splitUncovered(
     }
     if (candidates.length === 0) continue;
 
-    // Build loose segments from runs of close-together points.
+    // Build transit segments from runs of close-together points.
     const segments: Interval[] = [];
     let runStart = candidates[0];
     let runEnd = candidates[0];
@@ -140,26 +150,31 @@ export function splitUncovered(
     for (const seg of segments) {
       const a = Math.max(seg.start, start);
       const b = Math.min(seg.end, end);
-      if (b > a) looseMs += b - a;
+      if (b > a) transitMs += b - a;
     }
   }
 
   // Safety clamp (floating-point drift).
-  if (looseMs > totalMs) looseMs = totalMs;
-  return { looseMs, noDataMs: totalMs - looseMs };
+  if (transitMs > totalMs) transitMs = totalMs;
+  return { transitMs, noDataMs: totalMs - transitMs };
 }
 
 /**
- * Build a per-day summary of place visits from clustering stays + transit + raw points.
+ * Build a per-day summary of place visits from clustering stays + raw points.
  *
  * Returns the most recent `days` days (including today), sorted most-recent first.
  * Today's elapsed is truncated at `now` rather than full 24h. Days with zero
- * activity of any kind (no stays, no transit, no raw points) are omitted to
- * avoid showing empty history from before tracking was enabled.
+ * activity (no stays AND no raw points) are omitted to avoid showing empty
+ * history from before tracking was enabled.
+ *
+ * The `transit` argument is accepted for API compatibility but unused — we
+ * derive transit minutes from raw points, not from clustering's
+ * `TransitSegment` output. See file header for rationale.
  */
 export function buildPlacesDailySummary(
   stays: Stay[],
-  transit: TransitSegment[],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _transit: TransitSegment[],
   rawPoints: LocationPoint[],
   days: number,
   now: number = Date.now(),
@@ -175,11 +190,10 @@ export function buildPlacesDailySummary(
     if (dayEnd <= dayStart) continue;
 
     const dateKey = formatDateKey(new Date(dayStart));
-    const covered: Interval[] = [];
+    const stayCovered: Interval[] = [];
     const placeMap = new Map<string, number>(); // placeId → ms
     const visits: PlaceVisitDetail[] = [];
     let stayMsTotal = 0;
-    let transitMsTotal = 0;
 
     // Collect stays overlapping this day.
     for (const stay of stays) {
@@ -189,7 +203,7 @@ export function buildPlacesDailySummary(
       placeMap.set(stay.placeId, (placeMap.get(stay.placeId) ?? 0) + ov);
       const clampedStart = Math.max(stay.startTime, dayStart);
       const clampedEnd = Math.min(stay.endTime, dayEnd);
-      covered.push({ start: clampedStart, end: clampedEnd });
+      stayCovered.push({ start: clampedStart, end: clampedEnd });
       visits.push({
         placeId: stay.placeId,
         startTime: clampedStart,
@@ -198,45 +212,33 @@ export function buildPlacesDailySummary(
       });
     }
 
-    // Collect transit overlapping this day.
-    for (const t of transit) {
-      const ov = overlapMs(dayStart, dayEnd, t.startTime, t.endTime);
-      if (ov <= 0) continue;
-      transitMsTotal += ov;
-      covered.push({
-        start: Math.max(t.startTime, dayStart),
-        end: Math.min(t.endTime, dayEnd),
-      });
-    }
+    // All non-stay time = day window minus stay intervals.
+    const nonStay = computeUncovered(stayCovered, dayStart, dayEnd);
+    const { transitMs, noDataMs } = splitNonStay(nonStay, rawPoints);
 
-    // Compute uncovered intervals and split into loose vs no-data.
-    const uncovered = computeUncovered(covered, dayStart, dayEnd);
-    const { looseMs, noDataMs } = splitUncovered(uncovered, rawPoints);
-
-    // Skip days with zero activity of any kind (pre-tracking history).
+    // Skip days with zero activity (pre-tracking history).
     const hasRawPoints = rawPoints.some(
       (p) => p.timestamp >= dayStart && p.timestamp < dayEnd,
     );
-    if (stayMsTotal === 0 && transitMsTotal === 0 && !hasRawPoints) continue;
+    if (stayMsTotal === 0 && !hasRawPoints) continue;
 
     // Round to whole minutes.
     const elapsedMin = Math.round((dayEnd - dayStart) / 60000);
     let stayMin = Math.round(stayMsTotal / 60000);
-    let transitMin = Math.round(transitMsTotal / 60000);
-    let looseMin = Math.round(looseMs / 60000);
+    let transitMin = Math.round(transitMs / 60000);
     let noDataMin = Math.round(noDataMs / 60000);
 
-    // Invariant: sum must equal elapsed ±1m. Clamp overshoot in priority
-    // order (noData first, then loose) so stay/transit stay truthful.
-    let delta = stayMin + transitMin + looseMin + noDataMin - elapsedMin;
+    // Invariant: stay + transit + noData = elapsed (±1m). Clamp overshoot
+    // in priority order (noData first, then transit) so stay stays truthful.
+    let delta = stayMin + transitMin + noDataMin - elapsedMin;
     if (delta > 0) {
       const dec = Math.min(delta, noDataMin);
       noDataMin -= dec;
       delta -= dec;
     }
     if (delta > 0) {
-      const dec = Math.min(delta, looseMin);
-      looseMin -= dec;
+      const dec = Math.min(delta, transitMin);
+      transitMin -= dec;
       delta -= dec;
     }
     if (delta < 0) {
@@ -244,7 +246,7 @@ export function buildPlacesDailySummary(
       noDataMin += -delta;
     }
     if (noDataMin < 0) noDataMin = 0;
-    if (looseMin < 0) looseMin = 0;
+    if (transitMin < 0) transitMin = 0;
 
     // Build top-10 places by minutes.
     const places = [...placeMap.entries()]
@@ -260,9 +262,9 @@ export function buildPlacesDailySummary(
       dateKey,
       places,
       visits,
+      elapsedMinutes: elapsedMin,
       totalStayMinutes,
       transitMinutes: transitMin,
-      looseMinutes: looseMin,
       noDataMinutes: noDataMin,
     });
   }

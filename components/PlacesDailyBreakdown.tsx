@@ -75,13 +75,12 @@ export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
   return (
     <View style={styles.container}>
       {days.map((day) => {
-        // Bar scale: max of stay rows + the supplemental rows so they all
-        // share a comparable visual scale.
+        // Bar scale: max across stays + transit + no-data so all rows share
+        // a comparable visual scale.
         const maxStay = day.places.length > 0 ? day.places[0].totalMinutes : 0;
         const maxMinutes = Math.max(
           maxStay,
           day.transitMinutes,
-          day.looseMinutes,
           day.noDataMinutes,
           1,
         );
@@ -95,7 +94,7 @@ export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
           >
             <View style={styles.dateRow}>
               <Text style={styles.dateHeader}>{formatDateLabel(day.dateKey)}</Text>
-              <Text style={styles.totalText}>{formatHours(day.totalStayMinutes)}</Text>
+              <Text style={styles.totalText}>{formatHours(day.elapsedMinutes)}</Text>
             </View>
             {day.places.map((place) => {
               const isUnknown = PLACE_N_PATTERN.test(place.placeId);
@@ -136,7 +135,7 @@ export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
               );
             })}
 
-            {/* Supplemental accounting rows: transit, loose, no-data */}
+            {/* Supplemental accounting rows: transit, no-data */}
             {day.transitMinutes > 0 && (
               <View style={styles.row}>
                 <View style={styles.barContainer}>
@@ -153,24 +152,6 @@ export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
                 </View>
                 <Text style={[styles.placeName, styles.dimText]} numberOfLines={1}>—transit—</Text>
                 <Text style={[styles.hours, styles.dimText]}>{formatHours(day.transitMinutes)}</Text>
-              </View>
-            )}
-            {day.looseMinutes > 0 && (
-              <View style={styles.row}>
-                <View style={styles.barContainer}>
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        width: `${Math.max((day.looseMinutes / maxMinutes) * 100, 2)}%`,
-                        backgroundColor: UNKNOWN_COLOR,
-                        opacity: 0.55,
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={[styles.placeName, styles.dimText]} numberOfLines={1}>—loose—</Text>
-                <Text style={[styles.hours, styles.dimText]}>{formatHours(day.looseMinutes)}</Text>
               </View>
             )}
             {day.noDataMinutes > 0 && (

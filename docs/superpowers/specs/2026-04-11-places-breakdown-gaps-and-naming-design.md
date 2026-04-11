@@ -33,96 +33,95 @@ The user needs to know at a glance: *"did I lose data here, or was I just moving
 
 ## Design
 
-### 1. Transit, Loose, and No-data rows in the daily breakdown
+### 1. Transit and No-data rows in the daily breakdown
 
-Each day card in `PlacesDailyBreakdown` gains up to three extra rows below the stays:
+Each day card in `PlacesDailyBreakdown` gains two extra rows below the stays. Three buckets in total: stay / transit / no-data.
 
 ```
 ┌──────────────────────────────────────────┐
-│ Sat Apr 11                       8h 42m │  ← day header (total stay time, unchanged)
-│ ████████████████  Home           6h 10m │  ← known place (green)
+│ Sat Apr 11                          24h │  ← day header = elapsed minutes
+│ ████████████████  Home           6h 10m │  ← known place
 │ ██████            Office         1h 40m │
-│ ██                Place 3           52m │  ← unknown — "Name" button on right
-│ ░░░░              —transit—      1h 05m │  ← cyan dashed, smaller
-│ ▓▓▓▓              —loose—          35m │  ← amber, dimmed (GPS points but no stay formed)
-│ ▒▒▒▒▒▒▒▒▒▒▒▒      —no data—      1h 45m │  ← grey, dimmed (GPS was off / phone dead)
+│ ██                Place 3           52m │  ← unknown — "Name" button
+│ ███████           —transit—      1h 53m │  ← cyan dim
+│ ███████████████   —no data—     13h 25m │  ← grey dim
 └──────────────────────────────────────────┘
+   sum of bars = 24h (elapsed)
 ```
 
-- Transit, loose, and no-data rows follow the stay rows, visually dimmer than stays.
+- **Stay** = matched to a known place (or auto-discovered `Place N`) for ≥5 min.
+- **Transit** = GPS points exist outside any stay. This includes both inter-stay movement (a real drive) and head/tail wandering (3-min stops, store browsing, GPS noise). The clustering distinction between "between stays" and "head/tail" is an internal implementation detail; from the user's perspective both are "I have GPS but it didn't form a stay."
+- **No data** = no GPS points (phone off, signal lost, tracking disabled).
+- Day header total = **elapsed minutes for the day** (`24h` for past days, `now − dayStart` for today). This makes the three buckets sum to the header number.
 - Transit row color: `#4cc9f0` at reduced opacity.
-- Loose row color: `#fca311` at reduced opacity (same hue as `Place N` so it reads as "unnamed/noise" data).
-- No-data row color: `#555` (existing null-value grey).
-- Bar width uses the same `maxMinutes` scale as stays.
-- Day header total remains **stay minutes only** (current behavior). The three non-stay rows are supplemental accounting, not bundled into the header number.
-- Any of the three rows with zero minutes is omitted.
-
-**Why split `loose` from `no data`:** The user needs to tell the difference between "I was somewhere for 3 minutes, it just didn't cluster" (loose) and "my phone was off" (no data). The former is actionable (evidence of a place worth capturing more carefully); the latter is a data-collection failure.
+- No-data row color: `#555`.
+- Bar width uses the max of all three bucket values as the scale.
+- Any row with zero minutes is omitted.
 
 ### 2. Per-day accounting math
 
-Inputs: `stays: Stay[]`, `transit: TransitSegment[]`, `rawPoints: LocationPoint[]` (sorted by timestamp), plus each day's `dayStart` / `dayEnd`.
+**Transit is evidence-gated.** Clustering's `buildTransit` is dumb time arithmetic — it labels every gap between two consecutive stays as `transit` regardless of whether GPS was actually reporting. An overnight Home → Coffee gap with a dead phone would naively read as "8h transit". We do not want that. `buildPlacesDailySummary` re-analyzes every non-stay minute against the raw GPS points: minutes with GPS evidence (per the loose-detection rules below) become `transitMinutes`; minutes without evidence become `noDataMinutes`. We don't trust clustering's transit output for accounting — only its stays.
+
+Inputs: `stays: Stay[]`, `transit: TransitSegment[]` (kept in the API for symmetry but ignored for the bucket math), `rawPoints: LocationPoint[]` (sorted by timestamp), plus each day's `dayStart` / `dayEnd`.
 
 For each local-midnight day bucket:
 - `dayStart` = local midnight of that date
 - `dayEnd` = `min(dayStart + 24h, now)` — today's day is truncated at "now"
-- `stayMinutes` = sum of `overlap(stay, [dayStart, dayEnd])` across all stays
-- `transitMinutes` = sum of `overlap(transit, [dayStart, dayEnd])` across all transit segments
-- `uncovered` = total minutes in `[dayStart, dayEnd]` not covered by any stay or transit
-- `uncovered` is then split into `looseMinutes` and `noDataMinutes` by inspecting raw points (see below)
-- Invariant: `stayMinutes + transitMinutes + looseMinutes + noDataMinutes = dayEnd − dayStart` (±1m rounding)
+- `elapsedMs` = `dayEnd − dayStart`
+- `stayMs` = sum of `overlap(stay, [dayStart, dayEnd])` across all stays
+- `nonStay` = `elapsedMs − stayMs` total, computed as the inverse of stay intervals against the day window
+- `nonStay` is split into `transitMs` and `noDataMs` by `splitNonStay(nonStayIntervals, rawPoints)`
+- Invariant: `stayMs + transitMs + noDataMs = elapsedMs` (±1m rounding)
 
-A stay or transit that straddles midnight gets split proportionally — a Home stay from 10pm to 8am contributes 2h to the earlier day and 8h to the later.
+A stay that straddles midnight gets split proportionally — a Home stay from 10pm to 8am contributes 2h to the earlier day and 8h to the later.
 
-### 2a. Splitting `uncovered` into `loose` vs `no data`
+### 2a. Splitting `non-stay` time into `transit` vs `no data`
 
-Walk the raw points in time order. For each uncovered sub-interval `[a, b]` of the day:
+Walk the raw points in time order. For each non-stay sub-interval `[a, b]` of the day:
 
-1. Collect all raw points whose `timestamp ∈ [a, b]`.
-2. If there are **no points** in `[a, b]`, the entire sub-interval is `noDataMinutes`.
-3. If there are points, walk them in order and split the sub-interval at "no-data gaps":
-   - Any contiguous run where consecutive points are within `LOOSE_MAX_GAP = 10 min` of each other is a **loose segment**; the segment spans from the first such point minus 5m to the last such point plus 5m (clamped to `[a, b]`).
-   - Any part of `[a, b]` not covered by a loose segment is `noDataMinutes`.
+1. Collect all raw points whose `timestamp ∈ [a − LOOSE_HALF_WINDOW, b + LOOSE_HALF_WINDOW]`.
+2. If there are **no points**, the entire sub-interval is `noDataMs`.
+3. If there are points, group them into runs where consecutive points are within `LOOSE_MAX_GAP = 10 min` of each other. Each run becomes a **transit segment** spanning `[firstPoint − LOOSE_HALF_WINDOW, lastPoint + LOOSE_HALF_WINDOW]`.
+4. Clamp segments to `[a, b]`, sum their length → `transitMs` for this sub-interval.
+5. Remaining minutes → `noDataMs`.
 
-The `5 min` half-window on either side of a point is because a single GPS breadcrumb represents "roughly around here and now" — treating it as a point mass would under-count loose time. The 10-min max gap matches the expectation that normal background tracking reports every 1–5 min; a >10-min silence is a real dropout.
+The `5 min` half-window on either side of a point is because a single GPS breadcrumb represents "roughly around here and now" — treating it as a point mass would under-count transit time. The 10-min max gap matches the expectation that normal background tracking reports every 1–5 min; a >10-min silence is a real dropout.
 
-Add the constant to `lib/clustering_v2.ts` alongside the other timing constants:
+Constants in `lib/clustering_v2.ts` (no algorithm change there, just exports):
 - `LOOSE_MAX_GAP = 10 * 60 * 1000` (10 minutes in ms)
 - `LOOSE_HALF_WINDOW = 5 * 60 * 1000` (5 minutes in ms, attributed to each point)
 
-Rounding: all four values rounded to whole minutes. If floating-point drift causes any to go negative, clamp to 0.
+The function name `splitUncovered` from the prior revision is renamed to `splitNonStay` to reflect that it now operates on all non-stay time, not just head/tail.
 
-### 3. `PlaceDaySummary` data model change
+Rounding: all three values rounded to whole minutes. If floating-point drift causes any to go negative, clamp to 0. Overshoot priority: clamp `noData` first, then `transit`, never touch `stay`.
 
-Update `lib/places_summary.ts`:
+### 3. `PlaceDaySummary` data model
 
 ```typescript
 export type PlaceDaySummary = {
   dateKey: string;
   places: { placeId: string; totalMinutes: number }[];
   visits: PlaceVisitDetail[];
-  totalStayMinutes: number;    // renamed from totalTrackedMinutes, same value
-  transitMinutes: number;      // new
-  looseMinutes: number;        // new — GPS points exist but no stay formed
-  noDataMinutes: number;       // new — no GPS points (phone off / tracking disabled)
+  elapsedMinutes: number;      // shown in the day header
+  totalStayMinutes: number;    // sum of top-10 places
+  transitMinutes: number;      // GPS evidence outside stays
+  noDataMinutes: number;       // no GPS evidence anywhere
 };
 ```
 
-`buildPlacesDailySummary` gains new arguments:
+Invariant: `totalStayMinutes + transitMinutes + noDataMinutes ≈ elapsedMinutes` (±1m).
 
 ```typescript
 buildPlacesDailySummary(
   stays: Stay[],
-  transit: TransitSegment[],
-  rawPoints: LocationPoint[],   // sorted by timestamp
+  transit: TransitSegment[],   // accepted but unused — kept for API stability
+  rawPoints: LocationPoint[],  // sorted by timestamp
   days: number,
-  now?: number,                 // injectable for tests; defaults to Date.now()
+  now?: number,                // injectable for tests; defaults to Date.now()
 ): PlaceDaySummary[]
 ```
 
-The `totalStayMinutes` field name makes the semantics explicit (before, it was ambiguous). `totalTrackedMinutes` is removed — rename is intentional, not backwards-compatible, because the old name was misleading.
-
-Passing `rawPoints` is necessary because the loose-vs-no-data split requires knowing *where* GPS points landed, which the stays/transit output alone has already lost.
+Passing `rawPoints` is necessary because the transit-vs-no-data split requires knowing *where* GPS points landed.
 
 ### 4. "Name this place" button
 
@@ -252,15 +251,16 @@ User names `Place 3` → "Home" but "Home" already exists. `addKnownPlace` will 
 
 ## Acceptance Criteria
 
-1. Each day card in the breakdown shows transit, loose, and no-data rows whenever those minutes are nonzero. Rows with zero minutes are omitted.
-2. `stayMinutes + transitMinutes + looseMinutes + noDataMinutes` equals `dayEnd − dayStart` for every day, within ±1 minute for rounding.
-3. A day with GPS points throughout but few/no stays reads mostly as `loose`, not `no data`.
-4. A day with the phone off / tracking disabled reads as `no data`, not `loose`.
-5. Unknown `Place N` rows have a visually distinct bar color and a tappable naming button.
-6. Tapping the naming button on a stay far from all known places opens a name input, and saving adds a new known place at the stay's centroid.
-7. Tapping the button on a stay within **500m** of any existing known place shows a merge-preview modal with the precomputed new radius and center shift, and accepting it updates the existing place via `mergePlaceCircle` + `updateKnownPlace`.
-8. After any successful name/expand, the breakdown re-renders within one frame and the formerly-`Place N` row is now labeled with the new name.
-9. All existing tests in `__tests__/places_summary.test.ts` and `__tests__/clustering_v2.test.ts` continue to pass (after updating for renamed field and new args).
+1. Each day card shows the day header as **elapsed minutes** (24h for past days, `now − dayStart` for today).
+2. Each day card shows transit and no-data rows whenever those minutes are nonzero. Rows with zero minutes are omitted.
+3. `stayMinutes + transitMinutes + noDataMinutes` equals `elapsedMinutes` for every day, within ±1 minute for rounding.
+4. A day with GPS points throughout but few/no stays reads mostly as `transit`, not `no data`.
+5. A day with the phone off / tracking disabled reads as `no data`, not `transit`.
+6. An overnight Home → Coffee gap with no GPS pings reads as `no data`, not `transit`.
+7. Unknown `Place N` rows have a visually distinct bar color and a tappable naming button.
+8. Tapping the naming button on a stay far from all known places opens a name input, and saving adds a new known place at the stay's centroid.
+9. Tapping the button on a stay within **500m** of any existing known place shows a merge-preview modal with the precomputed new radius and center shift, and accepting it updates the existing place via `mergePlaceCircle` + `updateKnownPlace`.
+10. After any successful name/expand, the breakdown re-renders within one frame and the formerly-`Place N` row is now labeled with the new name.
 
 ## Testing
 
