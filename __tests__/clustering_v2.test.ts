@@ -1,5 +1,6 @@
 import {
   clusterLocationsV2,
+  mergeConsecutiveSamePlace,
   type Stay,
   type TransitSegment,
   type ClusterResultV2,
@@ -330,5 +331,115 @@ describe("clusterLocationsV2 with real data", () => {
       expect(t.durationMinutes).toBeGreaterThan(0);
       expect(t.distanceKm).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+// ─── Step 4b: Consecutive Same-Place Merge ───────────────────────────────────
+
+describe("mergeConsecutiveSamePlace", () => {
+  function makeStay(
+    placeId: string,
+    startTime: number,
+    durationMinutes: number,
+    pointCount = 5,
+  ): Stay {
+    return {
+      placeId,
+      centroid: { latitude: HOME_LAT, longitude: HOME_LNG },
+      startTime,
+      endTime: startTime + durationMinutes * 60 * 1000,
+      durationMinutes,
+      pointCount,
+    };
+  }
+
+  const HOUR = 60 * 60 * 1000;
+  const T0 = new Date("2026-04-09T20:00:00").getTime();
+
+  it("returns empty input unchanged", () => {
+    expect(mergeConsecutiveSamePlace([])).toEqual([]);
+  });
+
+  it("merges Home → (overnight gap) → Home into one stay", () => {
+    // Wed 8pm-10pm Home, then 9h gap, then Thu 5am-5:15am Home
+    const stays: Stay[] = [
+      makeStay("Home", T0, 120, 10),
+      makeStay("Home", T0 + 11 * HOUR, 15, 3),
+    ];
+    const result = mergeConsecutiveSamePlace(stays);
+    expect(result).toHaveLength(1);
+    expect(result[0].placeId).toBe("Home");
+    expect(result[0].startTime).toBe(stays[0].startTime);
+    expect(result[0].endTime).toBe(stays[1].endTime);
+    expect(result[0].pointCount).toBe(13);
+    // Centroid is point-count weighted average; both inputs use the same coords here
+    expect(result[0].centroid.latitude).toBeCloseTo(HOME_LAT, 5);
+    expect(result[0].centroid.longitude).toBeCloseTo(HOME_LNG, 5);
+    // Duration spans the entire range, including the 9h gap
+    const expectedMinutes = Math.round((stays[1].endTime - stays[0].startTime) / 60000);
+    expect(result[0].durationMinutes).toBe(expectedMinutes);
+  });
+
+  it("does NOT merge Home → Bar → Home (intermediate stay breaks consecutiveness)", () => {
+    const stays: Stay[] = [
+      makeStay("Home", T0, 120),
+      makeStay("Bar", T0 + 3 * HOUR, 60),
+      makeStay("Home", T0 + 5 * HOUR, 120),
+    ];
+    const result = mergeConsecutiveSamePlace(stays);
+    expect(result).toHaveLength(3);
+    expect(result.map((s) => s.placeId)).toEqual(["Home", "Bar", "Home"]);
+  });
+
+  it("does NOT merge Home → Work (different placeId)", () => {
+    const stays: Stay[] = [
+      makeStay("Home", T0, 120),
+      makeStay("Work", T0 + 12 * HOUR, 480),
+    ];
+    const result = mergeConsecutiveSamePlace(stays);
+    expect(result).toHaveLength(2);
+  });
+
+  it("cascades: 3-day Home → Home → Home collapses into one stay", () => {
+    const stays: Stay[] = [
+      makeStay("Home", T0, 60, 5),
+      makeStay("Home", T0 + 24 * HOUR, 60, 5),
+      makeStay("Home", T0 + 48 * HOUR, 60, 5),
+    ];
+    const result = mergeConsecutiveSamePlace(stays);
+    expect(result).toHaveLength(1);
+    expect(result[0].pointCount).toBe(15);
+    expect(result[0].endTime).toBe(stays[2].endTime);
+  });
+
+  it("merges mid-day Work → (gap) → Work (Work parked stationary)", () => {
+    // Work 9am-2pm, then 4h gap (phone on desk), then ping at 6pm-6:30pm
+    const stays: Stay[] = [
+      makeStay("Work", T0, 5 * 60),
+      makeStay("Work", T0 + 9 * HOUR, 30),
+    ];
+    const result = mergeConsecutiveSamePlace(stays);
+    expect(result).toHaveLength(1);
+    expect(result[0].placeId).toBe("Work");
+    expect(result[0].endTime - result[0].startTime).toBe(9 * HOUR + 30 * 60 * 1000);
+  });
+
+  it("preserves point-count-weighted centroid", () => {
+    // First stay has 9 points at lat A, second has 1 point at lat B → weighted avg ≈ A
+    const stays: Stay[] = [
+      {
+        ...makeStay("Place 1", T0, 60, 9),
+        centroid: { latitude: 47.6, longitude: -122.3 },
+      },
+      {
+        ...makeStay("Place 1", T0 + 5 * HOUR, 60, 1),
+        centroid: { latitude: 47.7, longitude: -122.4 },
+      },
+    ];
+    const result = mergeConsecutiveSamePlace(stays);
+    expect(result).toHaveLength(1);
+    expect(result[0].centroid.latitude).toBeCloseTo((47.6 * 9 + 47.7 * 1) / 10, 4);
+    expect(result[0].centroid.longitude).toBeCloseTo((-122.3 * 9 + -122.4 * 1) / 10, 4);
+    expect(result[0].pointCount).toBe(10);
   });
 });

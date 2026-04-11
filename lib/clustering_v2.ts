@@ -280,6 +280,49 @@ function assignPlaces(
   });
 }
 
+// ─── Step 4b: Consecutive Same-Place Merge ───────────────────────────────────
+//
+// iOS suppresses background GPS deliveries when the phone is truly stationary,
+// so a phone parked at Home overnight (or at Work mid-day) can produce two
+// distinct same-place stays bracketing a multi-hour silence. The earlier
+// `mergeStays` step caps merges at MERGE_GAP=30min, so these survive.
+//
+// Rule: any two consecutive stays in the sorted list that share the same
+// placeId get merged. "Consecutive" already implies "no other stay between
+// them" — if the user had visited a different place in the gap, that visit
+// would itself be a stay in the list, breaking consecutiveness.
+//
+// See docs/superpowers/specs/2026-03-26-location-clustering-v2.md, section
+// "Consecutive same-place merging".
+
+function mergeConsecutiveSamePlace(stays: Stay[]): Stay[] {
+  if (stays.length === 0) return stays;
+  const result: Stay[] = [{ ...stays[0], centroid: { ...stays[0].centroid } }];
+  for (let i = 1; i < stays.length; i++) {
+    const prev = result[result.length - 1];
+    const curr = stays[i];
+    if (prev.placeId === curr.placeId) {
+      const totalPoints = prev.pointCount + curr.pointCount;
+      prev.centroid = {
+        latitude:
+          (prev.centroid.latitude * prev.pointCount +
+            curr.centroid.latitude * curr.pointCount) /
+          totalPoints,
+        longitude:
+          (prev.centroid.longitude * prev.pointCount +
+            curr.centroid.longitude * curr.pointCount) /
+          totalPoints,
+      };
+      prev.endTime = curr.endTime;
+      prev.pointCount = totalPoints;
+      prev.durationMinutes = Math.round((prev.endTime - prev.startTime) / (1000 * 60));
+    } else {
+      result.push({ ...curr, centroid: { ...curr.centroid } });
+    }
+  }
+  return result;
+}
+
 // ─── Step 5: Transit Annotation ──────────────────────────────────────────────
 
 function buildTransit(stays: Stay[]): TransitSegment[] {
@@ -454,7 +497,11 @@ export function clusterLocationsV2(
   const mergedStays = mergeStays(rawStays);
 
   // Step 4: Place assignment
-  const stays = assignPlaces(mergedStays, knownPlaces);
+  const assignedStays = assignPlaces(mergedStays, knownPlaces);
+
+  // Step 4b: Merge consecutive stays that share the same placeId. Catches
+  // the iOS overnight-stationary case where Home stays bracket a no-data gap.
+  const stays = mergeConsecutiveSamePlace(assignedStays);
 
   // Step 5: Transit annotation
   const transit = buildTransit(stays);
@@ -535,6 +582,6 @@ export function clusterLocations(
 }
 
 // Export internals for testing
-export { detectStays, mergeStays, assignPlaces, buildTransit, buildSummaryRecent, buildSummaryWeekly };
+export { detectStays, mergeStays, assignPlaces, mergeConsecutiveSamePlace, buildTransit, buildSummaryRecent, buildSummaryWeekly };
 export { STAY_RADIUS, MIN_STAY_DURATION, MAX_POINT_GAP, MERGE_GAP, MIN_TRANSIT_SUMMARY, RECENT_DAYS };
 export { LOOSE_MAX_GAP, LOOSE_HALF_WINDOW };

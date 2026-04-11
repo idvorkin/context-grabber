@@ -264,6 +264,71 @@ newRadius = (d + existing.radiusMeters) / 2 + 50            // half the span + b
 | 100m | 200m | 50m | 200m |
 | 50m  | 120m | 35m | 135m |
 
+## Consecutive same-place merging
+
+### Problem
+
+iOS suppresses background GPS deliveries when the phone is truly stationary (motion-coprocessor confirmed). A phone parked on a nightstand at home from 11 pm to 5 am will report zero breadcrumbs across that window. The clustering pipeline sees the last evening Home point, then nothing, then a fresh morning Home point — and produces **two separate Home stays** with a multi-hour gap between them.
+
+The same effect happens mid-day too: a 4-hour stretch parked at Work with the phone on the desk produces zero new GPS pings, so a single Work stay can fragment into a "Work" + "(no data)" + "Work" sandwich whenever a stray ping later interrupts the silence.
+
+`mergeStays` was supposed to coalesce these, but it caps merges at `MERGE_GAP = 30 min`. Anything longer survives as fragmented stays, and the gap bleeds into the per-day breakdown as `noData` even though the user demonstrably hadn't moved.
+
+We do not want to relax `MERGE_GAP` globally — anonymous mid-day clusters that happen to be close in time should still be allowed to be distinct visits. We want a narrowly-targeted rule that fires only when we have positive evidence the user was at the *same place* before and after the gap.
+
+### Rule
+
+After `assignPlaces` runs, post-process the stay list with a single pass:
+
+> For every pair of stays that are **consecutive in the sorted stay list** and share the same `placeId`, merge them into one stay spanning `[prev.startTime, curr.endTime]`. The merged centroid is the point-count-weighted average of the two; the merged `pointCount` is the sum.
+
+The single gating condition is **same `placeId`**. The "consecutive in the sorted stay list" wording means there is no other stay between them — which is the entire load-bearing claim. If the user had visited a different place in the gap, that visit would itself be a stay in the list, breaking consecutiveness. So:
+
+- **`Home → (gap) → Home`** with no other stay between them → merge. The user was at Home the whole time; iOS just stopped reporting.
+- **`Home → Bar → Home`** → no merge. The Bar visit broke consecutiveness.
+- **`Work → (gap) → Work`** mid-day → merge. Same logic as overnight Home.
+- **`Home → (gap) → Work`** → no merge. Different `placeId`.
+
+Same `placeId` covers both known places (Home, Work, Milstead) and auto-discovered ones (Place 5), since `assignPlaces` deduplicates discovered clusters by centroid before this pass runs.
+
+The pass cascades: if Mon-evening Home merges with Tue-morning Home, and the result then merges with a Wed-morning Home (because the user was home for a multi-day break), all three collapse into a single multi-day stay.
+
+### Why this is safe
+
+- **Strict same-place gating.** The merged stay claims the user was at one specific place across the gap. If they actually went somewhere else, the clustering would have produced a stay for that visit, breaking the consecutiveness check. Our only failure mode is "user went somewhere for less than `MIN_STAY_DURATION` (5 min) and the phone happened to ping enough to record it as a separate stay, just not enough to form a stay" — vanishingly rare and not worth gating against.
+- **Geometry already validated upstream.** Both stays already passed `assignPlaces`'s known-place radius check or were assigned the same auto-discovered cluster. The merge does not relax those checks; it only relaxes the time-gap cap.
+- **No information loss for the AI export.** A single 9 pm-to-7 am Home stay is more accurate than "9 pm-11 pm Home / 9h gap / 5 am-7 am Home" — the AI gets a better picture.
+
+### Where it sits in the pipeline
+
+```
+points → labelPointsWithKnownPlaces → detectStays → mergeStays
+       → assignPlaces → mergeConsecutiveSamePlace (NEW) → buildTransit
+```
+
+It runs after `assignPlaces` so it has access to `placeId`. It runs before `buildTransit` so the (now-removed) inter-stay gap doesn't appear as a phantom transit segment.
+
+### Edge cases
+
+| Case | Handling |
+|---|---|
+| 3-day camping at Place 8 | Cascading merge collapses all 3 nights into one stay |
+| Home → brief Bar → Home | Bar breaks consecutiveness — no merge |
+| Home Wed evening → Work Thu morning | Different `placeId` → no merge |
+| Home stay actually ends at 11:30 pm and next stay is Home 5 am | Same `placeId`, consecutive → merge |
+| Today's last stay with no successor yet | No `curr` to consider — leave alone |
+| Mid-day Work parked stationary 4h → ping → another Work stay | Same `placeId`, consecutive → merge |
+
+### Acceptance criteria
+
+1. Two consecutive stays sharing a `placeId` are merged into one regardless of the gap between them.
+2. Two consecutive stays with different `placeId` are never merged by this rule, regardless of gap.
+3. Cascading is allowed: three same-place stays separated by intermediate gaps (with no other stays between any pair) collapse into one.
+4. The merged stay's `pointCount` equals the sum of the originals.
+5. The merged stay's centroid is the point-count-weighted average of the originals.
+6. The merged stay's time span is `[firstOriginal.startTime, lastOriginal.endTime]`.
+7. After merging, the displayed Thursday in the user's real fixture data shows Home as a single multi-hour stay covering the 5h23m morning gap, not as a tiny 15-minute fragment.
+
 ## Parameters
 
 | Parameter | Value | Rationale |
