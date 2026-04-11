@@ -20,6 +20,12 @@ const MAX_POINT_GAP = 4 * 60 * 60 * 1000; // 4 hours in ms
 const MERGE_GAP = 30 * 60 * 1000; // 30 minutes in ms
 const MIN_TRANSIT_SUMMARY = 60 * 60 * 1000; // 1 hour in ms
 const RECENT_DAYS = 3;
+// Loose-vs-no-data split parameters (used by places_summary.ts)
+// LOOSE_MAX_GAP: max allowed gap between consecutive raw points in a "loose" run
+// LOOSE_HALF_WINDOW: time radius attributed to each raw point (a breadcrumb
+// represents "roughly around here and now" for ±5 min).
+const LOOSE_MAX_GAP = 10 * 60 * 1000; // 10 minutes in ms
+const LOOSE_HALF_WINDOW = 5 * 60 * 1000; // 5 minutes in ms
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -531,3 +537,4 @@ export function clusterLocations(
 // Export internals for testing
 export { detectStays, mergeStays, assignPlaces, buildTransit, buildSummaryRecent, buildSummaryWeekly };
 export { STAY_RADIUS, MIN_STAY_DURATION, MAX_POINT_GAP, MERGE_GAP, MIN_TRANSIT_SUMMARY, RECENT_DAYS };
+export { LOOSE_MAX_GAP, LOOSE_HALF_WINDOW };

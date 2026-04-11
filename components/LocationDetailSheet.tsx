@@ -13,11 +13,21 @@ import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import type { SQLiteDatabase } from "expo-sqlite";
-import { type KnownPlace } from "../lib/places";
-import { DB_NAME, getKnownPlaces, addKnownPlace, deleteKnownPlace, type LocationHistoryItem } from "../lib/db";
+import { type KnownPlace, mergePlaceCircle } from "../lib/places";
+import {
+  DB_NAME,
+  getKnownPlaces,
+  addKnownPlace,
+  deleteKnownPlace,
+  updateKnownPlace,
+  type LocationHistoryItem,
+} from "../lib/db";
 import { clusterLocationsV2 } from "../lib/clustering_v2";
 import { buildPlacesDailySummary } from "../lib/places_summary";
-import PlacesDailyBreakdown from "./PlacesDailyBreakdown";
+import { haversineDistance } from "../lib/geo";
+import PlacesDailyBreakdown, { type NamePlaceTarget } from "./PlacesDailyBreakdown";
+
+const MERGE_SUGGEST_DISTANCE = 500; // meters — see places-breakdown spec section 4
 
 type LocationData = {
   latitude: number;
@@ -60,18 +70,47 @@ export default function LocationDetailSheet({
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
   const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
 
+  // "Name this place" modal state
+  type NameModalState =
+    | { kind: "closed" }
+    | {
+        kind: "name";
+        centroid: { latitude: number; longitude: number };
+        defaultName: string;
+        sourcePlaceId: string;
+      }
+    | {
+        kind: "merge";
+        centroid: { latitude: number; longitude: number };
+        sourcePlaceId: string;
+        nearest: KnownPlace;
+        otherCount: number;
+        distance: number;
+        preview: { latitude: number; longitude: number; radiusMeters: number };
+        shift: number;
+      };
+  const [nameModal, setNameModal] = useState<NameModalState>({ kind: "closed" });
+  const [nameInput, setNameInput] = useState("");
+  const [nameRadiusInput, setNameRadiusInput] = useState("100");
+
+  // Memoize the raw points array (used by both clustering and the daily summary).
+  const rawPoints = useMemo(
+    () =>
+      locationHistory.map((h) => ({
+        latitude: h.latitude,
+        longitude: h.longitude,
+        timestamp: h.timestamp,
+        accuracy: h.accuracy ?? 0,
+      })),
+    [locationHistory],
+  );
+
   // Compute per-day places breakdown from location history
   const placesDailySummary = useMemo(() => {
-    if (locationHistory.length === 0) return [];
-    const points = locationHistory.map((h) => ({
-      latitude: h.latitude,
-      longitude: h.longitude,
-      timestamp: h.timestamp,
-      accuracy: h.accuracy ?? 0,
-    }));
-    const result = clusterLocationsV2(points, knownPlaces);
-    return buildPlacesDailySummary(result.stays, 7);
-  }, [locationHistory, knownPlaces]);
+    if (rawPoints.length === 0) return [];
+    const result = clusterLocationsV2(rawPoints, knownPlaces);
+    return buildPlacesDailySummary(result.stays, result.transit, rawPoints, 7);
+  }, [rawPoints, knownPlaces]);
 
   // --- Handlers ---
 
@@ -172,6 +211,132 @@ export default function LocationDetailSheet({
     }
   }
 
+  // Tap on the [+] button next to a Place N row in PlacesDailyBreakdown.
+  // Inspect proximity to known places and open either the merge-preview or
+  // name-input modal.
+  function handleNamePlaceTap(target: NamePlaceTarget) {
+    const day = placesDailySummary.find((d) => d.dateKey === target.dateKey);
+    if (!day) return;
+    const visit = day.visits[target.visitIndex];
+    if (!visit) return;
+
+    // The PlaceDaySummary doesn't carry the centroid (only stay times). Re-derive
+    // the centroid by re-running clustering on rawPoints — cheap, deterministic,
+    // and avoids leaking centroid through the summary type.
+    const cluster = clusterLocationsV2(rawPoints, knownPlaces);
+    const stay = cluster.stays.find(
+      (s) =>
+        s.placeId === visit.placeId &&
+        s.startTime <= visit.startTime &&
+        s.endTime >= visit.endTime,
+    );
+    if (!stay) return;
+    const centroid = stay.centroid;
+
+    // Find known places within MERGE_SUGGEST_DISTANCE
+    const candidates = knownPlaces
+      .map((kp) => ({
+        place: kp,
+        distance: haversineDistance(centroid.latitude, centroid.longitude, kp.latitude, kp.longitude),
+      }))
+      .filter((c) => c.distance <= MERGE_SUGGEST_DISTANCE)
+      .sort((a, b) => a.distance - b.distance);
+
+    if (candidates.length === 0) {
+      setNameInput("");
+      setNameRadiusInput("100");
+      setNameModal({
+        kind: "name",
+        centroid,
+        defaultName: "",
+        sourcePlaceId: target.placeId,
+      });
+      return;
+    }
+
+    // Branch B: merge preview
+    const nearest = candidates[0];
+    const preview = mergePlaceCircle(
+      {
+        latitude: nearest.place.latitude,
+        longitude: nearest.place.longitude,
+        radiusMeters: nearest.place.radiusMeters,
+      },
+      centroid,
+    );
+    const shift = haversineDistance(
+      nearest.place.latitude,
+      nearest.place.longitude,
+      preview.latitude,
+      preview.longitude,
+    );
+    setNameModal({
+      kind: "merge",
+      centroid,
+      sourcePlaceId: target.placeId,
+      nearest: nearest.place,
+      otherCount: candidates.length - 1,
+      distance: nearest.distance,
+      preview,
+      shift,
+    });
+  }
+
+  async function handleConfirmName() {
+    if (nameModal.kind !== "name") return;
+    if (!db) {
+      setError("Database not available. Please restart the app.");
+      return;
+    }
+    const name = nameInput.trim();
+    const radius = parseFloat(nameRadiusInput) || 100;
+    if (!name) {
+      setError("Place name is required");
+      return;
+    }
+    try {
+      await addKnownPlace(db, name, nameModal.centroid.latitude, nameModal.centroid.longitude, radius);
+      const places = await getKnownPlaces(db);
+      setKnownPlaces(places);
+      setNameModal({ kind: "closed" });
+    } catch (e: any) {
+      setError(e.message ?? "Failed to add place");
+    }
+  }
+
+  async function handleConfirmMerge() {
+    if (nameModal.kind !== "merge") return;
+    if (!db) {
+      setError("Database not available. Please restart the app.");
+      return;
+    }
+    try {
+      await updateKnownPlace(db, nameModal.nearest.id, {
+        latitude: nameModal.preview.latitude,
+        longitude: nameModal.preview.longitude,
+        radiusMeters: nameModal.preview.radiusMeters,
+      });
+      const places = await getKnownPlaces(db);
+      setKnownPlaces(places);
+      setNameModal({ kind: "closed" });
+    } catch (e: any) {
+      setError(e.message ?? "Failed to expand place");
+    }
+  }
+
+  // From the merge modal, switch to the "create new place" path.
+  function handleSwitchToCreateNew() {
+    if (nameModal.kind !== "merge") return;
+    setNameInput("");
+    setNameRadiusInput("100");
+    setNameModal({
+      kind: "name",
+      centroid: nameModal.centroid,
+      defaultName: "",
+      sourcePlaceId: nameModal.sourcePlaceId,
+    });
+  }
+
   async function handleDownloadDatabase() {
     try {
       setDbExportStatus("Exporting...");
@@ -235,7 +400,7 @@ export default function LocationDetailSheet({
           </View>
 
           {placesDailySummary.length > 0 && (
-            <PlacesDailyBreakdown days={placesDailySummary} />
+            <PlacesDailyBreakdown days={placesDailySummary} onNamePlace={handleNamePlaceTap} />
           )}
 
           <View style={styles.aboutCard}>
@@ -351,6 +516,99 @@ export default function LocationDetailSheet({
           </View>
         </ScrollView>
       </View>
+
+      {/* Name / Merge place modal */}
+      <Modal
+        visible={nameModal.kind !== "closed"}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setNameModal({ kind: "closed" })}
+      >
+        <View style={styles.namePlaceBackdrop}>
+          <View style={styles.namePlaceCard}>
+            {nameModal.kind === "name" && (
+              <>
+                <Text style={styles.namePlaceTitle}>Name this place</Text>
+                <Text style={styles.namePlaceCoords}>
+                  {nameModal.centroid.latitude.toFixed(5)}, {nameModal.centroid.longitude.toFixed(5)}
+                </Text>
+                <TextInput
+                  style={styles.addPlaceInput}
+                  placeholder="Place name"
+                  placeholderTextColor="#666"
+                  value={nameInput}
+                  onChangeText={setNameInput}
+                  autoFocus
+                  testID="name-place-input"
+                />
+                <TextInput
+                  style={[styles.addPlaceInput, { marginTop: 8 }]}
+                  placeholder="Radius (m)"
+                  placeholderTextColor="#666"
+                  value={nameRadiusInput}
+                  onChangeText={setNameRadiusInput}
+                  keyboardType="number-pad"
+                />
+                <View style={styles.namePlaceButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, styles.namePlaceCancelButton]}
+                    onPress={() => setNameModal({ kind: "closed" })}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, { flex: 1 }]}
+                    onPress={handleConfirmName}
+                    testID="name-place-save"
+                  >
+                    <Text style={styles.addPlaceButtonText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {nameModal.kind === "merge" && (
+              <>
+                <Text style={styles.namePlaceTitle}>Nearby known place</Text>
+                <Text style={styles.namePlaceBody}>
+                  <Text style={{ fontWeight: "700" }}>{nameModal.sourcePlaceId}</Text> is{" "}
+                  {Math.round(nameModal.distance)}m from{" "}
+                  <Text style={{ fontWeight: "700" }}>{nameModal.nearest.name}</Text>.
+                </Text>
+                <Text style={styles.namePlaceBody}>
+                  Expanding would grow radius {Math.round(nameModal.nearest.radiusMeters)}m →{" "}
+                  {Math.round(nameModal.preview.radiusMeters)}m and shift the center by{" "}
+                  {Math.round(nameModal.shift)}m.
+                </Text>
+                {nameModal.otherCount > 0 && (
+                  <Text style={styles.namePlaceHint}>(+{nameModal.otherCount} more within 500m)</Text>
+                )}
+                <View style={styles.namePlaceButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, styles.namePlaceCancelButton]}
+                    onPress={() => setNameModal({ kind: "closed" })}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, { backgroundColor: "#3d405b", flex: 1 }]}
+                    onPress={handleSwitchToCreateNew}
+                  >
+                    <Text style={styles.addPlaceButtonText}>Create new</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.addPlaceButton, { flex: 1 }]}
+                    onPress={handleConfirmMerge}
+                    testID="merge-place-confirm"
+                  >
+                    <Text style={styles.addPlaceButtonText}>Expand {nameModal.nearest.name}</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -487,5 +745,48 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "600",
+  },
+  namePlaceBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  namePlaceCard: {
+    backgroundColor: "#16213e",
+    borderRadius: 14,
+    padding: 20,
+  },
+  namePlaceTitle: {
+    color: "#e0e0e0",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  namePlaceCoords: {
+    color: "#888",
+    fontSize: 12,
+    fontFamily: "Courier",
+    marginBottom: 12,
+  },
+  namePlaceBody: {
+    color: "#ccc",
+    fontSize: 14,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  namePlaceHint: {
+    color: "#888",
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  namePlaceButtonRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  namePlaceCancelButton: {
+    backgroundColor: "#3d1f1f",
+    flex: 0.7,
   },
 });

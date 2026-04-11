@@ -7,8 +7,23 @@ const COLORS = [
   "#f77f00", "#06d6a0", "#e63946", "#a8dadc", "#fca311",
 ];
 
+// Color used for unnamed "Place N" rows AND loose-data rows — both signal
+// "tap-to-fix / unresolved data."
+const UNKNOWN_COLOR = "#fca311";
+const TRANSIT_COLOR = "#4cc9f0";
+const NO_DATA_COLOR = "#555";
+
+const PLACE_N_PATTERN = /^Place \d+$/;
+
+export type NamePlaceTarget = {
+  placeId: string;
+  visitIndex: number; // index into day.visits — use the most recent visit for centroid
+  dateKey: string;
+};
+
 type Props = {
   days: PlaceDaySummary[];
+  onNamePlace?: (target: NamePlaceTarget) => void;
 };
 
 function formatHours(minutes: number): string {
@@ -34,17 +49,21 @@ function formatTime(ts: number): string {
   return m === 0 ? `${h}${period}` : `${h}:${String(m).padStart(2, "0")}${period}`;
 }
 
-export default function PlacesDailyBreakdown({ days }: Props) {
+export default function PlacesDailyBreakdown({ days, onNamePlace }: Props) {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
+  // Assign colors per known place. Unknown "Place N" rows always use UNKNOWN_COLOR
+  // regardless of their slot in the rotating palette.
   const colorMap = useMemo(() => {
     const map = new Map<string, string>();
-    const allPlaces = new Set<string>();
+    const knownPlaces = new Set<string>();
     for (const day of days) {
-      for (const p of day.places) allPlaces.add(p.placeId);
+      for (const p of day.places) {
+        if (!PLACE_N_PATTERN.test(p.placeId)) knownPlaces.add(p.placeId);
+      }
     }
     let i = 0;
-    for (const id of allPlaces) {
+    for (const id of knownPlaces) {
       map.set(id, COLORS[i % COLORS.length]);
       i++;
     }
@@ -56,7 +75,16 @@ export default function PlacesDailyBreakdown({ days }: Props) {
   return (
     <View style={styles.container}>
       {days.map((day) => {
-        const maxMinutes = day.places.length > 0 ? day.places[0].totalMinutes : 1;
+        // Bar scale: max of stay rows + the supplemental rows so they all
+        // share a comparable visual scale.
+        const maxStay = day.places.length > 0 ? day.places[0].totalMinutes : 0;
+        const maxMinutes = Math.max(
+          maxStay,
+          day.transitMinutes,
+          day.looseMinutes,
+          day.noDataMinutes,
+          1,
+        );
         const isExpanded = expandedDay === day.dateKey;
         return (
           <TouchableOpacity
@@ -67,11 +95,19 @@ export default function PlacesDailyBreakdown({ days }: Props) {
           >
             <View style={styles.dateRow}>
               <Text style={styles.dateHeader}>{formatDateLabel(day.dateKey)}</Text>
-              <Text style={styles.totalText}>{formatHours(day.totalTrackedMinutes)}</Text>
+              <Text style={styles.totalText}>{formatHours(day.totalStayMinutes)}</Text>
             </View>
             {day.places.map((place) => {
+              const isUnknown = PLACE_N_PATTERN.test(place.placeId);
               const fraction = maxMinutes > 0 ? place.totalMinutes / maxMinutes : 0;
-              const color = colorMap.get(place.placeId) ?? COLORS[0];
+              const color = isUnknown
+                ? UNKNOWN_COLOR
+                : colorMap.get(place.placeId) ?? COLORS[0];
+              // Find the longest visit for this placeId on this day so the
+              // naming flow can use its centroid as a representative location.
+              const visitIndex = isUnknown
+                ? findLongestVisitIndex(day.visits, place.placeId)
+                : -1;
               return (
                 <View key={place.placeId} style={styles.row}>
                   <View style={styles.barContainer}>
@@ -79,15 +115,90 @@ export default function PlacesDailyBreakdown({ days }: Props) {
                   </View>
                   <Text style={styles.placeName} numberOfLines={1}>{place.placeId}</Text>
                   <Text style={styles.hours}>{formatHours(place.totalMinutes)}</Text>
+                  {isUnknown && onNamePlace && visitIndex >= 0 && (
+                    <TouchableOpacity
+                      style={styles.nameButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        onNamePlace({
+                          placeId: place.placeId,
+                          visitIndex,
+                          dateKey: day.dateKey,
+                        });
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      testID={`name-place-${day.dateKey}-${place.placeId}`}
+                    >
+                      <Text style={styles.nameButtonText}>＋</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })}
+
+            {/* Supplemental accounting rows: transit, loose, no-data */}
+            {day.transitMinutes > 0 && (
+              <View style={styles.row}>
+                <View style={styles.barContainer}>
+                  <View
+                    style={[
+                      styles.bar,
+                      {
+                        width: `${Math.max((day.transitMinutes / maxMinutes) * 100, 2)}%`,
+                        backgroundColor: TRANSIT_COLOR,
+                        opacity: 0.55,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.placeName, styles.dimText]} numberOfLines={1}>—transit—</Text>
+                <Text style={[styles.hours, styles.dimText]}>{formatHours(day.transitMinutes)}</Text>
+              </View>
+            )}
+            {day.looseMinutes > 0 && (
+              <View style={styles.row}>
+                <View style={styles.barContainer}>
+                  <View
+                    style={[
+                      styles.bar,
+                      {
+                        width: `${Math.max((day.looseMinutes / maxMinutes) * 100, 2)}%`,
+                        backgroundColor: UNKNOWN_COLOR,
+                        opacity: 0.55,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.placeName, styles.dimText]} numberOfLines={1}>—loose—</Text>
+                <Text style={[styles.hours, styles.dimText]}>{formatHours(day.looseMinutes)}</Text>
+              </View>
+            )}
+            {day.noDataMinutes > 0 && (
+              <View style={styles.row}>
+                <View style={styles.barContainer}>
+                  <View
+                    style={[
+                      styles.bar,
+                      {
+                        width: `${Math.max((day.noDataMinutes / maxMinutes) * 100, 2)}%`,
+                        backgroundColor: NO_DATA_COLOR,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.placeName, styles.dimText]} numberOfLines={1}>—no data—</Text>
+                <Text style={[styles.hours, styles.dimText]}>{formatHours(day.noDataMinutes)}</Text>
+              </View>
+            )}
 
             {/* Expanded: individual visits */}
             {isExpanded && day.visits.length > 0 && (
               <View style={styles.visitsSection}>
                 {day.visits.map((v, i) => {
-                  const color = colorMap.get(v.placeId) ?? COLORS[0];
+                  const isUnknown = PLACE_N_PATTERN.test(v.placeId);
+                  const color = isUnknown
+                    ? UNKNOWN_COLOR
+                    : colorMap.get(v.placeId) ?? COLORS[0];
                   return (
                     <View key={i} style={styles.visitRow}>
                       <View style={[styles.visitDot, { backgroundColor: color }]} />
@@ -106,6 +217,21 @@ export default function PlacesDailyBreakdown({ days }: Props) {
       })}
     </View>
   );
+}
+
+function findLongestVisitIndex(
+  visits: PlaceDaySummary["visits"],
+  placeId: string,
+): number {
+  let bestIdx = -1;
+  let bestDuration = -1;
+  for (let i = 0; i < visits.length; i++) {
+    if (visits[i].placeId === placeId && visits[i].durationMinutes > bestDuration) {
+      bestIdx = i;
+      bestDuration = visits[i].durationMinutes;
+    }
+  }
+  return bestIdx;
 }
 
 const styles = StyleSheet.create({
@@ -155,6 +281,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     width: 36,
     textAlign: "right",
+  },
+  dimText: {
+    opacity: 0.7,
+    color: "#888",
+  },
+  nameButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#2d6a4f",
+    marginLeft: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  nameButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 16,
   },
   totalText: {
     color: "#888",
