@@ -100,9 +100,9 @@ Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; imp
 
 1. Find or write the spec (summary, goals/non-goals, user-visible behavior, acceptance criteria).
 2. Confirm the spec with the user — they can edit it independently of code.
-3. Only then touch code (and/or write a plan with the implementation details).
+3. Only then touch code. For non-trivial changes, write an implementation plan in `docs/superpowers/plans/` in the same step as the spec update — the spec stays functional, the plan holds types/files/rollout.
 
-When modifying an existing feature, re-read its spec first and check it's still coherent. If the spec no longer matches reality, update the spec in the same change as the code. Never let implementation drift silently from spec.
+**Bug reports and UX tweaks on existing features are spec changes.** "This thing is wonky" / "I don't like how X works" / "what should happen if Y" are all triggers to re-open the feature's spec FIRST, not to triage fixes. If the spec no longer matches reality, update the spec in the same change as the code. Never let implementation drift silently from spec.
 
 ## Key Patterns
 
