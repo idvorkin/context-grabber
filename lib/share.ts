@@ -5,8 +5,9 @@
 
 import type { DailyValue, HeartRateDaily } from "./weekly";
 import type { PlaceCluster, PlaceVisit } from "./clustering";
-import type { WorkoutEntry } from "./health";
+import type { HealthData, WorkoutEntry } from "./health";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./stats";
+import { formatTime } from "./summary";
 
 export type DailyExportEntry = {
   date: string; // "YYYY-MM-DD"
@@ -53,11 +54,36 @@ export type WeeklyStatsExport = {
   exerciseMinutes: MetricStatsExport | null;
 };
 
+/** Today's headline — the first thing a life coach reads. Coach-friendly shape:
+ *  no ISO timestamps, no coordinates, no raw sample arrays. */
+export type TodayHeadline = {
+  date: string; // "YYYY-MM-DD" (local)
+  dayOfWeek: string;
+  steps: number | null;
+  heartRate: number | null;
+  restingHeartRate: number | null;
+  hrv: number | null;
+  sleepHours: number | null;
+  bedtime: string | null; // "11pm" / "12:15am" — formatted for humans
+  wakeTime: string | null;
+  meditationMinutes: number | null;
+  exerciseMinutes: number | null;
+  weightLbs: number | null;
+  activeEnergy: number | null;
+  walkingDistanceKm: number | null;
+  workouts: WorkoutEntry[];
+};
+
+/** Text-only place activity: human-readable, no coords, no unix timestamps. */
+export type PlacesSummary = {
+  weekly: string; // "This week: Home 92h, Office 28h\nLast week: ..."
+  recent: string; // "Mon Mar 15: Home 10pm–7am (9h), Office 9am–5pm (8h)"
+};
+
 export type SummaryExport = {
+  today: TodayHeadline;
   days: DailyExportEntry[];
-  weeklyStats: WeeklyStatsExport;
-  todayWorkouts: WorkoutEntry[];
-  locationSummary: LocationSummary | null;
+  places: PlacesSummary | null;
 };
 
 export type RawExport = {
@@ -136,18 +162,45 @@ export function buildWeeklyStats(data: WeeklyDataMap): WeeklyStatsExport {
 }
 
 /**
- * Build a summary export: 7-day daily health data + stats + location clusters.
+ * Build the "today" headline from live HealthData.
+ * Bedtime/wakeTime get formatted to coach-readable "11pm" form
+ * (the raw ISO value in HealthData is useful only to the chart layer).
+ */
+export function buildTodayHeadline(health: HealthData, dateKey: string): TodayHeadline {
+  return {
+    date: dateKey,
+    dayOfWeek: dateKey ? dayOfWeek(dateKey) : "",
+    steps: health.steps,
+    heartRate: health.heartRate,
+    restingHeartRate: health.restingHeartRate,
+    hrv: health.hrv,
+    sleepHours: health.sleepHours,
+    bedtime: health.bedtime ? formatTime(health.bedtime) : null,
+    wakeTime: health.wakeTime ? formatTime(health.wakeTime) : null,
+    meditationMinutes: health.meditationMinutes,
+    exerciseMinutes: health.exerciseMinutes,
+    weightLbs: health.weight != null ? Math.round(health.weight * 2.20462) : null,
+    activeEnergy: health.activeEnergy,
+    walkingDistanceKm: health.walkingDistance,
+    workouts: health.workouts ?? [],
+  };
+}
+
+/**
+ * Build a summary export: today's headline + last 7 daily health values + text-only place activity.
+ * No coordinates, no unix timestamps, no percentile tables — those belong in Raw / Copy Location Data.
  */
 export function buildSummaryExport(
   data: WeeklyDataMap,
-  locationSummary: LocationSummary | null,
-  todayWorkouts: WorkoutEntry[] = [],
+  health: HealthData,
+  places: PlacesSummary | null,
 ): SummaryExport {
+  // Canonical "today" is the last date in the 7-day window (data is sorted ascending).
+  const todayDate = data.steps[data.steps.length - 1]?.date ?? "";
   return {
+    today: buildTodayHeadline(health, todayDate),
     days: buildDailyExport(data),
-    weeklyStats: buildWeeklyStats(data),
-    todayWorkouts,
-    locationSummary,
+    places,
   };
 }
 

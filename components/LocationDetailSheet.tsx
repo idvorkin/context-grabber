@@ -12,6 +12,7 @@ import {
 import * as Location from "expo-location";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import * as Clipboard from "expo-clipboard";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { type KnownPlace, mergePlaceCircle } from "../lib/places";
 import {
@@ -22,7 +23,7 @@ import {
   updateKnownPlace,
   type LocationHistoryItem,
 } from "../lib/db";
-import { clusterLocationsV2 } from "../lib/clustering_v2";
+import { clusterLocations, clusterLocationsV2 } from "../lib/clustering_v2";
 import { buildPlacesDailySummary } from "../lib/places_summary";
 import { haversineDistance } from "../lib/geo";
 import PlacesDailyBreakdown, { type NamePlaceTarget } from "./PlacesDailyBreakdown";
@@ -69,6 +70,7 @@ export default function LocationDetailSheet({
   const [placesExpanded, setPlacesExpanded] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
   const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
+  const [locationDataCopied, setLocationDataCopied] = useState(false);
 
   // "Name this place" modal state
   type NameModalState =
@@ -337,6 +339,22 @@ export default function LocationDetailSheet({
     });
   }
 
+  async function handleCopyLocationData() {
+    // Full detailed location export — the shape that used to be inside Summary
+    // before it was trimmed for life-coach readability. Lives behind an explicit
+    // button so power users can still grab it without bloating every share.
+    const { clusters, timeline, summary } = locationHistory.length > 0
+      ? clusterLocations(rawPoints, 50, 3, knownPlaces)
+      : { clusters: [], timeline: [], summary: "" };
+    const payload = {
+      location,
+      locationClusters: { clusters, timeline, summary },
+    };
+    await Clipboard.setStringAsync(JSON.stringify(payload));
+    setLocationDataCopied(true);
+    setTimeout(() => setLocationDataCopied(false), 1500);
+  }
+
   async function handleDownloadDatabase() {
     try {
       setDbExportStatus("Exporting...");
@@ -404,6 +422,15 @@ export default function LocationDetailSheet({
           )}
 
           <View style={styles.aboutCard}>
+            <TouchableOpacity
+              style={[styles.addPlaceButton, { marginTop: 12 }]}
+              onPress={handleCopyLocationData}
+              testID="copy-location-data-button"
+            >
+              <Text style={styles.addPlaceButtonText} testID="copy-location-data-status">
+                {locationDataCopied ? "Copied" : "Copy Location Data"}
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.addPlaceButton, { marginTop: 12 }]}
               onPress={handleDownloadDatabase}

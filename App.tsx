@@ -53,7 +53,7 @@ import {
   pickLatestPerDay,
   formatDateKey,
 } from "./lib/weekly";
-import { buildSummaryExport, type WeeklyDataMap, type LocationSummary } from "./lib/share";
+import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
 import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
@@ -1118,17 +1118,20 @@ export default function App() {
         newStats[key] = computeStatsForMetric(key, allMetrics[i]);
       });
       setStatsCache((prev) => ({ ...prev, ...newStats }));
-      let locationSummary: LocationSummary | null = null;
+      let places: PlacesSummary | null = null;
       if (snapshot.locationHistory.length > 0) {
         setShareStatus(`Clustering ${snapshot.locationHistory.length} locations...`);
         // Yield to UI before heavy computation
         await new Promise((r) => setTimeout(r, 0));
-        const { clusters, timeline, summary } = clusterLocations(snapshot.locationHistory, 50, 3, knownPlaces);
-        locationSummary = { clusters, timeline, summary };
+        const v2 = clusterLocationsV2(snapshot.locationHistory, knownPlaces);
+        if (v2.summaryRecent || v2.summaryWeekly) {
+          places = { weekly: v2.summaryWeekly, recent: v2.summaryRecent };
+        }
       }
       setShareStatus("Sharing...");
-      const summaryExport = buildSummaryExport(weeklyData, locationSummary, snapshot.health.workouts);
-      const json = JSON.stringify(summaryExport, null, 2);
+      const summaryExport = buildSummaryExport(weeklyData, snapshot.health, places);
+      // Compact JSON — pretty-print is a debugger affordance, not a delivery format.
+      const json = JSON.stringify(summaryExport);
       await Share.share({
         message: json,
         title: "Context Grabber - 7 Day Summary",

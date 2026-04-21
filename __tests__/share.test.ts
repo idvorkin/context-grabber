@@ -1,5 +1,24 @@
-import { dayOfWeek, buildDailyExport, buildSummaryExport, buildWeeklyStats, type WeeklyDataMap } from "../lib/share";
+import { dayOfWeek, buildDailyExport, buildSummaryExport, buildTodayHeadline, buildWeeklyStats, type WeeklyDataMap } from "../lib/share";
+import type { HealthData } from "../lib/health";
 import type { HeartRateDaily } from "../lib/weekly";
+
+const EMPTY_HEALTH: HealthData = {
+  steps: null,
+  heartRate: null,
+  sleepHours: null,
+  bedtime: null,
+  wakeTime: null,
+  sleepBySource: null,
+  activeEnergy: null,
+  walkingDistance: null,
+  weight: null,
+  weightDaysLast7: null,
+  meditationMinutes: null,
+  hrv: null,
+  restingHeartRate: null,
+  exerciseMinutes: null,
+  workouts: [],
+};
 
 describe("dayOfWeek", () => {
   it("returns correct day names", () => {
@@ -244,10 +263,74 @@ describe("buildSummaryExport", () => {
     exerciseMinutes: dates.map((d) => ({ date: d, value: null })),
   });
 
-  it("includes weeklyStats in export", () => {
-    const result = buildSummaryExport(makeData(), null);
+  it("returns today + days + places, no weeklyStats, no locationSummary", () => {
+    const result = buildSummaryExport(makeData(), EMPTY_HEALTH, null);
+    expect(result).toHaveProperty("today");
     expect(result).toHaveProperty("days");
-    expect(result).toHaveProperty("weeklyStats");
-    expect(result).toHaveProperty("locationSummary");
+    expect(result).toHaveProperty("places");
+    expect(result).not.toHaveProperty("weeklyStats");
+    expect(result).not.toHaveProperty("locationSummary");
+    expect(result).not.toHaveProperty("todayWorkouts");
+    expect(result.days).toHaveLength(7);
+  });
+
+  it("today headline uses the last date in the 7-day window", () => {
+    const result = buildSummaryExport(makeData(), EMPTY_HEALTH, null);
+    expect(result.today.date).toBe("2026-03-15");
+    expect(result.today.dayOfWeek).toBe("Sunday");
+  });
+
+  it("places summary is null when caller passes null (empty location history)", () => {
+    const result = buildSummaryExport(makeData(), EMPTY_HEALTH, null);
+    expect(result.places).toBeNull();
+  });
+
+  it("surfaces PlacesSummary text blocks when caller provides them", () => {
+    const result = buildSummaryExport(makeData(), EMPTY_HEALTH, {
+      weekly: "This week: Home 92h, Office 28h",
+      recent: "Mon Mar 15: Home 10pm–7am (9h)",
+    });
+    expect(result.places?.weekly).toContain("Home 92h");
+    expect(result.places?.recent).toContain("10pm–7am");
+  });
+
+  it("exported JSON contains no lat/lng, coordinates, or unix timestamps", () => {
+    // The whole point of the trim — verify by stringifying and grepping for
+    // forbidden key names.
+    const health: HealthData = {
+      ...EMPTY_HEALTH,
+      steps: 8241,
+      heartRate: 72,
+      sleepHours: 7.5,
+      bedtime: "2026-03-14T06:00:00Z", // 11pm local in Pacific
+      wakeTime: "2026-03-15T14:30:00Z",
+      weight: 75, // kg
+    };
+    const result = buildSummaryExport(makeData(), health, {
+      weekly: "This week: Home 92h",
+      recent: "Sun Mar 15: Home all day",
+    });
+    const json = JSON.stringify(result);
+    expect(json).not.toContain("latitude");
+    expect(json).not.toContain("longitude");
+    expect(json).not.toContain("radiusMeters");
+    expect(json).not.toContain("firstVisit");
+    expect(json).not.toContain("lastVisit");
+    expect(json).not.toContain("pointCount");
+    expect(json).not.toContain("weeklyStats");
+  });
+
+  it("today headline converts weight kg → lbs and formats bedtime/wake times", () => {
+    const health: HealthData = {
+      ...EMPTY_HEALTH,
+      weight: 75, // 75 kg → 165 lbs
+      bedtime: "2026-03-15T06:00:00Z", // 6:00 UTC
+      wakeTime: "2026-03-15T14:30:00Z", // 14:30 UTC
+    };
+    const today = buildTodayHeadline(health, "2026-03-15");
+    expect(today.weightLbs).toBe(165);
+    // formatTime uses UTC — 06:00 → "6am", 14:30 → "2:30pm"
+    expect(today.bedtime).toBe("6am");
+    expect(today.wakeTime).toBe("2:30pm");
   });
 });
