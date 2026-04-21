@@ -1412,23 +1412,27 @@ export default function App() {
             >
               <Text style={styles.metricLabel}>Location</Text>
               {snapshot.location ? (
-                <TouchableOpacity
-                  onPress={async () => {
-                    if (!snapshot.location) return;
-                    const text = `${snapshot.location.latitude.toFixed(6)}, ${snapshot.location.longitude.toFixed(6)}`;
-                    await Clipboard.setStringAsync(text);
-                    setLocationCopied(true);
-                    setTimeout(() => setLocationCopied(false), 1500);
-                  }}
-                  testID="location-copy"
-                  accessibilityLabel="Copy coordinates"
-                >
+                <View style={styles.locationRow}>
                   <Text style={styles.metricValue}>
-                    {locationCopied
-                      ? "Copied"
-                      : `${snapshot.location.latitude.toFixed(4)}, ${snapshot.location.longitude.toFixed(4)}`}
+                    {snapshot.location.latitude.toFixed(4)}, {snapshot.location.longitude.toFixed(4)}
                   </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      if (!snapshot.location) return;
+                      const text = `${snapshot.location.latitude.toFixed(6)}, ${snapshot.location.longitude.toFixed(6)}`;
+                      await Clipboard.setStringAsync(text);
+                      setLocationCopied(true);
+                      setTimeout(() => setLocationCopied(false), 1500);
+                    }}
+                    style={styles.copyButton}
+                    testID="location-copy"
+                    accessibilityLabel="Copy coordinates"
+                  >
+                    <Text style={styles.copyButtonText}>
+                      {locationCopied ? "Copied" : "Copy"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <Text style={[styles.metricValue, styles.metricValueNull]}>
                   Unavailable
@@ -1640,6 +1644,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#888",
     marginTop: 4,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  copyButton: {
+    backgroundColor: "#1f3a6b",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  copyButtonText: {
+    color: "#e0e0e0",
+    fontSize: 13,
+    fontWeight: "600",
   },
   timestamp: {
     fontSize: 12,
