@@ -15,7 +15,7 @@ module.exports = {
       roots: ["<rootDir>/__tests__"],
       testMatch: ["**/*.test.tsx"],
       transformIgnorePatterns: [
-        "node_modules/(?!(react-native|@react-native|expo|react-native-audio-api|expo-location|expo-sqlite|expo-task-manager|expo-status-bar|expo-file-system|expo-sharing|@kingstinct|expo-modules-core)/)",
+        "node_modules/(?!(react-native|@react-native|expo|react-native-audio-api|expo-location|expo-sqlite|expo-task-manager|expo-status-bar|expo-file-system|expo-sharing|expo-clipboard|@kingstinct|expo-modules-core)/)",
       ],
       setupFiles: [
         "./node_modules/react-native/jest/setup.js",

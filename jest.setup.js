@@ -65,6 +65,12 @@ jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
+// Mock expo-clipboard
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn().mockResolvedValue(undefined),
+  getStringAsync: jest.fn().mockResolvedValue(''),
+}));
+
 // Mock expo-live-activity
 jest.mock('expo-live-activity', () => ({
   startActivity: jest.fn().mockReturnValue('mock-activity-id'),

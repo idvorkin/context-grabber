@@ -19,6 +19,7 @@ import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SQLite from "expo-sqlite";
 import * as Updates from "expo-updates";
+import * as Clipboard from "expo-clipboard";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type {
   QuantityTypeIdentifier,
@@ -361,6 +362,7 @@ export default function App() {
   const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
   const [locationExpanded, setLocationExpanded] = useState(false);
   const [locationSummaryText, setLocationSummaryText] = useState<string | null>(null);
+  const [locationCopied, setLocationCopied] = useState(false);
   const [gymTimerVisible, setGymTimerVisible] = useState(false);
   const [otaUpdateReady, setOtaUpdateReady] = useState(false);
 
@@ -1410,10 +1412,23 @@ export default function App() {
             >
               <Text style={styles.metricLabel}>Location</Text>
               {snapshot.location ? (
-                <Text style={styles.metricValue}>
-                  {snapshot.location.latitude.toFixed(4)},{" "}
-                  {snapshot.location.longitude.toFixed(4)}
-                </Text>
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (!snapshot.location) return;
+                    const text = `${snapshot.location.latitude.toFixed(6)}, ${snapshot.location.longitude.toFixed(6)}`;
+                    await Clipboard.setStringAsync(text);
+                    setLocationCopied(true);
+                    setTimeout(() => setLocationCopied(false), 1500);
+                  }}
+                  testID="location-copy"
+                  accessibilityLabel="Copy coordinates"
+                >
+                  <Text style={styles.metricValue}>
+                    {locationCopied
+                      ? "Copied"
+                      : `${snapshot.location.latitude.toFixed(4)}, ${snapshot.location.longitude.toFixed(4)}`}
+                  </Text>
+                </TouchableOpacity>
               ) : (
                 <Text style={[styles.metricValue, styles.metricValueNull]}>
                   Unavailable

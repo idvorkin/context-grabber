@@ -33,6 +33,8 @@ PODS:
     - Yoga
   - ExpoAsset (55.0.12):
     - ExpoModulesCore
+  - ExpoClipboard (55.0.13):
+    - ExpoModulesCore
   - ExpoDomWebView (55.0.3):
     - ExpoModulesCore
   - ExpoFileSystem (55.0.11):
@@ -2044,6 +2046,7 @@ DEPENDENCIES:
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - "ExpoDomWebView (from `../node_modules/expo/node_modules/@expo/log-box/node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo/node_modules/expo-font/ios`)
@@ -2155,6 +2158,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoClipboard:
+    :path: "../node_modules/expo-clipboard/ios"
   ExpoDomWebView:
     :path: "../node_modules/expo/node_modules/@expo/log-box/node_modules/@expo/dom-webview/ios"
   ExpoFileSystem:
@@ -2348,6 +2353,7 @@ SPEC CHECKSUMS:
   EXManifests: 2b53302deb6d7275ae26005b8014f5a1aee42a0e
   Expo: 9a502b466698a5e33c0ba6b749ef50d7f8a02477
   ExpoAsset: 63f22b029eb9aa68d5048f77ff9430f42c770d2c
+  ExpoClipboard: 5d1b0cd2686406f21e616f2d9b3431259dee2e6a
   ExpoDomWebView: f101fb3db4b6eec4163fca51f7507189b7e48661
   ExpoFileSystem: ccbe192dde132e6e97bedcd51018a1642f4fa01c
   ExpoFont: 1aa465cf9f8ac6b670405becba8b15473581b2dd
