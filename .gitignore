@@ -59,3 +59,6 @@ lib/generated_version.ts
 *.db
 .beads-credential-key
 tmp/
+
+# Beads ad-hoc report exports (canonical data lives in .beads/beads.jsonl)
+beads_report_*.md
