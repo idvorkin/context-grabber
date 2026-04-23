@@ -1,8 +1,10 @@
 import {
   buildPlacesDailySummary,
+  formatPlacesDailyText,
   splitNonStay,
   segmentNonStay,
 } from "../lib/places_summary";
+import type { PlaceDaySummary } from "../lib/places_summary";
 import type { Stay, TransitSegment } from "../lib/clustering_v2";
 import type { LocationPoint } from "../lib/clustering";
 
@@ -413,5 +415,57 @@ describe("splitNonStay", () => {
     // Point at time 2 with ±5min window → [−3, 7]; interval starts at 0 → transit = 7
     const r = splitNonStay([{ start: 0, end: 60 * MIN }], [makePoint(2 * MIN)]);
     expect(r.transitMs).toBe(7 * MIN);
+  });
+});
+
+describe("formatPlacesDailyText", () => {
+  function makeDay(dateKey: string, placeTotals: Array<[string, number]>): PlaceDaySummary {
+    return {
+      dateKey,
+      places: placeTotals.map(([placeId, totalMinutes]) => ({ placeId, totalMinutes })),
+      visits: [],
+      elapsedMinutes: 24 * 60,
+      totalStayMinutes: placeTotals.reduce((s, [, m]) => s + m, 0),
+      transitMinutes: 0,
+      noDataMinutes: 0,
+      stripSegments: [],
+    };
+  }
+
+  it("formats a day as 'Day Mon D: Place Nh, …' with whole-hour places in descending order", () => {
+    // 2026-04-20 is a Monday (local).
+    const text = formatPlacesDailyText([
+      makeDay("2026-04-20", [["Home", 540], ["Office", 480], ["Gym", 60]]),
+    ]);
+    expect(text).toBe("Mon Apr 20: Home 9h, Office 8h, Gym 1h");
+  });
+
+  it("renders one line per day separated by newlines, most recent first as caller supplies", () => {
+    const text = formatPlacesDailyText([
+      makeDay("2026-04-21", [["Home", 600]]),
+      makeDay("2026-04-20", [["Office", 480]]),
+    ]);
+    expect(text).toBe("Tue Apr 21: Home 10h\nMon Apr 20: Office 8h");
+  });
+
+  it("uses minutes for sub-hour stays and tenths-of-hour otherwise", () => {
+    const text = formatPlacesDailyText([
+      makeDay("2026-04-20", [["Home", 90], ["Cafe", 45]]),
+    ]);
+    expect(text).toBe("Mon Apr 20: Home 1.5h, Cafe 45m");
+  });
+
+  it("handles days with no known places gracefully", () => {
+    const text = formatPlacesDailyText([makeDay("2026-04-20", [])]);
+    expect(text).toBe("Mon Apr 20: no known places");
+  });
+
+  it("contains no lat/lng or ISO/unix timestamps — human text only", () => {
+    const text = formatPlacesDailyText([
+      makeDay("2026-04-20", [["Home", 540]]),
+    ]);
+    expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}T/);
+    expect(text).not.toMatch(/latitude|longitude/);
+    expect(text).not.toMatch(/\d{13}/); // no unix ms
   });
 });

@@ -48,11 +48,23 @@ The JSON is serialized **without** pretty-printing (no 2-space indent, no newlin
 
 The Summary share no longer includes: weekly percentile stats, cluster objects with coordinates/radius/unix timestamps, per-stay timeline objects, or any lat/lng number.
 
-### Location Detail Sheet — new "Copy Location Data" action
+### Location Detail Sheet — two new copy actions
 
-In the Location sheet (opened by tapping the Location card on the main screen), add a new button placed near the existing Export Database button. Tap it and the full detailed location export — today's current location with coordinates, the clusters array, the per-stay timeline including short stays, and the summary strings — is copied to the clipboard as JSON. The button briefly shows "Copied" for ~1.5s, mirroring the existing coordinate-copy feedback pattern.
+In the Location sheet (opened by tapping the Location card on the main screen), add two buttons placed near the existing Export Database button. Both show "Copied" feedback for ~1.5s, mirroring the existing coordinate-copy pattern.
 
-This gives users who want the detailed machine-readable location data (for a custom tool, for their own LLM, for debugging) a single-tap path to it without cluttering the Summary share.
+1. **Copy Daily Summary** — copies a human-readable, one-line-per-day breakdown of time spent per known place, newest day first. Example:
+
+   ```
+   Tue Apr 22: Home 10h, Office 7h, Gym 1h
+   Mon Apr 21: Home 9h, Office 8h
+   Sun Apr 20: Home 22h
+   ```
+
+   Places are sorted within each day by total time descending. Stays ≥ 1 hour render as `Nh` (with a decimal when not whole, e.g. `1.5h`); stays under an hour render as `Xm`. Days with no recognized stays render as `"<header>: no known places"`. The text contains no coordinates, ISO timestamps, or unix milliseconds — the intent is a format a life coach can read as-is.
+
+2. **Copy Location Details** — copies a JSON blob with today's current-location coordinates, the full clusters array, the per-stay timeline (including short stays), and the summary string. This is the shape that used to be bundled into Summary before the trim. Kept as a single-tap power-user export.
+
+The main-screen Location card keeps its existing lat/lng-only "Copy" button unchanged. Together the three actions split cleanly by audience: main-screen Copy for quick coordinate sharing, Copy Daily Summary for a coach briefing, Copy Location Details for machine-readable power use.
 
 ### Raw share button
 
@@ -66,8 +78,9 @@ Unchanged. Still emits the full detailed export (health + single coordinate + fu
 - The Summary JSON's place activity section contains only string values (no arrays of objects, no nested lat/lng).
 - Weekly place breakdown text lists named places in descending order by hours (e.g. Home before Office before Gym when those are the true hours).
 - Recent days timeline text contains at most the last 3 days and uses 12-hour local time (`10pm–7am`), not unix milliseconds or ISO strings.
-- Tapping **Copy Location Data** in the Location sheet copies a JSON string containing `clusters`, `timeline`, and current coordinates, and shows "Copied" feedback for ~1.5 seconds.
-- When location history is empty, the Summary share still succeeds (no location section, or an empty one) and the Copy Location Data button is either hidden or shows no-op feedback (implementer's choice — both are acceptable).
+- Tapping **Copy Location Details** in the Location sheet copies a JSON string containing `clusters`, `timeline`, and current coordinates, and shows "Copied" feedback for ~1.5 seconds.
+- Tapping **Copy Daily Summary** copies plain text with one line per day (day header + comma-separated places with durations), no coordinates or unix timestamps, and shows "Copied" feedback for ~1.5 seconds.
+- When location history is empty, the Summary share still succeeds (no location section, or an empty one) and the copy buttons are either hidden or copy an empty-state string (implementer's choice — both are acceptable).
 - The Raw share button's output is unchanged byte-for-byte vs. before this change.
 
 ## Rationale

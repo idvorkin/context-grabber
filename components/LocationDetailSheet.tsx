@@ -24,7 +24,7 @@ import {
   type LocationHistoryItem,
 } from "../lib/db";
 import { clusterLocations, clusterLocationsV2 } from "../lib/clustering_v2";
-import { buildPlacesDailySummary } from "../lib/places_summary";
+import { buildPlacesDailySummary, formatPlacesDailyText } from "../lib/places_summary";
 import { haversineDistance } from "../lib/geo";
 import PlacesDailyBreakdown, { type NamePlaceTarget } from "./PlacesDailyBreakdown";
 
@@ -70,7 +70,8 @@ export default function LocationDetailSheet({
   const [placesExpanded, setPlacesExpanded] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
   const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
-  const [locationDataCopied, setLocationDataCopied] = useState(false);
+  const [locationDetailsCopied, setLocationDetailsCopied] = useState(false);
+  const [dailySummaryCopied, setDailySummaryCopied] = useState(false);
 
   // "Name this place" modal state
   type NameModalState =
@@ -339,10 +340,18 @@ export default function LocationDetailSheet({
     });
   }
 
-  async function handleCopyLocationData() {
-    // Full detailed location export — the shape that used to be inside Summary
-    // before it was trimmed for life-coach readability. Lives behind an explicit
-    // button so power users can still grab it without bloating every share.
+  async function handleCopyDailySummary() {
+    // Human-readable per-day per-place breakdown — same data the on-screen
+    // PlacesDailyBreakdown renders, formatted as one line per day for a life coach.
+    const text = formatPlacesDailyText(placesDailySummary);
+    await Clipboard.setStringAsync(text);
+    setDailySummaryCopied(true);
+    setTimeout(() => setDailySummaryCopied(false), 1500);
+  }
+
+  async function handleCopyLocationDetails() {
+    // Full detailed location export with per-stay timeline + coordinates —
+    // the shape that used to be bundled into Summary before it was trimmed.
     const { clusters, timeline, summary } = locationHistory.length > 0
       ? clusterLocations(rawPoints, 50, 3, knownPlaces)
       : { clusters: [], timeline: [], summary: "" };
@@ -351,8 +360,8 @@ export default function LocationDetailSheet({
       locationClusters: { clusters, timeline, summary },
     };
     await Clipboard.setStringAsync(JSON.stringify(payload));
-    setLocationDataCopied(true);
-    setTimeout(() => setLocationDataCopied(false), 1500);
+    setLocationDetailsCopied(true);
+    setTimeout(() => setLocationDetailsCopied(false), 1500);
   }
 
   async function handleDownloadDatabase() {
@@ -424,11 +433,20 @@ export default function LocationDetailSheet({
           <View style={styles.aboutCard}>
             <TouchableOpacity
               style={[styles.addPlaceButton, { marginTop: 12 }]}
-              onPress={handleCopyLocationData}
-              testID="copy-location-data-button"
+              onPress={handleCopyDailySummary}
+              testID="copy-daily-summary-button"
             >
-              <Text style={styles.addPlaceButtonText} testID="copy-location-data-status">
-                {locationDataCopied ? "Copied" : "Copy Location Data"}
+              <Text style={styles.addPlaceButtonText} testID="copy-daily-summary-status">
+                {dailySummaryCopied ? "Copied" : "Copy Daily Summary"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.addPlaceButton, { marginTop: 12 }]}
+              onPress={handleCopyLocationDetails}
+              testID="copy-location-details-button"
+            >
+              <Text style={styles.addPlaceButtonText} testID="copy-location-details-status">
+                {locationDetailsCopied ? "Copied" : "Copy Location Details"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

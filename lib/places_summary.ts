@@ -392,3 +392,41 @@ export function buildPlacesDailySummary(
   // Already in most-recent-first order due to the loop direction.
   return summaries;
 }
+
+// ─── Copy-friendly text formatters ───────────────────────────────────────────
+
+const DAY_ABBR = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_ABBR = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+/** "2026-04-20" → "Mon Apr 20" (interpreted as local date). */
+function formatDayHeader(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${DAY_ABBR[date.getDay()]} ${MONTH_ABBR[date.getMonth()]} ${d}`;
+}
+
+/** 540 min → "9h", 55 min → "55m", 90 min → "1.5h". Drops trailing .0 naturally. */
+function formatHours(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const h = Math.round(minutes / 6) / 10;
+  return `${h}h`;
+}
+
+/**
+ * One line per day, places sorted by time descending:
+ *   Mon Apr 20: Home 9h, Office 8h, Gym 1h
+ * Days with no recognized stays render as "…: no known places".
+ */
+export function formatPlacesDailyText(days: PlaceDaySummary[]): string {
+  return days
+    .map((day) => {
+      const header = formatDayHeader(day.dateKey);
+      if (day.places.length === 0) return `${header}: no known places`;
+      const parts = day.places.map((p) => `${p.placeId} ${formatHours(p.totalMinutes)}`);
+      return `${header}: ${parts.join(", ")}`;
+    })
+    .join("\n");
+}
