@@ -123,6 +123,9 @@ struct TodayWidgetView: View {
     }
     .padding(12)
     .widgetURL(URL(string: "grabber://main")!)
+    .containerBackground(for: .widget) {
+      Color(UIColor.systemBackground)
+    }
   }
 
   private func formatInt(_ n: Int) -> String {
