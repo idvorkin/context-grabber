@@ -28,6 +28,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.idvorkin.contextgrabber</string>
+				<string>grabber</string>
 			</array>
 		</dict>
 	</array>
