@@ -401,25 +401,31 @@ The chart in the sheet bar-stacks the `aggregateSleepDetailed` output (noon-to-n
 
 This decouples the Sleep Avg entirely from the legacy `aggregateSleep` path. Other metrics (non-sleep) keep using their existing Avg calculation.
 
-### 4.3 Dropped-tracking indicator on per-night rows
+### 4.3 Dropped-tracking indicator + sleep-onset surface (revised 2026-04-24)
 
-When a tracker loses coverage mid-night (phone dies, Watch isn't worn, Eight Sleep session aborts early), the tracked `totalHours` can be materially less than the user's actual time in bed. Today there's no visual cue that a night is under-reported; the user sees "6.3h Thu" and has no way to distinguish "slept 6.3 hours" from "slept ~7 hours but tracker dropped the last hour."
+Two observations from early use of the initial 4.3 implementation:
 
-**Fix:** flag nights where the **time-in-bed range** (from `bedtime` to `wakeTime`) materially exceeds the tracked `totalHours`. Definition of "materially":
+- Folding Awake-in-bed time into the "gap" number double-counted it: the chart already shows Awake as gray segments, AND the `⚠ gap` label silently rolled that same time in. A night with 1h of mid-night Awake and zero dropped data read as `⚠ gap 1h` — misleading.
+- The pre-sleep Awake period (the "winding down before falling asleep" time) is useful information on its own, and users noticed it being absorbed into the gap value instead of surfaced.
 
-- Both `bedtime` and `wakeTime` are present.
-- `(wakeTime − bedtime) − totalHours > max(30 min, 10% × (wakeTime − bedtime))`.
-- `totalHours > 0` (don't flag nights with no data — they're already visibly blank).
+**Revised model:** split "time spent not actually sleeping" into two distinct concepts per night:
 
-Flagged nights render an additional subtle marker next to the totalHours value on the daily row — for example a small `⚠` glyph or a muted-color `(gap: 47m)` tag. Tapping the row still opens the existing day-zoom card; the marker is passive information, not a new interaction.
+1. **`⚠ gap Ym`** — truly untracked time only. `(wakeTime − bedtime) − (Core + Deep + REM + Awake-in-session)`. When this exceeds `max(30 min, 10% × in-bed range)`, flag the row.
+2. **`onset Xm`** — sleep-onset latency. Awake time directly preceding the first actual-sleep sample, walking backwards and stopping when the gap to the previous Awake segment (or to sleep) exceeds **1 hour**. The 1-hour rule discards "noise Awake" — e.g. a Watch that briefly detected bed-like activity hours before the real bedtime and went idle before re-engaging at actual bedtime. Only surface when `onset ≥ 10 min` so very short values don't clutter the row.
 
-This is a **heuristic**, not a diagnosis. It tells the reader "worth a second look" without claiming the tracker is wrong. Targeting false-positive rate over false-negative rate is correct — we'd rather occasionally flag a nap-awake gap than silently miss a night with an hour of dropped data.
+Both labels can appear on the same row; neither is required. Tapping the row still opens the existing day-zoom card; these markers are passive information, not new interactions.
+
+Mid-night Awake (bathroom breaks, brief stirs) remains visible as gray segments in the stacked bar and is no longer labeled textually — the chart already communicates it.
+
+The `onset` calculation is heuristic, targeting a low false-positive rate. A Watch that both detects bed-activity 3 hours before real bedtime AND briefly re-engages just before real bedtime would correctly show only the true onset; a Watch that stays continuously engaged from early-bed-activity through real sleep would over-report onset — an edge case we accept.
 
 ## Phase 4 acceptance
 
 - With the Sleep card's header date-range visible, the rendered text contains no `T00:00:00` / `Z` / `YYYY-MM-DD` substrings. It shows only local short-form times separated by an en-dash.
 - With the `Unknown` (or any other) sleep source tab selected, the Avg number equals the arithmetic mean of the non-null bar heights visible in the chart, rounded to 1 decimal.
-- A night whose `totalHours` is at least 30 minutes AND at least 10% shorter than `(wakeTime − bedtime)` renders the dropped-tracking marker; a night meeting neither threshold does not.
-- Nights with missing `bedtime` or `wakeTime` never render the marker (they'd be false positives).
+- The `⚠ gap` label is based on truly untracked time only — Awake samples inside `[bedtime, wakeTime]` are counted as *covered* and not folded into the gap number.
+- A night with only Awake time filling the "non-sleep" window (i.e. no truly missing samples) never flags `⚠ gap`.
+- A night with ≥ 10 minutes of pre-sleep Awake time directly adjacent to the first sleep moment renders an `onset Xm` label; Awake segments separated from sleep by > 1 hour of untracked time are discarded and do not contribute to the `onset` value.
+- Both `onset` and `⚠ gap` labels may appear on the same row independently.
 - The two other metrics that share the sheet's Avg path (HRV-style whisker averages and generic DailyValue averages) are unchanged.
 

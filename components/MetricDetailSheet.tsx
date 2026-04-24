@@ -385,6 +385,13 @@ export default function MetricDetailSheet({
           ? `gap ${Math.floor(gapMinutes / 60)}h${gapMinutes % 60 ? ` ${gapMinutes % 60}m` : ""}`
           : `gap ${gapMinutes}m`
         : null;
+      // Only surface onset when it's material (≥ 10 min) — short
+      // pre-sleep windows aren't interesting and add visual clutter.
+      const onsetLabel = night.onsetMinutes != null && night.onsetMinutes >= 10
+        ? night.onsetMinutes >= 60
+          ? `onset ${Math.floor(night.onsetMinutes / 60)}h${night.onsetMinutes % 60 ? ` ${night.onsetMinutes % 60}m` : ""}`
+          : `onset ${night.onsetMinutes}m`
+        : null;
       return (
         <TouchableOpacity
           key={night.date}
@@ -400,6 +407,15 @@ export default function MetricDetailSheet({
           >
             <Text style={styles.dayRowLabel}>{formatDayRow(night.date)}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              {onsetLabel && (
+                <Text
+                  style={styles.sleepRowOnset}
+                  accessibilityLabel={`Sleep onset: ${onsetLabel}`}
+                  testID={`sleep-row-onset-${night.date}`}
+                >
+                  {onsetLabel}
+                </Text>
+              )}
               {gapLabel && (
                 <Text
                   style={styles.sleepRowGap}
@@ -961,6 +977,10 @@ const styles = StyleSheet.create({
   sleepRowGap: {
     fontSize: 11,
     color: "#b88a2a",
+  },
+  sleepRowOnset: {
+    fontSize: 11,
+    color: "#8d99ae",
   },
   sleepStatsBlock: {
     marginTop: 12,

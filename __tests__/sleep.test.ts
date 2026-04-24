@@ -7,6 +7,7 @@ import {
   computeSleepDebt,
   computeConsistencyStats,
   computeTrackingGap,
+  computeOnsetMinutes,
   type SleepDaily,
 } from "../lib/sleep";
 import type { SleepSample } from "../lib/health";
@@ -165,7 +166,7 @@ describe("computeSleepDebt", () => {
     return {
       date: "2026-03-15", totalHours: total,
       coreHours: 0, deepHours: 0, remHours: 0, awakeHours: 0,
-      bedtime: null, wakeTime: null, samples: [],
+      bedtime: null, wakeTime: null, onsetMinutes: null, samples: [],
     };
   }
 
@@ -202,7 +203,7 @@ describe("computeConsistencyStats", () => {
     return {
       date: "2026-03-15", totalHours: 8,
       coreHours: 0, deepHours: 0, remHours: 0, awakeHours: 0,
-      bedtime, wakeTime, samples: [],
+      bedtime, wakeTime, onsetMinutes: null, samples: [],
     };
   }
 
@@ -375,6 +376,7 @@ describe("computeTrackingGap", () => {
       deepHours: 0,
       remHours: 0,
       awakeHours: 0,
+      onsetMinutes: null,
       // Bedtime 10:30pm, wakeTime 5:30am = 7h in bed.
       bedtime: "2026-04-24T05:30:00Z", // Thu 22:30 local if PDT
       wakeTime: "2026-04-24T12:30:00Z", // Fri 05:30 local if PDT
@@ -422,6 +424,7 @@ describe("computeTrackingGap", () => {
       awakeHours: 0,
       bedtime: "2026-04-24T05:00:00Z",
       wakeTime: "2026-04-24T15:00:00Z", // 10h later
+      onsetMinutes: null,
       samples: [],
     };
     // Exactly 60m gap, 10% of 600m = 60m. gap (60) is NOT > threshold (60) → null.
@@ -440,5 +443,191 @@ describe("computeTrackingGap", () => {
         }),
       ),
     ).toBeNull();
+  });
+});
+
+describe("computeOnsetMinutes", () => {
+  // Small helper: build an Awake sample from start/end ms.
+  const awake = (startMs: number, endMs: number): SleepSample => ({
+    startDate: new Date(startMs).toISOString(),
+    endDate: new Date(endMs).toISOString(),
+    value: 2,
+  });
+  const sleep = (startMs: number, endMs: number): SleepSample => ({
+    startDate: new Date(startMs).toISOString(),
+    endDate: new Date(endMs).toISOString(),
+    value: 3,
+  });
+  const minutes = 60 * 1000;
+  const hours = 60 * minutes;
+
+  it("returns null when there's no pre-sleep Awake", () => {
+    const first = Date.UTC(2026, 3, 24, 5, 0); // 5:00 UTC
+    const samples = [sleep(first, first + 8 * hours)];
+    expect(computeOnsetMinutes(samples, first)).toBeNull();
+  });
+
+  it("returns the duration of a single contiguous pre-sleep Awake segment", () => {
+    const first = Date.UTC(2026, 3, 24, 5, 0);
+    const samples = [
+      awake(first - 30 * minutes, first), // 30m Awake ending exactly at first sleep
+      sleep(first, first + 8 * hours),
+    ];
+    expect(computeOnsetMinutes(samples, first)).toBe(30);
+  });
+
+  it("sums multiple close-together pre-sleep Awake segments", () => {
+    const first = Date.UTC(2026, 3, 24, 5, 0);
+    const samples = [
+      awake(first - 50 * minutes, first - 40 * minutes), // 10m
+      awake(first - 20 * minutes, first), // 20m, 20m gap to prior — still < 1h
+      sleep(first, first + 8 * hours),
+    ];
+    // Walking backwards: pick up 20m (directly adjacent), then 20m gap is fine
+    // (< 1h), pick up 10m. Total 30m.
+    expect(computeOnsetMinutes(samples, first)).toBe(30);
+  });
+
+  it("discards Awake separated from sleep by more than 1h gap (the 'noise' case)", () => {
+    const first = Date.UTC(2026, 3, 24, 5, 0);
+    const samples = [
+      awake(first - 4 * hours, first - 3.5 * hours), // 30m, far from sleep → noise
+      awake(first - 15 * minutes, first), // 15m, directly adjacent → counted
+      sleep(first, first + 8 * hours),
+    ];
+    // Walking backwards: 15m (adjacent). Then gap from first-15m back to
+    // first-3.5h = 3h 15m > 1h → stop. Noise segment discarded.
+    expect(computeOnsetMinutes(samples, first)).toBe(15);
+  });
+
+  it("stops at the first >1h gap even mid-run", () => {
+    const first = Date.UTC(2026, 3, 24, 5, 0);
+    const samples = [
+      awake(first - 6 * hours, first - 5.5 * hours), // 30m, noise
+      awake(first - 90 * minutes, first - 80 * minutes), // 10m, bridges >1h to prior
+      awake(first - 45 * minutes, first - 30 * minutes), // 15m, bridges 35m to prior
+      awake(first - 20 * minutes, first), // 20m, 10m gap to prior
+      sleep(first, first + 8 * hours),
+    ];
+    // Walking backwards: 20m (adj), 10m gap, 15m (45m→30m), 35m gap, 10m
+    // (90m→80m), 3h 50m gap → stop. Noise (30m earlier) discarded.
+    // Total = 20 + 15 + 10 = 45m.
+    expect(computeOnsetMinutes(samples, first)).toBe(45);
+  });
+
+  it("ignores Awake samples whose end is after the first sleep start", () => {
+    // A mid-night Awake (say 3am wake) is not an onset segment.
+    const first = Date.UTC(2026, 3, 24, 5, 0);
+    const samples = [
+      sleep(first, first + 2 * hours),
+      awake(first + 2 * hours, first + 2.25 * hours), // mid-night Awake
+      sleep(first + 2.25 * hours, first + 8 * hours),
+    ];
+    expect(computeOnsetMinutes(samples, first)).toBeNull();
+  });
+
+  it("merges overlapping pre-sleep Awake samples from two sources", () => {
+    const first = Date.UTC(2026, 3, 24, 5, 0);
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date(first - 30 * minutes).toISOString(),
+        endDate: new Date(first - 10 * minutes).toISOString(),
+        value: 2,
+        source: "Watch",
+      },
+      {
+        startDate: new Date(first - 20 * minutes).toISOString(),
+        endDate: new Date(first).toISOString(),
+        value: 2,
+        source: "iPhone",
+      },
+      sleep(first, first + 7 * hours),
+    ];
+    // Watch covers [-30, -10], iPhone covers [-20, 0]. Merged: [-30, 0] = 30m.
+    expect(computeOnsetMinutes(samples, first)).toBe(30);
+  });
+});
+
+describe("computeTrackingGap — Awake-in-session is covered, not a gap", () => {
+  const minutes = 60 * 1000;
+  const hours = 60 * minutes;
+
+  it("does not flag a night whose only 'gap' is mid-night Awake time", () => {
+    // 8h in bed, 6.5h Core+Deep+REM, 1.5h Awake (bathroom breaks + early stir).
+    // Old behavior: gap = 8 - 6.5 = 1.5h → flagged.
+    // New behavior: covered = 6.5 + 1.5 = 8h → gap = 0 → null.
+    const bedMs = Date.UTC(2026, 3, 24, 5, 0);
+    const wakeMs = bedMs + 8 * hours;
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date(bedMs).toISOString(),
+        endDate: new Date(bedMs + 2 * hours).toISOString(),
+        value: 3,
+      },
+      {
+        startDate: new Date(bedMs + 2 * hours).toISOString(),
+        endDate: new Date(bedMs + 2.5 * hours).toISOString(),
+        value: 2, // 30m Awake mid-session
+      },
+      {
+        startDate: new Date(bedMs + 2.5 * hours).toISOString(),
+        endDate: new Date(bedMs + 7 * hours).toISOString(),
+        value: 3,
+      },
+      {
+        startDate: new Date(bedMs + 7 * hours).toISOString(),
+        endDate: new Date(bedMs + 8 * hours).toISOString(),
+        value: 2, // 1h Awake at end
+      },
+    ];
+    const night: SleepDaily = {
+      date: "2026-04-23",
+      totalHours: 6.5, // core+deep+rem, Awake excluded
+      coreHours: 6.5,
+      deepHours: 0,
+      remHours: 0,
+      awakeHours: 1.5,
+      bedtime: new Date(bedMs).toISOString(),
+      wakeTime: new Date(wakeMs).toISOString(),
+      onsetMinutes: null,
+      samples,
+    };
+    expect(computeTrackingGap(night)).toBeNull();
+  });
+
+  it("flags when truly untracked time is beyond the threshold even if some Awake exists", () => {
+    // 8h in bed, 5.5h core+deep+rem, 15m Awake, 2h 15m truly untracked.
+    const bedMs = Date.UTC(2026, 3, 24, 5, 0);
+    const wakeMs = bedMs + 8 * hours;
+    const samples: SleepSample[] = [
+      {
+        startDate: new Date(bedMs).toISOString(),
+        endDate: new Date(bedMs + 5.5 * hours).toISOString(),
+        value: 3, // 5.5h sleep
+      },
+      {
+        startDate: new Date(bedMs + 5.5 * hours).toISOString(),
+        endDate: new Date(bedMs + 5.75 * hours).toISOString(),
+        value: 2, // 15m Awake (then 2h 15m of nothing)
+      },
+    ];
+    const night: SleepDaily = {
+      date: "2026-04-23",
+      totalHours: 5.5,
+      coreHours: 5.5,
+      deepHours: 0,
+      remHours: 0,
+      awakeHours: 0.25,
+      bedtime: new Date(bedMs).toISOString(),
+      wakeTime: new Date(wakeMs).toISOString(),
+      onsetMinutes: null,
+      samples,
+    };
+    // Covered = 5.5 + 0.25 = 5.75h. In-bed 8h. Gap = 2.25h = 135m.
+    // Threshold = max(30, 48) = 48. 135 > 48 → flagged.
+    const gap = computeTrackingGap(night);
+    expect(gap).not.toBeNull();
+    expect(gap!).toBeGreaterThanOrEqual(134);
+    expect(gap!).toBeLessThanOrEqual(136);
   });
 });

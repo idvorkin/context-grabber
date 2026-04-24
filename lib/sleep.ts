@@ -21,8 +21,21 @@ export type SleepDaily = {
   awakeHours: number;
   bedtime: string | null; // ISO 8601 — first asleep sample start
   wakeTime: string | null; // ISO 8601 — last asleep sample end
+  /**
+   * Sleep-onset latency: Awake time directly preceding the first actual-sleep
+   * sample, walking backwards and stopping when the gap between one Awake
+   * segment and the next exceeds `ONSET_NOISE_GAP_MS`. Awake segments that
+   * are separated from sleep by a > 1h untracked gap are discarded as noise
+   * (typical when a device detects bed-like activity much earlier and later
+   * re-engages). `null` when there's no pre-sleep Awake at all.
+   */
+  onsetMinutes: number | null;
   samples: SleepSample[]; // sorted by startTime, used by stage strip rendering
 };
+
+/** Max tolerable gap between an Awake segment and the next sample still counted
+ *  as part of sleep-onset latency. Beyond this, earlier Awake is "noise." */
+export const ONSET_NOISE_GAP_MS = 60 * 60 * 1000; // 1 hour
 
 export type SleepConsistencyStats = {
   bedtimeStdevMinutes: number;
@@ -101,6 +114,7 @@ export function aggregateSleepDetailed(
       awakeHours: 0,
       bedtime: null,
       wakeTime: null,
+      onsetMinutes: null,
       samples: [],
     });
   }
@@ -143,12 +157,14 @@ export function aggregateSleepDetailed(
       const sleepSorted = [...actualSleep].sort(
         (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
       );
-      bucket.bedtime = new Date(sleepSorted[0].startDate).toISOString();
+      const firstSleepStartMs = new Date(sleepSorted[0].startDate).getTime();
+      bucket.bedtime = new Date(firstSleepStartMs).toISOString();
       const lastEnd = sleepSorted.reduce(
         (max, s) => Math.max(max, new Date(s.endDate).getTime()),
         0,
       );
       bucket.wakeTime = new Date(lastEnd).toISOString();
+      bucket.onsetMinutes = computeOnsetMinutes(bucket.samples, firstSleepStartMs);
     }
 
     // Stage hours — merge overlapping intervals per-stage
@@ -294,21 +310,85 @@ export function computeSleepDebt(
   return Math.round(debt * 10) / 10;
 }
 
+// ─── computeOnsetMinutes ──────────────────────────────────────────────────────
+
+/**
+ * Walking backwards from `firstSleepMs` through the night's samples, sum Awake
+ * durations that are directly contiguous with the sleep-onset moment. A gap
+ * (time with no samples) of more than `ONSET_NOISE_GAP_MS` between one Awake
+ * segment and the next causes anything earlier to be dropped as noise — e.g.
+ * a Watch that detected bed-like activity 3h before the real bedtime and then
+ * went idle before re-engaging at actual bedtime.
+ *
+ * Returns total pre-sleep Awake minutes (rounded), or null when there's no
+ * pre-sleep Awake at all.
+ */
+export function computeOnsetMinutes(
+  samples: SleepSample[],
+  firstSleepMs: number,
+): number | null {
+  if (samples.length === 0) return null;
+
+  // Collect all Awake segments ending at or before the first sleep sample,
+  // merge any overlapping ones per-segment (by start), then walk backwards.
+  const awakeRanges: { start: number; end: number }[] = samples
+    .filter((s) => s.value === 2)
+    .map((s) => ({
+      start: new Date(s.startDate).getTime(),
+      end: new Date(s.endDate).getTime(),
+    }))
+    .filter((r) => r.end <= firstSleepMs && r.end > r.start)
+    .sort((a, b) => a.start - b.start);
+
+  if (awakeRanges.length === 0) return null;
+
+  // Merge overlapping Awake intervals so we count time covered, not samples.
+  const merged: { start: number; end: number }[] = [awakeRanges[0]];
+  for (let i = 1; i < awakeRanges.length; i++) {
+    const last = merged[merged.length - 1];
+    if (awakeRanges[i].start <= last.end) {
+      last.end = Math.max(last.end, awakeRanges[i].end);
+    } else {
+      merged.push(awakeRanges[i]);
+    }
+  }
+
+  // Walk backwards from the first sleep moment, accepting Awake segments while
+  // the gap to the next-later known time (firstSleepMs, then each accepted
+  // segment's start) stays ≤ ONSET_NOISE_GAP_MS.
+  let totalMs = 0;
+  let cursor = firstSleepMs;
+  for (let i = merged.length - 1; i >= 0; i--) {
+    const seg = merged[i];
+    const gapToCursor = cursor - seg.end;
+    if (gapToCursor > ONSET_NOISE_GAP_MS) break; // earlier segments are noise
+    totalMs += seg.end - seg.start;
+    cursor = seg.start;
+  }
+
+  if (totalMs <= 0) return null;
+  return Math.round(totalMs / 60000);
+}
+
 // ─── computeTrackingGap ───────────────────────────────────────────────────────
 
 /**
- * Gap between time-in-bed (bedtime → wakeTime range) and tracked total sleep
- * hours. Surfaces nights where the tracker likely dropped coverage (phone died,
+ * Gap between time-in-bed (bedtime → wakeTime range) and total *covered* time
+ * — i.e. time HealthKit had a sample for (actual sleep OR Awake in session).
+ * Surfaces nights where the tracker genuinely dropped coverage (phone died,
  * Watch removed mid-night, Eight Sleep session aborted).
  *
- * Returns the gap in MINUTES (positive only) when both of these hold:
+ * Awake-in-bed is NOT counted as gap — it's visible as the gray segment in the
+ * chart and surfaced separately via `onsetMinutes` when it's pre-sleep. That
+ * way "⚠ gap" only flags missing data, not awake time that was recorded.
+ *
+ * Returns the gap in MINUTES (positive only) when all of these hold:
  *   - Both bedtime and wakeTime are present.
- *   - totalHours is a positive number (skip unreported nights entirely — a
- *     blank bar is already self-evident as "no data" and shouldn't be flagged).
+ *   - totalHours is a positive number.
  *   - The gap exceeds max(30 min, 10% of the in-bed range).
  *
- * Returns null otherwise. The "material" threshold is heuristic — we target
- * a low false-positive rate at the cost of occasionally missing thin gaps.
+ * Returns null otherwise. Heuristic — low false-positive rate at the cost of
+ * occasionally missing thin gaps.
  */
 export function computeTrackingGap(night: SleepDaily): number | null {
   if (!night.bedtime || !night.wakeTime) return null;
@@ -317,11 +397,43 @@ export function computeTrackingGap(night: SleepDaily): number | null {
   const wakeMs = new Date(night.wakeTime).getTime();
   const inBedMinutes = (wakeMs - bedMs) / 60000;
   if (inBedMinutes <= 0) return null;
-  const trackedMinutes = night.totalHours * 60;
-  const gapMinutes = inBedMinutes - trackedMinutes;
+
+  // Covered time = actual sleep (Core+Deep+REM merged, i.e. totalHours)
+  // + Awake time inside [bedtime, wakeTime] (the gray in-chart segments).
+  const awakeInSessionMs = mergedAwakeMsInRange(night.samples, bedMs, wakeMs);
+  const coveredMinutes = night.totalHours * 60 + awakeInSessionMs / 60000;
+
+  const gapMinutes = inBedMinutes - coveredMinutes;
   const threshold = Math.max(30, inBedMinutes * 0.1);
   if (gapMinutes <= threshold) return null;
   return Math.round(gapMinutes);
+}
+
+/** Sum Awake sample time (merged overlaps) clipped to [rangeStart, rangeEnd]. */
+function mergedAwakeMsInRange(
+  samples: SleepSample[],
+  rangeStart: number,
+  rangeEnd: number,
+): number {
+  const clipped = samples
+    .filter((s) => s.value === 2)
+    .map((s) => ({
+      start: Math.max(new Date(s.startDate).getTime(), rangeStart),
+      end: Math.min(new Date(s.endDate).getTime(), rangeEnd),
+    }))
+    .filter((r) => r.end > r.start)
+    .sort((a, b) => a.start - b.start);
+  if (clipped.length === 0) return 0;
+  const merged: { start: number; end: number }[] = [clipped[0]];
+  for (let i = 1; i < clipped.length; i++) {
+    const last = merged[merged.length - 1];
+    if (clipped[i].start <= last.end) {
+      last.end = Math.max(last.end, clipped[i].end);
+    } else {
+      merged.push(clipped[i]);
+    }
+  }
+  return merged.reduce((acc, r) => acc + (r.end - r.start), 0);
 }
 
 // ─── computeConsistencyStats ──────────────────────────────────────────────────
