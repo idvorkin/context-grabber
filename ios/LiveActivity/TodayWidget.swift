@@ -123,15 +123,30 @@ struct TodayWidgetView: View {
     }
     .padding(12)
     .widgetURL(URL(string: "grabber://main")!)
-    .containerBackground(for: .widget) {
-      Color(UIColor.systemBackground)
-    }
+    .widgetBackgroundCompat()
   }
 
   private func formatInt(_ n: Int) -> String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .decimal
     return formatter.string(from: NSNumber(value: n)) ?? "\(n)"
+  }
+}
+
+// MARK: - Background compat
+
+/// `containerBackground(for: .widget)` is iOS 17+; the deployment target supports older OSes,
+/// so fall back to a plain `background(...)` on older systems where the new API is absent.
+extension View {
+  @ViewBuilder
+  func widgetBackgroundCompat() -> some View {
+    if #available(iOS 17.0, *) {
+      self.containerBackground(for: .widget) {
+        Color(UIColor.systemBackground)
+      }
+    } else {
+      self.background(Color(UIColor.systemBackground))
+    }
   }
 }
 
