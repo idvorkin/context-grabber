@@ -408,6 +408,8 @@ Two observations from early use of the initial 4.3 implementation:
 - Folding Awake-in-bed time into the "gap" number double-counted it: the chart already shows Awake as gray segments, AND the `⚠ gap` label silently rolled that same time in. A night with 1h of mid-night Awake and zero dropped data read as `⚠ gap 1h` — misleading.
 - The pre-sleep Awake period (the "winding down before falling asleep" time) is useful information on its own, and users noticed it being absorbed into the gap value instead of surfaced.
 
+**Main sleep session detection (2026-04-24 further refinement).** Real sleep data turned up a second problem: a stray noise sample (afternoon blip, morning in-bed reading, Watch briefly detecting bed-like activity hours before real bedtime) was being used as `bedtime` or `wakeTime`. The in-bed range would balloon to 13h+ and invent a `⚠ gap` that wasn't real. Fix: cluster actual-sleep samples with the same 1-hour noise rule already used for onset, pick the cluster with the most Core+Deep+REM minutes (ties → most recent) as the "main session," and use *that* cluster's bounds for bedtime/wakeTime. Samples outside the main session are excluded from totalHours and per-stage totals. The chart strip bounds auto-tighten because it uses bedtime/wakeTime as its x-axis, so noise segments fall outside the strip window.
+
 **Revised model:** split "time spent not actually sleeping" into two distinct concepts per night:
 
 1. **`⚠ gap Ym`** — truly untracked time only. `(wakeTime − bedtime) − (Core + Deep + REM + Awake-in-session)`. When this exceeds `max(30 min, 10% × in-bed range)`, flag the row.

@@ -422,7 +422,7 @@ export default function MetricDetailSheet({
                   accessibilityLabel={`Tracker gap: ${gapLabel}`}
                   testID={`sleep-row-gap-${night.date}`}
                 >
-                  \u26a0 {gapLabel}
+                  {"⚠"} {gapLabel}
                 </Text>
               )}
               <Text style={styles.dayRowValue}>

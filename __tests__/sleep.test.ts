@@ -8,6 +8,7 @@ import {
   computeConsistencyStats,
   computeTrackingGap,
   computeOnsetMinutes,
+  pickMainSleepSession,
   type SleepDaily,
 } from "../lib/sleep";
 import type { SleepSample } from "../lib/health";
@@ -629,5 +630,98 @@ describe("computeTrackingGap — Awake-in-session is covered, not a gap", () => 
     expect(gap).not.toBeNull();
     expect(gap!).toBeGreaterThanOrEqual(134);
     expect(gap!).toBeLessThanOrEqual(136);
+  });
+});
+
+describe("pickMainSleepSession", () => {
+  const hours = 60 * 60 * 1000;
+  const s = (startMs: number, endMs: number, value = 3): SleepSample => ({
+    startDate: new Date(startMs).toISOString(),
+    endDate: new Date(endMs).toISOString(),
+    value,
+  });
+
+  it("returns null for an empty array", () => {
+    expect(pickMainSleepSession([])).toBeNull();
+  });
+
+  it("returns the bounds of the single cluster when there's no gap > 1h", () => {
+    const t = Date.UTC(2026, 3, 23, 5, 0); // arbitrary anchor
+    const samples = [
+      s(t, t + 2 * hours),
+      s(t + 2 * hours, t + 4 * hours),
+      s(t + 4.5 * hours, t + 7 * hours), // 30m gap → same cluster
+    ];
+    const main = pickMainSleepSession(samples);
+    expect(main).not.toBeNull();
+    expect(main!.startMs).toBe(t);
+    expect(main!.endMs).toBe(t + 7 * hours);
+  });
+
+  it("picks the cluster with the most Core+Deep+REM minutes (not the first)", () => {
+    const t = Date.UTC(2026, 3, 23, 0, 0);
+    const samples = [
+      // Noise: 15-min afternoon nap at the start of the bucket
+      s(t, t + 15 * 60 * 1000, 3),
+      // >1h gap (6h), then the real overnight session of 7h
+      s(t + 6 * hours, t + 13 * hours, 3),
+    ];
+    const main = pickMainSleepSession(samples);
+    expect(main).not.toBeNull();
+    expect(main!.startMs).toBe(t + 6 * hours);
+    expect(main!.endMs).toBe(t + 13 * hours);
+  });
+
+  it("reproduces the 'Sun Apr 19 4:01pm bedtime' bug: afternoon blip is discarded", () => {
+    // Local 2026-04-19 16:01 → main sleep 22:00 → 05:23.
+    const blipStart = Date.UTC(2026, 3, 19, 16 + 7, 1); // 4:01pm PDT as UTC
+    const blipEnd = blipStart + 5 * 60 * 1000; // 5m blip
+    const mainStart = Date.UTC(2026, 3, 20, 22 + 7 - 24, 0); // 22:00 PDT of the prior day = 2026-04-20T05:00Z
+    // Simpler: pick clearly >1h apart timestamps.
+    const t = Date.UTC(2026, 3, 20, 0, 0);
+    const samples = [
+      s(t, t + 5 * 60 * 1000, 3), // blip: 5m at t
+      s(t + 7 * hours, t + 14 * hours, 3), // main: 7h starting 7h later
+    ];
+    const main = pickMainSleepSession(samples);
+    expect(main!.startMs).toBe(t + 7 * hours);
+    expect(main!.endMs).toBe(t + 14 * hours);
+    // Not the blip:
+    expect(main!.startMs).not.toBe(t);
+  });
+
+  it("prefers the most recent cluster on a tie", () => {
+    // Two equal-length clusters, both 3h of core sleep.
+    const t = Date.UTC(2026, 3, 23, 0, 0);
+    const samples = [
+      s(t, t + 3 * hours, 3),
+      s(t + 6 * hours, t + 9 * hours, 3), // gap is 3h >1h
+    ];
+    const main = pickMainSleepSession(samples);
+    expect(main!.startMs).toBe(t + 6 * hours);
+    expect(main!.endMs).toBe(t + 9 * hours);
+  });
+
+  it("ignores generic Asleep (value=1) for scoring when stage-typed samples exist elsewhere", () => {
+    const t = Date.UTC(2026, 3, 23, 0, 0);
+    const samples = [
+      // "Generic asleep" noise of 10h at the start — but it's value=1, not stage-typed.
+      s(t, t + 10 * hours, 1),
+      // Stage-typed overnight of 2h starting 12h later
+      s(t + 12 * hours, t + 14 * hours, 3),
+    ];
+    const main = pickMainSleepSession(samples);
+    // Stage-typed cluster wins even though it's shorter in wall-clock.
+    expect(main!.startMs).toBe(t + 12 * hours);
+  });
+
+  it("falls back to value=1 scoring when no cluster has stage-typed samples", () => {
+    const t = Date.UTC(2026, 3, 23, 0, 0);
+    const samples = [
+      s(t, t + 1 * hours, 1),
+      s(t + 3 * hours, t + 10 * hours, 1), // bigger, wins by duration
+    ];
+    const main = pickMainSleepSession(samples);
+    expect(main!.startMs).toBe(t + 3 * hours);
   });
 });

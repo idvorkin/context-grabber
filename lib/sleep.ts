@@ -153,21 +153,16 @@ export function aggregateSleepDetailed(
 
     // Bedtime/wake — earliest start, latest end across actual-sleep samples
     const actualSleep = filterActualSleep(bucket.samples);
-    if (actualSleep.length > 0) {
-      const sleepSorted = [...actualSleep].sort(
-        (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
-      );
-      const firstSleepStartMs = new Date(sleepSorted[0].startDate).getTime();
-      bucket.bedtime = new Date(firstSleepStartMs).toISOString();
-      const lastEnd = sleepSorted.reduce(
-        (max, s) => Math.max(max, new Date(s.endDate).getTime()),
-        0,
-      );
-      bucket.wakeTime = new Date(lastEnd).toISOString();
-      bucket.onsetMinutes = computeOnsetMinutes(bucket.samples, firstSleepStartMs);
+    const mainSession = pickMainSleepSession(actualSleep);
+    if (mainSession) {
+      bucket.bedtime = new Date(mainSession.startMs).toISOString();
+      bucket.wakeTime = new Date(mainSession.endMs).toISOString();
+      bucket.onsetMinutes = computeOnsetMinutes(bucket.samples, mainSession.startMs);
     }
 
-    // Stage hours — merge overlapping intervals per-stage
+    // Stage hours — merge overlapping intervals per-stage, restricted to the
+    // main session window when one exists (so noise naps / phantom afternoon
+    // samples don't inflate totals or chart bar heights).
     const stages = [
       { value: 3, key: "coreHours" as const },
       { value: 4, key: "deepHours" as const },
@@ -176,19 +171,134 @@ export function aggregateSleepDetailed(
     ];
     for (const { value, key } of stages) {
       const stageSamples = bucket.samples.filter((s) => s.value === value);
-      const hours = mergedHours(stageSamples);
+      const hours = mainSession
+        ? mergedHoursInRange(stageSamples, mainSession.startMs, mainSession.endMs)
+        : mergedHours(stageSamples);
       bucket[key] = Math.round(hours * 10) / 10;
     }
 
-    // Total hours = merged core+deep+rem (matches calculateSleepHours semantics)
+    // Total hours = merged core+deep+rem inside the main session only.
     const actualSleepSamples = bucket.samples.filter(
       (s) => s.value === 1 || s.value === 3 || s.value === 4 || s.value === 5,
     );
-    const totalMergedHours = mergedHours(actualSleepSamples);
+    const totalMergedHours = mainSession
+      ? mergedHoursInRange(actualSleepSamples, mainSession.startMs, mainSession.endMs)
+      : mergedHours(actualSleepSamples);
     bucket.totalHours = totalMergedHours > 0 ? Math.round(totalMergedHours * 10) / 10 : null;
   }
 
   return buckets;
+}
+
+/**
+ * Pick the "main" overnight sleep session out of a night's actual-sleep samples
+ * by clustering with the same 1-hour-gap rule used for onset-noise detection.
+ * Returns `{startMs, endMs}` of the cluster with the most Core+Deep+REM merged
+ * minutes (ties broken by the latest-ending cluster). Returns null when there
+ * are no actual-sleep samples at all.
+ *
+ * This prevents noise samples — afternoon naps, early-evening bed-like Watch
+ * activity that later re-engages, or mid-morning in-bed readings — from
+ * inflating the night's bedtime/wakeTime range and producing phantom gap
+ * warnings and oversized chart strips.
+ */
+export function pickMainSleepSession(
+  actualSleep: SleepSample[],
+): { startMs: number; endMs: number } | null {
+  if (actualSleep.length === 0) return null;
+
+  const sorted = [...actualSleep]
+    .map((s) => ({
+      start: new Date(s.startDate).getTime(),
+      end: new Date(s.endDate).getTime(),
+      value: s.value,
+    }))
+    .filter((s) => s.end > s.start)
+    .sort((a, b) => a.start - b.start);
+  if (sorted.length === 0) return null;
+
+  // Group into clusters: consecutive samples with ≤ ONSET_NOISE_GAP_MS between
+  // previous cluster end and next sample start are merged.
+  type Cluster = { startMs: number; endMs: number; samples: typeof sorted };
+  const clusters: Cluster[] = [];
+  for (const s of sorted) {
+    const last = clusters[clusters.length - 1];
+    if (last && s.start - last.endMs <= ONSET_NOISE_GAP_MS) {
+      last.endMs = Math.max(last.endMs, s.end);
+      last.samples.push(s);
+    } else {
+      clusters.push({ startMs: s.start, endMs: s.end, samples: [s] });
+    }
+  }
+
+  // Score a cluster by merged minutes of a given sample-value set.
+  function mergedMsByValues(c: Cluster, values: Set<number>): number {
+    const pool = c.samples.filter((s) => s.value !== undefined && values.has(s.value));
+    if (pool.length === 0) return 0;
+    const sortedPool = [...pool].sort((a, b) => a.start - b.start);
+    const merged: { start: number; end: number }[] = [];
+    for (const s of sortedPool) {
+      const last = merged[merged.length - 1];
+      if (last && s.start <= last.end) {
+        last.end = Math.max(last.end, s.end);
+      } else {
+        merged.push({ start: s.start, end: s.end });
+      }
+    }
+    return merged.reduce((acc, i) => acc + (i.end - i.start), 0);
+  }
+
+  // Prefer stage-typed scoring when ANY cluster has stage data — this prevents
+  // a long "generic asleep" (value=1) noise blob from beating a real 2h typed
+  // overnight session. Fall back to value=1 only when no cluster has stages.
+  const STAGED = new Set([3, 4, 5]);
+  const ANY_SLEEP = new Set([1, 3, 4, 5]);
+  const anyClusterHasTyped = clusters.some((c) => mergedMsByValues(c, STAGED) > 0);
+  const scoreOf = (c: Cluster): number =>
+    anyClusterHasTyped ? mergedMsByValues(c, STAGED) : mergedMsByValues(c, ANY_SLEEP);
+
+  let best = clusters[0];
+  let bestMs = scoreOf(best);
+  for (let i = 1; i < clusters.length; i++) {
+    const c = clusters[i];
+    const cMs = scoreOf(c);
+    // Tie-break: prefer the most recent cluster (typical case: a user naps
+    // in the afternoon then sleeps overnight — we want the overnight session).
+    if (cMs > bestMs || (cMs === bestMs && c.endMs > best.endMs)) {
+      best = c;
+      bestMs = cMs;
+    }
+  }
+
+  return { startMs: best.startMs, endMs: best.endMs };
+}
+
+/** Merge overlapping intervals clipped to [rangeStart, rangeEnd] and return total hours. */
+function mergedHoursInRange(
+  samples: SleepSample[],
+  rangeStart: number,
+  rangeEnd: number,
+): number {
+  if (samples.length === 0 || rangeEnd <= rangeStart) return 0;
+  const clipped = samples
+    .map((s) => ({
+      start: Math.max(rangeStart, new Date(s.startDate).getTime()),
+      end: Math.min(rangeEnd, new Date(s.endDate).getTime()),
+    }))
+    .filter((i) => i.end > i.start)
+    .sort((a, b) => a.start - b.start);
+  if (clipped.length === 0) return 0;
+  const merged: { start: number; end: number }[] = [clipped[0]];
+  for (let i = 1; i < clipped.length; i++) {
+    const last = merged[merged.length - 1];
+    if (clipped[i].start <= last.end) {
+      last.end = Math.max(last.end, clipped[i].end);
+    } else {
+      merged.push(clipped[i]);
+    }
+  }
+  const totalMs = merged.reduce((acc, i) => acc + (i.end - i.start), 0);
+  return totalMs / (1000 * 60 * 60);
 }
 
 /** Merge overlapping intervals in a sample array and return total hours. */
