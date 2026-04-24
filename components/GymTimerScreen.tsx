@@ -18,6 +18,10 @@ type Mode = "rounds" | "stopwatch" | "sets";
 
 type GymTimerScreenProps = {
   onExit: () => void;
+  initialMode?: Mode;
+  initialPreset?: string;
+  autostart?: boolean;
+  onIntentConsumed?: () => void;
 };
 
 // --- Presets ---
@@ -58,8 +62,14 @@ function phaseLabel(phase: Phase): string {
 
 // --- Sub-components ---
 
-function RoundsMode({ profile, onReset }: { profile: TimerProfile; onReset: () => void }) {
+function RoundsMode({ profile, onReset, autostart }: { profile: TimerProfile; onReset: () => void; autostart?: boolean }) {
   const { state, toggle, reset } = useTimer(profile);
+  const autostartFiredRef = useRef(false);
+  useEffect(() => {
+    if (!autostart || autostartFiredRef.current) return;
+    autostartFiredRef.current = true;
+    toggle();
+  }, [autostart, toggle]);
   const { start: laStart, update: laUpdate, stop: laStop } = useLiveActivity();
   const prevPhaseRef = useRef<Phase>("idle");
   const prevRunningRef = useRef(false);
@@ -239,10 +249,27 @@ function SetsMode() {
 
 // --- Main Screen ---
 
-export default function GymTimerScreen({ onExit }: GymTimerScreenProps) {
+export default function GymTimerScreen({
+  onExit,
+  initialMode,
+  initialPreset,
+  autostart,
+  onIntentConsumed,
+}: GymTimerScreenProps) {
   useKeepAwake();
-  const [mode, setMode] = useState<Mode>("rounds");
-  const [activePreset, setActivePreset] = useState("30sec");
+  const [mode, setMode] = useState<Mode>(initialMode ?? "rounds");
+  const initialPresetIsValid = initialPreset != null && PRESETS.some(p => p.id === initialPreset);
+  const [activePreset, setActivePreset] = useState(
+    initialPresetIsValid ? initialPreset! : "30sec",
+  );
+
+  // Consume the intent once so re-opens from deep links don't replay stale state.
+  const intentConsumedRef = useRef(false);
+  useEffect(() => {
+    if (intentConsumedRef.current) return;
+    intentConsumedRef.current = true;
+    onIntentConsumed?.();
+  }, [onIntentConsumed]);
 
   const currentProfile = PRESETS.find(p => p.id === activePreset)?.profile ?? PRESETS[0].profile;
 
@@ -276,7 +303,7 @@ export default function GymTimerScreen({ onExit }: GymTimerScreenProps) {
 
       {/* Mode content */}
       <View style={styles.content}>
-        {mode === "rounds" && <RoundsMode profile={currentProfile} onReset={() => {}} />}
+        {mode === "rounds" && <RoundsMode profile={currentProfile} onReset={() => {}} autostart={autostart} />}
         {mode === "stopwatch" && <StopwatchMode />}
         {mode === "sets" && <SetsMode />}
       </View>

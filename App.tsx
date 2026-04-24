@@ -54,6 +54,7 @@ import {
   formatDateKey,
 } from "./lib/weekly";
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
+import { parseDeepLink } from "./lib/deepLink";
 import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
@@ -364,6 +365,11 @@ export default function App() {
   const [locationSummaryText, setLocationSummaryText] = useState<string | null>(null);
   const [locationCopied, setLocationCopied] = useState(false);
   const [gymTimerVisible, setGymTimerVisible] = useState(false);
+  const [timerIntent, setTimerIntent] = useState<{
+    mode: "rounds" | "stopwatch" | "sets";
+    preset: string | null;
+    autostart: boolean;
+  } | null>(null);
   const [otaUpdateReady, setOtaUpdateReady] = useState(false);
 
   // Initialize database on mount
@@ -411,6 +417,27 @@ export default function App() {
       grabContext();
     }
   }, [dbReady]);
+
+  // Deep link routing. Keep a ref to grabContext so the handler always uses
+  // the latest closure (grabContext reads live component state).
+  const grabContextRef = useRef<(() => void) | null>(null);
+  grabContextRef.current = () => { void grabContext(); };
+  useEffect(() => {
+    const handle = (url: string | null) => {
+      const route = parseDeepLink(url);
+      if (route.kind === "main") {
+        setGymTimerVisible(false);
+        if (route.autoGrab) grabContextRef.current?.();
+      } else if (route.kind === "timer") {
+        setTimerIntent({ mode: route.mode, preset: route.preset, autostart: route.autostart });
+        setGymTimerVisible(true);
+      }
+      // kind === "unknown" → no-op (already on whatever screen)
+    };
+    void Linking.getInitialURL().then(handle);
+    const sub = Linking.addEventListener("url", (ev) => handle(ev.url));
+    return () => sub.remove();
+  }, []);
 
   // Prune on app foreground
   useEffect(() => {
@@ -1277,7 +1304,18 @@ export default function App() {
     : [];
 
   if (gymTimerVisible) {
-    return <GymTimerScreen onExit={() => setGymTimerVisible(false)} />;
+    return (
+      <GymTimerScreen
+        onExit={() => {
+          setGymTimerVisible(false);
+          setTimerIntent(null);
+        }}
+        initialMode={timerIntent?.mode}
+        initialPreset={timerIntent?.preset ?? undefined}
+        autostart={timerIntent?.autostart}
+        onIntentConsumed={() => setTimerIntent(null)}
+      />
+    );
   }
 
   return (
