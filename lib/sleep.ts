@@ -294,6 +294,36 @@ export function computeSleepDebt(
   return Math.round(debt * 10) / 10;
 }
 
+// ─── computeTrackingGap ───────────────────────────────────────────────────────
+
+/**
+ * Gap between time-in-bed (bedtime → wakeTime range) and tracked total sleep
+ * hours. Surfaces nights where the tracker likely dropped coverage (phone died,
+ * Watch removed mid-night, Eight Sleep session aborted).
+ *
+ * Returns the gap in MINUTES (positive only) when both of these hold:
+ *   - Both bedtime and wakeTime are present.
+ *   - totalHours is a positive number (skip unreported nights entirely — a
+ *     blank bar is already self-evident as "no data" and shouldn't be flagged).
+ *   - The gap exceeds max(30 min, 10% of the in-bed range).
+ *
+ * Returns null otherwise. The "material" threshold is heuristic — we target
+ * a low false-positive rate at the cost of occasionally missing thin gaps.
+ */
+export function computeTrackingGap(night: SleepDaily): number | null {
+  if (!night.bedtime || !night.wakeTime) return null;
+  if (night.totalHours == null || night.totalHours <= 0) return null;
+  const bedMs = new Date(night.bedtime).getTime();
+  const wakeMs = new Date(night.wakeTime).getTime();
+  const inBedMinutes = (wakeMs - bedMs) / 60000;
+  if (inBedMinutes <= 0) return null;
+  const trackedMinutes = night.totalHours * 60;
+  const gapMinutes = inBedMinutes - trackedMinutes;
+  const threshold = Math.max(30, inBedMinutes * 0.1);
+  if (gapMinutes <= threshold) return null;
+  return Math.round(gapMinutes);
+}
+
 // ─── computeConsistencyStats ──────────────────────────────────────────────────
 
 /**

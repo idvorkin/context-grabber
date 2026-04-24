@@ -1,4 +1,4 @@
-import { buildSummary, formatTime, formatNumber } from "../lib/summary";
+import { buildSummary, formatTime, formatLocalTime, formatNumber } from "../lib/summary";
 import type { HealthData } from "../lib/health";
 
 function makeHealth(overrides: Partial<HealthData> = {}): HealthData {
@@ -159,5 +159,34 @@ describe("formatNumber", () => {
 
   it("formats 0", () => {
     expect(formatNumber(0)).toBe("0");
+  });
+});
+
+describe("formatLocalTime", () => {
+  // Lock the test's timezone so local-hour assertions are deterministic across CI
+  // environments. The project's users are in PDT / America/Los_Angeles.
+  const originalTZ = process.env.TZ;
+  beforeAll(() => { process.env.TZ = "America/Los_Angeles"; });
+  afterAll(() => { process.env.TZ = originalTZ; });
+
+  it("converts a Thursday-night-in-PDT ISO to the correct local time", () => {
+    // 2026-04-24T05:30:00Z is Thu 2026-04-23 22:30 PDT.
+    expect(formatLocalTime("2026-04-24T05:30:00.000Z")).toBe("10:30pm");
+  });
+
+  it("converts Friday-morning-in-PDT wake time to local time", () => {
+    // 2026-04-24T12:19:19Z is Fri 2026-04-24 05:19 PDT.
+    expect(formatLocalTime("2026-04-24T12:19:00.000Z")).toBe("5:19am");
+  });
+
+  it("renders whole hours without trailing :00", () => {
+    // Midnight UTC = 5pm PDT previous day.
+    expect(formatLocalTime("2026-04-24T00:00:00.000Z")).toBe("5pm");
+  });
+
+  it("differs from formatTime (which is UTC) for a non-midnight UTC ISO", () => {
+    const local = formatLocalTime("2026-04-24T05:30:00.000Z"); // "10:30pm"
+    const utc = formatTime("2026-04-24T05:30:00.000Z"); // "5:30am"
+    expect(local).not.toBe(utc);
   });
 });

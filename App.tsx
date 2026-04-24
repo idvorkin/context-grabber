@@ -38,7 +38,7 @@ import {
   type SleepDetailedBundle,
 } from "./lib/sleep";
 import { buildActivityTimeline, type ActivityTimeline } from "./lib/activity";
-import { buildSummary, formatNumber } from "./lib/summary";
+import { buildSummary, formatNumber, formatLocalTime } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
 import {
   type MetricKey,
@@ -1280,8 +1280,12 @@ export default function App() {
           value: h?.sleepHours != null ? `${h.sleepHours} hrs` : "\u2014",
           sublabel:
             h?.bedtime && h?.wakeTime
-              ? `${h.bedtime} \u2013 ${h.wakeTime}`
-              : "last night",
+              ? `${formatLocalTime(h.bedtime)} \u2013 ${formatLocalTime(h.wakeTime)}`
+              : h?.bedtime
+                ? `${formatLocalTime(h.bedtime)} \u2013`
+                : h?.wakeTime
+                  ? `\u2013 ${formatLocalTime(h.wakeTime)}`
+                  : "last night",
           onPress: handleMetricPress,
           boxPlotStats: statsCache.sleep,
           color: METRIC_CONFIG.sleep.color,

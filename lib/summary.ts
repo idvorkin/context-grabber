@@ -1,20 +1,31 @@
 import type { HealthData } from "./health";
 
 /**
- * Format ISO timestamp to short time: "2026-03-15T23:00:00Z" -> "11pm"
+ * Format ISO timestamp to short time in **UTC**: "2026-03-15T23:00:00Z" -> "11pm".
+ * Used by the share export so the output is deterministic regardless of where
+ * the user (or a downstream LLM) reads it.
  */
 export function formatTime(isoString: string): string {
   const date = new Date(isoString);
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
+  return formatClock(date.getUTCHours(), date.getUTCMinutes());
+}
 
+/**
+ * Format ISO timestamp to short time in the **device's local timezone**:
+ * "2026-04-24T05:30:00Z" -> "10:30pm" in PDT.
+ * Used for in-app UI where the user reads times against their wall clock.
+ */
+export function formatLocalTime(isoString: string): string {
+  const date = new Date(isoString);
+  return formatClock(date.getHours(), date.getMinutes());
+}
+
+function formatClock(hours: number, minutes: number): string {
   const period = hours >= 12 ? "pm" : "am";
   let displayHour = hours % 12;
   if (displayHour === 0) displayHour = 12;
 
-  if (minutes === 0) {
-    return `${displayHour}${period}`;
-  }
+  if (minutes === 0) return `${displayHour}${period}`;
   const paddedMinutes = minutes.toString().padStart(2, "0");
   return `${displayHour}:${paddedMinutes}${period}`;
 }

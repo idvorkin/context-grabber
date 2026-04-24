@@ -380,3 +380,46 @@ While a day is selected, the "last night" stage percentage row that normally sit
 ### Phase 3 implementation
 
 Phase 3 engineering details (data shapes, component layout, file-level changes, rollout order, risks) live in [`docs/superpowers/plans/2026-04-11-sleep-display-phase-3-plan.md`](../plans/2026-04-11-sleep-display-phase-3-plan.md).
+
+## Phase 4 — Attribution + source-aware avg + dropped-tracking flag (2026-04-24 revision)
+
+Trigger: GitHub issue #28 reported three problems visible in the Sleep panel at once. Each resolves a visible lie between two parts of the view that describe the same night.
+
+### 4.1 Sleep card header (summary line) uses local short-time formatting
+
+When the user taps the Sleep card, the detail sheet's header line currently reads `<ISO bedtime> – <ISO wakeTime>` using the raw UTC ISO strings from HealthData. For a sleep session that ran from Thu 10:30 PM PDT to Fri 5:19 AM PDT, both ISO strings stamp the UTC calendar day (2026-04-24 in this case) even though the attribution convention used by the 7-day chart places the night on Thursday (the bed-day in local time). The viewer sees "2026-04-24T05:30:00Z – 2026-04-24T12:19:19Z" and concludes Friday — while the chart attributes it to Thursday — and the two parts of the panel contradict each other.
+
+**Fix:** render the header as local-time, short-form times only, no dates — for example `10:30pm – 5:19am`. The chart's day labeling (Sun / Mon / … / Thu) plus the header's short-time range together convey the same night without either repeating or contradicting the attribution. If one end of the range is unavailable, render just the known end (`10:30pm –` or `– 5:19am`). If both are unavailable, fall back to the existing `"last night"` label.
+
+Formatting helper to reuse: the `formatTime` utility already used by the share summary builder.
+
+### 4.2 Displayed Avg matches the bars (source-filtered + noon-to-noon)
+
+The chart in the sheet bar-stacks the `aggregateSleepDetailed` output (noon-to-noon attribution, per-source filterable). The header Avg text is computed separately from the older `aggregateSleep` output (midnight-attribution, all-sources merged through inBed-inclusive overlap logic). With the `Unknown` tab selected, the bars might sum to ~7.85h/day while the Avg still reads 10.4h/day — a ~30% lie.
+
+**Fix:** when the Sleep sheet is open, compute the Avg directly from the same data the bars render — i.e. from `sleepDetailed.totalHours` for the currently selected source tab. The number the user sees in the Avg line must always equal the mean of the bars they see.
+
+This decouples the Sleep Avg entirely from the legacy `aggregateSleep` path. Other metrics (non-sleep) keep using their existing Avg calculation.
+
+### 4.3 Dropped-tracking indicator on per-night rows
+
+When a tracker loses coverage mid-night (phone dies, Watch isn't worn, Eight Sleep session aborts early), the tracked `totalHours` can be materially less than the user's actual time in bed. Today there's no visual cue that a night is under-reported; the user sees "6.3h Thu" and has no way to distinguish "slept 6.3 hours" from "slept ~7 hours but tracker dropped the last hour."
+
+**Fix:** flag nights where the **time-in-bed range** (from `bedtime` to `wakeTime`) materially exceeds the tracked `totalHours`. Definition of "materially":
+
+- Both `bedtime` and `wakeTime` are present.
+- `(wakeTime − bedtime) − totalHours > max(30 min, 10% × (wakeTime − bedtime))`.
+- `totalHours > 0` (don't flag nights with no data — they're already visibly blank).
+
+Flagged nights render an additional subtle marker next to the totalHours value on the daily row — for example a small `⚠` glyph or a muted-color `(gap: 47m)` tag. Tapping the row still opens the existing day-zoom card; the marker is passive information, not a new interaction.
+
+This is a **heuristic**, not a diagnosis. It tells the reader "worth a second look" without claiming the tracker is wrong. Targeting false-positive rate over false-negative rate is correct — we'd rather occasionally flag a nap-awake gap than silently miss a night with an hour of dropped data.
+
+## Phase 4 acceptance
+
+- With the Sleep card's header date-range visible, the rendered text contains no `T00:00:00` / `Z` / `YYYY-MM-DD` substrings. It shows only local short-form times separated by an en-dash.
+- With the `Unknown` (or any other) sleep source tab selected, the Avg number equals the arithmetic mean of the non-null bar heights visible in the chart, rounded to 1 decimal.
+- A night whose `totalHours` is at least 30 minutes AND at least 10% shorter than `(wakeTime − bedtime)` renders the dropped-tracking marker; a night meeting neither threshold does not.
+- Nights with missing `bedtime` or `wakeTime` never render the marker (they'd be false positives).
+- The two other metrics that share the sheet's Avg path (HRV-style whisker averages and generic DailyValue averages) are unchanged.
+

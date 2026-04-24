@@ -6,6 +6,7 @@ import {
   SLEEP_ALL_SOURCES,
   computeSleepDebt,
   computeConsistencyStats,
+  computeTrackingGap,
   type SleepDaily,
 } from "../lib/sleep";
 import type { SleepSample } from "../lib/health";
@@ -362,5 +363,82 @@ describe("pickDefaultSleepSource", () => {
   it("returns 'All' for empty bundle", () => {
     const bundle = buildSleepDetailedBundle([], endDate, 7);
     expect(pickDefaultSleepSource(bundle)).toBe(SLEEP_ALL_SOURCES);
+  });
+});
+
+describe("computeTrackingGap", () => {
+  function night(overrides: Partial<SleepDaily> = {}): SleepDaily {
+    return {
+      date: "2026-04-23",
+      totalHours: 7,
+      coreHours: 0,
+      deepHours: 0,
+      remHours: 0,
+      awakeHours: 0,
+      // Bedtime 10:30pm, wakeTime 5:30am = 7h in bed.
+      bedtime: "2026-04-24T05:30:00Z", // Thu 22:30 local if PDT
+      wakeTime: "2026-04-24T12:30:00Z", // Fri 05:30 local if PDT
+      samples: [],
+      ...overrides,
+    };
+  }
+
+  it("returns null when totalHours roughly matches in-bed range", () => {
+    // 7h in bed, 7h tracked → gap 0 → null.
+    expect(computeTrackingGap(night({ totalHours: 7 }))).toBeNull();
+  });
+
+  it("returns null for nights with no bedtime or wakeTime", () => {
+    expect(computeTrackingGap(night({ bedtime: null, totalHours: 5 }))).toBeNull();
+    expect(computeTrackingGap(night({ wakeTime: null, totalHours: 5 }))).toBeNull();
+  });
+
+  it("returns null for nights with no tracked hours (already visibly blank)", () => {
+    expect(computeTrackingGap(night({ totalHours: null }))).toBeNull();
+    expect(computeTrackingGap(night({ totalHours: 0 }))).toBeNull();
+  });
+
+  it("returns null when gap is below the 30-minute floor", () => {
+    // 7h in bed, 6h42m tracked → gap 18m → below 30m floor, null.
+    expect(computeTrackingGap(night({ totalHours: 6.7 }))).toBeNull();
+  });
+
+  it("flags when tracker dropped ~45 min on a 7-hour night", () => {
+    // 7h in bed, 6.25h tracked → gap 45m → above 30m floor AND 10% of 420=42, yes.
+    const gap = computeTrackingGap(night({ totalHours: 6.25 }));
+    expect(gap).not.toBeNull();
+    expect(gap!).toBeGreaterThanOrEqual(44);
+    expect(gap!).toBeLessThanOrEqual(46);
+  });
+
+  it("respects the 10% threshold on longer nights", () => {
+    // 10h in bed (bed 10pm, wake 8am), 9h tracked → gap 60m, 10% = 60m → boundary; null or just under.
+    const gapNight: SleepDaily = {
+      date: "2026-04-23",
+      totalHours: 9,
+      coreHours: 0,
+      deepHours: 0,
+      remHours: 0,
+      awakeHours: 0,
+      bedtime: "2026-04-24T05:00:00Z",
+      wakeTime: "2026-04-24T15:00:00Z", // 10h later
+      samples: [],
+    };
+    // Exactly 60m gap, 10% of 600m = 60m. gap (60) is NOT > threshold (60) → null.
+    expect(computeTrackingGap(gapNight)).toBeNull();
+    // Now drop tracked to 8.5h → gap 90m, threshold max(30, 60) = 60 → 90 > 60 → flagged.
+    expect(computeTrackingGap({ ...gapNight, totalHours: 8.5 })).toBeGreaterThanOrEqual(89);
+  });
+
+  it("returns null on a degenerate in-bed range (wakeTime at or before bedtime)", () => {
+    expect(
+      computeTrackingGap(
+        night({
+          bedtime: "2026-04-24T12:30:00Z",
+          wakeTime: "2026-04-24T12:30:00Z",
+          totalHours: 1,
+        }),
+      ),
+    ).toBeNull();
   });
 });

@@ -26,6 +26,7 @@ import {
 import {
   computeSleepDebt,
   computeConsistencyStats,
+  computeTrackingGap,
   pickDefaultSleepSource,
   SLEEP_ALL_SOURCES,
   SLEEP_STAGE_COLORS,
@@ -332,6 +333,22 @@ export default function MetricDetailSheet({
       distance: statsFor(movementData.days.map((d) => d.distanceKm)),
       energy: statsFor(movementData.days.map((d) => d.energyKcal)),
     };
+  } else if (isSleep && !error) {
+    // Sleep Avg must match the bars the user is seeing. The bars come from
+    // sleepDetailed (noon-to-noon, filtered by selected source tab). Historical
+    // bug: averaging `data` (aggregateSleep output, midnight-attribution,
+    // all-sources merged) produced numbers 30%+ off from the bars — see
+    // GitHub issue #28 / context-grabber-80y. Skip the legacy path entirely
+    // for sleep even when sleepDetailed is still loading (leave Avg blank).
+    if (sleepDetailed) {
+      const hoursValues = sleepDetailed
+        .map((n) => n.totalHours)
+        .filter((v): v is number => v !== null);
+      if (hoursValues.length > 0) {
+        const avg = Math.round((hoursValues.reduce((s, v) => s + v, 0) / hoursValues.length) * 10) / 10;
+        averageText = `Avg: ${avg} ${config.unit}/day`;
+      }
+    }
   } else if (data !== null && !error) {
     if (isHeartRateData(data)) {
       // Build DailyValue array from avg values for computeAverage.
@@ -362,6 +379,12 @@ export default function MetricDetailSheet({
     const reversedNights = [...sleepDetailed].reverse();
     dailyRows = reversedNights.map((night, index) => {
       const isSelected = selectedDay === night.date;
+      const gapMinutes = computeTrackingGap(night);
+      const gapLabel = gapMinutes != null
+        ? gapMinutes >= 60
+          ? `gap ${Math.floor(gapMinutes / 60)}h${gapMinutes % 60 ? ` ${gapMinutes % 60}m` : ""}`
+          : `gap ${gapMinutes}m`
+        : null;
       return (
         <TouchableOpacity
           key={night.date}
@@ -376,9 +399,20 @@ export default function MetricDetailSheet({
             ]}
           >
             <Text style={styles.dayRowLabel}>{formatDayRow(night.date)}</Text>
-            <Text style={styles.dayRowValue}>
-              {night.totalHours != null ? `${night.totalHours}h` : "\u2014"}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              {gapLabel && (
+                <Text
+                  style={styles.sleepRowGap}
+                  accessibilityLabel={`Tracker gap: ${gapLabel}`}
+                  testID={`sleep-row-gap-${night.date}`}
+                >
+                  \u26a0 {gapLabel}
+                </Text>
+              )}
+              <Text style={styles.dayRowValue}>
+                {night.totalHours != null ? `${night.totalHours}h` : "\u2014"}
+              </Text>
+            </View>
           </View>
           <SleepStageStrip
             samples={night.samples}
@@ -923,6 +957,10 @@ const styles = StyleSheet.create({
   dayRowValue: {
     fontSize: 17,
     color: "#aaa",
+  },
+  sleepRowGap: {
+    fontSize: 11,
+    color: "#b88a2a",
   },
   sleepStatsBlock: {
     marginTop: 12,

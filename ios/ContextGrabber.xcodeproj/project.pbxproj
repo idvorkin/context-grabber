@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		25DDCECE25A31A7EA1F67007 /* libPods-ContextGrabber.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1C112DCC3F60EF15EB00618C /* libPods-ContextGrabber.a */; };
+		2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B5A22B94E3C33440FF8B522D /* WidgetBridge.m */; };
+		38FA08474EBB8AD0515CF9D9 /* TodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */; };
+		3A0EE4D05E12DCD976F0E611 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CD82761E5BC979438AB8 /* WidgetBridge.swift */; };
 		3AA0FFA81784471DB1087E9F /* LiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D4DE2434681B4741B8C717DC /* LiveActivity.appex */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		6C9B23304E164AAA8C136E3B /* Date+toTimerInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D9CA755F98464486D8D08E /* Date+toTimerInterval.swift */; };
@@ -25,9 +28,6 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		D4060797DFE746B29012C884 /* LiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C5665F99DD40D8926454AF /* LiveActivityWidgetBundle.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		38FA08474EBB8AD0515CF9D9 /* TodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */; };
-		3A0EE4D05E12DCD976F0E611 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CD82761E5BC979438AB8 /* WidgetBridge.swift */; };
-		2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B5A22B94E3C33440FF8B522D /* WidgetBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +55,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* ContextGrabber.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ContextGrabber.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ContextGrabber/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ContextGrabber/Info.plist; sourceTree = "<group>"; };
@@ -71,8 +72,10 @@
 		8FD47BA835714582B01BCE8A /* View+applyIfPresent.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = "View+applyIfPresent.swift"; sourceTree = "<group>"; };
 		97FA39D51DAB4F3384222EDC /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = ContextGrabber/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B5A22B94E3C33440FF8B522D /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridge.m; path = ContextGrabber/WidgetBridge.m; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C1D91943C7939D0EFD55D4EE /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = ContextGrabber/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		C554CD82761E5BC979438AB8 /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridge.swift; path = ContextGrabber/WidgetBridge.swift; sourceTree = "<group>"; };
 		CB8CBC5FB00D0A2CBAB93E85 /* Pods-ContextGrabber.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ContextGrabber.debug.xcconfig"; path = "Target Support Files/Pods-ContextGrabber/Pods-ContextGrabber.debug.xcconfig"; sourceTree = "<group>"; };
 		D3D9CA755F98464486D8D08E /* Date+toTimerInterval.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = "Date+toTimerInterval.swift"; sourceTree = "<group>"; };
 		D4DE2434681B4741B8C717DC /* LiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 9; includeInIndex = 0; path = LiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,9 +84,6 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ContextGrabber/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* ContextGrabber-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContextGrabber-Bridging-Header.h"; path = "ContextGrabber/ContextGrabber-Bridging-Header.h"; sourceTree = "<group>"; };
-		0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
-		C554CD82761E5BC979438AB8 /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridge.swift; path = ContextGrabber/WidgetBridge.swift; sourceTree = "<group>"; };
-		B5A22B94E3C33440FF8B522D /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridge.m; path = ContextGrabber/WidgetBridge.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
