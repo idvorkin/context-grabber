@@ -55,6 +55,7 @@ import {
 } from "./lib/weekly";
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
 import { parseDeepLink } from "./lib/deepLink";
+import { writeWidgetSnapshot } from "./lib/widgetSnapshot";
 import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
@@ -1104,6 +1105,13 @@ export default function App() {
         locationHistory,
       };
       setSnapshot(result);
+      // Fire-and-forget: push today's headline to the home-screen widget's
+      // shared suite. Never awaited — widget refresh is best-effort.
+      void writeWidgetSnapshot({
+        steps: health.steps,
+        sleepHours: health.sleepHours,
+        exerciseMinutes: health.exerciseMinutes,
+      });
       // Kick off 7-day prefetch in the background so box plots appear on
       // every card without the user having to tap each one. Not awaited —
       // the UI renders immediately with today's values.

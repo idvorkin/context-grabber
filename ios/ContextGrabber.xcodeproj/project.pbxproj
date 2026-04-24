@@ -26,6 +26,8 @@
 		D4060797DFE746B29012C884 /* LiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C5665F99DD40D8926454AF /* LiveActivityWidgetBundle.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		38FA08474EBB8AD0515CF9D9 /* TodayWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */; };
+		3A0EE4D05E12DCD976F0E611 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CD82761E5BC979438AB8 /* WidgetBridge.swift */; };
+		2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B5A22B94E3C33440FF8B522D /* WidgetBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +82,8 @@
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ContextGrabber/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* ContextGrabber-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContextGrabber-Bridging-Header.h"; path = "ContextGrabber/ContextGrabber-Bridging-Header.h"; sourceTree = "<group>"; };
 		0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = TodayWidget.swift; sourceTree = "<group>"; };
+		C554CD82761E5BC979438AB8 /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridge.swift; path = ContextGrabber/WidgetBridge.swift; sourceTree = "<group>"; };
+		B5A22B94E3C33440FF8B522D /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridge.m; path = ContextGrabber/WidgetBridge.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +118,8 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				C554CD82761E5BC979438AB8 /* WidgetBridge.swift */,
+				B5A22B94E3C33440FF8B522D /* WidgetBridge.m */,
 				F11748442D0722820044C1D9 /* ContextGrabber-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -445,6 +451,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
+				3A0EE4D05E12DCD976F0E611 /* WidgetBridge.swift in Sources */,
+				2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */,
 				ABE2603F49802D4B81ED8B88 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
