@@ -48,7 +48,7 @@ describe("parseDeepLink — timer route", () => {
     });
   });
 
-  it("accepts all three known presets", () => {
+  it("accepts all known presets", () => {
     expect(parseDeepLink("grabber://timer?preset=30sec")).toEqual({
       kind: "timer",
       mode: "rounds",
@@ -59,6 +59,12 @@ describe("parseDeepLink — timer route", () => {
       kind: "timer",
       mode: "rounds",
       preset: "1min",
+      autostart: false,
+    });
+    expect(parseDeepLink("grabber://timer?preset=2min")).toEqual({
+      kind: "timer",
+      mode: "rounds",
+      preset: "2min",
       autostart: false,
     });
     expect(parseDeepLink("grabber://timer?preset=5-1")).toEqual({

@@ -25,7 +25,7 @@ export type DeepLinkRoute =
   | { kind: "counter"; action: "inc" }
   | { kind: "unknown" };
 
-const KNOWN_PRESETS = new Set(["30sec", "1min", "5-1"]);
+const KNOWN_PRESETS = new Set(["30sec", "1min", "2min", "5-1"]);
 const KNOWN_SCHEMES = ["com.idvorkin.contextgrabber://", "grabber://"];
 
 /**

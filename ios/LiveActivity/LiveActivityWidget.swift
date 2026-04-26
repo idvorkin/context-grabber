@@ -79,15 +79,20 @@ struct LiveActivityWidget: Widget {
           }
         }
       } compactLeading: {
-        // Fallback to the activity title (e.g. "WORK", "REST") when no image
-        // is supplied. Empty compactLeading causes iOS to hide the entire
-        // Dynamic Island compact pill on some iOS versions.
+        // Fallback to the activity title plus a compact round indicator
+        // ("WORK 1/5") when no image is supplied. The subtitle is parsed
+        // for "Round X/Y"; if found, "X/Y" is appended to the title. Empty
+        // compactLeading otherwise causes iOS to hide the entire Dynamic
+        // Island compact pill on some iOS versions.
         Group {
           if let dynamicIslandImageName = context.state.dynamicIslandImageName {
             resizableImage(imageName: dynamicIslandImageName)
               .frame(maxWidth: 23, maxHeight: 23)
           } else {
-            Text(context.state.title)
+            Text(LiveActivityWidget.compactLeadingLabel(
+              title: context.state.title,
+              subtitle: context.state.subtitle
+            ))
               .font(.system(size: 13, weight: .bold, design: .rounded))
               .lineLimit(1)
               .minimumScaleFactor(0.6)
@@ -124,6 +129,19 @@ struct LiveActivityWidget: Widget {
         }
       }
     }
+  }
+
+  /// Compose the compactLeading text. If the subtitle has the form
+  /// "Round X/Y" we fold the "X/Y" into the title so the pill shows e.g.
+  /// "WORK 1/5" instead of just "WORK".
+  static func compactLeadingLabel(title: String, subtitle: String?) -> String {
+    guard let subtitle = subtitle else { return title }
+    let prefix = "Round "
+    if subtitle.hasPrefix(prefix) {
+      let suffix = String(subtitle.dropFirst(prefix.count))
+      return "\(title) \(suffix)"
+    }
+    return title
   }
 
   @ViewBuilder
