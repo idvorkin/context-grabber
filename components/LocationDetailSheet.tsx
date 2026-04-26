@@ -71,6 +71,9 @@ export default function LocationDetailSheet({
   const [locationDetailsCopyState, setLocationDetailsCopyState] = useState<
     "idle" | "refreshing" | "copied" | "copied-cached"
   >("idle");
+  const [coordsCopyState, setCoordsCopyState] = useState<
+    "idle" | "refreshing" | "copied" | "copied-cached"
+  >("idle");
   const [dailySummaryCopied, setDailySummaryCopied] = useState(false);
 
   // "Name this place" modal state
@@ -349,6 +352,39 @@ export default function LocationDetailSheet({
     setTimeout(() => setDailySummaryCopied(false), 1500);
   }
 
+  async function handleCopyCoords() {
+    if (coordsCopyState === "refreshing") return;
+    setCoordsCopyState("refreshing");
+    let coords: { latitude: number; longitude: number } | null = location;
+    let usedCached = false;
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        usedCached = true;
+      } else {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Highest,
+        });
+        const age = Date.now() - loc.timestamp;
+        if (age > 30000) {
+          usedCached = true;
+        } else {
+          coords = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+        }
+      }
+    } catch {
+      usedCached = true;
+    }
+    if (!coords) {
+      setCoordsCopyState("idle");
+      return;
+    }
+    const text = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+    await Clipboard.setStringAsync(text);
+    setCoordsCopyState(usedCached ? "copied-cached" : "copied");
+    setTimeout(() => setCoordsCopyState("idle"), 1500);
+  }
+
   async function handleCopyLocationDetails() {
     // Full detailed location export with per-stay timeline + coordinates —
     // the shape that used to be bundled into Summary before it was trimmed.
@@ -437,9 +473,27 @@ export default function LocationDetailSheet({
           <View style={styles.aboutCard}>
             <Text style={styles.metricLabel}>Current Location</Text>
             {location ? (
-              <Text style={styles.metricValue}>
-                {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-              </Text>
+              <View style={styles.coordsRow}>
+                <Text style={styles.metricValue}>
+                  {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                </Text>
+                <TouchableOpacity
+                  style={styles.coordsCopyButton}
+                  onPress={handleCopyCoords}
+                  testID="copy-coords-button"
+                  accessibilityLabel="Copy coordinates"
+                >
+                  <Text style={styles.coordsCopyButtonText}>
+                    {coordsCopyState === "refreshing"
+                      ? "Refreshing..."
+                      : coordsCopyState === "copied"
+                        ? "Copied"
+                        : coordsCopyState === "copied-cached"
+                          ? "Copied (cached)"
+                          : "Copy"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               <Text style={[styles.metricValue, styles.metricValueNull]}>Unavailable</Text>
             )}
@@ -863,5 +917,21 @@ const styles = StyleSheet.create({
   namePlaceCancelButton: {
     backgroundColor: "#3d1f1f",
     flex: 0.7,
+  },
+  coordsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  coordsCopyButton: {
+    backgroundColor: "#1f3a6b",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  coordsCopyButtonText: {
+    color: "#e0e0e0",
+    fontSize: 13,
+    fontWeight: "600",
   },
 });
