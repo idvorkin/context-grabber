@@ -26,12 +26,9 @@ describe("App rendering", () => {
     expect(getByText("Context Grabber")).toBeTruthy();
   });
 
-  it("shows title and subtitle", async () => {
+  it("shows title", async () => {
     const { getByText } = await renderApp();
     expect(getByText("Context Grabber")).toBeTruthy();
-    expect(
-      getByText("Grab your iPhone context for your AI life coach"),
-    ).toBeTruthy();
   });
 
   it("shows refresh button in header", async () => {
@@ -218,20 +215,6 @@ describe("Dashboard display after grab", () => {
       coords: { latitude: 47.6062, longitude: -122.3321, accuracy: 10 },
       timestamp: 1710460800000,
     });
-  });
-
-  it("shows summary banner with step count", async () => {
-    (HealthKit.queryStatisticsForQuantity as jest.Mock)
-      .mockResolvedValueOnce({ sumQuantity: { quantity: 8432 } }) // steps
-      .mockResolvedValueOnce({ sumQuantity: { quantity: 312 } }) // active energy
-      .mockResolvedValueOnce({ sumQuantity: { quantity: 5.67 } }); // distance
-    (HealthKit.getMostRecentQuantitySample as jest.Mock)
-      .mockResolvedValueOnce({ quantity: 72 }) // heart rate
-      .mockResolvedValueOnce({ quantity: 75.5 }); // weight
-    (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
-
-    const { getByText } = await renderApp();
-    expect(getByText(/8,432 steps/)).toBeTruthy();
   });
 
   it("shows location as unavailable when permission denied", async () => {

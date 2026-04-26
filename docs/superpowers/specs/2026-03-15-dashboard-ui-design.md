@@ -20,15 +20,9 @@ Replace the current raw data display with a polished dashboard — a natural lan
 
 ## Design
 
-### 1. Summary Banner
+### 1. Summary Banner — REMOVED (2026-04-26)
 
-A single natural-language line at the top of the snapshot, auto-generated from the data:
-
-> "8,241 steps | Slept 7.2hrs (11pm–6:15am) | 73 bpm | 142 locations"
-
-- Adapts to available data — omits metrics that are null
-- Uses short readable formats: "11pm" not "2026-03-15T23:00:00Z", "7.2hrs" not "7.2 hours"
-- Subtle background, smaller font — designed for scanning not reading
+The dashboard no longer renders a natural-language summary line above the metric grid. The same data is already visible in the metric cards below; the banner duplicated information without adding value. The `buildSummary` builder still exists and is used in shared exports.
 
 ### 2. Metric Cards
 
@@ -74,14 +68,14 @@ Below the health cards:
 - Tracking status, point count, retention window
 - Full-width card (not in grid)
 
-### 4. Layout Structure
+### 4. Layout Structure (updated 2026-04-26)
+
+The header shows the title only — no subtitle. Header icons sit to the right of the title; the refresh and gym-timer icons stay on the top row, while the settings gear and the `i` (About) icon stack vertically as a single column to free horizontal space.
 
 ```
 ┌──────────────────────────────────────┐
-│ Context Grabber                      │
-│ Grab your iPhone context...          │
-├──────────────────────────────────────┤
-│ "8,241 steps | Slept 7.2hrs..."      │  ← Summary banner
+│ Context Grabber       ↻  🏋️   ⚙     │
+│                                  i   │
 ├──────────┬───────────────────────────┤
 │ Steps    │ Heart Rate               │  ← Metric cards (2-col grid)
 │ 8,241    │ 73 bpm                   │
@@ -102,6 +96,10 @@ Below the health cards:
 │       [ Share JSON   ]               │
 └──────────────────────────────────────┘
 ```
+
+Removed elements:
+- Subtitle "Grab your iPhone context for your AI life coach"
+- Summary banner (`X steps | Y bpm | …`) above the metric grid
 
 ### 5. Styling
 

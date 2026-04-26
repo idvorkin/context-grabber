@@ -39,7 +39,7 @@ import {
   type SleepDetailedBundle,
 } from "./lib/sleep";
 import { buildActivityTimeline, type ActivityTimeline } from "./lib/activity";
-import { buildSummary, formatNumber, formatLocalTime } from "./lib/summary";
+import { formatNumber, formatLocalTime } from "./lib/summary";
 import { getBuildInfo, formatBuildTimestamp } from "./lib/version";
 import {
   type MetricKey,
@@ -1284,10 +1284,6 @@ export default function App() {
     });
   }
 
-  const summaryText = snapshot
-    ? buildSummary(snapshot.health, locationCount)
-    : "";
-
   const h = snapshot?.health;
 
   // Build the Movement card sublabel: "<distance> km · <energy> kcal"
@@ -1422,9 +1418,6 @@ export default function App() {
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
             <Text style={styles.title}>Context Grabber</Text>
-            <Text style={styles.subtitle}>
-              Grab your iPhone context for your AI life coach
-            </Text>
           </View>
           <View style={styles.headerButtons}>
             <TouchableOpacity
@@ -1442,21 +1435,23 @@ export default function App() {
             >
               <Text style={styles.headerIconText}>{"🏋️"}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={() => setSettingsVisible(true)}
-              accessibilityLabel="Settings"
-            >
-              <Text style={styles.headerIconText}>{"\u2699"}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={() => setAboutVisible(true)}
-              accessibilityLabel="About"
-              testID="about-button"
-            >
-              <Text style={[styles.headerIconText, { fontStyle: "italic" }]}>i</Text>
-            </TouchableOpacity>
+            <View style={styles.headerIconColumn}>
+              <TouchableOpacity
+                style={styles.headerIconButton}
+                onPress={() => setSettingsVisible(true)}
+                accessibilityLabel="Settings"
+              >
+                <Text style={styles.headerIconText}>{"\u2699"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerIconButton}
+                onPress={() => setAboutVisible(true)}
+                accessibilityLabel="About"
+                testID="about-button"
+              >
+                <Text style={[styles.headerIconText, { fontStyle: "italic" }]}>i</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -1514,12 +1509,6 @@ export default function App() {
 
         {snapshot && (
           <>
-            {summaryText.length > 0 && (
-              <View style={styles.summaryBanner}>
-                <Text style={styles.summaryText}>{summaryText}</Text>
-              </View>
-            )}
-
             <View style={styles.counterCard}>
               <TallyCounter
                 value={counterValue}
@@ -1745,11 +1734,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#e0e0e0",
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#888",
-    marginTop: 4,
-  },
   content: {
     flex: 1,
     paddingHorizontal: 20,
@@ -1792,17 +1776,6 @@ const styles = StyleSheet.create({
     color: "#888",
     fontSize: 18,
     fontWeight: "600",
-  },
-  summaryBanner: {
-    backgroundColor: "#0f3460",
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 12,
-  },
-  summaryText: {
-    color: "#ccc",
-    fontSize: 13,
-    textAlign: "center",
   },
   metricGrid: {
     flexDirection: "row",
@@ -1939,8 +1912,12 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: "row",
     gap: 8,
-    alignItems: "center",
+    alignItems: "flex-start",
     marginTop: 4,
+  },
+  headerIconColumn: {
+    flexDirection: "column",
+    gap: 6,
   },
   headerIconButton: {
     width: 32,
