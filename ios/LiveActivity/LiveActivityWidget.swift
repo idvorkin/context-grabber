@@ -79,11 +79,21 @@ struct LiveActivityWidget: Widget {
           }
         }
       } compactLeading: {
-        if let dynamicIslandImageName = context.state.dynamicIslandImageName {
-          resizableImage(imageName: dynamicIslandImageName)
-            .frame(maxWidth: 23, maxHeight: 23)
-            .applyWidgetURL(from: context.attributes.deepLinkUrl)
+        // Fallback to an SF Symbol when no image is supplied: an empty
+        // compactLeading region causes iOS to hide the entire Dynamic Island
+        // compact pill on some iOS versions.
+        Group {
+          if let dynamicIslandImageName = context.state.dynamicIslandImageName {
+            resizableImage(imageName: dynamicIslandImageName)
+              .frame(maxWidth: 23, maxHeight: 23)
+          } else {
+            Image(systemName: "timer")
+              .foregroundStyle(
+                context.attributes.progressViewTint.map { Color(hex: $0) } ?? .white
+              )
+          }
         }
+        .applyWidgetURL(from: context.attributes.deepLinkUrl)
       } compactTrailing: {
         if let date = context.state.timerEndDateInMilliseconds {
           compactTimer(
@@ -91,6 +101,11 @@ struct LiveActivityWidget: Widget {
             timerType: context.attributes.timerType ?? .circular,
             progressViewTint: context.attributes.progressViewTint
           ).applyWidgetURL(from: context.attributes.deepLinkUrl)
+        } else {
+          // Defensive: never leave compactTrailing empty either.
+          Image(systemName: "timer")
+            .foregroundStyle(.secondary)
+            .applyWidgetURL(from: context.attributes.deepLinkUrl)
         }
       } minimal: {
         if let date = context.state.timerEndDateInMilliseconds {
@@ -99,6 +114,10 @@ struct LiveActivityWidget: Widget {
             timerType: context.attributes.timerType ?? .circular,
             progressViewTint: context.attributes.progressViewTint
           ).applyWidgetURL(from: context.attributes.deepLinkUrl)
+        } else {
+          Image(systemName: "timer")
+            .foregroundStyle(.secondary)
+            .applyWidgetURL(from: context.attributes.deepLinkUrl)
         }
       }
     }

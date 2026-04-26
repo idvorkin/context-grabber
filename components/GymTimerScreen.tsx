@@ -11,6 +11,7 @@ import { useTimer, type TimerProfile, type Phase } from "../lib/gym/useTimer";
 import { useStopwatch, formatStopwatchTime } from "../lib/gym/useStopwatch";
 import { useSets } from "../lib/gym/useSets";
 import { useLiveActivity } from "../lib/gym/useLiveActivity";
+import { configureAudioSessionForBackground } from "../lib/gym/keepalive";
 
 // --- Types ---
 
@@ -266,6 +267,12 @@ export default function GymTimerScreen({
   onIntentConsumed,
 }: GymTimerScreenProps) {
   useKeepAwake();
+  // Configure the iOS audio session for `playback` BEFORE any audio plays so
+  // the first beep / silent loop runs in the correct background-eligible
+  // category. Idempotent — safe to call on every mount.
+  useEffect(() => {
+    configureAudioSessionForBackground();
+  }, []);
   const [mode, setMode] = useState<Mode>(initialMode ?? "rounds");
   const initialPresetIsValid = initialPreset != null && PRESETS.some(p => p.id === initialPreset);
   const [activePreset, setActivePreset] = useState(
