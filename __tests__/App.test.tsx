@@ -97,8 +97,8 @@ describe("App interactions", () => {
   it("shows location coordinates after auto-grab", async () => {
     const { getByText } = await renderApp();
     expect(getByText("Location")).toBeTruthy();
-    expect(getByText(/47\.6062/)).toBeTruthy();
-    expect(getByText(/-122\.3321/)).toBeTruthy();
+    expect(getByText(/47\.61/)).toBeTruthy();
+    expect(getByText(/-122\.33/)).toBeTruthy();
   });
 });
 
@@ -154,12 +154,12 @@ describe("MetricCard rendering after grab", () => {
     expect(getByText("HRV")).toBeTruthy();
     expect(getByText("Exercise")).toBeTruthy();
 
-    // meditation always says "today"; exercise's sublabel is now staleness-driven
-    // ("7+ days ago" in tests where weeklyCache hasn't loaded), not "today".
+    // meditation always says "today"; exercise + weight sublabels are
+    // staleness-driven ("7+ days ago" when weeklyCache hasn't loaded).
     const todaySublabels = getAllByText("today");
     expect(todaySublabels.length).toBe(1);
     const latestSublabels = getAllByText("latest");
-    expect(latestSublabels.length).toBe(3); // heart rate, hrv, weight (weight falls back to "latest" when weightDaysLast7 is null in the test fixture)
+    expect(latestSublabels.length).toBe(2); // heart rate, hrv
   });
 
   it("shows all metric cards after grab", async () => {

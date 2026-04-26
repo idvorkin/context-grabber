@@ -20,7 +20,6 @@ import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
 import * as SQLite from "expo-sqlite";
 import * as Updates from "expo-updates";
-import * as Clipboard from "expo-clipboard";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type {
   QuantityTypeIdentifier,
@@ -148,7 +147,6 @@ type MetricCardProps = {
   label: string;
   value: string;
   sublabel: string;
-  fullWidth?: boolean;
   onPress: (key: MetricKey) => void;
   boxPlotStats?: BoxPlotStats | null;
   color?: string;
@@ -163,7 +161,6 @@ function MetricCard({
   label,
   value,
   sublabel,
-  fullWidth,
   onPress,
   boxPlotStats,
   color,
@@ -172,7 +169,7 @@ function MetricCard({
   const isNull = value === "\u2014";
   return (
     <TouchableOpacity
-      style={[styles.metricCard, fullWidth && styles.metricCardFull]}
+      style={styles.metricCard}
       onPress={() => onPress(metricKey)}
       activeOpacity={0.7}
     >
@@ -367,9 +364,6 @@ export default function App() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
   const [locationExpanded, setLocationExpanded] = useState(false);
-  const [locationCopyState, setLocationCopyState] = useState<
-    "idle" | "refreshing" | "copied" | "copied-cached"
-  >("idle");
   const [gymTimerVisible, setGymTimerVisible] = useState(false);
   const [timerIntent, setTimerIntent] = useState<{
     mode: "rounds" | "stopwatch" | "sets";
@@ -1384,10 +1378,14 @@ export default function App() {
           metricKey: "weight" as MetricKey,
           label: "Weight",
           value: h?.weight != null ? `${Math.round(h.weight * 2.20462)} lbs` : "\u2014",
-          sublabel:
-            h?.weightDaysLast7 != null
-              ? `${h.weightDaysLast7}/7 days weighed`
-              : "latest",
+          sublabel: (() => {
+            if (h?.weightDaysLast7 != null) return `${h.weightDaysLast7}/7 days weighed`;
+            const days = daysSinceLastDailyValue(weeklyCache.weight as DailyValue[] | undefined);
+            if (days == null) return "7+ days ago";
+            if (days === 0) return "today";
+            if (days === 1) return "yesterday";
+            return `${days} days ago`;
+          })(),
           onPress: handleMetricPress,
           boxPlotStats: statsCache.weight,
           color: METRIC_CONFIG.weight.color,
@@ -1527,95 +1525,50 @@ export default function App() {
             </View>
 
             <View style={styles.metricGrid}>
-              {metrics.map((m, i) => (
+              {metrics.map((m) => (
                 <MetricCard
                   key={m.label}
                   metricKey={m.metricKey}
                   label={m.label}
                   value={m.value}
                   sublabel={m.sublabel}
-                  fullWidth={metrics.length % 2 === 1 && i === metrics.length - 1}
                   onPress={handleMetricPress}
                   boxPlotStats={m.boxPlotStats}
                   boxPlotStatsList={m.boxPlotStatsList}
                   color={m.color}
                 />
               ))}
-            </View>
-
-            <TouchableOpacity
-              style={styles.locationCard}
-              onPress={() => setLocationExpanded(true)}
-              testID="location-card"
-            >
-              <Text style={styles.metricLabel}>Location</Text>
-              {snapshot.location ? (
-                <View style={styles.locationRow}>
+              <TouchableOpacity
+                style={styles.metricCard}
+                onPress={() => setLocationExpanded(true)}
+                testID="location-card"
+                activeOpacity={0.7}
+              >
+                <Text style={styles.metricLabel}>Location</Text>
+                {snapshot.location ? (
                   <Text style={styles.metricValue}>
-                    {snapshot.location.latitude.toFixed(4)}, {snapshot.location.longitude.toFixed(4)}
+                    {snapshot.location.latitude.toFixed(2)}, {snapshot.location.longitude.toFixed(2)}
                   </Text>
-                  <TouchableOpacity
-                    onPress={async () => {
-                      if (!snapshot.location) return;
-                      if (locationCopyState === "refreshing") return;
-                      setLocationCopyState("refreshing");
-                      let coords: { latitude: number; longitude: number } =
-                        snapshot.location;
-                      let usedCached = false;
-                      try {
-                        const { status } =
-                          await Location.requestForegroundPermissionsAsync();
-                        if (status !== "granted") {
-                          usedCached = true;
-                        } else {
-                          const loc = await Location.getCurrentPositionAsync({
-                            accuracy: Location.Accuracy.Highest,
-                          });
-                          const age = Date.now() - loc.timestamp;
-                          if (age > 30000) {
-                            usedCached = true;
-                          } else {
-                            coords = {
-                              latitude: loc.coords.latitude,
-                              longitude: loc.coords.longitude,
-                            };
-                          }
-                        }
-                      } catch {
-                        usedCached = true;
-                      }
-                      const text = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
-                      await Clipboard.setStringAsync(text);
-                      setLocationCopyState(usedCached ? "copied-cached" : "copied");
-                      setTimeout(() => setLocationCopyState("idle"), 1500);
-                    }}
-                    style={styles.copyButton}
-                    testID="location-copy"
-                    accessibilityLabel="Copy coordinates"
-                  >
-                    <Text style={styles.copyButtonText}>
-                      {locationCopyState === "refreshing"
-                        ? "Refreshing..."
-                        : locationCopyState === "copied"
-                          ? "Copied"
-                          : locationCopyState === "copied-cached"
-                            ? "Copied (cached)"
-                            : "Copy"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <Text style={[styles.metricValue, styles.metricValueNull]}>
-                  Unavailable
+                ) : (
+                  <Text style={[styles.metricValue, styles.metricValueNull]}>—</Text>
+                )}
+                <Text style={styles.metricSublabel}>
+                  {(() => {
+                    const latestMs = snapshot.location?.timestamp
+                      ?? (snapshot.locationHistory.length > 0
+                        ? snapshot.locationHistory[snapshot.locationHistory.length - 1].timestamp
+                        : null);
+                    if (latestMs == null) return "Unavailable";
+                    const ageMs = Date.now() - latestMs;
+                    if (ageMs < 5 * 60 * 1000) return "now";
+                    if (ageMs < 60 * 60 * 1000) return `${Math.round(ageMs / 60000)} min ago`;
+                    if (ageMs < 24 * 60 * 60 * 1000) return `${Math.round(ageMs / 3600000)} hr ago`;
+                    const days = Math.round(ageMs / (24 * 3600000));
+                    return days === 1 ? "yesterday" : `${days} days ago`;
+                  })()}
                 </Text>
-              )}
-              {snapshot.locationHistory.length > 0 && (
-                <Text style={styles.locationCountText}>
-                  {snapshot.locationHistory.length} point
-                  {snapshot.locationHistory.length !== 1 ? "s" : ""} in trail
-                </Text>
-              )}
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
 
             <LocationDetailSheet
               visible={locationExpanded}
@@ -1776,9 +1729,6 @@ const styles = StyleSheet.create({
     width: "48%",
     marginBottom: 10,
   },
-  metricCardFull: {
-    width: "100%",
-  },
   metricLabel: {
     fontSize: 13,
     fontWeight: "600",
@@ -1796,12 +1746,6 @@ const styles = StyleSheet.create({
   metricSublabel: {
     fontSize: 11,
     color: "#888",
-    marginTop: 2,
-  },
-  locationCard: {
-    backgroundColor: "#16213e",
-    borderRadius: 12,
-    padding: 16,
     marginTop: 2,
   },
   settingsCard: {
@@ -1831,27 +1775,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     borderWidth: 1,
     borderColor: "#333",
-  },
-  locationCountText: {
-    fontSize: 13,
-    color: "#888",
-    marginTop: 4,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  copyButton: {
-    backgroundColor: "#1f3a6b",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  copyButtonText: {
-    color: "#e0e0e0",
-    fontSize: 13,
-    fontWeight: "600",
   },
   timestamp: {
     fontSize: 12,

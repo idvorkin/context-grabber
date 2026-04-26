@@ -52,21 +52,16 @@ Each card:
 - Null values show "—" with dimmed styling
 - Consistent card size in a 2-column grid
 
-### 3. Location Section
+### 3. Location Card (updated 2026-04-26)
 
-Below the health cards:
+Location is now a **half-width** metric-style card in the same grid as Weight, Movement, etc. (no longer a full-width row of its own). It shows:
 
-```
-┌──────────────────────────────────────┐
-│ 📍  Location                         │
-│ Current: 47.6062, -122.3321          │
-│ Tracking: ON · 142 points · 30d     │
-└──────────────────────────────────────┘
-```
+- Label: "Location"
+- Value: short coordinates `47.61, -122.33`, or "—" when unavailable
+- Sublabel: staleness — "now" / "X min ago" / "X hr ago" / "yesterday" / "X days ago" / "Unavailable"
+- Tap opens the Location detail sheet (which holds the Copy Coordinates / Copy Daily Summary / Copy Location Details actions, retention status, place editor, etc.)
 
-- Current GPS coordinate
-- Tracking status, point count, retention window
-- Full-width card (not in grid)
+The inline Copy button on the dashboard tile has been removed; copy actions live inside the detail sheet.
 
 ### 4. Layout Structure (updated 2026-04-26)
 
@@ -84,13 +79,10 @@ The header shows the title only — no subtitle. Header icons sit to the right o
 ├──────────┼───────────────────────────┤
 │ Distance │ Weight                   │
 │ 5.2 km   │ 78.3 kg                 │
+├──────────┼───────────────────────────┤
+│ Weight   │ Location                 │  ← Weight + Location half-buttons
+│ 165 lbs  │ 47.61, -122.33           │
 ├──────────┴───────────────────────────┤
-│ Meditation: 15 min                   │  ← Odd card spans full width
-├──────────────────────────────────────┤
-│ 📍 Location                         │  ← Location card
-│ Current: 47.6062, -122.3321          │
-│ Tracking: ON · 142 points · 30d     │
-├──────────────────────────────────────┤
 │       [ Grab Context ]               │
 │       [ Share JSON   ]               │
 └──────────────────────────────────────┘

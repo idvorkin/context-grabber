@@ -764,22 +764,38 @@ export default function MetricDetailSheet({
             </View>
           )}
 
-          {/* Workout breakdown for exercise metric */}
-          {metricKey === "exerciseMinutes" && workouts && workouts.length > 0 && (
-            <View style={styles.workoutSection}>
-              <Text style={[styles.workoutTitle, { color: config.color }]}>Today's Workouts</Text>
-              {workouts.map((w, i) => (
-                <View key={i} style={styles.workoutRow}>
-                  <Text style={styles.workoutName}>{w.activityType}</Text>
-                  <View style={styles.workoutDetails}>
-                    <Text style={styles.workoutPill}>{w.durationMinutes} min</Text>
-                    {w.energyBurned != null && <Text style={styles.workoutPill}>{w.energyBurned} kcal</Text>}
-                    {w.distanceKm != null && <Text style={styles.workoutPill}>{w.distanceKm} km</Text>}
+          {/* Workout breakdown for exercise metric — selected day or today */}
+          {metricKey === "exerciseMinutes" && (() => {
+            const todayKey = data ? data[data.length - 1]?.date : null;
+            const dayKey = selectedDay ?? todayKey;
+            if (!dayKey) return null;
+            const isToday = dayKey === todayKey;
+            const dayWorkouts = isToday
+              ? (workouts ?? [])
+              : (workoutsByDay?.[dayKey] ?? []);
+            const dayValue = (data as DailyValue[] | null)?.find((d) => d.date === dayKey);
+            const totalMin = dayValue?.value ?? null;
+            const headerLabel = isToday ? "Today" : formatDayRow(dayKey);
+            const totalText = totalMin != null ? ` — ${totalMin} min total` : "";
+            if (dayWorkouts.length === 0 && totalMin == null) return null;
+            return (
+              <View style={styles.workoutSection}>
+                <Text style={[styles.workoutTitle, { color: config.color }]}>
+                  {headerLabel}{totalText}
+                </Text>
+                {dayWorkouts.map((w, i) => (
+                  <View key={i} style={styles.workoutRow}>
+                    <Text style={styles.workoutName}>{w.activityType}</Text>
+                    <View style={styles.workoutDetails}>
+                      <Text style={styles.workoutPill}>{w.durationMinutes} min</Text>
+                      {w.energyBurned != null && <Text style={styles.workoutPill}>{w.energyBurned} kcal</Text>}
+                      {w.distanceKm != null && <Text style={styles.workoutPill}>{w.distanceKm} km</Text>}
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
-          )}
+                ))}
+              </View>
+            );
+          })()}
 
           {/* Selected day raw values */}
           {selectedDayData && selectedDayData.raw.length > 0 && (
