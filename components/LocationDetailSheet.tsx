@@ -45,7 +45,6 @@ type LocationDetailSheetProps = {
   knownPlaces: KnownPlace[];
   setKnownPlaces: (places: KnownPlace[]) => void;
   setError: (msg: string | null) => void;
-  locationSummaryText: string | null;
 };
 
 // --- Component ---
@@ -59,7 +58,6 @@ export default function LocationDetailSheet({
   knownPlaces,
   setKnownPlaces,
   setError,
-  locationSummaryText,
 }: LocationDetailSheetProps) {
   // Form state
   const [newPlaceName, setNewPlaceName] = useState("");
@@ -448,11 +446,6 @@ export default function LocationDetailSheet({
             {locationHistory.length > 0 && (
               <Text style={styles.locationCountText}>
                 {locationHistory.length} point{locationHistory.length !== 1 ? "s" : ""} in trail
-              </Text>
-            )}
-            {locationSummaryText && (
-              <Text style={{ color: "#ccc", fontSize: 12, fontFamily: "Courier", marginTop: 12 }}>
-                {locationSummaryText}
               </Text>
             )}
           </View>

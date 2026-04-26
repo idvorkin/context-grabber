@@ -367,7 +367,6 @@ export default function App() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
   const [locationExpanded, setLocationExpanded] = useState(false);
-  const [locationSummaryText, setLocationSummaryText] = useState<string | null>(null);
   const [locationCopyState, setLocationCopyState] = useState<
     "idle" | "refreshing" | "copied" | "copied-cached"
   >("idle");
@@ -1552,13 +1551,7 @@ export default function App() {
 
             <TouchableOpacity
               style={styles.locationCard}
-              onPress={() => {
-                setLocationExpanded(true);
-                if (snapshot.locationHistory.length > 0 && !locationSummaryText) {
-                  const v2 = clusterLocationsV2(snapshot.locationHistory, knownPlaces);
-                  setLocationSummaryText(v2.summaryRecent + "\n\n" + v2.summaryWeekly);
-                }
-              }}
+              onPress={() => setLocationExpanded(true)}
               testID="location-card"
             >
               <Text style={styles.metricLabel}>Location</Text>
@@ -1639,7 +1632,6 @@ export default function App() {
               knownPlaces={knownPlaces}
               setKnownPlaces={setKnownPlaces}
               setError={setError}
-              locationSummaryText={locationSummaryText}
             />
 
             <Text style={styles.timestamp}>{snapshot.timestamp}</Text>
