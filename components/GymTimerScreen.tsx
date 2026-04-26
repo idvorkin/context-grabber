@@ -72,18 +72,24 @@ function RoundsMode({ profile, onReset, autostart }: { profile: TimerProfile; on
   }, [autostart, toggle]);
   const { start: laStart, update: laUpdate, stop: laStop } = useLiveActivity();
   const prevPhaseRef = useRef<Phase>("idle");
+  const prevRoundRef = useRef(state.currentRound);
   const prevRunningRef = useRef(false);
   const prevPausedRef = useRef(false);
-  // Snapshot timeLeft at phase boundaries so we don't need it in deps
+  // Snapshot timeLeft at boundaries so we don't need it in deps
   const timeLeftRef = useRef(state.timeLeft);
   timeLeftRef.current = state.timeLeft;
 
-  // Manage Live Activity lifecycle — only fires on phase/running/paused changes
+  // Manage Live Activity lifecycle. Fires on phase / round / running / paused
+  // changes. Round changes are tracked separately so AppState foreground
+  // catch-up across a full rest period (same phase, different round) still
+  // reissues the LA update.
   useEffect(() => {
     const wasRunning = prevRunningRef.current;
     const wasPaused = prevPausedRef.current;
     const prevPhase = prevPhaseRef.current;
+    const prevRound = prevRoundRef.current;
     prevPhaseRef.current = state.phase;
+    prevRoundRef.current = state.currentRound;
     prevRunningRef.current = state.isRunning;
     prevPausedRef.current = state.isPaused;
 
@@ -98,7 +104,10 @@ function RoundsMode({ profile, onReset, autostart }: { profile: TimerProfile; on
       laStop("PAUSED", roundLabel);
     } else if (state.isRunning && !wasRunning) {
       laStart(phaseLabel(state.phase) || "TIMER", roundLabel, endTimeMs);
-    } else if (state.isRunning && state.phase !== prevPhase) {
+    } else if (
+      state.isRunning &&
+      (state.phase !== prevPhase || state.currentRound !== prevRound)
+    ) {
       laUpdate(phaseLabel(state.phase), roundLabel, endTimeMs);
     }
   }, [state.phase, state.isRunning, state.isPaused, state.currentRound, state.totalRounds, laStart, laUpdate, laStop]);

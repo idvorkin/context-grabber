@@ -3,19 +3,12 @@
  * Same interface as igor-timer's useAudio.
  * Uses react-native-audio-api (Web Audio API polyfill) for dynamic tone generation.
  */
-import { useCallback, useRef } from "react";
-import { AudioContext } from "react-native-audio-api";
-
-let _ctx: InstanceType<typeof AudioContext> | null = null;
-
-function getCtx(): InstanceType<typeof AudioContext> {
-  if (!_ctx) _ctx = new AudioContext();
-  return _ctx;
-}
+import { useCallback } from "react";
+import { getAudioContext } from "./audioContext";
 
 function playTone(frequency: number, duration: number, volume = 0.7, delay = 0): void {
   try {
-    const ctx = getCtx();
+    const ctx = getAudioContext();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.frequency.value = frequency;
