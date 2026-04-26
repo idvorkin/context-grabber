@@ -163,17 +163,26 @@ struct TodayWidgetView: View {
 
         Link(destination: URL(string: "grabber://timer?preset=1min&autostart=1")!) {
           Text("1 MIN")
-            .font(.system(size: 13, weight: .bold))
-            .padding(.horizontal, 12).padding(.vertical, 6)
+            .font(.system(size: 12, weight: .bold))
+            .padding(.horizontal, 8).padding(.vertical, 6)
             .background(Color.blue.opacity(0.15))
             .foregroundColor(.blue)
             .cornerRadius(8)
         }
 
+        Link(destination: URL(string: "grabber://timer?preset=2min&autostart=1")!) {
+          Text("2 MIN")
+            .font(.system(size: 12, weight: .bold))
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(Color.purple.opacity(0.15))
+            .foregroundColor(.purple)
+            .cornerRadius(8)
+        }
+
         Link(destination: URL(string: "grabber://timer?preset=5-1&autostart=1")!) {
           Text("5-1")
-            .font(.system(size: 13, weight: .bold))
-            .padding(.horizontal, 12).padding(.vertical, 6)
+            .font(.system(size: 12, weight: .bold))
+            .padding(.horizontal, 8).padding(.vertical, 6)
             .background(Color.orange.opacity(0.15))
             .foregroundColor(.orange)
             .cornerRadius(8)

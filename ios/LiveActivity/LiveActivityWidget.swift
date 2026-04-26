@@ -79,15 +79,18 @@ struct LiveActivityWidget: Widget {
           }
         }
       } compactLeading: {
-        // Fallback to an SF Symbol when no image is supplied: an empty
-        // compactLeading region causes iOS to hide the entire Dynamic Island
-        // compact pill on some iOS versions.
+        // Fallback to the activity title (e.g. "WORK", "REST") when no image
+        // is supplied. Empty compactLeading causes iOS to hide the entire
+        // Dynamic Island compact pill on some iOS versions.
         Group {
           if let dynamicIslandImageName = context.state.dynamicIslandImageName {
             resizableImage(imageName: dynamicIslandImageName)
               .frame(maxWidth: 23, maxHeight: 23)
           } else {
-            Image(systemName: "timer")
+            Text(context.state.title)
+              .font(.system(size: 13, weight: .bold, design: .rounded))
+              .lineLimit(1)
+              .minimumScaleFactor(0.6)
               .foregroundStyle(
                 context.attributes.progressViewTint.map { Color(hex: $0) } ?? .white
               )

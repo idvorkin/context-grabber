@@ -30,6 +30,7 @@ type GymTimerScreenProps = {
 const PRESETS: { id: string; name: string; profile: TimerProfile }[] = [
   { id: "30sec", name: "30 SEC", profile: { name: "30sec", workTime: 30, restTime: 5, rounds: 6, cycles: 1, prepTime: 5 } },
   { id: "1min", name: "1 MIN", profile: { name: "1min", workTime: 60, restTime: 10, rounds: 5, cycles: 1, prepTime: 5 } },
+  { id: "2min", name: "2 MIN", profile: { name: "2min", workTime: 120, restTime: 15, rounds: 4, cycles: 1, prepTime: 10 } },
   { id: "5-1", name: "5-1", profile: { name: "5-1", workTime: 300, restTime: 60, rounds: 3, cycles: 1, prepTime: 10 } },
 ];
 
