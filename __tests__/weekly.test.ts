@@ -7,6 +7,7 @@ import {
   aggregateMeditation,
   pickLatestPerDay,
   buildMovementOverlay,
+  daysSinceLastDailyValue,
   type DailyValue,
   type HeartRateDaily,
   type MetricKey,
@@ -485,5 +486,56 @@ describe("buildMovementOverlay", () => {
     expect(result.days[0].steps).toBe(5000);
     expect(result.days[0].distanceKm).toBe(3);
     expect(result.days[0].energyKcal).toBe(200);
+  });
+});
+
+describe("daysSinceLastDailyValue", () => {
+  // Anchor "now" at 2026-04-26 12:00 local so date math is deterministic.
+  const now = new Date(2026, 3, 26, 12, 0, 0);
+
+  function entry(date: string, value: number | null): DailyValue {
+    return { date, value };
+  }
+
+  it("returns 0 when today has a positive value", () => {
+    const data = [
+      entry("2026-04-25", 5),
+      entry("2026-04-26", 30),
+    ];
+    expect(daysSinceLastDailyValue(data, now)).toBe(0);
+  });
+
+  it("returns 1 when yesterday has a value but today doesn't", () => {
+    const data = [
+      entry("2026-04-24", 0),
+      entry("2026-04-25", 45),
+      entry("2026-04-26", 0),
+    ];
+    expect(daysSinceLastDailyValue(data, now)).toBe(1);
+  });
+
+  it("returns the gap to the most recent positive entry", () => {
+    const data = [
+      entry("2026-04-20", 30),
+      entry("2026-04-21", 0),
+      entry("2026-04-22", 0),
+      entry("2026-04-26", null),
+    ];
+    expect(daysSinceLastDailyValue(data, now)).toBe(6);
+  });
+
+  it("treats null and zero values as no-data", () => {
+    const data = [
+      entry("2026-04-26", null),
+      entry("2026-04-25", 0),
+      entry("2026-04-24", 0),
+    ];
+    expect(daysSinceLastDailyValue(data, now)).toBeNull();
+  });
+
+  it("returns null on empty / missing array", () => {
+    expect(daysSinceLastDailyValue([], now)).toBeNull();
+    expect(daysSinceLastDailyValue(undefined, now)).toBeNull();
+    expect(daysSinceLastDailyValue(null, now)).toBeNull();
   });
 });

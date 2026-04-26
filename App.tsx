@@ -53,6 +53,7 @@ import {
   aggregateMeditation,
   pickLatestPerDay,
   formatDateKey,
+  daysSinceLastDailyValue,
 } from "./lib/weekly";
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
 import { parseDeepLink } from "./lib/deepLink";
@@ -1320,10 +1321,20 @@ export default function App() {
         {
           metricKey: "exerciseMinutes" as MetricKey,
           label: "Exercise",
-          value: h?.exerciseMinutes != null ? `${h.exerciseMinutes} min` : "\u2014",
-          sublabel: h?.workouts && h.workouts.length > 0
-            ? h.workouts.map(w => `${w.activityType} ${w.durationMinutes}m`).join(", ")
-            : "today",
+          value: h?.exerciseMinutes != null && h.exerciseMinutes > 0 ? `${h.exerciseMinutes} min` : "\u2014",
+          sublabel: (() => {
+            if (h?.workouts && h.workouts.length > 0) {
+              return h.workouts.map(w => `${w.activityType} ${w.durationMinutes}m`).join(", ");
+            }
+            if (h?.exerciseMinutes != null && h.exerciseMinutes > 0) {
+              return "today";
+            }
+            const days = daysSinceLastDailyValue(weeklyCache.exerciseMinutes as DailyValue[] | undefined);
+            if (days == null) return "7+ days ago";
+            if (days === 0) return "today";
+            if (days === 1) return "yesterday";
+            return `${days} days ago`;
+          })(),
           onPress: handleMetricPress,
           boxPlotStats: statsCache.exerciseMinutes,
           color: METRIC_CONFIG.exerciseMinutes.color,
@@ -1337,15 +1348,6 @@ export default function App() {
           onPress: handleMetricPress,
           boxPlotStats: statsCache.heartRate,
           color: METRIC_CONFIG.heartRate.color,
-        },
-        {
-          metricKey: "restingHeartRate" as MetricKey,
-          label: "Resting HR",
-          value: h?.restingHeartRate != null ? `${h.restingHeartRate} bpm` : "\u2014",
-          sublabel: "latest",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.restingHeartRate,
-          color: METRIC_CONFIG.restingHeartRate.color,
         },
         // Recovery
         {
@@ -1709,6 +1711,8 @@ export default function App() {
             movementData={movementData}
             sleepBundle={selectedMetric === "sleep" ? sleepDetailedCache : null}
             sleepTargetHours={selectedMetric === "sleep" ? sleepTargetHours : null}
+            restingHeartRateWeekly={selectedMetric === "heartRate" ? (weeklyCache.restingHeartRate as HeartRateDaily[] | undefined) ?? null : null}
+            restingHeartRateToday={selectedMetric === "heartRate" ? snapshot?.health.restingHeartRate ?? null : null}
             fetchRawCache={db && selectedMetric !== "movement" ? async () => {
               const dateKeys = buildDateKeys(new Date(), 7);
               const raw = await getRawCachedBatch(db, selectedMetric, dateKeys);

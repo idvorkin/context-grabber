@@ -63,6 +63,11 @@ type MetricDetailSheetProps = {
   sleepBundle?: SleepDetailedBundle | null;
   /** Sleep target in hours (for the debt line) */
   sleepTargetHours?: number | null;
+  /** Resting heart rate weekly data + today's value, surfaced at the bottom
+   *  of the Heart Rate detail sheet (since the metric grid no longer has a
+   *  dedicated Resting HR card). Only consumed when metricKey === "heartRate". */
+  restingHeartRateWeekly?: HeartRateDaily[] | null;
+  restingHeartRateToday?: number | null;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -138,6 +143,8 @@ export default function MetricDetailSheet({
   movementData,
   sleepBundle,
   sleepTargetHours,
+  restingHeartRateWeekly,
+  restingHeartRateToday,
 }: MetricDetailSheetProps): React.ReactElement {
   const isMovement = metricKey === "movement";
   const isSleep = metricKey === "sleep";
@@ -795,6 +802,37 @@ export default function MetricDetailSheet({
 
           {dailyRows}
 
+          {/* Resting Heart Rate section — appears at the bottom of the Heart
+              Rate sheet now that Resting HR no longer has its own card. */}
+          {metricKey === "heartRate" && (restingHeartRateToday != null || (restingHeartRateWeekly && restingHeartRateWeekly.some((d) => d.avg !== null))) && (
+            <View style={styles.restingHrSection} testID="resting-hr-section">
+              <Text style={styles.restingHrTitle}>Resting Heart Rate</Text>
+              <Text style={styles.restingHrLatest} testID="resting-hr-latest">
+                {restingHeartRateToday != null
+                  ? `${restingHeartRateToday} bpm latest`
+                  : "— bpm latest"}
+              </Text>
+              {restingHeartRateWeekly && restingHeartRateWeekly.length > 0 && (
+                <View style={styles.restingHrRows}>
+                  {[...restingHeartRateWeekly].reverse().map((d, i) => (
+                    <View
+                      key={d.date}
+                      style={[
+                        styles.restingHrRow,
+                        i > 0 && styles.dayRowDivider,
+                      ]}
+                    >
+                      <Text style={styles.dayRowLabel}>{formatDayRow(d.date)}</Text>
+                      <Text style={styles.dayRowValue}>
+                        {d.avg != null ? `${Math.round(d.avg)} bpm` : "—"}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Debug button — available for all metrics */}
           {data && data.length > 0 && (
             <View style={styles.debugSection}>
@@ -986,6 +1024,34 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 20,
     gap: 6,
+  },
+  restingHrSection: {
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  restingHrTitle: {
+    color: "#888",
+    fontSize: 13,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  restingHrLatest: {
+    color: "#e0e0e0",
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  restingHrRows: {
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 8,
+  },
+  restingHrRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   sleepDebtLine: {
     fontSize: 13,

@@ -93,7 +93,6 @@ describe("App interactions", () => {
     expect(getByText("Weight")).toBeTruthy();
     expect(getByText("Meditation")).toBeTruthy();
     expect(getByText("HRV")).toBeTruthy();
-    expect(getByText("Resting HR")).toBeTruthy();
     expect(getByText("Exercise")).toBeTruthy();
   });
 
@@ -161,13 +160,14 @@ describe("MetricCard rendering after grab", () => {
     expect(getByText("Weight")).toBeTruthy();
     expect(getByText("Meditation")).toBeTruthy();
     expect(getByText("HRV")).toBeTruthy();
-    expect(getByText("Resting HR")).toBeTruthy();
     expect(getByText("Exercise")).toBeTruthy();
 
+    // meditation always says "today"; exercise's sublabel is now staleness-driven
+    // ("7+ days ago" in tests where weeklyCache hasn't loaded), not "today".
     const todaySublabels = getAllByText("today");
-    expect(todaySublabels.length).toBe(2); // meditation, exercise (movement uses custom sublabel)
+    expect(todaySublabels.length).toBe(1);
     const latestSublabels = getAllByText("latest");
-    expect(latestSublabels.length).toBe(4); // heart rate, weight, hrv, resting hr
+    expect(latestSublabels.length).toBe(3); // heart rate, hrv, weight (weight falls back to "latest" when weightDaysLast7 is null in the test fixture)
   });
 
   it("shows all metric cards after grab", async () => {
@@ -188,7 +188,7 @@ describe("MetricCard rendering after grab", () => {
 
     const metricLabels = [
       "Movement", "Heart Rate", "Sleep", "Weight", "Meditation",
-      "HRV", "Resting HR", "Exercise",
+      "HRV", "Exercise",
     ];
 
     for (const label of metricLabels) {

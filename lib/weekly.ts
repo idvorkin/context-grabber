@@ -138,6 +138,29 @@ export function bucketByDay<T extends HasStartDate>(
 // ─── computeAverage ───────────────────────────────────────────────────────────
 
 /**
+ * Days between today (local) and the most recent DailyValue with a positive
+ * value. Returns 0 if today is the latest, 1 if yesterday, etc. Returns null
+ * when the array is empty / undefined or contains no positive entries — the
+ * caller decides what "no data in the window" should display.
+ */
+export function daysSinceLastDailyValue(
+  values: DailyValue[] | undefined | null,
+  now: Date = new Date(),
+): number | null {
+  if (!values || values.length === 0) return null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  // Walk newest-first so the first hit wins.
+  for (let i = values.length - 1; i >= 0; i--) {
+    const v = values[i].value;
+    if (v == null || v <= 0) continue;
+    const [y, m, d] = values[i].date.split("-").map(Number);
+    const that = new Date(y, m - 1, d).getTime();
+    return Math.round((today - that) / 86400000);
+  }
+  return null;
+}
+
+/**
  * Average non-null values in a DailyValue array, rounded to 1 decimal.
  * Returns null when there are no non-null values.
  */
