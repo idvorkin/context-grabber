@@ -48,4 +48,23 @@ class WidgetBridge: NSObject {
     }
     resolve(nil)
   }
+
+  /// Read whichever values the App Group currently holds. Used by the app on
+  /// foreground/launch to reconcile widget-side counter increments back into
+  /// the SQLite source of truth.
+  @objc(readSnapshot:rejecter:)
+  func readSnapshot(
+    resolver resolve: RCTPromiseResolveBlock,
+    rejecter reject: RCTPromiseRejectBlock
+  ) {
+    guard let defaults = UserDefaults(suiteName: WidgetBridge.suite) else {
+      reject("no_suite", "Could not open UserDefaults suite \(WidgetBridge.suite)", nil)
+      return
+    }
+    let result: [String: Any] = [
+      "counter": defaults.object(forKey: "counter") as? Int as Any,
+      "counterDate": defaults.string(forKey: "counterDate") as Any,
+    ]
+    resolve(result)
+  }
 }

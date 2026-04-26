@@ -3,7 +3,7 @@
  * settings store; the real `getSetting`/`setSetting` from lib/db are not
  * exercised here — those are thin wrappers tested elsewhere.
  */
-import { todayLocalDateKey, getCounter, incrementCounter, resetCounter } from "../lib/counter";
+import { todayLocalDateKey, getCounter, incrementCounter, resetCounter, reconcileFromWidget } from "../lib/counter";
 
 // Minimal mock of the (key, value) store that lib/counter persists through.
 function makeFakeDb() {
@@ -114,5 +114,72 @@ describe("resetCounter", () => {
     await resetCounter({} as never);
     const result = await resetCounter({} as never);
     expect(result.value).toBe(0);
+  });
+});
+
+describe("reconcileFromWidget", () => {
+  it("adopts the widget's higher value when dates match (widget incremented while app was closed)", async () => {
+    const today = todayLocalDateKey();
+    __store.set("counter_value", "3");
+    __store.set("counter_reset_date", today);
+    const result = await reconcileFromWidget({} as never, {
+      counter: 7,
+      counterDate: today,
+    });
+    expect(result.value).toBe(7);
+    expect(__store.get("counter_value")).toBe("7");
+  });
+
+  it("keeps SQLite value when widget value is lower (stale widget snapshot)", async () => {
+    const today = todayLocalDateKey();
+    __store.set("counter_value", "10");
+    __store.set("counter_reset_date", today);
+    const result = await reconcileFromWidget({} as never, {
+      counter: 4,
+      counterDate: today,
+    });
+    expect(result.value).toBe(10);
+  });
+
+  it("ignores widget value when counterDate is yesterday or older", async () => {
+    const today = todayLocalDateKey();
+    __store.set("counter_value", "5");
+    __store.set("counter_reset_date", today);
+    const result = await reconcileFromWidget({} as never, {
+      counter: 99,
+      counterDate: "2024-01-01",
+    });
+    expect(result.value).toBe(5);
+  });
+
+  it("ignores widget when its value or date is null (Android / module missing)", async () => {
+    const today = todayLocalDateKey();
+    __store.set("counter_value", "2");
+    __store.set("counter_reset_date", today);
+    const a = await reconcileFromWidget({} as never, { counter: null, counterDate: today });
+    expect(a.value).toBe(2);
+    const b = await reconcileFromWidget({} as never, { counter: 5, counterDate: null });
+    expect(b.value).toBe(2);
+  });
+
+  it("works when SQLite is empty — adopts widget value as-is", async () => {
+    const today = todayLocalDateKey();
+    const result = await reconcileFromWidget({} as never, {
+      counter: 11,
+      counterDate: today,
+    });
+    expect(result.value).toBe(11);
+  });
+
+  it("applies daily reset before reconciling — widget today wins over stale SQLite yesterday", async () => {
+    const today = todayLocalDateKey();
+    __store.set("counter_value", "20");
+    __store.set("counter_reset_date", "2025-01-01"); // stale
+    const result = await reconcileFromWidget({} as never, {
+      counter: 3,
+      counterDate: today,
+    });
+    // Local was reset to 0 (stale date), then widget's 3 > 0 → adopt 3.
+    expect(result.value).toBe(3);
   });
 });

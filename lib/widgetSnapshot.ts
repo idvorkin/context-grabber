@@ -17,7 +17,31 @@ type WidgetBridgeModule = {
     counterDate?: string; // local YYYY-MM-DD
     grabbedAt: number; // unix ms
   }) => Promise<void>;
+  readSnapshot: () => Promise<{
+    counter: number | null;
+    counterDate: string | null;
+  }>;
 };
+
+/**
+ * Read whatever the App Group currently holds. Used to reconcile widget-side
+ * counter increments (via the iOS 17 App Intent) with the app's SQLite source
+ * of truth on foreground / launch. Returns nulls on Android or when the
+ * native module isn't loaded yet (e.g. old binary).
+ */
+export async function readWidgetSnapshot(): Promise<{
+  counter: number | null;
+  counterDate: string | null;
+}> {
+  if (Platform.OS !== "ios") return { counter: null, counterDate: null };
+  const bridge = (NativeModules as { WidgetBridge?: WidgetBridgeModule }).WidgetBridge;
+  if (!bridge?.readSnapshot) return { counter: null, counterDate: null };
+  try {
+    return await bridge.readSnapshot();
+  } catch {
+    return { counter: null, counterDate: null };
+  }
+}
 
 type SnapshotInput = {
   steps: number | null;

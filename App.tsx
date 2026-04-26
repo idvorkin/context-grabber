@@ -56,8 +56,8 @@ import {
 } from "./lib/weekly";
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
 import { parseDeepLink } from "./lib/deepLink";
-import { writeWidgetSnapshot } from "./lib/widgetSnapshot";
-import { getCounter, incrementCounter, resetCounter } from "./lib/counter";
+import { writeWidgetSnapshot, readWidgetSnapshot } from "./lib/widgetSnapshot";
+import { getCounter, incrementCounter, resetCounter, reconcileFromWidget } from "./lib/counter";
 import TallyCounter from "./components/TallyCounter";
 import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
@@ -402,8 +402,9 @@ export default function App() {
         const places = await getKnownPlaces(database);
         setKnownPlaces(places);
 
-        // Load counter (auto-resets if a new local day has begun).
-        const counter = await getCounter(database);
+        // Load counter, reconciling with any widget-side increments first.
+        const widgetSnap = await readWidgetSnapshot();
+        const counter = await reconcileFromWidget(database, widgetSnap);
         setCounterValue(counter.value);
 
         // Prune on startup
@@ -472,7 +473,11 @@ export default function App() {
           console.error("Prune on foreground error:", e);
         }
         try {
-          const counter = await getCounter(db);
+          // Pull any widget-side increments back into SQLite before pushing
+          // our (now-reconciled) value to the widget. Without this read step,
+          // the foreground sync silently overwrites widget +1s.
+          const widgetSnap = await readWidgetSnapshot();
+          const counter = await reconcileFromWidget(db, widgetSnap);
           setCounterValue(counter.value);
           void writeWidgetSnapshot({
             steps: snapshot?.health.steps ?? null,

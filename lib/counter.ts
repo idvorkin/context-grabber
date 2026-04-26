@@ -60,3 +60,33 @@ export async function resetCounter(db: SQLiteDatabase): Promise<CounterState> {
   await setSetting(db, KEY_RESET_DATE, today);
   return { value: 0, dateKey: today };
 }
+
+/**
+ * Reconcile the SQLite-stored counter with whatever value the iOS widget /
+ * App Intent has written into the App Group UserDefaults. The widget-side
+ * value wins when:
+ *   - It's tagged with today's local date, AND
+ *   - It exceeds the SQLite value (i.e. has more increments than the app
+ *     knows about — typically because the App Intent fired while the app
+ *     was backgrounded or terminated).
+ *
+ * Returns the reconciled CounterState. `widget` is provided by the native
+ * bridge (`readWidgetSnapshot`); the caller passes it through so this
+ * function stays platform-agnostic and trivially testable.
+ */
+export async function reconcileFromWidget(
+  db: SQLiteDatabase,
+  widget: { counter: number | null; counterDate: string | null },
+): Promise<CounterState> {
+  const local = await getCounter(db); // applies daily reset if needed
+  const today = todayLocalDateKey();
+  if (
+    widget.counter != null &&
+    widget.counterDate === today &&
+    widget.counter > local.value
+  ) {
+    await setSetting(db, KEY_VALUE, String(widget.counter));
+    return { value: widget.counter, dateKey: today };
+  }
+  return local;
+}
