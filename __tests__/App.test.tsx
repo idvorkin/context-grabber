@@ -41,11 +41,6 @@ describe("App rendering", () => {
     expect(getByLabelText("Settings")).toBeTruthy();
   });
 
-  it("shows about button in header", async () => {
-    const { getByLabelText } = await renderApp();
-    expect(getByLabelText("About")).toBeTruthy();
-  });
-
   it("shows share buttons after auto-grab on startup", async () => {
     const { getByText } = await renderApp();
     expect(getByText(/Summary/)).toBeTruthy();

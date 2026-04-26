@@ -70,12 +70,11 @@ Below the health cards:
 
 ### 4. Layout Structure (updated 2026-04-26)
 
-The header shows the title only — no subtitle. Header icons sit to the right of the title; the refresh and gym-timer icons stay on the top row, while the settings gear and the `i` (About) icon stack vertically as a single column to free horizontal space.
+The header shows the title only — no subtitle. Header icons sit to the right of the title in a single row: refresh, gym timer, settings. The About (`i`) entry has been folded into the Settings sheet (renders as the bottom-most row, opens the existing About modal).
 
 ```
 ┌──────────────────────────────────────┐
 │ Context Grabber       ↻  🏋️   ⚙     │
-│                                  i   │
 ├──────────┬───────────────────────────┤
 │ Steps    │ Heart Rate               │  ← Metric cards (2-col grid)
 │ 8,241    │ 73 bpm                   │
@@ -100,6 +99,7 @@ The header shows the title only — no subtitle. Header icons sit to the right o
 Removed elements:
 - Subtitle "Grab your iPhone context for your AI life coach"
 - Summary banner (`X steps | Y bpm | …`) above the metric grid
+- Standalone About (`i`) button in the header (folded into Settings → About row)
 
 ### 5. Styling
 

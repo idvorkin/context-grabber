@@ -1434,23 +1434,13 @@ export default function App() {
             >
               <Text style={styles.headerIconText}>{"🏋️"}</Text>
             </TouchableOpacity>
-            <View style={styles.headerIconColumn}>
-              <TouchableOpacity
-                style={styles.headerIconButton}
-                onPress={() => setSettingsVisible(true)}
-                accessibilityLabel="Settings"
-              >
-                <Text style={styles.headerIconText}>{"\u2699"}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.headerIconButton}
-                onPress={() => setAboutVisible(true)}
-                accessibilityLabel="About"
-                testID="about-button"
-              >
-                <Text style={[styles.headerIconText, { fontStyle: "italic" }]}>i</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => setSettingsVisible(true)}
+              accessibilityLabel="Settings"
+            >
+              <Text style={styles.headerIconText}>{"\u2699"}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -1481,6 +1471,10 @@ export default function App() {
       <SettingsModal
         visible={settingsVisible}
         onClose={() => setSettingsVisible(false)}
+        onShowAbout={() => {
+          setSettingsVisible(false);
+          setAboutVisible(true);
+        }}
         db={db}
         trackingEnabled={trackingEnabled}
         setTrackingEnabled={setTrackingEnabled}
@@ -1904,12 +1898,8 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: "row",
     gap: 8,
-    alignItems: "flex-start",
+    alignItems: "center",
     marginTop: 4,
-  },
-  headerIconColumn: {
-    flexDirection: "column",
-    gap: 6,
   },
   headerIconButton: {
     width: 32,

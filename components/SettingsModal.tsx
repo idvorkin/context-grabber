@@ -21,6 +21,7 @@ const CTI_SLEEP =
 type SettingsModalProps = {
   visible: boolean;
   onClose: () => void;
+  onShowAbout: () => void;
   db: SQLite.SQLiteDatabase | null;
   trackingEnabled: boolean;
   setTrackingEnabled: (enabled: boolean) => void;
@@ -39,6 +40,7 @@ type SettingsModalProps = {
 export default function SettingsModal({
   visible,
   onClose,
+  onShowAbout,
   db,
   trackingEnabled,
   setTrackingEnabled,
@@ -197,6 +199,17 @@ export default function SettingsModal({
               </>
             )}
           </View>
+
+          <TouchableOpacity
+            style={styles.aboutRow}
+            onPress={onShowAbout}
+            accessibilityLabel="About"
+            testID="about-row"
+          >
+            <Text style={styles.aboutRowIcon}>i</Text>
+            <Text style={styles.aboutRowLabel}>About</Text>
+            <Text style={styles.aboutRowChevron}>{"›"}</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </Modal>
@@ -218,4 +231,8 @@ const styles = StyleSheet.create({
   countText: { color: "#888", fontSize: 12, marginTop: 4 },
   actionButton: { backgroundColor: "#2d6a4f", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16, alignItems: "center" },
   actionButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+  aboutRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#16213e", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 24 },
+  aboutRowIcon: { color: "#4cc9f0", fontSize: 16, fontWeight: "700", fontStyle: "italic", width: 24 },
+  aboutRowLabel: { color: "#e0e0e0", fontSize: 16, fontWeight: "600", flex: 1 },
+  aboutRowChevron: { color: "#888", fontSize: 22, fontWeight: "300" },
 });
