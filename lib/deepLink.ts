@@ -22,6 +22,7 @@ export type TimerMode = "rounds" | "stopwatch" | "sets";
 export type DeepLinkRoute =
   | { kind: "main"; autoGrab: boolean }
   | { kind: "timer"; mode: TimerMode; preset: string | null; autostart: boolean }
+  | { kind: "counter"; action: "inc" }
   | { kind: "unknown" };
 
 const KNOWN_PRESETS = new Set(["30sec", "1min", "5-1"]);
@@ -59,6 +60,10 @@ export function parseDeepLink(url: string | null | undefined): DeepLinkRoute {
 
   if (segments[0] === "grab") {
     return { kind: "main", autoGrab: true };
+  }
+
+  if (segments[0] === "counter" && segments[1] === "inc") {
+    return { kind: "counter", action: "inc" };
   }
 
   if (segments[0] === "timer") {

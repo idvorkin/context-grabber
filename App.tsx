@@ -367,7 +367,9 @@ export default function App() {
   const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
   const [locationExpanded, setLocationExpanded] = useState(false);
   const [locationSummaryText, setLocationSummaryText] = useState<string | null>(null);
-  const [locationCopied, setLocationCopied] = useState(false);
+  const [locationCopyState, setLocationCopyState] = useState<
+    "idle" | "refreshing" | "copied" | "copied-cached"
+  >("idle");
   const [gymTimerVisible, setGymTimerVisible] = useState(false);
   const [timerIntent, setTimerIntent] = useState<{
     mode: "rounds" | "stopwatch" | "sets";
@@ -431,6 +433,7 @@ export default function App() {
   // the latest closure (grabContext reads live component state).
   const grabContextRef = useRef<(() => void) | null>(null);
   grabContextRef.current = () => { void grabContext(); };
+  const counterIncrementRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     const handle = (url: string | null) => {
       const route = parseDeepLink(url);
@@ -440,6 +443,10 @@ export default function App() {
       } else if (route.kind === "timer") {
         setTimerIntent({ mode: route.mode, preset: route.preset, autostart: route.autostart });
         setGymTimerVisible(true);
+      } else if (route.kind === "counter" && route.action === "inc") {
+        // iOS 16 fallback: widget tap launches the app, which performs the +1.
+        setGymTimerVisible(false);
+        counterIncrementRef.current?.();
       }
       // kind === "unknown" → no-op (already on whatever screen)
     };
@@ -482,6 +489,8 @@ export default function App() {
   }, [db, snapshot]);
 
   // Counter handlers — increment on tap, reset on the ↺ button.
+  // Keep a ref to the increment handler so the deep-link route (registered
+  // once at mount) always calls the latest closure with current `db` / `snapshot`.
   const handleCounterIncrement = useCallback(async () => {
     if (!db) return;
     try {
@@ -497,6 +506,7 @@ export default function App() {
       console.error("Counter increment error:", e);
     }
   }, [db, snapshot]);
+  counterIncrementRef.current = () => { void handleCounterIncrement(); };
 
   const handleCounterReset = useCallback(() => {
     if (!db) return;
@@ -1556,17 +1566,50 @@ export default function App() {
                   <TouchableOpacity
                     onPress={async () => {
                       if (!snapshot.location) return;
-                      const text = `${snapshot.location.latitude.toFixed(6)}, ${snapshot.location.longitude.toFixed(6)}`;
+                      if (locationCopyState === "refreshing") return;
+                      setLocationCopyState("refreshing");
+                      let coords: { latitude: number; longitude: number } =
+                        snapshot.location;
+                      let usedCached = false;
+                      try {
+                        const { status } =
+                          await Location.requestForegroundPermissionsAsync();
+                        if (status !== "granted") {
+                          usedCached = true;
+                        } else {
+                          const loc = await Location.getCurrentPositionAsync({
+                            accuracy: Location.Accuracy.Highest,
+                          });
+                          const age = Date.now() - loc.timestamp;
+                          if (age > 30000) {
+                            usedCached = true;
+                          } else {
+                            coords = {
+                              latitude: loc.coords.latitude,
+                              longitude: loc.coords.longitude,
+                            };
+                          }
+                        }
+                      } catch {
+                        usedCached = true;
+                      }
+                      const text = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
                       await Clipboard.setStringAsync(text);
-                      setLocationCopied(true);
-                      setTimeout(() => setLocationCopied(false), 1500);
+                      setLocationCopyState(usedCached ? "copied-cached" : "copied");
+                      setTimeout(() => setLocationCopyState("idle"), 1500);
                     }}
                     style={styles.copyButton}
                     testID="location-copy"
                     accessibilityLabel="Copy coordinates"
                   >
                     <Text style={styles.copyButtonText}>
-                      {locationCopied ? "Copied" : "Copy"}
+                      {locationCopyState === "refreshing"
+                        ? "Refreshing..."
+                        : locationCopyState === "copied"
+                          ? "Copied"
+                          : locationCopyState === "copied-cached"
+                            ? "Copied (cached)"
+                            : "Copy"}
                     </Text>
                   </TouchableOpacity>
                 </View>

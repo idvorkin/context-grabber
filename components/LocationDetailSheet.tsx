@@ -70,7 +70,9 @@ export default function LocationDetailSheet({
   const [placesExpanded, setPlacesExpanded] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
   const [dbExportStatus, setDbExportStatus] = useState<string | null>(null);
-  const [locationDetailsCopied, setLocationDetailsCopied] = useState(false);
+  const [locationDetailsCopyState, setLocationDetailsCopyState] = useState<
+    "idle" | "refreshing" | "copied" | "copied-cached"
+  >("idle");
   const [dailySummaryCopied, setDailySummaryCopied] = useState(false);
 
   // "Name this place" modal state
@@ -352,16 +354,45 @@ export default function LocationDetailSheet({
   async function handleCopyLocationDetails() {
     // Full detailed location export with per-stay timeline + coordinates —
     // the shape that used to be bundled into Summary before it was trimmed.
+    if (locationDetailsCopyState === "refreshing") return;
+    setLocationDetailsCopyState("refreshing");
+
+    // Refresh GPS first; fall back to the cached `location` prop on any error.
+    let freshLocation: LocationData = location;
+    let usedCached = false;
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        usedCached = true;
+      } else {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Highest,
+        });
+        const age = Date.now() - loc.timestamp;
+        if (age > 30000) {
+          usedCached = true;
+        } else {
+          freshLocation = {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+            timestamp: loc.timestamp,
+          };
+        }
+      }
+    } catch {
+      usedCached = true;
+    }
+
     const { clusters, timeline, summary } = locationHistory.length > 0
       ? clusterLocations(rawPoints, 50, 3, knownPlaces)
       : { clusters: [], timeline: [], summary: "" };
     const payload = {
-      location,
+      location: freshLocation,
       locationClusters: { clusters, timeline, summary },
     };
     await Clipboard.setStringAsync(JSON.stringify(payload));
-    setLocationDetailsCopied(true);
-    setTimeout(() => setLocationDetailsCopied(false), 1500);
+    setLocationDetailsCopyState(usedCached ? "copied-cached" : "copied");
+    setTimeout(() => setLocationDetailsCopyState("idle"), 1500);
   }
 
   async function handleDownloadDatabase() {
@@ -446,7 +477,13 @@ export default function LocationDetailSheet({
               testID="copy-location-details-button"
             >
               <Text style={styles.addPlaceButtonText} testID="copy-location-details-status">
-                {locationDetailsCopied ? "Copied" : "Copy Location Details"}
+                {locationDetailsCopyState === "refreshing"
+                  ? "Refreshing..."
+                  : locationDetailsCopyState === "copied"
+                    ? "Copied"
+                    : locationDetailsCopyState === "copied-cached"
+                      ? "Copied (cached)"
+                      : "Copy Location Details"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

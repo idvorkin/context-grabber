@@ -28,6 +28,7 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		D4060797DFE746B29012C884 /* LiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C5665F99DD40D8926454AF /* LiveActivityWidgetBundle.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		E3BA8072BB9B0CBEBEAA4A0C /* CounterIncrementIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2275BB3BE8143D0FCF632D56 /* CounterIncrementIntent.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -84,6 +85,7 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ContextGrabber/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* ContextGrabber-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContextGrabber-Bridging-Header.h"; path = "ContextGrabber/ContextGrabber-Bridging-Header.h"; sourceTree = "<group>"; };
+		2275BB3BE8143D0FCF632D56 /* CounterIncrementIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterIncrementIntent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -206,6 +208,7 @@
 				15E7D8C385804BB48CE8FB9E /* LiveActivityWidget.swift */,
 				76C5665F99DD40D8926454AF /* LiveActivityWidgetBundle.swift */,
 				0EA290EC98628807FF0CCFE0 /* TodayWidget.swift */,
+				2275BB3BE8143D0FCF632D56 /* CounterIncrementIntent.swift */,
 				8FD47BA835714582B01BCE8A /* View+applyIfPresent.swift */,
 				E352AF6F25CA441F8B0F53A5 /* View+applyWidgetURL.swift */,
 				DD67AB286B54407CB59190EF /* ViewHelpers.swift */,
@@ -468,6 +471,7 @@
 				70F234C978C649A489668EE3 /* LiveActivityWidget.swift in Sources */,
 				D4060797DFE746B29012C884 /* LiveActivityWidgetBundle.swift in Sources */,
 				38FA08474EBB8AD0515CF9D9 /* TodayWidget.swift in Sources */,
+				E3BA8072BB9B0CBEBEAA4A0C /* CounterIncrementIntent.swift in Sources */,
 				B6FD345A08564D6685C41660 /* View+applyIfPresent.swift in Sources */,
 				718E49A1294D4E7C950ECFCE /* View+applyWidgetURL.swift in Sources */,
 				8BE9431286B74189B5AD4F2F /* ViewHelpers.swift in Sources */,

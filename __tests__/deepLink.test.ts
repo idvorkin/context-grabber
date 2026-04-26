@@ -121,3 +121,22 @@ describe("parseDeepLink — unknown routes", () => {
     expect(parseDeepLink("grabber://whatever")).toEqual({ kind: "unknown" });
   });
 });
+
+describe("parseDeepLink — counter route", () => {
+  it("parses grabber://counter/inc as the increment action", () => {
+    expect(parseDeepLink("grabber://counter/inc")).toEqual({ kind: "counter", action: "inc" });
+  });
+
+  it("works on the long-form bundle-id scheme too", () => {
+    expect(parseDeepLink("com.idvorkin.contextgrabber://counter/inc"))
+      .toEqual({ kind: "counter", action: "inc" });
+  });
+
+  it("returns unknown for /counter without an action", () => {
+    expect(parseDeepLink("grabber://counter")).toEqual({ kind: "unknown" });
+  });
+
+  it("returns unknown for an unrecognized counter sub-action", () => {
+    expect(parseDeepLink("grabber://counter/reset")).toEqual({ kind: "unknown" });
+  });
+});
