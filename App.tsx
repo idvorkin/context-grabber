@@ -1525,6 +1525,14 @@ export default function App() {
                 testID="counter-tally"
               />
               <TouchableOpacity
+                onPress={handleCounterIncrement}
+                style={styles.counterPlusOne}
+                testID="counter-plus-one"
+                accessibilityLabel="Add one to counter"
+              >
+                <Text style={styles.counterPlusOneText}>+1</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={handleCounterReset}
                 style={styles.counterReset}
                 testID="counter-reset"
@@ -1754,6 +1762,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 12,
+  },
+  counterPlusOne: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(76, 201, 240, 0.18)",
+    marginLeft: "auto",
+    marginRight: 8,
+  },
+  counterPlusOneText: {
+    color: "#4cc9f0",
+    fontSize: 15,
+    fontWeight: "700",
   },
   counterReset: {
     width: 36,
