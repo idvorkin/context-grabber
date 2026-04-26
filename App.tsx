@@ -11,6 +11,7 @@ import {
   Switch,
   TextInput,
   AppState,
+  Alert,
   Modal,
   Linking,
 
@@ -56,6 +57,8 @@ import {
 import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
 import { parseDeepLink } from "./lib/deepLink";
 import { writeWidgetSnapshot } from "./lib/widgetSnapshot";
+import { getCounter, incrementCounter, resetCounter } from "./lib/counter";
+import TallyCounter from "./components/TallyCounter";
 import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
@@ -372,6 +375,7 @@ export default function App() {
     autostart: boolean;
   } | null>(null);
   const [otaUpdateReady, setOtaUpdateReady] = useState(false);
+  const [counterValue, setCounterValue] = useState(0);
 
   // Initialize database on mount
   useEffect(() => {
@@ -395,6 +399,10 @@ export default function App() {
 
         const places = await getKnownPlaces(database);
         setKnownPlaces(places);
+
+        // Load counter (auto-resets if a new local day has begun).
+        const counter = await getCounter(database);
+        setCounterValue(counter.value);
 
         // Prune on startup
         await pruneLocations(database, parseInt(days, 10) || 30);
@@ -440,7 +448,8 @@ export default function App() {
     return () => sub.remove();
   }, []);
 
-  // Prune on app foreground
+  // Prune on app foreground + sync counter (daily reset + pull any +1's that
+  // came from the widget while the app was backgrounded).
   useEffect(() => {
     const subscription = AppState.addEventListener("change", async (state) => {
       if (state === "active" && db) {
@@ -455,10 +464,68 @@ export default function App() {
         } catch (e) {
           console.error("Prune on foreground error:", e);
         }
+        try {
+          const counter = await getCounter(db);
+          setCounterValue(counter.value);
+          void writeWidgetSnapshot({
+            steps: snapshot?.health.steps ?? null,
+            sleepHours: snapshot?.health.sleepHours ?? null,
+            exerciseMinutes: snapshot?.health.exerciseMinutes ?? null,
+            counter: counter.value,
+          });
+        } catch (e) {
+          console.error("Counter sync on foreground error:", e);
+        }
       }
     });
     return () => subscription.remove();
-  }, [db]);
+  }, [db, snapshot]);
+
+  // Counter handlers — increment on tap, reset on the ↺ button.
+  const handleCounterIncrement = useCallback(async () => {
+    if (!db) return;
+    try {
+      const next = await incrementCounter(db);
+      setCounterValue(next.value);
+      void writeWidgetSnapshot({
+        steps: snapshot?.health.steps ?? null,
+        sleepHours: snapshot?.health.sleepHours ?? null,
+        exerciseMinutes: snapshot?.health.exerciseMinutes ?? null,
+        counter: next.value,
+      });
+    } catch (e) {
+      console.error("Counter increment error:", e);
+    }
+  }, [db, snapshot]);
+
+  const handleCounterReset = useCallback(() => {
+    if (!db) return;
+    Alert.alert(
+      "Reset count to 0?",
+      undefined,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const next = await resetCounter(db);
+              setCounterValue(next.value);
+              void writeWidgetSnapshot({
+                steps: snapshot?.health.steps ?? null,
+                sleepHours: snapshot?.health.sleepHours ?? null,
+                exerciseMinutes: snapshot?.health.exerciseMinutes ?? null,
+                counter: next.value,
+              });
+            } catch (e) {
+              console.error("Counter reset error:", e);
+            }
+          },
+        },
+      ],
+    );
+  }, [db, snapshot]);
 
   const startTracking = useCallback(async () => {
     try {
@@ -1111,6 +1178,7 @@ export default function App() {
         steps: health.steps,
         sleepHours: health.sleepHours,
         exerciseMinutes: health.exerciseMinutes,
+        counter: counterValue,
       });
       // Kick off 7-day prefetch in the background so box plots appear on
       // every card without the user having to tap each one. Not awaited —
@@ -1435,6 +1503,22 @@ export default function App() {
               </View>
             )}
 
+            <View style={styles.counterCard}>
+              <TallyCounter
+                value={counterValue}
+                onPress={handleCounterIncrement}
+                testID="counter-tally"
+              />
+              <TouchableOpacity
+                onPress={handleCounterReset}
+                style={styles.counterReset}
+                testID="counter-reset"
+                accessibilityLabel="Reset counter"
+              >
+                <Text style={styles.counterResetText}>↺</Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.metricGrid}>
               {metrics.map((m, i) => (
                 <MetricCard
@@ -1612,6 +1696,29 @@ const styles = StyleSheet.create({
   },
   contentInner: {
     paddingBottom: 20,
+  },
+  counterCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1a1a2e",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  counterReset: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2a2a40",
+  },
+  counterResetText: {
+    color: "#888",
+    fontSize: 18,
+    fontWeight: "600",
   },
   summaryBanner: {
     backgroundColor: "#0f3460",

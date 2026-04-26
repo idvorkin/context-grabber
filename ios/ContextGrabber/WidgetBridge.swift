@@ -36,6 +36,12 @@ class WidgetBridge: NSObject {
     if let ts = payload["grabbedAt"] as? NSNumber {
       defaults.set(ts.doubleValue, forKey: "grabbedAt")
     }
+    if let counter = payload["counter"] as? NSNumber {
+      defaults.set(counter.intValue, forKey: "counter")
+    }
+    if let counterDate = payload["counterDate"] as? String {
+      defaults.set(counterDate, forKey: "counterDate")
+    }
 
     if #available(iOS 14.0, *) {
       WidgetCenter.shared.reloadAllTimelines()
