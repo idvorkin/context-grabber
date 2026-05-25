@@ -293,6 +293,18 @@ describe("Tab navigation", () => {
     expect(result.getByTestId("role-row-amelia")).toBeTruthy();
     expect(result.getByTestId("role-row-zach")).toBeTruthy();
     expect(result.getByTestId("role-row-smiles")).toBeTruthy();
+    expect(result.getByTestId("roles-add-moment")).toBeTruthy();
+  });
+
+  it("tap '+ Tag moment' opens the role picker sheet", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "roles");
+    await act(async () => {
+      fireEvent.press(result.getByTestId("roles-add-moment"));
+    });
+    // Sheet renders one chip per role
+    expect(result.getByTestId("tag-pick-fit")).toBeTruthy();
+    expect(result.getByTestId("tag-pick-tori")).toBeTruthy();
   });
 
   it("Move tab shows the 4 gym timer presets and weekly ring", async () => {

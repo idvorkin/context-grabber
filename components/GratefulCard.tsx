@@ -12,6 +12,7 @@ import {
 import * as SQLite from "expo-sqlite";
 import { createGratitude } from "../lib/journal";
 import { insertEntry, insertAudio, tallyByContextFromDb } from "../lib/journalDb";
+import { recordJournalMoment } from "../lib/autoDetect";
 import { syncJournal } from "../lib/cloudkit";
 import { uuidV4 } from "../lib/uuid";
 import { VoiceRecorder, type RecordedVoice } from "./VoiceRecorder";
@@ -79,6 +80,7 @@ export function GratefulCard({ visible, onClose, db }: Props) {
       });
       await insertEntry(db, entry);
       void syncJournal(db);
+      void recordJournalMoment(db, entry);
 
       setText("");
       setPendingVoice(null);

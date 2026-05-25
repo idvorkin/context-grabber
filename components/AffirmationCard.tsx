@@ -17,6 +17,7 @@ import {
 } from "../lib/affirmations";
 import { createEntry, type JournalContext } from "../lib/journal";
 import { insertEntry, insertAudio, tallyByContextFromDb } from "../lib/journalDb";
+import { recordJournalMoment } from "../lib/autoDetect";
 import { syncJournal } from "../lib/cloudkit";
 import { uuidV4 } from "../lib/uuid";
 import { VoiceRecorder, type RecordedVoice } from "./VoiceRecorder";
@@ -109,6 +110,7 @@ export function AffirmationCard({ visible, onClose, db }: Props) {
       await insertEntry(db, entry);
       // Best-effort background sync; UI doesn't wait.
       void syncJournal(db);
+      void recordJournalMoment(db, entry);
 
       setText("");
       setPendingVoice(null);

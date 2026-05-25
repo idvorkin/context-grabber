@@ -60,6 +60,7 @@ import { buildSummaryExport, buildRolesExportBlock, type WeeklyDataMap, type Loc
 import { ROLES, computeWeekActivity } from "./lib/roles";
 import { getMomentsInRange } from "./lib/roleMoments";
 import { getCurrentWeekIntentions } from "./lib/intentions";
+import { recordWorkoutMoments } from "./lib/autoDetect";
 import { parseDeepLink } from "./lib/deepLink";
 import { writeWidgetSnapshot, readWidgetSnapshot, writeReflectToWidget } from "./lib/widgetSnapshot";
 import { getCounter, incrementCounter, resetCounter, reconcileFromWidget } from "./lib/counter";
@@ -1494,6 +1495,11 @@ export default function App() {
       // bulky locationHistory array — it's reloaded from SQLite directly.
       if (db) {
         void setLastSnapshot(db, { ...result, locationHistory: [] });
+        // Auto-detect role moments from HealthKit workouts. Idempotent by
+        // workout startTime — re-grabs across the same day don't double-count.
+        if (health.workouts && health.workouts.length > 0) {
+          void recordWorkoutMoments(db, health.workouts);
+        }
       }
       // Fire-and-forget: push today's headline to the home-screen widget's
       // shared suite. Never awaited — widget refresh is best-effort.
