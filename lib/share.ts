@@ -80,7 +80,37 @@ export type PlacesSummary = {
   recent: string; // "Mon Mar 15: Home 10pm–7am (9h), Office 9am–5pm (8h)"
 };
 
+export type RoleExportEntry = {
+  id: string;
+  name: string;
+  score: number;
+  /** "strong" if score ≥ 50, otherwise "quiet". */
+  qualifier: "strong" | "quiet";
+  /** One-line activity summary, e.g. "3 gym · 6 days weighed · 7.1h avg". */
+  activity: string;
+  daysSinceLastShown: number | null;
+};
+
+export type RoleAttentionEntry = {
+  id: string;
+  name: string;
+  reason: string;
+};
+
+export type RoleIntentionExportEntry = {
+  roleId: string;
+  roleName: string;
+  text: string;
+};
+
+export type RolesExportBlock = {
+  roles: RoleExportEntry[];
+  attention: RoleAttentionEntry[];
+  intentions: RoleIntentionExportEntry[];
+};
+
 export type SummaryExport = {
+  roles: RolesExportBlock | null;
   today: TodayHeadline;
   days: DailyExportEntry[];
   places: PlacesSummary | null;
@@ -194,13 +224,53 @@ export function buildSummaryExport(
   data: WeeklyDataMap,
   health: HealthData,
   places: PlacesSummary | null,
+  roles: RolesExportBlock | null = null,
 ): SummaryExport {
   // Canonical "today" is the last date in the 7-day window (data is sorted ascending).
   const todayDate = data.steps[data.steps.length - 1]?.date ?? "";
   return {
+    roles,
     today: buildTodayHeadline(health, todayDate),
     days: buildDailyExport(data),
     places,
+  };
+}
+
+/**
+ * Build the roles section for Larry — strong vs. quiet labels, attention
+ * reasons, and any saved intentions. Caller computes the inputs from
+ * `computeWeekActivity` + `getCurrentWeekIntentions`.
+ */
+export function buildRolesExportBlock(args: {
+  activities: Array<{
+    roleId: string;
+    roleName: string;
+    score: number;
+    activityLine: string;
+    daysSinceLastShown: number | null;
+    attention: { flagged: boolean; reason: string | null };
+  }>;
+  intentions: Array<{ roleId: string; roleName: string; text: string }>;
+}): RolesExportBlock {
+  const roles: RoleExportEntry[] = args.activities.map((a) => ({
+    id: a.roleId,
+    name: a.roleName,
+    score: a.score,
+    qualifier: a.score >= 50 ? "strong" : "quiet",
+    activity: a.activityLine,
+    daysSinceLastShown: a.daysSinceLastShown,
+  }));
+  const attention: RoleAttentionEntry[] = args.activities
+    .filter((a) => a.attention.flagged && a.attention.reason)
+    .map((a) => ({
+      id: a.roleId,
+      name: a.roleName,
+      reason: a.attention.reason as string,
+    }));
+  return {
+    roles,
+    attention,
+    intentions: args.intentions,
   };
 }
 

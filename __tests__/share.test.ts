@@ -1,4 +1,4 @@
-import { dayOfWeek, buildDailyExport, buildSummaryExport, buildTodayHeadline, buildWeeklyStats, type WeeklyDataMap } from "../lib/share";
+import { dayOfWeek, buildDailyExport, buildSummaryExport, buildTodayHeadline, buildWeeklyStats, buildRolesExportBlock, type WeeklyDataMap } from "../lib/share";
 import type { HealthData } from "../lib/health";
 import type { HeartRateDaily } from "../lib/weekly";
 
@@ -332,5 +332,79 @@ describe("buildSummaryExport", () => {
     // formatTime uses UTC — 06:00 → "6am", 14:30 → "2:30pm"
     expect(today.bedtime).toBe("6am");
     expect(today.wakeTime).toBe("2:30pm");
+  });
+});
+
+describe("buildRolesExportBlock", () => {
+  it("flags strong (score ≥ 50) and quiet rows separately", () => {
+    const block = buildRolesExportBlock({
+      activities: [
+        {
+          roleId: "fit",
+          roleName: "Fit fellow",
+          score: 72,
+          activityLine: "3 gym · 6 weighed",
+          daysSinceLastShown: 0,
+          attention: { flagged: false, reason: null },
+        },
+        {
+          roleId: "tori",
+          roleName: "Husband to Tori",
+          score: 10,
+          activityLine: "no signal this week",
+          daysSinceLastShown: 11,
+          attention: { flagged: true, reason: "Last shown 11 days ago" },
+        },
+      ],
+      intentions: [],
+    });
+    expect(block.roles[0]).toEqual(
+      expect.objectContaining({ id: "fit", qualifier: "strong" }),
+    );
+    expect(block.roles[1]).toEqual(
+      expect.objectContaining({ id: "tori", qualifier: "quiet" }),
+    );
+  });
+
+  it("populates attention entries only for flagged roles with a reason", () => {
+    const block = buildRolesExportBlock({
+      activities: [
+        {
+          roleId: "fit",
+          roleName: "Fit fellow",
+          score: 80,
+          activityLine: "3 gym",
+          daysSinceLastShown: 0,
+          attention: { flagged: false, reason: null },
+        },
+        {
+          roleId: "tori",
+          roleName: "Husband to Tori",
+          score: 10,
+          activityLine: "no signal",
+          daysSinceLastShown: 11,
+          attention: { flagged: true, reason: "Last shown 11 days ago" },
+        },
+      ],
+      intentions: [],
+    });
+    expect(block.attention).toHaveLength(1);
+    expect(block.attention[0]).toEqual({
+      id: "tori",
+      name: "Husband to Tori",
+      reason: "Last shown 11 days ago",
+    });
+  });
+
+  it("passes intentions through unchanged", () => {
+    const block = buildRolesExportBlock({
+      activities: [],
+      intentions: [
+        { roleId: "tori", roleName: "Husband to Tori", text: "Plan a date this week" },
+      ],
+    });
+    expect(block.intentions).toEqual([
+      { roleId: "tori", roleName: "Husband to Tori", text: "Plan a date this week" },
+    ]);
   });
 });

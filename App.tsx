@@ -56,7 +56,10 @@ import {
   formatDateKey,
   daysSinceLastDailyValue,
 } from "./lib/weekly";
-import { buildSummaryExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary } from "./lib/share";
+import { buildSummaryExport, buildRolesExportBlock, type WeeklyDataMap, type LocationSummary, type PlacesSummary, type RolesExportBlock } from "./lib/share";
+import { ROLES, computeWeekActivity } from "./lib/roles";
+import { getMomentsInRange } from "./lib/roleMoments";
+import { getCurrentWeekIntentions } from "./lib/intentions";
 import { parseDeepLink } from "./lib/deepLink";
 import { writeWidgetSnapshot, readWidgetSnapshot, writeReflectToWidget } from "./lib/widgetSnapshot";
 import { getCounter, incrementCounter, resetCounter, reconcileFromWidget } from "./lib/counter";
@@ -1554,8 +1557,47 @@ export default function App() {
           places = { weekly: v2.summaryWeekly, recent: v2.summaryRecent };
         }
       }
+      // Build the roles block for Larry — best-effort: empty roles
+      // shouldn't block sharing the rest of the summary.
+      let rolesBlock: RolesExportBlock | null = null;
+      try {
+        if (db) {
+          const now = Date.now();
+          const sevenDaysAgo = now - 7 * 24 * 3600 * 1000;
+          const [moments, intentions] = await Promise.all([
+            getMomentsInRange(db, sevenDaysAgo, now),
+            getCurrentWeekIntentions(db),
+          ]);
+          const nowDate = new Date();
+          const activities = ROLES.map((def) => {
+            const a = computeWeekActivity(def.id, {
+              health: weeklyData,
+              moments,
+              now: nowDate,
+            });
+            return {
+              roleId: def.id,
+              roleName: def.name,
+              score: a.score,
+              activityLine: a.activityLine,
+              daysSinceLastShown: a.daysSinceLastShown,
+              attention: a.attention,
+            };
+          });
+          rolesBlock = buildRolesExportBlock({
+            activities,
+            intentions: intentions.map((i) => ({
+              roleId: i.roleId,
+              roleName: ROLES.find((r) => r.id === i.roleId)?.name ?? i.roleId,
+              text: i.text,
+            })),
+          });
+        }
+      } catch {
+        // Roles block is optional — fall through with null
+      }
       setShareStatus("Sharing...");
-      const summaryExport = buildSummaryExport(weeklyData, snapshot.health, places);
+      const summaryExport = buildSummaryExport(weeklyData, snapshot.health, places, rolesBlock);
       // Compact JSON — pretty-print is a debugger affordance, not a delivery format.
       const json = JSON.stringify(summaryExport);
       await Share.share({
