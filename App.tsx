@@ -1767,7 +1767,6 @@ export default function App() {
         <BodyScreen
           snapshot={snapshot}
           metrics={metrics}
-          onOpenLocationDetail={() => setLocationExpanded(true)}
         />
       )}
       {activeTab === "move" && (
@@ -1795,7 +1794,14 @@ export default function App() {
           onCounterReset={handleCounterReset}
         />
       )}
-      {activeTab === "places" && <PlacesScreen />}
+      {activeTab === "places" && (
+        <PlacesScreen
+          snapshot={snapshot}
+          knownPlaces={knownPlaces}
+          onOpenLocationDetail={() => setLocationExpanded(true)}
+          onOpenSettings={() => setSettingsVisible(true)}
+        />
+      )}
       {activeTab === "roles" && <RolesScreen />}
 
       <TabBar active={activeTab} onChange={setActiveTab} />

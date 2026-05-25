@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { MetricCard, type MetricCardProps } from "../components/MetricCard";
 import { WeekStrip, buildWeekStripDays } from "../components/WeekStrip";
 import { formatDateKey } from "../lib/weekly";
@@ -8,7 +8,6 @@ import type { ContextSnapshot } from "../lib/appTypes";
 type Props = {
   snapshot: ContextSnapshot | null;
   metrics: MetricCardProps[];
-  onOpenLocationDetail: () => void;
   /** Optional: dates that should show a workout-day dot. Map of dateKey → true. */
   workoutDays?: Set<string>;
 };
@@ -16,7 +15,6 @@ type Props = {
 export function BodyScreen({
   snapshot,
   metrics,
-  onOpenLocationDetail,
   workoutDays,
 }: Props) {
   const days = useMemo(
@@ -51,37 +49,6 @@ export function BodyScreen({
                 color={m.color}
               />
             ))}
-            <TouchableOpacity
-              style={styles.metricCard}
-              onPress={onOpenLocationDetail}
-              testID="location-card"
-              activeOpacity={0.7}
-            >
-              <Text style={styles.metricLabel}>Location</Text>
-              {snapshot.location ? (
-                <Text style={styles.metricValue}>
-                  {snapshot.location.latitude.toFixed(2)},{" "}
-                  {snapshot.location.longitude.toFixed(2)}
-                </Text>
-              ) : (
-                <Text style={[styles.metricValue, styles.metricValueNull]}>—</Text>
-              )}
-              <Text style={styles.metricSublabel}>
-                {(() => {
-                  const latestMs = snapshot.location?.timestamp
-                    ?? (snapshot.locationHistory.length > 0
-                      ? snapshot.locationHistory[snapshot.locationHistory.length - 1].timestamp
-                      : null);
-                  if (latestMs == null) return "Unavailable";
-                  const ageMs = Date.now() - latestMs;
-                  if (ageMs < 5 * 60 * 1000) return "now";
-                  if (ageMs < 60 * 60 * 1000) return `${Math.round(ageMs / 60000)} min ago`;
-                  if (ageMs < 24 * 60 * 60 * 1000) return `${Math.round(ageMs / 3600000)} hr ago`;
-                  const days = Math.round(ageMs / (24 * 3600000));
-                  return days === 1 ? "yesterday" : `${days} days ago`;
-                })()}
-              </Text>
-            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.empty}>

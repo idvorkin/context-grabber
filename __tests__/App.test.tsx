@@ -99,12 +99,12 @@ describe("App interactions", () => {
     expect(getByText(/Raw/)).toBeTruthy();
   });
 
-  it("shows location coordinates on Body tab after auto-grab", async () => {
+  it("shows location coordinates on Places tab after auto-grab", async () => {
     const result = await renderApp();
-    await gotoTab(result, "body");
+    await gotoTab(result, "places");
     const { getByText } = result;
-    expect(getByText("Location")).toBeTruthy();
-    expect(getByText(/47\.61/)).toBeTruthy();
+    // PlacesScreen uses toFixed(4), so we match the first 4 digits.
+    expect(getByText(/47\.60/)).toBeTruthy();
     expect(getByText(/-122\.33/)).toBeTruthy();
   });
 });
@@ -235,7 +235,7 @@ describe("Dashboard display after grab", () => {
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
     const result = await renderApp();
-    await gotoTab(result, "body");
+    await gotoTab(result, "places");
     expect(result.getByText("Unavailable")).toBeTruthy();
   });
 });
@@ -278,9 +278,16 @@ describe("Tab navigation", () => {
     expect(result.getByTestId("mind-journal")).toBeTruthy();
   });
 
-  it("switches to Places tab and shows Coming soon stub", async () => {
+  it("switches to Places tab and shows the stylized map", async () => {
     const result = await renderApp();
     await gotoTab(result, "places");
+    expect(result.getByTestId("stylized-map")).toBeTruthy();
+    expect(result.getByTestId("places-open-detail")).toBeTruthy();
+  });
+
+  it("switches to Roles tab and shows Coming soon stub", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "roles");
     expect(result.getByText("Coming soon")).toBeTruthy();
   });
 
