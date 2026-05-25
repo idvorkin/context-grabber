@@ -1,5 +1,5 @@
 import React from "react";
-import { render, act } from "@testing-library/react-native";
+import { render, act, fireEvent } from "@testing-library/react-native";
 import * as SQLite from "expo-sqlite";
 import HealthKit from "@kingstinct/react-native-healthkit";
 import * as Location from "expo-location";
@@ -219,5 +219,37 @@ describe("Dashboard display after grab", () => {
 
     const { getByText } = await renderApp();
     expect(getByText("Unavailable")).toBeTruthy();
+  });
+});
+
+describe("Tab navigation", () => {
+  it("renders the tab bar", async () => {
+    const { getByTestId } = await renderApp();
+    expect(getByTestId("tab-bar")).toBeTruthy();
+  });
+
+  it("renders all six tabs in spec order", async () => {
+    const { getByTestId } = await renderApp();
+    expect(getByTestId("tab-today")).toBeTruthy();
+    expect(getByTestId("tab-body")).toBeTruthy();
+    expect(getByTestId("tab-move")).toBeTruthy();
+    expect(getByTestId("tab-mind")).toBeTruthy();
+    expect(getByTestId("tab-places")).toBeTruthy();
+    expect(getByTestId("tab-roles")).toBeTruthy();
+  });
+
+  it("starts on Today tab", async () => {
+    const { getByText } = await renderApp();
+    expect(getByText("Context Grabber")).toBeTruthy();
+  });
+
+  it("switches to Body tab when its tab is pressed", async () => {
+    const { getByTestId, getAllByText } = await renderApp();
+    await act(async () => {
+      fireEvent.press(getByTestId("tab-body"));
+    });
+    // Body screen renders "Body" title and "Coming soon" placeholder
+    const comingSoon = getAllByText("Coming soon");
+    expect(comingSoon.length).toBeGreaterThanOrEqual(1);
   });
 });

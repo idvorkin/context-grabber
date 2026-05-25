@@ -8,14 +8,10 @@ import {
   TouchableOpacity,
   Share,
   Platform,
-  Switch,
-  TextInput,
   AppState,
   Alert,
   Modal,
   Linking,
-  RefreshControl,
-
 } from "react-native";
 import * as Location from "expo-location";
 import * as TaskManager from "expo-task-manager";
@@ -72,7 +68,6 @@ import { GratefulCard } from "./components/GratefulCard";
 import { JournalScreen } from "./components/JournalScreen";
 import { CopyableError } from "./components/CopyableError";
 import * as Clipboard from "expo-clipboard";
-import TallyCounter from "./components/TallyCounter";
 import { clusterLocations, clusterLocationsV2 } from "./lib/clustering_v2";
 import { type KnownPlace } from "./lib/places";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./lib/stats";
@@ -85,27 +80,22 @@ import {
   partitionDays,
 } from "./lib/healthCache";
 import MetricDetailSheet from "./components/MetricDetailSheet";
-import BoxPlot from "./components/BoxPlot";
 import SettingsModal from "./components/SettingsModal";
 import LocationDetailSheet from "./components/LocationDetailSheet";
 import GymTimerScreen from "./components/GymTimerScreen";
+import type { MetricCardProps } from "./components/MetricCard";
+import { TabBar, type TabId } from "./components/TabBar";
+import { TodayScreen } from "./screens/TodayScreen";
+import { BodyScreen } from "./screens/BodyScreen";
+import { MoveScreen } from "./screens/MoveScreen";
+import { MindScreen } from "./screens/MindScreen";
+import { PlacesScreen } from "./screens/PlacesScreen";
+import { RolesScreen } from "./screens/RolesScreen";
+import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
 // --- Constants ---
 
 const LOCATION_TASK_NAME = "background-location-task";
-
-type LocationData = {
-  latitude: number;
-  longitude: number;
-  timestamp: number;
-} | null;
-
-type ContextSnapshot = {
-  timestamp: string;
-  health: HealthData;
-  location: LocationData;
-  locationHistory: LocationHistoryItem[];
-};
 
 const QTI = {
   stepCount: "HKQuantityTypeIdentifierStepCount" as QuantityTypeIdentifier,
@@ -171,61 +161,6 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     console.error("Failed to store background location:", e);
   }
 });
-
-// --- MetricCard Component ---
-
-type MetricCardProps = {
-  metricKey: MetricKey;
-  label: string;
-  value: string;
-  sublabel: string;
-  onPress: (key: MetricKey) => void;
-  boxPlotStats?: BoxPlotStats | null;
-  color?: string;
-  /** Multi-box-plot mode: used by composite metrics (Movement) to stack mini
-   *  box plots for each underlying series. When present, overrides
-   *  boxPlotStats and renders the sublabel above the stack. */
-  boxPlotStatsList?: Array<{ stats: BoxPlotStats; color: string }>;
-};
-
-function MetricCard({
-  metricKey,
-  label,
-  value,
-  sublabel,
-  onPress,
-  boxPlotStats,
-  color,
-  boxPlotStatsList,
-}: MetricCardProps) {
-  const isNull = value === "\u2014";
-  return (
-    <TouchableOpacity
-      style={styles.metricCard}
-      onPress={() => onPress(metricKey)}
-      activeOpacity={0.7}
-    >
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={[styles.metricValue, isNull && styles.metricValueNull]}>
-        {value}
-      </Text>
-      {boxPlotStatsList && boxPlotStatsList.length > 0 ? (
-        <>
-          <Text style={styles.metricSublabel}>{sublabel}</Text>
-          <View style={{ marginTop: 4 }}>
-            {boxPlotStatsList.map((item, i) => (
-              <BoxPlot key={i} stats={item.stats} color={item.color} compact />
-            ))}
-          </View>
-        </>
-      ) : boxPlotStats && color ? (
-        <BoxPlot stats={boxPlotStats} color={color} />
-      ) : (
-        <Text style={styles.metricSublabel}>{sublabel}</Text>
-      )}
-    </TouchableOpacity>
-  );
-}
 
 // --- About Modal ---
 
@@ -587,6 +522,7 @@ export default function App() {
   const [gratefulVisible, setGratefulVisible] = useState(false);
   const [journalVisible, setJournalVisible] = useState(false);
   const [reflectTally, setReflectTally] = useState({ opportunity: 0, didit: 0, grateful: 0 });
+  const [activeTab, setActiveTab] = useState<TabId>("today");
 
   // Configure CloudKit once at boot. Safe to call before iCloud account is known —
   // configure() just registers the container ID; account status is checked lazily.
@@ -1789,55 +1725,41 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>Context Grabber</Text>
-          </View>
-          <View style={styles.headerButtons}>
-            {loading && loadingStartedAt != null && (
-              <View style={styles.loadingPill}>
-                <Text style={styles.loadingPillText}>
-                  {Math.max(0, Math.floor((Date.now() - loadingStartedAt) / 1000))}s
-                  {loadingPhase ? ` · ${loadingPhase}` : ""}
-                </Text>
-              </View>
-            )}
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={() => setGymTimerVisible(true)}
-              accessibilityLabel="Gym Timer"
-            >
-              <Text style={styles.headerIconText}>{"🏋️"}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={() => setSettingsVisible(true)}
-              accessibilityLabel="Settings"
-            >
-              <Text style={styles.headerIconText}>{"\u2699"}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
 
-      {otaUpdateReady && (
-        <TouchableOpacity
-          style={styles.updateReadyBanner}
-          onPress={async () => {
-            try {
-              await Updates.reloadAsync();
-            } catch {
-              setOtaUpdateReady(false);
-            }
-          }}
-          accessibilityLabel="Reload with new update"
-        >
-          <Text style={styles.updateReadyText}>
-            {"\u2193"} Update ready — tap to reload
-          </Text>
-        </TouchableOpacity>
+      {activeTab === "today" && (
+        <TodayScreen
+          snapshot={snapshot}
+          loading={loading}
+          loadingStartedAt={loadingStartedAt}
+          loadingPhase={loadingPhase}
+          error={error}
+          otaUpdateReady={otaUpdateReady}
+          setOtaUpdateReady={setOtaUpdateReady}
+          counterValue={counterValue}
+          reflectTally={reflectTally}
+          metrics={metrics}
+          sharing={sharing}
+          shareStatus={shareStatus}
+          onOpenGymTimer={() => setGymTimerVisible(true)}
+          onOpenSettings={() => setSettingsVisible(true)}
+          onOpenAffirmation={() => setAffirmationVisible(true)}
+          onOpenGrateful={() => setGratefulVisible(true)}
+          onOpenJournal={() => setJournalVisible(true)}
+          onOpenLocationDetail={() => setLocationExpanded(true)}
+          onCounterIncrement={handleCounterIncrement}
+          onCounterReset={handleCounterReset}
+          onRefresh={grabContext}
+          onShareSnapshot={shareSnapshot}
+          onShareRaw={shareRaw}
+        />
       )}
+      {activeTab === "body" && <BodyScreen />}
+      {activeTab === "move" && <MoveScreen />}
+      {activeTab === "mind" && <MindScreen />}
+      {activeTab === "places" && <PlacesScreen />}
+      {activeTab === "roles" && <RolesScreen />}
+
+      <TabBar active={activeTab} onChange={setActiveTab} />
 
       <AboutModal
         visible={aboutVisible}
@@ -1897,164 +1819,17 @@ export default function App() {
         setSleepTargetHours={setSleepTargetHoursState}
       />
 
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentInner}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={grabContext}
-            tintColor="#4cc9f0"
-          />
-        }
-      >
-        {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+      <LocationDetailSheet
+        visible={locationExpanded}
+        onClose={() => setLocationExpanded(false)}
+        db={db}
+        location={snapshot?.location ?? null}
+        locationHistory={snapshot?.locationHistory ?? []}
+        knownPlaces={knownPlaces}
+        setKnownPlaces={setKnownPlaces}
+        setError={setError}
+      />
 
-        {snapshot && (
-          <>
-            <View style={styles.counterCard}>
-              <TallyCounter
-                value={counterValue}
-                onPress={handleCounterIncrement}
-                testID="counter-tally"
-              />
-              <TouchableOpacity
-                onPress={handleCounterIncrement}
-                style={styles.counterPlusOne}
-                testID="counter-plus-one"
-                accessibilityLabel="Add one to counter"
-              >
-                <Text style={styles.counterPlusOneText}>+1</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCounterReset}
-                style={styles.counterReset}
-                testID="counter-reset"
-                accessibilityLabel="Reset counter"
-              >
-                <Text style={styles.counterResetText}>↺</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={reflectStyles.zone}>
-              <View style={reflectStyles.headerRow}>
-                <Text style={reflectStyles.heading}>Reflect</Text>
-                <Text style={reflectStyles.tally}>
-                  ☀️ {reflectTally.opportunity}  ✓ {reflectTally.didit}  🙏 {reflectTally.grateful}
-                </Text>
-              </View>
-              <View style={reflectStyles.btnRow}>
-                <TouchableOpacity
-                  style={[reflectStyles.btn, reflectStyles.btnAffirm]}
-                  onPress={() => setAffirmationVisible(true)}
-                  testID="reflect-affirm"
-                >
-                  <Text style={reflectStyles.btnText}>🎯 Affirm</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[reflectStyles.btn, reflectStyles.btnGrateful]}
-                  onPress={() => setGratefulVisible(true)}
-                  testID="reflect-grateful"
-                >
-                  <Text style={reflectStyles.btnText}>🙏 Grateful</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[reflectStyles.btn, reflectStyles.btnJournal]}
-                  onPress={() => setJournalVisible(true)}
-                  testID="reflect-journal"
-                >
-                  <Text style={reflectStyles.btnText}>📖 Journal</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.metricGrid}>
-              {metrics.map((m) => (
-                <MetricCard
-                  key={m.label}
-                  metricKey={m.metricKey}
-                  label={m.label}
-                  value={m.value}
-                  sublabel={m.sublabel}
-                  onPress={handleMetricPress}
-                  boxPlotStats={m.boxPlotStats}
-                  boxPlotStatsList={m.boxPlotStatsList}
-                  color={m.color}
-                />
-              ))}
-              <TouchableOpacity
-                style={styles.metricCard}
-                onPress={() => setLocationExpanded(true)}
-                testID="location-card"
-                activeOpacity={0.7}
-              >
-                <Text style={styles.metricLabel}>Location</Text>
-                {snapshot.location ? (
-                  <Text style={styles.metricValue}>
-                    {snapshot.location.latitude.toFixed(2)}, {snapshot.location.longitude.toFixed(2)}
-                  </Text>
-                ) : (
-                  <Text style={[styles.metricValue, styles.metricValueNull]}>—</Text>
-                )}
-                <Text style={styles.metricSublabel}>
-                  {(() => {
-                    const latestMs = snapshot.location?.timestamp
-                      ?? (snapshot.locationHistory.length > 0
-                        ? snapshot.locationHistory[snapshot.locationHistory.length - 1].timestamp
-                        : null);
-                    if (latestMs == null) return "Unavailable";
-                    const ageMs = Date.now() - latestMs;
-                    if (ageMs < 5 * 60 * 1000) return "now";
-                    if (ageMs < 60 * 60 * 1000) return `${Math.round(ageMs / 60000)} min ago`;
-                    if (ageMs < 24 * 60 * 60 * 1000) return `${Math.round(ageMs / 3600000)} hr ago`;
-                    const days = Math.round(ageMs / (24 * 3600000));
-                    return days === 1 ? "yesterday" : `${days} days ago`;
-                  })()}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <LocationDetailSheet
-              visible={locationExpanded}
-              onClose={() => setLocationExpanded(false)}
-              db={db}
-              location={snapshot.location}
-              locationHistory={snapshot.locationHistory}
-              knownPlaces={knownPlaces}
-              setKnownPlaces={setKnownPlaces}
-              setError={setError}
-            />
-
-            <Text style={styles.timestamp}>{snapshot.timestamp}</Text>
-          </>
-        )}
-      </ScrollView>
-
-      {snapshot && (
-        <View style={styles.buttons}>
-          <View style={styles.shareRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.shareButton, styles.shareButtonHalf]}
-              onPress={shareSnapshot}
-              disabled={sharing}
-            >
-              <Text style={styles.buttonText}>
-                {sharing ? (shareStatus || "Preparing...") : "\u2197 Summary"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.rawButton, styles.shareButtonHalf]}
-              onPress={shareRaw}
-            >
-              <Text style={styles.buttonText}>{"\u2197"} Raw</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
       {selectedMetric && (() => {
         // Movement overlay data derived from the three underlying cached series.
         let movementData: MovementOverlayData | null = null;
@@ -2119,217 +1894,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#1a1a2e",
   },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#e0e0e0",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  contentInner: {
-    paddingBottom: 20,
-  },
-  counterCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#1a1a2e",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 12,
-  },
-  counterPlusOne: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "rgba(76, 201, 240, 0.18)",
-    marginLeft: "auto",
-    marginRight: 8,
-  },
-  counterPlusOneText: {
-    color: "#4cc9f0",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  counterReset: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#2a2a40",
-  },
-  counterResetText: {
-    color: "#888",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  metricGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  metricCard: {
-    backgroundColor: "#16213e",
-    borderRadius: 12,
-    padding: 16,
-    width: "48%",
-    marginBottom: 10,
-  },
+  // AboutModal-only styles
   metricLabel: {
     fontSize: 13,
     fontWeight: "600",
     color: "#4cc9f0",
     marginBottom: 4,
-  },
-  metricValue: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#e0e0e0",
-  },
-  metricValueNull: {
-    color: "#555",
-  },
-  metricSublabel: {
-    fontSize: 11,
-    color: "#888",
-    marginTop: 2,
-  },
-  settingsCard: {
-    backgroundColor: "#16213e",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
-  },
-  settingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  settingText: {
-    fontSize: 16,
-    color: "#ccc",
-  },
-  retentionInput: {
-    backgroundColor: "#1a1a2e",
-    color: "#fff",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    fontSize: 16,
-    width: 60,
-    textAlign: "center",
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  timestamp: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 12,
-    textAlign: "right",
-  },
-  errorBox: {
-    backgroundColor: "#3d1f1f",
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-  },
-  errorText: {
-    color: "#ff6b6b",
-    fontSize: 14,
-  },
-  buttons: {
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
-    gap: 10,
-  },
-  button: {
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-  },
-  shareButton: {
-    backgroundColor: "#2d6a4f",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  headerText: {
-    flex: 1,
-  },
-  headerButtons: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  headerIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#16213e",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerIconText: {
-    color: "#4cc9f0",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  loadingPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: "rgba(76,201,240,0.15)",
-  },
-  loadingPillText: {
-    color: "#4cc9f0",
-    fontSize: 11,
-    fontWeight: "600",
-    fontVariant: ["tabular-nums"],
-  },
-  updateReadyBanner: {
-    marginHorizontal: 20,
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: "#1d4e4a",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#4cc9f0",
-    alignItems: "center",
-  },
-  updateReadyText: {
-    color: "#4cc9f0",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  shareRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  shareButtonHalf: {
-    flex: 1,
-  },
-  rawButton: {
-    backgroundColor: "#3d405b",
   },
   modalContainer: {
     flex: 1,
@@ -2397,63 +1967,6 @@ const styles = StyleSheet.create({
   aboutLink: {
     color: "#4361ee",
   },
-  knownPlaceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#1a1a2e",
-    marginTop: 4,
-  },
-  knownPlaceInfo: {
-    flex: 1,
-  },
-  knownPlaceName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#e0e0e0",
-  },
-  knownPlaceDetail: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 2,
-  },
-  knownPlaceDelete: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#3d1f1f",
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 8,
-  },
-  knownPlaceDeleteText: {
-    color: "#ff6b6b",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  addPlaceForm: {
-    marginTop: 12,
-    gap: 8,
-  },
-  addPlaceInput: {
-    backgroundColor: "#1a1a2e",
-    color: "#fff",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  addPlaceCoordRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  addPlaceCoordInput: {
-    flex: 1,
-  },
   addPlaceButton: {
     backgroundColor: "#2d6a4f",
     borderRadius: 8,
@@ -2465,40 +1978,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-});
-
-
-const reflectStyles = StyleSheet.create({
-  zone: {
-    // No horizontal margin — the outer ScrollView already has
-    // paddingHorizontal: 20 (see styles.content), and the surrounding
-    // counterCard / metricGrid have no extra margin, so the Reflect
-    // zone needs none either to line up flush with them.
-    backgroundColor: "#0e0e0e",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#1a1a1a",
-    marginBottom: 4,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  heading: { color: "#fff", fontSize: 14, fontWeight: "600", letterSpacing: 0.5, textTransform: "uppercase" },
-  tally: { color: "#bbb", fontSize: 13, fontVariant: ["tabular-nums"] },
-  btnRow: { flexDirection: "row", gap: 8 },
-  btn: {
-    flex: 1,
-    paddingVertical: 14,
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  btnAffirm: { backgroundColor: "#1a2a3a" },
-  btnGrateful: { backgroundColor: "#2a1f1a" },
-  btnJournal: { backgroundColor: "#1a1a1a" },
-  btnText: { color: "#fff", fontSize: 14, fontWeight: "600" },
 });
