@@ -1,28 +1,196 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import type * as SQLite from "expo-sqlite";
+import {
+  ROLES,
+  computeWeekActivity,
+  type RoleWeekActivity,
+  type RoleId,
+  type WeeklyCacheLike,
+} from "../lib/roles";
+import { getMomentsInRange, type RoleMoment } from "../lib/roleMoments";
 
-export function RolesScreen() {
+type Props = {
+  db: SQLite.SQLiteDatabase | null;
+  weeklyCache: WeeklyCacheLike;
+};
+
+export function RolesScreen({ db, weeklyCache }: Props) {
+  const [moments, setMoments] = useState<RoleMoment[]>([]);
+
+  useEffect(() => {
+    if (!db) return;
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 24 * 3600 * 1000;
+    void (async () => {
+      try {
+        const rows = await getMomentsInRange(db, sevenDaysAgo, now);
+        setMoments(rows);
+      } catch {
+        // Tolerate missing table on devices that haven't migrated yet.
+      }
+    })();
+  }, [db]);
+
+  const activities = useMemo(() => {
+    const now = new Date();
+    const out: Record<RoleId, RoleWeekActivity> = {} as any;
+    for (const def of ROLES) {
+      out[def.id] = computeWeekActivity(def.id, {
+        health: weeklyCache,
+        moments,
+        now,
+      });
+    }
+    return out;
+  }, [weeklyCache, moments]);
+
+  const attention = useMemo(
+    () => ROLES.filter((r) => activities[r.id].attention.flagged),
+    [activities],
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Roles</Text>
+        <Text style={styles.subtitle}>Living my eulogy</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.placeholder}>Coming soon</Text>
-        <Text style={styles.sub}>
-          The 11 eulogy roles as a living dashboard. Constellation, year
-          heatmap, role detail with eulogy passages.
-        </Text>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {attention.length > 0 && (
+          <View style={styles.attentionCard}>
+            <Text style={styles.attentionHeading}>Needs attention</Text>
+            {attention.slice(0, 3).map((r) => {
+              const a = activities[r.id];
+              return (
+                <View key={r.id} style={styles.attentionRow}>
+                  <View style={[styles.dot, { backgroundColor: r.color }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.attentionName}>{r.name}</Text>
+                    <Text style={styles.attentionReason}>
+                      {a.attention.reason}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        <Text style={styles.sectionHeading}>All 11 · this week</Text>
+        {ROLES.map((r) => {
+          const a = activities[r.id];
+          return (
+            <View
+              key={r.id}
+              style={styles.roleRow}
+              testID={`role-row-${r.id}`}
+            >
+              <View style={[styles.dot, { backgroundColor: r.color }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.roleName}>{r.short}</Text>
+                <Text style={styles.roleActivity}>{a.activityLine}</Text>
+              </View>
+              <View style={styles.scorePill}>
+                <Text
+                  style={[
+                    styles.scoreText,
+                    a.score < 25 && styles.scoreTextDim,
+                  ]}
+                >
+                  {a.score}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+
+        <View style={styles.footnote}>
+          <Text style={styles.footnoteText}>
+            Each role's score is a 0–100 blend of HealthKit signals and
+            manually-tagged moments from the last 7 days. Attention rules
+            fire when a role is quiet past its threshold (3–7 days).
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111828" },
-  header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 },
-  title: { fontSize: 28, fontWeight: "700", color: "#e0e0e0" },
-  content: { flexGrow: 1, justifyContent: "center", alignItems: "center", padding: 20 },
-  placeholder: { fontSize: 18, fontWeight: "600", color: "#888", marginBottom: 8 },
-  sub: { fontSize: 13, color: "#666", textAlign: "center" },
+  container: { flex: 1, backgroundColor: "#1a1a2e" },
+  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#e0e0e0" },
+  subtitle: { color: "#888", fontSize: 13, marginTop: 2 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 24 },
+  attentionCard: {
+    backgroundColor: "#2a2010",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(232, 168, 124, 0.3)",
+  },
+  attentionHeading: {
+    color: "#e8a87c",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 8,
+  },
+  attentionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  attentionName: { color: "#e0e0e0", fontSize: 14, fontWeight: "600" },
+  attentionReason: { color: "#bbb", fontSize: 12, marginTop: 2 },
+  sectionHeading: {
+    color: "#4cc9f0",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 8,
+  },
+  roleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#16213e",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 6,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 12,
+  },
+  roleName: { color: "#e0e0e0", fontSize: 15, fontWeight: "600" },
+  roleActivity: { color: "#888", fontSize: 12, marginTop: 2 },
+  scorePill: {
+    width: 38,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#1a1a2e",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scoreText: {
+    color: "#4cc9f0",
+    fontSize: 12,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
+  scoreTextDim: { color: "#666" },
+  footnote: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "rgba(255,255,255,0.02)",
+    borderRadius: 8,
+  },
+  footnoteText: { color: "#666", fontSize: 11, lineHeight: 16 },
 });

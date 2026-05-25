@@ -285,10 +285,14 @@ describe("Tab navigation", () => {
     expect(result.getByTestId("places-open-detail")).toBeTruthy();
   });
 
-  it("switches to Roles tab and shows Coming soon stub", async () => {
+  it("switches to Roles tab and shows the 11 role rows", async () => {
     const result = await renderApp();
     await gotoTab(result, "roles");
-    expect(result.getByText("Coming soon")).toBeTruthy();
+    expect(result.getByTestId("role-row-fit")).toBeTruthy();
+    expect(result.getByTestId("role-row-tori")).toBeTruthy();
+    expect(result.getByTestId("role-row-amelia")).toBeTruthy();
+    expect(result.getByTestId("role-row-zach")).toBeTruthy();
+    expect(result.getByTestId("role-row-smiles")).toBeTruthy();
   });
 
   it("Move tab shows the 4 gym timer presets and weekly ring", async () => {

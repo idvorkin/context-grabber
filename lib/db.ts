@@ -50,6 +50,37 @@ export async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
       sync_state TEXT NOT NULL DEFAULT 'pending'
     );
     CREATE INDEX IF NOT EXISTS idx_mood_log_sync ON mood_log(sync_state);
+    CREATE TABLE IF NOT EXISTS role_moments (
+      id TEXT PRIMARY KEY,
+      role_id TEXT NOT NULL,
+      timestamp INTEGER NOT NULL,
+      what TEXT NOT NULL,
+      tag TEXT,
+      source TEXT NOT NULL,
+      source_ref TEXT,
+      ck_record_name TEXT,
+      ck_change_tag TEXT,
+      sync_state TEXT NOT NULL DEFAULT 'pending'
+    );
+    CREATE INDEX IF NOT EXISTS idx_role_moments_role_time
+      ON role_moments(role_id, timestamp);
+    CREATE INDEX IF NOT EXISTS idx_role_moments_time
+      ON role_moments(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_role_moments_sync
+      ON role_moments(sync_state);
+    CREATE TABLE IF NOT EXISTS role_intentions (
+      id TEXT PRIMARY KEY,
+      role_id TEXT NOT NULL,
+      week_start_date TEXT NOT NULL,
+      text TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      ck_record_name TEXT,
+      ck_change_tag TEXT,
+      sync_state TEXT NOT NULL DEFAULT 'pending',
+      UNIQUE(role_id, week_start_date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_intentions_sync
+      ON role_intentions(sync_state);
     INSERT OR IGNORE INTO settings (key, value) VALUES ('schema_version', '2');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('retention_days', '30');

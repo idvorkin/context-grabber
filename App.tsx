@@ -1802,7 +1802,9 @@ export default function App() {
           onOpenSettings={() => setSettingsVisible(true)}
         />
       )}
-      {activeTab === "roles" && <RolesScreen />}
+      {activeTab === "roles" && (
+        <RolesScreen db={db} weeklyCache={weeklyCache} />
+      )}
 
       <TabBar active={activeTab} onChange={setActiveTab} />
 
