@@ -273,4 +273,14 @@ describe("Tab navigation", () => {
     await gotoTab(result, "mind");
     expect(result.getByText("Coming soon")).toBeTruthy();
   });
+
+  it("Move tab shows the 4 gym timer presets and weekly ring", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "move");
+    expect(result.getByTestId("ring-progress")).toBeTruthy();
+    expect(result.getByTestId("gym-preset-30sec")).toBeTruthy();
+    expect(result.getByTestId("gym-preset-1min")).toBeTruthy();
+    expect(result.getByTestId("gym-preset-2min")).toBeTruthy();
+    expect(result.getByTestId("gym-preset-5-1")).toBeTruthy();
+  });
 });

@@ -24,7 +24,6 @@ type Props = {
   reflectTally: { opportunity: number; didit: number; grateful: number };
   sharing: boolean;
   shareStatus: string;
-  onOpenGymTimer: () => void;
   onOpenSettings: () => void;
   onOpenAffirmation: () => void;
   onOpenGrateful: () => void;
@@ -48,7 +47,6 @@ export function TodayScreen({
   reflectTally,
   sharing,
   shareStatus,
-  onOpenGymTimer,
   onOpenSettings,
   onOpenAffirmation,
   onOpenGrateful,
@@ -75,13 +73,6 @@ export function TodayScreen({
                 </Text>
               </View>
             )}
-            <TouchableOpacity
-              style={styles.headerIconButton}
-              onPress={onOpenGymTimer}
-              accessibilityLabel="Gym Timer"
-            >
-              <Text style={styles.headerIconText}>{"🏋️"}</Text>
-            </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIconButton}
               onPress={onOpenSettings}

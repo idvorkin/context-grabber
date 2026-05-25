@@ -1752,7 +1752,6 @@ export default function App() {
           reflectTally={reflectTally}
           sharing={sharing}
           shareStatus={shareStatus}
-          onOpenGymTimer={() => setGymTimerVisible(true)}
           onOpenSettings={() => setSettingsVisible(true)}
           onOpenAffirmation={() => setAffirmationVisible(true)}
           onOpenGrateful={() => setGratefulVisible(true)}
@@ -1771,7 +1770,18 @@ export default function App() {
           onOpenLocationDetail={() => setLocationExpanded(true)}
         />
       )}
-      {activeTab === "move" && <MoveScreen />}
+      {activeTab === "move" && (
+        <MoveScreen
+          exerciseMinutesWeekly={(weeklyCache.exerciseMinutes as DailyValue[] | undefined) ?? null}
+          workoutsToday={snapshot?.health.workouts ?? []}
+          workoutsByDay={workoutsByDay}
+          onLaunchPreset={(preset) => {
+            setTimerIntent({ mode: "rounds", preset, autostart: false });
+            setGymTimerVisible(true);
+          }}
+          onSelectWorkout={setSelectedWorkout}
+        />
+      )}
       {activeTab === "mind" && <MindScreen />}
       {activeTab === "places" && <PlacesScreen />}
       {activeTab === "roles" && <RolesScreen />}
