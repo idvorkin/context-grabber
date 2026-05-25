@@ -1662,22 +1662,35 @@ export default function App() {
           boxPlotStats: statsCache.hrv,
           color: METRIC_CONFIG.hrv.color,
         },
-        {
-          metricKey: "sleep" as MetricKey,
-          label: "Sleep",
-          value: h?.sleepHours != null ? `${h.sleepHours} hrs` : "\u2014",
-          sublabel:
-            h?.bedtime && h?.wakeTime
-              ? `${formatLocalTime(h.bedtime)} \u2013 ${formatLocalTime(h.wakeTime)}`
-              : h?.bedtime
-                ? `${formatLocalTime(h.bedtime)} \u2013`
-                : h?.wakeTime
-                  ? `\u2013 ${formatLocalTime(h.wakeTime)}`
-                  : "last night",
-          onPress: handleMetricPress,
-          boxPlotStats: statsCache.sleep,
-          color: METRIC_CONFIG.sleep.color,
-        },
+        (() => {
+          // PR-2: surface asleep + in-bed + efficiency on the sleep card.
+          const inBedHours = h?.bedtime && h?.wakeTime
+            ? (new Date(h.wakeTime).getTime() - new Date(h.bedtime).getTime()) / (1000 * 3600)
+            : null;
+          const efficiency = inBedHours != null && inBedHours > 0 && h?.sleepHours != null
+            ? Math.round((h.sleepHours / inBedHours) * 100)
+            : null;
+          const sublabel = (() => {
+            if (inBedHours != null && efficiency != null) {
+              return `${inBedHours.toFixed(1)}h bed \u00b7 ${efficiency}% eff`;
+            }
+            if (h?.bedtime && h?.wakeTime) {
+              return `${formatLocalTime(h.bedtime)} \u2013 ${formatLocalTime(h.wakeTime)}`;
+            }
+            if (h?.bedtime) return `${formatLocalTime(h.bedtime)} \u2013`;
+            if (h?.wakeTime) return `\u2013 ${formatLocalTime(h.wakeTime)}`;
+            return "last night";
+          })();
+          return {
+            metricKey: "sleep" as MetricKey,
+            label: "Sleep",
+            value: h?.sleepHours != null ? `${h.sleepHours}h asleep` : "\u2014",
+            sublabel,
+            onPress: handleMetricPress,
+            boxPlotStats: statsCache.sleep,
+            color: METRIC_CONFIG.sleep.color,
+          };
+        })(),
         // Wellness / body
         {
           metricKey: "meditation" as MetricKey,
@@ -1737,7 +1750,6 @@ export default function App() {
           setOtaUpdateReady={setOtaUpdateReady}
           counterValue={counterValue}
           reflectTally={reflectTally}
-          metrics={metrics}
           sharing={sharing}
           shareStatus={shareStatus}
           onOpenGymTimer={() => setGymTimerVisible(true)}
@@ -1745,7 +1757,6 @@ export default function App() {
           onOpenAffirmation={() => setAffirmationVisible(true)}
           onOpenGrateful={() => setGratefulVisible(true)}
           onOpenJournal={() => setJournalVisible(true)}
-          onOpenLocationDetail={() => setLocationExpanded(true)}
           onCounterIncrement={handleCounterIncrement}
           onCounterReset={handleCounterReset}
           onRefresh={grabContext}
@@ -1753,7 +1764,13 @@ export default function App() {
           onShareRaw={shareRaw}
         />
       )}
-      {activeTab === "body" && <BodyScreen />}
+      {activeTab === "body" && (
+        <BodyScreen
+          snapshot={snapshot}
+          metrics={metrics}
+          onOpenLocationDetail={() => setLocationExpanded(true)}
+        />
+      )}
       {activeTab === "move" && <MoveScreen />}
       {activeTab === "mind" && <MindScreen />}
       {activeTab === "places" && <PlacesScreen />}

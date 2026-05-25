@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import * as Updates from "expo-updates";
 import TallyCounter from "../components/TallyCounter";
-import { MetricCard, type MetricCardProps } from "../components/MetricCard";
 import type { ContextSnapshot } from "../lib/appTypes";
 
 type Props = {
@@ -23,7 +22,6 @@ type Props = {
   setOtaUpdateReady: (v: boolean) => void;
   counterValue: number;
   reflectTally: { opportunity: number; didit: number; grateful: number };
-  metrics: MetricCardProps[];
   sharing: boolean;
   shareStatus: string;
   onOpenGymTimer: () => void;
@@ -31,7 +29,6 @@ type Props = {
   onOpenAffirmation: () => void;
   onOpenGrateful: () => void;
   onOpenJournal: () => void;
-  onOpenLocationDetail: () => void;
   onCounterIncrement: () => void;
   onCounterReset: () => void;
   onRefresh: () => void;
@@ -49,7 +46,6 @@ export function TodayScreen({
   setOtaUpdateReady,
   counterValue,
   reflectTally,
-  metrics,
   sharing,
   shareStatus,
   onOpenGymTimer,
@@ -57,7 +53,6 @@ export function TodayScreen({
   onOpenAffirmation,
   onOpenGrateful,
   onOpenJournal,
-  onOpenLocationDetail,
   onCounterIncrement,
   onCounterReset,
   onRefresh,
@@ -189,53 +184,6 @@ export function TodayScreen({
                   <Text style={reflectStyles.btnText}>📖 Journal</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            <View style={styles.metricGrid}>
-              {metrics.map((m) => (
-                <MetricCard
-                  key={m.label}
-                  metricKey={m.metricKey}
-                  label={m.label}
-                  value={m.value}
-                  sublabel={m.sublabel}
-                  onPress={m.onPress}
-                  boxPlotStats={m.boxPlotStats}
-                  boxPlotStatsList={m.boxPlotStatsList}
-                  color={m.color}
-                />
-              ))}
-              <TouchableOpacity
-                style={styles.metricCard}
-                onPress={onOpenLocationDetail}
-                testID="location-card"
-                activeOpacity={0.7}
-              >
-                <Text style={styles.metricLabel}>Location</Text>
-                {snapshot.location ? (
-                  <Text style={styles.metricValue}>
-                    {snapshot.location.latitude.toFixed(2)},{" "}
-                    {snapshot.location.longitude.toFixed(2)}
-                  </Text>
-                ) : (
-                  <Text style={[styles.metricValue, styles.metricValueNull]}>—</Text>
-                )}
-                <Text style={styles.metricSublabel}>
-                  {(() => {
-                    const latestMs = snapshot.location?.timestamp
-                      ?? (snapshot.locationHistory.length > 0
-                        ? snapshot.locationHistory[snapshot.locationHistory.length - 1].timestamp
-                        : null);
-                    if (latestMs == null) return "Unavailable";
-                    const ageMs = Date.now() - latestMs;
-                    if (ageMs < 5 * 60 * 1000) return "now";
-                    if (ageMs < 60 * 60 * 1000) return `${Math.round(ageMs / 60000)} min ago`;
-                    if (ageMs < 24 * 60 * 60 * 1000) return `${Math.round(ageMs / 3600000)} hr ago`;
-                    const days = Math.round(ageMs / (24 * 3600000));
-                    return days === 1 ? "yesterday" : `${days} days ago`;
-                  })()}
-                </Text>
-              </TouchableOpacity>
             </View>
 
             <Text style={styles.timestamp}>{snapshot.timestamp}</Text>

@@ -18,6 +18,14 @@ async function renderApp() {
   return result;
 }
 
+// Switch to a tab and settle effects.
+async function gotoTab(result: ReturnType<typeof render>, tab: string) {
+  await act(async () => {
+    fireEvent.press(result.getByTestId(`tab-${tab}`));
+    await flushPromises();
+  });
+}
+
 // --- Rendering Tests ---
 
 describe("App rendering", () => {
@@ -72,8 +80,10 @@ describe("App interactions", () => {
     });
   });
 
-  it("shows metric cards after auto-grab", async () => {
-    const { getByText } = await renderApp();
+  it("shows metric cards on Body tab after auto-grab", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    const { getByText } = result;
     expect(getByText("Movement")).toBeTruthy();
     expect(getByText("Heart Rate")).toBeTruthy();
     expect(getByText("Sleep")).toBeTruthy();
@@ -89,8 +99,10 @@ describe("App interactions", () => {
     expect(getByText(/Raw/)).toBeTruthy();
   });
 
-  it("shows location coordinates after auto-grab", async () => {
-    const { getByText } = await renderApp();
+  it("shows location coordinates on Body tab after auto-grab", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    const { getByText } = result;
     expect(getByText("Location")).toBeTruthy();
     expect(getByText(/47\.61/)).toBeTruthy();
     expect(getByText(/-122\.33/)).toBeTruthy();
@@ -120,26 +132,29 @@ describe("MetricCard rendering after grab", () => {
     });
   });
 
-  it("shows em dash for null health values", async () => {
+  it("shows em dash for null health values on Body tab", async () => {
     (HealthKit.queryStatisticsForQuantity as jest.Mock).mockResolvedValue({
       sumQuantity: { quantity: 0 },
     });
     (HealthKit.getMostRecentQuantitySample as jest.Mock).mockResolvedValue(null);
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
-    const { getAllByText } = await renderApp();
-    const dashes = getAllByText("\u2014");
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    const dashes = result.getAllByText("\u2014");
     expect(dashes.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("renders metric card labels and sublabels", async () => {
+  it("renders metric card labels and sublabels on Body tab", async () => {
     (HealthKit.queryStatisticsForQuantity as jest.Mock).mockResolvedValue({
       sumQuantity: { quantity: 0 },
     });
     (HealthKit.getMostRecentQuantitySample as jest.Mock).mockResolvedValue(null);
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
-    const { getByText, getAllByText } = await renderApp();
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    const { getByText, getAllByText } = result;
 
     expect(getByText("Movement")).toBeTruthy();
     expect(getByText("Heart Rate")).toBeTruthy();
@@ -157,7 +172,7 @@ describe("MetricCard rendering after grab", () => {
     expect(latestSublabels.length).toBe(2); // heart rate, hrv
   });
 
-  it("shows all metric cards after grab", async () => {
+  it("shows all metric cards on Body tab after grab", async () => {
     (HealthKit.queryStatisticsForQuantity as jest.Mock).mockResolvedValue({
       sumQuantity: { quantity: 1000 },
     });
@@ -171,7 +186,9 @@ describe("MetricCard rendering after grab", () => {
       },
     ]);
 
-    const { getByText } = await renderApp();
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    const { getByText } = result;
 
     const metricLabels = [
       "Movement", "Heart Rate", "Sleep", "Weight", "Meditation",
@@ -217,8 +234,9 @@ describe("Dashboard display after grab", () => {
     (HealthKit.getMostRecentQuantitySample as jest.Mock).mockResolvedValue(null);
     (HealthKit.queryCategorySamples as jest.Mock).mockResolvedValue([]);
 
-    const { getByText } = await renderApp();
-    expect(getByText("Unavailable")).toBeTruthy();
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    expect(result.getByText("Unavailable")).toBeTruthy();
   });
 });
 
@@ -244,12 +262,15 @@ describe("Tab navigation", () => {
   });
 
   it("switches to Body tab when its tab is pressed", async () => {
-    const { getByTestId, getAllByText } = await renderApp();
-    await act(async () => {
-      fireEvent.press(getByTestId("tab-body"));
-    });
-    // Body screen renders "Body" title and "Coming soon" placeholder
-    const comingSoon = getAllByText("Coming soon");
-    expect(comingSoon.length).toBeGreaterThanOrEqual(1);
+    const result = await renderApp();
+    await gotoTab(result, "body");
+    // Body tab renders WeekStrip (unique to Body in PR-2)
+    expect(result.getByTestId("week-strip")).toBeTruthy();
+  });
+
+  it("switches to Mind tab and shows Coming soon stub", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "mind");
+    expect(result.getByText("Coming soon")).toBeTruthy();
   });
 });
