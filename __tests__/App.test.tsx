@@ -268,9 +268,19 @@ describe("Tab navigation", () => {
     expect(result.getByTestId("week-strip")).toBeTruthy();
   });
 
-  it("switches to Mind tab and shows Coming soon stub", async () => {
+  it("switches to Mind tab and shows mood report + meditation flatline", async () => {
     const result = await renderApp();
     await gotoTab(result, "mind");
+    expect(result.getByTestId("mood-report-card")).toBeTruthy();
+    expect(result.getByTestId("meditation-flatline-card")).toBeTruthy();
+    expect(result.getByTestId("mind-affirm")).toBeTruthy();
+    expect(result.getByTestId("mind-grateful")).toBeTruthy();
+    expect(result.getByTestId("mind-journal")).toBeTruthy();
+  });
+
+  it("switches to Places tab and shows Coming soon stub", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "places");
     expect(result.getByText("Coming soon")).toBeTruthy();
   });
 

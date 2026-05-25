@@ -1782,7 +1782,19 @@ export default function App() {
           onSelectWorkout={setSelectedWorkout}
         />
       )}
-      {activeTab === "mind" && <MindScreen />}
+      {activeTab === "mind" && (
+        <MindScreen
+          db={db}
+          counterValue={counterValue}
+          todayMeditationMinutes={snapshot?.health.meditationMinutes ?? null}
+          weeklyMeditation={(weeklyCache.meditation as DailyValue[] | undefined) ?? null}
+          onOpenAffirmation={() => setAffirmationVisible(true)}
+          onOpenGrateful={() => setGratefulVisible(true)}
+          onOpenJournal={() => setJournalVisible(true)}
+          onCounterIncrement={handleCounterIncrement}
+          onCounterReset={handleCounterReset}
+        />
+      )}
       {activeTab === "places" && <PlacesScreen />}
       {activeTab === "roles" && <RolesScreen />}
 

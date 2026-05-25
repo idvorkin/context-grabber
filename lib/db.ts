@@ -40,7 +40,17 @@ export async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
       longitude REAL NOT NULL,
       radius_meters REAL NOT NULL DEFAULT 100
     );
-    INSERT OR IGNORE INTO settings (key, value) VALUES ('schema_version', '1');
+    CREATE TABLE IF NOT EXISTS mood_log (
+      date TEXT PRIMARY KEY,
+      energy INTEGER NOT NULL,
+      mood INTEGER NOT NULL,
+      note TEXT,
+      ck_record_name TEXT,
+      ck_change_tag TEXT,
+      sync_state TEXT NOT NULL DEFAULT 'pending'
+    );
+    CREATE INDEX IF NOT EXISTS idx_mood_log_sync ON mood_log(sync_state);
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('schema_version', '2');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('retention_days', '30');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('sleep_target_hours', '8');
