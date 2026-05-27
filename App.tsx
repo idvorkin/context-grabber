@@ -1846,6 +1846,10 @@ export default function App() {
         <PlacesScreen
           snapshot={snapshot}
           knownPlaces={knownPlaces}
+          db={db}
+          locationHistory={snapshot?.locationHistory ?? []}
+          setKnownPlaces={setKnownPlaces}
+          setError={setError}
           onOpenLocationDetail={() => setLocationExpanded(true)}
           onOpenSettings={() => setSettingsVisible(true)}
         />
