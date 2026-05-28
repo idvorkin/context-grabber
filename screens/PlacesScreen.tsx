@@ -91,14 +91,45 @@ export function PlacesScreen({
     [locationHistory],
   );
 
+  // Cluster output reused twice — once for the daily breakdown table, once
+  // for today's path overlay on the map. Memoize to avoid recomputing.
+  const clusterResult = useMemo(() => {
+    if (rawPoints.length === 0) return null;
+    return clusterLocationsV2(rawPoints, knownPlaces);
+  }, [rawPoints, knownPlaces]);
+
   // Per-day places breakdown — the timeline the Places tab is supposed to
   // surface per spec (2026-05-25-tabbed-app-design.md acceptance criterion
   // "Today + Yesterday timeline shows all clusters with start/end times").
   const placesDailySummary = useMemo(() => {
-    if (rawPoints.length === 0) return [];
-    const result = clusterLocationsV2(rawPoints, knownPlaces);
-    return buildPlacesDailySummary(result.stays, result.transit, rawPoints, 7);
-  }, [rawPoints, knownPlaces]);
+    if (!clusterResult) return [];
+    return buildPlacesDailySummary(
+      clusterResult.stays,
+      clusterResult.transit,
+      rawPoints,
+      7,
+    );
+  }, [clusterResult, rawPoints]);
+
+  // Today's path overlay — stay centroids in chronological order, filtered
+  // to stays that overlap today's local-time window. Used by StylizedMap to
+  // draw a polyline between the day's visited known places. Per issue #42
+  // Option A: "Overlay today's location path (breadcrumbs / route)".
+  const todaysPath = useMemo(() => {
+    if (!clusterResult) return [];
+    const now = Date.now();
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    const startMs = dayStart.getTime();
+    return clusterResult.stays
+      .filter((s) => s.endTime >= startMs && s.startTime <= now)
+      .sort((a, b) => a.startTime - b.startTime)
+      .map((s) => ({
+        lat: s.centroid.latitude,
+        lon: s.centroid.longitude,
+        timestamp: s.startTime,
+      }));
+  }, [clusterResult]);
 
   // Tap on the [+] button next to a "Place N" row in PlacesDailyBreakdown.
   // Inspect proximity to known places and open either the merge-preview or
@@ -245,6 +276,7 @@ export function PlacesScreen({
         <StylizedMap
           currentLocation={snapshot?.location ?? null}
           knownPlaces={knownPlaces}
+          path={todaysPath}
         />
 
         <View style={styles.summaryCard}>
