@@ -58,37 +58,6 @@ export function journalEntryIdFromMoment(m: RoleMoment): string | null {
 }
 
 /**
- * Journal entry ids tied to a role, for the Journal's role filter. Walks
- * the role's moments and normalizes every source_ref to an entry id.
- */
-export async function getEntryIdsForRole(
-  db: SQLite.SQLiteDatabase,
-  roleId: RoleId,
-): Promise<Set<string>> {
-  const rows = await db.getAllAsync<{
-    source: RoleMomentSource;
-    source_ref: string | null;
-  }>(
-    `SELECT source, source_ref FROM role_moments WHERE role_id = ?`,
-    [roleId],
-  );
-  const ids = new Set<string>();
-  for (const r of rows) {
-    const entryId = journalEntryIdFromMoment({
-      id: "",
-      roleId,
-      timestamp: 0,
-      what: "",
-      tag: null,
-      source: r.source,
-      sourceRef: r.source_ref,
-    });
-    if (entryId) ids.add(entryId);
-  }
-  return ids;
-}
-
-/**
  * Map every journal-backed role moment to its entry id, grouping the role
  * ids that point at each entry. Pure — the DB read lives in
  * getRolesByEntry. Powers the Journal's per-row role avatars and the

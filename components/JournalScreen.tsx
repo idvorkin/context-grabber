@@ -20,7 +20,7 @@ import {
   groupEntriesByRole,
 } from "../lib/journal";
 import { getAllAudio, getAllEntries } from "../lib/journalDb";
-import { getEntryIdsForRole, getRolesByEntry } from "../lib/roleMoments";
+import { getRolesByEntry } from "../lib/roleMoments";
 import { ROLES, getRole, type RoleId } from "../lib/roles";
 import { deleteJournalEntry, syncJournal } from "../lib/cloudkit";
 import { RoleAvatar } from "./RoleAvatar";
@@ -42,10 +42,11 @@ export function JournalScreen({ visible, onClose, db }: Props) {
   const [collapsedDays, setCollapsedDays] = useState<Record<string, boolean>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Role filter: null = show all. filterEntryIds is the set of entry ids
-  // tied to the selected role (via role_moments), fetched when it changes.
+  // Role filter: null = show all. The filtered set is derived from
+  // rolesByEntryMap (the same entry→roles source the avatars and the
+  // group-by-role view use), so the filter, the avatars, and the groups
+  // can never disagree — including right after an inline role edit.
   const [filterRole, setFilterRole] = useState<RoleId | null>(null);
-  const [filterEntryIds, setFilterEntryIds] = useState<Set<string> | null>(null);
   const [rolesByEntryMap, setRolesByEntryMap] = useState<Map<string, Set<RoleId>>>(
     new Map(),
   );
@@ -58,32 +59,12 @@ export function JournalScreen({ visible, onClose, db }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  // Resolve which entries belong to the selected role.
-  useEffect(() => {
-    if (!db || filterRole == null) {
-      setFilterEntryIds(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const ids = await getEntryIdsForRole(db, filterRole);
-        if (!cancelled) setFilterEntryIds(ids);
-      } catch {
-        if (!cancelled) setFilterEntryIds(new Set());
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, filterRole, visible]);
-
   const filteredEntries = useMemo(
     () =>
-      filterEntryIds
-        ? allEntries.filter((e) => filterEntryIds.has(e.id))
-        : allEntries,
-    [allEntries, filterEntryIds],
+      filterRole == null
+        ? allEntries
+        : allEntries.filter((e) => rolesByEntryMap.get(e.id)?.has(filterRole)),
+    [allEntries, filterRole, rolesByEntryMap],
   );
   const groups = useMemo(() => groupEntries(filteredEntries), [filteredEntries]);
   const roleDays = useMemo(

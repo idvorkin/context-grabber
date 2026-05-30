@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -43,17 +43,23 @@ export function JournalEntryRoleEditor({
 }: Props) {
   const [selected, setSelected] = useState<Set<RoleId>>(new Set(currentRoles));
   const [error, setError] = useState<string | null>(null);
+  // Roles with an in-flight write — guards against a rapid double-tap
+  // firing two inserts/deletes for the same role before the first resolves.
+  const inFlight = useRef<Set<RoleId>>(new Set());
 
   useEffect(() => {
     if (visible) {
       setSelected(new Set(currentRoles));
       setError(null);
+      inFlight.current = new Set();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, entry?.id]);
 
   async function toggle(roleId: RoleId) {
     if (!db || !entry) return;
+    if (inFlight.current.has(roleId)) return;
+    inFlight.current.add(roleId);
     const isOn = selected.has(roleId);
     // Optimistic UI; revert on failure.
     setSelected((prev) => {
@@ -87,6 +93,8 @@ export function JournalEntryRoleEditor({
         else next.delete(roleId);
         return next;
       });
+    } finally {
+      inFlight.current.delete(roleId);
     }
   }
 
