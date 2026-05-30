@@ -3,12 +3,14 @@ import {
   createGratitude,
   dayKey,
   groupEntries,
+  groupEntriesByRole,
   isJournalContext,
   isKnownAffirmationTitle,
   momentMetaForEntry,
   tallyByContext,
   type JournalEntry,
 } from "../lib/journal";
+import type { RoleId } from "../lib/roles";
 import {
   AFFIRMATIONS,
   GRATEFUL_BUCKET,
@@ -278,5 +280,78 @@ describe("journalExport round-trip", () => {
   it("parseJournalExport tolerates missing audioRecordings array", () => {
     const result = parseJournalExport({ entries: [] });
     expect(result.audioRecordings).toEqual([]);
+  });
+});
+
+describe("groupEntriesByRole", () => {
+  const ORDER: RoleId[] = ["amelia", "family", "tori"];
+
+  function entry(
+    id: string,
+    date: number,
+    ctx: "opportunity" | "didit" | "grateful" = "opportunity",
+  ) {
+    return createEntry({
+      id,
+      date,
+      context: ctx,
+      affirmationTitle: "Do It Anyways",
+      text: id,
+    });
+  }
+
+  it("puts an entry under each of its roles within the day", () => {
+    const e = entry("e1", Date.UTC(2026, 4, 30, 12));
+    const map = new Map<string, Set<RoleId>>([
+      ["e1", new Set(["amelia", "family"])],
+    ]);
+    const days = groupEntriesByRole([e], map, ORDER);
+    expect(days).toHaveLength(1);
+    expect(days[0].roles.map((r) => r.roleId)).toEqual(["amelia", "family"]);
+  });
+
+  it("collects untagged entries under a null-role group at the end of the day", () => {
+    const e = entry("e1", Date.UTC(2026, 4, 30, 12));
+    const map = new Map<string, Set<RoleId>>();
+    const days = groupEntriesByRole([e], map, ORDER);
+    expect(days[0].roles.map((r) => r.roleId)).toEqual([null]);
+  });
+
+  it("orders tagged roles by the supplied order, untagged last", () => {
+    const tagged = entry("e1", Date.UTC(2026, 4, 30, 12));
+    const untagged = entry("e2", Date.UTC(2026, 4, 30, 13));
+    const map = new Map<string, Set<RoleId>>([["e1", new Set(["tori"])]]);
+    const days = groupEntriesByRole([tagged, untagged], map, ORDER);
+    expect(days[0].roles.map((r) => r.roleId)).toEqual(["tori", null]);
+  });
+
+  it("preserves date → newest-day-first across days", () => {
+    const older = entry("e1", Date.UTC(2026, 4, 29, 12));
+    const newer = entry("e2", Date.UTC(2026, 4, 30, 12));
+    const map = new Map<string, Set<RoleId>>([
+      ["e1", new Set(["amelia"])],
+      ["e2", new Set(["amelia"])],
+    ]);
+    const days = groupEntriesByRole([older, newer], map, ORDER);
+    expect(days.map((d) => d.dayKey)).toEqual(["2026-05-30", "2026-05-29"]);
+  });
+
+  it("keeps context → affirmation structure inside a role group", () => {
+    const opp = entry("e1", Date.UTC(2026, 4, 30, 12), "opportunity");
+    const grat = createGratitude({
+      id: "e2",
+      date: Date.UTC(2026, 4, 30, 13),
+      text: "thanks",
+    });
+    const map = new Map<string, Set<RoleId>>([
+      ["e1", new Set(["amelia"])],
+      ["e2", new Set(["amelia"])],
+    ]);
+    const days = groupEntriesByRole([opp, grat], map, ORDER);
+    const amelia = days[0].roles.find((r) => r.roleId === "amelia")!;
+    expect(amelia.contexts.map((c) => c.context)).toEqual([
+      "opportunity",
+      "grateful",
+    ]);
   });
 });

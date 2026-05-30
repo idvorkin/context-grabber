@@ -3,6 +3,7 @@
 // This module is the SHAPE — what an entry is, how to group, what to export.
 
 import { ALL_AFFIRMATION_TITLES, GRATEFUL_BUCKET } from "./affirmations";
+import type { RoleId } from "./roles";
 
 export type JournalContext = "opportunity" | "didit" | "grateful";
 
@@ -80,26 +81,31 @@ export type DayGroup = {
   contexts: ContextGroup[];
 };
 
+/** A role bucket within a day. roleId === null is the "Untagged" group. */
+export type RoleGroup = {
+  roleId: RoleId | null;
+  contexts: ContextGroup[];
+};
+
+export type RoleDayGroup = {
+  dayKey: string;
+  roles: RoleGroup[];
+};
+
 /**
- * Group entries by date → context → affirmation. Newest-first at every
- * level. Empty contexts/affirmations are pruned.
+ * Group a single day's entries by context → affirmation, newest-first,
+ * pruning empties. Shared by groupEntries (date → context → affirmation)
+ * and groupEntriesByRole (date → role → context → affirmation).
  */
-export function groupEntries(entries: JournalEntry[]): DayGroup[] {
-  if (entries.length === 0) return [];
-
-  const byDay = new Map<string, Map<JournalContext, Map<string, JournalEntry[]>>>();
-
+export function groupByContextAffirmation(
+  entries: JournalEntry[],
+): ContextGroup[] {
+  const byContext = new Map<JournalContext, Map<string, JournalEntry[]>>();
   for (const entry of entries) {
-    const day = dayKey(entry.date);
-    let dayMap = byDay.get(day);
-    if (!dayMap) {
-      dayMap = new Map();
-      byDay.set(day, dayMap);
-    }
-    let contextMap = dayMap.get(entry.context);
+    let contextMap = byContext.get(entry.context);
     if (!contextMap) {
       contextMap = new Map();
-      dayMap.set(entry.context, contextMap);
+      byContext.set(entry.context, contextMap);
     }
     const affKey = entry.affirmationTitle;
     let bucket = contextMap.get(affKey);
@@ -110,38 +116,112 @@ export function groupEntries(entries: JournalEntry[]): DayGroup[] {
     bucket.push(entry);
   }
 
-  const days: DayGroup[] = [];
-  // Newest day first (lexicographic descending works for YYYY-MM-DD).
-  const sortedDays = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
-  for (const day of sortedDays) {
-    const dayMap = byDay.get(day)!;
-    const contexts: ContextGroup[] = [];
-    // Fixed context order: opp → did → grateful.
-    for (const ctx of JOURNAL_CONTEXTS) {
-      const contextMap = dayMap.get(ctx);
-      if (!contextMap || contextMap.size === 0) continue;
-      const affirmations: AffirmationGroup[] = [];
-      // Affirmations within a context: known order first, then any
-      // unrecognized titles alphabetically (defensive — known shouldn't
-      // change but old data might carry historical names).
-      const titles = [...contextMap.keys()].sort((a, b) => {
-        const ai = ALL_AFFIRMATION_TITLES.indexOf(a);
-        const bi = ALL_AFFIRMATION_TITLES.indexOf(b);
-        if (ai === -1 && bi === -1) return a.localeCompare(b);
-        if (ai === -1) return 1;
-        if (bi === -1) return -1;
-        return ai - bi;
-      });
-      for (const title of titles) {
-        const bucket = contextMap.get(title)!;
-        bucket.sort((a, b) => b.date - a.date);
-        affirmations.push({ affirmationTitle: title, entries: bucket });
-      }
-      contexts.push({ context: ctx, affirmations });
+  const contexts: ContextGroup[] = [];
+  // Fixed context order: opp → did → grateful.
+  for (const ctx of JOURNAL_CONTEXTS) {
+    const contextMap = byContext.get(ctx);
+    if (!contextMap || contextMap.size === 0) continue;
+    const affirmations: AffirmationGroup[] = [];
+    // Affirmations within a context: known order first, then any
+    // unrecognized titles alphabetically (defensive — known shouldn't
+    // change but old data might carry historical names).
+    const titles = [...contextMap.keys()].sort((a, b) => {
+      const ai = ALL_AFFIRMATION_TITLES.indexOf(a);
+      const bi = ALL_AFFIRMATION_TITLES.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+    for (const title of titles) {
+      const bucket = contextMap.get(title)!;
+      bucket.sort((a, b) => b.date - a.date);
+      affirmations.push({ affirmationTitle: title, entries: bucket });
     }
-    days.push({ dayKey: day, contexts });
+    contexts.push({ context: ctx, affirmations });
+  }
+  return contexts;
+}
+
+/**
+ * Group entries by date → context → affirmation. Newest-first at every
+ * level. Empty contexts/affirmations are pruned.
+ */
+export function groupEntries(entries: JournalEntry[]): DayGroup[] {
+  if (entries.length === 0) return [];
+
+  const byDay = new Map<string, JournalEntry[]>();
+  for (const entry of entries) {
+    const day = dayKey(entry.date);
+    let bucket = byDay.get(day);
+    if (!bucket) {
+      bucket = [];
+      byDay.set(day, bucket);
+    }
+    bucket.push(entry);
   }
 
+  // Newest day first (lexicographic descending works for YYYY-MM-DD).
+  const sortedDays = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
+  const days: DayGroup[] = [];
+  for (const day of sortedDays) {
+    const contexts = groupByContextAffirmation(byDay.get(day)!);
+    days.push({ dayKey: day, contexts });
+  }
+  return days;
+}
+
+/**
+ * Group entries by date → role → context → affirmation. An entry appears
+ * under EACH role it's tied to (per entryRoles); entries with no role land
+ * in a single null-role "Untagged" group at the end of each day. Roles are
+ * ordered by roleOrder (the canonical ROLES order); untagged always last.
+ * Newest day first, mirroring groupEntries.
+ */
+export function groupEntriesByRole(
+  entries: JournalEntry[],
+  entryRoles: Map<string, Set<RoleId>>,
+  roleOrder: readonly RoleId[],
+): RoleDayGroup[] {
+  if (entries.length === 0) return [];
+
+  // day -> roleKey -> entries.  roleKey is the RoleId, or "" for untagged.
+  const byDay = new Map<string, Map<string, JournalEntry[]>>();
+  for (const entry of entries) {
+    const day = dayKey(entry.date);
+    let dayMap = byDay.get(day);
+    if (!dayMap) {
+      dayMap = new Map();
+      byDay.set(day, dayMap);
+    }
+    const roles = entryRoles.get(entry.id);
+    const keys = roles && roles.size > 0 ? [...roles] : [""];
+    for (const key of keys) {
+      let bucket = dayMap.get(key);
+      if (!bucket) {
+        bucket = [];
+        dayMap.set(key, bucket);
+      }
+      bucket.push(entry);
+    }
+  }
+
+  const sortedDays = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
+  const days: RoleDayGroup[] = [];
+  for (const day of sortedDays) {
+    const dayMap = byDay.get(day)!;
+    const roles: RoleGroup[] = [];
+    for (const roleId of roleOrder) {
+      const bucket = dayMap.get(roleId);
+      if (!bucket || bucket.length === 0) continue;
+      roles.push({ roleId, contexts: groupByContextAffirmation(bucket) });
+    }
+    const untagged = dayMap.get("");
+    if (untagged && untagged.length > 0) {
+      roles.push({ roleId: null, contexts: groupByContextAffirmation(untagged) });
+    }
+    days.push({ dayKey: day, roles });
+  }
   return days;
 }
 
