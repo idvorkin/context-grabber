@@ -647,6 +647,27 @@ export async function deleteMomentsForEntry(
   }
 }
 
+/**
+ * Remove a single role's link to a journal entry (both source_ref forms:
+ * the raw entry id from card/inline tagging and `journal:<id>` from
+ * auto-emo). Sync-aware via deleteMomentRecord so CloudKit tombstones too.
+ * Used by the Journal's inline role editor when a role is toggled off.
+ */
+export async function removeRoleTagFromEntry(
+  db: SQLite.SQLiteDatabase,
+  entryId: string,
+  roleId: RoleId,
+): Promise<void> {
+  const rows = await db.getAllAsync<{ id: string }>(
+    `SELECT id FROM role_moments
+      WHERE role_id = ? AND (source_ref = ? OR source_ref = ?)`,
+    [roleId, entryId, `journal:${entryId}`],
+  );
+  for (const r of rows) {
+    await deleteMomentRecord(db, r.id);
+  }
+}
+
 /** Delete a moment locally and from CloudKit. */
 export async function deleteMomentRecord(
   db: SQLite.SQLiteDatabase,
