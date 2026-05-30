@@ -88,6 +88,59 @@ export async function getEntryIdsForRole(
   return ids;
 }
 
+/**
+ * Map every journal-backed role moment to its entry id, grouping the role
+ * ids that point at each entry. Pure — the DB read lives in
+ * getRolesByEntry. Powers the Journal's per-row role avatars and the
+ * group-by-role view. Moments not backed by a journal entry are skipped.
+ */
+export function rolesByEntry(
+  moments: Pick<RoleMoment, "roleId" | "source" | "sourceRef">[],
+): Map<string, Set<RoleId>> {
+  const map = new Map<string, Set<RoleId>>();
+  for (const m of moments) {
+    const entryId = journalEntryIdFromMoment({
+      id: "",
+      roleId: m.roleId,
+      timestamp: 0,
+      what: "",
+      tag: null,
+      source: m.source,
+      sourceRef: m.sourceRef,
+    });
+    if (!entryId) continue;
+    let set = map.get(entryId);
+    if (!set) {
+      set = new Set<RoleId>();
+      map.set(entryId, set);
+    }
+    set.add(m.roleId);
+  }
+  return map;
+}
+
+/**
+ * Load the entry-id → role-set map for every journal-backed moment.
+ * Thin DB wrapper around rolesByEntry; tolerant callers should catch a
+ * missing table the same way the rest of the journal reads do.
+ */
+export async function getRolesByEntry(
+  db: SQLite.SQLiteDatabase,
+): Promise<Map<string, Set<RoleId>>> {
+  const rows = await db.getAllAsync<{
+    role_id: RoleId;
+    source: RoleMomentSource;
+    source_ref: string | null;
+  }>(`SELECT role_id, source, source_ref FROM role_moments`);
+  return rolesByEntry(
+    rows.map((r) => ({
+      roleId: r.role_id,
+      source: r.source,
+      sourceRef: r.source_ref,
+    })),
+  );
+}
+
 export async function insertMoment(
   db: SQLite.SQLiteDatabase,
   m: Omit<RoleMoment, "id">,

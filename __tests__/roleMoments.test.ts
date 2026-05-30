@@ -3,7 +3,11 @@
  * normalizer that maps a moment back to its journal entry id (or null).
  */
 
-import { journalEntryIdFromMoment, type RoleMoment } from "../lib/roleMoments";
+import {
+  journalEntryIdFromMoment,
+  rolesByEntry,
+  type RoleMoment,
+} from "../lib/roleMoments";
 
 function moment(partial: Partial<RoleMoment>): RoleMoment {
   return {
@@ -73,5 +77,39 @@ describe("journalEntryIdFromMoment", () => {
         moment({ source: "auto-workout", sourceRef: "somethingweird" }),
       ),
     ).toBeNull();
+  });
+});
+
+describe("rolesByEntry", () => {
+  it("groups role ids under the entry id a moment resolves to", () => {
+    const map = rolesByEntry([
+      moment({ roleId: "amelia", source: "manual", sourceRef: "e1" }),
+      moment({ roleId: "family", source: "manual", sourceRef: "e1" }),
+      moment({ roleId: "tori", source: "manual", sourceRef: "e2" }),
+    ]);
+    expect(map.get("e1")).toEqual(new Set(["amelia", "family"]));
+    expect(map.get("e2")).toEqual(new Set(["tori"]));
+  });
+
+  it("resolves the journal: prefix form (auto-emo) to the same entry id", () => {
+    const map = rolesByEntry([
+      moment({ roleId: "emo", source: "auto-journal", sourceRef: "journal:e1" }),
+    ]);
+    expect(map.get("e1")).toEqual(new Set(["emo"]));
+  });
+
+  it("ignores moments not backed by a journal entry", () => {
+    const map = rolesByEntry([
+      moment({ roleId: "fit", source: "auto-workout", sourceRef: "workout:123" }),
+    ]);
+    expect(map.size).toBe(0);
+  });
+
+  it("deduplicates a role linked to the same entry by two moments", () => {
+    const map = rolesByEntry([
+      moment({ roleId: "tori", source: "manual", sourceRef: "e1" }),
+      moment({ roleId: "tori", source: "auto-journal", sourceRef: "journal:e1" }),
+    ]);
+    expect(map.get("e1")).toEqual(new Set(["tori"]));
   });
 });
