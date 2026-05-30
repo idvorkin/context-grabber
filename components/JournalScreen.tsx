@@ -14,16 +14,21 @@ import {
   type AudioRecording,
   type JournalContext,
   type JournalEntry,
+  type RoleDayGroup,
   CONTEXT_LABEL,
   groupEntries,
+  groupEntriesByRole,
 } from "../lib/journal";
 import { getAllAudio, getAllEntries } from "../lib/journalDb";
-import { getEntryIdsForRole } from "../lib/roleMoments";
+import { getEntryIdsForRole, getRolesByEntry } from "../lib/roleMoments";
 import { ROLES, getRole, type RoleId } from "../lib/roles";
 import { deleteJournalEntry, syncJournal } from "../lib/cloudkit";
 import { RoleAvatar } from "./RoleAvatar";
 import { AudioPlayer } from "./AudioPlayer";
 import { CopyableError } from "./CopyableError";
+import { JournalEntryRoleEditor } from "./JournalEntryRoleEditor";
+
+const ROLE_ORDER: RoleId[] = ROLES.map((r) => r.id);
 
 type Props = {
   visible: boolean;
@@ -41,6 +46,11 @@ export function JournalScreen({ visible, onClose, db }: Props) {
   // tied to the selected role (via role_moments), fetched when it changes.
   const [filterRole, setFilterRole] = useState<RoleId | null>(null);
   const [filterEntryIds, setFilterEntryIds] = useState<Set<string> | null>(null);
+  const [rolesByEntryMap, setRolesByEntryMap] = useState<Map<string, Set<RoleId>>>(
+    new Map(),
+  );
+  const [groupMode, setGroupMode] = useState<"affirmation" | "role">("affirmation");
+  const [editing, setEditing] = useState<JournalEntry | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -76,6 +86,21 @@ export function JournalScreen({ visible, onClose, db }: Props) {
     [allEntries, filterEntryIds],
   );
   const groups = useMemo(() => groupEntries(filteredEntries), [filteredEntries]);
+  const roleDays = useMemo(
+    () => groupEntriesByRole(filteredEntries, rolesByEntryMap, ROLE_ORDER),
+    [filteredEntries, rolesByEntryMap],
+  );
+  // In role mode, an active filter narrows to just that role's group
+  // (drop untagged + other roles that multi-tagged entries also belong to).
+  const visibleRoleDays = useMemo<RoleDayGroup[]>(() => {
+    if (filterRole == null) return roleDays;
+    return roleDays
+      .map((d) => ({
+        dayKey: d.dayKey,
+        roles: d.roles.filter((r) => r.roleId === filterRole),
+      }))
+      .filter((d) => d.roles.length > 0);
+  }, [roleDays, filterRole]);
 
   async function load() {
     if (!db) return;
@@ -87,6 +112,11 @@ export function JournalScreen({ visible, onClose, db }: Props) {
       const map: Record<string, AudioRecording> = {};
       for (const a of audio) map[a.id] = a;
       setAudioById(map);
+      try {
+        setRolesByEntryMap(await getRolesByEntry(db));
+      } catch {
+        setRolesByEntryMap(new Map()); // tolerate missing table
+      }
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
@@ -131,6 +161,96 @@ export function JournalScreen({ visible, onClose, db }: Props) {
     );
   }
 
+  function renderEmpty() {
+    return (
+      <View style={styles.emptyBlock}>
+        <Text style={styles.emptyTitle}>
+          {filterRole != null ? "No entries for this role yet" : "No entries yet"}
+        </Text>
+        <Text style={styles.emptyHint}>
+          {filterRole != null
+            ? "Tag an affirmation or gratitude with this role, or write one from the role's detail sheet."
+            : "Use Affirmation or Grateful from the dashboard to log thoughts. Pull down here to sync from CloudKit."}
+        </Text>
+      </View>
+    );
+  }
+
+  function renderEntry(entry: JournalEntry) {
+    return (
+      <EntryRow
+        key={entry.id}
+        entry={entry}
+        audio={
+          entry.audioRecordingId ? audioById[entry.audioRecordingId] : undefined
+        }
+        db={db}
+        roles={rolesByEntryMap.get(entry.id) ?? null}
+        onEditRoles={() => setEditing(entry)}
+        onDelete={() => handleDelete(entry)}
+      />
+    );
+  }
+
+  function renderContexts(contexts: typeof groups[number]["contexts"]) {
+    return contexts.map((ctx) => (
+      <View key={ctx.context} style={styles.contextBlock}>
+        <Text style={styles.contextHeader}>
+          {CONTEXT_LABEL[ctx.context as JournalContext]}
+        </Text>
+        {ctx.affirmations.map((a) => (
+          <View key={a.affirmationTitle} style={styles.affirmationBlock}>
+            <Text style={styles.affirmationHeader}>{a.affirmationTitle}</Text>
+            {a.entries.map((entry) => renderEntry(entry))}
+          </View>
+        ))}
+      </View>
+    ));
+  }
+
+  function renderAffirmationDay(day: typeof groups[number]) {
+    return (
+      <View key={day.dayKey} style={styles.dayBlock}>
+        <TouchableOpacity onPress={() => toggleDay(day.dayKey)}>
+          <Text style={styles.dayHeader}>
+            {collapsedDays[day.dayKey] ? "▸" : "▾"} {formatDayHeader(day.dayKey)}
+          </Text>
+        </TouchableOpacity>
+        {!collapsedDays[day.dayKey] && renderContexts(day.contexts)}
+      </View>
+    );
+  }
+
+  function renderRoleDay(day: RoleDayGroup) {
+    return (
+      <View key={day.dayKey} style={styles.dayBlock}>
+        <TouchableOpacity onPress={() => toggleDay(day.dayKey)}>
+          <Text style={styles.dayHeader}>
+            {collapsedDays[day.dayKey] ? "▸" : "▾"} {formatDayHeader(day.dayKey)}
+          </Text>
+        </TouchableOpacity>
+        {!collapsedDays[day.dayKey] &&
+          day.roles.map((roleGroup) => (
+            <View key={roleGroup.roleId ?? "untagged"} style={styles.contextBlock}>
+              <View style={styles.roleGroupHeader}>
+                {roleGroup.roleId && (
+                  <RoleAvatar
+                    roleId={roleGroup.roleId}
+                    size={18}
+                    ringColor={getRole(roleGroup.roleId).color}
+                  />
+                )}
+                <Text style={styles.roleGroupHeaderText}>
+                  {roleGroup.roleId ? getRole(roleGroup.roleId).name : "Untagged"}
+                </Text>
+              </View>
+              {renderContexts(roleGroup.contexts)}
+            </View>
+          ))}
+      </View>
+    );
+  }
+
   return (
     <Modal
       visible={visible}
@@ -151,6 +271,19 @@ export function JournalScreen({ visible, onClose, db }: Props) {
             <CopyableError message={error} context="JournalScreen" />
           </View>
         )}
+
+        <View style={styles.groupToggleRow}>
+          <GroupToggleButton
+            label="By affirmation"
+            active={groupMode === "affirmation"}
+            onPress={() => setGroupMode("affirmation")}
+          />
+          <GroupToggleButton
+            label="By role"
+            active={groupMode === "role"}
+            onPress={() => setGroupMode("role")}
+          />
+        </View>
 
         <ScrollView
           horizontal
@@ -194,59 +327,29 @@ export function JournalScreen({ visible, onClose, db }: Props) {
               {filteredEntries.length === 1 ? "entry" : "entries"}
             </Text>
           )}
-          {groups.length === 0 ? (
-            <View style={styles.emptyBlock}>
-              <Text style={styles.emptyTitle}>
-                {filterRole != null
-                  ? "No entries for this role yet"
-                  : "No entries yet"}
-              </Text>
-              <Text style={styles.emptyHint}>
-                {filterRole != null
-                  ? "Tag an affirmation or gratitude with this role, or write one from the role's detail sheet."
-                  : "Use Affirmation or Grateful from the dashboard to log thoughts. Pull down here to sync from CloudKit."}
-              </Text>
-            </View>
+          {groupMode === "affirmation" ? (
+            groups.length === 0 ? (
+              renderEmpty()
+            ) : (
+              groups.map((day) => renderAffirmationDay(day))
+            )
+          ) : visibleRoleDays.length === 0 ? (
+            renderEmpty()
           ) : (
-            groups.map((day) => (
-              <View key={day.dayKey} style={styles.dayBlock}>
-                <TouchableOpacity onPress={() => toggleDay(day.dayKey)}>
-                  <Text style={styles.dayHeader}>
-                    {collapsedDays[day.dayKey] ? "▸" : "▾"} {formatDayHeader(day.dayKey)}
-                  </Text>
-                </TouchableOpacity>
-                {!collapsedDays[day.dayKey] &&
-                  day.contexts.map((ctx) => (
-                    <View key={ctx.context} style={styles.contextBlock}>
-                      <Text style={styles.contextHeader}>
-                        {CONTEXT_LABEL[ctx.context as JournalContext]}
-                      </Text>
-                      {ctx.affirmations.map((a) => (
-                        <View key={a.affirmationTitle} style={styles.affirmationBlock}>
-                          <Text style={styles.affirmationHeader}>
-                            {a.affirmationTitle}
-                          </Text>
-                          {a.entries.map((entry) => (
-                            <EntryRow
-                              key={entry.id}
-                              entry={entry}
-                              audio={
-                                entry.audioRecordingId
-                                  ? audioById[entry.audioRecordingId]
-                                  : undefined
-                              }
-                              db={db}
-                              onDelete={() => handleDelete(entry)}
-                            />
-                          ))}
-                        </View>
-                      ))}
-                    </View>
-                  ))}
-              </View>
-            ))
+            visibleRoleDays.map((day) => renderRoleDay(day))
           )}
         </ScrollView>
+
+        <JournalEntryRoleEditor
+          visible={editing != null}
+          entry={editing}
+          currentRoles={
+            editing ? rolesByEntryMap.get(editing.id) ?? new Set() : new Set()
+          }
+          db={db}
+          onClose={() => setEditing(null)}
+          onChanged={() => void load()}
+        />
       </View>
     </Modal>
   );
@@ -256,17 +359,22 @@ function EntryRow({
   entry,
   audio,
   db,
+  roles,
+  onEditRoles,
   onDelete,
 }: {
   entry: JournalEntry;
   audio: AudioRecording | undefined;
   db: SQLite.SQLiteDatabase | null;
+  roles: ReadonlySet<RoleId> | null;
+  onEditRoles: () => void;
   onDelete: () => void;
 }) {
   const time = new Date(entry.date).toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
+  const roleIds = roles ? ROLE_ORDER.filter((id) => roles.has(id)) : [];
   return (
     <View style={styles.entryRow}>
       <View style={{ flex: 1 }}>
@@ -283,12 +391,57 @@ function EntryRow({
         {entry.audioRecordingId && !audio && (
           <Text style={styles.entryMissing}>voice note (metadata pending sync)</Text>
         )}
-        <Text style={styles.entryTime}>{time}</Text>
+        <View style={styles.entryFooter}>
+          <Text style={styles.entryTime}>{time}</Text>
+          <TouchableOpacity
+            onPress={onEditRoles}
+            style={styles.roleTagBtn}
+            testID={`entry-roles-${entry.id}`}
+            accessibilityLabel="Edit role tags"
+          >
+            {roleIds.map((id) => (
+              <RoleAvatar
+                key={id}
+                roleId={id}
+                size={16}
+                ringColor={getRole(id).color}
+              />
+            ))}
+            <Text style={styles.roleTagPlus}>
+              {roleIds.length === 0 ? "+ tag" : "＋"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
         <Text style={styles.deleteBtnText}>×</Text>
       </TouchableOpacity>
     </View>
+  );
+}
+
+function GroupToggleButton({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.groupToggleBtn, active && styles.groupToggleBtnActive]}
+      testID={`journal-group-${label.includes("role") ? "role" : "affirmation"}`}
+      accessibilityState={{ selected: active }}
+    >
+      <Text
+        style={[styles.groupToggleText, active && styles.groupToggleTextActive]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -458,11 +611,56 @@ const styles = {
   },
   entryText: { color: "#fff", fontSize: 14, lineHeight: 20 },
   entryMissing: { color: "#666", fontSize: 12, fontStyle: "italic" as const },
-  entryTime: { color: "#666", fontSize: 11, marginTop: 4 },
+  entryTime: { color: "#666", fontSize: 11 },
+  entryFooter: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    marginTop: 4,
+  },
+  roleTagBtn: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 3,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  roleTagPlus: { color: "#6f7891", fontSize: 12, marginLeft: 2 },
   deleteBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginLeft: 6,
   },
   deleteBtnText: { color: "#ff5555", fontSize: 22, fontWeight: "300" as const },
+  groupToggleRow: {
+    flexDirection: "row" as const,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  groupToggleBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2a2a3a",
+    backgroundColor: "#111",
+  },
+  groupToggleBtnActive: {
+    borderColor: "#4a9eff",
+    backgroundColor: "#13243a",
+  },
+  groupToggleText: { color: "#aaa", fontSize: 13 },
+  groupToggleTextActive: { color: "#4a9eff", fontWeight: "700" as const },
+  roleGroupHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+    marginTop: 8,
+  },
+  roleGroupHeaderText: {
+    color: "#cdd3df",
+    fontSize: 14,
+    fontWeight: "700" as const,
+  },
 };
