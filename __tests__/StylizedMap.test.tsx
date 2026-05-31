@@ -1,5 +1,5 @@
 import React from "react";
-import { render } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import { StylizedMap, type PathPoint } from "../components/StylizedMap";
 
 describe("StylizedMap", () => {
@@ -74,5 +74,39 @@ describe("StylizedMap", () => {
         /No location yet — grab context or add a known place\./,
       ),
     ).toBeTruthy();
+  });
+
+  it("shows find-me and fullscreen controls when a location is present", () => {
+    const result = render(<StylizedMap {...baseProps} />);
+    expect(result.getByTestId("map-find-me")).toBeTruthy();
+    expect(result.getByTestId("map-fullscreen")).toBeTruthy();
+  });
+
+  it("hides the find-me control when there is no current location", () => {
+    // Places give a region so the map still renders, but with no "You"
+    // pin there is nothing to recenter on.
+    const result = render(
+      <StylizedMap currentLocation={null} knownPlaces={baseProps.knownPlaces} />,
+    );
+    expect(result.getByTestId("stylized-map")).toBeTruthy();
+    expect(result.queryByTestId("map-pin-current")).toBeNull();
+    expect(result.queryByTestId("map-find-me")).toBeNull();
+    // Fullscreen is still available even without a current location.
+    expect(result.getByTestId("map-fullscreen")).toBeTruthy();
+  });
+
+  it("opens a fullscreen surface when the fullscreen control is tapped", () => {
+    const result = render(<StylizedMap {...baseProps} />);
+    expect(result.queryByTestId("stylized-map-fullscreen")).toBeNull();
+    fireEvent.press(result.getByTestId("map-fullscreen"));
+    expect(result.getByTestId("stylized-map-fullscreen")).toBeTruthy();
+    // The fullscreen instance carries its own close + find-me controls.
+    expect(result.getByTestId("map-fs-fullscreen")).toBeTruthy();
+    expect(result.getByTestId("map-fs-find-me")).toBeTruthy();
+  });
+
+  it("recenter tap does not throw with a current location", () => {
+    const result = render(<StylizedMap {...baseProps} />);
+    expect(() => fireEvent.press(result.getByTestId("map-find-me"))).not.toThrow();
   });
 });

@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useMemo, useRef, useState } from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import MapView, {
   Marker,
@@ -9,11 +9,7 @@ import MapView, {
 } from "react-native-maps";
 import type { KnownPlace } from "../lib/places";
 import type { LocationData } from "../lib/appTypes";
-import {
-  CURRENT_LOCATION_COLOR,
-  PLACE_COLORS,
-  UNKNOWN_PLACE_COLOR,
-} from "../lib/places_colors";
+import { CURRENT_LOCATION_COLOR, PLACE_COLORS } from "../lib/places_colors";
 import { iconForPlace } from "../lib/place_icons";
 
 export type PathPoint = {
@@ -42,6 +38,9 @@ const FALLBACK_REGION: Region = {
   latitudeDelta: 0.4,
   longitudeDelta: 0.4,
 };
+
+// Street-level span the find-me control zooms to (≈ a neighborhood).
+const FIND_ME_DELTA = 0.01;
 
 function computeRegion(
   currentLocation: LocationData,
@@ -122,42 +121,55 @@ function CurrentPin() {
   );
 }
 
-export function StylizedMap({
+type SurfaceProps = {
+  region: Region;
+  currentLocation: LocationData;
+  knownPlaces: KnownPlace[];
+  polylineCoords: { latitude: number; longitude: number }[];
+  placeColors?: Map<string, string>;
+  /** This surface fills its parent (fullscreen) vs. fixed embedded height. */
+  fullscreen: boolean;
+  height: number;
+  /** Toggle handler: enter fullscreen (embedded) or exit it (fullscreen). */
+  onToggleFullscreen: () => void;
+  /** Frame testID — "stylized-map" (embedded) or "stylized-map-fullscreen". */
+  frameTestID: string;
+  /** Control testID prefix — "map-" (embedded) or "map-fs-" (fullscreen). */
+  idPrefix: string;
+};
+
+/**
+ * The map itself plus its overlay controls. Owns its own MapView ref so the
+ * find-me control animates the right camera, and its own copy-confirmation
+ * state. Rendered twice: once embedded, once inside the fullscreen modal.
+ */
+function MapSurface({
+  region,
   currentLocation,
   knownPlaces,
-  height = 180,
-  path,
+  polylineCoords,
   placeColors,
-}: Props) {
+  fullscreen,
+  height,
+  onToggleFullscreen,
+  frameTestID,
+  idPrefix,
+}: SurfaceProps) {
+  const mapRef = useRef<MapView>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
 
-  const cleanPath = useMemo(
-    () =>
-      (path ?? []).filter(
-        (p) => Number.isFinite(p.lat) && Number.isFinite(p.lon),
-      ),
-    [path],
-  );
-
-  const region = useMemo(
-    () => computeRegion(currentLocation, knownPlaces, cleanPath),
-    [currentLocation, knownPlaces, cleanPath],
-  );
-
-  if (!region) {
-    return (
-      <View style={[styles.frame, styles.emptyFrame, { height }]} testID="stylized-map">
-        <Text style={styles.emptyText}>
-          No location yet — grab context or add a known place.
-        </Text>
-      </View>
+  function handleFindMe() {
+    if (!currentLocation) return;
+    mapRef.current?.animateToRegion(
+      {
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: FIND_ME_DELTA,
+        longitudeDelta: FIND_ME_DELTA,
+      },
+      350,
     );
   }
-
-  const polylineCoords = cleanPath.map((p) => ({
-    latitude: p.lat,
-    longitude: p.lon,
-  }));
 
   async function handleCopyCoords() {
     if (!currentLocation) return;
@@ -167,9 +179,15 @@ export function StylizedMap({
     setTimeout(() => setCopyState("idle"), 1500);
   }
 
+  const pos = fullscreen ? fsPositions : embeddedPositions;
+
   return (
-    <View style={[styles.frame, { height }]} testID="stylized-map">
+    <View
+      style={[styles.frame, fullscreen ? { flex: 1 } : { height }]}
+      testID={frameTestID}
+    >
       <MapView
+        ref={mapRef}
         provider={PROVIDER_DEFAULT}
         style={StyleSheet.absoluteFill}
         initialRegion={region ?? FALLBACK_REGION}
@@ -220,20 +238,122 @@ export function StylizedMap({
           />
         )}
       </MapView>
+
+      <TouchableOpacity
+        onPress={onToggleFullscreen}
+        style={[styles.control, pos.fullscreen]}
+        testID={`${idPrefix}fullscreen`}
+        accessibilityLabel={fullscreen ? "Exit fullscreen map" : "Expand map to fullscreen"}
+        hitSlop={8}
+      >
+        <Text style={styles.controlGlyph}>{fullscreen ? "⤡" : "⤢"}</Text>
+      </TouchableOpacity>
+
+      {currentLocation && (
+        <TouchableOpacity
+          onPress={handleFindMe}
+          style={[styles.control, pos.findMe]}
+          testID={`${idPrefix}find-me`}
+          accessibilityLabel="Recenter map on my location"
+          hitSlop={8}
+        >
+          <Text style={styles.controlGlyph}>◎</Text>
+        </TouchableOpacity>
+      )}
+
       {currentLocation && (
         <TouchableOpacity
           onPress={handleCopyCoords}
-          style={styles.copyOverlay}
-          testID="map-copy-coords"
+          style={[styles.control, pos.copy]}
+          testID={`${idPrefix}copy-coords`}
           accessibilityLabel="Copy current coordinates"
           hitSlop={8}
         >
-          <Text style={styles.copyOverlayGlyph}>
+          <Text style={styles.controlGlyph}>
             {copyState === "copied" ? "✓" : "📋"}
           </Text>
         </TouchableOpacity>
       )}
     </View>
+  );
+}
+
+export function StylizedMap({
+  currentLocation,
+  knownPlaces,
+  height = 180,
+  path,
+  placeColors,
+}: Props) {
+  const [fullscreen, setFullscreen] = useState(false);
+
+  const cleanPath = useMemo(
+    () =>
+      (path ?? []).filter(
+        (p) => Number.isFinite(p.lat) && Number.isFinite(p.lon),
+      ),
+    [path],
+  );
+
+  const region = useMemo(
+    () => computeRegion(currentLocation, knownPlaces, cleanPath),
+    [currentLocation, knownPlaces, cleanPath],
+  );
+
+  if (!region) {
+    return (
+      <View style={[styles.frame, styles.emptyFrame, { height }]} testID="stylized-map">
+        <Text style={styles.emptyText}>
+          No location yet — grab context or add a known place.
+        </Text>
+      </View>
+    );
+  }
+
+  const polylineCoords = cleanPath.map((p) => ({
+    latitude: p.lat,
+    longitude: p.lon,
+  }));
+
+  const surfaceData = {
+    region,
+    currentLocation,
+    knownPlaces,
+    polylineCoords,
+    placeColors,
+  };
+
+  return (
+    <>
+      <MapSurface
+        {...surfaceData}
+        fullscreen={false}
+        height={height}
+        onToggleFullscreen={() => setFullscreen(true)}
+        frameTestID="stylized-map"
+        idPrefix="map-"
+      />
+      {fullscreen && (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setFullscreen(false)}
+          testID="map-fullscreen-modal"
+        >
+          <View style={styles.fullscreenBackdrop}>
+            <MapSurface
+              {...surfaceData}
+              fullscreen
+              height={height}
+              onToggleFullscreen={() => setFullscreen(false)}
+              frameTestID="stylized-map-fullscreen"
+              idPrefix="map-fs-"
+            />
+          </View>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -246,16 +366,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1a2a3a",
   },
+  fullscreenBackdrop: {
+    flex: 1,
+    backgroundColor: "#0e1a2b",
+  },
   emptyFrame: {
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
   },
   emptyText: { color: "#666", fontSize: 12, textAlign: "center" },
-  copyOverlay: {
+  control: {
     position: "absolute",
-    bottom: 8,
-    right: 8,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -263,11 +385,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(20, 20, 30, 0.65)",
   },
-  copyOverlayGlyph: {
+  controlGlyph: {
     fontSize: 16,
     color: "#fff",
     textAlign: "center",
   },
+});
+
+// Control positions differ between embedded (compact, bottom-right stack) and
+// fullscreen (close at top clearing the notch, actions above the home bar).
+const embeddedPositions = StyleSheet.create({
+  fullscreen: { top: 8, right: 8 },
+  findMe: { bottom: 48, right: 8 },
+  copy: { bottom: 8, right: 8 },
+});
+
+const fsPositions = StyleSheet.create({
+  fullscreen: { top: 54, right: 16 },
+  findMe: { bottom: 96, right: 16 },
+  copy: { bottom: 48, right: 16 },
 });
 
 const pinStyles = StyleSheet.create({

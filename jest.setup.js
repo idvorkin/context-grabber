@@ -132,7 +132,16 @@ jest.mock('expo-cloudkit', () => ({
 jest.mock('react-native-maps', () => {
   const React = require('react');
   const { View } = require('react-native');
-  const MapView = (props) => React.createElement(View, props, props.children);
+  // forwardRef so components can hold a MapView ref and call imperative
+  // camera methods (animateToRegion) — used by the find-me control.
+  const MapView = React.forwardRef((props, ref) => {
+    React.useImperativeHandle(ref, () => ({
+      animateToRegion: () => {},
+      animateCamera: () => {},
+      fitToCoordinates: () => {},
+    }));
+    return React.createElement(View, props, props.children);
+  });
   const Marker = (props) => React.createElement(View, props, props.children);
   const Polyline = (props) => React.createElement(View, props);
   return {
