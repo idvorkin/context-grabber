@@ -229,6 +229,51 @@ Re-assertion is skipped when the live route already matches the request,
 so it cannot loop. A request the session refuses twice in a row is
 dropped and reported once as `audio.error`.
 
+## Call intent (app → page)
+
+A deep link — `grabber://call` or `grabber://call?via=eleven`, from a Siri
+Shortcut, the Action Button, a widget — brings the app to the Cockpit tab and
+asks the page to start a call. The app never starts it: the call is the
+page's, and every rule the page's handset enforces (never a second call, no
+call without a microphone, the device picks above) must hold for a link.
+Spec: `superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md`.
+
+Delivered once per link, after the page has finished loading, as **both**:
+
+```js
+window.CockpitCallIntent = { type: "call.start", via: "eleven", nonce: 1756400000000 };
+window.dispatchEvent(new CustomEvent("cockpit-call", { detail: <same object> }));
+```
+
+| field | meaning |
+| --- | --- |
+| `via` | `"eleven"`, `"gemini"`, `"openai"`, `"drill"`, or `null` for the page's current backend |
+| `nonce` | distinguishes two links from one link seen twice; a page that has acted on a nonce ignores it again |
+
+Read `window.CockpitCallIntent` at bootstrap (a listener attached late still
+sees the most recent one; clear it once acted on) and listen for
+`cockpit-call` for anything that arrives while the page is up. There is no
+page → app half: the page answers with its own state line, and a call already
+live is navigated to, not restarted.
+
+Not part of the `version` — additive.
+
+## Call state (page → app)
+
+Only the page knows when a call is connecting, live, or over — it owns the
+socket. It says so on the same channel as the audio requests, and the app
+keeps the screen awake for exactly that long, whichever tab is showing.
+Spec: `superpowers/specs/2026-08-28-cockpit-keep-awake-design.md`.
+
+```js
+window.CockpitAudioBridge.post({ type: "call.state", live: true });   // talkStart, as it begins connecting
+window.CockpitAudioBridge.post({ type: "call.state", live: false });  // talkTeardown, however it ended
+```
+
+No `requestId`, no answer. A page that goes away — reload, load failure, a
+content-process kill — is treated as a call that ended, whether or not it
+managed to say so.
+
 ## What this does not do
 
 - **No native capture.** The page's own `getUserMedia` still does the

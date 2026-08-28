@@ -316,6 +316,33 @@ describe("Tab navigation", () => {
     expect(result.getByText("Context Grabber")).toBeTruthy();
   });
 
+  it("a grabber://call link brings up the Cockpit tab and asks the page to call", async () => {
+    const { Linking } = require("react-native");
+    const web = jest.requireMock("react-native-webview").__mock as { injectJavaScript: jest.Mock };
+    // Earlier renders in this file registered their own (now dead) listeners;
+    // only the one THIS render registers can reach live state.
+    (Linking.addEventListener as jest.Mock).mockClear();
+    const result = await renderApp();
+    expect(result.queryByTestId("cockpit-webview")).toBeNull();
+    const urlCalls = (Linking.addEventListener as jest.Mock).mock.calls.filter((c: unknown[]) => c[0] === "url");
+    expect(urlCalls.length).toBeGreaterThan(0);
+    const onUrl = urlCalls[urlCalls.length - 1][1] as (ev: { url: string }) => void;
+    await act(async () => {
+      onUrl({ url: "grabber://call?via=eleven" });
+    });
+    // Mounted AND showing — not merely mounted-hidden.
+    expect(result.getByTestId("cockpit-webview")).toBeTruthy();
+    web.injectJavaScript.mockClear();
+    await act(async () => {
+      fireEvent(result.getByTestId("cockpit-webview"), "loadEnd");
+    });
+    // The payload rides inside a JSON string literal in the script, so its
+    // quotes are escaped; match on the words. CockpitScreen.test executes the
+    // script for real and asserts the exact shape.
+    const scripts = web.injectJavaScript.mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(scripts.some((s: string) => s.includes("call.start") && s.includes("eleven"))).toBe(true);
+  });
+
   it("tap '+ Tag moment' opens the role picker sheet", async () => {
     const result = await renderApp();
     await gotoTab(result, "roles");

@@ -8,10 +8,14 @@ import {
   View,
 } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CopyableError } from "../components/CopyableError";
 import {
   bridgeEmitScript,
   bridgeInstallScript,
+  callIntentEmitScript,
+  parseCallState,
+  type CallIntent,
   describeError,
   devicesPayload,
   errorPayload,
@@ -42,12 +46,42 @@ type Props = {
   visible?: boolean;
   /** Override the loaded URL. Tests only. */
   url?: string;
+  /**
+   * A deep link asked for a call (`grabber://call?via=…`). Delivered to the
+   * page exactly once per nonce, as soon as the page is loaded and healthy.
+   * Spec: docs/superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md.
+   */
+  callIntent?: CallIntent | null;
 };
 
-export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
+/** Tagged so it can never collide with the Gym Timer's default keep-awake. */
+const KEEP_AWAKE_TAG = "cockpit";
+
+export function CockpitScreen({
+  visible = true,
+  url = COCKPIT_URL,
+  callIntent = null,
+}: Props) {
   const webRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /* ---------- keep the screen awake while a call is live ----------
+     Igor: "make it a function of the call, not the tab." Only the page knows
+     when a call is connecting, live, or over — it owns the socket — so it
+     says so (call.state, below) and the screen is held for exactly that
+     long, whichever tab is showing. A page that goes away (reload, load
+     failure, a content-process kill) is a call that ended, whether or not it
+     managed to say so: every one of those resets `callLive`.
+     Spec: docs/superpowers/specs/2026-08-28-cockpit-keep-awake-design.md. */
+  const [callLive, setCallLive] = useState(false);
+  useEffect(() => {
+    if (!callLive) return;
+    void Promise.resolve(activateKeepAwakeAsync(KEEP_AWAKE_TAG)).catch(() => {});
+    return () => {
+      void Promise.resolve(deactivateKeepAwake(KEEP_AWAKE_TAG)).catch(() => {});
+    };
+  }, [callLive]);
   // Bumped on every manual retry to force a fresh WebView mount — reload()
   // on a WebView that failed its very first load is unreliable.
   const [reloadKey, setReloadKey] = useState(0);
@@ -55,6 +89,7 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
   const handleRetry = useCallback(() => {
     setError(null);
     setLoading(true);
+    setCallLive(false);
     setReloadKey((k) => k + 1);
   }, []);
 
@@ -118,6 +153,11 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
 
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
+      const state = parseCallState(event.nativeEvent.data);
+      if (state) {
+        setCallLive(state.live);
+        return;
+      }
       const request = parseBridgeRequest(event.nativeEvent.data);
       // Not ours. The page owns postMessage and may be using it for something
       // else; swallowing that traffic would be a bug.
@@ -155,6 +195,26 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
     setLoading(false);
     emit(readyPayload(!!AudioRoute));
   }, [emit]);
+
+  /* ---------- call intent ----------
+     The app never starts the call; it asks the page to press its own
+     handset, so every rule the handset enforces holds for a link. One
+     delivery per nonce. A page still loading gets it on load end — the same
+     effect re-runs when `loading` flips. A failed load CONSUMES it: a call
+     Igor asked for must not start an hour later when the page finally comes
+     up after "Try again". A reload after a content-process kill does not
+     re-deliver, because the nonce is already spent. */
+  const intentDelivered = useRef<number | null>(null);
+  useEffect(() => {
+    if (!callIntent || intentDelivered.current === callIntent.nonce) return;
+    if (error) {
+      intentDelivered.current = callIntent.nonce;
+      return;
+    }
+    if (loading) return;
+    intentDelivered.current = callIntent.nonce;
+    webRef.current?.injectJavaScript(callIntentEmitScript(callIntent));
+  }, [callIntent, loading, error]);
 
   /**
    * Keep the tab pinned to the Cockpit. Anything on another host (a
@@ -252,23 +312,31 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
             // --- refresh ---
             pullToRefreshEnabled
             // --- lifecycle ---
-            onLoadStart={() => setLoading(true)}
+            onLoadStart={() => {
+              setLoading(true);
+              setCallLive(false); // a reload ends whatever call the old page had
+            }}
             onLoadEnd={handleLoadEnd}
             onError={(e) => {
               const { description, code } = e.nativeEvent;
               setLoading(false);
+              setCallLive(false);
               setError(`${description ?? "Load failed"} (code ${code})`);
             }}
             onHttpError={(e) => {
               const { statusCode, description } = e.nativeEvent;
               setLoading(false);
+              setCallLive(false);
               setError(
                 `HTTP ${statusCode}${description ? ` — ${description}` : ""}`,
               );
             }}
             // iOS reclaims the web content process on memory pressure while
             // backgrounded; without this the tab comes back as a white void.
-            onContentProcessDidTerminate={() => webRef.current?.reload()}
+            onContentProcessDidTerminate={() => {
+              setCallLive(false);
+              webRef.current?.reload();
+            }}
             style={styles.web}
             // Match the app chrome so the load flash isn't a white slab.
             containerStyle={styles.webContainer}
