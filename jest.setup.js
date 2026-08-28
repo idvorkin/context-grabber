@@ -157,19 +157,68 @@ jest.mock('react-native-maps', () => {
 // Mock react-native-webview (no WKWebView in tests). Rendered as a plain
 // View that still forwards testID/props so assertions can inspect the
 // media-capture and refresh props we depend on.
+//
+// The imperative handle's methods are jest.fn()s exposed as `__mock` so the
+// audio-bridge tests can read what was injected into the page — that string
+// IS the protocol's wire format, and asserting on it is the only way to test
+// the app→page direction without a device.
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { View } = require('react-native');
+  const handle = {
+    reload: jest.fn(),
+    goBack: jest.fn(),
+    injectJavaScript: jest.fn(),
+  };
   const WebView = React.forwardRef((props, ref) => {
-    React.useImperativeHandle(ref, () => ({
-      reload: () => {},
-      goBack: () => {},
-      injectJavaScript: () => {},
-    }));
+    React.useImperativeHandle(ref, () => handle);
     return React.createElement(View, props);
   });
-  return { __esModule: true, WebView, default: WebView };
+  return { __esModule: true, WebView, default: WebView, __mock: handle };
 });
+
+// Mock the local audio-route Expo module (no AVAudioSession in tests). The
+// default snapshot is a phone with AirPods paired — the shape that matters,
+// since a phone with nothing attached is the case where the pickers have
+// nothing to show anyway.
+const mockAudioRouteSnapshot = {
+  inputs: [
+    { id: 'BuiltInMicrophoneBottom', name: 'iPhone Microphone', type: 'MicrophoneBuiltIn' },
+    { id: 'AC:12:34:56:78:9A-tacl', name: 'AirPods Pro', type: 'BluetoothHFP' },
+  ],
+  outputs: [
+    { id: 'auto', name: 'Automatic', type: 'auto' },
+    { id: 'speaker', name: 'Speaker', type: 'Speaker' },
+    { id: 'AC:12:34:56:78:9A-tacl', name: 'AirPods Pro', type: 'BluetoothHFP' },
+  ],
+  current: {
+    input: { id: 'BuiltInMicrophoneBottom', name: 'iPhone Microphone', type: 'MicrophoneBuiltIn' },
+    output: { id: 'speaker', name: 'Speaker', type: 'Speaker' },
+  },
+  capabilities: { selectInput: true, selectOutput: true, forceSpeaker: true },
+};
+const mockAudioRoute = {
+  snapshot: mockAudioRouteSnapshot,
+  listeners: [],
+  isAvailable: jest.fn(() => true),
+  activate: jest.fn(async () => mockAudioRoute.snapshot),
+  getDevices: jest.fn(() => mockAudioRoute.snapshot),
+  setInput: jest.fn(async () => mockAudioRoute.snapshot),
+  setOutput: jest.fn(async () => mockAudioRoute.snapshot),
+  addListener: jest.fn((_name, listener) => {
+    mockAudioRoute.listeners.push(listener);
+    return {
+      remove: jest.fn(() => {
+        mockAudioRoute.listeners = mockAudioRoute.listeners.filter((l) => l !== listener);
+      }),
+    };
+  }),
+};
+jest.mock('./modules/audio-route', () => ({
+  __esModule: true,
+  default: mockAudioRoute,
+  __mock: mockAudioRoute,
+}));
 
 // Mock react-native-audio-api
 jest.mock('react-native-audio-api', () => ({
