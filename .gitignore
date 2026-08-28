@@ -68,3 +68,6 @@ tmp/
 
 # Beads ad-hoc report exports (canonical data lives in .beads/beads.jsonl)
 beads_report_*.md
+
+# Beads / Dolt files (added by bd init)
+.beads/proxieddb/
