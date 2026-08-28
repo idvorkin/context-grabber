@@ -258,6 +258,22 @@ live is navigated to, not restarted.
 
 Not part of the `version` — additive.
 
+## Call state (page → app)
+
+Only the page knows when a call is connecting, live, or over — it owns the
+socket. It says so on the same channel as the audio requests, and the app
+keeps the screen awake for exactly that long, whichever tab is showing.
+Spec: `superpowers/specs/2026-08-28-cockpit-keep-awake-design.md`.
+
+```js
+window.CockpitAudioBridge.post({ type: "call.state", live: true });   // talkStart, as it begins connecting
+window.CockpitAudioBridge.post({ type: "call.state", live: false });  // talkTeardown, however it ended
+```
+
+No `requestId`, no answer. A page that goes away — reload, load failure, a
+content-process kill — is treated as a call that ended, whether or not it
+managed to say so.
+
 ## What this does not do
 
 - **No native capture.** The page's own `getUserMedia` still does the

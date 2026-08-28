@@ -6,17 +6,25 @@ Both ship as one OTA from `context-grabber` + one page PR in `igor2`.
 
 ## context-grabber (JS only — no native build)
 
-### Keep awake — `screens/CockpitScreen.tsx`
+### Keep awake — a function of the call
 - `expo-keep-awake` 55.0.6 is already a dep and `ExpoKeepAwake` is in the
   shipped Podfile.lock (GymTimerScreen uses `useKeepAwake`).
-- CockpitScreen stays mounted while hidden, so `useKeepAwake()` would hold the
-  screen on every tab. Use an effect keyed on `visible`:
-  `activateKeepAwakeAsync("cockpit")` when visible, `deactivateKeepAwake("cockpit")`
-  on hide/unmount. Tagged so it cannot collide with the Gym Timer's default
-  tag. Wrap in try/catch (expo-keep-awake throws in jest without the mock).
-- jest.setup.js: mock `expo-keep-awake` (activate/deactivate as jest.fn) and
-  assert in `__tests__/CockpitScreen.test.tsx`: activate on visible, deactivate
-  on hide, deactivate on unmount, never activated while hidden.
+- Page → app: the Cockpit page posts `{type:"call.state", live:true|false}`
+  through the bridge's `post` (same `window.ReactNativeWebView.postMessage`
+  channel as the audio requests) when a call starts connecting and when it
+  is torn down. `lib/audioBridge.ts` parses it alongside the audio requests
+  (`parseBridgeRequest` grows a `call.state` case; a message the page can
+  send without a `requestId`).
+- `screens/CockpitScreen.tsx`: `callLive` state. Effect keyed on `callLive`:
+  `activateKeepAwakeAsync("cockpit")` when true, `deactivateKeepAwake("cockpit")`
+  when false / on unmount. Independent of `visible` — a call keeps running
+  in the hidden tab. Reset `callLive` to false on `onLoadStart` (reload),
+  `onError` / `onHttpError`, and `onContentProcessDidTerminate`: a page that
+  went away is a call that ended, whether or not it said so.
+- jest.setup.js already mocks `activateKeepAwakeAsync` / `deactivateKeepAwake`.
+  `__tests__/CockpitScreen.test.tsx`: held on `call.state live:true`,
+  released on `live:false`, released on reload/error/unmount, never held for
+  the tab alone, still held while hidden.
 
 ### Call deep link
 - `lib/deepLink.ts`: new route `{ kind: "call"; via: CallBackend | null }` for
@@ -26,20 +34,19 @@ Both ship as one OTA from `context-grabber` + one page PR in `igor2`.
 - `App.tsx` deep-link handler: `route.kind === "call"` → close overlays
   (gym timer etc.), `setCockpitMounted(true)`, `setActiveTab("cockpit")`,
   `setCallIntent({ via, nonce: Date.now() })`.
-- `screens/CockpitScreen.tsx` new prop `callIntent?: { via: string | null; nonce: number } | null`.
-  Delivery, in `lib/audioBridge.ts` next to the existing bridge helpers:
-  - `callIntentInstallScript(intent)` — injected before content on a fresh
-    load: `window.CockpitCallIntent = { type: "call.start", via, nonce }`.
-    Implemented by feeding `injectedJavaScriptBeforeContentLoaded` the bridge
-    install script concatenated with this when an intent is pending at
-    mount/reload time.
-  - `callIntentEmitScript(intent)` — for an already-loaded page:
-    `window.CockpitCallIntent = …; window.dispatchEvent(new CustomEvent("cockpit-call", { detail }))`.
-  - Rules: an intent is delivered at most once (track delivered nonce in a
-    ref); delivered on `onLoadEnd` if the page loaded after the intent
-    arrived; **dropped** (nonce marked delivered) on `onError`/`onHttpError`
-    so a later retry never starts a stale call (spec: "consumed by a failed
-    load"). `onContentProcessDidTerminate` reload does NOT re-deliver.
+- `screens/CockpitScreen.tsx` new prop `callIntent?: { via: CallBackend | null; nonce: number } | null`.
+  Delivery, in `lib/audioBridge.ts` next to the existing bridge helpers —
+  ONE script, `callIntentEmitScript(intent)`, injected after load:
+  `window.CockpitCallIntent = …; window.dispatchEvent(new CustomEvent("cockpit-call", { detail }))`.
+  (No before-content install script: the page's bootstrap has run by load
+  end, and it both reads the global and listens for the event, so a single
+  post-load delivery covers a fresh load and an already-loaded page alike.)
+  - Rules: an intent is delivered at most once (delivered nonce in a ref);
+    the effect is keyed on `loading`, so an intent that arrives mid-load is
+    delivered on load end; **consumed** (nonce marked delivered) when an
+    error pane is showing, so a later retry never starts a stale call (spec:
+    "consumed by a failed load"). `onContentProcessDidTerminate` reload does
+    NOT re-deliver.
 - Tests: `__tests__/CockpitScreen.test.tsx` — intent while loaded → inject
   once; intent before load → delivered on load end, not before; error → not
   delivered on the next load; same nonce twice → once. `__tests__/App.test.tsx`

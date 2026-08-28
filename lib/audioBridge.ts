@@ -13,6 +13,8 @@
  * Full protocol: `docs/cockpit-audio-bridge.md`.
  */
 
+import type { CallBackend } from "./deepLink";
+
 import type {
   AudioRouteChange,
   AudioRouteSnapshot,
@@ -230,14 +232,14 @@ export const CALL_INTENT_EVENT = "cockpit-call";
 
 export type CallIntent = {
   /** Backend to switch to before starting, or null for the page's current pick. */
-  via: string | null;
+  via: CallBackend | null;
   /** Distinguishes two links from one link delivered twice. */
   nonce: number;
 };
 
 export type CallIntentPayload = {
   type: "call.start";
-  via: string | null;
+  via: CallBackend | null;
   nonce: number;
 };
 
@@ -259,4 +261,28 @@ export function callIntentEmitScript(intent: CallIntent): string {
   } catch (e) {}
 })();
 true;`;
+}
+
+/* ---------- call state (page → app) ----------
+   Only the page knows when a call is connecting, live, or over — it owns the
+   socket. It says so through the same channel as the audio requests, and the
+   app holds the screen awake for exactly that long.
+   Spec: docs/superpowers/specs/2026-08-28-cockpit-keep-awake-design.md. */
+
+export type CallStateMessage = { type: "call.state"; live: boolean };
+
+/** `null` for anything that is not a well-formed call.state — left for other consumers. */
+export function parseCallState(raw: unknown): CallStateMessage | null {
+  const text = typeof raw === "string" ? raw : "";
+  if (!text) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  const m = parsed as { type?: unknown; live?: unknown };
+  if (m.type !== "call.state" || typeof m.live !== "boolean") return null;
+  return { type: "call.state", live: m.live };
 }

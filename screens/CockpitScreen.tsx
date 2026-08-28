@@ -14,6 +14,7 @@ import {
   bridgeEmitScript,
   bridgeInstallScript,
   callIntentEmitScript,
+  parseCallState,
   type CallIntent,
   describeError,
   devicesPayload,
@@ -65,20 +66,22 @@ export function CockpitScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* ---------- keep the screen awake ----------
-     Igor: "when I'm on the Cockpit screen, I want to make sure it doesn't
-     lock." A property of the tab, not of a call: he reads decisions here
-     too. The screen stays mounted while hidden, so this keys on `visible`
-     rather than on mount — every other tab hands the idle timer straight
-     back to iOS. The error pane counts as the tab (a reconnect is watched).
+  /* ---------- keep the screen awake while a call is live ----------
+     Igor: "make it a function of the call, not the tab." Only the page knows
+     when a call is connecting, live, or over — it owns the socket — so it
+     says so (call.state, below) and the screen is held for exactly that
+     long, whichever tab is showing. A page that goes away (reload, load
+     failure, a content-process kill) is a call that ended, whether or not it
+     managed to say so: every one of those resets `callLive`.
      Spec: docs/superpowers/specs/2026-08-28-cockpit-keep-awake-design.md. */
+  const [callLive, setCallLive] = useState(false);
   useEffect(() => {
-    if (!visible) return;
+    if (!callLive) return;
     void Promise.resolve(activateKeepAwakeAsync(KEEP_AWAKE_TAG)).catch(() => {});
     return () => {
       void Promise.resolve(deactivateKeepAwake(KEEP_AWAKE_TAG)).catch(() => {});
     };
-  }, [visible]);
+  }, [callLive]);
   // Bumped on every manual retry to force a fresh WebView mount — reload()
   // on a WebView that failed its very first load is unreliable.
   const [reloadKey, setReloadKey] = useState(0);
@@ -86,6 +89,7 @@ export function CockpitScreen({
   const handleRetry = useCallback(() => {
     setError(null);
     setLoading(true);
+    setCallLive(false);
     setReloadKey((k) => k + 1);
   }, []);
 
@@ -149,6 +153,11 @@ export function CockpitScreen({
 
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
+      const state = parseCallState(event.nativeEvent.data);
+      if (state) {
+        setCallLive(state.live);
+        return;
+      }
       const request = parseBridgeRequest(event.nativeEvent.data);
       // Not ours. The page owns postMessage and may be using it for something
       // else; swallowing that traffic would be a bug.
@@ -303,23 +312,31 @@ export function CockpitScreen({
             // --- refresh ---
             pullToRefreshEnabled
             // --- lifecycle ---
-            onLoadStart={() => setLoading(true)}
+            onLoadStart={() => {
+              setLoading(true);
+              setCallLive(false); // a reload ends whatever call the old page had
+            }}
             onLoadEnd={handleLoadEnd}
             onError={(e) => {
               const { description, code } = e.nativeEvent;
               setLoading(false);
+              setCallLive(false);
               setError(`${description ?? "Load failed"} (code ${code})`);
             }}
             onHttpError={(e) => {
               const { statusCode, description } = e.nativeEvent;
               setLoading(false);
+              setCallLive(false);
               setError(
                 `HTTP ${statusCode}${description ? ` — ${description}` : ""}`,
               );
             }}
             // iOS reclaims the web content process on memory pressure while
             // backgrounded; without this the tab comes back as a white void.
-            onContentProcessDidTerminate={() => webRef.current?.reload()}
+            onContentProcessDidTerminate={() => {
+              setCallLive(false);
+              webRef.current?.reload();
+            }}
             style={styles.web}
             // Match the app chrome so the load flash isn't a white slab.
             containerStyle={styles.webContainer}

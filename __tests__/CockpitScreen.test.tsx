@@ -300,56 +300,91 @@ describe("CockpitScreen audio bridge", () => {
   });
 });
 
-/* ---------- keep the screen awake ----------
+/* ---------- keep the screen awake while a call is live ----------
    Spec: docs/superpowers/specs/2026-08-28-cockpit-keep-awake-design.md. A
-   property of the tab: held while it shows, released the moment it does not. */
-describe("CockpitScreen keeps the screen awake", () => {
+   property of the call, not the tab: held from "connecting" to "ended",
+   whichever tab shows; a page that goes away is a call that ended. */
+describe("CockpitScreen keeps the screen awake during a call", () => {
   const keep = jest.requireMock("expo-keep-awake") as {
     activateKeepAwakeAsync: jest.Mock;
     deactivateKeepAwake: jest.Mock;
   };
+  const live = (r: ReturnType<typeof render>, on: boolean) =>
+    post(r, { type: "call.state", live: on });
   beforeEach(() => {
     keep.activateKeepAwakeAsync.mockClear();
     keep.deactivateKeepAwake.mockClear();
   });
 
-  it("holds the screen while the tab is showing", () => {
-    render(<CockpitScreen />);
+  it("does not hold the screen for the tab alone", () => {
+    const r = render(<CockpitScreen />);
+    fireEvent(r.getByTestId("cockpit-webview"), "loadEnd");
+    expect(keep.activateKeepAwakeAsync).not.toHaveBeenCalled();
+  });
+
+  it("holds the screen the moment the page says a call is live", () => {
+    const r = render(<CockpitScreen />);
+    live(r, true);
     expect(keep.activateKeepAwakeAsync).toHaveBeenCalledWith("cockpit");
     expect(keep.deactivateKeepAwake).not.toHaveBeenCalled();
   });
 
-  it("never holds it for a tab that is mounted but hidden", () => {
-    render(<CockpitScreen visible={false} />);
-    expect(keep.activateKeepAwakeAsync).not.toHaveBeenCalled();
-  });
-
-  it("hands the idle timer back the moment another tab shows, and takes it again on return", () => {
+  it("releases it when the page says the call ended", () => {
     const r = render(<CockpitScreen />);
-    r.rerender(<CockpitScreen visible={false} />);
+    live(r, true);
+    live(r, false);
     expect(keep.deactivateKeepAwake).toHaveBeenCalledWith("cockpit");
-    r.rerender(<CockpitScreen visible />);
-    expect(keep.activateKeepAwakeAsync).toHaveBeenCalledTimes(2);
   });
 
-  it("releases it when the screen goes away entirely", () => {
+  it("keeps holding it while another tab is showing — the call is the reason, not the tab", () => {
     const r = render(<CockpitScreen />);
+    live(r, true);
+    r.rerender(<CockpitScreen visible={false} />);
+    expect(keep.deactivateKeepAwake).not.toHaveBeenCalled();
+  });
+
+  it("a page that reloads is a call that ended", () => {
+    const r = render(<CockpitScreen />);
+    live(r, true);
+    fireEvent(r.getByTestId("cockpit-webview"), "loadStart");
+    expect(keep.deactivateKeepAwake).toHaveBeenCalledWith("cockpit");
+  });
+
+  it("a page that fails to load is a call that ended", () => {
+    const r = render(<CockpitScreen />);
+    live(r, true);
+    fireEvent(r.getByTestId("cockpit-webview"), "error", {
+      nativeEvent: { description: "offline", code: -1009 },
+    });
+    expect(keep.deactivateKeepAwake).toHaveBeenCalledWith("cockpit");
+  });
+
+  it("a screen that goes away releases it", () => {
+    const r = render(<CockpitScreen />);
+    live(r, true);
     r.unmount();
     expect(keep.deactivateKeepAwake).toHaveBeenCalledWith("cockpit");
   });
 
-  it("still holds it on the reconnect pane — a reconnect is watched", () => {
+  it("says live once, not once per message", () => {
     const r = render(<CockpitScreen />);
-    fireEvent(r.getByTestId("cockpit-webview"), "error", {
-      nativeEvent: { description: "offline", code: -1009 },
-    });
-    expect(r.getByTestId("cockpit-error")).toBeTruthy();
-    expect(keep.deactivateKeepAwake).not.toHaveBeenCalled();
+    live(r, true);
+    live(r, true);
+    expect(keep.activateKeepAwakeAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a malformed call.state and leaves other messages to the bridge", () => {
+    const r = render(<CockpitScreen />);
+    post(r, { type: "call.state", live: "yes" });
+    post(r, { type: "audio.listDevices" });
+    expect(keep.activateKeepAwakeAsync).not.toHaveBeenCalled();
+    expect(audio.getDevices).toHaveBeenCalled();
   });
 
   it("uses its own tag so the Gym Timer's default keep-awake is never released by it", () => {
     const r = render(<CockpitScreen />);
-    r.unmount();
+    live(r, true);
+    live(r, false);
     for (const call of keep.deactivateKeepAwake.mock.calls) expect(call[0]).toBe("cockpit");
   });
 });
