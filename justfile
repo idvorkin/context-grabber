@@ -19,31 +19,15 @@ test:
 deploy device="Igor iPhone 17" udid="856A38BD-04D3-5D27-8485-E09FEF892783": generate-version
     #!/usr/bin/env bash
     set -euo pipefail
-    # Pods are stale when they're absent OR when Podfile.lock has moved on
-    # from the installed Pods/Manifest.lock — which is what happens after a
-    # new native module lands in package.json (e.g. react-native-webview).
-    # Without this check the build succeeds and the app red-screens at
-    # runtime with a missing native view manager.
-    #
-    # A LOCAL module (modules/<name>/) does not move Podfile.lock at all until
-    # pod install runs, so the diff above cannot see it. Check each local
-    # podspec against the installed manifest by name instead — otherwise the
-    # build succeeds and the module is silently absent at runtime.
-    pods_stale=""
-    if [ ! -d ios/Pods ] || ! diff -q ios/Podfile.lock ios/Pods/Manifest.lock >/dev/null 2>&1; then
-      pods_stale="Podfile.lock moved"
-    else
-      for spec in modules/*/ios/*.podspec; do
-        [ -e "$spec" ] || continue
-        pod_name=$(basename "$spec" .podspec)
-        if ! grep -q " ${pod_name} (" ios/Pods/Manifest.lock 2>/dev/null; then
-          pods_stale="local module ${pod_name} not installed"
-        fi
-      done
-    fi
-    if [ -n "$pods_stale" ]; then
-      echo "==> Pods out of date (${pods_stale}) — running pod install..."
-      (cd ios && PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH" pod install)
+    # Always run pod install (~10s when nothing changed). Diffing
+    # Podfile.lock against Pods/Manifest.lock is not enough: a PR that adds a
+    # native module without re-running pod install (react-native-webview in
+    # #66) leaves both files equally stale, the check passes, and the app
+    # red-screens at runtime with a missing native view manager.
+    echo "==> Installing pods..."
+    (cd ios && PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH" pod install)
+    if ! git diff --quiet -- ios/Podfile.lock; then
+      echo "==> NOTE: pod install changed ios/Podfile.lock — commit it so the next clone builds correctly."
     fi
     echo "==> Building release..."
     DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
