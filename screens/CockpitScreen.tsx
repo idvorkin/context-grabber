@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -7,8 +7,21 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { WebView } from "react-native-webview";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { CopyableError } from "../components/CopyableError";
+import {
+  bridgeEmitScript,
+  bridgeInstallScript,
+  describeError,
+  devicesPayload,
+  errorPayload,
+  parseBridgeRequest,
+  readyPayload,
+  routeChangedPayload,
+  type BridgePayload,
+  type BridgeRequest,
+} from "../lib/audioBridge";
+import AudioRoute, { type AudioRouteSnapshot } from "../modules/audio-route";
 
 /**
  * Igor's decision Cockpit. Served only on the tailnet — there is no
@@ -53,6 +66,95 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
     setLoading(true);
     webRef.current?.reload();
   }, [error, handleRetry]);
+
+  /* ---------- audio bridge ----------
+     WebKit shows the page one nameless microphone and no outputs at all, so
+     the Cockpit's device pickers have nothing to build a control out of and
+     hide themselves. The real roster is in AVAudioSession. This is the pipe:
+     the page asks, the app answers, the app applies the page's choice.
+     Protocol: docs/cockpit-audio-bridge.md. */
+
+  const emit = useCallback((payload: BridgePayload) => {
+    webRef.current?.injectJavaScript(bridgeEmitScript(payload));
+  }, []);
+
+  const handleBridgeRequest = useCallback(
+    async (request: BridgeRequest) => {
+      if (!AudioRoute) {
+        // An OTA update can put a newer page in front of an older binary.
+        // Saying so beats a request that never gets an answer.
+        emit(
+          errorPayload(
+            request.type,
+            "This build has no native audio bridge",
+            request.requestId,
+          ),
+        );
+        return;
+      }
+      try {
+        let snapshot: AudioRouteSnapshot;
+        switch (request.type) {
+          case "audio.setInput":
+            snapshot = await AudioRoute.setInput(request.id);
+            break;
+          case "audio.setOutput":
+            snapshot = await AudioRoute.setOutput(request.port);
+            break;
+          default:
+            // listDevices and getRoute differ only in what the page reads
+            // out of the answer, so they share one.
+            snapshot = AudioRoute.getDevices();
+        }
+        emit(devicesPayload(snapshot, request.requestId));
+      } catch (e) {
+        // Audio failures belong to the page, next to the control that caused
+        // them — never to the app's own "can't reach the Cockpit" panel.
+        emit(errorPayload(request.type, describeError(e), request.requestId));
+      }
+    },
+    [emit],
+  );
+
+  const handleMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      const request = parseBridgeRequest(event.nativeEvent.data);
+      // Not ours. The page owns postMessage and may be using it for something
+      // else; swallowing that traffic would be a bug.
+      if (!request) return;
+      void handleBridgeRequest(request);
+    },
+    [handleBridgeRequest],
+  );
+
+  // The session has to be recording-capable before availableInputs lists
+  // anything but the built-in mic and before an output override is legal.
+  // Done on first visibility rather than on mount so a user who never opens
+  // the tab never has their audio session touched.
+  const activated = useRef(false);
+  useEffect(() => {
+    if (!visible || activated.current || !AudioRoute) return;
+    activated.current = true;
+    AudioRoute.activate().catch(() => {
+      // Nothing to show: the page has not asked for anything yet, and the
+      // next request re-reports the failure with its own requestId.
+    });
+  }, [visible]);
+
+  // AirPods connecting, a cable pulled, a battery dying — or the web view's
+  // own getUserMedia reconfiguring the session out from under us.
+  useEffect(() => {
+    if (!AudioRoute) return;
+    const sub = AudioRoute.addListener("onRouteChange", (change) => {
+      emit(routeChangedPayload(change));
+    });
+    return () => sub.remove();
+  }, [emit]);
+
+  const handleLoadEnd = useCallback(() => {
+    setLoading(false);
+    emit(readyPayload(!!AudioRoute));
+  }, [emit]);
 
   /**
    * Keep the tab pinned to the Cockpit. Anything on another host (a
@@ -136,6 +238,13 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
             allowsAirPlayForMediaPlayback
+            // --- audio bridge ---
+            // onMessage is not optional: setting it is what makes
+            // window.ReactNativeWebView.postMessage exist on the page at all.
+            onMessage={handleMessage}
+            // Before content, so the page can feature-detect the bridge on its
+            // first line of script instead of racing a load event.
+            injectedJavaScriptBeforeContentLoaded={bridgeInstallScript()}
             // --- navigation ---
             onShouldStartLoadWithRequest={handleShouldStartLoad}
             setSupportMultipleWindows={false}
@@ -144,7 +253,7 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
             pullToRefreshEnabled
             // --- lifecycle ---
             onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
+            onLoadEnd={handleLoadEnd}
             onError={(e) => {
               const { description, code } = e.nativeEvent;
               setLoading(false);

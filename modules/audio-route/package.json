@@ -1,0 +1,10 @@
+{
+  "name": "audio-route",
+  "version": "1.0.0",
+  "description": "Local Expo module: read and steer the iOS audio route for the Cockpit web view.",
+  "main": "index.ts",
+  "private": true,
+  "license": "MIT",
+  "author": "Igor Dvorkin",
+  "homepage": "https://github.com/idvorkin/context-grabber"
+}

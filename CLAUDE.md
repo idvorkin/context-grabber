@@ -19,6 +19,10 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `lib/share.ts` — Export JSON formatting (SummaryExport, RawExport, WeeklyStatsExport)
 - `lib/summary.ts` — Summary text and number formatting (buildSummary, formatNumber, formatTime)
 - `lib/location.ts` — Location pruning logic (pruneThreshold)
+- `lib/audioBridge.ts` — Cockpit audio-bridge wire format (message parsing, injected JS). Protocol: `docs/cockpit-audio-bridge.md`
+
+### Local Native Modules
+- `modules/audio-route/` — iOS audio route: list microphones/outputs, steer `AVAudioSession`, push route changes. Feeds the Cockpit's device pickers.
 
 ### Components
 - `components/MetricDetailSheet.tsx` — Bottom sheet with chart + daily breakdown for each metric
@@ -128,6 +132,9 @@ Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; imp
 - **Never run `expo prebuild` in `just deploy`.** It wipes `DEVELOPMENT_TEAM` from `project.pbxproj` and creates duplicate file refs in LiveActivity's appex (asset catalog conflict). Use `just resync-native` only when native regeneration is intentional, and expect to re-commit `ios/` afterwards.
 - **Adding a native module means `pod install` + a full rebuild, not OTA.** New pods (e.g. `react-native-webview`) can't ship over the air — the JS bundle references a view manager the installed binary doesn't have, and the app red-screens. `just deploy` now compares `ios/Podfile.lock` against `ios/Pods/Manifest.lock` and re-runs `pod install` when they diverge; `expo prebuild` is still NOT needed for autolinked pods.
 - **WKWebView `getUserMedia` needs `mediaCapturePermissionGrantType`.** `react-native-webview`'s default is to deny silently, so a page's mic button appears to do nothing. Use `grantIfSameHostElsePrompt` (grants the loaded origin, defers to the iOS system alert for anything else) plus `allowsInlineMediaPlayback` and `mediaPlaybackRequiresUserAction={false}`. `NSMicrophoneUsageDescription` is already declared via the `expo-audio` plugin — the OS prompt is the only permission UI.
+- **WebKit enumerates one nameless microphone and zero outputs, and has no `setSinkId`.** That is every browser engine on iOS, `WKWebView` included, and it is why a hosted page's device pickers vanish inside the app while working fine on a laptop. There is nothing to fix in the page. The roster only exists in `AVAudioSession` — see `modules/audio-route/` and `docs/cockpit-audio-bridge.md` for the bridge that carries it into the web view. Corollary: the web view's own capture reconfigures the shared audio session when it starts, so a route set *before* a call begins has to be re-asserted on `routeChangeNotification` or it silently reverts.
+- **Local Expo modules live in `modules/<name>/` and are autolinked with no `expo prebuild`.** `nativeModulesDir` defaults to `./modules`, so a directory with an `expo-module.config.json` + `ios/<Pod>.podspec` is picked up by `use_expo_modules!`. Verify discovery on any machine — no Mac needed — with `node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking resolve --platform apple --json`. But a local module does **not** move `ios/Podfile.lock`, so the Podfile.lock-vs-Manifest.lock check cannot see it; `just deploy` additionally greps `ios/Pods/Manifest.lock` for each local podspec's pod name.
+- **`expo-audio` already exposes input selection** — `AudioRecorder.getAvailableInputs / getCurrentInput / setInput` wrap `AVAudioSession.availableInputs` and `setPreferredInput` on the shared session. They need a prepared recorder, expose no outputs, and emit no route-change events, which is why `modules/audio-route/` exists — but check them first before writing native code for anything input-only.
 - **Inventory `ios/` before scoping native work.** `ios/LiveActivity/` is a `WidgetBundle` appex — add home-screen widgets as new `Widget` structs inside `LiveActivityWidgetBundle`, NOT a new Xcode target. URL scheme `com.idvorkin.contextgrabber://` is already registered in `ios/ContextGrabber/Info.plist`; `widgetURL()` deep-link plumbing exists in Swift (via `deepLinkUrl`), but JS-side inbound routing (`Linking.addEventListener` / `getInitialURL`) is NOT wired — Live Activity taps currently wake the app without routing.
 - **Ignore recurring `bd doctor` warnings for `Dolt Status / Dolt Locks: config: modified`.** Every `bd` read (including `bd doctor` itself) re-creates that state; `bd vc commit` clears it but the next read brings it back. Cosmetic, not actionable.
 - **Sanity-check geometry thresholds against `__tests__/fixtures/context-grabber.db` + `locations.json`** before shipping clustering / place-matching / distance rules. The fixture carries 36K real GPS points + 4 real known places — synthetic tests miss edge cases real data exposes. (Example: the place-merge gate moved from 50m → 500m because the tight gate caught 0/10 unmatched stays in the fixture.)
@@ -159,7 +166,7 @@ Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; imp
 - **Location Detail Sheet:** coordinates, clustering summary, Export Database, Known Places CRUD
 - **Settings Modal:** location tracking toggle, retention days, debug sleep data
 - **About Modal:** build info, OTA updates, repository link
-- **Cockpit tab:** WKWebView on the tailnet-only Cockpit dashboard (`screens/CockpitScreen.tsx`). Mounted lazily on first visit and kept mounted (hidden) afterwards so the web session survives tab switches.
+- **Cockpit tab:** WKWebView on the tailnet-only Cockpit dashboard (`screens/CockpitScreen.tsx`). Mounted lazily on first visit and kept mounted (hidden) afterwards so the web session survives tab switches. Carries the audio bridge — the page can list and choose real microphones and outputs (`docs/cockpit-audio-bridge.md`).
 
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
