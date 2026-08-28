@@ -216,3 +216,47 @@ export function bridgeEmitScript(payload: BridgePayload): string {
 })();
 true;`;
 }
+
+/* ---------- call intent (app → page) ----------
+   A deep link (`grabber://call?via=eleven` — a Shortcut, the Action Button, a
+   widget) brings the app to the Cockpit tab and asks the page to press its
+   own handset. The app never starts the call itself: the call IS the page,
+   and every rule the handset enforces — never a second call, no call without
+   a microphone, the audio bridge's device picks — must hold for a link too.
+   Spec: docs/superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md. */
+
+export const CALL_INTENT_GLOBAL = "CockpitCallIntent";
+export const CALL_INTENT_EVENT = "cockpit-call";
+
+export type CallIntent = {
+  /** Backend to switch to before starting, or null for the page's current pick. */
+  via: string | null;
+  /** Distinguishes two links from one link delivered twice. */
+  nonce: number;
+};
+
+export type CallIntentPayload = {
+  type: "call.start";
+  via: string | null;
+  nonce: number;
+};
+
+export function callIntentPayload(intent: CallIntent): CallIntentPayload {
+  return { type: "call.start", via: intent.via, nonce: intent.nonce };
+}
+
+/**
+ * Same global (so a listener that attaches late still finds it) plus the
+ * event a listening page acts on immediately. Sent once the page has
+ * finished loading — the page's own bootstrap has run by then.
+ */
+export function callIntentEmitScript(intent: CallIntent): string {
+  return `(function () {
+  var detail = JSON.parse(${jsonLiteral(callIntentPayload(intent))});
+  window.${CALL_INTENT_GLOBAL} = detail;
+  try {
+    window.dispatchEvent(new CustomEvent(${JSON.stringify(CALL_INTENT_EVENT)}, { detail: detail }));
+  } catch (e) {}
+})();
+true;`;
+}

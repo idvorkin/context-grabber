@@ -16,6 +16,8 @@
  *   reflect/affirm                 → open Affirmation Card
  *   reflect/grateful               → open Grateful Card
  *   reflect/journal                → open Journal screen
+ *   call                           → Cockpit tab, start a Larry call (page's current backend)
+ *   call?via=<backend>             → …on that backend: eleven | gemini | openai | drill
  *
  * Unknown URLs return { kind: "unknown" } — callers should treat as "open main".
  */
@@ -24,14 +26,19 @@ export type TimerMode = "rounds" | "stopwatch" | "sets";
 
 export type ReflectSurface = "affirm" | "grateful" | "journal";
 
+/** The voice backends the Cockpit's Call tab offers. Unknown values → null. */
+export type CallBackend = "eleven" | "gemini" | "openai" | "drill";
+
 export type DeepLinkRoute =
   | { kind: "main"; autoGrab: boolean }
   | { kind: "timer"; mode: TimerMode; preset: string | null; autostart: boolean }
   | { kind: "counter"; action: "inc" }
   | { kind: "reflect"; surface: ReflectSurface }
+  | { kind: "call"; via: CallBackend | null }
   | { kind: "unknown" };
 
 const KNOWN_PRESETS = new Set(["30sec", "1min", "2min", "5-1"]);
+const KNOWN_BACKENDS = new Set<CallBackend>(["eleven", "gemini", "openai", "drill"]);
 const KNOWN_SCHEMES = ["com.idvorkin.contextgrabber://", "grabber://"];
 
 /**
@@ -78,6 +85,14 @@ export function parseDeepLink(url: string | null | undefined): DeepLinkRoute {
       return { kind: "reflect", surface };
     }
     return { kind: "unknown" };
+  }
+
+  if (segments[0] === "call") {
+    // Sub-paths are tolerated and ignored: the only thing a call link says is
+    // "start one", plus which backend. An unknown backend is not an error —
+    // the call still starts, on whatever the page has picked.
+    const via = params.get("via");
+    return { kind: "call", via: via && KNOWN_BACKENDS.has(via as CallBackend) ? (via as CallBackend) : null };
   }
 
   if (segments[0] === "timer") {

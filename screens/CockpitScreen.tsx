@@ -8,10 +8,13 @@ import {
   View,
 } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CopyableError } from "../components/CopyableError";
 import {
   bridgeEmitScript,
   bridgeInstallScript,
+  callIntentEmitScript,
+  type CallIntent,
   describeError,
   devicesPayload,
   errorPayload,
@@ -42,12 +45,40 @@ type Props = {
   visible?: boolean;
   /** Override the loaded URL. Tests only. */
   url?: string;
+  /**
+   * A deep link asked for a call (`grabber://call?via=…`). Delivered to the
+   * page exactly once per nonce, as soon as the page is loaded and healthy.
+   * Spec: docs/superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md.
+   */
+  callIntent?: CallIntent | null;
 };
 
-export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
+/** Tagged so it can never collide with the Gym Timer's default keep-awake. */
+const KEEP_AWAKE_TAG = "cockpit";
+
+export function CockpitScreen({
+  visible = true,
+  url = COCKPIT_URL,
+  callIntent = null,
+}: Props) {
   const webRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /* ---------- keep the screen awake ----------
+     Igor: "when I'm on the Cockpit screen, I want to make sure it doesn't
+     lock." A property of the tab, not of a call: he reads decisions here
+     too. The screen stays mounted while hidden, so this keys on `visible`
+     rather than on mount — every other tab hands the idle timer straight
+     back to iOS. The error pane counts as the tab (a reconnect is watched).
+     Spec: docs/superpowers/specs/2026-08-28-cockpit-keep-awake-design.md. */
+  useEffect(() => {
+    if (!visible) return;
+    void Promise.resolve(activateKeepAwakeAsync(KEEP_AWAKE_TAG)).catch(() => {});
+    return () => {
+      void Promise.resolve(deactivateKeepAwake(KEEP_AWAKE_TAG)).catch(() => {});
+    };
+  }, [visible]);
   // Bumped on every manual retry to force a fresh WebView mount — reload()
   // on a WebView that failed its very first load is unreliable.
   const [reloadKey, setReloadKey] = useState(0);
@@ -155,6 +186,26 @@ export function CockpitScreen({ visible = true, url = COCKPIT_URL }: Props) {
     setLoading(false);
     emit(readyPayload(!!AudioRoute));
   }, [emit]);
+
+  /* ---------- call intent ----------
+     The app never starts the call; it asks the page to press its own
+     handset, so every rule the handset enforces holds for a link. One
+     delivery per nonce. A page still loading gets it on load end — the same
+     effect re-runs when `loading` flips. A failed load CONSUMES it: a call
+     Igor asked for must not start an hour later when the page finally comes
+     up after "Try again". A reload after a content-process kill does not
+     re-deliver, because the nonce is already spent. */
+  const intentDelivered = useRef<number | null>(null);
+  useEffect(() => {
+    if (!callIntent || intentDelivered.current === callIntent.nonce) return;
+    if (error) {
+      intentDelivered.current = callIntent.nonce;
+      return;
+    }
+    if (loading) return;
+    intentDelivered.current = callIntent.nonce;
+    webRef.current?.injectJavaScript(callIntentEmitScript(callIntent));
+  }, [callIntent, loading, error]);
 
   /**
    * Keep the tab pinned to the Cockpit. Anything on another host (a

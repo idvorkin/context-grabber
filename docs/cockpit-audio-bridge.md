@@ -229,6 +229,35 @@ Re-assertion is skipped when the live route already matches the request,
 so it cannot loop. A request the session refuses twice in a row is
 dropped and reported once as `audio.error`.
 
+## Call intent (app → page)
+
+A deep link — `grabber://call` or `grabber://call?via=eleven`, from a Siri
+Shortcut, the Action Button, a widget — brings the app to the Cockpit tab and
+asks the page to start a call. The app never starts it: the call is the
+page's, and every rule the page's handset enforces (never a second call, no
+call without a microphone, the device picks above) must hold for a link.
+Spec: `superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md`.
+
+Delivered once per link, after the page has finished loading, as **both**:
+
+```js
+window.CockpitCallIntent = { type: "call.start", via: "eleven", nonce: 1756400000000 };
+window.dispatchEvent(new CustomEvent("cockpit-call", { detail: <same object> }));
+```
+
+| field | meaning |
+| --- | --- |
+| `via` | `"eleven"`, `"gemini"`, `"openai"`, `"drill"`, or `null` for the page's current backend |
+| `nonce` | distinguishes two links from one link seen twice; a page that has acted on a nonce ignores it again |
+
+Read `window.CockpitCallIntent` at bootstrap (a listener attached late still
+sees the most recent one; clear it once acted on) and listen for
+`cockpit-call` for anything that arrives while the page is up. There is no
+page → app half: the page answers with its own state line, and a call already
+live is navigated to, not restarted.
+
+Not part of the `version` — additive.
+
 ## What this does not do
 
 - **No native capture.** The page's own `getUserMedia` still does the

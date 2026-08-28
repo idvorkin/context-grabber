@@ -81,6 +81,8 @@ jest.mock('expo-live-activity', () => ({
 // Mock expo-keep-awake
 jest.mock('expo-keep-awake', () => ({
   useKeepAwake: jest.fn(),
+  activateKeepAwakeAsync: jest.fn(() => Promise.resolve()),
+  deactivateKeepAwake: jest.fn(() => Promise.resolve()),
 }));
 
 // Mock expo-audio (no native recorder/player in tests)

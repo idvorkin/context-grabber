@@ -96,6 +96,7 @@ import { MindScreen } from "./screens/MindScreen";
 import { PlacesScreen } from "./screens/PlacesScreen";
 import { RolesScreen } from "./screens/RolesScreen";
 import { CockpitScreen } from "./screens/CockpitScreen";
+import type { CallIntent } from "./lib/audioBridge";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
 // --- Constants ---
@@ -529,6 +530,9 @@ export default function App() {
   const [journalVisible, setJournalVisible] = useState(false);
   const [reflectTally, setReflectTally] = useState({ opportunity: 0, didit: 0, grateful: 0 });
   const [activeTab, setActiveTab] = useState<TabId>("today");
+  // A `grabber://call` link. Handed to the Cockpit tab, which delivers it to
+  // the page once the page is up; a fresh nonce per link.
+  const [callIntent, setCallIntent] = useState<CallIntent | null>(null);
   // The Cockpit is a live web session — remounting it on every tab switch
   // would drop scroll position and any in-flight recording. Mount it lazily
   // on first visit, then keep it mounted and merely hidden.
@@ -664,6 +668,17 @@ export default function App() {
         if (route.surface === "affirm") setAffirmationVisible(true);
         else if (route.surface === "grateful") setGratefulVisible(true);
         else if (route.surface === "journal") setJournalVisible(true);
+      } else if (route.kind === "call") {
+        // A Shortcut / Action Button / widget asked for Larry. Clear anything
+        // that could sit over the Cockpit, bring the tab up (mounting it if
+        // this session never opened it), and let the tab start the call.
+        setGymTimerVisible(false);
+        setAffirmationVisible(false);
+        setGratefulVisible(false);
+        setJournalVisible(false);
+        setCockpitMounted(true);
+        setActiveTab("cockpit");
+        setCallIntent({ via: route.via, nonce: Date.now() });
       }
       // kind === "unknown" → no-op (already on whatever screen)
     };
@@ -1873,7 +1888,9 @@ export default function App() {
       {activeTab === "roles" && (
         <RolesScreen db={db} weeklyCache={weeklyCache} />
       )}
-      {cockpitMounted && <CockpitScreen visible={activeTab === "cockpit"} />}
+      {cockpitMounted && (
+        <CockpitScreen visible={activeTab === "cockpit"} callIntent={callIntent} />
+      )}
 
       <TabBar active={activeTab} onChange={handleTabChange} />
 

@@ -122,6 +122,28 @@ describe("parseDeepLink — timer route", () => {
   });
 });
 
+describe("parseDeepLink — call route", () => {
+  it("starts a call on the page's current backend when bare", () => {
+    expect(parseDeepLink("grabber://call")).toEqual({ kind: "call", via: null });
+    expect(parseDeepLink("com.idvorkin.contextgrabber://call")).toEqual({ kind: "call", via: null });
+  });
+
+  it("carries each backend the Call tab offers", () => {
+    for (const via of ["eleven", "gemini", "openai", "drill"]) {
+      expect(parseDeepLink(`grabber://call?via=${via}`)).toEqual({ kind: "call", via });
+    }
+  });
+
+  it("drops a backend the page does not offer to null — the call still starts", () => {
+    expect(parseDeepLink("grabber://call?via=nonsense")).toEqual({ kind: "call", via: null });
+    expect(parseDeepLink("grabber://call?via=")).toEqual({ kind: "call", via: null });
+  });
+
+  it("ignores sub-paths and stray params", () => {
+    expect(parseDeepLink("grabber://call/anything?x=1&via=gemini")).toEqual({ kind: "call", via: "gemini" });
+  });
+});
+
 describe("parseDeepLink — unknown routes", () => {
   it("returns unknown for an unknown top-level path", () => {
     expect(parseDeepLink("grabber://whatever")).toEqual({ kind: "unknown" });
