@@ -23,6 +23,7 @@ import {
 } from "react-native-audio-api";
 import AudioRoute from "../modules/audio-route";
 import type { CallAudio } from "./callSession";
+import { NO_LOG, type CallLog } from "./callLog";
 import { BRIDGE_IN_RATE, pcm16ToFloat } from "./pcm";
 
 /** Scheduling lead on the first frame after silence — the page's 80 ms. */
@@ -84,7 +85,7 @@ async function configureSession(): Promise<void> {
   await AudioManager.setAudioSessionActivity(true);
 }
 
-export function createNativeCallAudio(): CallAudio {
+export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallAudio {
   let recorder: AudioRecorder | null = null;
   let listener: MicListener | null = null;
   let ctx: AudioContext | null = null;
@@ -114,7 +115,11 @@ export function createNativeCallAudio(): CallAudio {
       routeTimer = null;
       if (!recorder || rearming) return;
       const rate = hardwareRate();
-      if (rate === armedRate) return;
+      if (rate === armedRate) {
+        log.add(`route changed, hardware rate still ${rate} Hz → mic kept`);
+        return;
+      }
+      log.add(`route changed, hardware rate ${armedRate} → ${rate} Hz → re-arming mic`);
       rearming = true;
       try {
         disarmRecorder();
@@ -129,6 +134,7 @@ export function createNativeCallAudio(): CallAudio {
   }
 
   function armRecorder(): AudioRecorder {
+    log.add(`recorder arming: hardware rate ${hardwareRate()} Hz, asking ${BRIDGE_IN_RATE} Hz mono`);
     const r = new AudioRecorder();
     r.onAudioReady(
       { sampleRate: BRIDGE_IN_RATE, bufferLength: MIC_BUFFER_FRAMES, channelCount: 1 },
@@ -138,9 +144,16 @@ export function createNativeCallAudio(): CallAudio {
         listener?.(buffer.getChannelData(0), buffer.sampleRate);
       },
     );
-    r.onError((e) => console.warn("[call] recorder:", e.message));
+    r.onError((e) => {
+      log.add(`recorder ERROR: ${e.message}`);
+      console.warn("[call] recorder:", e.message);
+    });
     const result = r.start();
-    if (result.status === "error") throw new Error(result.message || "recorder failed to start");
+    if (result.status === "error") {
+      log.add(`recorder start FAILED: ${result.message}`);
+      throw new Error(result.message || "recorder failed to start");
+    }
+    log.add("recorder started");
     return r;
   }
 
@@ -180,11 +193,14 @@ export function createNativeCallAudio(): CallAudio {
   return {
     async prepare() {
       const permission = await AudioManager.requestRecordingPermissions();
+      log.add(`mic permission: ${permission}`);
       if (permission !== "Granted") throw new Error(`microphone permission ${permission}`);
       await configureSession();
+      log.add("session: playAndRecord / voiceChat / bluetooth+speaker, active");
       AudioManager.observeAudioInterruptions(true);
       interruption?.remove();
       interruption = AudioManager.addSystemEventListener("interruption", (ev) => {
+        log.add(`interruption ${ev.type}${ev.type === "ended" ? ` (shouldResume=${ev.shouldResume})` : ""}`);
         if (ev.type === "began") {
           recorder?.pause();
           return;
@@ -216,6 +232,7 @@ export function createNativeCallAudio(): CallAudio {
 
     openPlayback(rate) {
       closePlayback();
+      log.add(`playback open @ ${rate} Hz, gain ${PLAYBACK_GAIN}`);
       outRate = rate;
       ctx = new AudioContext({ sampleRate: rate });
       gain = ctx.createGain();

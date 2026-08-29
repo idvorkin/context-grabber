@@ -27,6 +27,17 @@ export function preferredInput(snapshot: AudioRouteSnapshot): string | null {
   return usb.id;
 }
 
+/**
+ * What the output picker offers. A USB device is listed only while iOS is
+ * actually playing through it: the native module lists every USB *input*
+ * as a steerable output (right for a USB headset), but a wireless-mic
+ * receiver has no speaker, and offering it is offering silence.
+ */
+export function offeredOutputs(snapshot: AudioRouteSnapshot): AudioDevice[] {
+  const currentId = snapshot.current.output?.id;
+  return snapshot.outputs.filter((d) => d.type !== USB_PORT_TYPE || d.id === currentId);
+}
+
 /** "iPhone Microphone · Speaker" — the folded devices line. */
 export function describeRoute(snapshot: AudioRouteSnapshot | null): string {
   if (!snapshot) return "";

@@ -97,12 +97,32 @@ and flat otherwise. Muted, it still moves (the mic is still heard, just not
 sent) but is dimmed, so "is my mic working" and "am I muted" are both
 answered at a glance.
 
-**A USB microphone wins.** *"If a mic is over USB, let's take that as a
-default."* When a USB audio device with a microphone is attached — at the
-start of a call, or plugged in during one — the call uses it without a tap,
-and the devices line says so. Igor's own pick still wins: once he has chosen
-a microphone by hand during a call, the app stops second-guessing him until
-the next call.
+**A USB microphone wins — for the microphone only.** *"If a mic is over
+USB, let's take that as a default."* When a USB audio device with a
+microphone is attached — at the start of a call, or plugged in during one —
+the call uses it without a tap, and the devices line says so. Igor's own
+pick still wins: once he has chosen a microphone by hand during a call, the
+app stops second-guessing him until the next call. **The output does not
+move.** iOS likes to send playback to a USB device that was just chosen as
+the microphone; a wireless-mic receiver has no speaker, and the first time
+this rule ran Larry's voice went into the dongle and Igor heard nothing
+(2026-08-29). The output stays where it was, and a USB device is offered in
+the output picker only while iOS is actually playing through it.
+
+### Diagnostics
+
+*"Do you have logging output on this?"* Under the devices line, a
+**Diagnostics** fold. Open, it shows the call's log — a timestamped line
+for everything that matters and nothing that does not: the call starting
+and on which backend and bridge, the audio session configured, the
+recorder opening and at what hardware rate, the first mic frame and every
+few seconds of frames after, the probe and its ack, mute, interruptions,
+route changes with the full roster (every mic and output by name and
+type), the bridge's `ready`, warnings, errors, and the ending. A **Copy
+diagnostics** button puts the whole log plus the build, the state, and the
+current roster on the clipboard, so a bad call can be pasted into a chat
+without a cable. Folded by default; the log is kept whether or not it is
+open, across the call and until the next one starts.
 
 ### Starting a call
 
@@ -281,6 +301,15 @@ does not know about the native call.
     built-in mic, then plug the USB mic in: the call moves to it within
     2 s. Pick *iPhone Microphone* by hand, then re-plug the USB mic: the
     call stays on the built-in mic for the rest of that call.
+24. **USB does not steal the output.** With a wireless-mic USB receiver
+    plugged in, start a call on speaker: the mic is the receiver, the
+    output is still *Speaker*, Larry is audible, and the receiver is not
+    listed under *Out*.
+25. **Diagnostics.** After any call, open *Diagnostics*: the log shows the
+    start, `ready` with the output rate, the recorder's rate, the first mic
+    frame, `mic_ack`, every route change with the roster, and the ending.
+    *Copy diagnostics* → paste: the same, plus build sha, state, and the
+    current roster.
 
 **Why native rather than fixing the web view.** WebKit on iOS suspends
 `getUserMedia` capture when the app leaves the foreground, and `WKWebView`

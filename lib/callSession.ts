@@ -28,6 +28,7 @@ import {
   type CallBackend,
 } from "./callProtocol";
 import { encodeMicFrame, micLevel } from "./pcm";
+import { NO_LOG, type CallLog } from "./callLog";
 
 export type CallState = "idle" | "connecting" | "live" | "ended";
 
@@ -98,7 +99,12 @@ export type CallSessionDeps = {
   connect: (url: string) => BridgeSocket;
   audio: CallAudio;
   now?: () => number;
+  /** Where the call narrates itself. The Diagnostics fold reads it. */
+  log?: Pick<CallLog, "add"> & Partial<Pick<CallLog, "reset">>;
 };
+
+/** Log a frame-count line this often. */
+const FRAME_LOG_EVERY = 50;
 
 /** How long the bridge gets to acknowledge the first mic frame. Mirrors the page. */
 export const MIC_ACK_MS = 5000;
@@ -109,7 +115,9 @@ type Listener = (snapshot: CallSnapshot) => void;
 type LevelListener = (level: number) => void;
 
 export class CallSession {
-  private readonly deps: Required<CallSessionDeps>;
+  private readonly deps: Required<Omit<CallSessionDeps, "log">> & Pick<CallSessionDeps, "log">;
+  private framesSent = 0;
+  private framesPlayed = 0;
   private readonly url: string;
   private listeners = new Set<Listener>();
   /** The mic level rides its own channel: ten updates a second must not re-render the captions. */
@@ -132,6 +140,10 @@ export class CallSession {
   constructor(deps: CallSessionDeps, url: string) {
     this.deps = { now: () => Date.now(), ...deps };
     this.url = url;
+  }
+
+  private log(line: string): void {
+    (this.deps.log ?? NO_LOG).add(line);
   }
 
   static idle(): CallSnapshot {
@@ -170,12 +182,19 @@ export class CallSession {
 
   /** No-op while a call is connecting or live: the link that finds a live call joins it. */
   async start(backend: CallBackend): Promise<void> {
-    if (this.snap.state === "connecting" || this.snap.state === "live") return;
+    if (this.snap.state === "connecting" || this.snap.state === "live") {
+      this.log(`start(${backend}) ignored: already ${this.snap.state}`);
+      return;
+    }
     this.resetForCall(backend);
+    this.deps.log?.reset?.();
+    this.log(`start backend=${backend} bridge=${this.url}`);
     this.emit();
     try {
       await this.deps.audio.prepare();
+      this.log("audio prepared (permission, session)");
     } catch (e) {
+      this.log(`audio prepare FAILED: ${describe(e)}`);
       this.finish(`microphone unavailable: ${describe(e)}`, true);
       return;
     }
@@ -190,7 +209,10 @@ export class CallSession {
     }
     this.socket = socket;
     socket.binaryType = "arraybuffer";
-    socket.onopen = () => this.safeSend(startFrame(backend));
+    socket.onopen = () => {
+      this.log("socket open → start frame");
+      this.safeSend(startFrame(backend));
+    };
     socket.onmessage = (ev: { data: unknown }) => this.onSocketData(ev.data);
     socket.onerror = () => this.onSocketGone();
     socket.onclose = () => this.onSocketGone();
@@ -199,6 +221,7 @@ export class CallSession {
   /** Hang up. The bridge is told first — `stt_stop` flushes Deepgram's tail, then `stop`. */
   stop(): void {
     if (this.snap.state !== "connecting" && this.snap.state !== "live") return;
+    this.log("hang up");
     if (this.socket) {
       this.safeSend(sttStopFrame());
       this.safeSend(stopFrame());
@@ -208,6 +231,7 @@ export class CallSession {
 
   setMuted(muted: boolean): void {
     if (this.snap.muted === muted) return;
+    this.log(muted ? "muted" : "unmuted");
     this.update({ muted });
     if (this.snap.state === "live") this.safeSend(micFrame(muted));
   }
@@ -222,7 +246,12 @@ export class CallSession {
       return;
     }
     if (isArrayBuffer(data)) {
-      if (this.snap.state === "live") this.deps.audio.play(data);
+      if (this.snap.state === "live") {
+        this.deps.audio.play(data);
+        this.framesPlayed += 1;
+        if (this.framesPlayed === 1) this.log(`first audio from Larry: ${data.byteLength} bytes`);
+        else if (this.framesPlayed % FRAME_LOG_EVERY === 0) this.log(`${this.framesPlayed} frames played`);
+      }
       return;
     }
     // A Blob from a socket that ignored binaryType. Not ours to guess.
@@ -231,6 +260,7 @@ export class CallSession {
   private onSocketGone(): void {
     if (this.closing) return;
     if (this.snap.state === "connecting" || this.snap.state === "live") {
+      this.log("socket closed by the far end / network");
       this.finish(CONNECTION_LOST, true);
     }
   }
@@ -253,6 +283,7 @@ export class CallSession {
       case "mic_ack":
         // Only the probe that is actually waiting. A late ack for an earlier
         // probe, arriving after a re-arm, must not vouch for the new graph.
+        this.log(`mic_ack token=${m.token}${m.token === this.probeToken ? "" : " (stale, ignored)"}`);
         if (m.token === this.probeToken) this.clearProbe();
         return;
       case "transcript":
@@ -274,6 +305,7 @@ export class CallSession {
         this.setIgor(joinWords(this.igorFinal, m.text), "");
         return;
       case "interrupted":
+        this.log("interrupted (barge-in) → playback flushed");
         this.deps.audio.flush();
         this.larryRowId = null;
         return;
@@ -298,16 +330,20 @@ export class CallSession {
         this.addRow("note", `Larry added context: ${m.text}`);
         return;
       case "warning":
+        this.log(`bridge warning: ${m.message}`);
         this.larryRowId = null;
         this.addRow("note", m.message);
         return;
       case "error":
+        this.log(`bridge error: ${m.message}`);
         this.update({ problem: m.message });
         return;
       case "vendor_closed":
+        this.log(`vendor closed: kind=${m.kind} ${m.message}`);
         this.finish(m.message || (m.kind === "quota" ? "vendor quota exhausted" : "vendor hung up"), true);
         return;
       case "closed":
+        this.log(`bridge closed: reason=${JSON.stringify(m.reason)}`);
         this.finish(m.reason, false);
         return;
     }
@@ -315,11 +351,13 @@ export class CallSession {
 
   private onReady(outRate: number): void {
     if (this.snap.state !== "connecting") return;
+    this.log(`ready: out_rate=${outRate} → live; playback open, stt_start, mic opening`);
     this.update({ state: "live", startedAt: this.deps.now() });
     this.deps.audio.openPlayback(outRate);
     this.safeSend(sttStartFrame());
     void this.deps.audio.startMic(this.onMicBuffer).catch((e) => {
       // The call goes on — Larry can still be heard — but say so.
+      this.log(`mic FAILED to open: ${describe(e)}`);
       this.update({ problem: `microphone failed: ${describe(e)}` });
     });
   }
@@ -331,9 +369,16 @@ export class CallSession {
     this.emitLevel(micLevel(samples));
     if (this.snap.muted) return;
     this.safeSend(encodeMicFrame(samples, sampleRate));
+    this.framesSent += 1;
+    if (this.framesSent === 1) {
+      this.log(`first mic frame: ${samples.length} samples @ ${sampleRate} Hz → 16 kHz PCM16`);
+    } else if (this.framesSent % FRAME_LOG_EVERY === 0) {
+      this.log(`${this.framesSent} mic frames sent`);
+    }
     if (!this.probeSent) {
       this.probeSent = true;
       this.probeToken += 1;
+      this.log(`mic_probe token=${this.probeToken} (ack expected within ${MIC_ACK_MS / 1000}s)`);
       this.safeSend(micProbeFrame(this.probeToken));
       this.probeTimer = setTimeout(() => this.onProbeMissed(), MIC_ACK_MS);
     }
@@ -342,6 +387,7 @@ export class CallSession {
   private onProbeMissed(): void {
     this.probeTimer = null;
     if (this.snap.state !== "live") return;
+    this.log(this.rearmed ? "mic_ack missed again → mic is not reaching Larry" : "mic_ack missed → re-arming the mic once");
     if (!this.rearmed) {
       // Once. Two silent capture graphs in a row is a fact, not a hiccup.
       this.rearmed = true;
@@ -430,10 +476,13 @@ export class CallSession {
     this.probeSent = false;
     this.rearmed = false;
     this.closing = false;
+    this.framesSent = 0;
+    this.framesPlayed = 0;
   }
 
   private finish(reason: string, badly: boolean): void {
     if (this.snap.state === "ended" || this.snap.state === "idle") return;
+    this.log(`ended${badly ? " BADLY" : ""}: ${reason} (${this.framesSent} mic frames sent, ${this.framesPlayed} played)`);
     this.clearProbe();
     this.closing = true;
     const socket = this.socket;

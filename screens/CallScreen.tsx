@@ -14,7 +14,10 @@ import {
 } from "react-native";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CopyableError } from "../components/CopyableError";
-import { describeRoute, preferredInput } from "../lib/callDevices";
+import * as Clipboard from "expo-clipboard";
+import { describeRoute, offeredOutputs, preferredInput } from "../lib/callDevices";
+import type { CallLog } from "../lib/callLog";
+import { getBuildInfo } from "../lib/version";
 import {
   BACKENDS,
   endingText,
@@ -34,6 +37,8 @@ import AudioRoute, { type AudioRouteSnapshot } from "../modules/audio-route";
 
 type Props = {
   session: CallSession;
+  /** The call's log; shown under Diagnostics and copied from there. */
+  log: CallLog;
   backend: CallBackend;
   onBackendChange: (backend: CallBackend) => void;
   /** A call is live on the Cockpit *page*; two microphones on one phone is a no. */
@@ -77,7 +82,7 @@ function formatElapsed(ms: number): string {
   return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
 }
 
-export function CallScreen({ session, backend, onBackendChange, cockpitCallLive }: Props) {
+export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive }: Props) {
   const snap = useCallSnapshot(session);
   const active = snap.state === "connecting" || snap.state === "live";
 
@@ -117,13 +122,14 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
       })
       .catch(() => {});
     const sub = AudioRoute.addListener("onRouteChange", (change) => {
+      log.add(`route change (${change.reason}): ${describeRoster(change)}`);
       setRoute(change);
     });
     return () => {
       cancelled = true;
       sub.remove();
     };
-  }, []);
+  }, [log]);
 
   /* ---------- a USB microphone wins ----------
      Igor: "If a mic is over USB, let's take that as a default." Applied
@@ -138,8 +144,24 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
     if (!route || !AudioRoute || manualInputPick.current) return;
     const wanted = preferredInput(route);
     if (!wanted) return;
-    AudioRoute.setInput(wanted).then(setRoute).catch(() => {});
-  }, [route]);
+    const module = AudioRoute;
+    // Only the microphone. iOS sends playback to a USB device that was just
+    // chosen as the input; a mic receiver has no speaker. Put the output
+    // back where it was.
+    const before = route.current.output;
+    log.add(`USB mic ${wanted} present → making it the mic (output stays ${before?.name ?? "auto"})`);
+    module
+      .setInput(wanted)
+      .then((after) => {
+        const moved = after.current.output?.id !== before?.id;
+        if (!moved || !before) return after;
+        const restore = before.type === "Speaker" ? "speaker" : before.id;
+        log.add(`output moved to ${after.current.output?.name ?? "?"} → restoring ${before.name}`);
+        return module.setOutput(restore);
+      })
+      .then(setRoute)
+      .catch((e) => log.add(`USB default failed: ${e instanceof Error ? e.message : String(e)}`));
+  }, [route, log]);
 
   const [devicesOpen, setDevicesOpen] = useState(false);
 
@@ -169,19 +191,45 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
     (id: string) => {
       if (!AudioRoute) return;
       manualInputPick.current = true;
-      AudioRoute.setInput(id).then(setRoute).catch(() => {});
+      log.add(`pick mic ${id}`);
+      AudioRoute.setInput(id).then(setRoute).catch((e) => log.add(`pick mic failed: ${String(e)}`));
       refreshRoute();
     },
-    [refreshRoute],
+    [refreshRoute, log],
   );
   const pickOutput = useCallback(
     (id: string) => {
       if (!AudioRoute) return;
-      AudioRoute.setOutput(id).then(setRoute).catch(() => {});
+      log.add(`pick output ${id}`);
+      AudioRoute.setOutput(id).then(setRoute).catch((e) => log.add(`pick output failed: ${String(e)}`));
       refreshRoute();
     },
-    [refreshRoute],
+    [refreshRoute, log],
   );
+
+  /* ---------- diagnostics ---------- */
+  const [diagOpen, setDiagOpen] = useState(false);
+  const [logLines, setLogLines] = useState<readonly string[]>(() => log.all);
+  useEffect(() => log.subscribe((lines) => setLogLines([...lines])), [log]);
+  const [copied, setCopied] = useState(false);
+  const copyDiagnostics = useCallback(async () => {
+    const build = getBuildInfo();
+    const text = log.render({
+      build: `${build.shortSha} (${build.branch})`,
+      state: snap.state,
+      backend: snap.backend,
+      ended: snap.endedReason,
+      problem: snap.problem,
+      route: route ? describeRoster(route) : "unknown",
+    });
+    try {
+      await Clipboard.setStringAsync(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard unavailable — the lines are still on screen
+    }
+  }, [log, snap, route]);
 
   /* ---------- captions scroll ---------- */
   const scrollRef = useRef<ScrollView>(null);
@@ -269,11 +317,44 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
               />
               <DeviceRow
                 label="Out"
-                devices={route.outputs}
+                devices={offeredOutputs(route)}
                 currentId={route.current.output?.id ?? null}
                 onPick={pickOutput}
                 testID="call-outputs"
               />
+            </View>
+          )}
+          <Pressable
+            onPress={() => setDiagOpen((o) => !o)}
+            style={styles.devicesLine}
+            testID="call-diag-toggle"
+            accessibilityRole="button"
+            accessibilityState={{ expanded: diagOpen }}
+          >
+            <Text style={styles.devicesSummary}>Diagnostics · {logLines.length} lines</Text>
+            <Text style={styles.devicesChevron}>{diagOpen ? "▾" : "▸"}</Text>
+          </Pressable>
+          {diagOpen && (
+            <View style={styles.diag} testID="call-diag">
+              <ScrollView style={styles.diagScroll} nestedScrollEnabled>
+                {logLines.length === 0 ? (
+                  <Text style={styles.diagLine}>No call yet.</Text>
+                ) : (
+                  logLines.map((l, i) => (
+                    <Text key={i} style={styles.diagLine} selectable>
+                      {l}
+                    </Text>
+                  ))
+                )}
+              </ScrollView>
+              <Pressable
+                onPress={() => void copyDiagnostics()}
+                style={styles.diagCopy}
+                testID="call-diag-copy"
+                accessibilityRole="button"
+              >
+                <Text style={styles.diagCopyText}>{copied ? "Copied" : "Copy diagnostics"}</Text>
+              </Pressable>
             </View>
           )}
         </View>
@@ -385,6 +466,12 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
       </View>
     </View>
   );
+}
+
+/** Every mic and output by name and type, one line — what a route change actually changed. */
+function describeRoster(s: AudioRouteSnapshot): string {
+  const d = (x: { name: string; type: string } | null | undefined) => (x ? `${x.name}[${x.type}]` : "none");
+  return `in=${d(s.current.input)} out=${d(s.current.output)} | mics: ${s.inputs.map(d).join(", ") || "none"} | outs: ${s.outputs.map(d).join(", ") || "none"}`;
 }
 
 /**
@@ -502,6 +589,11 @@ const styles = StyleSheet.create({
   },
   meterFill: { height: "100%", backgroundColor: "#4ade80", borderRadius: 4 },
   meterFillMuted: { backgroundColor: "#64748b" },
+  diag: { gap: 6, paddingBottom: 6 },
+  diagScroll: { maxHeight: 180, backgroundColor: "#0c121f", borderRadius: 8, padding: 8 },
+  diagLine: { color: "#9fb3c8", fontSize: 11, fontFamily: "Menlo", lineHeight: 15 },
+  diagCopy: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: "#243447" },
+  diagCopyText: { color: "#4cc9f0", fontSize: 13, fontWeight: "600" },
   deviceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   deviceLabel: { color: "#888", fontSize: 12, width: 28 },
   deviceChips: { gap: 6 },

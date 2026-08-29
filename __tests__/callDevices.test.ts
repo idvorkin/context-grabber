@@ -1,4 +1,4 @@
-import { describeRoute, preferredInput, usbInput } from "../lib/callDevices";
+import { describeRoute, offeredOutputs, preferredInput, usbInput } from "../lib/callDevices";
 import type { AudioRouteSnapshot } from "../modules/audio-route";
 
 const builtIn = { id: "BuiltInMicrophoneBottom", name: "iPhone Microphone", type: "MicrophoneBuiltIn" };
@@ -28,6 +28,16 @@ describe("usbInput / preferredInput", () => {
 
   it("already on the USB mic → stay", () => {
     expect(preferredInput(snap([builtIn, usb], usb))).toBeNull();
+  });
+});
+
+describe("offeredOutputs", () => {
+  it("hides a USB device from the outputs unless iOS is playing through it", () => {
+    const s = snap([builtIn, usb]);
+    s.outputs = [{ id: "auto", name: "Automatic", type: "auto" }, speaker, usb];
+    expect(offeredOutputs(s).map((d) => d.id)).toEqual(["auto", "speaker"]);
+    s.current.output = usb;
+    expect(offeredOutputs(s).map((d) => d.id)).toEqual(["auto", "speaker", "USB-1234"]);
   });
 });
 

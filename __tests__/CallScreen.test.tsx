@@ -3,6 +3,8 @@ import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CallScreen } from "../screens/CallScreen";
 import { CallSession, type BridgeSocket, type CallAudio } from "../lib/callSession";
+import { CallLog } from "../lib/callLog";
+import * as Clipboard from "expo-clipboard";
 import AudioRoute from "../modules/audio-route";
 
 class FakeSocket implements BridgeSocket {
@@ -37,17 +39,19 @@ const route = AudioRoute as unknown as { listeners: ((p: unknown) => void)[]; se
 
 function setup(props: { cockpitCallLive?: boolean } = {}) {
   const socket = new FakeSocket();
-  const session = new CallSession({ connect: () => socket, audio }, "wss://h/bridge");
+  const log = new CallLog();
+  const session = new CallSession({ connect: () => socket, audio, log }, "wss://h/bridge");
   const onBackendChange = jest.fn();
   const r = render(
     <CallScreen
       session={session}
+      log={log}
       backend="gemini"
       onBackendChange={onBackendChange}
       cockpitCallLive={props.cockpitCallLive ?? false}
     />,
   );
-  return { r, socket, session, onBackendChange };
+  return { r, socket, session, onBackendChange, log };
 }
 
 const settle = () => act(async () => {});
@@ -213,6 +217,18 @@ describe("CallScreen", () => {
       for (const l of route.listeners) l({ ...withUsb, reason: "NewDeviceAvailable" });
     });
     expect(route.setInput).toHaveBeenLastCalledWith("USB-1");
+    // iOS moved the output to the USB device along with the input — put it back
+    await settle();
+    expect(route.setOutput).not.toHaveBeenCalled();
+    route.setInput.mockImplementationOnce(async () => ({
+      ...withUsb,
+      current: { input: usb, output: usb },
+    }));
+    act(() => {
+      for (const l of route.listeners) l({ ...withUsb, current: { input: base.inputs[0], output: { id: "speaker", name: "Speaker", type: "Speaker" } }, reason: "NewDeviceAvailable" });
+    });
+    await settle();
+    expect(route.setOutput).toHaveBeenLastCalledWith("speaker");
     // Igor picks the built-in mic by hand; a re-plug no longer overrides him
     fireEvent.press(t.r.getByTestId("call-devices-toggle"));
     route.setInput.mockClear();
@@ -223,6 +239,36 @@ describe("CallScreen", () => {
       for (const l of route.listeners) l({ ...withUsb, reason: "NewDeviceAvailable" });
     });
     expect(route.setInput).not.toHaveBeenCalled();
+  });
+
+  it("does not offer a USB mic receiver as an output", async () => {
+    const usb = { id: "USB-1", name: "Wireless Mic RX", type: "USBAudio" };
+    const base = (AudioRoute as unknown as { snapshot: { inputs: unknown[]; outputs: unknown[] } }).snapshot;
+    const t = setup();
+    await settle();
+    act(() => {
+      for (const l of route.listeners) l({ ...base, outputs: [...base.outputs, usb], reason: "NewDeviceAvailable" });
+    });
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
+    expect(t.r.queryByTestId("call-outputs-USB-1")).toBeNull();
+    expect(t.r.getByTestId("call-outputs-speaker")).toBeTruthy();
+  });
+
+  it("diagnostics: the log unfolds and copies with build, state and roster", async () => {
+    const t = setup();
+    await goLive(t);
+    expect(t.r.queryByTestId("call-diag")).toBeNull();
+    fireEvent.press(t.r.getByTestId("call-diag-toggle"));
+    expect(t.r.getByText(/start backend=gemini bridge=wss:\/\/h\/bridge/)).toBeTruthy();
+    expect(t.r.getByText(/ready: out_rate=24000/)).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(t.r.getByTestId("call-diag-copy"));
+    });
+    const copied = (Clipboard.setStringAsync as jest.Mock).mock.calls.at(-1)[0] as string;
+    expect(copied).toMatch(/^build: /m);
+    expect(copied).toMatch(/^state: live/m);
+    expect(copied).toMatch(/^route: in=iPhone Microphone\[MicrophoneBuiltIn\]/m);
+    expect(copied).toMatch(/ready: out_rate=24000/);
   });
 
   it("shows the real device roster and applies a pick", async () => {
