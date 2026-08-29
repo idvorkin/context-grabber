@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@kingstinct/react-native-healthkit": "^13.3.1",
-    "expo": "~55.0.6",
+    "expo": "~55.0.30",
     "expo-audio": "~55.0.14",
     "expo-clipboard": "~55.0.13",
     "expo-cloudkit": "^0.20.8",
