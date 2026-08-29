@@ -575,7 +575,7 @@ describe("CallSession — captions", () => {
     t.socket.say({ type: "injected", text: "the PR merged" });
     t.socket.say({ type: "warning", message: "Gemini goAway in 60s" });
     t.socket.say({ type: "error", message: "vendor 500" });
-    expect(texts(t)).toEqual(["note:Larry added context: the PR merged", "note:Gemini goAway in 60s"]);
+    expect(texts(t)).toEqual(["note:added context: the PR merged", "note:warning: Gemini goAway in 60s"]);
     expect(t.session.snapshot).toMatchObject({ state: "live", problem: "vendor 500" });
   });
 });

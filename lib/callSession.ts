@@ -416,12 +416,12 @@ export class CallSession {
         return;
       case "injected":
         this.larryRowId = null;
-        this.addRow("note", `Larry added context: ${m.text}`);
+        this.addRow("note", `added context: ${m.text}`);
         return;
       case "warning":
         this.log(`bridge warning: ${m.message}`);
         this.larryRowId = null;
-        this.addRow("note", m.message);
+        this.addRow("note", `warning: ${m.message}`);
         return;
       case "error":
         this.log(`bridge error: ${m.message}`);

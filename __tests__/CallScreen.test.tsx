@@ -149,7 +149,7 @@ describe("CallScreen", () => {
     fireEvent.press(tool);
     expect(t.r.getByText("asking Larry: what next? …").props.numberOfLines).toBeUndefined();
     // Labels never wider than five characters (Cockpit DESIGN P24).
-    for (const [who, a11y] of [["igor", "Igor"], ["larry", "Larry"], ["tool", "consult"]]) {
+    for (const [who, a11y] of [["igor", "Igor"], ["larry", "Tony"], ["tool", "consult"]]) {
       const row = t.r.getByTestId(new RegExp(`^call-row-${who}-`));
       const label = within(row).getByLabelText(a11y).props.children as string;
       expect(label.length).toBeLessThanOrEqual(5);

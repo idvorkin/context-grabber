@@ -73,18 +73,19 @@ const PULSE_MS = 1600;
 /** A telephone (U+260E) with the text-presentation selector — not the emoji, so it takes our colour. */
 const HANDSET = "\u260E\uFE0E";
 
+/** The voice is Tony; Larry is the reasoning half behind him (#94). */
 const LABEL: Record<CaptionRow["who"], string> = {
   igor: "Igor",
-  larry: "Larry",
+  larry: "Tony",
   tool: "⟳",
-  note: "·",
+  note: "Larry",
 };
 
 const LABEL_A11Y: Record<CaptionRow["who"], string> = {
   igor: "Igor",
-  larry: "Larry",
+  larry: "Tony",
   tool: "consult",
-  note: "note",
+  note: "Larry (context)",
 };
 
 export function useCallSnapshot(session: CallSession): CallSnapshot {

@@ -212,9 +212,12 @@ to idle. Nothing hangs.
 
 The screen is the conversation and nothing else (Cockpit DESIGN P23/P24):
 
-- **Captions.** Each thing Igor says and each thing Larry says is a row:
-  a short speaker label — *Igor*, *Larry*, never wider than five
-  characters — and the words. Larry's spoken text appears as he says it;
+- **Captions.** Each thing Igor says and each thing the voice says is a
+  row: a short speaker label — *Igor*, *Tony*, never wider than five
+  characters — and the words. The voice is **Tony** (Igor, 2026-08-29:
+  *"In the call log, it should say Igor and Tony, not Igor and Larry"*);
+  Larry is the reasoning half behind him. A line Larry put into the call
+  himself (injected context) carries the label *Larry*. Larry's spoken text appears as he says it;
   Igor's appears when the recognizer settles on it. No turn numbers, no
   links, no per-turn readouts. Larry's *consults* (asking the other Larry
   something mid-call) show as a short clamped row that expands on tap and
