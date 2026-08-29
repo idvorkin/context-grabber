@@ -41,7 +41,13 @@ struct CallLarryIntent: AppIntent {
   var via: CallBackendOption?
 
   static var parameterSummary: some ParameterSummary {
-    Summary("Call Larry on \(\.$via)")
+    // "Call Larry on ElevenLabs" when a backend is picked; just "Call Larry"
+    // when it is left blank — no dangling "on".
+    When(\.$via, .hasAnyValue) {
+      Summary("Call Larry on \(\.$via)")
+    } otherwise: {
+      Summary("Call Larry")
+    }
   }
 
   @MainActor

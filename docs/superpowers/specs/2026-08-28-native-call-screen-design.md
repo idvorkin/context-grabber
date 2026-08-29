@@ -218,10 +218,6 @@ does not know about the native call.
     timer did not reset.
 14. Start a call on the Cockpit page's Call tab, then tap **Call Larry**:
     refused with the reason; the page's call is unaffected.
-18. Tap **☎ Call** on the home-screen widget (medium, then large): the app
-    opens on the Call tab and the call is *live* on the remembered backend
-    without another tap. With a call already live: the app comes to the
-    Call tab; the timer did not reset.
 15. Trigger a Siri interruption mid-call: after Siri dismisses, the call's
     audio is back within 2 s without a tap.
 16. The live screen contains no turn numbers and no speaker label wider
@@ -229,6 +225,10 @@ does not know about the native call.
     expanding it does not touch the call.
 17. The bridge's call record for a native call (`data/voice-live/<session>.jsonl`,
     the feedback marker on teardown) is indistinguishable from a page call.
+18. Tap **☎ Call** on the home-screen widget (medium, then large): the app
+    opens on the Call tab and the call is *live* on the remembered backend
+    without another tap. With a call already live: the app comes to the
+    Call tab; the timer did not reset.
 
 ## Rationale and risks
 
