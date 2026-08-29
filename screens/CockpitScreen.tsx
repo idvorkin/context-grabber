@@ -13,9 +13,7 @@ import { CopyableError } from "../components/CopyableError";
 import {
   bridgeEmitScript,
   bridgeInstallScript,
-  callIntentEmitScript,
   parseCallState,
-  type CallIntent,
   describeError,
   devicesPayload,
   errorPayload,
@@ -47,11 +45,10 @@ type Props = {
   /** Override the loaded URL. Tests only. */
   url?: string;
   /**
-   * A deep link asked for a call (`grabber://call?via=…`). Delivered to the
-   * page exactly once per nonce, as soon as the page is loaded and healthy.
-   * Spec: docs/superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md.
+   * The page's call went live / ended. The native Call tab refuses to open a
+   * second microphone while the page has one.
    */
-  callIntent?: CallIntent | null;
+  onCallLiveChange?: (live: boolean) => void;
 };
 
 /** Tagged so it can never collide with the Gym Timer's default keep-awake. */
@@ -60,7 +57,7 @@ const KEEP_AWAKE_TAG = "cockpit";
 export function CockpitScreen({
   visible = true,
   url = COCKPIT_URL,
-  callIntent = null,
+  onCallLiveChange,
 }: Props) {
   const webRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +72,9 @@ export function CockpitScreen({
      managed to say so: every one of those resets `callLive`.
      Spec: docs/superpowers/specs/2026-08-28-cockpit-keep-awake-design.md. */
   const [callLive, setCallLive] = useState(false);
+  useEffect(() => {
+    onCallLiveChange?.(callLive);
+  }, [callLive, onCallLiveChange]);
   useEffect(() => {
     if (!callLive) return;
     void Promise.resolve(activateKeepAwakeAsync(KEEP_AWAKE_TAG)).catch(() => {});
@@ -195,26 +195,6 @@ export function CockpitScreen({
     setLoading(false);
     emit(readyPayload(!!AudioRoute));
   }, [emit]);
-
-  /* ---------- call intent ----------
-     The app never starts the call; it asks the page to press its own
-     handset, so every rule the handset enforces holds for a link. One
-     delivery per nonce. A page still loading gets it on load end — the same
-     effect re-runs when `loading` flips. A failed load CONSUMES it: a call
-     Igor asked for must not start an hour later when the page finally comes
-     up after "Try again". A reload after a content-process kill does not
-     re-deliver, because the nonce is already spent. */
-  const intentDelivered = useRef<number | null>(null);
-  useEffect(() => {
-    if (!callIntent || intentDelivered.current === callIntent.nonce) return;
-    if (error) {
-      intentDelivered.current = callIntent.nonce;
-      return;
-    }
-    if (loading) return;
-    intentDelivered.current = callIntent.nonce;
-    webRef.current?.injectJavaScript(callIntentEmitScript(callIntent));
-  }, [callIntent, loading, error]);
 
   /**
    * Keep the tab pinned to the Cockpit. Anything on another host (a

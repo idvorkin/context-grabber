@@ -222,11 +222,13 @@ jest.mock('./modules/audio-route', () => ({
   __mock: mockAudioRoute,
 }));
 
-// Mock react-native-audio-api
+// Mock react-native-audio-api (Gym Timer tones + the native Call tab's engine)
 jest.mock('react-native-audio-api', () => ({
-  AudioContext: jest.fn().mockImplementation(() => ({
+  AudioContext: jest.fn().mockImplementation((opts) => ({
     currentTime: 0,
+    sampleRate: (opts && opts.sampleRate) || 48000,
     destination: {},
+    close: jest.fn().mockResolvedValue(undefined),
     createOscillator: jest.fn().mockReturnValue({
       frequency: { value: 0 },
       type: 'sine',
@@ -238,5 +240,40 @@ jest.mock('react-native-audio-api', () => ({
       gain: { value: 0 },
       connect: jest.fn(),
     }),
+    createBuffer: jest.fn((channels, length, sampleRate) => ({
+      length,
+      sampleRate,
+      duration: length / sampleRate,
+      getChannelData: jest.fn(() => new Float32Array(length)),
+      copyToChannel: jest.fn(),
+    })),
+    createBufferSource: jest.fn(() => ({
+      buffer: null,
+      loop: false,
+      onEnded: null,
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      start: jest.fn(),
+      stop: jest.fn(),
+    })),
   })),
+  AudioRecorder: jest.fn().mockImplementation(() => ({
+    onAudioReady: jest.fn(),
+    clearOnAudioReady: jest.fn(),
+    onError: jest.fn(),
+    clearOnError: jest.fn(),
+    start: jest.fn(() => ({ status: 'success', path: '' })),
+    stop: jest.fn(() => ({ status: 'success' })),
+    pause: jest.fn(),
+    resume: jest.fn(),
+  })),
+  AudioManager: {
+    setAudioSessionOptions: jest.fn(),
+    setAudioSessionActivity: jest.fn().mockResolvedValue(true),
+    observeAudioInterruptions: jest.fn(),
+    addSystemEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    requestRecordingPermissions: jest.fn().mockResolvedValue('Granted'),
+    checkRecordingPermissions: jest.fn().mockResolvedValue('Granted'),
+    getDevicePreferredSampleRate: jest.fn(() => 48000),
+  },
 }));

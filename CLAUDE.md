@@ -20,6 +20,10 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `lib/summary.ts` — Summary text and number formatting (buildSummary, formatNumber, formatTime)
 - `lib/location.ts` — Location pruning logic (pruneThreshold)
 - `lib/audioBridge.ts` — Cockpit audio-bridge wire format (message parsing, injected JS). Protocol: `docs/cockpit-audio-bridge.md`
+- `lib/callProtocol.ts` — Voice-bridge wire format for the native Call tab (frames both ways, ending text, bridge URL). Source of truth: `handle_browser` docstring in the Cockpit repo's `voice_bridge.py`
+- `lib/pcm.ts` — Float32 ↔ PCM16 LE, linear resample to the bridge's 16 kHz
+- `lib/callSession.ts` — The call's state machine (socket + mic + playback + captions), platform-free; fake socket/audio in tests
+- `lib/callAudio.ts` — Native audio half of a call on `react-native-audio-api` + `modules/audio-route`: `.playAndRecord`/`.voiceChat` session, mic capture, scheduled playback, interruption resume
 
 ### Local Native Modules
 - `modules/audio-route/` — iOS audio route: list microphones/outputs, steer `AVAudioSession`, push route changes. Feeds the Cockpit's device pickers.
@@ -166,6 +170,7 @@ Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; imp
 - **Location Detail Sheet:** coordinates, clustering summary, Export Database, Known Places CRUD
 - **Settings Modal:** location tracking toggle, retention days, debug sleep data
 - **About Modal:** build info, OTA updates, repository link
+- **Call tab:** a Larry call with no web view (`screens/CallScreen.tsx`) — speaks the voice bridge directly, so the call survives screen lock / backgrounding under the `audio` background mode. `grabber://call` lands here. One `CallSession` lives in `App.tsx` and outlives the tab. Spec: `docs/superpowers/specs/2026-08-28-native-call-screen-design.md`.
 - **Cockpit tab:** WKWebView on the tailnet-only Cockpit dashboard (`screens/CockpitScreen.tsx`). Mounted lazily on first visit and kept mounted (hidden) afterwards so the web session survives tab switches. Carries the audio bridge — the page can list and choose real microphones and outputs (`docs/cockpit-audio-bridge.md`).
 
 

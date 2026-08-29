@@ -14,6 +14,7 @@ export type TabId =
   | "mind"
   | "places"
   | "roles"
+  | "call"
   | "cockpit";
 
 type TabDef = { id: TabId; label: string; icon: string };
@@ -25,6 +26,7 @@ export const TABS: ReadonlyArray<TabDef> = [
   { id: "mind", label: "Mind", icon: "○" },
   { id: "places", label: "Places", icon: "◆" },
   { id: "roles", label: "Roles", icon: "★" },
+  { id: "call", label: "Call", icon: "☎" },
   { id: "cockpit", label: "Cockpit", icon: "✈" },
 ];
 
