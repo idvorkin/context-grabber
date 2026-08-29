@@ -289,7 +289,6 @@ does not know about the native call.
     Larry moves to the speaker; pick *AirPods Pro*: he moves back. Repeat
     the mic pick with the phone locked mid-way: still captioned after
     unlock.
-## Rationale and risks
 21. **Level strip.** On a live call, speak: the strip rises with the voice
     and falls in silence. Mute: it still moves, dimmed. Hang up: flat.
 22. **Folded pickers.** Open the Call tab: one devices line (strip, *iPhone
@@ -311,6 +310,7 @@ does not know about the native call.
     *Copy diagnostics* → paste: the same, plus build sha, state, and the
     current roster.
 
+## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
 `getUserMedia` capture when the app leaves the foreground, and `WKWebView`
 exposes no way to opt out — Safari got background WebRTC; embedded web

@@ -113,9 +113,11 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     if (routeTimer) clearTimeout(routeTimer);
     routeTimer = setTimeout(() => {
       routeTimer = null;
-      if (!recorder || rearming) return;
+      // `listener` is "the call wants a mic"; `recorder` may be null after a
+      // failed re-arm, and that is exactly when the next route change should try again.
+      if (!listener || rearming) return;
       const rate = hardwareRate();
-      if (rate === armedRate) {
+      if (recorder && rate === armedRate) {
         log.add(`route changed, hardware rate still ${rate} Hz → mic kept`);
         return;
       }

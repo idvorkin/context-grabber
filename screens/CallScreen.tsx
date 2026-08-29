@@ -141,7 +141,9 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
     if (!active) manualInputPick.current = false;
   }, [active]);
   useEffect(() => {
-    if (!route || !AudioRoute || manualInputPick.current) return;
+    // Only while a call is live or connecting: opening the tab idle must not
+    // move the system's preferred input.
+    if (!active || !route || !AudioRoute || manualInputPick.current) return;
     const wanted = preferredInput(route);
     if (!wanted) return;
     const module = AudioRoute;
@@ -161,7 +163,7 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
       })
       .then(setRoute)
       .catch((e) => log.add(`USB default failed: ${e instanceof Error ? e.message : String(e)}`));
-  }, [route, log]);
+  }, [active, route, log]);
 
   const [devicesOpen, setDevicesOpen] = useState(false);
 
@@ -212,6 +214,13 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
   const [logLines, setLogLines] = useState<readonly string[]>(() => log.all);
   useEffect(() => log.subscribe((lines) => setLogLines([...lines])), [log]);
   const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
   const copyDiagnostics = useCallback(async () => {
     const build = getBuildInfo();
     const text = log.render({
@@ -225,7 +234,8 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
     try {
       await Clipboard.setStringAsync(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(false), 1500);
     } catch {
       // clipboard unavailable — the lines are still on screen
     }
