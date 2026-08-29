@@ -311,6 +311,37 @@ describe("CallSession — a mic that delivers exact zeros (#88)", () => {
   });
 });
 
+describe("CallSession — prime (#88 experiment)", () => {
+  it("brings audio up and down once without a socket, and logs it", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      const lines: string[] = [];
+      const session = new CallSession({ connect: t.connect, audio: t.audio, log: { add: (l) => lines.push(l) } }, "wss://h/bridge");
+      const p = session.prime();
+      await flush();
+      expect(t.audio.prepare).toHaveBeenCalledTimes(1);
+      expect(t.audio.startMic).toHaveBeenCalledTimes(1);
+      jest.advanceTimersByTime(1000);
+      await p;
+      expect(t.audio.stop).toHaveBeenCalledTimes(1);
+      expect(t.connect).not.toHaveBeenCalled();
+      expect(lines).toEqual(["prime: session up", "prime: mic open", "prime: mic closed, session down"]);
+      expect(session.snapshot.state).toBe("idle");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("is refused while a call is up", async () => {
+    const t = setup();
+    await goLive(t);
+    t.audio.prepare.mockClear();
+    await t.session.prime();
+    expect(t.audio.prepare).not.toHaveBeenCalled();
+  });
+});
+
 describe("CallSession — mute", () => {
   it("muted: nothing leaves the phone, and the bridge is told", async () => {
     const t = setup();

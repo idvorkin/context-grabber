@@ -125,6 +125,18 @@ current roster on the clipboard, so a bad call can be pasted into a chat
 without a cable. Folded by default; the log is kept whether or not it is
 open, across the call and until the next one starts.
 
+Beside *Copy diagnostics*, while no call is live, a **Prime audio**
+control (Igor, 2026-08-29 09:16, still chasing the silent first call: *"Do
+we need to do something like a dummy call that opens, closes, reopens?
+Maybe give me a button to do that so I can test."*). It brings the call's
+audio up and down once without dialling — session on, microphone open for
+half a second to nowhere, everything off — and logs each step. It exists
+for the experiment: prime, then call; if the first call then carries
+audio, the cause is the first activation of the input unit and priming
+becomes automatic; if not, something else owns the microphone. The log's
+first line of every call also says whether the Cockpit tab is loaded and
+whether its page reports a call of its own.
+
 ### Starting a call
 
 Igor, 2026-08-29, on a call from this tab: *"Can you make the UI just a

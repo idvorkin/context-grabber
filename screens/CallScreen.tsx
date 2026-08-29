@@ -46,6 +46,8 @@ type Props = {
   onBackendChange: (backend: CallBackend) => void;
   /** A call is live on the Cockpit *page*; two microphones on one phone is a no. */
   cockpitCallLive: boolean;
+  /** The Cockpit web view exists in this app session (it may hold a mic). Logged per call for #88. */
+  cockpitMounted?: boolean;
 };
 
 /** Tagged so it can never collide with the Gym Timer's or the Cockpit tab's hold. */
@@ -118,7 +120,7 @@ function formatElapsed(ms: number): string {
   return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
 }
 
-export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive }: Props) {
+export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive, cockpitMounted = false }: Props) {
   const snap = useCallSnapshot(session);
   const active = snap.state === "connecting" || snap.state === "live";
   const reduceMotion = useReduceMotion();
@@ -304,6 +306,23 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
 
   const startBlocked = cockpitCallLive ? "a call is live in the Cockpit tab" : null;
 
+  // The first line of every call's log: what else might hold the mic (#88).
+  const startCall = useCallback(() => {
+    void session.start(backend).then(() => {
+      session.note(`context: cockpit web view ${cockpitMounted ? "mounted" : "not mounted"}, page call ${cockpitCallLive ? "LIVE" : "none"}`);
+    });
+  }, [session, backend, cockpitMounted, cockpitCallLive]);
+
+  const [priming, setPriming] = useState(false);
+  const primeAudio = useCallback(async () => {
+    setPriming(true);
+    try {
+      await session.prime();
+    } finally {
+      setPriming(false);
+    }
+  }, [session]);
+
   return (
     <View style={styles.container} testID="call-screen">
       <View style={styles.header}>
@@ -393,14 +412,28 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
                   ))
                 )}
               </ScrollView>
-              <Pressable
-                onPress={() => void copyDiagnostics()}
-                style={styles.diagCopy}
-                testID="call-diag-copy"
-                accessibilityRole="button"
-              >
-                <Text style={styles.diagCopyText}>{copied ? "Copied" : "Copy diagnostics"}</Text>
-              </Pressable>
+              <View style={styles.diagButtons}>
+                <Pressable
+                  onPress={() => void copyDiagnostics()}
+                  style={styles.diagCopy}
+                  testID="call-diag-copy"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.diagCopyText}>{copied ? "Copied" : "Copy diagnostics"}</Text>
+                </Pressable>
+                {!active && (
+                  <Pressable
+                    onPress={() => void primeAudio()}
+                    disabled={priming}
+                    style={[styles.diagCopy, priming && styles.buttonDisabled]}
+                    testID="call-prime"
+                    accessibilityRole="button"
+                    accessibilityLabel="Prime audio"
+                  >
+                    <Text style={styles.diagCopyText}>{priming ? "Priming…" : "Prime audio"}</Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
           )}
         </View>
@@ -499,7 +532,7 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
         ) : (
           <View style={styles.startWrap}>
             <Pressable
-              onPress={() => void session.start(backend)}
+              onPress={startCall}
               disabled={!!startBlocked}
               style={[styles.button, styles.buttonStart, startBlocked && styles.buttonDisabled]}
               testID="call-start"
@@ -736,6 +769,7 @@ const styles = StyleSheet.create({
   diag: { gap: 6, paddingBottom: 6 },
   diagScroll: { maxHeight: 180, backgroundColor: "#0c121f", borderRadius: 8, padding: 8 },
   diagLine: { color: "#9fb3c8", fontSize: 11, fontFamily: "Menlo", lineHeight: 15 },
+  diagButtons: { flexDirection: "row", gap: 8 },
   diagCopy: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: "#243447" },
   diagCopyText: { color: "#4cc9f0", fontSize: 13, fontWeight: "600" },
   deviceRow: { flexDirection: "row", alignItems: "center", gap: 8 },

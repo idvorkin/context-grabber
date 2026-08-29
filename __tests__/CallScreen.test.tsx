@@ -336,6 +336,30 @@ describe("CallScreen", () => {
     expect(copied).toMatch(/ready: out_rate=24000/);
   });
 
+  it("Prime audio runs the session up and down once, only between calls", async () => {
+    const t = setup();
+    await settle();
+    fireEvent.press(t.r.getByTestId("call-diag-toggle"));
+    (audio.prepare as jest.Mock).mockClear();
+    await act(async () => {
+      fireEvent.press(t.r.getByTestId("call-prime"));
+      await new Promise((r) => setTimeout(r, 500));
+    });
+    expect(audio.prepare).toHaveBeenCalledTimes(1);
+    expect(audio.startMic).toHaveBeenCalledTimes(1);
+    expect(audio.stop).toHaveBeenCalled();
+    expect(t.r.getByText(/prime: mic closed, session down/)).toBeTruthy();
+    await goLive(t);
+    expect(t.r.queryByTestId("call-prime")).toBeNull();
+  });
+
+  it("every call's log opens with what else might hold the mic", async () => {
+    const t = setup();
+    await goLive(t);
+    fireEvent.press(t.r.getByTestId("call-diag-toggle"));
+    expect(t.r.getByText(/context: cockpit web view not mounted, page call none/)).toBeTruthy();
+  });
+
   it("shows the real device roster and applies a pick", async () => {
     const t = setup();
     await settle();

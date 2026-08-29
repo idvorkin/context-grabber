@@ -114,6 +114,9 @@ export const ZERO_BUFFERS_BEFORE_REARM = 10;
 
 export const MIC_SILENT = "the microphone is delivering silence";
 
+/** How long the priming mic stays open. */
+export const PRIME_MS = 400;
+
 /** Log a frame-count line this often. */
 const FRAME_LOG_EVERY = 50;
 
@@ -192,6 +195,35 @@ export class CallSession {
   }
 
   /* ---------- controls ---------- */
+
+  /** A line from the screen into the call's log (context the session cannot see). */
+  note(line: string): void {
+    this.log(line);
+  }
+
+  /**
+   * The experiment for #88: bring the audio up and down once without
+   * dialling — session on, mic open to nowhere for a beat, everything off.
+   * Only between calls.
+   */
+  async prime(): Promise<void> {
+    if (this.snap.state === "connecting" || this.snap.state === "live") {
+      this.log("prime ignored: a call is up");
+      return;
+    }
+    this.log("prime: session up");
+    try {
+      await this.deps.audio.prepare();
+      this.log("prime: mic open");
+      await this.deps.audio.startMic(() => {});
+      await new Promise((r) => setTimeout(r, PRIME_MS));
+      this.log("prime: mic closed, session down");
+    } catch (e) {
+      this.log(`prime FAILED: ${describe(e)}`);
+    } finally {
+      await this.deps.audio.stop().catch(() => {});
+    }
+  }
 
   /** No-op while a call is connecting or live: the link that finds a live call joins it. */
   async start(backend: CallBackend): Promise<void> {

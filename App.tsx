@@ -1943,6 +1943,7 @@ export default function App() {
           backend={callBackend}
           onBackendChange={handleCallBackendChange}
           cockpitCallLive={cockpitCallLive}
+          cockpitMounted={cockpitMounted}
         />
       )}
       {cockpitMounted && (
