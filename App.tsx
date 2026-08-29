@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -95,8 +95,11 @@ import { MoveScreen } from "./screens/MoveScreen";
 import { MindScreen } from "./screens/MindScreen";
 import { PlacesScreen } from "./screens/PlacesScreen";
 import { RolesScreen } from "./screens/RolesScreen";
-import { CockpitScreen } from "./screens/CockpitScreen";
-import type { CallIntent } from "./lib/audioBridge";
+import { CockpitScreen, COCKPIT_URL } from "./screens/CockpitScreen";
+import { CallScreen } from "./screens/CallScreen";
+import { CallSession } from "./lib/callSession";
+import { createNativeCallAudio } from "./lib/callAudio";
+import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./lib/callProtocol";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
 // --- Constants ---
@@ -530,9 +533,29 @@ export default function App() {
   const [journalVisible, setJournalVisible] = useState(false);
   const [reflectTally, setReflectTally] = useState({ opportunity: 0, didit: 0, grateful: 0 });
   const [activeTab, setActiveTab] = useState<TabId>("today");
-  // A `grabber://call` link. Handed to the Cockpit tab, which delivers it to
-  // the page once the page is up; a fresh nonce per link.
-  const [callIntent, setCallIntent] = useState<CallIntent | null>(null);
+  // The native Larry call. One per app, outliving the Call tab's screen so a
+  // call keeps going while another tab is showing — or the phone is locked.
+  // Spec: docs/superpowers/specs/2026-08-28-native-call-screen-design.md.
+  const callSession = useMemo(
+    () =>
+      new CallSession(
+        { connect: (url) => new WebSocket(url), audio: createNativeCallAudio() },
+        bridgeUrl(COCKPIT_URL),
+      ),
+    [],
+  );
+  const [callBackend, setCallBackend] = useState<CallBackend>(DEFAULT_BACKEND);
+  const callBackendRef = useRef<CallBackend>(DEFAULT_BACKEND);
+  callBackendRef.current = callBackend;
+  const handleCallBackendChange = useCallback((b: CallBackend) => {
+    setCallBackend(b);
+    if (db) void setSetting(db, "call_backend", b).catch(() => {});
+  }, [db]);
+  const handleCallBackendChangeRef = useRef(handleCallBackendChange);
+  handleCallBackendChangeRef.current = handleCallBackendChange;
+  // The Cockpit page's own call: while it is live, the native tab will not
+  // open a second microphone on the same phone.
+  const [cockpitCallLive, setCockpitCallLive] = useState(false);
   // The Cockpit is a live web session — remounting it on every tab switch
   // would drop scroll position and any in-flight recording. Mount it lazily
   // on first visit, then keep it mounted and merely hidden.
@@ -563,6 +586,8 @@ export default function App() {
         await initDB(database);
         setDb(database);
 
+        const rememberedBackend = await getSetting(database, "call_backend", DEFAULT_BACKEND);
+        if (isCallBackend(rememberedBackend)) setCallBackend(rememberedBackend);
         const enabled = await getSetting(database, "tracking_enabled", "false");
         setTrackingEnabled(enabled === "true");
 
@@ -670,15 +695,17 @@ export default function App() {
         else if (route.surface === "journal") setJournalVisible(true);
       } else if (route.kind === "call") {
         // A Shortcut / Action Button / widget asked for Larry. Clear anything
-        // that could sit over the Cockpit, bring the tab up (mounting it if
-        // this session never opened it), and let the tab start the call.
+        // that could sit over the Call tab, bring it up, and start the call
+        // natively. A link that finds a call already live joins it —
+        // start() is a no-op while connecting or live.
         setGymTimerVisible(false);
         setAffirmationVisible(false);
         setGratefulVisible(false);
         setJournalVisible(false);
-        setCockpitMounted(true);
-        setActiveTab("cockpit");
-        setCallIntent({ via: route.via, nonce: Date.now() });
+        setActiveTab("call");
+        const via = route.via ?? callBackendRef.current;
+        if (route.via) handleCallBackendChangeRef.current(route.via);
+        void callSession.start(via);
       }
       // kind === "unknown" → no-op (already on whatever screen)
     };
@@ -1888,8 +1915,16 @@ export default function App() {
       {activeTab === "roles" && (
         <RolesScreen db={db} weeklyCache={weeklyCache} />
       )}
+      {activeTab === "call" && (
+        <CallScreen
+          session={callSession}
+          backend={callBackend}
+          onBackendChange={handleCallBackendChange}
+          cockpitCallLive={cockpitCallLive}
+        />
+      )}
       {cockpitMounted && (
-        <CockpitScreen visible={activeTab === "cockpit"} callIntent={callIntent} />
+        <CockpitScreen visible={activeTab === "cockpit"} onCallLiveChange={setCockpitCallLive} />
       )}
 
       <TabBar active={activeTab} onChange={handleTabChange} />

@@ -37,7 +37,9 @@ up in the Shortcuts app by name and takes parameters — is a separate spec.
 
 - **An App Intent / Shortcuts action by name.** Phase 2.
 - **A native call screen.** The call runs in the Cockpit page exactly as it
-  does when started by hand. See #74.
+  does when started by hand. See #74. *(Superseded 2026-08-28: the
+  [native Call tab](2026-08-28-native-call-screen-design.md) now receives
+  `grabber://call`; the link's syntax and rules below are unchanged.)*
 - **Hanging up from a link.** Ending a call stays a tap on the page.
 - **Any other Cockpit route.** `…://call` is the only new link; opening the
   Cockpit tab without a call is not a link, deliberately — the tab is one tap

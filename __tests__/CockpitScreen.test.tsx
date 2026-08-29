@@ -2,7 +2,7 @@ import React from "react";
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import { Linking } from "react-native";
 import { CockpitScreen, COCKPIT_URL } from "../screens/CockpitScreen";
-import { BRIDGE_EVENT, BRIDGE_GLOBAL, CALL_INTENT_EVENT, CALL_INTENT_GLOBAL } from "../lib/audioBridge";
+import { BRIDGE_EVENT, BRIDGE_GLOBAL } from "../lib/audioBridge";
 import AudioRoute from "../modules/audio-route";
 
 // Both mocks live in jest.setup.js. The web view one exposes its imperative
@@ -305,6 +305,16 @@ describe("CockpitScreen audio bridge", () => {
    property of the call, not the tab: held from "connecting" to "ended",
    whichever tab shows; a page that goes away is a call that ended. */
 describe("CockpitScreen keeps the screen awake during a call", () => {
+  it("reports call.state to the app so the native Call tab can refuse a second call", () => {
+    const onCallLiveChange = jest.fn();
+    const r = render(<CockpitScreen onCallLiveChange={onCallLiveChange} />);
+    expect(onCallLiveChange).toHaveBeenLastCalledWith(false);
+    post(r, { type: "call.state", live: true });
+    expect(onCallLiveChange).toHaveBeenLastCalledWith(true);
+    post(r, { type: "call.state", live: false });
+    expect(onCallLiveChange).toHaveBeenLastCalledWith(false);
+  });
+
   const keep = jest.requireMock("expo-keep-awake") as {
     activateKeepAwakeAsync: jest.Mock;
     deactivateKeepAwake: jest.Mock;
@@ -386,108 +396,5 @@ describe("CockpitScreen keeps the screen awake during a call", () => {
     live(r, true);
     live(r, false);
     for (const call of keep.deactivateKeepAwake.mock.calls) expect(call[0]).toBe("cockpit");
-  });
-});
-
-/* ---------- call intent ----------
-   Spec: docs/superpowers/specs/2026-08-28-cockpit-call-deep-link-design.md.
-   The app asks the page to press its own handset — once per link, only once
-   the page is up, and never after a failed load. */
-describe("CockpitScreen call intent", () => {
-  beforeEach(() => {
-    web.injectJavaScript.mockClear();
-  });
-
-  /** Every injected script, run against a fake page; returns the cockpit-call events + the parked global. */
-  function delivered() {
-    const events: any[] = [];
-    const win: Record<string, any> = { dispatchEvent: (e: any) => events.push(e) };
-    class FakeCustomEvent {
-      type: string;
-      detail: unknown;
-      constructor(type: string, init?: { detail?: unknown }) {
-        this.type = type;
-        this.detail = init?.detail;
-      }
-    }
-    for (const call of web.injectJavaScript.mock.calls) {
-      new Function("window", "CustomEvent", call[0])(win, FakeCustomEvent);
-    }
-    return {
-      calls: events.filter((e) => e.type === CALL_INTENT_EVENT).map((e) => e.detail),
-      parked: win[CALL_INTENT_GLOBAL],
-      order: events.map((e) => e.type),
-    };
-  }
-  const load = (r: ReturnType<typeof render>) => fireEvent(r.getByTestId("cockpit-webview"), "loadEnd");
-
-  it("asks the page to start the call once the page is up, not before", () => {
-    const r = render(<CockpitScreen callIntent={{ via: "eleven", nonce: 1 }} />);
-    expect(delivered().calls).toHaveLength(0);
-    load(r);
-    const d = delivered();
-    expect(d.calls).toEqual([{ type: "call.start", via: "eleven", nonce: 1 }]);
-    expect(d.parked).toEqual({ type: "call.start", via: "eleven", nonce: 1 });
-  });
-
-  it("tells the page the bridge is ready before asking it to call", () => {
-    const r = render(<CockpitScreen callIntent={{ via: null, nonce: 1 }} />);
-    load(r);
-    const order = delivered().order;
-    expect(order.indexOf(BRIDGE_EVENT)).toBeLessThan(order.indexOf(CALL_INTENT_EVENT));
-  });
-
-  it("delivers straight away to a page that is already loaded", () => {
-    const r = render(<CockpitScreen />);
-    load(r);
-    r.rerender(<CockpitScreen callIntent={{ via: "gemini", nonce: 2 }} />);
-    expect(delivered().calls).toEqual([{ type: "call.start", via: "gemini", nonce: 2 }]);
-  });
-
-  it("delivers a link once — not again on re-render, not again after a reload", () => {
-    const r = render(<CockpitScreen />);
-    load(r);
-    const intent = { via: null, nonce: 3 };
-    r.rerender(<CockpitScreen callIntent={intent} />);
-    r.rerender(<CockpitScreen callIntent={{ ...intent }} />);
-    // iOS killed the content process; the screen reloads the page.
-    fireEvent(r.getByTestId("cockpit-webview"), "loadStart");
-    load(r);
-    expect(delivered().calls).toHaveLength(1);
-  });
-
-  it("a second link is a second call request", () => {
-    const r = render(<CockpitScreen />);
-    load(r);
-    r.rerender(<CockpitScreen callIntent={{ via: null, nonce: 4 }} />);
-    r.rerender(<CockpitScreen callIntent={{ via: "drill", nonce: 5 }} />);
-    expect(delivered().calls.map((c) => c.nonce)).toEqual([4, 5]);
-  });
-
-  it("a failed load consumes the link: Try again loads the page and starts no call", () => {
-    const r = render(<CockpitScreen callIntent={{ via: "eleven", nonce: 6 }} />);
-    fireEvent(r.getByTestId("cockpit-webview"), "error", {
-      nativeEvent: { description: "offline", code: -1009 },
-    });
-    fireEvent.press(r.getByTestId("cockpit-retry"));
-    load(r);
-    expect(delivered().calls).toHaveLength(0);
-  });
-
-  it("a link that arrives on the reconnect pane is consumed too", () => {
-    const r = render(<CockpitScreen />);
-    fireEvent(r.getByTestId("cockpit-webview"), "httpError", {
-      nativeEvent: { statusCode: 502, description: "Bad Gateway" },
-    });
-    r.rerender(<CockpitScreen callIntent={{ via: null, nonce: 7 }} />);
-    fireEvent.press(r.getByTestId("cockpit-retry"));
-    load(r);
-    expect(delivered().calls).toHaveLength(0);
-  });
-
-  it("waits for the page even when the tab is hidden, then delivers on load", () => {
-    const r = render(<CockpitScreen visible={false} callIntent={{ via: null, nonce: 8 }} />);
-    fireEvent(r.getByTestId("cockpit-webview", { includeHiddenElements: true }), "loadEnd");
-    expect(delivered().calls).toHaveLength(1);
   });
 });
