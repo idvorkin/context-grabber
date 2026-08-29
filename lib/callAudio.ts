@@ -39,35 +39,29 @@ const MIC_BUFFER_FRAMES = 1600;
  */
 const PLAYBACK_GAIN = 0.8;
 
-/** A route change fires several notifications in a burst; act once, after it settles. */
-const ROUTE_SETTLE_MS = 350;
+/**
+ * A route change fires several notifications in a burst, and the audio
+ * library restarts its engine ON THE MAIN THREAD for each one. Wait for all
+ * of that to finish before touching the engine from the JS thread — doing
+ * both at once froze the app when Igor switched devices quickly.
+ */
+const ROUTE_SETTLE_MS = 1000;
 
 type MicListener = (samples: Float32Array, sampleRate: number) => void;
 
 /**
- * What the mic is actually attached to, as a string that changes when the
- * recorder must be re-armed: the input port, the output port, and the
- * hardware rate. AirPods (HFP) run at 16 or 24 kHz where the built-in mic
- * runs at 48; the engine rebuilds itself on that change, but the recorder's
- * sample-rate converter stays prepared for the old rate.
+ * The one thing a route change can break: the hardware sample rate. AirPods
+ * over HFP run at 16 or 24 kHz where the built-in mic runs at 48; the engine
+ * rebuilds itself on that change, but the recorder's sample-rate converter
+ * stays prepared for the old rate. A different built-in mic, or an output
+ * change alone, keeps the rate — and needs nothing from us.
  */
-function routeSignature(): string {
-  let input = "?";
-  let output = "?";
+function hardwareRate(): number {
   try {
-    const snap = AudioRoute?.getDevices();
-    input = snap?.current.input?.id ?? "?";
-    output = snap?.current.output?.id ?? "?";
+    return AudioManager.getDevicePreferredSampleRate();
   } catch {
-    // module missing or session not ready — the rate alone still discriminates
+    return 0; // simulator
   }
-  let rate = 0;
-  try {
-    rate = AudioManager.getDevicePreferredSampleRate();
-  } catch {
-    // simulator
-  }
-  return `${input}|${output}|${rate}`;
 }
 
 /**
@@ -101,29 +95,36 @@ export function createNativeCallAudio(): CallAudio {
   let interruption: { remove(): void } | null = null;
   let routeChange: { remove(): void } | null = null;
   let routeTimer: ReturnType<typeof setTimeout> | null = null;
-  let armedRoute = "";
+  let armedRate = 0;
+  let rearming = false;
 
   /**
    * The picker moved the mic, AirPods arrived, a cable came out: if the
-   * hardware the recorder was sized for is gone, size it again. Debounced,
-   * and compared against what it was armed with, so the engine restart our
-   * own re-arm causes does not re-arm it again.
+   * hardware rate the recorder was sized for is gone, size it again — and
+   * nothing else. No session reconfiguration here: the session is already
+   * right (audio-route re-asserts the chosen route itself, the library
+   * re-applies the category), and calling setActive from the JS thread while
+   * the main thread is inside the library's own restart is a deadlock.
+   * Debounced past the burst, compared against the rate the mic was armed
+   * with, and never overlapping.
    */
   function onRouteChanged(): void {
     if (routeTimer) clearTimeout(routeTimer);
     routeTimer = setTimeout(() => {
       routeTimer = null;
-      if (!recorder) return;
-      const now = routeSignature();
-      if (now === armedRoute) return;
-      armedRoute = now;
-      void configureSession()
-        .catch((e) => console.warn("[call] session after route change:", e))
-        .then(() => {
-          if (!recorder) return;
-          disarmRecorder();
-          recorder = armRecorder();
-        });
+      if (!recorder || rearming) return;
+      const rate = hardwareRate();
+      if (rate === armedRate) return;
+      rearming = true;
+      try {
+        disarmRecorder();
+        recorder = armRecorder();
+        armedRate = hardwareRate();
+      } catch (e) {
+        console.warn("[call] re-arm after route change:", e);
+      } finally {
+        rearming = false;
+      }
     }, ROUTE_SETTLE_MS);
   }
 
@@ -202,7 +203,7 @@ export function createNativeCallAudio(): CallAudio {
       listener = onBuffer;
       disarmRecorder();
       recorder = armRecorder();
-      armedRoute = routeSignature();
+      armedRate = hardwareRate();
       routeChange?.remove();
       routeChange = AudioManager.addSystemEventListener("routeChange", onRouteChanged);
     },
@@ -210,7 +211,7 @@ export function createNativeCallAudio(): CallAudio {
     async restartMic() {
       disarmRecorder();
       recorder = armRecorder();
-      armedRoute = routeSignature();
+      armedRate = hardwareRate();
     },
 
     openPlayback(rate) {
