@@ -366,7 +366,7 @@ describe("Tab navigation", () => {
       await flushPromises();
     });
     expect(result.getByTestId("call-screen")).toBeTruthy();
-    expect(result.getByTestId("call-status").props.children).toMatch(/connecting… Gemini/);
+    expect(result.getByTestId("call-status").props.children).toMatch(/calling Larry… · Gemini/);
     expect(sockets).toHaveLength(1);
     // the web view is still mounted, hidden, and was never navigated or reloaded
     expect(result.getByTestId("cockpit-webview", { includeHiddenElements: true })).toBeTruthy();
@@ -393,7 +393,7 @@ describe("Tab navigation", () => {
     expect(result.queryByTestId("cockpit-webview")).toBeNull();
     // The call is connecting on the backend the link named, and the socket
     // went to the bridge's mount on the Cockpit host.
-    expect(result.getByTestId("call-status").props.children).toMatch(/connecting… ElevenLabs/);
+    expect(result.getByTestId("call-status").props.children).toMatch(/calling Larry… · ElevenLabs/);
     expect(result.getByTestId("call-backend-eleven").props.accessibilityState.selected).toBe(true);
     expect(sockets.map((s) => s.url)).toEqual(["wss://c-5004.squeaker-teeth.ts.net/bridge"]);
   });
