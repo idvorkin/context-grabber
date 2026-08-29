@@ -1,4 +1,6 @@
 PODS:
+  - AudioRoute (1.0.0):
+    - ExpoModulesCore
   - EASClient (55.0.2):
     - ExpoModulesCore
   - EXConstants (55.0.11):
@@ -2113,6 +2115,7 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - AudioRoute (from `../modules/audio-route/ios`)
   - EASClient (from `../node_modules/expo-eas-client/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
@@ -2223,6 +2226,8 @@ SPEC REPOS:
     - ReachabilitySwift
 
 EXTERNAL SOURCES:
+  AudioRoute:
+    :path: "../modules/audio-route/ios"
   EASClient:
     :path: "../node_modules/expo-eas-client/ios"
   EXConstants:
@@ -2432,6 +2437,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  AudioRoute: 20d7b6e63e4d8306cae017406f02e65a475ad8b3
   EASClient: 7eead1417d9970757ad2654d1eddee4de796d1ee
   EXConstants: 9813b8a316e5b7bb562731c7a45e236f54195185
   EXJSONUtils: 0080c14b673cfa9a6be5e3fe429768ffe3d42dfb
