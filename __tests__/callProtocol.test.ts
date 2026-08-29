@@ -7,6 +7,7 @@ import {
   isCallBackend,
   micFrame,
   micProbeFrame,
+  diagnosticsFrame,
   parseBridgeMessage,
   startFrame,
   stopFrame,
@@ -43,13 +44,16 @@ describe("backends", () => {
 });
 
 describe("outbound frames", () => {
-  it("start names the backend and leaves model/voice to the vendor", () => {
-    expect(JSON.parse(startFrame("eleven"))).toEqual({
+  it("start names the backend, leaves model/voice to the vendor, and says who is calling", () => {
+    expect(JSON.parse(startFrame("eleven", "abc1234"))).toEqual({
       type: "start",
       backend: "eleven",
       model: "",
       voice: "",
+      client: "context-grabber",
+      build: "abc1234",
     });
+    expect(JSON.parse(startFrame("gemini"))).toMatchObject({ client: "context-grabber", build: "" });
   });
 
   it("the rest match the bridge docstring", () => {
@@ -58,6 +62,11 @@ describe("outbound frames", () => {
     expect(JSON.parse(stopFrame())).toEqual({ type: "stop" });
     expect(JSON.parse(micFrame(true))).toEqual({ type: "mic", muted: true });
     expect(JSON.parse(micProbeFrame(3))).toEqual({ type: "mic_probe", token: 3 });
+    expect(JSON.parse(diagnosticsFrame("abc (main)", "+0.0s start"))).toEqual({
+      type: "diagnostics",
+      build: "abc (main)",
+      text: "+0.0s start",
+    });
   });
 });
 

@@ -46,6 +46,8 @@ type Props = {
   onBackendChange: (backend: CallBackend) => void;
   /** A call is live on the Cockpit *page*; two microphones on one phone is a no. */
   cockpitCallLive: boolean;
+  /** The Cockpit web view exists in this app session (it may hold a mic). Logged per call for #88. */
+  cockpitMounted?: boolean;
 };
 
 /** Tagged so it can never collide with the Gym Timer's or the Cockpit tab's hold. */
@@ -71,18 +73,19 @@ const PULSE_MS = 1600;
 /** A telephone (U+260E) with the text-presentation selector — not the emoji, so it takes our colour. */
 const HANDSET = "\u260E\uFE0E";
 
+/** The voice is Tony; Larry is the reasoning half behind him (#94). */
 const LABEL: Record<CaptionRow["who"], string> = {
   igor: "Igor",
-  larry: "Larry",
+  larry: "Tony",
   tool: "⟳",
-  note: "·",
+  note: "Larry",
 };
 
 const LABEL_A11Y: Record<CaptionRow["who"], string> = {
   igor: "Igor",
-  larry: "Larry",
+  larry: "Tony",
   tool: "consult",
-  note: "note",
+  note: "Larry (context)",
 };
 
 export function useCallSnapshot(session: CallSession): CallSnapshot {
@@ -118,7 +121,7 @@ function formatElapsed(ms: number): string {
   return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
 }
 
-export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive }: Props) {
+export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive, cockpitMounted = false }: Props) {
   const snap = useCallSnapshot(session);
   const active = snap.state === "connecting" || snap.state === "live";
   const reduceMotion = useReduceMotion();
@@ -304,6 +307,23 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
 
   const startBlocked = cockpitCallLive ? "a call is live in the Cockpit tab" : null;
 
+  // The first line of every call's log: what else might hold the mic (#88).
+  const startCall = useCallback(() => {
+    void session.start(backend).then(() => {
+      session.note(`context: cockpit web view ${cockpitMounted ? "mounted" : "not mounted"}, page call ${cockpitCallLive ? "LIVE" : "none"}`);
+    });
+  }, [session, backend, cockpitMounted, cockpitCallLive]);
+
+  const [priming, setPriming] = useState(false);
+  const primeAudio = useCallback(async () => {
+    setPriming(true);
+    try {
+      await session.prime();
+    } finally {
+      setPriming(false);
+    }
+  }, [session]);
+
   return (
     <View style={styles.container} testID="call-screen">
       <View style={styles.header}>
@@ -393,14 +413,28 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
                   ))
                 )}
               </ScrollView>
-              <Pressable
-                onPress={() => void copyDiagnostics()}
-                style={styles.diagCopy}
-                testID="call-diag-copy"
-                accessibilityRole="button"
-              >
-                <Text style={styles.diagCopyText}>{copied ? "Copied" : "Copy diagnostics"}</Text>
-              </Pressable>
+              <View style={styles.diagButtons}>
+                <Pressable
+                  onPress={() => void copyDiagnostics()}
+                  style={styles.diagCopy}
+                  testID="call-diag-copy"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.diagCopyText}>{copied ? "Copied" : "Copy diagnostics"}</Text>
+                </Pressable>
+                {!active && (
+                  <Pressable
+                    onPress={() => void primeAudio()}
+                    disabled={priming}
+                    style={[styles.diagCopy, priming && styles.buttonDisabled]}
+                    testID="call-prime"
+                    accessibilityRole="button"
+                    accessibilityLabel="Prime audio"
+                  >
+                    <Text style={styles.diagCopyText}>{priming ? "Priming…" : "Prime audio"}</Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
           )}
         </View>
@@ -493,13 +527,26 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
                 <Text style={styles.controlLabel}>End</Text>
               </Pressable>
             </View>
-            {/* keeps the hang-up dead centre; the right slot is empty for now */}
-            <View style={styles.controlSlot} />
+            <View style={styles.controlSlot}>
+              <Pressable
+                onPress={() => session.restart()}
+                style={styles.control}
+                testID="call-restart"
+                accessibilityRole="button"
+                accessibilityLabel="Restart call"
+                hitSlop={8}
+              >
+                <View style={styles.restartCircle}>
+                  <Text style={styles.restartGlyph}>↻</Text>
+                </View>
+                <Text style={styles.controlLabel}>Restart</Text>
+              </Pressable>
+            </View>
           </>
         ) : (
           <View style={styles.startWrap}>
             <Pressable
-              onPress={() => void session.start(backend)}
+              onPress={startCall}
               disabled={!!startBlocked}
               style={[styles.button, styles.buttonStart, startBlocked && styles.buttonDisabled]}
               testID="call-start"
@@ -736,6 +783,7 @@ const styles = StyleSheet.create({
   diag: { gap: 6, paddingBottom: 6 },
   diagScroll: { maxHeight: 180, backgroundColor: "#0c121f", borderRadius: 8, padding: 8 },
   diagLine: { color: "#9fb3c8", fontSize: 11, fontFamily: "Menlo", lineHeight: 15 },
+  diagButtons: { flexDirection: "row", gap: 8 },
   diagCopy: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: "#243447" },
   diagCopyText: { color: "#4cc9f0", fontSize: 13, fontWeight: "600" },
   deviceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -793,6 +841,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#0c121f",
   },
   controlSlot: { flex: 1, alignItems: "center" },
+  restartCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#243447",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  restartGlyph: { color: "#4cc9f0", fontSize: 26, lineHeight: 30, fontWeight: "700" },
   control: { alignItems: "center", gap: 8 },
   controlLabel: { color: "#9fb3c8", fontSize: 12, fontWeight: "600" },
   controlLabelMuted: { color: "#f87171" },

@@ -125,6 +125,42 @@ current roster on the clipboard, so a bad call can be pasted into a chat
 without a cable. Folded by default; the log is kept whether or not it is
 open, across the call and until the next one starts.
 
+Beside *Copy diagnostics*, while no call is live, a **Prime audio**
+control (Igor, 2026-08-29 09:16, still chasing the silent first call: *"Do
+we need to do something like a dummy call that opens, closes, reopens?
+Maybe give me a button to do that so I can test."*). It brings the call's
+audio up and down once without dialling — session on, microphone open for
+half a second to nowhere, everything off — and logs each step. It exists
+for the experiment: prime, then call; if the first call then carries
+audio, the cause is the first activation of the input unit and priming
+becomes automatic; if not, something else owns the microphone. The log's
+first line of every call also says whether the Cockpit tab is loaded and
+whether its page reports a call of its own.
+
+**The log keeps the call before.** A retry must never erase the evidence
+of the call it is retrying ([#92](https://github.com/idvorkin/context-grabber/issues/92)):
+the log holds the last two calls, separated by a rule, and *Copy
+diagnostics* copies both.
+
+**The dump reaches the bridge on its own.** At every hang-up, at every
+automatic redial, and when the bridge fails to acknowledge the microphone,
+the app sends the dump to the bridge over the call's own socket before
+anything closes, so Larry can read it from the call's record without Igor
+pasting anything. (Bridge half: the Cockpit repo.)
+
+### A microphone that never delivers
+
+Larry's finding on [#88](https://github.com/idvorkin/context-grabber/issues/88),
+2026-08-29 09:26: on every silent first call the bridge received *no*
+microphone frames at all — not zeros, nothing. The recorder was started and
+never produced a buffer. So the app watches for exactly that: if three
+seconds pass after the recorder starts with no buffer, the call's audio is
+torn down and brought back up (a short gap in Larry's voice, a line in
+Diagnostics); if there is still nothing after that, the call **redials
+itself** — once — on the same backend, because the retry has always
+worked. From the chair: the first call after launch may take a few seconds
+longer to become a working call, and never needs a second tap.
+
 ### Starting a call
 
 Igor, 2026-08-29, on a call from this tab: *"Can you make the UI just a
@@ -148,6 +184,26 @@ the status says *live*, a timer starts, and the microphone opens — not
 before. (Opening the microphone before the far end is ready is the page's
 rule too; it stops Igor talking into nothing.)
 
+**The first call after launch works like every other call.** Igor,
+2026-08-29 08:40: *"I think there's something wrong when it's a first
+call."* The bridge's recordings agreed ([#88](https://github.com/idvorkin/context-grabber/issues/88)):
+the first call of a burst sent exact silence for its whole length and the
+retry carried audio. The first attempt at this (waiting for the input
+route) did not fix it: the route was up. What differed was order — on a
+first call, echo cancellation was switched on *after* playback had already
+started the audio engine; on every later call it was already on before.
+Now it is switched on the moment the call's audio session is configured,
+before anything starts. And if the mic nonetheless delivers a second of
+exact zeros, the call's audio is torn down and brought back up the way a
+second call would (a short gap in Larry's voice), with a line in
+Diagnostics saying so. Only if it is still silent after that does the
+screen say *the microphone is delivering silence*.
+
+**The bridge knows it is the app.** The call introduces itself —
+`client: context-grabber` and the build — so the bridge's records can tell
+an app call from a browser call ([#78](https://github.com/idvorkin/context-grabber/issues/78),
+the call half).
+
 If the bridge cannot be reached — not on the tailnet, the server is down —
 the screen says so within a few seconds, with a copyable error, and returns
 to idle. Nothing hangs.
@@ -156,9 +212,12 @@ to idle. Nothing hangs.
 
 The screen is the conversation and nothing else (Cockpit DESIGN P23/P24):
 
-- **Captions.** Each thing Igor says and each thing Larry says is a row:
-  a short speaker label — *Igor*, *Larry*, never wider than five
-  characters — and the words. Larry's spoken text appears as he says it;
+- **Captions.** Each thing Igor says and each thing the voice says is a
+  row: a short speaker label — *Igor*, *Tony*, never wider than five
+  characters — and the words. The voice is **Tony** (Igor, 2026-08-29:
+  *"In the call log, it should say Igor and Tony, not Igor and Larry"*);
+  Larry is the reasoning half behind him. A line Larry put into the call
+  himself (injected context) carries the label *Larry*. Larry's spoken text appears as he says it;
   Igor's appears when the recognizer settles on it. No turn numbers, no
   links, no per-turn readouts. Larry's *consults* (asking the other Larry
   something mid-call) show as a short clamped row that expands on tap and
@@ -259,6 +318,16 @@ reason — *a call is live in the Cockpit tab* — rather than opening a
 second microphone on the same phone. The reverse is not policed; the page
 does not know about the native call.
 
+### Restart
+
+Igor, 2026-08-29 09:39: *"Including End Call, we should have Restart
+Call."* Beside the hang-up, a **Restart** control: one tap ends the current
+session and dials a new one on the same backend, without a trip through the
+picker. It is the user's own self-heal for a call that went bad — a silent
+first call, echo, a stuck consult, a dropped socket. The ended call's
+diagnostics are sent to the bridge and kept in the log (behind the
+separator) exactly as a hang-up's are; Restart never erases evidence.
+
 ## Acceptance criteria
 
 1. **Call Larry** on a fresh install (nothing remembered): the call is on
@@ -300,7 +369,9 @@ does not know about the native call.
     than five characters; a consult row is clamped and expandable, and
     expanding it does not touch the call.
 17. The bridge's call record for a native call (`data/voice-live/<session>.jsonl`,
-    the feedback marker on teardown) is indistinguishable from a page call.
+    the feedback marker on teardown) matches a page call's in every way
+    except the client tag on the start frame, which names the app and
+    build.
 18. Tap **☎ Call** on the home-screen widget (medium, then large): the app
     opens on the Call tab and the call is *live* on the remembered backend
     without another tap. With a call already live: the app comes to the
@@ -358,6 +429,27 @@ does not know about the native call.
     sits bottom-centre, at least 64 pt across; tapping it ends the call with
     *stopped*. Idle and ended, it is gone and **Call Larry** is back. The
     *Diagnostics* fold opens in every state, calling and live included.
+29. **First call after launch.** Force-quit the app. Launch, Call tab,
+    **Call Larry**, say a sentence as soon as Tony has greeted: the voice
+    control swells as you speak and your sentence is captioned. Diagnostics
+    shows `input route ready: iPhone Microphone` before `recorder
+    started`, and no `zeros` line. Repeat five times (force-quit between):
+    five for five. If a `mic delivering zeros → re-arming` line appears,
+    the call still works (the watchdog caught it) — report it.
+30. **No-frames self-heal.** Diagnostics on any call where the mic never
+    delivered shows `no mic buffer within 3s … → resetting audio`, then
+    either `first mic frame` (healed) or `still no mic buffer → redialing`
+    followed by a fresh `start` on the same backend; the screen shows
+    *Calling Larry…* again briefly and then *live*, without a tap. The
+    bridge's record of the dead session ends with the app's diagnostics.
+31. **Evidence survives a retry.** After a silent call and its retry, open
+    Diagnostics: both calls are there, separated by a rule, the earlier one
+    first; *Copy diagnostics* copies both.
+32. **Restart.** On a live call, tap **Restart**: the call ends with
+    *stopped* and immediately shows *Calling Larry…* on the same backend,
+    then *live*; no picker, no second tap. Diagnostics afterwards holds
+    both calls, and the bridge's record of the first ends with the app's
+    diagnostics.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends

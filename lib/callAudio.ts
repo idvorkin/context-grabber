@@ -41,6 +41,39 @@ const MIC_BUFFER_FRAMES = 1600;
 const PLAYBACK_GAIN = 0.8;
 
 /**
+ * After the session is (re)configured, iOS brings the input route up a
+ * beat later. Arming the voice-processing unit before that captures a
+ * not-yet-routed input — exact zeros for the whole call (#88). Wait for an
+ * input to be on the route, briefly.
+ */
+const INPUT_ROUTE_WAIT_MS = 1500;
+const INPUT_ROUTE_POLL_MS = 50;
+
+async function waitForInputRoute(log: Pick<CallLog, "add">): Promise<void> {
+  if (!AudioRoute) return;
+  const deadline = Date.now() + INPUT_ROUTE_WAIT_MS;
+  let waited = 0;
+  for (;;) {
+    let input: { name: string } | null = null;
+    try {
+      input = AudioRoute.getDevices().current.input;
+    } catch {
+      // session not ready yet — keep waiting
+    }
+    if (input) {
+      log.add(`input route ready: ${input.name}${waited ? ` (after ${waited} ms)` : ""}`);
+      return;
+    }
+    if (Date.now() >= deadline) {
+      log.add(`no input on the route after ${INPUT_ROUTE_WAIT_MS} ms — arming anyway`);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, INPUT_ROUTE_POLL_MS));
+    waited += INPUT_ROUTE_POLL_MS;
+  }
+}
+
+/**
  * A route change fires several notifications in a burst, and the audio
  * library restarts its engine ON THE MAIN THREAD for each one. Wait for all
  * of that to finish before touching the engine from the JS thread — doing
@@ -220,14 +253,38 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     async startMic(onBuffer) {
       listener = onBuffer;
       disarmRecorder();
+      await waitForInputRoute(log);
       recorder = armRecorder();
       armedRate = hardwareRate();
       routeChange?.remove();
       routeChange = AudioManager.addSystemEventListener("routeChange", onRouteChanged);
     },
 
+    /**
+     * The watchdog's re-arm (#88). A plain re-arm did not help: the dead
+     * input was the I/O unit itself, not the tap. Do what a second call
+     * does — everything down, session re-activated, playback reopened,
+     * mic re-armed — because the second call is the one that always works.
+     */
     async restartMic() {
+      log.add("mic reset: session down, playback reopened, mic re-armed");
       disarmRecorder();
+      const rate = outRate;
+      closePlayback();
+      if (Platform.OS === "ios") {
+        try {
+          await AudioManager.setAudioSessionActivity(false);
+        } catch {
+          // was not active
+        }
+      }
+      await configureSession();
+      ctx = new AudioContext({ sampleRate: rate });
+      gain = ctx.createGain();
+      gain.gain.value = PLAYBACK_GAIN;
+      gain.connect(ctx.destination);
+      playhead = 0;
+      await waitForInputRoute(log);
       recorder = armRecorder();
       armedRate = hardwareRate();
     },

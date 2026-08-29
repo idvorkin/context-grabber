@@ -149,7 +149,7 @@ describe("CallScreen", () => {
     fireEvent.press(tool);
     expect(t.r.getByText("asking Larry: what next? …").props.numberOfLines).toBeUndefined();
     // Labels never wider than five characters (Cockpit DESIGN P24).
-    for (const [who, a11y] of [["igor", "Igor"], ["larry", "Larry"], ["tool", "consult"]]) {
+    for (const [who, a11y] of [["igor", "Igor"], ["larry", "Tony"], ["tool", "consult"]]) {
       const row = t.r.getByTestId(new RegExp(`^call-row-${who}-`));
       const label = within(row).getByLabelText(a11y).props.children as string;
       expect(label.length).toBeLessThanOrEqual(5);
@@ -324,7 +324,7 @@ describe("CallScreen", () => {
     await goLive(t);
     expect(t.r.queryByTestId("call-diag")).toBeNull();
     fireEvent.press(t.r.getByTestId("call-diag-toggle"));
-    expect(t.r.getByText(/start backend=gemini bridge=wss:\/\/h\/bridge/)).toBeTruthy();
+    expect(t.r.getByText(/start backend=gemini build=.* bridge=wss:\/\/h\/bridge/)).toBeTruthy();
     expect(t.r.getByText(/ready: out_rate=24000/)).toBeTruthy();
     await act(async () => {
       fireEvent.press(t.r.getByTestId("call-diag-copy"));
@@ -334,6 +334,42 @@ describe("CallScreen", () => {
     expect(copied).toMatch(/^state: live/m);
     expect(copied).toMatch(/^route: in=iPhone Microphone\[MicrophoneBuiltIn\]/m);
     expect(copied).toMatch(/ready: out_rate=24000/);
+  });
+
+  it("Restart hangs up and redials on the same backend in one tap", async () => {
+    const t = setup();
+    await goLive(t);
+    expect(t.r.getByTestId("call-restart")).toBeTruthy();
+    fireEvent.press(t.r.getByTestId("call-restart"));
+    await settle();
+    const types = t.socket.sent.filter((x): x is string => typeof x === "string").map((x) => JSON.parse(x).type as string);
+    expect(types.slice(-2)).toEqual(["stt_stop", "stop"]);
+    expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "gemini" });
+    expect(t.r.queryByTestId("call-start")).toBeNull();
+  });
+
+  it("Prime audio runs the session up and down once, only between calls", async () => {
+    const t = setup();
+    await settle();
+    fireEvent.press(t.r.getByTestId("call-diag-toggle"));
+    (audio.prepare as jest.Mock).mockClear();
+    await act(async () => {
+      fireEvent.press(t.r.getByTestId("call-prime"));
+      await new Promise((r) => setTimeout(r, 500));
+    });
+    expect(audio.prepare).toHaveBeenCalledTimes(1);
+    expect(audio.startMic).toHaveBeenCalledTimes(1);
+    expect(audio.stop).toHaveBeenCalled();
+    expect(t.r.getByText(/prime: mic closed, session down/)).toBeTruthy();
+    await goLive(t);
+    expect(t.r.queryByTestId("call-prime")).toBeNull();
+  });
+
+  it("every call's log opens with what else might hold the mic", async () => {
+    const t = setup();
+    await goLive(t);
+    fireEvent.press(t.r.getByTestId("call-diag-toggle"));
+    expect(t.r.getByText(/context: cockpit web view not mounted, page call none/)).toBeTruthy();
   });
 
   it("shows the real device roster and applies a pick", async () => {

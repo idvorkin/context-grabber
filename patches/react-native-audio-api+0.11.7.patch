@@ -670,6 +670,22 @@ index 4a90d79..90a299e 100644
  class Result {
    struct OkTag {};
    struct ErrTag {};
+diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/AudioAPIModule.mm b/node_modules/react-native-audio-api/ios/audioapi/ios/AudioAPIModule.mm
+index d172414..afa8d3a 100644
+--- a/node_modules/react-native-audio-api/ios/audioapi/ios/AudioAPIModule.mm
++++ b/node_modules/react-native-audio-api/ios/audioapi/ios/AudioAPIModule.mm
+@@ -166,6 +166,11 @@ RCT_EXPORT_METHOD(
+                                               mode:mode
+                                            options:options
+                                       allowHaptics:allowHaptics];
++  // context-grabber patch: switch the I/O unit to/from VoiceProcessingIO NOW,
++  // while nothing is running. Toggling it later — after playback has already
++  // started the engine for this session activation — left the input dead
++  // (exact zeros) for the whole first call (#88).
++  [self.audioEngine syncVoiceProcessingWithSessionMode];
+ }
+ 
+ RCT_EXPORT_METHOD(observeAudioInterruptions : (BOOL)enabled)
 diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/core/IOSAudioRecorder.h b/node_modules/react-native-audio-api/ios/audioapi/ios/core/IOSAudioRecorder.h
 index 9137b94..49cb577 100644
 --- a/node_modules/react-native-audio-api/ios/audioapi/ios/core/IOSAudioRecorder.h

@@ -541,7 +541,12 @@ export default function App() {
   const callSession = useMemo(
     () =>
       new CallSession(
-        { connect: (url) => new WebSocket(url), audio: createNativeCallAudio(callLog), log: callLog },
+        {
+          connect: (url) => new WebSocket(url),
+          audio: createNativeCallAudio(callLog),
+          log: callLog,
+          build: `${getBuildInfo().shortSha} (${getBuildInfo().branch})`,
+        },
         bridgeUrl(COCKPIT_URL),
       ),
     [callLog],
@@ -1938,6 +1943,7 @@ export default function App() {
           backend={callBackend}
           onBackendChange={handleCallBackendChange}
           cockpitCallLive={cockpitCallLive}
+          cockpitMounted={cockpitMounted}
         />
       )}
       {cockpitMounted && (

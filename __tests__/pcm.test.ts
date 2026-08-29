@@ -7,6 +7,15 @@ import {
   resampleLinear,
 } from "../lib/pcm";
 
+describe("isExactSilence", () => {
+  it("is true only for all-zero, non-empty buffers", () => {
+    const { isExactSilence } = require("../lib/pcm");
+    expect(isExactSilence(new Float32Array(480))).toBe(true);
+    expect(isExactSilence(new Float32Array([0, 0, 1e-9]))).toBe(false);
+    expect(isExactSilence(new Float32Array(0))).toBe(false);
+  });
+});
+
 describe("micLevel", () => {
   it("silence is 0, full scale is 1, and clipping does not exceed 1", () => {
     expect(micLevel(new Float32Array(100))).toBe(0);

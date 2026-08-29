@@ -17,6 +17,7 @@
 import {
   CONNECTION_LOST,
   STOPPED,
+  diagnosticsFrame,
   micFrame,
   micProbeFrame,
   parseBridgeMessage,
@@ -27,7 +28,7 @@ import {
   type BridgeMessage,
   type CallBackend,
 } from "./callProtocol";
-import { encodeMicFrame, micLevel } from "./pcm";
+import { encodeMicFrame, isExactSilence, micLevel } from "./pcm";
 import { NO_LOG, type CallLog } from "./callLog";
 
 export type CallState = "idle" | "connecting" | "live" | "ended";
@@ -100,8 +101,29 @@ export type CallSessionDeps = {
   audio: CallAudio;
   now?: () => number;
   /** Where the call narrates itself. The Diagnostics fold reads it. */
-  log?: Pick<CallLog, "add"> & Partial<Pick<CallLog, "reset">>;
+  log?: Pick<CallLog, "add"> & Partial<Pick<CallLog, "reset" | "all">>;
+  /** The build, for the bridge's records (#78). */
+  build?: string;
 };
+
+/**
+ * Mic buffers that are exactly zero before the mic is re-armed. A dead
+ * capture graph is zero to the sample; a quiet room never is (#88). Ten
+ * buffers ≈ one second.
+ */
+export const ZERO_BUFFERS_BEFORE_REARM = 10;
+
+export const MIC_SILENT = "the microphone is delivering silence";
+
+/** How long the priming mic stays open. */
+export const PRIME_MS = 400;
+
+/**
+ * A recorder that starts and never delivers (#88: the bridge saw no frames
+ * at all on silent calls). Three seconds without a buffer → reset the
+ * audio; still nothing → redial once.
+ */
+export const FIRST_FRAME_MS = 3000;
 
 /** Log a frame-count line this often. */
 const FRAME_LOG_EVERY = 50;
@@ -115,9 +137,16 @@ type Listener = (snapshot: CallSnapshot) => void;
 type LevelListener = (level: number) => void;
 
 export class CallSession {
-  private readonly deps: Required<Omit<CallSessionDeps, "log">> & Pick<CallSessionDeps, "log">;
+  private readonly deps: Required<Omit<CallSessionDeps, "log" | "build">> & Pick<CallSessionDeps, "log" | "build">;
   private framesSent = 0;
   private framesPlayed = 0;
+  private zeroRun = 0;
+  private zeroRearmed = false;
+  private firstFrameTimer: ReturnType<typeof setTimeout> | null = null;
+  private audioReset = false;
+  /** One automatic redial per burst; cleared by a call that delivers audio. */
+  private redialed = false;
+  private micBuffers = 0;
   private readonly url: string;
   private listeners = new Set<Listener>();
   /** The mic level rides its own channel: ten updates a second must not re-render the captions. */
@@ -144,6 +173,14 @@ export class CallSession {
 
   private log(line: string): void {
     (this.deps.log ?? NO_LOG).add(line);
+  }
+
+  /** The dump to the bridge, over the call's own socket, before anything closes (#92). */
+  private sendDiagnostics(why: string): void {
+    const lines = this.deps.log?.all;
+    if (!lines || !this.socket) return;
+    this.log(`diagnostics → bridge (${why})`);
+    this.safeSend(diagnosticsFrame(this.deps.build ?? "", lines.join("\n")));
   }
 
   static idle(): CallSnapshot {
@@ -180,6 +217,44 @@ export class CallSession {
 
   /* ---------- controls ---------- */
 
+  /** A line from the screen into the call's log (context the session cannot see). */
+  note(line: string): void {
+    this.log(line);
+  }
+
+  /**
+   * The experiment for #88: bring the audio up and down once without
+   * dialling — session on, mic open to nowhere for a beat, everything off.
+   * Only between calls.
+   */
+  async prime(): Promise<void> {
+    if (this.snap.state === "connecting" || this.snap.state === "live") {
+      this.log("prime ignored: a call is up");
+      return;
+    }
+    this.log("prime: session up");
+    let buffers = 0;
+    let firstNonZero = -1;
+    try {
+      await this.deps.audio.prepare();
+      this.log("prime: mic open");
+      await this.deps.audio.startMic((samples) => {
+        buffers += 1;
+        if (firstNonZero < 0 && !isExactSilence(samples)) firstNonZero = buffers;
+      });
+      await new Promise((r) => setTimeout(r, PRIME_MS));
+      this.log(
+        `prime: mic closed, session down — ${buffers} buffers, ${
+          firstNonZero < 0 ? "none non-zero" : `first non-zero at #${firstNonZero}`
+        }`,
+      );
+    } catch (e) {
+      this.log(`prime FAILED: ${describe(e)}`);
+    } finally {
+      await this.deps.audio.stop().catch(() => {});
+    }
+  }
+
   /** No-op while a call is connecting or live: the link that finds a live call joins it. */
   async start(backend: CallBackend): Promise<void> {
     if (this.snap.state === "connecting" || this.snap.state === "live") {
@@ -188,7 +263,7 @@ export class CallSession {
     }
     this.resetForCall(backend);
     this.deps.log?.reset?.();
-    this.log(`start backend=${backend} bridge=${this.url}`);
+    this.log(`start backend=${backend} build=${this.deps.build ?? "?"} bridge=${this.url}`);
     this.emit();
     try {
       await this.deps.audio.prepare();
@@ -211,7 +286,7 @@ export class CallSession {
     socket.binaryType = "arraybuffer";
     socket.onopen = () => {
       this.log("socket open → start frame");
-      this.safeSend(startFrame(backend));
+      this.safeSend(startFrame(backend, this.deps.build ?? ""));
     };
     socket.onmessage = (ev: { data: unknown }) => this.onSocketData(ev.data);
     socket.onerror = () => this.onSocketGone();
@@ -223,10 +298,24 @@ export class CallSession {
     if (this.snap.state !== "connecting" && this.snap.state !== "live") return;
     this.log("hang up");
     if (this.socket) {
+      this.sendDiagnostics("hang up");
       this.safeSend(sttStopFrame());
       this.safeSend(stopFrame());
     }
     this.finish(STOPPED, false);
+  }
+
+  /**
+   * Restart (#93): hang up and dial again on the same backend, one tap.
+   * The same path the no-frames self-heal takes; the ended call's
+   * diagnostics go to the bridge and stay in the log.
+   */
+  restart(): void {
+    if (this.snap.state !== "connecting" && this.snap.state !== "live") return;
+    const backend = this.snap.backend;
+    this.log("restart: hang up + redial");
+    this.stop();
+    if (backend) void this.start(backend);
   }
 
   setMuted(muted: boolean): void {
@@ -327,12 +416,12 @@ export class CallSession {
         return;
       case "injected":
         this.larryRowId = null;
-        this.addRow("note", `Larry added context: ${m.text}`);
+        this.addRow("note", `added context: ${m.text}`);
         return;
       case "warning":
         this.log(`bridge warning: ${m.message}`);
         this.larryRowId = null;
-        this.addRow("note", m.message);
+        this.addRow("note", `warning: ${m.message}`);
         return;
       case "error":
         this.log(`bridge error: ${m.message}`);
@@ -355,18 +444,59 @@ export class CallSession {
     this.update({ state: "live", startedAt: this.deps.now() });
     this.deps.audio.openPlayback(outRate);
     this.safeSend(sttStartFrame());
-    void this.deps.audio.startMic(this.onMicBuffer).catch((e) => {
-      // The call goes on — Larry can still be heard — but say so.
-      this.log(`mic FAILED to open: ${describe(e)}`);
-      this.update({ problem: `microphone failed: ${describe(e)}` });
-    });
+    void this.deps.audio
+      .startMic(this.onMicBuffer)
+      .then(() => this.armFirstFrameWatch())
+      .catch((e) => {
+        // The call goes on — Larry can still be heard — but say so.
+        this.log(`mic FAILED to open: ${describe(e)}`);
+        this.update({ problem: `microphone failed: ${describe(e)}` });
+      });
+  }
+
+  private armFirstFrameWatch(): void {
+    if (this.snap.state !== "live") return;
+    if (this.firstFrameTimer) clearTimeout(this.firstFrameTimer);
+    this.firstFrameTimer = setTimeout(() => this.onNoFirstFrame(), FIRST_FRAME_MS);
+  }
+
+  private onNoFirstFrame(): void {
+    this.firstFrameTimer = null;
+    if (this.snap.state !== "live" || this.micBuffers > 0) return;
+    if (!this.audioReset) {
+      this.audioReset = true;
+      this.log(`no mic buffer within ${FIRST_FRAME_MS / 1000}s of recorder start (0 frames sent) → resetting audio`);
+      void this.deps.audio
+        .restartMic()
+        .then(() => this.armFirstFrameWatch())
+        .catch((e) => this.log(`audio reset FAILED: ${describe(e)}`));
+      return;
+    }
+    if (!this.redialed) {
+      this.redialed = true;
+      const backend = this.snap.backend;
+      this.log("still no mic buffer after reset → redialing once");
+      this.sendDiagnostics("redial");
+      this.stop();
+      if (backend) void this.start(backend);
+      return;
+    }
+    this.log("still no mic buffer after redial — giving up on self-heal");
+    this.update({ problem: MIC_SILENT });
   }
 
   private onMicBuffer = (samples: Float32Array, sampleRate: number): void => {
     if (this.snap.state !== "live") return;
+    this.micBuffers += 1;
+    if (this.micBuffers === 1) {
+      if (this.firstFrameTimer) clearTimeout(this.firstFrameTimer);
+      this.firstFrameTimer = null;
+      this.redialed = false; // this burst delivered; the next dead call may redial again
+    }
     // Heard even while muted: "is my mic working" and "am I muted" are
     // different questions, and the strip answers both.
     this.emitLevel(micLevel(samples));
+    this.watchForZeros(samples);
     if (this.snap.muted) return;
     this.safeSend(encodeMicFrame(samples, sampleRate));
     this.framesSent += 1;
@@ -384,10 +514,44 @@ export class CallSession {
     }
   };
 
+  /**
+   * The first call after launch used to send exact silence for its whole
+   * length (#88): the mic was armed before iOS had the input route up. If
+   * the first second is zero to the sample, close and reopen the mic once;
+   * if it is still zero after that, say so.
+   */
+  private watchForZeros(samples: Float32Array): void {
+    if (!isExactSilence(samples)) {
+      if (this.zeroRun >= ZERO_BUFFERS_BEFORE_REARM) this.log("mic audio present again");
+      this.zeroRun = 0;
+      if (this.snap.problem === MIC_SILENT) this.update({ problem: null });
+      return;
+    }
+    this.zeroRun += 1;
+    if (this.zeroRun !== ZERO_BUFFERS_BEFORE_REARM) return;
+    if (!this.zeroRearmed) {
+      this.zeroRearmed = true;
+      this.zeroRun = 0;
+      this.log(`mic delivering zeros (${ZERO_BUFFERS_BEFORE_REARM} buffers) → re-arming the mic once`);
+      void this.deps.audio.restartMic().catch((e) => {
+        this.log(`re-arm after zeros FAILED: ${describe(e)}`);
+        this.update({ problem: `microphone failed: ${describe(e)}` });
+      });
+      return;
+    }
+    this.log("mic still delivering zeros after re-arm");
+    this.update({ problem: MIC_SILENT });
+  }
+
   private onProbeMissed(): void {
     this.probeTimer = null;
     if (this.snap.state !== "live") return;
-    this.log(this.rearmed ? "mic_ack missed again → mic is not reaching Larry" : "mic_ack missed → re-arming the mic once");
+    this.log(
+      `mic_ack missed (${this.framesSent} frames sent, ${this.micBuffers} buffers) → ${
+        this.rearmed ? "mic is not reaching Larry" : "re-arming the mic once"
+      }`,
+    );
+    if (this.rearmed) this.sendDiagnostics("mic_ack timeout");
     if (!this.rearmed) {
       // Once. Two silent capture graphs in a row is a fact, not a hiccup.
       this.rearmed = true;
@@ -478,12 +642,20 @@ export class CallSession {
     this.closing = false;
     this.framesSent = 0;
     this.framesPlayed = 0;
+    this.zeroRun = 0;
+    this.zeroRearmed = false;
+    this.micBuffers = 0;
+    this.audioReset = false;
+    if (this.firstFrameTimer) clearTimeout(this.firstFrameTimer);
+    this.firstFrameTimer = null;
   }
 
   private finish(reason: string, badly: boolean): void {
     if (this.snap.state === "ended" || this.snap.state === "idle") return;
     this.log(`ended${badly ? " BADLY" : ""}: ${reason} (${this.framesSent} mic frames sent, ${this.framesPlayed} played)`);
     this.clearProbe();
+    if (this.firstFrameTimer) clearTimeout(this.firstFrameTimer);
+    this.firstFrameTimer = null;
     this.closing = true;
     const socket = this.socket;
     this.socket = null;

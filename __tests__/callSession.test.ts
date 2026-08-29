@@ -2,6 +2,9 @@ import {
   CallSession,
   MIC_ACK_MS,
   MIC_NOT_REACHING,
+  MIC_SILENT,
+  ZERO_BUFFERS_BEFORE_REARM,
+  FIRST_FRAME_MS,
   type BridgeSocket,
   type CallAudio,
   type CallSnapshot,
@@ -109,7 +112,17 @@ describe("CallSession — connecting", () => {
     expect(t.session.snapshot.state).toBe("connecting");
     expect(t.socket.sent).toHaveLength(0);
     t.socket.open();
-    expect(t.socket.frames).toEqual([{ type: "start", backend: "eleven", model: "", voice: "" }]);
+    expect(t.socket.frames).toEqual([
+      { type: "start", backend: "eleven", model: "", voice: "", client: "context-grabber", build: "" },
+    ]);
+  });
+
+  it("introduces itself to the bridge with the build when it has one (#78)", async () => {
+    const socket = new FakeSocket();
+    const session = new CallSession({ connect: () => socket, audio: fakeAudio(), build: "abc1234" }, "wss://h/bridge");
+    await session.start("gemini");
+    socket.open();
+    expect(socket.frames[0]).toMatchObject({ client: "context-grabber", build: "abc1234" });
   });
 
   it("does not open the mic before ready", async () => {
@@ -250,6 +263,185 @@ describe("CallSession — ready and the microphone", () => {
   });
 });
 
+describe("CallSession — a recorder that never delivers (#88)", () => {
+  it("resets the audio after 3 s without a buffer, then redials once, sending the dump first", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      const lines: string[] = [];
+      const log = { add: (l: string) => lines.push(l), all: lines };
+      const session = new CallSession({ connect: t.connect, audio: t.audio, log, build: "abc (x)" }, "wss://h/bridge");
+      await session.start("eleven");
+      t.socket.open();
+      t.socket.say({ type: "ready", out_rate: 16000 });
+      await flush();
+      expect(t.audio.restartMic).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(FIRST_FRAME_MS);
+      expect(t.audio.restartMic).toHaveBeenCalledTimes(1);
+      await flush();
+      // still nothing after the reset → redial: diagnostics, stop, new socket, same backend
+      const second = new FakeSocket();
+      t.connect.mockImplementation(() => second);
+      jest.advanceTimersByTime(FIRST_FRAME_MS);
+      await flush();
+      const diag = t.socket.frames.find((f) => f.type === "diagnostics") as { build: string; text: string } | undefined;
+      expect(diag).toBeTruthy();
+      expect(diag!.build).toBe("abc (x)");
+      expect(diag!.text).toMatch(/still no mic buffer after reset → redialing once/);
+      expect(t.socket.frames.at(-1)).toEqual({ type: "stop" });
+      expect(t.connect).toHaveBeenCalledTimes(2);
+      expect(session.snapshot).toMatchObject({ state: "connecting", backend: "eleven" });
+      second.open();
+      expect(second.frames[0]).toMatchObject({ type: "start", backend: "eleven" });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("a buffer in time cancels the watch, and a live call never redials", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      await goLive(t);
+      t.audio.mic();
+      t.socket.say({ type: "mic_ack", token: 1 }); // the probe watchdog is a different test
+      jest.advanceTimersByTime(FIRST_FRAME_MS * 3);
+      expect(t.audio.restartMic).not.toHaveBeenCalled();
+      expect(t.connect).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("redials at most once per dead burst, then reports silence", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      await goLive(t);
+      jest.advanceTimersByTime(FIRST_FRAME_MS); // reset
+      await flush();
+      const second = new FakeSocket();
+      t.connect.mockImplementation(() => second);
+      jest.advanceTimersByTime(FIRST_FRAME_MS); // redial
+      await flush();
+      second.open();
+      second.say({ type: "ready", out_rate: 16000 });
+      await flush();
+      jest.advanceTimersByTime(FIRST_FRAME_MS); // reset again on the redialed call
+      await flush();
+      jest.advanceTimersByTime(FIRST_FRAME_MS); // would redial — but no
+      await flush();
+      expect(t.connect).toHaveBeenCalledTimes(2);
+      expect(t.session.snapshot.problem).toBe(MIC_SILENT);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe("CallSession — a mic that delivers exact zeros (#88)", () => {
+  const zeros = (t: ReturnType<typeof setup>, n: number) => {
+    for (let i = 0; i < n; i++) t.audio.mic(480, 48000);
+  };
+  const voice = (t: ReturnType<typeof setup>) => {
+    const feed = t.audio.startMic.mock.calls[0][0] as (s: Float32Array, r: number) => void;
+    feed(new Float32Array(480).fill(0.2), 48000);
+  };
+
+  it("re-arms the mic once after a second of zeros, and says so", async () => {
+    const t = setup();
+    await goLive(t);
+    zeros(t, ZERO_BUFFERS_BEFORE_REARM - 1);
+    expect(t.audio.restartMic).not.toHaveBeenCalled();
+    zeros(t, 1);
+    expect(t.audio.restartMic).toHaveBeenCalledTimes(1);
+    expect(t.session.snapshot.problem).toBeNull();
+    // the re-armed mic works: no problem, and a note that audio is back
+    voice(t);
+    expect(t.session.snapshot.problem).toBeNull();
+  });
+
+  it("reports silence if zeros continue after the re-arm, and clears when audio returns", async () => {
+    const t = setup();
+    await goLive(t);
+    zeros(t, ZERO_BUFFERS_BEFORE_REARM);
+    zeros(t, ZERO_BUFFERS_BEFORE_REARM);
+    expect(t.audio.restartMic).toHaveBeenCalledTimes(1);
+    expect(t.session.snapshot.problem).toBe(MIC_SILENT);
+    voice(t);
+    expect(t.session.snapshot.problem).toBeNull();
+  });
+
+  it("a quiet room is not zeros: no re-arm", async () => {
+    const t = setup();
+    await goLive(t);
+    const feed = t.audio.startMic.mock.calls[0][0] as (s: Float32Array, r: number) => void;
+    for (let i = 0; i < ZERO_BUFFERS_BEFORE_REARM * 2; i++) feed(new Float32Array(480).fill(1e-6), 48000);
+    expect(t.audio.restartMic).not.toHaveBeenCalled();
+  });
+
+  it("still sends the zero frames meanwhile (the bridge's recording shows the gap honestly)", async () => {
+    const t = setup();
+    await goLive(t);
+    zeros(t, 3);
+    expect(t.socket.binaryFrames).toHaveLength(3);
+  });
+});
+
+describe("CallSession — prime (#88 experiment)", () => {
+  it("brings audio up and down once without a socket, and logs it", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      const lines: string[] = [];
+      const session = new CallSession({ connect: t.connect, audio: t.audio, log: { add: (l) => lines.push(l) } }, "wss://h/bridge");
+      const p = session.prime();
+      await flush();
+      expect(t.audio.prepare).toHaveBeenCalledTimes(1);
+      expect(t.audio.startMic).toHaveBeenCalledTimes(1);
+      jest.advanceTimersByTime(1000);
+      await p;
+      expect(t.audio.stop).toHaveBeenCalledTimes(1);
+      expect(t.connect).not.toHaveBeenCalled();
+      expect(lines.slice(0, 2)).toEqual(["prime: session up", "prime: mic open"]);
+      expect(lines[2]).toMatch(/^prime: mic closed, session down — 0 buffers, none non-zero$/);
+      expect(session.snapshot.state).toBe("idle");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("is refused while a call is up", async () => {
+    const t = setup();
+    await goLive(t);
+    t.audio.prepare.mockClear();
+    await t.session.prime();
+    expect(t.audio.prepare).not.toHaveBeenCalled();
+  });
+});
+
+describe("CallSession — restart (#93)", () => {
+  it("hangs up (diagnostics, stt_stop, stop) and dials again on the same backend", async () => {
+    const t = setup();
+    await goLive(t, "eleven");
+    const second = new FakeSocket();
+    t.connect.mockImplementation(() => second);
+    t.session.restart();
+    expect(t.socket.frames.slice(-2).map((f) => f.type)).toEqual(["stt_stop", "stop"]);
+    expect(t.socket.closed).toBe(true);
+    await flush();
+    expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "eleven" });
+    second.open();
+    expect(second.frames[0]).toMatchObject({ type: "start", backend: "eleven" });
+  });
+
+  it("does nothing when idle", async () => {
+    const t = setup();
+    t.session.restart();
+    expect(t.connect).not.toHaveBeenCalled();
+  });
+});
+
 describe("CallSession — mute", () => {
   it("muted: nothing leaves the phone, and the bridge is told", async () => {
     const t = setup();
@@ -383,12 +575,29 @@ describe("CallSession — captions", () => {
     t.socket.say({ type: "injected", text: "the PR merged" });
     t.socket.say({ type: "warning", message: "Gemini goAway in 60s" });
     t.socket.say({ type: "error", message: "vendor 500" });
-    expect(texts(t)).toEqual(["note:Larry added context: the PR merged", "note:Gemini goAway in 60s"]);
+    expect(texts(t)).toEqual(["note:added context: the PR merged", "note:warning: Gemini goAway in 60s"]);
     expect(t.session.snapshot).toMatchObject({ state: "live", problem: "vendor 500" });
   });
 });
 
 describe("CallSession — endings", () => {
+  it("stop sends the diagnostics first, then stt_stop and stop", async () => {
+    const lines: string[] = [];
+    const t = setup();
+    const session = new CallSession(
+      { connect: t.connect, audio: t.audio, log: { add: (l: string) => lines.push(l), all: lines }, build: "b (m)" },
+      "wss://h/bridge",
+    );
+    await session.start("gemini");
+    t.socket.open();
+    t.socket.say({ type: "ready", out_rate: 24000 });
+    await flush();
+    session.stop();
+    expect(t.socket.frames.slice(-3).map((f) => f.type)).toEqual(["diagnostics", "stt_stop", "stop"]);
+    expect((t.socket.frames.at(-3) as { build: string; text: string }).build).toBe("b (m)");
+    expect((t.socket.frames.at(-3) as { text: string }).text).toMatch(/hang up/);
+  });
+
   it("stop sends stt_stop then stop, closes, and ends as stopped", async () => {
     const t = setup();
     await goLive(t);
@@ -443,7 +652,7 @@ describe("CallSession — endings", () => {
     await t.session.start("drill");
     expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "drill", captions: [], endedReason: null });
     second.open();
-    expect(second.frames).toEqual([{ type: "start", backend: "drill", model: "", voice: "" }]);
+    expect(second.frames[0]).toMatchObject({ type: "start", backend: "drill" });
   });
 
   it("mic buffers after the end go nowhere", async () => {
