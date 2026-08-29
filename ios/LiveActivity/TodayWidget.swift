@@ -126,6 +126,7 @@ struct TodayWidgetView: View {
           .font(.system(size: 13, weight: .semibold))
           .foregroundColor(.secondary)
         Spacer()
+        CallLarryPill()
         Image(systemName: "arrow.up.right")
           .font(.system(size: 11, weight: .bold))
           .foregroundColor(.secondary)
@@ -289,6 +290,7 @@ struct TodayWidgetView: View {
           .font(.system(size: 14, weight: .semibold))
           .foregroundColor(.secondary)
         Spacer()
+        CallLarryPill()
         Image(systemName: "arrow.up.right")
           .font(.system(size: 12, weight: .bold))
           .foregroundColor(.secondary)
@@ -531,6 +533,29 @@ extension View {
 }
 
 // MARK: - Widget
+
+/// One tap from the home screen to a live call with Larry. `grabber://call`
+/// lands on the app's native Call tab and starts the call on the remembered
+/// backend; a call already live is joined, not restarted. Sits in the
+/// header of both layouts so it is never the row that gets squeezed.
+/// Spec: docs/superpowers/specs/2026-08-28-native-call-screen-design.md.
+struct CallLarryPill: View {
+  var body: some View {
+    Link(destination: URL(string: "grabber://call")!) {
+      HStack(spacing: 4) {
+        Image(systemName: "phone.fill")
+          .font(.system(size: 10, weight: .bold))
+        Text("Call")
+          .font(.system(size: 12, weight: .bold))
+      }
+      .padding(.horizontal, 9).padding(.vertical, 4)
+      .background(Color.green.opacity(0.18))
+      .foregroundColor(.green)
+      .cornerRadius(8)
+    }
+    .padding(.trailing, 6)
+  }
+}
 
 struct TodayWidget: Widget {
   let kind = "TodayWidget"

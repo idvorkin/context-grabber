@@ -14,6 +14,7 @@
 		3A0EE4D05E12DCD976F0E611 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C554CD82761E5BC979438AB8 /* WidgetBridge.swift */; };
 		3AA0FFA81784471DB1087E9F /* LiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D4DE2434681B4741B8C717DC /* LiveActivity.appex */; platformFilter = ios; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		465E9DAE6A2BFC07EFCBC89E /* CallLarryIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADA94FDFD3B440C6A873989 /* CallLarryIntent.swift */; };
 		6C9B23304E164AAA8C136E3B /* Date+toTimerInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D9CA755F98464486D8D08E /* Date+toTimerInterval.swift */; };
 		6F750B4F182742269EA3F27F /* Image+dynamic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300321A7EE624CD1B0B2F2AE /* Image+dynamic.swift */; };
 		70F234C978C649A489668EE3 /* LiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E7D8C385804BB48CE8FB9E /* LiveActivityWidget.swift */; };
@@ -86,6 +87,7 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ContextGrabber/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* ContextGrabber-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "ContextGrabber-Bridging-Header.h"; path = "ContextGrabber/ContextGrabber-Bridging-Header.h"; sourceTree = "<group>"; };
+		FADA94FDFD3B440C6A873989 /* CallLarryIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CallLarryIntent.swift; path = ContextGrabber/CallLarryIntent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +130,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				C1D91943C7939D0EFD55D4EE /* PrivacyInfo.xcprivacy */,
+				FADA94FDFD3B440C6A873989 /* CallLarryIntent.swift */,
 			);
 			name = ContextGrabber;
 			sourceTree = "<group>";
@@ -450,6 +453,7 @@
 				3A0EE4D05E12DCD976F0E611 /* WidgetBridge.swift in Sources */,
 				2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */,
 				ABE2603F49802D4B81ED8B88 /* ExpoModulesProvider.swift in Sources */,
+				465E9DAE6A2BFC07EFCBC89E /* CallLarryIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
