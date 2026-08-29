@@ -16,8 +16,9 @@
  *   reflect/affirm                 → open Affirmation Card
  *   reflect/grateful               → open Grateful Card
  *   reflect/journal                → open Journal screen
- *   call                           → Cockpit tab, start a Larry call (page's current backend)
+ *   call                           → Call tab, start a Larry call (remembered backend)
  *   call?via=<backend>             → …on that backend: eleven | gemini | openai | drill
+ *   cockpit                        → Cockpit tab (the dashboard); sub-paths and queries ignored
  *
  * Unknown URLs return { kind: "unknown" } — callers should treat as "open main".
  */
@@ -35,6 +36,7 @@ export type DeepLinkRoute =
   | { kind: "counter"; action: "inc" }
   | { kind: "reflect"; surface: ReflectSurface }
   | { kind: "call"; via: CallBackend | null }
+  | { kind: "cockpit" }
   | { kind: "unknown" };
 
 const KNOWN_PRESETS = new Set(["30sec", "1min", "2min", "5-1"]);
@@ -93,6 +95,11 @@ export function parseDeepLink(url: string | null | undefined): DeepLinkRoute {
     // the call still starts, on whatever the page has picked.
     const via = params.get("via");
     return { kind: "call", via: via && KNOWN_BACKENDS.has(via as CallBackend) ? (via as CallBackend) : null };
+  }
+
+  if (segments[0] === "cockpit") {
+    // One link, one tab. Igor: "a shortcut that takes me to Cockpit."
+    return { kind: "cockpit" };
   }
 
   if (segments[0] === "timer") {

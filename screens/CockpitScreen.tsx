@@ -49,7 +49,17 @@ type Props = {
    * second microphone while the page has one.
    */
   onCallLiveChange?: (live: boolean) => void;
+  /**
+   * The page opened one of the app's own links (`grabber://call?via=…`,
+   * `grabber://cockpit`). Handled in-process, same handler as a Shortcut's
+   * link — no round trip through iOS. Without it, the link goes to iOS.
+   * Spec: docs/superpowers/specs/2026-08-29-open-cockpit-and-page-handoff-design.md.
+   */
+  onAppLink?: (url: string) => void;
 };
+
+/** The app's own URL schemes, as the page would open them. */
+const APP_SCHEMES = ["grabber:", "com.idvorkin.contextgrabber:"];
 
 /** Tagged so it can never collide with the Gym Timer's default keep-awake. */
 const KEEP_AWAKE_TAG = "cockpit";
@@ -58,6 +68,7 @@ export function CockpitScreen({
   visible = true,
   url = COCKPIT_URL,
   onCallLiveChange,
+  onAppLink,
 }: Props) {
   const webRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
@@ -205,17 +216,26 @@ export function CockpitScreen({
   const handleShouldStartLoad = useCallback(
     (request: { url: string; navigationType?: string }) => {
       let host = "";
+      let protocol = "";
       try {
-        host = new URL(request.url).host;
+        const parsed = new URL(request.url);
+        host = parsed.host;
+        protocol = parsed.protocol;
       } catch {
         return true;
       }
       if (host === COCKPIT_HOST) return true;
       if (request.url.startsWith("about:")) return true;
+      // The page handing the app one of its own links — the Cockpit's call
+      // button starting the native call. In-process; the page stays put.
+      if (APP_SCHEMES.includes(protocol) && onAppLink) {
+        onAppLink(request.url);
+        return false;
+      }
       Linking.openURL(request.url).catch(() => {});
       return false;
     },
-    [],
+    [onAppLink],
   );
 
   return (
