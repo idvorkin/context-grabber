@@ -6,6 +6,7 @@
 **Issue:** [#74](https://github.com/idvorkin/context-grabber/issues/74) (this) · subsumes [#73](https://github.com/idvorkin/context-grabber/issues/73) · bead `context-grabber-e19`
 **Depends on:** [Cockpit Tab](2026-08-27-cockpit-tab-design.md), [Cockpit Audio Bridge](2026-08-28-cockpit-audio-bridge-design.md)
 **Changes:** [Call deep link](2026-08-28-cockpit-call-deep-link-design.md) — `grabber://call` now lands here, not on the Cockpit page
+**Amended:** 2026-08-29, [#90](https://github.com/idvorkin/context-grabber/issues/90) — a calling treatment while the bridge answers; mute folds into the voice indicator; a round red hang-up
 
 ## Summary
 
@@ -85,17 +86,17 @@ to be able to collapse that down, maybe under a folder, so I have more
 space."* And: *"I want to see mic input volume, that little strip that goes
 up and down."*
 
-One line, always visible: a small **level strip** that rises and falls with
-the microphone, then the current microphone and output by name — *iPhone
-Microphone · Speaker* — and a disclosure chevron. Tap the line and the two
-pickers unfold beneath it (the same roster and names the audio bridge gives
-the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*); tap again and they
-fold away. Folded is the default; the captions get the space.
+One line, always visible: the current microphone and output by name —
+*iPhone Microphone · Speaker* — and a disclosure chevron. Tap the line and
+the two pickers unfold beneath it (the same roster and names the audio
+bridge gives the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*); tap
+again and they fold away. Folded is the default; the captions get the space.
 
-The level strip is live whenever the microphone is open — during a call —
-and flat otherwise. Muted, it still moves (the mic is still heard, just not
-sent) but is dimmed, so "is my mic working" and "am I muted" are both
-answered at a glance.
+The "little strip that goes up and down" started life on this line. Since
+[#90](https://github.com/idvorkin/context-grabber/issues/90) it is the
+**voice control** at the bottom of the screen — the thing you look at while
+talking, and the mute — described under *During a call*. It is live
+whenever the microphone is open, and gone with the call.
 
 **A USB microphone wins — for the microphone only.** *"If a mic is over
 USB, let's take that as a default."* When a USB audio device with a
@@ -126,10 +127,26 @@ open, across the call and until the next one starts.
 
 ### Starting a call
 
-Tap **Call Larry**. The screen says *connecting…* and the backend's name.
-When the bridge answers, the screen says *live*, a timer starts, and the
-microphone opens — not before. (Opening the microphone before the far end
-is ready is the page's rule too; it stops Igor talking into nothing.)
+Igor, 2026-08-29, on a call from this tab: *"Can you make the UI just a
+little bit nicer too? While it's calling, instead of saying 'Connecting the
+bridge', have like a calling thing; and mute and hang up are pretty ugly
+buttons. Maybe the mute button merges with the little voice dial-y thing.
+Make it prettier."*
+
+Tap **Call Larry**. The screen *calls*, the way the Phone app does: in the
+middle of the screen a ring pulses slowly outward around a handset, under it
+*Calling Larry…* and the backend's name, and the status line at the top
+says *calling Larry…* and the backend. Nothing about bridges or connecting
+is on screen. The round red hang-up is already at the bottom, so a call that
+is taking too long can be abandoned with the same tap that ends a live one.
+With the phone's Reduce Motion on, the ring is still; the words are the
+same. The five or six seconds this takes are the first impression of every
+call.
+
+When the bridge answers, the calling treatment gives way to the captions,
+the status says *live*, a timer starts, and the microphone opens — not
+before. (Opening the microphone before the far end is ready is the page's
+rule too; it stops Igor talking into nothing.)
 
 If the bridge cannot be reached — not on the tailnet, the server is down —
 the screen says so within a few seconds, with a copyable error, and returns
@@ -146,9 +163,21 @@ The screen is the conversation and nothing else (Cockpit DESIGN P23/P24):
   links, no per-turn readouts. Larry's *consults* (asking the other Larry
   something mid-call) show as a short clamped row that expands on tap and
   never touches the call.
-- **Mute.** One toggle. Muted, nothing Igor says leaves the phone, and the
-  bridge is told so it does not hang up on the silence.
-- **Hang up.** One button. The call ends with reason *stopped*.
+- **The voice control — which is the mute.** At the bottom, left of the
+  hang-up, one round control that *is* the microphone: a disc inside it
+  swells with Igor's voice and shrinks in silence, so "is my mic working"
+  is answered by glancing at it. Tapping it mutes. Muted, the control dims,
+  a red slash crosses the microphone, the disc stops moving — frozen where
+  it was — and the word under it reads *Muted*; nothing Igor says leaves
+  the phone, and the bridge is told so it does not hang up on the silence.
+  Tap again: the slash goes, the disc moves again. There is no separate
+  mute button; the level and the mute are one thing, with a label under it
+  so the first tap is not a guess.
+- **Hang up.** A round red button with a handset on it, bottom-centre, big
+  enough for a thumb without looking — not a text button. Tapping it ends
+  the call with reason *stopped*. It is there from the moment the call
+  starts calling until the call ends, and then **Call Larry** takes its
+  place.
 - **Mic / output pickers.** Change the microphone or the speaker mid-call;
   it takes effect immediately, and if iOS reroutes on its own (AirPods
   connect, headphones unplugged) the pickers follow and the call carries
@@ -289,12 +318,13 @@ does not know about the native call.
     Larry moves to the speaker; pick *AirPods Pro*: he moves back. Repeat
     the mic pick with the phone locked mid-way: still captioned after
     unlock.
-21. **Level strip.** On a live call, speak: the strip rises with the voice
-    and falls in silence. Mute: it still moves, dimmed. Hang up: flat.
-22. **Folded pickers.** Open the Call tab: one devices line (strip, *iPhone
-    Microphone · Speaker*, chevron); no chips. Tap it: the mic and output
-    pickers appear; tap again: gone. Picking a device updates the line's
-    names whether folded or not.
+21. **Level.** On a live call, speak: the disc in the voice control swells
+    with the voice and shrinks in silence. Mute: it freezes and dims. Hang
+    up: the control is gone with the call.
+22. **Folded pickers.** Open the Call tab: one devices line (*iPhone
+    Microphone · Speaker*, chevron); no level strip on it, no chips. Tap
+    it: the mic and output pickers appear; tap again: gone. Picking a
+    device updates the line's names whether folded or not.
 23. **USB default.** Plug a USB-C microphone in, then start a call: the
     devices line names the USB mic and Larry hears it. Start a call on the
     built-in mic, then plug the USB mic in: the call moves to it within
@@ -309,6 +339,25 @@ does not know about the native call.
     frame, `mic_ack`, every route change with the roster, and the ending.
     *Copy diagnostics* → paste: the same, plus build sha, state, and the
     current roster.
+26. **Calling.** Tap **Call Larry**: until the bridge answers, the middle of
+    the screen shows a ring pulsing outward around a handset, *Calling
+    Larry…*, and the backend's name; the status line reads *calling Larry…*
+    with the backend; the words "connecting" and "bridge" appear nowhere.
+    The round red hang-up is already tappable and ends it with *stopped*.
+    When the bridge answers, the treatment is gone and the captions area
+    says *Say hello.* Turn on Reduce Motion (Settings → Accessibility →
+    Motion) and call again: the ring does not pulse; everything else is the
+    same.
+27. **The voice control is the mute.** On a live call, the round control
+    left of the hang-up swells as Igor speaks. Tap it: it dims, a red slash
+    crosses the microphone, the disc stops moving, the word under it says
+    *Muted*; say something — no *Igor* caption, Larry does not react. Tap
+    again: the slash goes, the disc moves, and the next sentence is
+    captioned. There is no other mute control on the screen.
+28. **Hang-up.** While calling and while live, a round red handset button
+    sits bottom-centre, at least 64 pt across; tapping it ends the call with
+    *stopped*. Idle and ended, it is gone and **Call Larry** is back. The
+    *Diagnostics* fold opens in every state, calling and live included.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends

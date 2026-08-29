@@ -6,6 +6,9 @@ import React, {
   useSyncExternalStore,
 } from "react";
 import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -51,8 +54,22 @@ const KEEP_AWAKE_TAG = "call";
 /** How long iOS gets to apply a route pick before the picker re-reads it. */
 const ROUTE_REFRESH_MS = 400;
 
-/** The level strip falls at this rate per frame so a word leaves a visible trace. */
+/** The level disc falls at this rate per frame so a word leaves a visible trace. */
 const METER_DECAY = 0.85;
+
+/** The voice control's circle, and the level disc inside it at silence and at full voice. */
+const VOICE_SIZE = 68;
+const VOICE_DISC_MIN = 22;
+const VOICE_DISC_MAX = VOICE_SIZE;
+
+/** The hang-up is the biggest thing on the screen: a thumb finds it without looking. */
+const HANGUP_SIZE = 72;
+
+/** One outward pulse of the calling ring; the second ring runs half a period behind. */
+const PULSE_MS = 1600;
+
+/** A telephone (U+260E) with the text-presentation selector — not the emoji, so it takes our colour. */
+const HANDSET = "\u260E\uFE0E";
 
 const LABEL: Record<CaptionRow["who"], string> = {
   igor: "Igor",
@@ -73,6 +90,25 @@ export function useCallSnapshot(session: CallSession): CallSnapshot {
   return useSyncExternalStore(subscribe, () => session.snapshot, () => session.snapshot);
 }
 
+/** iOS's Reduce Motion, live: the calling ring holds still when it is on. */
+function useReduceMotion(): boolean {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((v) => {
+        if (!cancelled) setReduce(v);
+      })
+      .catch(() => {});
+    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduce);
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
+  }, []);
+  return reduce;
+}
+
 function formatElapsed(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const h = Math.floor(total / 3600);
@@ -85,6 +121,7 @@ function formatElapsed(ms: number): string {
 export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive }: Props) {
   const snap = useCallSnapshot(session);
   const active = snap.state === "connecting" || snap.state === "live";
+  const reduceMotion = useReduceMotion();
 
   /* ---------- keep the screen awake while the call is live ----------
      The call no longer depends on this — that is the point of the tab — but
@@ -260,7 +297,7 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
   const backendLabel = BACKENDS.find((b) => b.id === (snap.backend ?? backend))?.label ?? "";
 
   let status: string;
-  if (snap.state === "connecting") status = `connecting… ${backendLabel}`;
+  if (snap.state === "connecting") status = `calling Larry… · ${backendLabel}`;
   else if (snap.state === "live") status = `live · ${formatElapsed(now - (snap.startedAt ?? now))} · ${backendLabel}`;
   else if (snap.state === "ended") status = `ended — ${endingText(snap.endedReason)}`;
   else status = "";
@@ -310,7 +347,6 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
             accessibilityState={{ expanded: devicesOpen }}
             accessibilityLabel="Microphone and output"
           >
-            <MicMeter session={session} muted={snap.muted} live={snap.state === "live"} />
             <Text style={styles.devicesSummary} numberOfLines={1} testID="call-devices-summary">
               {describeRoute(route)}
             </Text>
@@ -402,15 +438,16 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
             </Pressable>
           );
         })}
-        {snap.captions.every((r) => !r.text) && (
-          <Text style={styles.empty}>
-            {snap.state === "live"
-              ? "Say hello."
-              : snap.state === "connecting"
-                ? "Reaching the bridge…"
+        {snap.captions.every((r) => !r.text) &&
+          (snap.state === "connecting" ? (
+            <Calling backendLabel={backendLabel} reduceMotion={reduceMotion} />
+          ) : (
+            <Text style={styles.empty}>
+              {snap.state === "live"
+                ? "Say hello."
                 : "Larry, over the tailnet. The call keeps going when the phone locks."}
-          </Text>
-        )}
+            </Text>
+          ))}
       </ScrollView>
 
       {snap.problem && (
@@ -433,25 +470,31 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
       <View style={styles.controls}>
         {active ? (
           <>
-            <Pressable
-              onPress={() => session.setMuted(!snap.muted)}
-              style={[styles.button, styles.buttonSecondary, snap.muted && styles.buttonMuted]}
-              testID="call-mute"
-              accessibilityRole="button"
-              accessibilityState={{ selected: snap.muted }}
-              accessibilityLabel={snap.muted ? "Unmute" : "Mute"}
-            >
-              <Text style={styles.buttonText}>{snap.muted ? "Unmute" : "Mute"}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => session.stop()}
-              style={[styles.button, styles.buttonHangup]}
-              testID="call-hangup"
-              accessibilityRole="button"
-              accessibilityLabel="Hang up"
-            >
-              <Text style={styles.buttonText}>Hang up</Text>
-            </Pressable>
+            <View style={styles.controlSlot}>
+              <VoiceControl
+                session={session}
+                muted={snap.muted}
+                live={snap.state === "live"}
+                onPress={() => session.setMuted(!snap.muted)}
+              />
+            </View>
+            <View style={styles.controlSlot}>
+              <Pressable
+                onPress={() => session.stop()}
+                style={styles.control}
+                testID="call-hangup"
+                accessibilityRole="button"
+                accessibilityLabel="Hang up"
+                hitSlop={8}
+              >
+                <View style={styles.hangupCircle}>
+                  <Text style={styles.hangupGlyph}>{HANDSET}</Text>
+                </View>
+                <Text style={styles.controlLabel}>End</Text>
+              </Pressable>
+            </View>
+            {/* keeps the hang-up dead centre; the right slot is empty for now */}
+            <View style={styles.controlSlot} />
           </>
         ) : (
           <View style={styles.startWrap}>
@@ -485,12 +528,79 @@ function describeRoster(s: AudioRouteSnapshot): string {
 }
 
 /**
- * The little strip that goes up and down. Subscribes to the session's level
- * channel directly so ten updates a second re-render this one view and not
- * the captions. Falls with decay so a word leaves a trace.
+ * The calling treatment: a handset with a ring pulsing outward, the way the
+ * Phone app calls. Two rings half a period apart; under Reduce Motion one
+ * still ring. Shown in place of the captions until the bridge says `ready`.
  */
-function MicMeter({ session, muted, live }: { session: CallSession; muted: boolean; live: boolean }) {
+function Calling({ backendLabel, reduceMotion }: { backendLabel: string; reduceMotion: boolean }) {
+  const first = useRef(new Animated.Value(0)).current;
+  const second = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduceMotion) return;
+    const pulse = (v: Animated.Value) =>
+      Animated.loop(
+        Animated.timing(v, {
+          toValue: 1,
+          duration: PULSE_MS,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      );
+    const anim = Animated.parallel([
+      pulse(first),
+      Animated.sequence([Animated.delay(PULSE_MS / 2), pulse(second)]),
+    ]);
+    anim.start();
+    return () => {
+      anim.stop();
+      first.setValue(0);
+      second.setValue(0);
+    };
+  }, [first, second, reduceMotion]);
+  const ringStyle = (v: Animated.Value) =>
+    reduceMotion
+      ? styles.callingRingStill
+      : {
+          transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.9] }) }],
+          opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
+        };
+  return (
+    <View style={styles.calling} testID="call-calling" accessibilityLabel={`Calling Larry on ${backendLabel}`}>
+      <View style={styles.callingRingWrap}>
+        <Animated.View style={[styles.callingRing, ringStyle(first)]} />
+        {!reduceMotion && <Animated.View style={[styles.callingRing, ringStyle(second)]} />}
+        <View style={styles.callingDisc}>
+          <Text style={styles.callingGlyph}>{HANDSET}</Text>
+        </View>
+      </View>
+      <Text style={styles.callingText}>Calling Larry…</Text>
+      <Text style={styles.callingBackend}>{backendLabel}</Text>
+    </View>
+  );
+}
+
+/**
+ * The voice control — "the little voice dial-y thing" — and the mute, one
+ * control. A disc inside the circle swells with the mic and falls with
+ * decay so a word leaves a trace. Subscribes to the session's level channel
+ * directly so ten updates a second re-render this one view and not the
+ * captions. Muted, the disc freezes where it was, the circle dims, and a
+ * slash crosses the microphone.
+ */
+function VoiceControl({
+  session,
+  muted,
+  live,
+  onPress,
+}: {
+  session: CallSession;
+  muted: boolean;
+  live: boolean;
+  onPress: () => void;
+}) {
   const [level, setLevel] = useState(0);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
   useEffect(() => {
     if (!live) {
       setLevel(0);
@@ -498,17 +608,50 @@ function MicMeter({ session, muted, live }: { session: CallSession; muted: boole
     }
     let shown = 0;
     return session.subscribeLevel((raw) => {
+      // Frozen while muted: the level is the mute's own state, not a meter.
+      if (mutedRef.current) return;
       shown = Math.max(raw, shown * METER_DECAY);
       setLevel(shown);
     });
   }, [session, live]);
+  const disc = Math.round(VOICE_DISC_MIN + level * (VOICE_DISC_MAX - VOICE_DISC_MIN));
   return (
-    <View
-      style={styles.meter}
-      testID="call-mic-meter"
-      accessibilityLabel={`microphone level ${Math.round(level * 100)}%`}
+    <Pressable
+      onPress={onPress}
+      style={styles.control}
+      testID="call-mute"
+      accessibilityRole="button"
+      accessibilityState={{ selected: muted }}
+      accessibilityLabel={muted ? "Unmute" : "Mute"}
+      accessibilityValue={{ text: `microphone level ${Math.round(level * 100)}%` }}
+      hitSlop={8}
     >
-      <View style={[styles.meterFill, muted && styles.meterFillMuted, { width: `${Math.round(level * 100)}%` }]} />
+      <View style={[styles.voiceCircle, muted && styles.voiceCircleMuted]}>
+        <View
+          testID="call-mic-meter"
+          style={[
+            styles.voiceDisc,
+            muted && styles.voiceDiscMuted,
+            { width: disc, height: disc, borderRadius: disc / 2 },
+          ]}
+        />
+        <MicGlyph muted={muted} />
+        {muted && <View style={styles.voiceSlash} />}
+      </View>
+      <Text style={[styles.controlLabel, muted && styles.controlLabelMuted]}>{muted ? "Muted" : "Mute"}</Text>
+    </Pressable>
+  );
+}
+
+/** A microphone drawn from views — capsule, cradle, stem, foot — so it needs no icon font or SVG. */
+function MicGlyph({ muted }: { muted: boolean }) {
+  const tint = muted ? styles.micMuted : null;
+  return (
+    <View style={styles.mic} pointerEvents="none">
+      <View style={[styles.micCapsule, tint]} />
+      <View style={[styles.micCradle, muted && styles.micCradleMuted]} />
+      <View style={[styles.micStem, tint]} />
+      <View style={[styles.micFoot, tint]} />
     </View>
   );
 }
@@ -590,15 +733,6 @@ const styles = StyleSheet.create({
   devicesSummary: { flex: 1, color: "#aaa", fontSize: 13 },
   devicesChevron: { color: "#666", fontSize: 13 },
   devicesRows: { gap: 6, paddingTop: 4 },
-  meter: {
-    width: 44,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#243447",
-    overflow: "hidden",
-  },
-  meterFill: { height: "100%", backgroundColor: "#4ade80", borderRadius: 4 },
-  meterFillMuted: { backgroundColor: "#64748b" },
   diag: { gap: 6, paddingBottom: 6 },
   diagScroll: { maxHeight: 180, backgroundColor: "#0c121f", borderRadius: 8, padding: 8 },
   diagLine: { color: "#9fb3c8", fontSize: 11, fontFamily: "Menlo", lineHeight: 15 },
@@ -620,15 +754,48 @@ const styles = StyleSheet.create({
   wordsMuted: { color: "#94a3b8", fontSize: 14, lineHeight: 20 },
   empty: { color: "#666", fontSize: 14, lineHeight: 20, paddingTop: 20 },
   problem: { marginHorizontal: 16 },
+
+  /* ---------- calling ---------- */
+  calling: { alignItems: "center", gap: 6, paddingTop: 48, paddingBottom: 24 },
+  callingRingWrap: { width: 96, height: 96, alignItems: "center", justifyContent: "center", marginBottom: 18 },
+  callingRing: {
+    position: "absolute",
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2,
+    borderColor: "#4cc9f0",
+  },
+  callingRingStill: { opacity: 0.35 },
+  callingDisc: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#243447",
+    borderWidth: 2,
+    borderColor: "#4cc9f0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  callingGlyph: { color: "#4cc9f0", fontSize: 34, lineHeight: 40 },
+  callingText: { color: "#eee", fontSize: 20, fontWeight: "600" },
+  callingBackend: { color: "#888", fontSize: 14 },
+
+  /* ---------- controls ---------- */
   controls: {
     flexDirection: "row",
-    gap: 12,
+    alignItems: "flex-start",
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 18,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: "#222",
     backgroundColor: "#0c121f",
   },
+  controlSlot: { flex: 1, alignItems: "center" },
+  control: { alignItems: "center", gap: 8 },
+  controlLabel: { color: "#9fb3c8", fontSize: 12, fontWeight: "600" },
+  controlLabelMuted: { color: "#f87171" },
   startWrap: { flex: 1, gap: 6 },
   button: {
     flex: 1,
@@ -638,10 +805,56 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   buttonStart: { backgroundColor: "#16a34a" },
-  buttonSecondary: { backgroundColor: "#243447" },
-  buttonMuted: { backgroundColor: "#b45309" },
-  buttonHangup: { backgroundColor: "#dc2626" },
   buttonDisabled: { opacity: 0.4 },
   buttonText: { color: "#fff", fontSize: 17, fontWeight: "700" },
   blocked: { color: "#f87171", fontSize: 13, textAlign: "center" },
+
+  /* the voice control: circle, level disc, mic, slash */
+  voiceCircle: {
+    width: VOICE_SIZE,
+    height: VOICE_SIZE,
+    borderRadius: VOICE_SIZE / 2,
+    backgroundColor: "#243447",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  voiceCircleMuted: { opacity: 0.55 },
+  voiceDisc: { position: "absolute", backgroundColor: "#4ade80", opacity: 0.45 },
+  voiceDiscMuted: { backgroundColor: "#64748b" },
+  voiceSlash: {
+    position: "absolute",
+    width: 3,
+    height: VOICE_SIZE,
+    borderRadius: 2,
+    backgroundColor: "#f87171",
+    transform: [{ rotate: "45deg" }],
+  },
+  mic: { alignItems: "center" },
+  micCapsule: { width: 12, height: 20, borderRadius: 6, backgroundColor: "#eee" },
+  micCradle: {
+    width: 22,
+    height: 12,
+    marginTop: -9,
+    borderWidth: 2.5,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 11,
+    borderBottomRightRadius: 11,
+    borderColor: "#eee",
+  },
+  micCradleMuted: { borderColor: "#cbd5e1" },
+  micStem: { width: 2.5, height: 4, backgroundColor: "#eee" },
+  micFoot: { width: 12, height: 2.5, borderRadius: 1.25, backgroundColor: "#eee" },
+  micMuted: { backgroundColor: "#cbd5e1" },
+
+  /* the hang-up: round, red, the handset in white */
+  hangupCircle: {
+    width: HANGUP_SIZE,
+    height: HANGUP_SIZE,
+    borderRadius: HANGUP_SIZE / 2,
+    backgroundColor: "#dc2626",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hangupGlyph: { color: "#fff", fontSize: 32, lineHeight: 38 },
 });

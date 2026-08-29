@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CallScreen } from "../screens/CallScreen";
 import { CallSession, type BridgeSocket, type CallAudio } from "../lib/callSession";
@@ -87,17 +88,50 @@ describe("CallScreen", () => {
     expect(t.onBackendChange).toHaveBeenCalledTimes(1);
   });
 
-  it("Call Larry → connecting → live with a timer, mute and hang up", async () => {
+  it("Call Larry → calling → live with a timer, the voice control and hang up", async () => {
     const t = setup();
+    expect(t.r.queryByTestId("call-calling")).toBeNull();
     fireEvent.press(t.r.getByTestId("call-start"));
     await settle();
-    expect(t.r.getByTestId("call-status").props.children).toBe("connecting… Gemini");
+    expect(t.r.getByTestId("call-status").props.children).toBe("calling Larry… · Gemini");
+    // The calling treatment, not "connecting the bridge"; the hang-up is already there.
+    expect(t.r.getByTestId("call-calling")).toBeTruthy();
+    expect(t.r.getByText("Calling Larry…")).toBeTruthy();
+    expect(t.r.queryByText(/connecting|bridge/i)).toBeNull();
     expect(t.r.getByTestId("call-hangup")).toBeTruthy();
     act(() => t.socket.onopen?.({}));
     t.socket.say({ type: "ready", out_rate: 24000, backend: "gemini", session: "s" });
     await settle();
     expect(t.r.getByTestId("call-status").props.children).toMatch(/^live · \d+:\d\d · Gemini$/);
+    expect(t.r.queryByTestId("call-calling")).toBeNull();
+    expect(t.r.getByText("Say hello.")).toBeTruthy();
     expect(t.r.getByTestId("call-mute")).toBeTruthy();
+  });
+
+  it("hanging up while still calling ends it with 'stopped'", async () => {
+    const t = setup();
+    fireEvent.press(t.r.getByTestId("call-start"));
+    await settle();
+    fireEvent.press(t.r.getByTestId("call-hangup"));
+    await settle();
+    expect(t.r.getByTestId("call-status").props.children).toBe("ended — stopped");
+    expect(t.r.queryByTestId("call-calling")).toBeNull();
+  });
+
+  it("the calling ring holds still under Reduce Motion", async () => {
+    const { AccessibilityInfo } = require("react-native");
+    (AccessibilityInfo.isReduceMotionEnabled as jest.Mock).mockResolvedValueOnce(true);
+    const t = setup();
+    fireEvent.press(t.r.getByTestId("call-start"));
+    await settle();
+    const calling = t.r.getByTestId("call-calling");
+    const rings = calling.props.children[0].props.children.filter(
+      (c: { props?: { style?: unknown } } | false | null) => c && c.props?.style,
+    );
+    // one still ring (no transform, no second ring), the handset, and the words
+    expect(rings).toHaveLength(2);
+    expect(JSON.stringify(rings[0].props.style)).not.toContain("transform");
+    expect(t.r.getByText("Calling Larry…")).toBeTruthy();
   });
 
   it("captions: Igor pending in italics, Larry settled, a consult clamped and expandable", async () => {
@@ -127,7 +161,13 @@ describe("CallScreen", () => {
     await goLive(t);
     fireEvent.press(t.r.getByTestId("call-mute"));
     expect(t.session.snapshot.muted).toBe(true);
-    expect(t.r.getByText("Unmute")).toBeTruthy();
+    expect(t.r.getByLabelText("Unmute")).toBeTruthy();
+    expect(t.r.getByText("Muted")).toBeTruthy();
+    fireEvent.press(t.r.getByTestId("call-mute"));
+    expect(t.session.snapshot.muted).toBe(false);
+    expect(t.r.getByLabelText("Mute")).toBeTruthy();
+    // One control: no separate mute button anywhere.
+    expect(t.r.queryByText("Unmute")).toBeNull();
     fireEvent.press(t.r.getByTestId("call-hangup"));
     await settle();
     expect(t.r.getByTestId("call-status").props.children).toBe("ended — stopped");
@@ -188,21 +228,40 @@ describe("CallScreen", () => {
     expect(t.r.queryByTestId("call-inputs")).toBeNull();
   });
 
-  it("the level strip follows the mic, dimmed while muted, flat after the call", async () => {
+  it("the voice control's disc follows the mic, freezes while muted, and goes with the call", async () => {
     const t = setup();
     await goLive(t);
-    const width = () => t.r.getByTestId("call-mic-meter").props.children.props.style.at(-1).width;
-    expect(width()).toBe("0%");
+    const disc = () => StyleSheet.flatten(t.r.getByTestId("call-mic-meter").props.style).width as number;
+    const resting = disc();
     const loud = new Float32Array(480).fill(0.5);
+    const quiet = new Float32Array(480).fill(0.001);
     const feed = (audio.startMic as jest.Mock).mock.calls[0][0] as (s: Float32Array, r: number) => void;
     act(() => feed(loud, 48000));
-    expect(parseInt(width(), 10)).toBeGreaterThan(80);
+    const swollen = disc();
+    expect(swollen).toBeGreaterThan(resting + 30);
+    // muted: the disc freezes where it was, whatever the mic hears
     fireEvent.press(t.r.getByTestId("call-mute"));
-    act(() => feed(loud, 48000));
-    expect(parseInt(width(), 10)).toBeGreaterThan(80);
+    act(() => feed(quiet, 48000));
+    act(() => feed(quiet, 48000));
+    expect(disc()).toBe(swollen);
+    // unmuted: it moves again
+    fireEvent.press(t.r.getByTestId("call-mute"));
+    act(() => feed(quiet, 48000));
+    expect(disc()).toBeLessThan(swollen);
     fireEvent.press(t.r.getByTestId("call-hangup"));
     await settle();
-    expect(width()).toBe("0%");
+    expect(t.r.queryByTestId("call-mic-meter")).toBeNull();
+    expect(t.r.queryByTestId("call-mute")).toBeNull();
+  });
+
+  it("the devices line carries no level strip; the level lives in the voice control", async () => {
+    const t = setup();
+    await settle();
+    expect(t.r.queryByTestId("call-mic-meter")).toBeNull();
+    await goLive(t);
+    const line = t.r.getByTestId("call-devices-toggle");
+    expect(within(line).queryByTestId("call-mic-meter")).toBeNull();
+    expect(within(t.r.getByTestId("call-mute")).getByTestId("call-mic-meter")).toBeTruthy();
   });
 
   it("a USB microphone becomes the mic on its own, unless Igor picked one by hand", async () => {
