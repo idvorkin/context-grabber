@@ -1,4 +1,4 @@
-import { CALL_LOG_LINES, CallLog } from "../lib/callLog";
+import { CALL_LOG_LINES, CALL_SEPARATOR, CallLog } from "../lib/callLog";
 
 describe("CallLog", () => {
   it("stamps lines relative to its start and keeps them in order", () => {
@@ -17,17 +17,24 @@ describe("CallLog", () => {
     expect(log.all[0]).toBe("+0.0s l5");
   });
 
-  it("reset clears and restarts the clock; listeners hear both", () => {
+  it("reset keeps exactly one call back, behind a separator, and restarts the clock", () => {
     let now = 0;
     const log = new CallLog(() => now);
-    const seen: number[] = [];
-    log.subscribe((lines) => seen.push(lines.length));
     log.add("a");
     now = 5000;
     log.reset();
     log.add("b");
-    expect(log.all).toEqual(["+0.0s b"]);
-    expect(seen).toEqual([1, 0, 1]);
+    expect(log.all).toEqual(["+0.0s a", CALL_SEPARATOR, "+0.0s b"]);
+    expect(log.current).toEqual(["+0.0s b"]);
+    log.reset();
+    log.add("c");
+    expect(log.all).toEqual(["+0.0s b", CALL_SEPARATOR, "+0.0s c"]);
+  });
+
+  it("an empty log resets to empty, no dangling separator", () => {
+    const log = new CallLog(() => 0);
+    log.reset();
+    expect(log.all).toEqual([]);
   });
 
   it("renders a header then the lines, skipping empty header values", () => {

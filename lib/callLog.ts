@@ -8,7 +8,10 @@
  * "Diagnostics".
  */
 
-export const CALL_LOG_LINES = 300;
+export const CALL_LOG_LINES = 600;
+
+/** Between calls. The call before must survive its retry (#92). */
+export const CALL_SEPARATOR = "──────── previous call above ────────";
 
 type LogListener = (lines: readonly string[]) => void;
 
@@ -34,11 +37,23 @@ export class CallLog {
     for (const l of this.listeners) l(this.lines);
   }
 
-  /** A new call starts a new log; the last one's lines are gone. */
+  /**
+   * A new call: keep the previous call's lines (one call back), drop
+   * anything older, restart the clock.
+   */
   reset(): void {
-    this.lines = [];
+    const prev = this.lines;
+    const cut = prev.lastIndexOf(CALL_SEPARATOR);
+    const kept = cut >= 0 ? prev.slice(cut + 1) : prev;
+    this.lines = kept.length ? [...kept, CALL_SEPARATOR] : [];
     this.t0 = this.now();
     for (const l of this.listeners) l(this.lines);
+  }
+
+  /** The current call's lines only (after the last separator). */
+  get current(): readonly string[] {
+    const cut = this.lines.lastIndexOf(CALL_SEPARATOR);
+    return cut >= 0 ? this.lines.slice(cut + 1) : this.lines;
   }
 
   get all(): readonly string[] {

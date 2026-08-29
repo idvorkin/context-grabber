@@ -545,7 +545,7 @@ export default function App() {
           connect: (url) => new WebSocket(url),
           audio: createNativeCallAudio(callLog),
           log: callLog,
-          build: getBuildInfo().shortSha,
+          build: `${getBuildInfo().shortSha} (${getBuildInfo().branch})`,
         },
         bridgeUrl(COCKPIT_URL),
       ),

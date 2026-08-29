@@ -7,6 +7,7 @@ import {
   isCallBackend,
   micFrame,
   micProbeFrame,
+  diagnosticsFrame,
   parseBridgeMessage,
   startFrame,
   stopFrame,
@@ -61,6 +62,11 @@ describe("outbound frames", () => {
     expect(JSON.parse(stopFrame())).toEqual({ type: "stop" });
     expect(JSON.parse(micFrame(true))).toEqual({ type: "mic", muted: true });
     expect(JSON.parse(micProbeFrame(3))).toEqual({ type: "mic_probe", token: 3 });
+    expect(JSON.parse(diagnosticsFrame("abc (main)", "+0.0s start"))).toEqual({
+      type: "diagnostics",
+      build: "abc (main)",
+      text: "+0.0s start",
+    });
   });
 });
 

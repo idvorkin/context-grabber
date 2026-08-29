@@ -75,6 +75,11 @@ export function micProbeFrame(token: number): string {
   return JSON.stringify({ type: "mic_probe", token });
 }
 
+/** The app's diagnostics, for the bridge to file beside the call (#92). */
+export function diagnosticsFrame(build: string, text: string): string {
+  return JSON.stringify({ type: "diagnostics", build, text });
+}
+
 /* ---------- inbound ---------- */
 
 export type BridgeMessage =

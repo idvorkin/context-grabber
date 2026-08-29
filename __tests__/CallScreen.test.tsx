@@ -324,7 +324,7 @@ describe("CallScreen", () => {
     await goLive(t);
     expect(t.r.queryByTestId("call-diag")).toBeNull();
     fireEvent.press(t.r.getByTestId("call-diag-toggle"));
-    expect(t.r.getByText(/start backend=gemini bridge=wss:\/\/h\/bridge/)).toBeTruthy();
+    expect(t.r.getByText(/start backend=gemini build=.* bridge=wss:\/\/h\/bridge/)).toBeTruthy();
     expect(t.r.getByText(/ready: out_rate=24000/)).toBeTruthy();
     await act(async () => {
       fireEvent.press(t.r.getByTestId("call-diag-copy"));

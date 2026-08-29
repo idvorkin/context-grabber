@@ -137,6 +137,30 @@ becomes automatic; if not, something else owns the microphone. The log's
 first line of every call also says whether the Cockpit tab is loaded and
 whether its page reports a call of its own.
 
+**The log keeps the call before.** A retry must never erase the evidence
+of the call it is retrying ([#92](https://github.com/idvorkin/context-grabber/issues/92)):
+the log holds the last two calls, separated by a rule, and *Copy
+diagnostics* copies both.
+
+**The dump reaches the bridge on its own.** At every hang-up, at every
+automatic redial, and when the bridge fails to acknowledge the microphone,
+the app sends the dump to the bridge over the call's own socket before
+anything closes, so Larry can read it from the call's record without Igor
+pasting anything. (Bridge half: the Cockpit repo.)
+
+### A microphone that never delivers
+
+Larry's finding on [#88](https://github.com/idvorkin/context-grabber/issues/88),
+2026-08-29 09:26: on every silent first call the bridge received *no*
+microphone frames at all — not zeros, nothing. The recorder was started and
+never produced a buffer. So the app watches for exactly that: if three
+seconds pass after the recorder starts with no buffer, the call's audio is
+torn down and brought back up (a short gap in Larry's voice, a line in
+Diagnostics); if there is still nothing after that, the call **redials
+itself** — once — on the same backend, because the retry has always
+worked. From the chair: the first call after launch may take a few seconds
+longer to become a working call, and never needs a second tap.
+
 ### Starting a call
 
 Igor, 2026-08-29, on a call from this tab: *"Can you make the UI just a
@@ -399,6 +423,15 @@ does not know about the native call.
     started`, and no `zeros` line. Repeat five times (force-quit between):
     five for five. If a `mic delivering zeros → re-arming` line appears,
     the call still works (the watchdog caught it) — report it.
+30. **No-frames self-heal.** Diagnostics on any call where the mic never
+    delivered shows `no mic buffer within 3s … → resetting audio`, then
+    either `first mic frame` (healed) or `still no mic buffer → redialing`
+    followed by a fresh `start` on the same backend; the screen shows
+    *Calling Larry…* again briefly and then *live*, without a tap. The
+    bridge's record of the dead session ends with the app's diagnostics.
+31. **Evidence survives a retry.** After a silent call and its retry, open
+    Diagnostics: both calls are there, separated by a rule, the earlier one
+    first; *Copy diagnostics* copies both.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
