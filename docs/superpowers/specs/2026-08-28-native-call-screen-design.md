@@ -238,6 +238,13 @@ does not know about the native call.
     restart himself. Then switch to the Today tab and back mid-call and
     repeat: still clean (re-activating the session must not drop it).
 
+20. **Pickers mid-call.** With AirPods paired, on a live call: pick
+    *AirPods Pro* as the microphone — within 2 s the chip moves, the call
+    continues, and the next sentence Igor says is captioned (the mic
+    survived the change of hardware rate). Pick *Speaker* as the output:
+    Larry moves to the speaker; pick *AirPods Pro*: he moves back. Repeat
+    the mic pick with the phone locked mid-way: still captioned after
+    unlock.
 ## Rationale and risks
 
 **Why native rather than fixing the web view.** WebKit on iOS suspends

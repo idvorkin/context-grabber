@@ -42,6 +42,9 @@ type Props = {
 /** Tagged so it can never collide with the Gym Timer's or the Cockpit tab's hold. */
 const KEEP_AWAKE_TAG = "call";
 
+/** How long iOS gets to apply a route pick before the picker re-reads it. */
+const ROUTE_REFRESH_MS = 400;
+
 const LABEL: Record<CaptionRow["who"], string> = {
   igor: "Igor",
   larry: "Larry",
@@ -118,14 +121,44 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
     };
   }, []);
 
-  const pickInput = useCallback((id: string) => {
-    if (!AudioRoute) return;
-    AudioRoute.setInput(id).then(setRoute).catch(() => {});
+  // iOS applies a route pick asynchronously; the snapshot the call returns
+  // can still show the old route. Read it again once the change has landed
+  // so the chip moves even when no route-change event reaches us.
+  const refreshLater = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshRoute = useCallback(() => {
+    if (refreshLater.current) clearTimeout(refreshLater.current);
+    refreshLater.current = setTimeout(() => {
+      refreshLater.current = null;
+      if (!AudioRoute) return;
+      try {
+        setRoute(AudioRoute.getDevices());
+      } catch {
+        // session not ready; the next route-change event will say
+      }
+    }, ROUTE_REFRESH_MS);
   }, []);
-  const pickOutput = useCallback((id: string) => {
-    if (!AudioRoute) return;
-    AudioRoute.setOutput(id).then(setRoute).catch(() => {});
-  }, []);
+  useEffect(
+    () => () => {
+      if (refreshLater.current) clearTimeout(refreshLater.current);
+    },
+    [],
+  );
+  const pickInput = useCallback(
+    (id: string) => {
+      if (!AudioRoute) return;
+      AudioRoute.setInput(id).then(setRoute).catch(() => {});
+      refreshRoute();
+    },
+    [refreshRoute],
+  );
+  const pickOutput = useCallback(
+    (id: string) => {
+      if (!AudioRoute) return;
+      AudioRoute.setOutput(id).then(setRoute).catch(() => {});
+      refreshRoute();
+    },
+    [refreshRoute],
+  );
 
   /* ---------- captions scroll ---------- */
   const scrollRef = useRef<ScrollView>(null);

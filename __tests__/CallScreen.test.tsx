@@ -33,7 +33,7 @@ const audio: CallAudio = {
   stop: jest.fn(async () => {}),
 };
 
-const route = AudioRoute as unknown as { listeners: ((p: unknown) => void)[]; setOutput: jest.Mock; setInput: jest.Mock };
+const route = AudioRoute as unknown as { listeners: ((p: unknown) => void)[]; setOutput: jest.Mock; setInput: jest.Mock; getDevices: jest.Mock };
 
 function setup(props: { cockpitCallLive?: boolean } = {}) {
   const socket = new FakeSocket();
@@ -180,5 +180,22 @@ describe("CallScreen", () => {
     expect(route.setOutput).toHaveBeenCalledWith("speaker");
     fireEvent.press(t.r.getByTestId("call-inputs-AC:12:34:56:78:9A-tacl"));
     expect(route.setInput).toHaveBeenCalledWith("AC:12:34:56:78:9A-tacl");
+  });
+
+  it("re-reads the route shortly after a pick, in case iOS applied it late", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      await settle();
+      route.getDevices.mockClear();
+      fireEvent.press(t.r.getByTestId("call-outputs-speaker"));
+      expect(route.getDevices).not.toHaveBeenCalled();
+      await act(async () => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(route.getDevices).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
