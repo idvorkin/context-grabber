@@ -49,6 +49,22 @@ const PLAYBACK_GAIN = 0.8;
 const INPUT_ROUTE_WAIT_MS = 1500;
 const INPUT_ROUTE_POLL_MS = 50;
 
+/**
+ * Larry (#95): a working call shows eight categoryChange notifications in
+ * its first 400 ms; a recorder armed between two of them lands on a graph
+ * the next change tears down — nothing ever arrives. So: quiet first.
+ */
+const ROUTE_QUIET_MS = 250;
+let lastRouteChangeAt = 0;
+let routeQuietSub: { remove(): void } | null = null;
+
+function observeRouteQuiet(): void {
+  if (routeQuietSub) return;
+  routeQuietSub = AudioManager.addSystemEventListener("routeChange", () => {
+    lastRouteChangeAt = Date.now();
+  });
+}
+
 async function waitForInputRoute(log: Pick<CallLog, "add">): Promise<void> {
   if (!AudioRoute) return;
   const deadline = Date.now() + INPUT_ROUTE_WAIT_MS;
@@ -60,8 +76,9 @@ async function waitForInputRoute(log: Pick<CallLog, "add">): Promise<void> {
     } catch {
       // session not ready yet — keep waiting
     }
-    if (input) {
-      log.add(`input route ready: ${input.name}${waited ? ` (after ${waited} ms)` : ""}`);
+    const sinceRoute = Date.now() - lastRouteChangeAt;
+    if (input && sinceRoute >= ROUTE_QUIET_MS) {
+      log.add(`input route ready: ${input.name}${waited ? ` (after ${waited} ms)` : ""}, route quiet ${Math.min(sinceRoute, 9999)} ms`);
       return;
     }
     if (Date.now() >= deadline) {
@@ -227,6 +244,7 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
 
   return {
     async prepare() {
+      observeRouteQuiet();
       const permission = await AudioManager.requestRecordingPermissions();
       log.add(`mic permission: ${permission}`);
       if (permission !== "Granted") throw new Error(`microphone permission ${permission}`);

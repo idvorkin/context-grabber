@@ -328,6 +328,24 @@ first call, echo, a stuck consult, a dropped socket. The ended call's
 diagnostics are sent to the bridge and kept in the log (behind the
 separator) exactly as a hang-up's are; Restart never erases evidence.
 
+### The call line
+
+Igor, 2026-08-29 09:44, on seeing the round controls from #90 on the
+phone: *"these mute and end buttons are ridiculously too big — it's awful,
+super distracting … maybe end and mute go up into the call line with the
+length. Look how much of the screen you're taking up."* Reversed
+([#96](https://github.com/idvorkin/context-grabber/issues/96)).
+
+During a call there is **one compact line** at the top: on the left,
+*live · 1:17 · ElevenLabs* (or *calling Larry… · ElevenLabs*); on the
+right, three small icon controls — **mute** (the voice indicator: it
+swells as Igor speaks; tap to mute, and it dims, freezes and takes a red
+slash), **restart** (↻), **end** (a red handset). Visually small, but each
+is comfortably tappable (44 pt hit area). Nothing else sits between the
+captions and the tab bar: the transcript gets the bottom of the screen
+back. The calling treatment in the middle of the screen stays; the big
+**Call Larry** button is only there when there is no call.
+
 ## Acceptance criteria
 
 1. **Call Larry** on a fresh install (nothing remembered): the call is on
@@ -419,14 +437,14 @@ separator) exactly as a hang-up's are; Restart never erases evidence.
     says *Say hello.* Turn on Reduce Motion (Settings → Accessibility →
     Motion) and call again: the ring does not pulse; everything else is the
     same.
-27. **The voice control is the mute.** On a live call, the round control
-    left of the hang-up swells as Igor speaks. Tap it: it dims, a red slash
+27. **The voice control is the mute.** On a live call, the small round
+    voice icon on the call line swells as Igor speaks. Tap it: it dims, a red slash
     crosses the microphone, the disc stops moving, the word under it says
     *Muted*; say something — no *Igor* caption, Larry does not react. Tap
     again: the slash goes, the disc moves, and the next sentence is
     captioned. There is no other mute control on the screen.
-28. **Hang-up.** While calling and while live, a round red handset button
-    sits bottom-centre, at least 64 pt across; tapping it ends the call with
+28. **Hang-up.** While calling and while live, a small red handset icon
+    sits at the right end of the call line, with a 44 pt hit area; tapping it ends the call with
     *stopped*. Idle and ended, it is gone and **Call Larry** is back. The
     *Diagnostics* fold opens in every state, calling and live included.
 29. **First call after launch.** Force-quit the app. Launch, Call tab,
@@ -450,6 +468,11 @@ separator) exactly as a hang-up's are; Restart never erases evidence.
     then *live*; no picker, no second tap. Diagnostics afterwards holds
     both calls, and the bridge's record of the first ends with the app's
     diagnostics.
+33. **The call line.** On a live call, the only controls are three small
+    icons on the status line's right — mute, restart, end — and the
+    captions run down to the tab bar with nothing under them. Each icon
+    answers a tap anywhere in a 44 pt square. Muting via the icon dims and
+    slashes it; the timer keeps counting.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
