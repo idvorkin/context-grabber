@@ -260,8 +260,30 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
       routeChange = AudioManager.addSystemEventListener("routeChange", onRouteChanged);
     },
 
+    /**
+     * The watchdog's re-arm (#88). A plain re-arm did not help: the dead
+     * input was the I/O unit itself, not the tap. Do what a second call
+     * does — everything down, session re-activated, playback reopened,
+     * mic re-armed — because the second call is the one that always works.
+     */
     async restartMic() {
+      log.add("mic reset: session down, playback reopened, mic re-armed");
       disarmRecorder();
+      const rate = outRate;
+      closePlayback();
+      if (Platform.OS === "ios") {
+        try {
+          await AudioManager.setAudioSessionActivity(false);
+        } catch {
+          // was not active
+        }
+      }
+      await configureSession();
+      ctx = new AudioContext({ sampleRate: rate });
+      gain = ctx.createGain();
+      gain.gain.value = PLAYBACK_GAIN;
+      gain.connect(ctx.destination);
+      playhead = 0;
       await waitForInputRoute(log);
       recorder = armRecorder();
       armedRate = hardwareRate();

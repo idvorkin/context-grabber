@@ -152,13 +152,16 @@ rule too; it stops Igor talking into nothing.)
 2026-08-29 08:40: *"I think there's something wrong when it's a first
 call."* The bridge's recordings agreed ([#88](https://github.com/idvorkin/context-grabber/issues/88)):
 the first call of a burst sent exact silence for its whole length and the
-retry carried audio — the microphone was opened before iOS had finished
-bringing the input route up for a freshly configured session. Now the app
-waits for an input to actually be on the route before it opens the mic,
-and if the mic nonetheless delivers a second of exact zeros it is closed
-and reopened once, with a line in Diagnostics saying so. Only if it is
-still silent after that does the screen say *the microphone is delivering
-silence* — and Larry's side hears nothing rather than Igor wondering.
+retry carried audio. The first attempt at this (waiting for the input
+route) did not fix it: the route was up. What differed was order — on a
+first call, echo cancellation was switched on *after* playback had already
+started the audio engine; on every later call it was already on before.
+Now it is switched on the moment the call's audio session is configured,
+before anything starts. And if the mic nonetheless delivers a second of
+exact zeros, the call's audio is torn down and brought back up the way a
+second call would (a short gap in Larry's voice), with a line in
+Diagnostics saying so. Only if it is still silent after that does the
+screen say *the microphone is delivering silence*.
 
 **The bridge knows it is the app.** The call introduces itself —
 `client: context-grabber` and the build — so the bridge's records can tell
