@@ -232,6 +232,11 @@ does not know about the native call.
     opens on the Call tab and the call is *live* on the remembered backend
     without another tap. With a call already live: the app comes to the
     Call tab; the timer did not reset.
+19. **Echo.** Gemini backend, phone on speaker, no headphones, held at
+    arm's length: let Larry say two full sentences. No *Igor* caption
+    appears containing Larry's words, and Larry does not interrupt or
+    restart himself. Then switch to the Today tab and back mid-call and
+    repeat: still clean (re-activating the session must not drop it).
 
 ## Rationale and risks
 
@@ -263,9 +268,13 @@ Gym Timer), and the deep-link routing. This is a screen and a socket.
   cellular will re-home the VPN and may drop the socket. Phase 1 reports
   *connection lost* rather than reconnecting.
 - *Echo.* On the speaker with the microphone open, the vendor's VAD hears
-  Larry and barges in on himself. The page has the same problem and the
-  same advice — headphones — but the native screen's voice-chat session
-  mode gives iOS's echo cancellation a real chance the web view never had.
+  Larry and barges in on himself — the first native calls did exactly that
+  ([#80](https://github.com/idvorkin/context-grabber/issues/80): Gemini
+  transcribed its own sentences as Igor and restarted them six times). The
+  session mode alone does not cancel echo; the audio engine has to run its
+  I/O through iOS's voice-processing unit, the same one the web view and
+  every VoIP app use. The native screen does, so speakerphone works without
+  headphones; headphones remain the quieter option.
 - *Two clients, one bridge.* The bridge supports several sessions, but the
   app polices only its own side (the one-call rule above).
 - *Vendor limits are unchanged.* Gemini's ~15 minutes, ElevenLabs's cut at

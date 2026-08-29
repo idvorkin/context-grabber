@@ -224,7 +224,7 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
               onPress={row.who === "tool" ? () => toggleExpanded(row.id) : undefined}
               disabled={row.who !== "tool"}
               style={styles.row}
-              testID={`call-row-${row.who}`}
+              testID={`call-row-${row.who}-${row.id}`}
             >
               <Text
                 style={[styles.who, styles[`who_${row.who}`]]}

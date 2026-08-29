@@ -104,7 +104,11 @@ public class AudioRouteModule: Module {
     #else
     options.insert(.allowBluetooth)
     #endif
-    try session.setCategory(.playAndRecord, mode: .default, options: options)
+    // A live call runs the session in `.voiceChat` (echo cancellation via
+    // VoiceProcessingIO). Re-activating for the roster — the Call tab does
+    // it on every mount — must not downgrade that to `.default` mid-call.
+    let mode: AVAudioSession.Mode = session.mode == .voiceChat ? .voiceChat : .default
+    try session.setCategory(.playAndRecord, mode: mode, options: options)
     try session.setActive(true)
   }
 

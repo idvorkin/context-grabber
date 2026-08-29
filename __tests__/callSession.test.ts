@@ -209,6 +209,23 @@ describe("CallSession — ready and the microphone", () => {
     }
   });
 
+  it("an ack for an earlier probe does not vouch for the re-armed mic", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      await goLive(t);
+      t.audio.mic();
+      jest.advanceTimersByTime(MIC_ACK_MS);
+      expect(t.audio.restartMic).toHaveBeenCalledTimes(1);
+      t.audio.mic(); // probe 2 is now waiting
+      t.socket.say({ type: "mic_ack", token: 1 }); // stale
+      jest.advanceTimersByTime(MIC_ACK_MS);
+      expect(t.session.snapshot.problem).toBe(MIC_NOT_REACHING);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it("an ack in time means no re-arm", async () => {
     jest.useFakeTimers();
     try {

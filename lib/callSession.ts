@@ -240,7 +240,9 @@ export class CallSession {
         this.onReady(m.outRate);
         return;
       case "mic_ack":
-        this.clearProbe();
+        // Only the probe that is actually waiting. A late ack for an earlier
+        // probe, arriving after a re-arm, must not vouch for the new graph.
+        if (m.token === this.probeToken) this.clearProbe();
         return;
       case "transcript":
         if (m.who === "igor") {

@@ -100,19 +100,19 @@ describe("CallScreen", () => {
     const t = setup();
     await goLive(t);
     t.socket.say({ type: "stt_partial", text: "hello" });
-    expect(t.r.getByTestId("call-row-igor")).toBeTruthy();
+    expect(t.r.getByTestId(/^call-row-igor-/)).toBeTruthy();
     expect(t.r.getByText("hello")).toBeTruthy();
     t.socket.say({ type: "transcript", who: "larry", text: "Hi Igor." });
     expect(t.r.getByText("Hi Igor.")).toBeTruthy();
     t.socket.say({ type: "tool_call", question: "what next?" });
-    const tool = t.r.getByTestId("call-row-tool");
+    const tool = t.r.getByTestId(/^call-row-tool-/);
     const words = t.r.getByText("asking Larry: what next? …");
     expect(words.props.numberOfLines).toBe(3);
     fireEvent.press(tool);
     expect(t.r.getByText("asking Larry: what next? …").props.numberOfLines).toBeUndefined();
     // Labels never wider than five characters (Cockpit DESIGN P24).
     for (const [who, a11y] of [["igor", "Igor"], ["larry", "Larry"], ["tool", "consult"]]) {
-      const row = t.r.getByTestId(`call-row-${who}`);
+      const row = t.r.getByTestId(new RegExp(`^call-row-${who}-`));
       const label = within(row).getByLabelText(a11y).props.children as string;
       expect(label.length).toBeLessThanOrEqual(5);
     }

@@ -713,6 +713,21 @@ index ac6229b..ae50950 100644
  }
  
  /// @brief Clears the audio data callback.
+diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/core/NativeAudioRecorder.m b/node_modules/react-native-audio-api/ios/audioapi/ios/core/NativeAudioRecorder.m
+index 0b26448..45ceb06 100644
+--- a/node_modules/react-native-audio-api/ios/audioapi/ios/core/NativeAudioRecorder.m
++++ b/node_modules/react-native-audio-api/ios/audioapi/ios/core/NativeAudioRecorder.m
+@@ -45,6 +45,10 @@ static inline uint32_t nextPowerOfTwo(uint32_t x)
+ // Note: this method should be called only after the session is activated
+ - (AVAudioFormat *)getInputFormat
+ {
++  // context-grabber patch: the recorder sizes its buffers from this format
++  // before it attaches, and VoiceProcessingIO reports a different one than
++  // RemoteIO — so decide the I/O unit first.
++  [AudioEngine.sharedInstance syncVoiceProcessingWithSessionMode];
+   AVAudioFormat *format = [AudioEngine.sharedInstance.audioEngine.inputNode inputFormatForBus:0];
+ 
+   if (format.sampleRate == 0 || format.channelCount == 0) {
 diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/core/utils/AudioDecoder.mm b/node_modules/react-native-audio-api/ios/audioapi/ios/core/utils/AudioDecoder.mm
 index 6b2988c..ecc8a43 100644
 --- a/node_modules/react-native-audio-api/ios/audioapi/ios/core/utils/AudioDecoder.mm
@@ -810,3 +825,71 @@ index 3293f8f..bd1d0e3 100644
  }
  
  /// @brief Cleans up resources used by the IOSRecorderCallback.
+diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.h b/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.h
+index 71e3985..ee1a1ec 100644
+--- a/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.h
++++ b/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.h
+@@ -30,6 +30,11 @@ typedef NS_ENUM(NSInteger, AudioEngineState) {
+ - (void)detachSourceNodeWithId:(NSString *)sourceNodeId;
+ 
+ - (void)attachInputNode:(AVAudioSinkNode *)inputNode format:(AVAudioFormat *)format;
++/// context-grabber patch: switch the I/O unit to VoiceProcessingIO (echo
++/// cancellation, AGC, noise suppression) when the desired session mode is
++/// voiceChat, and back to RemoteIO otherwise. Must run while the engine is
++/// stopped and BEFORE anyone reads the input node's format — VPIO changes it.
++- (void)syncVoiceProcessingWithSessionMode;
+ - (void)detachInputNode;
+ 
+ - (void)onInterruptionBegin;
+diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.mm b/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.mm
+index ae0da0c..d502ed8 100644
+--- a/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.mm
++++ b/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioEngine.mm
+@@ -70,8 +70,34 @@ static AudioEngine *_sharedInstance = nil;
+   [self.sourceFormats removeObjectForKey:sourceNodeId];
+ }
+ 
++- (void)syncVoiceProcessingWithSessionMode
++{
++  if (@available(iOS 13.0, *)) {
++    bool wantVoiceProcessing =
++        [self.sessionManager.desiredMode isEqualToString:AVAudioSessionModeVoiceChat];
++    AVAudioInputNode *input = self.audioEngine.inputNode;
++    if (input.isVoiceProcessingEnabled == wantVoiceProcessing) {
++      return;
++    }
++    // Toggling voice processing is only legal on a stopped engine. The
++    // recorder restarts it right after (start → stopIfNecessary/attach/
++    // startIfNecessary), so a brief gap in playback is the cost.
++    [self stopIfNecessary];
++    NSError *error = nil;
++    [input setVoiceProcessingEnabled:wantVoiceProcessing error:&error];
++    if (error != nil) {
++      NSLog(@"[AudioEngine] voice processing %@ failed: %@",
++            wantVoiceProcessing ? @"enable" : @"disable", [error debugDescription]);
++    } else {
++      NSLog(@"[AudioEngine] voice processing %@ (session mode %@)",
++            wantVoiceProcessing ? @"enabled" : @"disabled", self.sessionManager.desiredMode);
++    }
++  }
++}
++
+ - (void)attachInputNode:(AVAudioSinkNode *)inputNode format:(AVAudioFormat *)format
+ {
++  [self syncVoiceProcessingWithSessionMode];
+   self.inputNode = inputNode;
+   [self.audioEngine attachNode:inputNode];
+   [self.audioEngine connect:self.audioEngine.inputNode to:inputNode format:format];
+@@ -157,6 +183,12 @@ static AudioEngine *_sharedInstance = nil;
+ 
+   self.audioEngine = [[AVAudioEngine alloc] init];
+ 
++  if (self.inputNode) {
++    // A fresh engine is a fresh RemoteIO; put voice processing back before
++    // the input is reconnected, or an interruption silently drops AEC.
++    [self syncVoiceProcessingWithSessionMode];
++  }
++
+   for (id sourceNodeId in self.sourceNodes) {
+     AVAudioSourceNode *sourceNode = [self.sourceNodes valueForKey:sourceNodeId];
+     AVAudioFormat *format = [self.sourceFormats valueForKey:sourceNodeId];
