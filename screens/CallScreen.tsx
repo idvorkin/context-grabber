@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CopyableError } from "../components/CopyableError";
+import { describeRoute, preferredInput } from "../lib/callDevices";
 import {
   BACKENDS,
   endingText,
@@ -44,6 +45,9 @@ const KEEP_AWAKE_TAG = "call";
 
 /** How long iOS gets to apply a route pick before the picker re-reads it. */
 const ROUTE_REFRESH_MS = 400;
+
+/** The level strip falls at this rate per frame so a word leaves a visible trace. */
+const METER_DECAY = 0.85;
 
 const LABEL: Record<CaptionRow["who"], string> = {
   igor: "Igor",
@@ -121,6 +125,24 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
     };
   }, []);
 
+  /* ---------- a USB microphone wins ----------
+     Igor: "If a mic is over USB, let's take that as a default." Applied
+     whenever the roster changes — at the start of a call, or when the mic is
+     plugged in during one — unless Igor picked a mic by hand this call, in
+     which case his choice stands until the next call. */
+  const manualInputPick = useRef(false);
+  useEffect(() => {
+    if (!active) manualInputPick.current = false;
+  }, [active]);
+  useEffect(() => {
+    if (!route || !AudioRoute || manualInputPick.current) return;
+    const wanted = preferredInput(route);
+    if (!wanted) return;
+    AudioRoute.setInput(wanted).then(setRoute).catch(() => {});
+  }, [route]);
+
+  const [devicesOpen, setDevicesOpen] = useState(false);
+
   // iOS applies a route pick asynchronously; the snapshot the call returns
   // can still show the old route. Read it again once the change has landed
   // so the chip moves even when no route-change event reaches us.
@@ -146,6 +168,7 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
   const pickInput = useCallback(
     (id: string) => {
       if (!AudioRoute) return;
+      manualInputPick.current = true;
       AudioRoute.setInput(id).then(setRoute).catch(() => {});
       refreshRoute();
     },
@@ -219,25 +242,39 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
         })}
       </View>
 
-      {route && (route.inputs.length > 1 || route.outputs.length > 1) && (
+      {route && (
         <View style={styles.devices} testID="call-devices">
-          {route.inputs.length > 1 && (
-            <DeviceRow
-              label="Mic"
-              devices={route.inputs}
-              currentId={route.current.input?.id ?? null}
-              onPick={pickInput}
-              testID="call-inputs"
-            />
-          )}
-          {route.outputs.length > 1 && (
-            <DeviceRow
-              label="Out"
-              devices={route.outputs}
-              currentId={route.current.output?.id ?? null}
-              onPick={pickOutput}
-              testID="call-outputs"
-            />
+          <Pressable
+            onPress={() => setDevicesOpen((o) => !o)}
+            style={styles.devicesLine}
+            testID="call-devices-toggle"
+            accessibilityRole="button"
+            accessibilityState={{ expanded: devicesOpen }}
+            accessibilityLabel="Microphone and output"
+          >
+            <MicMeter session={session} muted={snap.muted} live={snap.state === "live"} />
+            <Text style={styles.devicesSummary} numberOfLines={1} testID="call-devices-summary">
+              {describeRoute(route)}
+            </Text>
+            <Text style={styles.devicesChevron}>{devicesOpen ? "▾" : "▸"}</Text>
+          </Pressable>
+          {devicesOpen && (
+            <View style={styles.devicesRows}>
+              <DeviceRow
+                label="Mic"
+                devices={route.inputs}
+                currentId={route.current.input?.id ?? null}
+                onPick={pickInput}
+                testID="call-inputs"
+              />
+              <DeviceRow
+                label="Out"
+                devices={route.outputs}
+                currentId={route.current.output?.id ?? null}
+                onPick={pickOutput}
+                testID="call-outputs"
+              />
+            </View>
           )}
         </View>
       )}
@@ -350,6 +387,35 @@ export function CallScreen({ session, backend, onBackendChange, cockpitCallLive 
   );
 }
 
+/**
+ * The little strip that goes up and down. Subscribes to the session's level
+ * channel directly so ten updates a second re-render this one view and not
+ * the captions. Falls with decay so a word leaves a trace.
+ */
+function MicMeter({ session, muted, live }: { session: CallSession; muted: boolean; live: boolean }) {
+  const [level, setLevel] = useState(0);
+  useEffect(() => {
+    if (!live) {
+      setLevel(0);
+      return;
+    }
+    let shown = 0;
+    return session.subscribeLevel((raw) => {
+      shown = Math.max(raw, shown * METER_DECAY);
+      setLevel(shown);
+    });
+  }, [session, live]);
+  return (
+    <View
+      style={styles.meter}
+      testID="call-mic-meter"
+      accessibilityLabel={`microphone level ${Math.round(level * 100)}%`}
+    >
+      <View style={[styles.meterFill, muted && styles.meterFillMuted, { width: `${Math.round(level * 100)}%` }]} />
+    </View>
+  );
+}
+
 function DeviceRow({
   label,
   devices,
@@ -422,7 +488,20 @@ const styles = StyleSheet.create({
   chipDisabled: { opacity: 0.4 },
   chipText: { color: "#cbd5e1", fontSize: 13, fontWeight: "600" },
   chipTextSelected: { color: "#0c121f" },
-  devices: { paddingHorizontal: 16, gap: 6, paddingBottom: 6 },
+  devices: { paddingHorizontal: 16, paddingBottom: 6 },
+  devicesLine: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 6 },
+  devicesSummary: { flex: 1, color: "#aaa", fontSize: 13 },
+  devicesChevron: { color: "#666", fontSize: 13 },
+  devicesRows: { gap: 6, paddingTop: 4 },
+  meter: {
+    width: 44,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#243447",
+    overflow: "hidden",
+  },
+  meterFill: { height: "100%", backgroundColor: "#4ade80", borderRadius: 4 },
+  meterFillMuted: { backgroundColor: "#64748b" },
   deviceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   deviceLabel: { color: "#888", fontSize: 12, width: 28 },
   deviceChips: { gap: 6 },

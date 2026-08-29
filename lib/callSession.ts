@@ -27,7 +27,7 @@ import {
   type BridgeMessage,
   type CallBackend,
 } from "./callProtocol";
-import { encodeMicFrame } from "./pcm";
+import { encodeMicFrame, micLevel } from "./pcm";
 
 export type CallState = "idle" | "connecting" | "live" | "ended";
 
@@ -106,11 +106,14 @@ export const MIC_ACK_MS = 5000;
 export const MIC_NOT_REACHING = "the microphone is not reaching Larry";
 
 type Listener = (snapshot: CallSnapshot) => void;
+type LevelListener = (level: number) => void;
 
 export class CallSession {
   private readonly deps: Required<CallSessionDeps>;
   private readonly url: string;
   private listeners = new Set<Listener>();
+  /** The mic level rides its own channel: ten updates a second must not re-render the captions. */
+  private levelListeners = new Set<LevelListener>();
   private socket: BridgeSocket | null = null;
   private snap: CallSnapshot = CallSession.idle();
   private nextRowId = 1;
@@ -152,6 +155,14 @@ export class CallSession {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
+    };
+  }
+
+  /** 0..1 per mic buffer while the mic is open — muted included; 0 once when it closes. */
+  subscribeLevel(listener: LevelListener): () => void {
+    this.levelListeners.add(listener);
+    return () => {
+      this.levelListeners.delete(listener);
     };
   }
 
@@ -314,7 +325,11 @@ export class CallSession {
   }
 
   private onMicBuffer = (samples: Float32Array, sampleRate: number): void => {
-    if (this.snap.state !== "live" || this.snap.muted) return;
+    if (this.snap.state !== "live") return;
+    // Heard even while muted: "is my mic working" and "am I muted" are
+    // different questions, and the strip answers both.
+    this.emitLevel(micLevel(samples));
+    if (this.snap.muted) return;
     this.safeSend(encodeMicFrame(samples, sampleRate));
     if (!this.probeSent) {
       this.probeSent = true;
@@ -437,6 +452,11 @@ export class CallSession {
     this.promoteIgor();
     this.update({ state: "ended", endedReason: reason, endedBadly: badly });
     void this.deps.audio.stop().catch(() => {});
+    this.emitLevel(0);
+  }
+
+  private emitLevel(level: number): void {
+    for (const l of this.levelListeners) l(level);
   }
 
   private update(patch: Partial<CallSnapshot>): void {

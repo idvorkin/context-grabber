@@ -76,9 +76,33 @@ A new tab, **Call**, beside Cockpit. Idle, it shows: a large **Call Larry**
 button, a row of backends to choose from — *ElevenLabs*, *Gemini*, *OpenAI*,
 *Drill* — with the last choice remembered (ElevenLabs, Tony's voice, until
 Igor picks otherwise — "Let's default to the 11 labs Tony call", 2026-08-29),
-and the microphone and output
-pickers showing what is attached right now (the same roster and names the
-audio bridge gives the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*).
+and one **devices line**.
+
+### The devices line
+
+Igor, 2026-08-29: *"Instead of wasting all of that mic output/input, I want
+to be able to collapse that down, maybe under a folder, so I have more
+space."* And: *"I want to see mic input volume, that little strip that goes
+up and down."*
+
+One line, always visible: a small **level strip** that rises and falls with
+the microphone, then the current microphone and output by name — *iPhone
+Microphone · Speaker* — and a disclosure chevron. Tap the line and the two
+pickers unfold beneath it (the same roster and names the audio bridge gives
+the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*); tap again and they
+fold away. Folded is the default; the captions get the space.
+
+The level strip is live whenever the microphone is open — during a call —
+and flat otherwise. Muted, it still moves (the mic is still heard, just not
+sent) but is dimmed, so "is my mic working" and "am I muted" are both
+answered at a glance.
+
+**A USB microphone wins.** *"If a mic is over USB, let's take that as a
+default."* When a USB audio device with a microphone is attached — at the
+start of a call, or plugged in during one — the call uses it without a tap,
+and the devices line says so. Igor's own pick still wins: once he has chosen
+a microphone by hand during a call, the app stops second-guessing him until
+the next call.
 
 ### Starting a call
 
@@ -246,6 +270,17 @@ does not know about the native call.
     the mic pick with the phone locked mid-way: still captioned after
     unlock.
 ## Rationale and risks
+21. **Level strip.** On a live call, speak: the strip rises with the voice
+    and falls in silence. Mute: it still moves, dimmed. Hang up: flat.
+22. **Folded pickers.** Open the Call tab: one devices line (strip, *iPhone
+    Microphone · Speaker*, chevron); no chips. Tap it: the mic and output
+    pickers appear; tap again: gone. Picking a device updates the line's
+    names whether folded or not.
+23. **USB default.** Plug a USB-C microphone in, then start a call: the
+    devices line names the USB mic and Larry hears it. Start a call on the
+    built-in mic, then plug the USB mic in: the call moves to it within
+    2 s. Pick *iPhone Microphone* by hand, then re-plug the USB mic: the
+    call stays on the built-in mic for the rest of that call.
 
 **Why native rather than fixing the web view.** WebKit on iOS suspends
 `getUserMedia` capture when the app leaves the foreground, and `WKWebView`

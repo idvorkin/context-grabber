@@ -2,9 +2,24 @@ import {
   BRIDGE_IN_RATE,
   encodeMicFrame,
   floatToPcm16,
+  micLevel,
   pcm16ToFloat,
   resampleLinear,
 } from "../lib/pcm";
+
+describe("micLevel", () => {
+  it("silence is 0, full scale is 1, and clipping does not exceed 1", () => {
+    expect(micLevel(new Float32Array(100))).toBe(0);
+    expect(micLevel(new Float32Array([0, 1, -0.2]))).toBe(1);
+    expect(micLevel(new Float32Array([3]))).toBe(1);
+  });
+
+  it("is a decibel scale: -20 dBFS sits at 0.6, -50 dBFS at the floor", () => {
+    expect(micLevel(new Float32Array([0.1]))).toBeCloseTo(0.6, 2);
+    expect(micLevel(new Float32Array([0.00316]))).toBeCloseTo(0, 1);
+    expect(micLevel(new Float32Array([0.0001]))).toBe(0);
+  });
+});
 
 describe("floatToPcm16", () => {
   it("maps full scale and clips beyond it", () => {

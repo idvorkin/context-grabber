@@ -172,9 +172,63 @@ describe("CallScreen", () => {
     expect(deactivateKeepAwake).toHaveBeenCalledWith("call");
   });
 
+  it("folds the pickers under one line that names the route; unfolds on tap", async () => {
+    const t = setup();
+    await settle();
+    expect(t.r.getByTestId("call-devices-summary").props.children).toBe("iPhone Microphone · Speaker");
+    expect(t.r.queryByTestId("call-inputs")).toBeNull();
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
+    expect(t.r.getByTestId("call-inputs")).toBeTruthy();
+    expect(t.r.getByTestId("call-outputs")).toBeTruthy();
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
+    expect(t.r.queryByTestId("call-inputs")).toBeNull();
+  });
+
+  it("the level strip follows the mic, dimmed while muted, flat after the call", async () => {
+    const t = setup();
+    await goLive(t);
+    const width = () => t.r.getByTestId("call-mic-meter").props.children.props.style.at(-1).width;
+    expect(width()).toBe("0%");
+    const loud = new Float32Array(480).fill(0.5);
+    const feed = (audio.startMic as jest.Mock).mock.calls[0][0] as (s: Float32Array, r: number) => void;
+    act(() => feed(loud, 48000));
+    expect(parseInt(width(), 10)).toBeGreaterThan(80);
+    fireEvent.press(t.r.getByTestId("call-mute"));
+    act(() => feed(loud, 48000));
+    expect(parseInt(width(), 10)).toBeGreaterThan(80);
+    fireEvent.press(t.r.getByTestId("call-hangup"));
+    await settle();
+    expect(width()).toBe("0%");
+  });
+
+  it("a USB microphone becomes the mic on its own, unless Igor picked one by hand", async () => {
+    const usb = { id: "USB-1", name: "Scarlett Solo", type: "USBAudio" };
+    const base = (AudioRoute as unknown as { snapshot: { inputs: unknown[] } }).snapshot;
+    const withUsb = { ...base, inputs: [...base.inputs, usb] };
+    const t = setup();
+    await settle();
+    expect(route.setInput).not.toHaveBeenCalled();
+    // plugged in mid-session: the roster changes
+    act(() => {
+      for (const l of route.listeners) l({ ...withUsb, reason: "NewDeviceAvailable" });
+    });
+    expect(route.setInput).toHaveBeenLastCalledWith("USB-1");
+    // Igor picks the built-in mic by hand; a re-plug no longer overrides him
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
+    route.setInput.mockClear();
+    fireEvent.press(t.r.getByTestId("call-inputs-BuiltInMicrophoneBottom"));
+    expect(route.setInput).toHaveBeenLastCalledWith("BuiltInMicrophoneBottom");
+    route.setInput.mockClear();
+    act(() => {
+      for (const l of route.listeners) l({ ...withUsb, reason: "NewDeviceAvailable" });
+    });
+    expect(route.setInput).not.toHaveBeenCalled();
+  });
+
   it("shows the real device roster and applies a pick", async () => {
     const t = setup();
     await settle();
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
     expect(t.r.getByTestId("call-inputs")).toBeTruthy();
     fireEvent.press(t.r.getByTestId("call-outputs-speaker"));
     expect(route.setOutput).toHaveBeenCalledWith("speaker");
@@ -187,6 +241,7 @@ describe("CallScreen", () => {
     try {
       const t = setup();
       await settle();
+      fireEvent.press(t.r.getByTestId("call-devices-toggle"));
       route.getDevices.mockClear();
       fireEvent.press(t.r.getByTestId("call-outputs-speaker"));
       expect(route.getDevices).not.toHaveBeenCalled();

@@ -278,6 +278,26 @@ describe("CallSession — mute", () => {
   });
 });
 
+describe("CallSession — mic level", () => {
+  it("reports a level per buffer, muted included, and 0 at the end", async () => {
+    const t = setup();
+    const levels: number[] = [];
+    t.session.subscribeLevel((l) => levels.push(l));
+    await goLive(t);
+    t.audio.mic(); // silence
+    t.session.setMuted(true);
+    const loud = new Float32Array(480).fill(0.5);
+    // reach the listener the engine would call
+    (t.audio.startMic.mock.calls[0][0] as (s: Float32Array, r: number) => void)(loud, 48000);
+    t.socket.say({ type: "closed", reason: "stopped" });
+    expect(levels[0]).toBe(0);
+    expect(levels[1]).toBeGreaterThan(0.8);
+    expect(levels.at(-1)).toBe(0);
+    // muted: the level was reported, the audio was not sent
+    expect(t.socket.binaryFrames).toHaveLength(1);
+  });
+});
+
 describe("CallSession — playback", () => {
   it("binary frames play while live and are dropped before ready", async () => {
     const t = setup();
