@@ -86,12 +86,13 @@ describe("CockpitScreen", () => {
     expect(web.props.mediaPlaybackRequiresUserAction).toBe(false);
   });
 
-  it("enables pull-to-refresh and exposes a reload control", () => {
+  it("enables pull-to-refresh and has no header bar", () => {
     const r = render(<CockpitScreen />);
     expect(r.getByTestId("cockpit-webview").props.pullToRefreshEnabled).toBe(
       true,
     );
-    expect(r.getByTestId("cockpit-reload")).toBeTruthy();
+    expect(r.queryByTestId("cockpit-reload")).toBeNull();
+    expect(r.queryByLabelText("Reload Cockpit")).toBeNull();
   });
 
   it("shows a loading state until the page finishes loading", () => {

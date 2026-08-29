@@ -76,11 +76,14 @@ within the Cockpit's own history, the way it does in Safari.
 
 ### Refreshing
 
-Two ways, both native:
+One way, native:
 
 - **Pull down** at the top of the dashboard to reload it.
-- **Tap the reload control** in a slim bar at the top of the tab, which also
-  carries the "Cockpit" title so it's clear which surface you're on.
+
+There is no header bar. Igor, 2026-08-29: *"When I'm on the cockpit page, I
+don't need a header. Just the footer is fine."* The tab bar says where you
+are; the dashboard gets the whole height above it, clear of the status bar.
+(A reload control with a "Cockpit" title used to sit at the top — removed.)
 
 Reloading re-fetches the page from the server; it does not clear any app state.
 
@@ -133,8 +136,8 @@ empty rectangle behind.
 2. Tapping Cockpit loads the dashboard; the other six tabs are unchanged.
 3. Switching away from Cockpit and back does not reload the page — scroll
    position and expanded state survive.
-4. Pull-to-refresh reloads the dashboard, and so does the reload control in the
-   header bar.
+4. Pull-to-refresh reloads the dashboard. There is no header bar above the
+   page; the page starts below the status bar and runs to the tab bar.
 5. Using the Cockpit's microphone control triggers iOS's own microphone prompt
    (once, app-wide) and then records; no in-app permission UI is involved.
 6. Audio inside the Cockpit plays inline and starts without an extra tap.
