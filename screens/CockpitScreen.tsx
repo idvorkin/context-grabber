@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -92,15 +93,6 @@ export function CockpitScreen({
     setCallLive(false);
     setReloadKey((k) => k + 1);
   }, []);
-
-  const handleReload = useCallback(() => {
-    if (error) {
-      handleRetry();
-      return;
-    }
-    setLoading(true);
-    webRef.current?.reload();
-  }, [error, handleRetry]);
 
   /* ---------- audio bridge ----------
      WebKit shows the page one nameless microphone and no outputs at all, so
@@ -218,25 +210,16 @@ export function CockpitScreen({
     [],
   );
 
+  // No header — Igor: "just the footer is fine." SafeAreaView keeps the page
+  // below the status bar; the tab bar below says where you are. Reload is
+  // pull-to-refresh, or Try again on the error pane.
   return (
-    <View
+    <SafeAreaView
       style={[styles.container, !visible && styles.hidden]}
       testID="cockpit-screen"
       // Hidden tabs shouldn't be reachable by VoiceOver or Maestro.
       pointerEvents={visible ? "auto" : "none"}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Cockpit</Text>
-        <TouchableOpacity
-          onPress={handleReload}
-          style={styles.reloadBtn}
-          testID="cockpit-reload"
-          accessibilityRole="button"
-          accessibilityLabel="Reload Cockpit"
-        >
-          <Text style={styles.reloadBtnText}>↻</Text>
-        </TouchableOpacity>
-      </View>
 
       {error ? (
         <View style={styles.errorPane} testID="cockpit-error">
@@ -329,27 +312,13 @@ export function CockpitScreen({
           )}
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1a1a2e" },
   hidden: { display: "none" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 10,
-    backgroundColor: "#0c121f",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#222",
-  },
-  title: { color: "#eee", fontSize: 20, fontWeight: "700" },
-  reloadBtn: { paddingHorizontal: 12, paddingVertical: 6 },
-  reloadBtnText: { color: "#4cc9f0", fontSize: 22, lineHeight: 26 },
   webWrap: { flex: 1 },
   web: { flex: 1, backgroundColor: "#1a1a2e" },
   webContainer: { backgroundColor: "#1a1a2e" },
