@@ -73,8 +73,10 @@ keeps talking.
 ### The Call tab
 
 A new tab, **Call**, beside Cockpit. Idle, it shows: a large **Call Larry**
-button, a row of backends to choose from — *Gemini*, *ElevenLabs*, *OpenAI*,
-*Drill* — with the last choice remembered, and the microphone and output
+button, a row of backends to choose from — *ElevenLabs*, *Gemini*, *OpenAI*,
+*Drill* — with the last choice remembered (ElevenLabs, Tony's voice, until
+Igor picks otherwise — "Let's default to the 11 labs Tony call", 2026-08-29),
+and the microphone and output
 pickers showing what is attached right now (the same roster and names the
 audio bridge gives the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*).
 
@@ -176,11 +178,12 @@ does not know about the native call.
 
 ## Acceptance criteria
 
-1. **Call Larry** on Gemini: within 5 s the screen says *live*, the timer
-   runs, and saying "hello Larry" produces a Larry reply, audible, with
-   both captions on screen.
-2. Repeat for ElevenLabs, OpenAI, and Drill. The remembered backend
-   survives an app restart.
+1. **Call Larry** on a fresh install (nothing remembered): the call is on
+   ElevenLabs — within 5 s the screen says *live*, the timer runs, and
+   saying "hello Larry" produces a reply in Tony's voice, with both
+   captions on screen.
+2. Repeat for Gemini, OpenAI, and Drill. The remembered backend survives
+   an app restart.
 3. Mid-call, press the side button. Wait 2 minutes with the screen dark,
    talking to Larry at intervals: Larry answers every time. Unlock: the
    captions include everything said while locked, the timer is continuous.

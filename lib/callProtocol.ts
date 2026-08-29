@@ -18,13 +18,14 @@ import type { CallBackend } from "./deepLink";
 export type { CallBackend };
 
 export const BACKENDS: ReadonlyArray<{ id: CallBackend; label: string }> = [
-  { id: "gemini", label: "Gemini" },
   { id: "eleven", label: "ElevenLabs" },
+  { id: "gemini", label: "Gemini" },
   { id: "openai", label: "OpenAI" },
   { id: "drill", label: "Drill" },
 ];
 
-export const DEFAULT_BACKEND: CallBackend = "gemini";
+/** ElevenLabs — Tony's voice. Igor, 2026-08-29: "Let's default to the 11 labs Tony call." */
+export const DEFAULT_BACKEND: CallBackend = "eleven";
 
 export function isCallBackend(value: unknown): value is CallBackend {
   return BACKENDS.some((b) => b.id === value);
