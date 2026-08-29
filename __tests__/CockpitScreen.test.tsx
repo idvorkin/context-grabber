@@ -167,6 +167,35 @@ describe("CockpitScreen", () => {
   });
 });
 
+describe("CockpitScreen hands the app its own links", () => {
+  it("routes grabber:// links in-process and does not navigate or leave the app", () => {
+    const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    const onAppLink = jest.fn();
+    const r = render(<CockpitScreen onAppLink={onAppLink} />);
+    const should = r.getByTestId("cockpit-webview").props.onShouldStartLoadWithRequest;
+    expect(should({ url: "grabber://call?via=eleven" })).toBe(false);
+    expect(should({ url: "com.idvorkin.contextgrabber://cockpit" })).toBe(false);
+    expect(onAppLink.mock.calls.map((c) => c[0])).toEqual([
+      "grabber://call?via=eleven",
+      "com.idvorkin.contextgrabber://cockpit",
+    ]);
+    expect(openURL).not.toHaveBeenCalled();
+    // other hosts still go out to Safari
+    expect(should({ url: "https://github.com/idvorkin/x" })).toBe(false);
+    expect(openURL).toHaveBeenCalledWith("https://github.com/idvorkin/x");
+    openURL.mockRestore();
+  });
+
+  it("without a handler, an app link goes to iOS as before", () => {
+    const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    const r = render(<CockpitScreen />);
+    const should = r.getByTestId("cockpit-webview").props.onShouldStartLoadWithRequest;
+    expect(should({ url: "grabber://call" })).toBe(false);
+    expect(openURL).toHaveBeenCalledWith("grabber://call");
+    openURL.mockRestore();
+  });
+});
+
 describe("CockpitScreen audio bridge", () => {
   beforeEach(() => {
     web.injectJavaScript.mockClear();

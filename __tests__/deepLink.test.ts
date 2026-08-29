@@ -122,6 +122,14 @@ describe("parseDeepLink — timer route", () => {
   });
 });
 
+describe("parseDeepLink — cockpit route", () => {
+  it("opens the Cockpit tab on either scheme, ignoring sub-paths and queries", () => {
+    expect(parseDeepLink("grabber://cockpit")).toEqual({ kind: "cockpit" });
+    expect(parseDeepLink("com.idvorkin.contextgrabber://cockpit")).toEqual({ kind: "cockpit" });
+    expect(parseDeepLink("grabber://cockpit/calls/abc?x=1")).toEqual({ kind: "cockpit" });
+  });
+});
+
 describe("parseDeepLink — call route", () => {
   it("starts a call on the page's current backend when bare", () => {
     expect(parseDeepLink("grabber://call")).toEqual({ kind: "call", via: null });

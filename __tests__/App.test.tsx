@@ -342,6 +342,38 @@ describe("Tab navigation", () => {
     expect(result.getByText("Context Grabber")).toBeTruthy();
   });
 
+  it("a grabber://cockpit link brings up the Cockpit tab", async () => {
+    const { Linking } = require("react-native");
+    (Linking.addEventListener as jest.Mock).mockClear();
+    const result = await renderApp();
+    expect(result.queryByTestId("cockpit-webview")).toBeNull();
+    const urlCalls = (Linking.addEventListener as jest.Mock).mock.calls.filter((c: unknown[]) => c[0] === "url");
+    const onUrl = urlCalls[urlCalls.length - 1][1] as (ev: { url: string }) => void;
+    await act(async () => {
+      onUrl({ url: "grabber://cockpit" });
+      await flushPromises();
+    });
+    expect(result.getByTestId("cockpit-webview")).toBeTruthy();
+    expect(result.getByTestId("tab-cockpit").props.accessibilityState.selected).toBe(true);
+  });
+
+  it("the Cockpit page opening grabber://call lands on the native Call tab, page untouched", async () => {
+    const result = await renderApp();
+    await gotoTab(result, "cockpit");
+    const should = result.getByTestId("cockpit-webview").props.onShouldStartLoadWithRequest;
+    await act(async () => {
+      expect(should({ url: "grabber://call?via=gemini" })).toBe(false);
+      await flushPromises();
+    });
+    expect(result.getByTestId("call-screen")).toBeTruthy();
+    expect(result.getByTestId("call-status").props.children).toMatch(/connecting… Gemini/);
+    expect(sockets).toHaveLength(1);
+    // the web view is still mounted, hidden, and was never navigated or reloaded
+    expect(result.getByTestId("cockpit-webview", { includeHiddenElements: true })).toBeTruthy();
+    const web = jest.requireMock("react-native-webview").__mock as { reload: jest.Mock };
+    expect(web.reload).not.toHaveBeenCalled();
+  });
+
   it("a grabber://call link brings up the native Call tab and starts the call", async () => {
     const { Linking } = require("react-native");
     // Earlier renders in this file registered their own (now dead) listeners;

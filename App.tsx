@@ -675,6 +675,11 @@ export default function App() {
   const grabContextRef = useRef<(() => void) | null>(null);
   grabContextRef.current = () => { void grabContext(); };
   const counterIncrementRef = useRef<(() => void) | null>(null);
+  // The one deep-link handler. Reached by iOS (Linking) and by the Cockpit
+  // web view handing the app its own links — a Shortcut's link and a link
+  // from the page must never drift apart.
+  const handleDeepLinkRef = useRef<(url: string | null) => void>(() => {});
+  const handleAppLink = useCallback((url: string) => handleDeepLinkRef.current(url), []);
   useEffect(() => {
     const handle = (url: string | null) => {
       const route = parseDeepLink(url);
@@ -708,9 +713,18 @@ export default function App() {
         const via = route.via ?? callBackendRef.current;
         if (route.via) handleCallBackendChangeRef.current(route.via);
         void callSession.start(via);
+      } else if (route.kind === "cockpit") {
+        // Igor: "a shortcut that takes me to Cockpit, not just call."
+        setGymTimerVisible(false);
+        setAffirmationVisible(false);
+        setGratefulVisible(false);
+        setJournalVisible(false);
+        setCockpitMounted(true);
+        setActiveTab("cockpit");
       }
       // kind === "unknown" → no-op (already on whatever screen)
     };
+    handleDeepLinkRef.current = handle;
     void Linking.getInitialURL().then(handle);
     const sub = Linking.addEventListener("url", (ev) => handle(ev.url));
     return () => sub.remove();
@@ -1927,7 +1941,11 @@ export default function App() {
         />
       )}
       {cockpitMounted && (
-        <CockpitScreen visible={activeTab === "cockpit"} onCallLiveChange={setCockpitCallLive} />
+        <CockpitScreen
+          visible={activeTab === "cockpit"}
+          onCallLiveChange={setCockpitCallLive}
+          onAppLink={handleAppLink}
+        />
       )}
 
       <TabBar active={activeTab} onChange={handleTabChange} />

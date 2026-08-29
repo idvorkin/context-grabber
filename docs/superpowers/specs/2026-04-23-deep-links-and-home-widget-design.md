@@ -51,6 +51,7 @@ Two schemes both work — pick whichever is more convenient for the context:
 | `grabber://timer/stopwatch` | Open Gym Timer in stopwatch mode. |
 | `grabber://timer/sets` | Open Gym Timer in sets mode. |
 | `grabber://call` / `grabber://call?via=<backend>` | Open the native Call tab and start a Larry call (2026-08-28; see the native call screen spec). The widget's header **☎ Call** pill uses this. |
+| `grabber://cockpit` | Open the Cockpit tab (2026-08-29; the **Open Cockpit** Shortcut uses this). Sub-paths and queries ignored. |
 | Any other / malformed URL | Open main dashboard (silent fallback, no error toast). |
 
 Cold launch and warm launch are identical in behavior. If the app is launched via URL when it was already grabbing context, the grab completes normally and the URL action applies to the post-grab state.

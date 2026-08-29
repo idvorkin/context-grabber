@@ -64,8 +64,27 @@ struct CallLarryIntent: AppIntent {
   }
 }
 
-/// The pre-built shortcut, so "Call Larry" exists in the Shortcuts app
-/// without building one, and answers to Siri.
+/// "Open Cockpit" as a Shortcuts action: the app comes to the front on the
+/// Cockpit tab — the dashboard, not a call. Igor: "a shortcut that takes me
+/// to Cockpit, not just call." Same route as `grabber://cockpit`.
+/// Spec: docs/superpowers/specs/2026-08-29-open-cockpit-and-page-handoff-design.md.
+@available(iOS 16.0, *)
+struct OpenCockpitIntent: AppIntent {
+  static var title: LocalizedStringResource = "Open Cockpit"
+  static var description = IntentDescription("Open Context Grabber on the Cockpit tab.")
+  static var openAppWhenRun: Bool = true
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    if let url = URL(string: "grabber://cockpit") {
+      await UIApplication.shared.open(url)
+    }
+    return .result()
+  }
+}
+
+/// The pre-built shortcuts, so "Call Larry" and "Open Cockpit" exist in the
+/// Shortcuts app without building them, and answer to Siri.
 @available(iOS 16.0, *)
 struct ContextGrabberShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
@@ -78,6 +97,15 @@ struct ContextGrabberShortcuts: AppShortcutsProvider {
       ],
       shortTitle: "Call Larry",
       systemImageName: "phone.fill"
+    )
+    AppShortcut(
+      intent: OpenCockpitIntent(),
+      phrases: [
+        "Open Cockpit in \(.applicationName)",
+        "Open the Cockpit in \(.applicationName)",
+      ],
+      shortTitle: "Open Cockpit",
+      systemImageName: "airplane"
     )
   }
 }
