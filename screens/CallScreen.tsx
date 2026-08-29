@@ -60,12 +60,12 @@ const ROUTE_REFRESH_MS = 400;
 const METER_DECAY = 0.85;
 
 /** The voice control's circle, and the level disc inside it at silence and at full voice. */
-const VOICE_SIZE = 68;
-const VOICE_DISC_MIN = 22;
+const VOICE_SIZE = 34;
+const VOICE_DISC_MIN = 14;
 const VOICE_DISC_MAX = VOICE_SIZE;
 
 /** The hang-up is the biggest thing on the screen: a thumb finds it without looking. */
-const HANGUP_SIZE = 72;
+const HANGUP_SIZE = 34;
 
 /** One outward pulse of the calling ring; the second ring runs half a period behind. */
 const PULSE_MS = 1600;
@@ -326,15 +326,53 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
 
   return (
     <View style={styles.container} testID="call-screen">
+      {/* The call line (#96): status on the left, three small controls on the
+          right while a call is up. Nothing under the captions. */}
       <View style={styles.header}>
-        <Text style={styles.title}>Call</Text>
-        <Text
-          style={[styles.status, snap.state === "live" && styles.statusLive, snap.endedBadly && styles.statusBad]}
-          testID="call-status"
-          numberOfLines={1}
-        >
-          {status}
-        </Text>
+        <View style={styles.headerLeft}>
+          {!active && <Text style={styles.title}>Call</Text>}
+          <Text
+            style={[styles.status, active && styles.statusActive, snap.state === "live" && styles.statusLive, snap.endedBadly && styles.statusBad]}
+            testID="call-status"
+            numberOfLines={1}
+          >
+            {status}
+          </Text>
+        </View>
+        {active && (
+          <View style={styles.callControls} testID="call-controls">
+            <VoiceControl
+              session={session}
+              muted={snap.muted}
+              live={snap.state === "live"}
+              onPress={() => session.setMuted(!snap.muted)}
+            />
+            <Pressable
+              onPress={() => session.restart()}
+              style={styles.iconButton}
+              testID="call-restart"
+              accessibilityRole="button"
+              accessibilityLabel="Restart call"
+              hitSlop={6}
+            >
+              <View style={styles.restartCircle}>
+                <Text style={styles.restartGlyph}>↻</Text>
+              </View>
+            </Pressable>
+            <Pressable
+              onPress={() => session.stop()}
+              style={styles.iconButton}
+              testID="call-hangup"
+              accessibilityRole="button"
+              accessibilityLabel="Hang up"
+              hitSlop={6}
+            >
+              <View style={styles.hangupCircle}>
+                <Text style={styles.hangupGlyph}>{HANDSET}</Text>
+              </View>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* backend — pickable only between calls */}
@@ -501,49 +539,8 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
         />
       )}
 
-      <View style={styles.controls}>
-        {active ? (
-          <>
-            <View style={styles.controlSlot}>
-              <VoiceControl
-                session={session}
-                muted={snap.muted}
-                live={snap.state === "live"}
-                onPress={() => session.setMuted(!snap.muted)}
-              />
-            </View>
-            <View style={styles.controlSlot}>
-              <Pressable
-                onPress={() => session.stop()}
-                style={styles.control}
-                testID="call-hangup"
-                accessibilityRole="button"
-                accessibilityLabel="Hang up"
-                hitSlop={8}
-              >
-                <View style={styles.hangupCircle}>
-                  <Text style={styles.hangupGlyph}>{HANDSET}</Text>
-                </View>
-                <Text style={styles.controlLabel}>End</Text>
-              </Pressable>
-            </View>
-            <View style={styles.controlSlot}>
-              <Pressable
-                onPress={() => session.restart()}
-                style={styles.control}
-                testID="call-restart"
-                accessibilityRole="button"
-                accessibilityLabel="Restart call"
-                hitSlop={8}
-              >
-                <View style={styles.restartCircle}>
-                  <Text style={styles.restartGlyph}>↻</Text>
-                </View>
-                <Text style={styles.controlLabel}>Restart</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : (
+      {!active && (
+        <View style={styles.controls}>
           <View style={styles.startWrap}>
             <Pressable
               onPress={startCall}
@@ -562,8 +559,8 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
               </Text>
             )}
           </View>
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -665,7 +662,7 @@ function VoiceControl({
   return (
     <Pressable
       onPress={onPress}
-      style={styles.control}
+      style={styles.iconButton}
       testID="call-mute"
       accessibilityRole="button"
       accessibilityState={{ selected: muted }}
@@ -685,7 +682,6 @@ function VoiceControl({
         <MicGlyph muted={muted} />
         {muted && <View style={styles.voiceSlash} />}
       </View>
-      <Text style={[styles.controlLabel, muted && styles.controlLabelMuted]}>{muted ? "Muted" : "Mute"}</Text>
     </Pressable>
   );
 }
@@ -745,16 +741,23 @@ function DeviceRow({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1a1a2e" },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 10,
+    paddingTop: 56,
+    paddingBottom: 8,
     backgroundColor: "#0c121f",
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#222",
-    gap: 2,
+    gap: 12,
+    minHeight: 100,
   },
+  headerLeft: { flex: 1, gap: 2 },
   title: { color: "#eee", fontSize: 20, fontWeight: "700" },
   status: { color: "#888", fontSize: 13, fontVariant: ["tabular-nums"] },
+  statusActive: { fontSize: 15, fontWeight: "600" },
+  callControls: { flexDirection: "row", alignItems: "center", gap: 6 },
+  iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   statusLive: { color: "#4ade80" },
   statusBad: { color: "#f87171" },
   chipRow: {
@@ -842,14 +845,14 @@ const styles = StyleSheet.create({
   },
   controlSlot: { flex: 1, alignItems: "center" },
   restartCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#243447",
     alignItems: "center",
     justifyContent: "center",
   },
-  restartGlyph: { color: "#4cc9f0", fontSize: 26, lineHeight: 30, fontWeight: "700" },
+  restartGlyph: { color: "#4cc9f0", fontSize: 18, lineHeight: 22, fontWeight: "700" },
   control: { alignItems: "center", gap: 8 },
   controlLabel: { color: "#9fb3c8", fontSize: 12, fontWeight: "600" },
   controlLabelMuted: { color: "#f87171" },
@@ -888,20 +891,20 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "45deg" }],
   },
   mic: { alignItems: "center" },
-  micCapsule: { width: 12, height: 20, borderRadius: 6, backgroundColor: "#eee" },
+  micCapsule: { width: 6, height: 10, borderRadius: 3, backgroundColor: "#eee" },
   micCradle: {
-    width: 22,
-    height: 12,
-    marginTop: -9,
-    borderWidth: 2.5,
+    width: 12,
+    height: 7,
+    marginTop: -5,
+    borderWidth: 1.5,
     borderTopWidth: 0,
-    borderBottomLeftRadius: 11,
-    borderBottomRightRadius: 11,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
     borderColor: "#eee",
   },
   micCradleMuted: { borderColor: "#cbd5e1" },
-  micStem: { width: 2.5, height: 4, backgroundColor: "#eee" },
-  micFoot: { width: 12, height: 2.5, borderRadius: 1.25, backgroundColor: "#eee" },
+  micStem: { width: 1.5, height: 2, backgroundColor: "#eee" },
+  micFoot: { width: 7, height: 1.5, borderRadius: 1, backgroundColor: "#eee" },
   micMuted: { backgroundColor: "#cbd5e1" },
 
   /* the hang-up: round, red, the handset in white */
@@ -913,5 +916,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  hangupGlyph: { color: "#fff", fontSize: 32, lineHeight: 38 },
+  hangupGlyph: { color: "#fff", fontSize: 17, lineHeight: 21 },
 });
