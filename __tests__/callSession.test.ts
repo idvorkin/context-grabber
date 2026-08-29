@@ -420,6 +420,28 @@ describe("CallSession — prime (#88 experiment)", () => {
   });
 });
 
+describe("CallSession — restart (#93)", () => {
+  it("hangs up (diagnostics, stt_stop, stop) and dials again on the same backend", async () => {
+    const t = setup();
+    await goLive(t, "eleven");
+    const second = new FakeSocket();
+    t.connect.mockImplementation(() => second);
+    t.session.restart();
+    expect(t.socket.frames.slice(-2).map((f) => f.type)).toEqual(["stt_stop", "stop"]);
+    expect(t.socket.closed).toBe(true);
+    await flush();
+    expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "eleven" });
+    second.open();
+    expect(second.frames[0]).toMatchObject({ type: "start", backend: "eleven" });
+  });
+
+  it("does nothing when idle", async () => {
+    const t = setup();
+    t.session.restart();
+    expect(t.connect).not.toHaveBeenCalled();
+  });
+});
+
 describe("CallSession — mute", () => {
   it("muted: nothing leaves the phone, and the bridge is told", async () => {
     const t = setup();

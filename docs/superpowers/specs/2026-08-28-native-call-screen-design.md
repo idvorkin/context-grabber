@@ -315,6 +315,16 @@ reason — *a call is live in the Cockpit tab* — rather than opening a
 second microphone on the same phone. The reverse is not policed; the page
 does not know about the native call.
 
+### Restart
+
+Igor, 2026-08-29 09:39: *"Including End Call, we should have Restart
+Call."* Beside the hang-up, a **Restart** control: one tap ends the current
+session and dials a new one on the same backend, without a trip through the
+picker. It is the user's own self-heal for a call that went bad — a silent
+first call, echo, a stuck consult, a dropped socket. The ended call's
+diagnostics are sent to the bridge and kept in the log (behind the
+separator) exactly as a hang-up's are; Restart never erases evidence.
+
 ## Acceptance criteria
 
 1. **Call Larry** on a fresh install (nothing remembered): the call is on
@@ -432,6 +442,11 @@ does not know about the native call.
 31. **Evidence survives a retry.** After a silent call and its retry, open
     Diagnostics: both calls are there, separated by a rule, the earlier one
     first; *Copy diagnostics* copies both.
+32. **Restart.** On a live call, tap **Restart**: the call ends with
+    *stopped* and immediately shows *Calling Larry…* on the same backend,
+    then *live*; no picker, no second tap. Diagnostics afterwards holds
+    both calls, and the bridge's record of the first ends with the app's
+    diagnostics.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends

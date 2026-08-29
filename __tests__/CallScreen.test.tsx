@@ -336,6 +336,18 @@ describe("CallScreen", () => {
     expect(copied).toMatch(/ready: out_rate=24000/);
   });
 
+  it("Restart hangs up and redials on the same backend in one tap", async () => {
+    const t = setup();
+    await goLive(t);
+    expect(t.r.getByTestId("call-restart")).toBeTruthy();
+    fireEvent.press(t.r.getByTestId("call-restart"));
+    await settle();
+    const types = t.socket.sent.filter((x): x is string => typeof x === "string").map((x) => JSON.parse(x).type as string);
+    expect(types.slice(-2)).toEqual(["stt_stop", "stop"]);
+    expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "gemini" });
+    expect(t.r.queryByTestId("call-start")).toBeNull();
+  });
+
   it("Prime audio runs the session up and down once, only between calls", async () => {
     const t = setup();
     await settle();

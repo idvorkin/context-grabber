@@ -526,8 +526,21 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
                 <Text style={styles.controlLabel}>End</Text>
               </Pressable>
             </View>
-            {/* keeps the hang-up dead centre; the right slot is empty for now */}
-            <View style={styles.controlSlot} />
+            <View style={styles.controlSlot}>
+              <Pressable
+                onPress={() => session.restart()}
+                style={styles.control}
+                testID="call-restart"
+                accessibilityRole="button"
+                accessibilityLabel="Restart call"
+                hitSlop={8}
+              >
+                <View style={styles.restartCircle}>
+                  <Text style={styles.restartGlyph}>↻</Text>
+                </View>
+                <Text style={styles.controlLabel}>Restart</Text>
+              </Pressable>
+            </View>
           </>
         ) : (
           <View style={styles.startWrap}>
@@ -827,6 +840,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#0c121f",
   },
   controlSlot: { flex: 1, alignItems: "center" },
+  restartCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#243447",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  restartGlyph: { color: "#4cc9f0", fontSize: 26, lineHeight: 30, fontWeight: "700" },
   control: { alignItems: "center", gap: 8 },
   controlLabel: { color: "#9fb3c8", fontSize: 12, fontWeight: "600" },
   controlLabelMuted: { color: "#f87171" },

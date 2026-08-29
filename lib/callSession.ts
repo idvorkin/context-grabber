@@ -305,6 +305,19 @@ export class CallSession {
     this.finish(STOPPED, false);
   }
 
+  /**
+   * Restart (#93): hang up and dial again on the same backend, one tap.
+   * The same path the no-frames self-heal takes; the ended call's
+   * diagnostics go to the bridge and stay in the log.
+   */
+  restart(): void {
+    if (this.snap.state !== "connecting" && this.snap.state !== "live") return;
+    const backend = this.snap.backend;
+    this.log("restart: hang up + redial");
+    this.stop();
+    if (backend) void this.start(backend);
+  }
+
   setMuted(muted: boolean): void {
     if (this.snap.muted === muted) return;
     this.log(muted ? "muted" : "unmuted");
