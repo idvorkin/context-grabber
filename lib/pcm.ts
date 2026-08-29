@@ -58,6 +58,25 @@ export function pcm16ToFloat(data: ArrayBuffer): Float32Array {
   return out;
 }
 
+/** Quietest level the strip still shows; below this it sits at zero. */
+const LEVEL_FLOOR_DB = -50;
+
+/**
+ * How loud a mic buffer is, 0..1, on a decibel scale so speech at a normal
+ * distance sits mid-strip rather than pinned near zero the way linear peak
+ * would put it. -50 dBFS → 0, 0 dBFS → 1.
+ */
+export function micLevel(samples: Float32Array): number {
+  let peak = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const a = Math.abs(samples[i]);
+    if (a > peak) peak = a;
+  }
+  if (peak <= 0) return 0;
+  const db = 20 * Math.log10(Math.min(1, peak));
+  return Math.max(0, Math.min(1, 1 - db / LEVEL_FLOOR_DB));
+}
+
 /**
  * One mic buffer from the engine → one binary frame for the bridge:
  * resampled to 16 kHz and packed as Int16 LE.

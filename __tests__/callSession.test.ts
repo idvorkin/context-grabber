@@ -209,6 +209,23 @@ describe("CallSession — ready and the microphone", () => {
     }
   });
 
+  it("an ack for an earlier probe does not vouch for the re-armed mic", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      await goLive(t);
+      t.audio.mic();
+      jest.advanceTimersByTime(MIC_ACK_MS);
+      expect(t.audio.restartMic).toHaveBeenCalledTimes(1);
+      t.audio.mic(); // probe 2 is now waiting
+      t.socket.say({ type: "mic_ack", token: 1 }); // stale
+      jest.advanceTimersByTime(MIC_ACK_MS);
+      expect(t.session.snapshot.problem).toBe(MIC_NOT_REACHING);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it("an ack in time means no re-arm", async () => {
     jest.useFakeTimers();
     try {
@@ -258,6 +275,26 @@ describe("CallSession — mute", () => {
     await goLive(t);
     expect(t.socket.frames.filter((f) => f.type === "mic")).toHaveLength(0);
     expect(t.session.snapshot.muted).toBe(true);
+  });
+});
+
+describe("CallSession — mic level", () => {
+  it("reports a level per buffer, muted included, and 0 at the end", async () => {
+    const t = setup();
+    const levels: number[] = [];
+    t.session.subscribeLevel((l) => levels.push(l));
+    await goLive(t);
+    t.audio.mic(); // silence
+    t.session.setMuted(true);
+    const loud = new Float32Array(480).fill(0.5);
+    // reach the listener the engine would call
+    (t.audio.startMic.mock.calls[0][0] as (s: Float32Array, r: number) => void)(loud, 48000);
+    t.socket.say({ type: "closed", reason: "stopped" });
+    expect(levels[0]).toBe(0);
+    expect(levels[1]).toBeGreaterThan(0.8);
+    expect(levels.at(-1)).toBe(0);
+    // muted: the level was reported, the audio was not sent
+    expect(t.socket.binaryFrames).toHaveLength(1);
   });
 });
 

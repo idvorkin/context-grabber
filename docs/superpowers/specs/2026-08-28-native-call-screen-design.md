@@ -76,9 +76,53 @@ A new tab, **Call**, beside Cockpit. Idle, it shows: a large **Call Larry**
 button, a row of backends to choose from — *ElevenLabs*, *Gemini*, *OpenAI*,
 *Drill* — with the last choice remembered (ElevenLabs, Tony's voice, until
 Igor picks otherwise — "Let's default to the 11 labs Tony call", 2026-08-29),
-and the microphone and output
-pickers showing what is attached right now (the same roster and names the
-audio bridge gives the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*).
+and one **devices line**.
+
+### The devices line
+
+Igor, 2026-08-29: *"Instead of wasting all of that mic output/input, I want
+to be able to collapse that down, maybe under a folder, so I have more
+space."* And: *"I want to see mic input volume, that little strip that goes
+up and down."*
+
+One line, always visible: a small **level strip** that rises and falls with
+the microphone, then the current microphone and output by name — *iPhone
+Microphone · Speaker* — and a disclosure chevron. Tap the line and the two
+pickers unfold beneath it (the same roster and names the audio bridge gives
+the page: *iPhone Microphone*, *AirPods Pro*, *Speaker*); tap again and they
+fold away. Folded is the default; the captions get the space.
+
+The level strip is live whenever the microphone is open — during a call —
+and flat otherwise. Muted, it still moves (the mic is still heard, just not
+sent) but is dimmed, so "is my mic working" and "am I muted" are both
+answered at a glance.
+
+**A USB microphone wins — for the microphone only.** *"If a mic is over
+USB, let's take that as a default."* When a USB audio device with a
+microphone is attached — at the start of a call, or plugged in during one —
+the call uses it without a tap, and the devices line says so. Igor's own
+pick still wins: once he has chosen a microphone by hand during a call, the
+app stops second-guessing him until the next call. **The output does not
+move.** iOS likes to send playback to a USB device that was just chosen as
+the microphone; a wireless-mic receiver has no speaker, and the first time
+this rule ran Larry's voice went into the dongle and Igor heard nothing
+(2026-08-29). The output stays where it was, and a USB device is offered in
+the output picker only while iOS is actually playing through it.
+
+### Diagnostics
+
+*"Do you have logging output on this?"* Under the devices line, a
+**Diagnostics** fold. Open, it shows the call's log — a timestamped line
+for everything that matters and nothing that does not: the call starting
+and on which backend and bridge, the audio session configured, the
+recorder opening and at what hardware rate, the first mic frame and every
+few seconds of frames after, the probe and its ack, mute, interruptions,
+route changes with the full roster (every mic and output by name and
+type), the bridge's `ready`, warnings, errors, and the ending. A **Copy
+diagnostics** button puts the whole log plus the build, the state, and the
+current roster on the clipboard, so a bad call can be pasted into a chat
+without a cable. Folded by default; the log is kept whether or not it is
+open, across the call and until the next one starts.
 
 ### Starting a call
 
@@ -232,8 +276,40 @@ does not know about the native call.
     opens on the Call tab and the call is *live* on the remembered backend
     without another tap. With a call already live: the app comes to the
     Call tab; the timer did not reset.
+19. **Echo.** Gemini backend, phone on speaker, no headphones, held at
+    arm's length: let Larry say two full sentences. No *Igor* caption
+    appears containing Larry's words, and Larry does not interrupt or
+    restart himself. Then switch to the Today tab and back mid-call and
+    repeat: still clean (re-activating the session must not drop it).
 
+20. **Pickers mid-call.** With AirPods paired, on a live call: pick
+    *AirPods Pro* as the microphone — within 2 s the chip moves, the call
+    continues, and the next sentence Igor says is captioned (the mic
+    survived the change of hardware rate). Pick *Speaker* as the output:
+    Larry moves to the speaker; pick *AirPods Pro*: he moves back. Repeat
+    the mic pick with the phone locked mid-way: still captioned after
+    unlock.
 ## Rationale and risks
+21. **Level strip.** On a live call, speak: the strip rises with the voice
+    and falls in silence. Mute: it still moves, dimmed. Hang up: flat.
+22. **Folded pickers.** Open the Call tab: one devices line (strip, *iPhone
+    Microphone · Speaker*, chevron); no chips. Tap it: the mic and output
+    pickers appear; tap again: gone. Picking a device updates the line's
+    names whether folded or not.
+23. **USB default.** Plug a USB-C microphone in, then start a call: the
+    devices line names the USB mic and Larry hears it. Start a call on the
+    built-in mic, then plug the USB mic in: the call moves to it within
+    2 s. Pick *iPhone Microphone* by hand, then re-plug the USB mic: the
+    call stays on the built-in mic for the rest of that call.
+24. **USB does not steal the output.** With a wireless-mic USB receiver
+    plugged in, start a call on speaker: the mic is the receiver, the
+    output is still *Speaker*, Larry is audible, and the receiver is not
+    listed under *Out*.
+25. **Diagnostics.** After any call, open *Diagnostics*: the log shows the
+    start, `ready` with the output rate, the recorder's rate, the first mic
+    frame, `mic_ack`, every route change with the roster, and the ending.
+    *Copy diagnostics* → paste: the same, plus build sha, state, and the
+    current roster.
 
 **Why native rather than fixing the web view.** WebKit on iOS suspends
 `getUserMedia` capture when the app leaves the foreground, and `WKWebView`
@@ -263,9 +339,13 @@ Gym Timer), and the deep-link routing. This is a screen and a socket.
   cellular will re-home the VPN and may drop the socket. Phase 1 reports
   *connection lost* rather than reconnecting.
 - *Echo.* On the speaker with the microphone open, the vendor's VAD hears
-  Larry and barges in on himself. The page has the same problem and the
-  same advice — headphones — but the native screen's voice-chat session
-  mode gives iOS's echo cancellation a real chance the web view never had.
+  Larry and barges in on himself — the first native calls did exactly that
+  ([#80](https://github.com/idvorkin/context-grabber/issues/80): Gemini
+  transcribed its own sentences as Igor and restarted them six times). The
+  session mode alone does not cancel echo; the audio engine has to run its
+  I/O through iOS's voice-processing unit, the same one the web view and
+  every VoIP app use. The native screen does, so speakerphone works without
+  headphones; headphones remain the quieter option.
 - *Two clients, one bridge.* The bridge supports several sessions, but the
   app polices only its own side (the one-call rule above).
 - *Vendor limits are unchanged.* Gemini's ~15 minutes, ElevenLabs's cut at

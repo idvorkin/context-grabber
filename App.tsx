@@ -99,6 +99,7 @@ import { CockpitScreen, COCKPIT_URL } from "./screens/CockpitScreen";
 import { CallScreen } from "./screens/CallScreen";
 import { CallSession } from "./lib/callSession";
 import { createNativeCallAudio } from "./lib/callAudio";
+import { CallLog } from "./lib/callLog";
 import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./lib/callProtocol";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
@@ -536,13 +537,14 @@ export default function App() {
   // The native Larry call. One per app, outliving the Call tab's screen so a
   // call keeps going while another tab is showing — or the phone is locked.
   // Spec: docs/superpowers/specs/2026-08-28-native-call-screen-design.md.
+  const callLog = useMemo(() => new CallLog(), []);
   const callSession = useMemo(
     () =>
       new CallSession(
-        { connect: (url) => new WebSocket(url), audio: createNativeCallAudio() },
+        { connect: (url) => new WebSocket(url), audio: createNativeCallAudio(callLog), log: callLog },
         bridgeUrl(COCKPIT_URL),
       ),
-    [],
+    [callLog],
   );
   const [callBackend, setCallBackend] = useState<CallBackend>(DEFAULT_BACKEND);
   const callBackendRef = useRef<CallBackend>(DEFAULT_BACKEND);
@@ -1918,6 +1920,7 @@ export default function App() {
       {activeTab === "call" && (
         <CallScreen
           session={callSession}
+          log={callLog}
           backend={callBackend}
           onBackendChange={handleCallBackendChange}
           cockpitCallLive={cockpitCallLive}
