@@ -212,7 +212,13 @@ describe("CallScreen", () => {
     const t = setup();
     await settle();
     expect(route.setInput).not.toHaveBeenCalled();
-    // plugged in mid-session: the roster changes
+    // idle: a USB mic in the roster changes nothing
+    act(() => {
+      for (const l of route.listeners) l({ ...withUsb, reason: "NewDeviceAvailable" });
+    });
+    expect(route.setInput).not.toHaveBeenCalled();
+    await goLive(t);
+    // plugged in mid-call: the roster changes
     act(() => {
       for (const l of route.listeners) l({ ...withUsb, reason: "NewDeviceAvailable" });
     });
