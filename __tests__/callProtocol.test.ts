@@ -1,6 +1,7 @@
 import {
   BACKENDS,
   CONNECTION_LOST,
+  DEFAULT_BACKEND,
   bridgeUrl,
   endingText,
   isCallBackend,
@@ -26,8 +27,12 @@ describe("bridgeUrl", () => {
 });
 
 describe("backends", () => {
-  it("offers the four the page offers", () => {
-    expect(BACKENDS.map((b) => b.id)).toEqual(["gemini", "eleven", "openai", "drill"]);
+  it("offers the four the page offers, ElevenLabs first", () => {
+    expect(BACKENDS.map((b) => b.id)).toEqual(["eleven", "gemini", "openai", "drill"]);
+  });
+
+  it("defaults to ElevenLabs — Tony's voice", () => {
+    expect(DEFAULT_BACKEND).toBe("eleven");
   });
 
   it("isCallBackend rejects anything else", () => {
