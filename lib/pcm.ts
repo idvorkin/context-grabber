@@ -58,6 +58,12 @@ export function pcm16ToFloat(data: ArrayBuffer): Float32Array {
   return out;
 }
 
+/** True when every sample is exactly zero — a dead capture graph, never a quiet room. */
+export function isExactSilence(samples: Float32Array): boolean {
+  for (let i = 0; i < samples.length; i++) if (samples[i] !== 0) return false;
+  return samples.length > 0;
+}
+
 /** Quietest level the strip still shows; below this it sits at zero. */
 const LEVEL_FLOOR_DB = -50;
 

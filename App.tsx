@@ -541,7 +541,12 @@ export default function App() {
   const callSession = useMemo(
     () =>
       new CallSession(
-        { connect: (url) => new WebSocket(url), audio: createNativeCallAudio(callLog), log: callLog },
+        {
+          connect: (url) => new WebSocket(url),
+          audio: createNativeCallAudio(callLog),
+          log: callLog,
+          build: getBuildInfo().shortSha,
+        },
         bridgeUrl(COCKPIT_URL),
       ),
     [callLog],

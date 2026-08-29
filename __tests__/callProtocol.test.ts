@@ -43,13 +43,16 @@ describe("backends", () => {
 });
 
 describe("outbound frames", () => {
-  it("start names the backend and leaves model/voice to the vendor", () => {
-    expect(JSON.parse(startFrame("eleven"))).toEqual({
+  it("start names the backend, leaves model/voice to the vendor, and says who is calling", () => {
+    expect(JSON.parse(startFrame("eleven", "abc1234"))).toEqual({
       type: "start",
       backend: "eleven",
       model: "",
       voice: "",
+      client: "context-grabber",
+      build: "abc1234",
     });
+    expect(JSON.parse(startFrame("gemini"))).toMatchObject({ client: "context-grabber", build: "" });
   });
 
   it("the rest match the bridge docstring", () => {

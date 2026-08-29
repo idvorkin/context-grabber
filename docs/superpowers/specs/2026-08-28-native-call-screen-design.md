@@ -148,6 +148,23 @@ the status says *live*, a timer starts, and the microphone opens — not
 before. (Opening the microphone before the far end is ready is the page's
 rule too; it stops Igor talking into nothing.)
 
+**The first call after launch works like every other call.** Igor,
+2026-08-29 08:40: *"I think there's something wrong when it's a first
+call."* The bridge's recordings agreed ([#88](https://github.com/idvorkin/context-grabber/issues/88)):
+the first call of a burst sent exact silence for its whole length and the
+retry carried audio — the microphone was opened before iOS had finished
+bringing the input route up for a freshly configured session. Now the app
+waits for an input to actually be on the route before it opens the mic,
+and if the mic nonetheless delivers a second of exact zeros it is closed
+and reopened once, with a line in Diagnostics saying so. Only if it is
+still silent after that does the screen say *the microphone is delivering
+silence* — and Larry's side hears nothing rather than Igor wondering.
+
+**The bridge knows it is the app.** The call introduces itself —
+`client: context-grabber` and the build — so the bridge's records can tell
+an app call from a browser call ([#78](https://github.com/idvorkin/context-grabber/issues/78),
+the call half).
+
 If the bridge cannot be reached — not on the tailnet, the server is down —
 the screen says so within a few seconds, with a copyable error, and returns
 to idle. Nothing hangs.
@@ -300,7 +317,9 @@ does not know about the native call.
     than five characters; a consult row is clamped and expandable, and
     expanding it does not touch the call.
 17. The bridge's call record for a native call (`data/voice-live/<session>.jsonl`,
-    the feedback marker on teardown) is indistinguishable from a page call.
+    the feedback marker on teardown) matches a page call's in every way
+    except the client tag on the start frame, which names the app and
+    build.
 18. Tap **☎ Call** on the home-screen widget (medium, then large): the app
     opens on the Call tab and the call is *live* on the remembered backend
     without another tap. With a call already live: the app comes to the
@@ -358,6 +377,13 @@ does not know about the native call.
     sits bottom-centre, at least 64 pt across; tapping it ends the call with
     *stopped*. Idle and ended, it is gone and **Call Larry** is back. The
     *Diagnostics* fold opens in every state, calling and live included.
+29. **First call after launch.** Force-quit the app. Launch, Call tab,
+    **Call Larry**, say a sentence as soon as Tony has greeted: the voice
+    control swells as you speak and your sentence is captioned. Diagnostics
+    shows `input route ready: iPhone Microphone` before `recorder
+    started`, and no `zeros` line. Repeat five times (force-quit between):
+    five for five. If a `mic delivering zeros → re-arming` line appears,
+    the call still works (the watchdog caught it) — report it.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends

@@ -27,7 +27,7 @@ import {
   type BridgeMessage,
   type CallBackend,
 } from "./callProtocol";
-import { encodeMicFrame, micLevel } from "./pcm";
+import { encodeMicFrame, isExactSilence, micLevel } from "./pcm";
 import { NO_LOG, type CallLog } from "./callLog";
 
 export type CallState = "idle" | "connecting" | "live" | "ended";
@@ -101,7 +101,18 @@ export type CallSessionDeps = {
   now?: () => number;
   /** Where the call narrates itself. The Diagnostics fold reads it. */
   log?: Pick<CallLog, "add"> & Partial<Pick<CallLog, "reset">>;
+  /** The build, for the bridge's records (#78). */
+  build?: string;
 };
+
+/**
+ * Mic buffers that are exactly zero before the mic is re-armed. A dead
+ * capture graph is zero to the sample; a quiet room never is (#88). Ten
+ * buffers ≈ one second.
+ */
+export const ZERO_BUFFERS_BEFORE_REARM = 10;
+
+export const MIC_SILENT = "the microphone is delivering silence";
 
 /** Log a frame-count line this often. */
 const FRAME_LOG_EVERY = 50;
@@ -115,9 +126,11 @@ type Listener = (snapshot: CallSnapshot) => void;
 type LevelListener = (level: number) => void;
 
 export class CallSession {
-  private readonly deps: Required<Omit<CallSessionDeps, "log">> & Pick<CallSessionDeps, "log">;
+  private readonly deps: Required<Omit<CallSessionDeps, "log" | "build">> & Pick<CallSessionDeps, "log" | "build">;
   private framesSent = 0;
   private framesPlayed = 0;
+  private zeroRun = 0;
+  private zeroRearmed = false;
   private readonly url: string;
   private listeners = new Set<Listener>();
   /** The mic level rides its own channel: ten updates a second must not re-render the captions. */
@@ -211,7 +224,7 @@ export class CallSession {
     socket.binaryType = "arraybuffer";
     socket.onopen = () => {
       this.log("socket open → start frame");
-      this.safeSend(startFrame(backend));
+      this.safeSend(startFrame(backend, this.deps.build ?? ""));
     };
     socket.onmessage = (ev: { data: unknown }) => this.onSocketData(ev.data);
     socket.onerror = () => this.onSocketGone();
@@ -367,6 +380,7 @@ export class CallSession {
     // Heard even while muted: "is my mic working" and "am I muted" are
     // different questions, and the strip answers both.
     this.emitLevel(micLevel(samples));
+    this.watchForZeros(samples);
     if (this.snap.muted) return;
     this.safeSend(encodeMicFrame(samples, sampleRate));
     this.framesSent += 1;
@@ -383,6 +397,35 @@ export class CallSession {
       this.probeTimer = setTimeout(() => this.onProbeMissed(), MIC_ACK_MS);
     }
   };
+
+  /**
+   * The first call after launch used to send exact silence for its whole
+   * length (#88): the mic was armed before iOS had the input route up. If
+   * the first second is zero to the sample, close and reopen the mic once;
+   * if it is still zero after that, say so.
+   */
+  private watchForZeros(samples: Float32Array): void {
+    if (!isExactSilence(samples)) {
+      if (this.zeroRun >= ZERO_BUFFERS_BEFORE_REARM) this.log("mic audio present again");
+      this.zeroRun = 0;
+      if (this.snap.problem === MIC_SILENT) this.update({ problem: null });
+      return;
+    }
+    this.zeroRun += 1;
+    if (this.zeroRun !== ZERO_BUFFERS_BEFORE_REARM) return;
+    if (!this.zeroRearmed) {
+      this.zeroRearmed = true;
+      this.zeroRun = 0;
+      this.log(`mic delivering zeros (${ZERO_BUFFERS_BEFORE_REARM} buffers) → re-arming the mic once`);
+      void this.deps.audio.restartMic().catch((e) => {
+        this.log(`re-arm after zeros FAILED: ${describe(e)}`);
+        this.update({ problem: `microphone failed: ${describe(e)}` });
+      });
+      return;
+    }
+    this.log("mic still delivering zeros after re-arm");
+    this.update({ problem: MIC_SILENT });
+  }
 
   private onProbeMissed(): void {
     this.probeTimer = null;
@@ -478,6 +521,8 @@ export class CallSession {
     this.closing = false;
     this.framesSent = 0;
     this.framesPlayed = 0;
+    this.zeroRun = 0;
+    this.zeroRearmed = false;
   }
 
   private finish(reason: string, badly: boolean): void {
