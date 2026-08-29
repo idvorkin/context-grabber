@@ -166,6 +166,16 @@ unknown `via` is ignored and the remembered backend is used. If a call is
 already live, the link brings Igor to it and does not start a second one.
 The rest of the deep-link spec is unchanged.
 
+### The widget
+
+Igor, 2026-08-29: *"Make sure to add a call button there as well, somewhere."*
+
+The home-screen widget (medium and large) gets a **☎ Call** pill in its
+header, beside the date. Tapping it is `grabber://call`: the app opens on
+the Call tab and the call starts on the remembered backend — from the home
+screen to Larry in one tap, no unlock-and-hunt. The rest of the widget is
+unchanged; the pill is the only new tap zone.
+
 ### One call at a time
 
 If a call is live on the Cockpit *page* (its own Call tab, in the web
@@ -215,6 +225,10 @@ does not know about the native call.
     expanding it does not touch the call.
 17. The bridge's call record for a native call (`data/voice-live/<session>.jsonl`,
     the feedback marker on teardown) is indistinguishable from a page call.
+18. Tap **☎ Call** on the home-screen widget (medium, then large): the app
+    opens on the Call tab and the call is *live* on the remembered backend
+    without another tap. With a call already live: the app comes to the
+    Call tab; the timer did not reset.
 
 ## Rationale and risks
 
