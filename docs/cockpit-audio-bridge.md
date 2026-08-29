@@ -15,7 +15,8 @@ Implemented on the app side by:
 | native audio session | `modules/audio-route/` (local Expo module, iOS-only) |
 
 The page consuming it lives in another repository
-(`igor2/decision_queue/index.html`) and is a **follow-up** — nothing here
+(`idvorkin-ai-tools/cockpit`, `index.html` — it moved out of `igor2/decision_queue`
+on 2026-08-28) and is a **follow-up** — nothing here
 requires it. With no page using the bridge, the app behaves exactly as it
 did before.
 

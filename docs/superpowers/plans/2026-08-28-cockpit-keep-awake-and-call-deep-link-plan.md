@@ -55,7 +55,7 @@ Both ship as one OTA from `context-grabber` + one page PR in `igor2`.
   `window.CockpitCallIntent` + `cockpit-call` event (app → page only; no
   version bump — additive).
 
-## igor2 (page) — `decision_queue/index.html`
+## Cockpit page — `index.html` in `idvorkin-ai-tools/cockpit` (branch `extract`; moved out of `igor2/decision_queue` on 2026-08-28 — page-side changes are PRs there, from a spec)
 - Bootstrap: `function cockpitCallIntent(m)`; feature-detect
   `window.CockpitCallIntent` at load and `window.addEventListener("cockpit-call", …)`.
   Consume once (clear `window.CockpitCallIntent` after handling).
