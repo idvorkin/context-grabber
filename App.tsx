@@ -101,6 +101,7 @@ import { CallSession } from "./lib/callSession";
 import { createNativeCallAudio } from "./lib/callAudio";
 import { CallLog } from "./lib/callLog";
 import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./lib/callProtocol";
+import { DEFAULT_VOICE, isCallVoice, type CallVoice } from "./lib/callVoices";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
 // --- Constants ---
@@ -560,6 +561,14 @@ export default function App() {
   }, [db]);
   const handleCallBackendChangeRef = useRef(handleCallBackendChange);
   handleCallBackendChangeRef.current = handleCallBackendChange;
+  // The voice the call answers in — Tony or Igor. Remembered like the backend (#98).
+  const [callVoice, setCallVoice] = useState<CallVoice>(DEFAULT_VOICE);
+  const callVoiceRef = useRef<CallVoice>(DEFAULT_VOICE);
+  callVoiceRef.current = callVoice;
+  const handleCallVoiceChange = useCallback((v: CallVoice) => {
+    setCallVoice(v);
+    if (db) void setSetting(db, "call_voice", v).catch(() => {});
+  }, [db]);
   // The Cockpit page's own call: while it is live, the native tab will not
   // open a second microphone on the same phone.
   const [cockpitCallLive, setCockpitCallLive] = useState(false);
@@ -595,6 +604,8 @@ export default function App() {
 
         const rememberedBackend = await getSetting(database, "call_backend", DEFAULT_BACKEND);
         if (isCallBackend(rememberedBackend)) setCallBackend(rememberedBackend);
+        const rememberedVoice = await getSetting(database, "call_voice", DEFAULT_VOICE);
+        if (isCallVoice(rememberedVoice)) setCallVoice(rememberedVoice);
         const enabled = await getSetting(database, "tracking_enabled", "false");
         setTrackingEnabled(enabled === "true");
 
@@ -717,7 +728,7 @@ export default function App() {
         setActiveTab("call");
         const via = route.via ?? callBackendRef.current;
         if (route.via) handleCallBackendChangeRef.current(route.via);
-        void callSession.start(via);
+        void callSession.start(via, callVoiceRef.current);
       } else if (route.kind === "cockpit") {
         // Igor: "a shortcut that takes me to Cockpit, not just call."
         setGymTimerVisible(false);
@@ -1942,6 +1953,8 @@ export default function App() {
           log={callLog}
           backend={callBackend}
           onBackendChange={handleCallBackendChange}
+          voice={callVoice}
+          onVoiceChange={handleCallVoiceChange}
           cockpitCallLive={cockpitCallLive}
           cockpitMounted={cockpitMounted}
         />

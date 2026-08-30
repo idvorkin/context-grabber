@@ -38,21 +38,29 @@ const audio: CallAudio = {
 
 const route = AudioRoute as unknown as { listeners: ((p: unknown) => void)[]; setOutput: jest.Mock; setInput: jest.Mock; getDevices: jest.Mock };
 
-function setup(props: { cockpitCallLive?: boolean } = {}) {
+type Backend = "eleven" | "gemini" | "openai" | "drill";
+type Voice = "tony" | "igor";
+
+function setup(props: { cockpitCallLive?: boolean; backend?: Backend; voice?: Voice } = {}) {
   const socket = new FakeSocket();
   const log = new CallLog();
   const session = new CallSession({ connect: () => socket, audio, log }, "wss://h/bridge");
   const onBackendChange = jest.fn();
-  const r = render(
+  const onVoiceChange = jest.fn();
+  const element = (o: { backend?: Backend; voice?: Voice } = {}) => (
     <CallScreen
       session={session}
       log={log}
-      backend="gemini"
+      backend={o.backend ?? props.backend ?? "gemini"}
       onBackendChange={onBackendChange}
+      voice={o.voice ?? props.voice}
+      onVoiceChange={onVoiceChange}
       cockpitCallLive={props.cockpitCallLive ?? false}
-    />,
+    />
   );
-  return { r, socket, session, onBackendChange, log };
+  const r = render(element());
+  const rerender = (o: { backend?: Backend; voice?: Voice }) => r.rerender(element(o));
+  return { r, socket, session, onBackendChange, onVoiceChange, log, rerender };
 }
 
 const settle = () => act(async () => {});
@@ -324,7 +332,7 @@ describe("CallScreen", () => {
     await goLive(t);
     expect(t.r.queryByTestId("call-diag")).toBeNull();
     fireEvent.press(t.r.getByTestId("call-diag-toggle"));
-    expect(t.r.getByText(/start backend=gemini build=.* bridge=wss:\/\/h\/bridge/)).toBeTruthy();
+    expect(t.r.getByText(/start backend=gemini voice=Tony build=.* bridge=wss:\/\/h\/bridge/)).toBeTruthy();
     expect(t.r.getByText(/ready: out_rate=24000/)).toBeTruthy();
     await act(async () => {
       fireEvent.press(t.r.getByTestId("call-diag-copy"));
@@ -334,6 +342,51 @@ describe("CallScreen", () => {
     expect(copied).toMatch(/^state: live/m);
     expect(copied).toMatch(/^route: in=iPhone Microphone\[MicrophoneBuiltIn\]/m);
     expect(copied).toMatch(/ready: out_rate=24000/);
+  });
+
+  it("the voice row: Tony and Igor under the fold on ElevenLabs, Tony by default, gone on Gemini (#98)", async () => {
+    const t = setup({ backend: "eleven" });
+    await settle();
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
+    const row = within(t.r.getByTestId("call-voices"));
+    expect(row.getByText("Tony")).toBeTruthy();
+    expect(row.getByText("Igor")).toBeTruthy();
+    expect(t.r.getByTestId("call-voices-tony").props.accessibilityState.selected).toBe(true);
+    expect(t.r.getByTestId("call-voices-igor").props.accessibilityState.selected).toBe(false);
+    t.rerender({ backend: "gemini" });
+    expect(t.r.queryByTestId("call-voices")).toBeNull();
+    t.rerender({ backend: "eleven" });
+    expect(t.r.getByTestId("call-voices-tony").props.accessibilityState.selected).toBe(true);
+  });
+
+  it("picking Igor is reported up, named on the devices and status lines, sent with the call, and locked once it starts", async () => {
+    const t = setup({ backend: "eleven" });
+    await settle();
+    expect(t.r.getByTestId("call-devices-summary").props.children).toBe("iPhone Microphone · Speaker · Tony");
+    fireEvent.press(t.r.getByTestId("call-devices-toggle"));
+    fireEvent.press(t.r.getByTestId("call-voices-igor"));
+    expect(t.onVoiceChange).toHaveBeenCalledWith("igor");
+    t.rerender({ voice: "igor" });
+    expect(t.r.getByTestId("call-devices-summary").props.children).toBe("iPhone Microphone · Speaker · Igor");
+    fireEvent.press(t.r.getByTestId("call-start"));
+    await settle();
+    expect(t.r.getByTestId("call-status").props.children).toBe("calling Larry… · ElevenLabs · Igor");
+    act(() => t.socket.onopen?.({}));
+    const start = JSON.parse(t.socket.sent[0] as string);
+    expect(start).toMatchObject({ backend: "eleven", voice: "Nvd5I2HGnOWHNU0ijNEy", model: "eleven_v3_conversational" });
+    t.socket.say({ type: "ready", out_rate: 24000, backend: "eleven", session: "s" });
+    await settle();
+    expect(t.r.getByTestId("call-status").props.children).toMatch(/^live · \d+:\d\d · ElevenLabs · Igor$/);
+    fireEvent.press(t.r.getByTestId("call-voices-tony"));
+    expect(t.onVoiceChange).toHaveBeenCalledTimes(1);
+    expect(t.r.getByTestId("call-voices-igor").props.accessibilityState.disabled).toBe(true);
+  });
+
+  it("on Gemini the status line names no voice", async () => {
+    const t = setup({ backend: "gemini", voice: "igor" });
+    await goLive(t);
+    expect(t.r.getByTestId("call-status").props.children).toMatch(/^live · \d+:\d\d · Gemini$/);
+    expect(t.r.getByTestId("call-devices-summary").props.children).toBe("iPhone Microphone · Speaker");
   });
 
   it("Restart hangs up and redials on the same backend in one tap", async () => {

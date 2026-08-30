@@ -271,7 +271,7 @@ describe("CallSession — a recorder that never delivers (#88)", () => {
       const lines: string[] = [];
       const log = { add: (l: string) => lines.push(l), all: lines };
       const session = new CallSession({ connect: t.connect, audio: t.audio, log, build: "abc (x)" }, "wss://h/bridge");
-      await session.start("eleven");
+      await session.start("eleven", "igor");
       t.socket.open();
       t.socket.say({ type: "ready", out_rate: 16000 });
       await flush();
@@ -290,9 +290,10 @@ describe("CallSession — a recorder that never delivers (#88)", () => {
       expect(diag!.text).toMatch(/still no mic buffer after reset → redialing once/);
       expect(t.socket.frames.at(-1)).toEqual({ type: "stop" });
       expect(t.connect).toHaveBeenCalledTimes(2);
-      expect(session.snapshot).toMatchObject({ state: "connecting", backend: "eleven" });
+      expect(session.snapshot).toMatchObject({ state: "connecting", backend: "eleven", voice: "igor" });
       second.open();
-      expect(second.frames[0]).toMatchObject({ type: "start", backend: "eleven" });
+      // the redial keeps the voice (#98)
+      expect(second.frames[0]).toMatchObject({ type: "start", backend: "eleven", voice: "Nvd5I2HGnOWHNU0ijNEy" });
     } finally {
       jest.useRealTimers();
     }
@@ -420,19 +421,63 @@ describe("CallSession — prime (#88 experiment)", () => {
   });
 });
 
-describe("CallSession — restart (#93)", () => {
-  it("hangs up (diagnostics, stt_stop, stop) and dials again on the same backend", async () => {
+describe("CallSession — the voice (#98)", () => {
+  it("Igor rides the start frame as the clone on v3; Tony sends the bridge's defaults", async () => {
     const t = setup();
-    await goLive(t, "eleven");
+    await t.session.start("eleven", "igor");
+    t.socket.open();
+    expect(t.socket.frames[0]).toMatchObject({
+      type: "start",
+      backend: "eleven",
+      voice: "Nvd5I2HGnOWHNU0ijNEy",
+      model: "eleven_v3_conversational",
+    });
+    expect(t.session.snapshot.voice).toBe("igor");
+    t.session.stop();
+    const second = new FakeSocket();
+    t.connect.mockImplementation(() => second);
+    await t.session.start("eleven", "tony");
+    second.open();
+    expect(second.frames[0]).toMatchObject({ voice: "", model: "" });
+    expect(t.session.snapshot.voice).toBe("tony");
+  });
+
+  it("on Gemini the pick is remembered in the snapshot but nothing rides the frame", async () => {
+    const t = setup();
+    await t.session.start("gemini", "igor");
+    t.socket.open();
+    expect(t.socket.frames[0]).toMatchObject({ backend: "gemini", voice: "", model: "" });
+    expect(t.session.snapshot.voice).toBe("igor");
+  });
+
+  it("start without a voice is Tony", async () => {
+    const t = setup();
+    await t.session.start("eleven");
+    expect(t.session.snapshot.voice).toBe("tony");
+  });
+});
+
+describe("CallSession — restart (#93)", () => {
+  it("hangs up (diagnostics, stt_stop, stop) and dials again on the same backend, in the same voice", async () => {
+    const t = setup();
+    await t.session.start("eleven", "igor");
+    t.socket.open();
+    t.socket.say({ type: "ready", out_rate: 24000, backend: "eleven", session: "s1" });
+    await flush();
     const second = new FakeSocket();
     t.connect.mockImplementation(() => second);
     t.session.restart();
     expect(t.socket.frames.slice(-2).map((f) => f.type)).toEqual(["stt_stop", "stop"]);
     expect(t.socket.closed).toBe(true);
     await flush();
-    expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "eleven" });
+    expect(t.session.snapshot).toMatchObject({ state: "connecting", backend: "eleven", voice: "igor" });
     second.open();
-    expect(second.frames[0]).toMatchObject({ type: "start", backend: "eleven" });
+    expect(second.frames[0]).toMatchObject({
+      type: "start",
+      backend: "eleven",
+      voice: "Nvd5I2HGnOWHNU0ijNEy",
+      model: "eleven_v3_conversational",
+    });
   });
 
   it("does nothing when idle", async () => {

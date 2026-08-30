@@ -56,6 +56,17 @@ describe("outbound frames", () => {
     expect(JSON.parse(startFrame("gemini"))).toMatchObject({ client: "context-grabber", build: "" });
   });
 
+  it("start carries a voice id and a model when the call has a pick (#98)", () => {
+    expect(JSON.parse(startFrame("eleven", "abc", "Nvd5I2HGnOWHNU0ijNEy", "eleven_v3_conversational"))).toEqual({
+      type: "start",
+      backend: "eleven",
+      model: "eleven_v3_conversational",
+      voice: "Nvd5I2HGnOWHNU0ijNEy",
+      client: "context-grabber",
+      build: "abc",
+    });
+  });
+
   it("the rest match the bridge docstring", () => {
     expect(JSON.parse(sttStartFrame())).toEqual({ type: "stt_start", rate: 16000 });
     expect(JSON.parse(sttStopFrame())).toEqual({ type: "stt_stop" });

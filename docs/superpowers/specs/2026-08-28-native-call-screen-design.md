@@ -7,6 +7,7 @@
 **Depends on:** [Cockpit Tab](2026-08-27-cockpit-tab-design.md), [Cockpit Audio Bridge](2026-08-28-cockpit-audio-bridge-design.md)
 **Changes:** [Call deep link](2026-08-28-cockpit-call-deep-link-design.md) — `grabber://call` now lands here, not on the Cockpit page
 **Amended:** 2026-08-29, [#90](https://github.com/idvorkin/context-grabber/issues/90) — a calling treatment while the bridge answers; mute folds into the voice indicator; a round red hang-up
+**Amended:** 2026-08-29, [#98](https://github.com/idvorkin/context-grabber/issues/98) — a voice picker beside the microphone picker
 
 ## Summary
 
@@ -62,9 +63,11 @@ keeps talking.
   green "call in progress" pill, surviving an *incoming phone call* — phase
   2, its own spec. Phase 1 is "the call does not die when the screen goes
   dark".
-- **A voice / model picker.** Phase 1 starts the call on the backend's
-  default voice and model. Igor's favourite voices (Cockpit PR
-  `voice-favorites`) come in phase 2 once the screen exists.
+- **A model picker.** The call runs on each backend's default model. (The
+  *voice* picker was a phase-2 item; it is in — see *The voice* below.)
+- **Voices for the other backends.** Igor: *"I don't care so much about the
+  other ones."* OpenAI's ten built-in voices and Gemini's pinned one are not
+  offered; those backends call on their defaults.
 - **Typed turns.** The page offers a text box when there is no microphone.
   The app always has a microphone.
 - **Android.**
@@ -97,6 +100,45 @@ The "little strip that goes up and down" started life on this line. Since
 **voice control** at the bottom of the screen — the thing you look at while
 talking, and the mute — described under *During a call*. It is live
 whenever the microphone is open, and gone with the call.
+
+### The voice
+
+Igor, on a call 2026-08-29 10:47, trying to reach his own cloned voice from
+the app: *"When we collapse microphones, can we also pick the voice to
+select as well? I want to be able to select the different ElevenLabs
+voices."* ([#98](https://github.com/idvorkin/context-grabber/issues/98)).
+Scoped down the same afternoon (16:14): *the full ElevenLabs voice list is
+not needed for v1 — a two-way selector is enough: Tony or Igor.*
+
+Inside the same fold as the microphone and output pickers, a third row,
+**Voice**, with two choices:
+
+- **Tony** — the stock voice (ElevenLabs's *Charlie*), the one every call
+  has used until now, on the bridge's default model.
+- **Igor** — his own cloned voice. The clone is only worth hearing on
+  ElevenLabs's *v3 conversational* model, where it performs `[laughs]`,
+  `[sighs]` and accent tags (Igor: *"Holy shit, that's good"*), so picking
+  Igor also puts the call on that model. Nothing else about the call
+  changes: same Tony persona, same Larry behind him.
+
+Tony is the pick on a fresh install. Tap the other: it is remembered like
+the backend is, across restarts, and the next call is placed in that voice.
+The pick is locked while a call is connecting or live — a voice cannot
+change mid-session — and Restart and the automatic redial keep it. **The
+voice's name is on the status line** whenever a call is up (*live · 1:17 ·
+ElevenLabs · Igor*) and on the folded devices line (*iPhone Microphone ·
+Speaker · Igor*), so a call in the wrong voice is visible without opening
+anything.
+
+The voice belongs to ElevenLabs (and to Drill, whose clips are ElevenLabs
+too). On Gemini and OpenAI the row is folded away and the call is on the
+vendor's default, whatever was picked for ElevenLabs; switch back and the
+pick is still there.
+
+Not in this change: the full account roster with favourites (the page has
+it; add it here if two is ever not enough), a model picker (Igor implies
+v3; Tony implies the default; nothing else is chosen), and voices for the
+other backends.
 
 **A USB microphone wins — for the microphone only.** *"If a mic is over
 USB, let's take that as a default."* When a USB audio device with a
@@ -241,7 +283,7 @@ The screen is the conversation and nothing else (Cockpit DESIGN P23/P24):
   it takes effect immediately, and if iOS reroutes on its own (AirPods
   connect, headphones unplugged) the pickers follow and the call carries
   on wherever iOS put it.
-- **Timer and backend name**, small, at the top.
+- **Timer, backend name and voice**, small, at the top.
 
 When Larry is cut off — Igor talks over him — the audio stops within a
 beat, exactly as on the page. That decision is the vendor's; the screen
@@ -337,8 +379,9 @@ length. Look how much of the screen you're taking up."* Reversed
 ([#96](https://github.com/idvorkin/context-grabber/issues/96)).
 
 During a call there is **one compact line** at the top: on the left,
-*live · 1:17 · ElevenLabs* (or *calling Larry… · ElevenLabs*); on the
-right, three small icon controls — **mute** (the voice indicator: it
+*live · 1:17 · ElevenLabs · Igor* (or *calling Larry… · ElevenLabs ·
+Igor*; no voice segment on a backend without a voice pick); on the right,
+three small icon controls — **mute** (the voice indicator: it
 swells as Igor speaks; tap to mute, and it dims, freezes and takes a red
 slash), **restart** (↻), **end** (a red handset). Visually small, but each
 is comfortably tappable (44 pt hit area). Nothing else sits between the
@@ -473,6 +516,20 @@ back. The calling treatment in the middle of the screen stays; the big
     captions run down to the tab bar with nothing under them. Each icon
     answers a tap anywhere in a 44 pt square. Muting via the icon dims and
     slashes it; the timer keeps counting.
+34. **The voice row.** ElevenLabs selected, open the devices fold: under
+    *Mic* and *Out* a *Voice* row offers **Tony** and **Igor**, Tony
+    highlighted on a fresh install. Switch the backend to Gemini: the row is
+    gone; back to ElevenLabs: it is back with the same pick.
+35. **A call as Igor.** Pick *Igor*, fold the pickers: the devices line ends
+    *· Igor*. **Call Larry**: the status line reads *calling Larry… ·
+    ElevenLabs · Igor*, then *live · 0:03 · ElevenLabs · Igor*, and the
+    voice that answers is Igor's own, with v3's expressiveness; the bridge's
+    session row names the clone and `eleven_v3_conversational`. Force-quit
+    and relaunch: *Igor* is still picked. Tap **Restart**: the new call is
+    as Igor too, and the row stayed locked throughout.
+36. **Back to Tony.** Pick *Tony*: the next call answers in Charlie's voice
+    on the default model, and the bridge's session row shows no voice or
+    model override — exactly a call placed before this change.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
