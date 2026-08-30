@@ -8,9 +8,10 @@
  * "Diagnostics".
  */
 
-export const CALL_LOG_LINES = 600;
+/** Room for six to ten calls: a silent call's evidence must outlive its retry and a few more (#92, #95). */
+export const CALL_LOG_LINES = 900;
 
-/** Between calls. The call before must survive its retry (#92). */
+/** Between calls. The calls before must survive their retries (#92). */
 export const CALL_SEPARATOR = "──────── previous call above ────────";
 
 type LogListener = (lines: readonly string[]) => void;
@@ -38,14 +39,15 @@ export class CallLog {
   }
 
   /**
-   * A new call: keep the previous call's lines (one call back), drop
-   * anything older, restart the clock.
+   * A new call: keep everything so far behind a separator (the line cap
+   * drops the oldest), restart the clock. One call back was not enough —
+   * a silent call's lines were gone after its retry and one more (#95).
    */
   reset(): void {
-    const prev = this.lines;
-    const cut = prev.lastIndexOf(CALL_SEPARATOR);
-    const kept = cut >= 0 ? prev.slice(cut + 1) : prev;
-    this.lines = kept.length ? [...kept, CALL_SEPARATOR] : [];
+    if (this.lines.length && this.lines[this.lines.length - 1] !== CALL_SEPARATOR) {
+      this.lines.push(CALL_SEPARATOR);
+    }
+    if (this.lines.length > CALL_LOG_LINES) this.lines.splice(0, this.lines.length - CALL_LOG_LINES);
     this.t0 = this.now();
     for (const l of this.listeners) l(this.lines);
   }

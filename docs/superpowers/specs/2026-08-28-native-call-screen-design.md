@@ -185,10 +185,13 @@ becomes automatic; if not, something else owns the microphone. The log's
 first line of every call also says whether the Cockpit tab is loaded and
 whether its page reports a call of its own.
 
-**The log keeps the call before.** A retry must never erase the evidence
-of the call it is retrying ([#92](https://github.com/idvorkin/context-grabber/issues/92)):
-the log holds the last two calls, separated by a rule, and *Copy
-diagnostics* copies both.
+**The log keeps the calls before.** A retry must never erase the evidence
+of the call it is retrying ([#92](https://github.com/idvorkin/context-grabber/issues/92)),
+and on 2026-08-29 a silent call's evidence was gone after two more calls
+— a retry and one after it — before anyone could read it. So the log
+holds every call it has room for (several hundred lines, six to ten
+calls), each separated by a rule, oldest first; *Copy diagnostics* copies
+all of it, and so does the dump the bridge gets.
 
 **The dump reaches the bridge on its own.** At every hang-up, at every
 automatic redial, and when the bridge fails to acknowledge the microphone,
@@ -201,13 +204,17 @@ pasting anything. (Bridge half: the Cockpit repo.)
 Larry's finding on [#88](https://github.com/idvorkin/context-grabber/issues/88),
 2026-08-29 09:26: on every silent first call the bridge received *no*
 microphone frames at all — not zeros, nothing. The recorder was started and
-never produced a buffer. So the app watches for exactly that: if three
-seconds pass after the recorder starts with no buffer, the call's audio is
+never produced a buffer. So the app watches for exactly that: if a second
+and a half passes after the recorder starts with no buffer, the call's audio is
 torn down and brought back up (a short gap in Larry's voice, a line in
 Diagnostics); if there is still nothing after that, the call **redials
 itself** — once — on the same backend, because the retry has always
-worked. From the chair: the first call after launch may take a few seconds
-longer to become a working call, and never needs a second tap.
+worked. The watch is short — a second and a half, where a working mic's
+first buffer comes within a tenth — because on 2026-08-29 17:33 Igor hung
+up a silent call at 3.1 s, before a three-second watch could act (the
+bridge's record shows zero frames). From the chair: the first call after
+launch may take a few seconds longer to become a working call, and never
+needs a second tap — give it five seconds before reaching for Restart.
 
 ### Starting a call
 
@@ -506,14 +513,14 @@ back. The calling treatment in the middle of the screen stays; the big
     five for five. If a `mic delivering zeros → re-arming` line appears,
     the call still works (the watchdog caught it) — report it.
 30. **No-frames self-heal.** Diagnostics on any call where the mic never
-    delivered shows `no mic buffer within 3s … → resetting audio`, then
+    delivered shows `no mic buffer within 1.5s … → resetting audio`, then
     either `first mic frame` (healed) or `still no mic buffer → redialing`
     followed by a fresh `start` on the same backend; the screen shows
     *Calling Larry…* again briefly and then *live*, without a tap. The
     bridge's record of the dead session ends with the app's diagnostics.
-31. **Evidence survives a retry.** After a silent call and its retry, open
-    Diagnostics: both calls are there, separated by a rule, the earlier one
-    first; *Copy diagnostics* copies both.
+31. **Evidence survives a retry.** After a silent call, its retry, and
+    three more calls, open Diagnostics: all of them are there, separated by
+    rules, the earliest first; *Copy diagnostics* copies all of them.
 32. **Restart.** On a live call, tap **Restart**: the call ends with
     *stopped* and immediately shows *Calling Larry…* on the same backend,
     then *live*; no picker, no second tap. Diagnostics afterwards holds
