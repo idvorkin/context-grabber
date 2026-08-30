@@ -19,6 +19,7 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `lib/share.ts` — Export JSON formatting (SummaryExport, RawExport, WeeklyStatsExport)
 - `lib/summary.ts` — Summary text and number formatting (buildSummary, formatNumber, formatTime)
 - `lib/location.ts` — Location pruning logic (pruneThreshold)
+- `lib/cockpitClient.ts` — The `?client=context-grabber&v=<build>` tag the Cockpit tab loads the page with (#78)
 - `lib/audioBridge.ts` — Cockpit audio-bridge wire format (message parsing, injected JS). Protocol: `docs/cockpit-audio-bridge.md`
 - `lib/callProtocol.ts` — Voice-bridge wire format for the native Call tab (frames both ways, ending text, bridge URL). Source of truth: `handle_browser` docstring in the Cockpit repo's `voice_bridge.py`
 - `lib/pcm.ts` — Float32 ↔ PCM16 LE, linear resample to the bridge's 16 kHz

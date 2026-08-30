@@ -67,10 +67,10 @@ describe("CockpitScreen", () => {
     }
   });
 
-  it("points the web view at the tailnet Cockpit", () => {
+  it("points the web view at the tailnet Cockpit, and tells the page it is the app (#78)", () => {
     const r = render(<CockpitScreen />);
     const web = r.getByTestId("cockpit-webview");
-    expect(web.props.source).toEqual({ uri: COCKPIT_URL });
+    expect(web.props.source.uri).toMatch(new RegExp(`^${COCKPIT_URL}\\?client=context-grabber&v=[0-9a-f]+$`));
     expect(COCKPIT_URL.startsWith("https://")).toBe(true);
   });
 

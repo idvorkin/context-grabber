@@ -100,6 +100,25 @@ The microphone is granted only to the Cockpit itself. If some page on another
 host ever asks for the microphone or camera inside this tab, iOS prompts rather
 than silently granting.
 
+### The page knows it is in the app
+
+Igor, on a call 2026-08-28 20:31: *"ask Larry if I'm on Cockpit, if he can
+detect that when I'm in Context Grabber."* And again 2026-08-29 05:12:
+*"Can you tell if this is coming through Context Grabber or through the
+Cockpit? … somehow we need to pass that information."*
+([#78](https://github.com/idvorkin/context-grabber/issues/78))
+
+The page can guess it is inside the app — it finds the native pickers —
+but nothing after the page knows, so a call placed from the tab looks
+like a laptop call in Larry's records. The tab says so explicitly: the
+Cockpit is opened with `?client=context-grabber&v=<build>` on its
+address, so the page — and through it the bridge and Larry — can tell an
+app session from a browser one and which build it was. Nothing else
+about the page changes; a page that ignores the tag behaves as before.
+The reconnect panel still shows the plain address, the one Igor would
+type. (The native Call tab says the same thing its own way: `client` and
+`build` on the call's start frame.)
+
 ### Links that leave the Cockpit
 
 Tapping a link that points somewhere other than the Cockpit — a GitHub pull
@@ -147,6 +166,10 @@ empty rectangle behind.
    view — and **Try again** succeeds once Tailscale is back on, without
    restarting the app.
 9. No credentials, tokens, or cookies are stored by the app for the Cockpit.
+10. With the Cockpit page's `client` support in place, a call placed from the
+    tab shows as an app call (with the build) in Larry's records, and a call
+    from a laptop browser does not; the page otherwise looks and behaves the
+    same in both.
 
 ## Rationale and risks
 
