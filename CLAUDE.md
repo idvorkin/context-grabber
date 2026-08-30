@@ -22,6 +22,7 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `lib/audioBridge.ts` — Cockpit audio-bridge wire format (message parsing, injected JS). Protocol: `docs/cockpit-audio-bridge.md`
 - `lib/callProtocol.ts` — Voice-bridge wire format for the native Call tab (frames both ways, ending text, bridge URL). Source of truth: `handle_browser` docstring in the Cockpit repo's `voice_bridge.py`
 - `lib/pcm.ts` — Float32 ↔ PCM16 LE, linear resample to the bridge's 16 kHz
+- `lib/callVoices.ts` — The voice a call answers in: Tony (bridge default) or Igor (his clone, implies `eleven_v3_conversational`); what rides the start frame per backend
 - `lib/callSession.ts` — The call's state machine (socket + mic + playback + captions), platform-free; fake socket/audio in tests
 - `lib/callAudio.ts` — Native audio half of a call on `react-native-audio-api` + `modules/audio-route`: `.playAndRecord`/`.voiceChat` session, mic capture, scheduled playback, interruption resume
 

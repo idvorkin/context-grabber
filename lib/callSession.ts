@@ -29,6 +29,7 @@ import {
   type CallBackend,
 } from "./callProtocol";
 import { encodeMicFrame, isExactSilence, micLevel } from "./pcm";
+import { DEFAULT_VOICE, voiceFrameFields, voiceLabel, type CallVoice } from "./callVoices";
 import { NO_LOG, type CallLog } from "./callLog";
 
 export type CallState = "idle" | "connecting" | "live" | "ended";
@@ -46,6 +47,8 @@ export type CaptionRow = {
 export type CallSnapshot = {
   state: CallState;
   backend: CallBackend | null;
+  /** The voice the call was placed in — Tony or Igor (#98). */
+  voice: CallVoice;
   /** Wall-clock ms when the bridge said `ready`; the timer counts from here. */
   startedAt: number | null;
   /** The bridge's reason (or CONNECTION_LOST), raw — see `endingText`. */
@@ -187,6 +190,7 @@ export class CallSession {
     return {
       state: "idle",
       backend: null,
+      voice: DEFAULT_VOICE,
       startedAt: null,
       endedReason: null,
       endedBadly: false,
@@ -255,15 +259,22 @@ export class CallSession {
     }
   }
 
-  /** No-op while a call is connecting or live: the link that finds a live call joins it. */
-  async start(backend: CallBackend): Promise<void> {
+  /**
+   * No-op while a call is connecting or live: the link that finds a live
+   * call joins it. `voice` only reaches the frame on a backend whose voice
+   * is an ElevenLabs one; elsewhere the vendor's default rides it.
+   */
+  async start(backend: CallBackend, voice: CallVoice = DEFAULT_VOICE): Promise<void> {
     if (this.snap.state === "connecting" || this.snap.state === "live") {
       this.log(`start(${backend}) ignored: already ${this.snap.state}`);
       return;
     }
-    this.resetForCall(backend);
+    this.resetForCall(backend, voice);
     this.deps.log?.reset?.();
-    this.log(`start backend=${backend} build=${this.deps.build ?? "?"} bridge=${this.url}`);
+    const fields = voiceFrameFields(backend, voice);
+    this.log(
+      `start backend=${backend} voice=${voiceLabel(voice)}${fields.voice ? ` (${fields.voice}, ${fields.model || "default model"})` : ""} build=${this.deps.build ?? "?"} bridge=${this.url}`,
+    );
     this.emit();
     try {
       await this.deps.audio.prepare();
@@ -286,7 +297,7 @@ export class CallSession {
     socket.binaryType = "arraybuffer";
     socket.onopen = () => {
       this.log("socket open → start frame");
-      this.safeSend(startFrame(backend, this.deps.build ?? ""));
+      this.safeSend(startFrame(backend, this.deps.build ?? "", fields.voice, fields.model));
     };
     socket.onmessage = (ev: { data: unknown }) => this.onSocketData(ev.data);
     socket.onerror = () => this.onSocketGone();
@@ -312,10 +323,10 @@ export class CallSession {
    */
   restart(): void {
     if (this.snap.state !== "connecting" && this.snap.state !== "live") return;
-    const backend = this.snap.backend;
+    const { backend, voice } = this.snap;
     this.log("restart: hang up + redial");
     this.stop();
-    if (backend) void this.start(backend);
+    if (backend) void this.start(backend, voice);
   }
 
   setMuted(muted: boolean): void {
@@ -474,11 +485,11 @@ export class CallSession {
     }
     if (!this.redialed) {
       this.redialed = true;
-      const backend = this.snap.backend;
+      const { backend, voice } = this.snap;
       this.log("still no mic buffer after reset → redialing once");
       this.sendDiagnostics("redial");
       this.stop();
-      if (backend) void this.start(backend);
+      if (backend) void this.start(backend, voice);
       return;
     }
     this.log("still no mic buffer after redial — giving up on self-heal");
@@ -631,8 +642,8 @@ export class CallSession {
 
   /* ---------- lifecycle ---------- */
 
-  private resetForCall(backend: CallBackend): void {
-    this.snap = { ...CallSession.idle(), state: "connecting", backend, muted: this.snap.muted };
+  private resetForCall(backend: CallBackend, voice: CallVoice): void {
+    this.snap = { ...CallSession.idle(), state: "connecting", backend, voice, muted: this.snap.muted };
     this.igorFinal = "";
     this.igorRowId = null;
     this.larryRowId = null;

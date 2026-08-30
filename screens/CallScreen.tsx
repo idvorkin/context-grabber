@@ -20,6 +20,7 @@ import { CopyableError } from "../components/CopyableError";
 import * as Clipboard from "expo-clipboard";
 import { describeRoute, offeredOutputs, preferredInput } from "../lib/callDevices";
 import type { CallLog } from "../lib/callLog";
+import { DEFAULT_VOICE, VOICES, hasVoicePick, voiceLabel, type CallVoice } from "../lib/callVoices";
 import { getBuildInfo } from "../lib/version";
 import {
   BACKENDS,
@@ -44,6 +45,9 @@ type Props = {
   log: CallLog;
   backend: CallBackend;
   onBackendChange: (backend: CallBackend) => void;
+  /** The voice the call answers in — Tony or Igor (#98). */
+  voice?: CallVoice;
+  onVoiceChange?: (voice: CallVoice) => void;
   /** A call is live on the Cockpit *page*; two microphones on one phone is a no. */
   cockpitCallLive: boolean;
   /** The Cockpit web view exists in this app session (it may hold a mic). Logged per call for #88. */
@@ -121,10 +125,27 @@ function formatElapsed(ms: number): string {
   return `${h ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
 }
 
-export function CallScreen({ session, log, backend, onBackendChange, cockpitCallLive, cockpitMounted = false }: Props) {
+export function CallScreen({
+  session,
+  log,
+  backend,
+  onBackendChange,
+  voice = DEFAULT_VOICE,
+  onVoiceChange,
+  cockpitCallLive,
+  cockpitMounted = false,
+}: Props) {
   const snap = useCallSnapshot(session);
   const active = snap.state === "connecting" || snap.state === "live";
   const reduceMotion = useReduceMotion();
+
+  /* ---------- the voice ----------
+     Tony or Igor (#98). Only ElevenLabs (and the drill) have a voice to
+     pick; the name rides the status line and the devices line so a call in
+     the wrong voice is visible without opening anything. */
+  const voicedBackend = hasVoicePick(active ? snap.backend : backend);
+  const pickedVoice: CallVoice = active ? snap.voice : voice;
+  const pickedVoiceName = voicedBackend ? voiceLabel(pickedVoice) : "";
 
   /* ---------- keep the screen awake while the call is live ----------
      The call no longer depends on this — that is the point of the tab — but
@@ -298,10 +319,12 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
   }, []);
 
   const backendLabel = BACKENDS.find((b) => b.id === (snap.backend ?? backend))?.label ?? "";
+  // The voice's name rides the status line so a call in the wrong voice is visible (#98).
+  const callLabel = pickedVoiceName ? `${backendLabel} · ${pickedVoiceName}` : backendLabel;
 
   let status: string;
-  if (snap.state === "connecting") status = `calling Larry… · ${backendLabel}`;
-  else if (snap.state === "live") status = `live · ${formatElapsed(now - (snap.startedAt ?? now))} · ${backendLabel}`;
+  if (snap.state === "connecting") status = `calling Larry… · ${callLabel}`;
+  else if (snap.state === "live") status = `live · ${formatElapsed(now - (snap.startedAt ?? now))} · ${callLabel}`;
   else if (snap.state === "ended") status = `ended — ${endingText(snap.endedReason)}`;
   else status = "";
 
@@ -309,10 +332,10 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
 
   // The first line of every call's log: what else might hold the mic (#88).
   const startCall = useCallback(() => {
-    void session.start(backend).then(() => {
+    void session.start(backend, voice).then(() => {
       session.note(`context: cockpit web view ${cockpitMounted ? "mounted" : "not mounted"}, page call ${cockpitCallLive ? "LIVE" : "none"}`);
     });
-  }, [session, backend, cockpitMounted, cockpitCallLive]);
+  }, [session, backend, voice, cockpitMounted, cockpitCallLive]);
 
   const [priming, setPriming] = useState(false);
   const primeAudio = useCallback(async () => {
@@ -403,10 +426,10 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
             testID="call-devices-toggle"
             accessibilityRole="button"
             accessibilityState={{ expanded: devicesOpen }}
-            accessibilityLabel="Microphone and output"
+            accessibilityLabel="Microphone, output and voice"
           >
             <Text style={styles.devicesSummary} numberOfLines={1} testID="call-devices-summary">
-              {describeRoute(route)}
+              {pickedVoiceName ? `${describeRoute(route)} · ${pickedVoiceName}` : describeRoute(route)}
             </Text>
             <Text style={styles.devicesChevron}>{devicesOpen ? "▾" : "▸"}</Text>
           </Pressable>
@@ -426,6 +449,16 @@ export function CallScreen({ session, log, backend, onBackendChange, cockpitCall
                 onPick={pickOutput}
                 testID="call-outputs"
               />
+              {voicedBackend && (
+                <VoiceRow
+                  picked={pickedVoice}
+                  locked={active}
+                  onPick={(v) => {
+                    log.add(`pick voice ${v}`);
+                    onVoiceChange?.(v);
+                  }}
+                />
+              )}
             </View>
           )}
           <Pressable
@@ -738,6 +771,44 @@ function DeviceRow({
   );
 }
 
+/**
+ * The voice row (#98): Tony or Igor. Locked while a call is up — a voice
+ * cannot change mid-session.
+ */
+function VoiceRow({
+  picked,
+  locked,
+  onPick,
+}: {
+  picked: CallVoice;
+  locked: boolean;
+  onPick: (voice: CallVoice) => void;
+}) {
+  return (
+    <View style={styles.deviceRow} testID="call-voices">
+      <Text style={styles.deviceLabel}>Voice</Text>
+      <View style={styles.deviceChips}>
+        {VOICES.map((v) => {
+          const selected = v.id === picked;
+          return (
+            <Pressable
+              key={v.id}
+              onPress={() => !locked && onPick(v.id)}
+              disabled={locked}
+              style={[styles.chip, styles.chipSmall, selected && styles.chipSelected, locked && !selected && styles.chipDisabled]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected, disabled: locked }}
+              testID={`call-voices-${v.id}`}
+            >
+              <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{v.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1a1a2e" },
   header: {
@@ -790,8 +861,8 @@ const styles = StyleSheet.create({
   diagCopy: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: "#243447" },
   diagCopyText: { color: "#4cc9f0", fontSize: 13, fontWeight: "600" },
   deviceRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  deviceLabel: { color: "#888", fontSize: 12, width: 28 },
-  deviceChips: { gap: 6 },
+  deviceLabel: { color: "#888", fontSize: 12, width: 36 },
+  deviceChips: { flexDirection: "row", gap: 6 },
   captions: { flex: 1 },
   captionsContent: { paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
   row: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
