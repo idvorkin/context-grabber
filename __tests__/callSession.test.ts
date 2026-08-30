@@ -264,7 +264,7 @@ describe("CallSession — ready and the microphone", () => {
 });
 
 describe("CallSession — a recorder that never delivers (#88)", () => {
-  it("resets the audio after 3 s without a buffer, then redials once, sending the dump first", async () => {
+  it("resets the audio after 1.5 s without a buffer, then redials once, sending the dump first", async () => {
     jest.useFakeTimers();
     try {
       const t = setup();

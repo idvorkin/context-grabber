@@ -17,7 +17,7 @@ describe("CallLog", () => {
     expect(log.all[0]).toBe("+0.0s l5");
   });
 
-  it("reset keeps exactly one call back, behind a separator, and restarts the clock", () => {
+  it("reset keeps every call so far, each behind a separator, and restarts the clock", () => {
     let now = 0;
     const log = new CallLog(() => now);
     log.add("a");
@@ -28,7 +28,7 @@ describe("CallLog", () => {
     expect(log.current).toEqual(["+0.0s b"]);
     log.reset();
     log.add("c");
-    expect(log.all).toEqual(["+0.0s b", CALL_SEPARATOR, "+0.0s c"]);
+    expect(log.all).toEqual(["+0.0s a", CALL_SEPARATOR, "+0.0s b", CALL_SEPARATOR, "+0.0s c"]);
   });
 
   it("an empty log resets to empty, no dangling separator", () => {

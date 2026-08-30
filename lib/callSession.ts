@@ -123,10 +123,12 @@ export const PRIME_MS = 400;
 
 /**
  * A recorder that starts and never delivers (#88: the bridge saw no frames
- * at all on silent calls). Three seconds without a buffer → reset the
- * audio; still nothing → redial once.
+ * at all on silent calls). A second and a half without a buffer → reset
+ * the audio; still nothing → redial once. A working mic's first buffer
+ * comes within ~100 ms; Igor hung up a silent call at 3.1 s (#95,
+ * 2026-08-29 17:33), before a three-second watch could act.
  */
-export const FIRST_FRAME_MS = 3000;
+export const FIRST_FRAME_MS = 1500;
 
 /** Log a frame-count line this often. */
 const FRAME_LOG_EVERY = 50;
