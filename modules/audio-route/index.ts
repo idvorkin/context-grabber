@@ -37,6 +37,29 @@ export type AudioRouteSnapshot = {
   capabilities: AudioRouteCapabilities;
 };
 
+/**
+ * The session as the recorder is about to see it (#95): whether another
+ * app is playing, whether an input is available, what is on the route, and
+ * how the session is set. Read at arm time into the call's diagnostics.
+ */
+export type AudioInputState = {
+  otherAudioPlaying: boolean;
+  secondaryAudioShouldBeSilenced: boolean;
+  inputAvailable: boolean;
+  inputs: AudioDevice[];
+  outputs: AudioDevice[];
+  preferredInput: string | null;
+  /** `PlayAndRecord`, … — the AVAudioSession name without its prefix. */
+  category: string;
+  /** `VoiceChat`, `Default`, … */
+  mode: string;
+  inputGain: number;
+  sampleRate: number;
+  /** Seconds. */
+  ioBufferDuration: number;
+  inputChannels: number;
+};
+
 /** A snapshot plus iOS's own word for why the route moved. */
 export type AudioRouteChange = AudioRouteSnapshot & {
   reason: string;
@@ -55,6 +78,8 @@ declare class AudioRouteNativeModule extends NativeModule<AudioRouteEvents> {
    */
   activate(): Promise<AudioRouteSnapshot>;
   getDevices(): AudioRouteSnapshot;
+  /** Optional: a binary built before #95 does not have it. Guard before calling. */
+  getInputState?(): AudioInputState;
   /** `null` or `""` clears the preference and hands the choice back to iOS. */
   setInput(uid: string | null): Promise<AudioRouteSnapshot>;
   setOutput(port: string): Promise<AudioRouteSnapshot>;

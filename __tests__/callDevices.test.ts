@@ -1,4 +1,4 @@
-import { describeRoute, offeredOutputs, preferredInput, usbInput } from "../lib/callDevices";
+import { describeInputState, describeRoute, offeredOutputs, preferredInput, usbInput } from "../lib/callDevices";
 import type { AudioRouteSnapshot } from "../modules/audio-route";
 
 const builtIn = { id: "BuiltInMicrophoneBottom", name: "iPhone Microphone", type: "MicrophoneBuiltIn" };
@@ -51,5 +51,41 @@ describe("describeRoute", () => {
     const s = snap([builtIn]);
     s.current.input = null;
     expect(describeRoute(s)).toBe("no mic · Speaker");
+  });
+});
+
+describe("describeInputState (#95)", () => {
+  const base = {
+    otherAudioPlaying: false,
+    secondaryAudioShouldBeSilenced: false,
+    inputAvailable: true,
+    inputs: [{ id: "b", name: "iPhone Microphone", type: "MicrophoneBuiltIn" }],
+    outputs: [{ id: "s", name: "Speaker", type: "Speaker" }],
+    preferredInput: null,
+    category: "PlayAndRecord",
+    mode: "VoiceChat",
+    inputGain: 1,
+    sampleRate: 48000,
+    ioBufferDuration: 0.005,
+    inputChannels: 1,
+  };
+
+  it("is one line: the quiet case reads as nothing to see", () => {
+    expect(describeInputState(base)).toBe(
+      "no other audio | input available | in: iPhone Microphone[MicrophoneBuiltIn] | out: Speaker[Speaker] | PlayAndRecord/VoiceChat | gain 1.00 | 48000 Hz | buffer 5 ms | 1 ch",
+    );
+  });
+
+  it("shouts the two things that explain a silent call", () => {
+    const line = describeInputState({
+      ...base,
+      otherAudioPlaying: true,
+      secondaryAudioShouldBeSilenced: true,
+      inputAvailable: false,
+      inputs: [],
+      preferredInput: "AirPods Pro",
+    });
+    expect(line).toMatch(/^OTHER AUDIO PLAYING \| silence hint ON \| NO INPUT AVAILABLE \| in: none \| /);
+    expect(line).toContain("preferred AirPods Pro");
   });
 });

@@ -1,4 +1,4 @@
-import type { AudioDevice, AudioRouteSnapshot } from "../modules/audio-route";
+import type { AudioDevice, AudioInputState, AudioRouteSnapshot } from "../modules/audio-route";
 
 /**
  * Which microphone a call should be on, given what is attached.
@@ -44,4 +44,28 @@ export function describeRoute(snapshot: AudioRouteSnapshot | null): string {
   const input = snapshot.current.input?.name ?? "no mic";
   const output = snapshot.current.output?.name ?? "no output";
   return `${input} · ${output}`;
+}
+
+/**
+ * One log line for what the mic is up against as it is armed (#95): the
+ * thing to read first on a silent call. "OTHER AUDIO PLAYING" is shouted
+ * because it is the answer to "could it be somebody else has the audio?".
+ */
+export function describeInputState(s: AudioInputState): string {
+  const d = (x: { name: string; type: string } | null | undefined) => (x ? `${x.name}[${x.type}]` : "none");
+  const list = (xs: readonly AudioDevice[]) => xs.map(d).join(", ") || "none";
+  const parts = [
+    s.otherAudioPlaying ? "OTHER AUDIO PLAYING" : "no other audio",
+    s.secondaryAudioShouldBeSilenced ? "silence hint ON" : null,
+    s.inputAvailable ? "input available" : "NO INPUT AVAILABLE",
+    `in: ${list(s.inputs)}`,
+    `out: ${list(s.outputs)}`,
+    s.preferredInput ? `preferred ${s.preferredInput}` : null,
+    `${s.category}/${s.mode}`,
+    `gain ${s.inputGain.toFixed(2)}`,
+    `${Math.round(s.sampleRate)} Hz`,
+    `buffer ${Math.round(s.ioBufferDuration * 1000)} ms`,
+    `${s.inputChannels} ch`,
+  ];
+  return parts.filter((x): x is string => !!x).join(" | ");
 }

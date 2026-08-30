@@ -22,6 +22,7 @@ import {
   type GainNode,
 } from "react-native-audio-api";
 import AudioRoute from "../modules/audio-route";
+import { describeInputState } from "./callDevices";
 import type { CallAudio } from "./callSession";
 import { NO_LOG, type CallLog } from "./callLog";
 import { BRIDGE_IN_RATE, pcm16ToFloat } from "./pcm";
@@ -185,8 +186,24 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     }, ROUTE_SETTLE_MS);
   }
 
+  /**
+   * Larry (#95, ask 4): on a silent first call, say what the mic was up
+   * against as it was armed — other audio, the inputs on the route, the
+   * session's shape. A binary older than the module's `getInputState`
+   * simply has no line.
+   */
+  function logInputState(): void {
+    if (!AudioRoute || typeof AudioRoute.getInputState !== "function") return;
+    try {
+      log.add(`at arm: ${describeInputState(AudioRoute.getInputState())}`);
+    } catch (e) {
+      log.add(`at arm: state unreadable (${e instanceof Error ? e.message : String(e)})`);
+    }
+  }
+
   function armRecorder(): AudioRecorder {
     log.add(`recorder arming: hardware rate ${hardwareRate()} Hz, asking ${BRIDGE_IN_RATE} Hz mono`);
+    logInputState();
     const r = new AudioRecorder();
     r.onAudioReady(
       { sampleRate: BRIDGE_IN_RATE, bufferLength: MIC_BUFFER_FRAMES, channelCount: 1 },
