@@ -158,7 +158,13 @@ the output picker only while iOS is actually playing through it.
 **Diagnostics** fold. Open, it shows the call's log — a timestamped line
 for everything that matters and nothing that does not: the call starting
 and on which backend and bridge, the audio session configured, the
-recorder opening and at what hardware rate, the first mic frame and every
+recorder opening and at what hardware rate — and, at the moment it is
+armed, whether another app is playing audio, whether an input is
+available at all, the inputs and outputs actually on the route, and how
+the session is set (category, mode, gain, rate, buffer), because Igor's
+question on a silent call was *"could it be somebody else has the
+audio?"* ([#95](https://github.com/idvorkin/context-grabber/issues/95)) —
+the first mic frame and every
 few seconds of frames after, the probe and its ack, mute, interruptions,
 route changes with the full roster (every mic and output by name and
 type), the bridge's `ready`, warnings, errors, and the ending. A **Copy
@@ -467,7 +473,9 @@ back. The calling treatment in the middle of the screen stays; the big
     output is still *Speaker*, Larry is audible, and the receiver is not
     listed under *Out*.
 25. **Diagnostics.** After any call, open *Diagnostics*: the log shows the
-    start, `ready` with the output rate, the recorder's rate, the first mic
+    start, `ready` with the output rate, the recorder's rate, an `at arm:`
+    line just before `recorder started` saying whether other audio was
+    playing and which inputs were on the route, the first mic
     frame, `mic_ack`, every route change with the roster, and the ending.
     *Copy diagnostics* → paste: the same, plus build sha, state, and the
     current roster.

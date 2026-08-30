@@ -28,7 +28,7 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `lib/callAudio.ts` — Native audio half of a call on `react-native-audio-api` + `modules/audio-route`: `.playAndRecord`/`.voiceChat` session, mic capture, scheduled playback, interruption resume
 
 ### Local Native Modules
-- `modules/audio-route/` — iOS audio route: list microphones/outputs, steer `AVAudioSession`, push route changes. Feeds the Cockpit's device pickers.
+- `modules/audio-route/` — iOS audio route: list microphones/outputs, steer `AVAudioSession`, push route changes, read the session's state at mic-arm time (`getInputState`, optional on old binaries). Feeds the Cockpit's device pickers and the Call tab's diagnostics.
 
 ### Components
 - `components/MetricDetailSheet.tsx` — Bottom sheet with chart + daily breakdown for each metric

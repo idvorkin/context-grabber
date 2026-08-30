@@ -61,6 +61,14 @@ public class AudioRouteModule: Module {
       self.snapshot()
     }
 
+    /// What the microphone is up against at the moment a call arms it
+    /// (#95, Larry's ask 4): is anyone else playing, is an input available,
+    /// what is actually on the route, how the session is set. Read-only;
+    /// the Call tab writes it into the call's diagnostics.
+    Function("getInputState") { () -> [String: Any] in
+      self.inputState()
+    }
+
     /// `nil` or `""` clears the preference and hands the choice back to iOS.
     AsyncFunction("setInput") { (uid: String?) -> [String: Any] in
       try self.applyInput(uid, remember: true)
@@ -187,6 +195,26 @@ public class AudioRouteModule: Module {
     }
 
     return current
+  }
+
+  /// The session as the recorder is about to see it. Every field is a
+  /// plain read; nothing here changes the route.
+  private func inputState() -> [String: Any] {
+    let route = session.currentRoute
+    return [
+      "otherAudioPlaying": session.isOtherAudioPlaying,
+      "secondaryAudioShouldBeSilenced": session.secondaryAudioShouldBeSilencedHint,
+      "inputAvailable": session.isInputAvailable,
+      "inputs": route.inputs.map(describe),
+      "outputs": route.outputs.map(describe),
+      "preferredInput": session.preferredInput?.portName ?? NSNull(),
+      "category": session.category.rawValue.replacingOccurrences(of: "AVAudioSessionCategory", with: ""),
+      "mode": session.mode.rawValue.replacingOccurrences(of: "AVAudioSessionMode", with: ""),
+      "inputGain": Double(session.inputGain),
+      "sampleRate": session.sampleRate,
+      "ioBufferDuration": session.ioBufferDuration,
+      "inputChannels": session.inputNumberOfChannels,
+    ]
   }
 
   private func snapshot(reason: String? = nil) -> [String: Any] {
