@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -11,6 +11,8 @@ import {
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import { CopyableError } from "../components/CopyableError";
+import { clientTaggedUrl } from "../lib/cockpitClient";
+import { getBuildInfo } from "../lib/version";
 import {
   bridgeEmitScript,
   bridgeInstallScript,
@@ -72,6 +74,9 @@ export function CockpitScreen({
   onAppLink,
 }: Props) {
   const webRef = useRef<WebView>(null);
+  // The page is told it is in the app, on the URL (#78). The error panel
+  // keeps showing the plain URL — that is the one Igor would type.
+  const loadUrl = useMemo(() => clientTaggedUrl(url, getBuildInfo().shortSha), [url]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -271,7 +276,7 @@ export function CockpitScreen({
             key={reloadKey}
             ref={webRef}
             testID="cockpit-webview"
-            source={{ uri: url }}
+            source={{ uri: loadUrl }}
             // --- media: let the Cockpit's voice controls work ---
             // iOS grants getUserMedia to same-host content and defers to
             // the system prompt for anything else. The app-level mic
