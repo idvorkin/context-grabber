@@ -10,6 +10,7 @@ import {
   parseBridgeRequest,
   readyPayload,
   routeChangedPayload,
+  parseCallControl,
 } from "../lib/audioBridge";
 import type { AudioRouteSnapshot } from "../modules/audio-route";
 
@@ -272,5 +273,22 @@ describe("bridgeEmitScript", () => {
 
   it("ends in a primitive, which iOS requires of an injected script", () => {
     expect(bridgeEmitScript(readyPayload(true)).trimEnd().endsWith("true;")).toBe(true);
+  });
+});
+
+describe("parseCallControl (#99)", () => {
+  it("call.focus, and call.start with a known backend or none", () => {
+    expect(parseCallControl(JSON.stringify({ type: "call.focus" }))).toEqual({ type: "call.focus" });
+    expect(parseCallControl(JSON.stringify({ type: "call.start", via: "eleven" }))).toEqual({ type: "call.start", via: "eleven" });
+    expect(parseCallControl(JSON.stringify({ type: "call.start", backend: "gemini" }))).toEqual({ type: "call.start", via: "gemini" });
+    expect(parseCallControl(JSON.stringify({ type: "call.start", via: "siri" }))).toEqual({ type: "call.start", via: null });
+    expect(parseCallControl(JSON.stringify({ type: "call.start" }))).toEqual({ type: "call.start", via: null });
+  });
+
+  it("everything else is null — call.state, audio requests, junk", () => {
+    expect(parseCallControl(JSON.stringify({ type: "call.state", live: true }))).toBeNull();
+    expect(parseCallControl(JSON.stringify({ type: "audio.getRoute" }))).toBeNull();
+    expect(parseCallControl("nope")).toBeNull();
+    expect(parseCallControl(undefined)).toBeNull();
   });
 });

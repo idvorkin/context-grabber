@@ -16,7 +16,9 @@ import { getBuildInfo } from "../lib/version";
 import {
   bridgeEmitScript,
   bridgeInstallScript,
+  parseCallControl,
   parseCallState,
+  type CallControlMessage,
   describeError,
   devicesPayload,
   errorPayload,
@@ -59,6 +61,12 @@ type Props = {
    * Spec: docs/superpowers/specs/2026-08-29-open-cockpit-and-page-handoff-design.md.
    */
   onAppLink?: (url: string) => void;
+  /**
+   * The page asked for the app's call (#99): `call.focus` from its ☎︎ while
+   * the native call is live — switch to the Call tab — or `call.start`,
+   * which is a focus while a native call is live and a dial otherwise.
+   */
+  onCallControl?: (message: CallControlMessage) => void;
 };
 
 /** The app's own URL schemes, as the page would open them. */
@@ -72,6 +80,7 @@ export function CockpitScreen({
   url = COCKPIT_URL,
   onCallLiveChange,
   onAppLink,
+  onCallControl,
 }: Props) {
   const webRef = useRef<WebView>(null);
   // The page is told it is in the app, on the URL (#78). The error panel
@@ -166,13 +175,18 @@ export function CockpitScreen({
         setCallLive(state.live);
         return;
       }
+      const control = parseCallControl(event.nativeEvent.data);
+      if (control) {
+        onCallControl?.(control);
+        return;
+      }
       const request = parseBridgeRequest(event.nativeEvent.data);
       // Not ours. The page owns postMessage and may be using it for something
       // else; swallowing that traffic would be a bug.
       if (!request) return;
       void handleBridgeRequest(request);
     },
-    [handleBridgeRequest],
+    [handleBridgeRequest, onCallControl],
   );
 
   // The session has to be recording-capable before availableInputs lists

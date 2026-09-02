@@ -102,6 +102,7 @@ import { createNativeCallAudio } from "./lib/callAudio";
 import { CallLog } from "./lib/callLog";
 import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./lib/callProtocol";
 import { DEFAULT_VOICE, isCallVoice, type CallVoice } from "./lib/callVoices";
+import type { CallControlMessage } from "./lib/audioBridge";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
 // --- Constants ---
@@ -723,6 +724,20 @@ export default function App() {
   // from the page must never drift apart.
   const handleDeepLinkRef = useRef<(url: string | null) => void>(() => {});
   const handleAppLink = useCallback((url: string) => handleDeepLinkRef.current(url), []);
+  // The page's ☎︎ while the app's own call is live (#99): focus the call,
+  // never a second dial. A page asking to *start* one goes through the same
+  // path as grabber://call — a no-op start when a call is already live.
+  const handleCallControl = useCallback((m: CallControlMessage) => {
+    if (m.type === "call.start") {
+      handleDeepLinkRef.current(`grabber://call${m.via ? `?via=${m.via}` : ""}`);
+      return;
+    }
+    setGymTimerVisible(false);
+    setAffirmationVisible(false);
+    setGratefulVisible(false);
+    setJournalVisible(false);
+    setActiveTab("call");
+  }, []);
   useEffect(() => {
     const handle = (url: string | null) => {
       const route = parseDeepLink(url);
@@ -1991,6 +2006,7 @@ export default function App() {
           visible={activeTab === "cockpit"}
           onCallLiveChange={setCockpitCallLive}
           onAppLink={handleAppLink}
+          onCallControl={handleCallControl}
         />
       )}
 

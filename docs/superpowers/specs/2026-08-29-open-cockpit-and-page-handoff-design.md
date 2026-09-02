@@ -83,6 +83,20 @@ Timer, a Reflect card, the Journal) is closed first, as every link does.
   `grabber://timer?…`) is handled the same way: in the app, on the spot.
   Links to other hosts still go to Safari, as today.
 
+**The page's ☎︎ while the app's own call is live**
+([#99](https://github.com/idvorkin/context-grabber/issues/99)). Igor,
+2026-08-29 11:48: *"If I'm in Context Grabber and I hit call, that should
+probably jump me to the Call tab. If I'm in an active call and I'm in the
+Cockpit, that should take me to the Call tab. 100%."* The Cockpit's
+masthead ☎︎ knows when a call is live elsewhere; inside the app, when that
+call is the app's native one, tapping it does not dial — the page tells
+the app *focus the call*, and the app switches to the **Call** tab, timer
+still running, exactly as if the tab had been tapped. A page that instead
+says *start a call* while the native call is live gets the same: the Call
+tab, no second dial. When no call is live, *start a call* dials on the
+backend the page names (or the remembered one), the same as the
+`grabber://call` link.
+
 ## Acceptance criteria
 
 1. `grabber://cockpit` from a Shortcut with the app closed: the app opens
@@ -102,6 +116,12 @@ Timer, a Reflect card, the Journal) is closed first, as every link does.
    `start` on the bridge.
 6. In the web view, a link to `https://github.com/…` still opens Safari.
 7. **Call Larry** and every existing link are unchanged.
+8. With a native call live, switch to the Cockpit tab and tap the page's
+   ☎︎: the app is on the Call tab within a beat, the timer has not reset,
+   and the bridge saw no second `start`. The page did not navigate.
+9. With no call live, the page's *start a call* (naming ElevenLabs) puts
+   the app on the Call tab *calling Larry… · ElevenLabs* → *live*; naming
+   nothing dials on the remembered backend.
 
 ## Rationale and risks
 

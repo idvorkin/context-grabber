@@ -14,6 +14,7 @@
  */
 
 
+import { isCallBackend, type CallBackend } from "./callProtocol";
 import type {
   AudioRouteChange,
   AudioRouteSnapshot,
@@ -240,4 +241,35 @@ export function parseCallState(raw: unknown): CallStateMessage | null {
   const m = parsed as { type?: unknown; live?: unknown };
   if (m.type !== "call.state" || typeof m.live !== "boolean") return null;
   return { type: "call.state", live: m.live };
+}
+
+/* ---------- the page asks for the app's call (#99) ----------
+   With the app's native call live, the page's masthead ☎︎ does not dial: it
+   asks the app to focus the call. `call.start` is the same ask from a page
+   that would otherwise dial — while a native call is live it is a focus;
+   idle, it is a dial on the named backend.
+   Spec: docs/superpowers/specs/2026-08-29-open-cockpit-and-page-handoff-design.md. */
+
+export type CallControlMessage =
+  | { type: "call.focus" }
+  | { type: "call.start"; via: CallBackend | null };
+
+/** `null` for anything that is not a well-formed call.focus / call.start. */
+export function parseCallControl(raw: unknown): CallControlMessage | null {
+  const text = typeof raw === "string" ? raw : "";
+  if (!text) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  const m = parsed as { type?: unknown; via?: unknown; backend?: unknown };
+  if (m.type === "call.focus") return { type: "call.focus" };
+  if (m.type === "call.start") {
+    const via = m.via ?? m.backend;
+    return { type: "call.start", via: isCallBackend(via) ? via : null };
+  }
+  return null;
 }
