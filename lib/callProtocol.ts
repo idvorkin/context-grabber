@@ -14,6 +14,7 @@
  */
 
 import type { CallBackend } from "./deepLink";
+import { locationFields, type CallLocation } from "./callLocation";
 
 export type { CallBackend };
 
@@ -47,12 +48,31 @@ export function bridgeUrl(cockpitUrl: string): string {
 /** How the call introduces itself, so the bridge's records can tell app from browser (#78). */
 export const CLIENT_NAME = "context-grabber";
 
-export function startFrame(backend: CallBackend, build = "", voice = "", model = ""): string {
+export function startFrame(
+  backend: CallBackend,
+  build = "",
+  voice = "",
+  model = "",
+  location: CallLocation | null = null,
+): string {
   // Empty model / voice = the vendor's default, which is what a page older
   // than the pickers sends. `voice` is an ElevenLabs voice id and `model`
-  // one the bridge allowlists (#98). `client` / `build` are extra keys; a
-  // bridge that does not know them ignores them.
-  return JSON.stringify({ type: "start", backend, model, voice, client: CLIENT_NAME, build });
+  // one the bridge allowlists (#98). `client` / `build` / `location` are
+  // extra keys; a bridge that does not know them ignores them.
+  return JSON.stringify({
+    type: "start",
+    backend,
+    model,
+    voice,
+    client: CLIENT_NAME,
+    build,
+    ...(location ? { location: locationFields(location) } : {}),
+  });
+}
+
+/** Where Igor is now, mid-call — after a significant move, or a fix that landed after the start (#107). */
+export function locationFrame(location: CallLocation): string {
+  return JSON.stringify({ type: "location", ...locationFields(location) });
 }
 
 export function sttStartFrame(): string {

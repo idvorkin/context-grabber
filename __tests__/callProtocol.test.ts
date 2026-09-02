@@ -8,6 +8,7 @@ import {
   micFrame,
   micProbeFrame,
   diagnosticsFrame,
+  locationFrame,
   parseBridgeMessage,
   startFrame,
   stopFrame,
@@ -64,6 +65,23 @@ describe("outbound frames", () => {
       voice: "Nvd5I2HGnOWHNU0ijNEy",
       client: "context-grabber",
       build: "abc",
+    });
+  });
+
+  it("start carries a location when the call has one; a location frame mid-call (#107)", () => {
+    const where = { lat: 47.6, lon: -122.3, accuracyM: 12, at: "2026-09-02T14:52:00.000Z", place: "Home" };
+    expect(JSON.parse(startFrame("eleven", "abc", "", "", where))).toMatchObject({
+      type: "start",
+      location: { lat: 47.6, lon: -122.3, accuracy_m: 12, at: "2026-09-02T14:52:00.000Z", place: "Home" },
+    });
+    expect(JSON.parse(startFrame("eleven"))).not.toHaveProperty("location");
+    expect(JSON.parse(locationFrame(where))).toEqual({
+      type: "location",
+      lat: 47.6,
+      lon: -122.3,
+      accuracy_m: 12,
+      at: "2026-09-02T14:52:00.000Z",
+      place: "Home",
     });
   });
 

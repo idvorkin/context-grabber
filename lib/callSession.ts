@@ -25,9 +25,11 @@ import {
   sttStartFrame,
   sttStopFrame,
   stopFrame,
+  locationFrame,
   type BridgeMessage,
   type CallBackend,
 } from "./callProtocol";
+import { describeLocation, type CallLocation } from "./callLocation";
 import { encodeMicFrame, isExactSilence, micLevel } from "./pcm";
 import { DEFAULT_VOICE, voiceFrameFields, voiceLabel, type CallVoice } from "./callVoices";
 import { NO_LOG, type CallLog } from "./callLog";
@@ -187,6 +189,9 @@ export class CallSession {
   private probeTimer: ReturnType<typeof setTimeout> | null = null;
   /** Set when WE closed the socket, so the close event is not "connection lost". */
   private closing = false;
+  /** The last fix the app gave us; rides the start frame, and a `location` frame when it changes (#107). */
+  private location: CallLocation | null = null;
+  private socketOpen = false;
 
   constructor(deps: CallSessionDeps, url: string) {
     this.deps = { now: () => Date.now(), ...deps };
@@ -326,8 +331,10 @@ export class CallSession {
     this.socket = socket;
     socket.binaryType = "arraybuffer";
     socket.onopen = () => {
-      this.log("socket open → start frame");
-      this.safeSend(startFrame(backend, this.deps.build ?? "", fields.voice, fields.model));
+      this.socketOpen = true;
+      const where = this.location;
+      this.log(`socket open → start frame${where ? ` (location: ${describeLocation(where)})` : ""}`);
+      this.safeSend(startFrame(backend, this.deps.build ?? "", fields.voice, fields.model, where));
     };
     socket.onmessage = (ev: { data: unknown }) => this.onSocketData(ev.data);
     socket.onerror = () => this.onSocketGone();
@@ -357,6 +364,19 @@ export class CallSession {
     this.log("restart: hang up + redial");
     this.stop();
     if (backend) void this.start(backend, voice);
+  }
+
+  /**
+   * Where Igor is (#107). Before the socket opens it waits for the start
+   * frame; once open, while connecting or live, it goes as its own frame.
+   * Idle or ended, it is simply remembered for the next call.
+   */
+  setLocation(location: CallLocation): void {
+    this.location = location;
+    const active = this.snap.state === "connecting" || this.snap.state === "live";
+    if (!active || !this.socketOpen) return;
+    this.log(`location: ${describeLocation(location)} → bridge`);
+    this.safeSend(locationFrame(location));
   }
 
   setMuted(muted: boolean): void {
@@ -713,6 +733,7 @@ export class CallSession {
     this.probeSent = false;
     this.rearmed = false;
     this.closing = false;
+    this.socketOpen = false;
     this.framesSent = 0;
     this.framesReceived = 0;
     this.bytesReceived = 0;
@@ -743,6 +764,7 @@ export class CallSession {
     if (this.firstFrameTimer) clearTimeout(this.firstFrameTimer);
     this.firstFrameTimer = null;
     this.closing = true;
+    this.socketOpen = false;
     const socket = this.socket;
     this.socket = null;
     if (socket) {
