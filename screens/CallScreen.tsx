@@ -318,6 +318,12 @@ export function CallScreen({
     });
   }, []);
 
+  // The live line: Igor's words as the recognizer still hears them, out of
+  // the transcript and into a big box under the call line. The session
+  // already keeps them as the one pending Igor row; the screen just moves it.
+  const liveRow = snap.captions.find((r) => r.who === "igor" && r.pending) ?? null;
+  const transcript = snap.captions.filter((r) => r !== liveRow);
+
   const backendLabel = BACKENDS.find((b) => b.id === (snap.backend ?? backend))?.label ?? "";
   // The voice's name rides the status line so a call in the wrong voice is visible (#98).
   const callLabel = pickedVoiceName ? `${backendLabel} · ${pickedVoiceName}` : backendLabel;
@@ -397,6 +403,20 @@ export function CallScreen({
           </View>
         )}
       </View>
+
+      {snap.state === "live" && (
+        <View style={styles.live} testID="call-live" accessibilityLabel="What you are saying">
+          <Text style={styles.liveLabel}>you</Text>
+          <Text
+            style={[styles.liveText, !liveRow?.text && styles.liveHint]}
+            numberOfLines={3}
+            ellipsizeMode="head"
+            testID="call-live-text"
+          >
+            {liveRow?.text || (snap.muted ? "muted" : "listening…")}
+          </Text>
+        </View>
+      )}
 
       {/* backend — pickable only between calls */}
       <View style={styles.chipRow} testID="call-backends">
@@ -517,7 +537,7 @@ export function CallScreen({
         contentContainerStyle={styles.captionsContent}
         testID="call-captions"
       >
-        {snap.captions.map((row) => {
+        {transcript.map((row) => {
           if (!row.text) return null;
           const clamped = row.who === "tool" && !expanded.has(row.id);
           return (
@@ -543,7 +563,7 @@ export function CallScreen({
             </Pressable>
           );
         })}
-        {snap.captions.every((r) => !r.text) &&
+        {transcript.every((r) => !r.text) &&
           (snap.state === "connecting" ? (
             <Calling backendLabel={backendLabel} reduceMotion={reduceMotion} />
           ) : (
@@ -831,6 +851,24 @@ const styles = StyleSheet.create({
   iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   statusLive: { color: "#4ade80" },
   statusBad: { color: "#f87171" },
+  /* the live line (#igor 2026-09-02): twice a caption row, big type */
+  live: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minHeight: 64,
+    borderRadius: 10,
+    backgroundColor: "#0f1b2d",
+    borderLeftWidth: 3,
+    borderLeftColor: "#4cc9f0",
+  },
+  liveLabel: { color: "#4cc9f0", fontSize: 12, fontWeight: "700", lineHeight: 28, width: 28 },
+  liveText: { flex: 1, color: "#f8fafc", fontSize: 22, lineHeight: 28, fontWeight: "500" },
+  liveHint: { color: "#475569", fontStyle: "italic", fontWeight: "400" },
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",

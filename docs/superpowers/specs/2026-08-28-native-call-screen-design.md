@@ -8,6 +8,7 @@
 **Changes:** [Call deep link](2026-08-28-cockpit-call-deep-link-design.md) — `grabber://call` now lands here, not on the Cockpit page
 **Amended:** 2026-08-29, [#90](https://github.com/idvorkin/context-grabber/issues/90) — a calling treatment while the bridge answers; mute folds into the voice indicator; a round red hang-up
 **Amended:** 2026-08-29, [#98](https://github.com/idvorkin/context-grabber/issues/98) — a voice picker beside the microphone picker
+**Amended:** 2026-09-02 — the live line: what Igor is saying, big, on top, before it settles
 **Amended:** 2026-09-02, [#107](https://github.com/idvorkin/context-grabber/issues/107) — the call tells the bridge where Igor is
 **Amended:** 2026-09-02, [#95](https://github.com/idvorkin/context-grabber/issues/95) / [#105](https://github.com/idvorkin/context-grabber/issues/105) / [#106](https://github.com/idvorkin/context-grabber/issues/106) — audio that stops mid-call heals itself; the greeting waits for the speaker; the log counts both directions and survives a freeze
 
@@ -331,10 +332,24 @@ The screen is the conversation and nothing else (Cockpit DESIGN P23/P24):
   *"In the call log, it should say Igor and Tony, not Igor and Larry"*);
   Larry is the reasoning half behind him. A line Larry put into the call
   himself (injected context) carries the label *Larry*. Larry's spoken text appears as he says it;
-  Igor's appears when the recognizer settles on it. No turn numbers, no
+  Igor's appears when the recognizer settles on it — until then it lives
+  in the **live line** (below). No turn numbers, no
   links, no per-turn readouts. Larry's *consults* (asking the other Larry
   something mid-call) show as a short clamped row that expands on tap and
   never touches the call.
+- **The live line.** Igor, 2026-09-02: *"What I'm saying as it's being
+  transcribed is a box on top before it gets sent … bigger, so I can see
+  when it's getting transcribed wrong … maybe 2× the height of the current
+  line."* Directly under the call line, for the whole of a live call, one
+  box about twice a caption row tall, with big type: what the recognizer
+  hears Igor saying *right now*, word by word, before the turn is sent. It
+  is where the eye goes while talking — a wrong word shows up here, large,
+  while there is still time to say it again. When the turn settles (Tony
+  answers, or the turn ends) the box empties and the sentence drops into
+  the transcript as an ordinary *Igor* row. With nothing pending the box
+  reads *listening…*, faint; muted, it reads *muted*. When the line runs
+  past the box, the newest words stay in view and the oldest scroll off
+  the top. The box is gone with the call.
 - **The voice control — which is the mute.** At the bottom, left of the
   hang-up, one round control that *is* the microphone: a disc inside it
   swells with Igor's voice and shrinks in silence, so "is my mic working"
@@ -657,6 +672,13 @@ back. The calling treatment in the middle of the screen stays; the big
     location permission off, the call starts exactly as before and the
     log says `location: no permission`.
 
+42. **The live line.** On a live call, under the call line, a box about
+    twice a caption row tall reads *listening…*. Say a sentence slowly:
+    the words appear in it, large, as they are recognised; a misheard word
+    is readable from arm's length. When Tony answers, the box returns to
+    *listening…* and the sentence is now an *Igor* row in the transcript
+    below — once, not twice. Mute: the box reads *muted*. Hang up: the box
+    is gone.
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
 `getUserMedia` capture when the app leaves the foreground, and `WKWebView`

@@ -116,6 +116,28 @@ describe("CallScreen", () => {
     expect(t.r.getByTestId("call-mute")).toBeTruthy();
   });
 
+  it("the live line: twice a row, big, listening… / muted / the words; gone with the call", async () => {
+    const t = setup();
+    expect(t.r.queryByTestId("call-live")).toBeNull();
+    await goLive(t);
+    const box = t.r.getByTestId("call-live");
+    const flat = StyleSheet.flatten(box.props.style) as { minHeight: number };
+    expect(flat.minHeight).toBeGreaterThanOrEqual(56); // about 2× a 22 pt caption row
+    const text = t.r.getByTestId("call-live-text");
+    expect(text.props.children).toBe("listening…");
+    expect((StyleSheet.flatten(text.props.style) as { fontSize: number }).fontSize).toBeGreaterThanOrEqual(20);
+    expect(text.props.ellipsizeMode).toBe("head"); // the newest words stay in view
+    fireEvent.press(t.r.getByTestId("call-mute"));
+    expect(t.r.getByTestId("call-live-text").props.children).toBe("muted");
+    fireEvent.press(t.r.getByTestId("call-mute"));
+    t.socket.say({ type: "stt_partial", text: "so I was" });
+    t.socket.say({ type: "stt_partial", text: "so I was thinking" });
+    expect(t.r.getByTestId("call-live-text").props.children).toBe("so I was thinking");
+    fireEvent.press(t.r.getByTestId("call-hangup"));
+    await settle();
+    expect(t.r.queryByTestId("call-live")).toBeNull();
+  });
+
   it("hanging up while still calling ends it with 'stopped'", async () => {
     const t = setup();
     fireEvent.press(t.r.getByTestId("call-start"));
@@ -142,13 +164,18 @@ describe("CallScreen", () => {
     expect(t.r.getByText("Calling Larry…")).toBeTruthy();
   });
 
-  it("captions: Igor pending in italics, Larry settled, a consult clamped and expandable", async () => {
+  it("captions: Igor's words live in the box until Tony answers, then become a row; a consult clamped and expandable", async () => {
     const t = setup();
     await goLive(t);
     t.socket.say({ type: "stt_partial", text: "hello" });
-    expect(t.r.getByTestId(/^call-row-igor-/)).toBeTruthy();
-    expect(t.r.getByText("hello")).toBeTruthy();
+    // pending: in the live line, not yet in the transcript
+    expect(t.r.getByTestId("call-live-text").props.children).toBe("hello");
+    expect(t.r.queryByTestId(/^call-row-igor-/)).toBeNull();
     t.socket.say({ type: "transcript", who: "larry", text: "Hi Igor." });
+    // settled: once, as a row; the box is listening again
+    expect(t.r.getByTestId(/^call-row-igor-/)).toBeTruthy();
+    expect(t.r.getAllByText("hello")).toHaveLength(1);
+    expect(t.r.getByTestId("call-live-text").props.children).toBe("listening…");
     expect(t.r.getByText("Hi Igor.")).toBeTruthy();
     t.socket.say({ type: "tool_call", question: "what next?" });
     const tool = t.r.getByTestId(/^call-row-tool-/);
