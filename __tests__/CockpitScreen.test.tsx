@@ -335,6 +335,19 @@ describe("CockpitScreen audio bridge", () => {
    property of the call, not the tab: held from "connecting" to "ended",
    whichever tab shows; a page that goes away is a call that ended. */
 describe("CockpitScreen keeps the screen awake during a call", () => {
+  it("hands the page's call.focus / call.start to the app, and nothing else (#99)", () => {
+    const onCallControl = jest.fn();
+    const r = render(<CockpitScreen onCallControl={onCallControl} />);
+    post(r, { type: "call.focus" });
+    post(r, { type: "call.start", via: "eleven" });
+    post(r, { type: "call.state", live: true });
+    post(r, { type: "audio.getRoute", requestId: "r1" });
+    expect(onCallControl.mock.calls.map((c) => c[0])).toEqual([
+      { type: "call.focus" },
+      { type: "call.start", via: "eleven" },
+    ]);
+  });
+
   it("reports call.state to the app so the native Call tab can refuse a second call", () => {
     const onCallLiveChange = jest.fn();
     const r = render(<CockpitScreen onCallLiveChange={onCallLiveChange} />);
