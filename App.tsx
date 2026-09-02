@@ -539,6 +539,33 @@ export default function App() {
   // call keeps going while another tab is showing — or the phone is locked.
   // Spec: docs/superpowers/specs/2026-08-28-native-call-screen-design.md.
   const callLog = useMemo(() => new CallLog(), []);
+  // The call log is mirrored to disk as it grows and the previous run's
+  // lines come back on launch (#106): a call that froze the app still
+  // leaves its evidence, and the next dump carries it.
+  useEffect(() => {
+    const path = `${FileSystem.documentDirectory}call-log.txt`;
+    let cancelled = false;
+    (async () => {
+      try {
+        const info = await FileSystem.getInfoAsync(path);
+        if (info.exists) {
+          const text = await FileSystem.readAsStringAsync(path);
+          if (!cancelled && text) callLog.preload(text.split("\n"));
+        }
+      } catch {
+        // no previous run, or unreadable — nothing to recover
+      }
+      if (cancelled) return;
+      callLog.attachSink((text) => {
+        void FileSystem.writeAsStringAsync(path, text).catch(() => {});
+      });
+      const build = getBuildInfo();
+      callLog.add(`app launched, build ${build.shortSha} (${build.branch})`);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [callLog]);
   const callSession = useMemo(
     () =>
       new CallSession(

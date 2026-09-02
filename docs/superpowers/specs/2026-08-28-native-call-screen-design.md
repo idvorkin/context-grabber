@@ -8,6 +8,7 @@
 **Changes:** [Call deep link](2026-08-28-cockpit-call-deep-link-design.md) — `grabber://call` now lands here, not on the Cockpit page
 **Amended:** 2026-08-29, [#90](https://github.com/idvorkin/context-grabber/issues/90) — a calling treatment while the bridge answers; mute folds into the voice indicator; a round red hang-up
 **Amended:** 2026-08-29, [#98](https://github.com/idvorkin/context-grabber/issues/98) — a voice picker beside the microphone picker
+**Amended:** 2026-09-02, [#95](https://github.com/idvorkin/context-grabber/issues/95) / [#105](https://github.com/idvorkin/context-grabber/issues/105) / [#106](https://github.com/idvorkin/context-grabber/issues/106) — audio that stops mid-call heals itself; the greeting waits for the speaker; the log counts both directions and survives a freeze
 
 ## Summary
 
@@ -193,11 +194,67 @@ holds every call it has room for (several hundred lines, six to ten
 calls), each separated by a rule, oldest first; *Copy diagnostics* copies
 all of it, and so does the dump the bridge gets.
 
+**The log counts both directions** ([#106](https://github.com/idvorkin/context-grabber/issues/106)).
+Every five seconds of a live call, one line: what came down the socket
+(kilobytes and frames), how much of it the speaker has rendered against
+how much was scheduled, whether the output clock is running, and how many
+microphone frames went up — so a call where the bridge sent a megabyte and
+the phone played fifteen frames is visible on the phone without the
+server's log. The ending line carries the final pair. *Played* means
+rendered by the speaker; *received* means delivered by the socket; the log
+never confuses the two.
+
+**The log survives a freeze.** Igor, 2026-08-30: *"I had a freeze when I
+switched microphones in the last call — hopefully the app was actually
+storing everything."* The log is mirrored to disk as it grows, not
+assembled at hang-up, so a call that freezes or kills the app still leaves
+its lines. On the next launch those lines come back at the top of the log
+under a *previous run, recovered from disk* rule, and go out with the next
+dump like any other call's.
+
 **The dump reaches the bridge on its own.** At every hang-up, at every
 automatic redial, and when the bridge fails to acknowledge the microphone,
 the app sends the dump to the bridge over the call's own socket before
 anything closes, so Larry can read it from the call's record without Igor
 pasting anything. (Bridge half: the Cockpit repo.)
+
+### Audio that stops — either direction
+
+Igor's dumps of 2026-08-30 ([#95](https://github.com/idvorkin/context-grabber/issues/95)):
+*"this time I'm getting microphone but not audio"*; on another call the
+microphone delivered one buffer and then nothing for the rest of the
+call, right after the phone's own route settled; on a third, *"I didn't
+hear you on the first round, but I did hear you on the second"* — the
+greeting played into a speaker that had not started. The audio session
+comes up with one direction dead, either way round, and a route change
+mid-call can kill a direction that was working.
+
+So the call **watches both directions the whole time, and heals what it
+can**:
+
+- **A microphone that goes quiet** — armed, not interrupted, and no
+  buffer for a second and a half — is closed and reopened, up to three
+  times. A line in Diagnostics says so each time (*mic stalled: no buffer
+  for 1600 ms → re-arming (1/3)*). If it stays quiet after that, the
+  screen says *the microphone stopped delivering* until buffers return.
+- **A speaker whose clock stops** — Larry's audio is queued and due, and
+  the output clock has not moved for a second — is reopened, and the
+  screen says *Tony's audio is arriving but not playing* until it moves
+  again. What was queued is lost (a short gap); the next frames play.
+- **The greeting waits for the speaker.** Larry's first frames are held
+  until the output clock is actually running — the first frame kicks it,
+  and the wait is logged (*output clock running after 120 ms*). If the
+  clock has not started after two seconds, playback is reopened once and
+  the held audio plays from there. Nothing Tony says in his first two
+  seconds is lost to a speaker that was still waking up.
+- **Audio that is not arriving at all** — Tony's words keep arriving as
+  text, but no audio has come down the socket for five seconds — is not
+  the phone's to heal. The screen says *Tony's audio is not arriving from
+  the bridge*, the captions carry his words meanwhile
+  ([#105](https://github.com/idvorkin/context-grabber/issues/105): *"I
+  don't hear you. Can I read what you're saying at least?"* — yes: the
+  captions have always shown Tony's transcript as he speaks), and the
+  banner clears the moment audio resumes.
 
 ### A microphone that never delivers
 
@@ -483,7 +540,9 @@ back. The calling treatment in the middle of the screen stays; the big
     start, `ready` with the output rate, the recorder's rate, an `at arm:`
     line just before `recorder started` saying whether other audio was
     playing and which inputs were on the route, the first mic
-    frame, `mic_ack`, every route change with the roster, and the ending.
+    frame, `mic_ack`, `output clock running after N ms`, every route change
+    with the roster, an `rx … KB / … frames · played … of …` line every five
+    seconds, and the ending with the final received/played pair.
     *Copy diagnostics* → paste: the same, plus build sha, state, and the
     current roster.
 26. **Calling.** Tap **Call Larry**: until the bridge answers, the middle of
@@ -546,44 +605,23 @@ back. The calling treatment in the middle of the screen stays; the big
     on the default model, and the bridge's session row shows no voice or
     model override — exactly a call placed before this change.
 
-## Rationale and risks
-**Why native rather than fixing the web view.** WebKit on iOS suspends
-`getUserMedia` capture when the app leaves the foreground, and `WKWebView`
-exposes no way to opt out — Safari got background WebRTC; embedded web
-views did not. Holding a native audio session open (#73's proposal) keeps
-the *process* alive but not the page's microphone. The keep-awake spec
-already records the symptom: "iOS then suspends the web view's audio
-capture, and the call dies." The only fix is for the app, not the page, to
-own the microphone and the speaker.
-
-**Why this is small.** The bridge was built page-agnostic: one socket,
-raw audio both ways, a dozen JSON message types, no auth on the tailnet.
-There is no conversation logic to port. The app already ships the audio
-engine (`react-native-audio-api`, used for the Gym Timer's tones), the
-native route module (the audio bridge), the `audio` background mode (the
-Gym Timer), and the deep-link routing. This is a screen and a socket.
-
-**Risks.**
-
-- *Audio under the lock.* The app keeps running while locked only while
-  its audio session is active in a recording-capable category. If the
-  session ever deactivates mid-call (an interruption not handled, a route
-  change mishandled), iOS suspends the app within seconds and the bridge
-  hangs up on the silence. Acceptance 3–6 and 15 are the guard.
-- *The tailnet under the lock.* Tailscale's iOS VPN stays up in the
-  background, but the socket is over it; a phone that drops Wi-Fi for
-  cellular will re-home the VPN and may drop the socket. Phase 1 reports
-  *connection lost* rather than reconnecting.
-- *Echo.* On the speaker with the microphone open, the vendor's VAD hears
-  Larry and barges in on himself — the first native calls did exactly that
-  ([#80](https://github.com/idvorkin/context-grabber/issues/80): Gemini
-  transcribed its own sentences as Igor and restarted them six times). The
-  session mode alone does not cancel echo; the audio engine has to run its
-  I/O through iOS's voice-processing unit, the same one the web view and
-  every VoIP app use. The native screen does, so speakerphone works without
-  headphones; headphones remain the quieter option.
-- *Two clients, one bridge.* The bridge supports several sessions, but the
-  app polices only its own side (the one-call rule above).
-- *Vendor limits are unchanged.* Gemini's ~15 minutes, ElevenLabs's cut at
-  ~10 minutes observed; a native client that survives the lock will hit
-  them more often than a page that dies first.
+37. **The greeting is heard.** Ten calls in a row, ElevenLabs, phone on
+    speaker: Tony's first sentence is heard in full every time; Diagnostics
+    shows `output clock running after N ms` before the first frame is
+    scheduled, and no call shows *I didn't hear you on the first round*.
+38. **A microphone that stops mid-call heals.** Mid-call, force a route
+    change that kills the tap (pick *Speaker* while already on the speaker,
+    or plug and unplug a USB mic): within ~2 s Diagnostics shows `mic
+    stalled … → re-arming (1/3)` and the next sentence is captioned; the
+    screen shows no error. If the re-arms fail, the screen says *the
+    microphone stopped delivering* and clears when buffers return.
+39. **Audio not arriving is named, not blamed on the speaker.** On a call
+    where Tony's captions keep coming but no audio does (a starved socket),
+    within 5 s the screen says *Tony's audio is not arriving from the
+    bridge*, the captions keep updating, and the banner clears when audio
+    resumes. The five-second `rx` lines show the byte count standing still.
+40. **The log outlives the app.** Force-quit the app mid-call. Relaunch,
+    open Diagnostics: the frozen call's lines are there at the top under
+    *previous run, recovered from disk*, followed by `app launched, build
+    …`. Place a call and hang up: the dump the bridge receives contains
+    those lines.

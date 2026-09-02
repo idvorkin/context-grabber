@@ -1,4 +1,4 @@
-import { CALL_LOG_LINES, CALL_SEPARATOR, CallLog } from "../lib/callLog";
+import { CALL_LOG_LINES, CALL_SEPARATOR, CallLog, RECOVERED_HEADER } from "../lib/callLog";
 
 describe("CallLog", () => {
   it("stamps lines relative to its start and keeps them in order", () => {
@@ -43,5 +43,58 @@ describe("CallLog", () => {
     expect(log.render({ build: "abc", state: "live", nothing: null, blank: "" })).toBe(
       "build: abc\nstate: live\n---\n+0.0s x",
     );
+  });
+});
+
+describe("the log on disk (#106)", () => {
+  it("mirrors the whole text to the sink shortly after each change, debounced", () => {
+    jest.useFakeTimers();
+    try {
+      const log = new CallLog(() => 0);
+      const sink = jest.fn();
+      log.attachSink(sink, 500);
+      log.add("a");
+      log.add("b");
+      expect(sink).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(499);
+      expect(sink).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(1);
+      expect(sink).toHaveBeenCalledTimes(1);
+      expect(sink).toHaveBeenLastCalledWith("+0.0s a\n+0.0s b");
+      log.reset();
+      jest.advanceTimersByTime(500);
+      expect(sink).toHaveBeenLastCalledWith(`+0.0s a\n+0.0s b\n${CALL_SEPARATOR}`);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("a sink that throws does not take the log down", () => {
+    jest.useFakeTimers();
+    try {
+      const log = new CallLog(() => 0);
+      log.attachSink(() => {
+        throw new Error("disk full");
+      }, 10);
+      log.add("a");
+      expect(() => jest.advanceTimersByTime(10)).not.toThrow();
+      expect(log.all).toEqual(["+0.0s a"]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("preload puts the previous run first, under its own header, and keeps the cap", () => {
+    const log = new CallLog(() => 0);
+    log.add("now");
+    log.preload(["+1.0s old start", "", "+2.0s old ended"]);
+    expect(log.all).toEqual([RECOVERED_HEADER, "+1.0s old start", "+2.0s old ended", CALL_SEPARATOR, "+0.0s now"]);
+    expect(log.current).toEqual(["+0.0s now"]);
+    log.preload([]);
+    expect(log.all).toHaveLength(5);
+    const many = Array.from({ length: CALL_LOG_LINES + 50 }, (_, i) => `l${i}`);
+    log.preload(many);
+    expect(log.all.length).toBe(CALL_LOG_LINES);
+    expect(log.all.at(-1)).toBe("+0.0s now");
   });
 });

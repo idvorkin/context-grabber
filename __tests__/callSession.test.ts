@@ -10,6 +10,7 @@ import {
   type CallSnapshot,
 } from "../lib/callSession";
 import { CONNECTION_LOST, STOPPED } from "../lib/callProtocol";
+import { AUDIO_NOT_ARRIVING, MIC_STOPPED } from "../lib/callWatchdog";
 
 /** A socket that records what was sent and lets the test play the bridge. */
 class FakeSocket implements BridgeSocket {
@@ -454,6 +455,73 @@ describe("CallSession — the voice (#98)", () => {
     const t = setup();
     await t.session.start("eleven");
     expect(t.session.snapshot.voice).toBe("tony");
+  });
+});
+
+describe("CallSession — both directions in the log (#106) and the audio layer's verdict (#95)", () => {
+  it("logs received bytes against played seconds every 5 s, and the final pair on ending", async () => {
+    jest.useFakeTimers();
+    try {
+      const t = setup();
+      const lines: string[] = [];
+      const log = { add: (l: string) => lines.push(l), all: lines };
+      const audio = t.audio as typeof t.audio & { stats?: () => { scheduledS: number; playedS: number; clockRunning: boolean } };
+      audio.stats = () => ({ scheduledS: 1.5, playedS: 1.2, clockRunning: true });
+      const session = new CallSession({ connect: t.connect, audio: t.audio, log, now: () => Date.now() }, "wss://h/bridge");
+      await session.start("eleven");
+      t.socket.open();
+      t.socket.say({ type: "ready", out_rate: 16000 });
+      await flush();
+      t.socket.speak(3200);
+      t.socket.speak(3200);
+      jest.advanceTimersByTime(5000);
+      expect(lines.find((l) => l.startsWith("rx "))).toBe("rx 6 KB / 2 frames · played 1.2s of 1.5s · 0 mic frames sent");
+      session.stop();
+      expect(lines.at(-1)).toMatch(/^ended: stopped \(0 mic frames sent, 2 frames \/ 6 KB received, played 1\.2s of 1\.5s\)$/);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("Tony's text with no audio behind it for 5 s is named as not arriving, and clears when audio comes", async () => {
+    jest.useFakeTimers();
+    try {
+      let now = 1_000_000;
+      const socket = new FakeSocket();
+      const audio = fakeAudio();
+      const session = new CallSession({ connect: () => socket, audio, now: () => now }, "wss://h/bridge");
+      await session.start("eleven");
+      socket.open();
+      socket.say({ type: "ready", out_rate: 16000 });
+      await flush();
+      socket.say({ type: "transcript", who: "larry", text: "Hello there." });
+      now += 5000;
+      jest.advanceTimersByTime(5000);
+      expect(session.snapshot.problem).toBe(AUDIO_NOT_ARRIVING);
+      socket.speak();
+      expect(session.snapshot.problem).toBeNull();
+      // and a line that keeps arriving with audio never trips it
+      socket.say({ type: "transcript", who: "larry", text: "Still here." });
+      now += 5000;
+      jest.advanceTimersByTime(5000);
+      expect(session.snapshot.problem).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("the audio layer's verdict is the problem on screen while it stands, and lifts without touching a bridge error", async () => {
+    const t = setup();
+    await goLive(t, "eleven");
+    const health = t.audio.onHealth!;
+    health(MIC_STOPPED);
+    expect(t.session.snapshot.problem).toBe(MIC_STOPPED);
+    health(null);
+    expect(t.session.snapshot.problem).toBeNull();
+    t.socket.say({ type: "error", message: "bridge boom" });
+    health(MIC_STOPPED);
+    health(null);
+    expect(t.session.snapshot.problem).toBe("bridge boom");
   });
 });
 
