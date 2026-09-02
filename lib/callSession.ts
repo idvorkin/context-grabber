@@ -31,6 +31,7 @@ import {
 import { encodeMicFrame, isExactSilence, micLevel } from "./pcm";
 import { DEFAULT_VOICE, voiceFrameFields, voiceLabel, type CallVoice } from "./callVoices";
 import { NO_LOG, type CallLog } from "./callLog";
+import { AUDIO_NOT_ARRIVING, audioAbsent, describePlayback, type PlaybackStats } from "./callWatchdog";
 
 export type CallState = "idle" | "connecting" | "live" | "ended";
 
@@ -97,6 +98,10 @@ export type CallAudio = {
   flush(): void;
   /** Mic, playback, session — all of it. Idempotent. */
   stop(): Promise<void>;
+  /** The output side, for the periodic log line. Absent on a fake. */
+  stats?(): PlaybackStats | null;
+  /** The audio layer's own verdict — a mic that stopped, audio not playing — or null when fine. Set by the session. */
+  onHealth?: (problem: string | null) => void;
 };
 
 export type CallSessionDeps = {
@@ -136,6 +141,9 @@ const FRAME_LOG_EVERY = 50;
 /** How long the bridge gets to acknowledge the first mic frame. Mirrors the page. */
 export const MIC_ACK_MS = 5000;
 
+/** The output-side counters go in the log this often (#106). */
+export const STATS_EVERY_MS = 5000;
+
 export const MIC_NOT_REACHING = "the microphone is not reaching Larry";
 
 type Listener = (snapshot: CallSnapshot) => void;
@@ -144,7 +152,16 @@ type LevelListener = (level: number) => void;
 export class CallSession {
   private readonly deps: Required<Omit<CallSessionDeps, "log" | "build">> & Pick<CallSessionDeps, "log" | "build">;
   private framesSent = 0;
-  private framesPlayed = 0;
+  /** Binary frames the socket delivered — not what the speaker rendered; `audio.stats()` says that. */
+  private framesReceived = 0;
+  private bytesReceived = 0;
+  private lastAudioAt = 0;
+  private lastTextAt = 0;
+  private statsTimer: ReturnType<typeof setInterval> | null = null;
+  /** The audio layer's current complaint; it outranks a bridge error while it stands. */
+  private audioProblem: string | null = null;
+  /** The bridge's own `error`, restored when an audio complaint lifts. */
+  private bridgeProblem: string | null = null;
   private zeroRun = 0;
   private zeroRearmed = false;
   private firstFrameTimer: ReturnType<typeof setTimeout> | null = null;
@@ -174,6 +191,17 @@ export class CallSession {
   constructor(deps: CallSessionDeps, url: string) {
     this.deps = { now: () => Date.now(), ...deps };
     this.url = url;
+    deps.audio.onHealth = (problem) => this.onAudioHealth(problem);
+  }
+
+  /** The audio layer's verdict (#95): shown while it stands, cleared when it lifts. */
+  private onAudioHealth(problem: string | null): void {
+    if (problem) this.log(`audio: ${problem}`);
+    else if (this.audioProblem) this.log("audio: recovered");
+    const previous = this.audioProblem;
+    this.audioProblem = problem;
+    if (problem) this.update({ problem });
+    else if (previous && this.snap.problem === previous) this.update({ problem: this.bridgeProblem });
   }
 
   private log(line: string): void {
@@ -350,9 +378,11 @@ export class CallSession {
     if (isArrayBuffer(data)) {
       if (this.snap.state === "live") {
         this.deps.audio.play(data);
-        this.framesPlayed += 1;
-        if (this.framesPlayed === 1) this.log(`first audio from Larry: ${data.byteLength} bytes`);
-        else if (this.framesPlayed % FRAME_LOG_EVERY === 0) this.log(`${this.framesPlayed} frames played`);
+        this.framesReceived += 1;
+        this.bytesReceived += data.byteLength;
+        this.lastAudioAt = this.deps.now();
+        if (this.framesReceived === 1) this.log(`first audio from Larry: ${data.byteLength} bytes`);
+        if (this.snap.problem === AUDIO_NOT_ARRIVING) this.update({ problem: null });
       }
       return;
     }
@@ -396,6 +426,7 @@ export class CallSession {
           if (m.source !== "typed" && m.text) this.setIgor(m.text, "");
         } else if (m.who === "larry") {
           // Larry answering means the vendor decided Igor's turn was over.
+          this.lastTextAt = this.deps.now();
           this.promoteIgor();
           this.appendLarry(m.text);
         }
@@ -438,6 +469,7 @@ export class CallSession {
         return;
       case "error":
         this.log(`bridge error: ${m.message}`);
+        this.bridgeProblem = m.message;
         this.update({ problem: m.message });
         return;
       case "vendor_closed":
@@ -456,6 +488,7 @@ export class CallSession {
     this.log(`ready: out_rate=${outRate} → live; playback open, stt_start, mic opening`);
     this.update({ state: "live", startedAt: this.deps.now() });
     this.deps.audio.openPlayback(outRate);
+    this.startStats();
     this.safeSend(sttStartFrame());
     void this.deps.audio
       .startMic(this.onMicBuffer)
@@ -465,6 +498,33 @@ export class CallSession {
         this.log(`mic FAILED to open: ${describe(e)}`);
         this.update({ problem: `microphone failed: ${describe(e)}` });
       });
+  }
+
+  /**
+   * Every five seconds while live (#106): what came down the socket against
+   * what the speaker rendered, and what went up. And the one thing the
+   * counters alone say: Tony's words arriving as text with no audio behind
+   * them for five seconds is the bridge or the socket, not the phone.
+   */
+  private startStats(): void {
+    if (this.statsTimer) clearInterval(this.statsTimer);
+    // A timer must never be what keeps a process alive (tests run in-band).
+    this.statsTimer = unref(setInterval(() => {
+      if (this.snap.state !== "live") return;
+      const now = this.deps.now();
+      this.log(
+        `rx ${(this.bytesReceived / 1024).toFixed(0)} KB / ${this.framesReceived} frames · ${describePlayback(
+          this.deps.audio.stats?.() ?? null,
+        )} · ${this.framesSent} mic frames sent`,
+      );
+      const absent = audioAbsent({ now, lastTextAt: this.lastTextAt, lastAudioAt: this.lastAudioAt });
+      if (absent && this.snap.problem === null) {
+        this.log("Tony is talking (text) but no audio has arrived for 5 s");
+        this.update({ problem: AUDIO_NOT_ARRIVING });
+      } else if (!absent && this.snap.problem === AUDIO_NOT_ARRIVING) {
+        this.update({ problem: null });
+      }
+    }, STATS_EVERY_MS));
   }
 
   private armFirstFrameWatch(): void {
@@ -654,7 +714,14 @@ export class CallSession {
     this.rearmed = false;
     this.closing = false;
     this.framesSent = 0;
-    this.framesPlayed = 0;
+    this.framesReceived = 0;
+    this.bytesReceived = 0;
+    this.lastAudioAt = 0;
+    this.lastTextAt = 0;
+    this.audioProblem = null;
+    this.bridgeProblem = null;
+    if (this.statsTimer) clearInterval(this.statsTimer);
+    this.statsTimer = null;
     this.zeroRun = 0;
     this.zeroRearmed = false;
     this.micBuffers = 0;
@@ -665,7 +732,13 @@ export class CallSession {
 
   private finish(reason: string, badly: boolean): void {
     if (this.snap.state === "ended" || this.snap.state === "idle") return;
-    this.log(`ended${badly ? " BADLY" : ""}: ${reason} (${this.framesSent} mic frames sent, ${this.framesPlayed} played)`);
+    this.log(
+      `ended${badly ? " BADLY" : ""}: ${reason} (${this.framesSent} mic frames sent, ${this.framesReceived} frames / ${(
+        this.bytesReceived / 1024
+      ).toFixed(0)} KB received, ${describePlayback(this.deps.audio.stats?.() ?? null)})`,
+    );
+    if (this.statsTimer) clearInterval(this.statsTimer);
+    this.statsTimer = null;
     this.clearProbe();
     if (this.firstFrameTimer) clearTimeout(this.firstFrameTimer);
     this.firstFrameTimer = null;
@@ -701,6 +774,12 @@ export class CallSession {
   private emit(): void {
     for (const l of this.listeners) l(this.snap);
   }
+}
+
+/** Node timers hold the process open; Hermes timers have no unref. Either way, not our job to keep the lights on. */
+function unref<T>(timer: T): T {
+  (timer as { unref?: () => void }).unref?.();
+  return timer;
 }
 
 /** Shape, not instanceof — an ArrayBuffer can come from another realm (RN's socket, Jest's VM). */
