@@ -525,6 +525,34 @@ describe("CallSession — both directions in the log (#106) and the audio layer'
   });
 });
 
+describe("CallSession — where Igor is (#107)", () => {
+  const home = { lat: 47.6, lon: -122.3, accuracyM: 12, at: "2026-09-02T14:52:00.000Z", place: "Home" };
+  const school = { lat: 47.61, lon: -122.31, accuracyM: 20, at: "2026-09-02T14:58:00.000Z", place: null };
+
+  it("a fix in hand before the socket opens rides the start frame", async () => {
+    const t = setup();
+    await t.session.start("eleven");
+    t.session.setLocation(home);
+    expect(t.socket.sent).toHaveLength(0);
+    t.socket.open();
+    expect(t.socket.frames[0]).toMatchObject({ type: "start", location: { place: "Home", lat: 47.6, accuracy_m: 12 } });
+    expect(t.socket.frames.filter((f) => f.type === "location")).toHaveLength(0);
+  });
+
+  it("a fix after the socket opens, and every move, is its own frame; idle it is only remembered", async () => {
+    const t = setup();
+    t.session.setLocation(home); // idle: nothing to send
+    await goLive(t, "eleven");
+    expect(t.socket.frames[0]).toMatchObject({ location: { place: "Home" } });
+    t.session.setLocation(school);
+    expect(t.socket.frames.at(-1)).toEqual({ type: "location", lat: 47.61, lon: -122.31, accuracy_m: 20, at: school.at, place: null });
+    t.session.stop();
+    const before = t.socket.frames.length;
+    t.session.setLocation(home);
+    expect(t.socket.frames).toHaveLength(before);
+  });
+});
+
 describe("CallSession — restart (#93)", () => {
   it("hangs up (diagnostics, stt_stop, stop) and dials again on the same backend, in the same voice", async () => {
     const t = setup();

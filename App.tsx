@@ -102,6 +102,7 @@ import { createNativeCallAudio } from "./lib/callAudio";
 import { CallLog } from "./lib/callLog";
 import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./lib/callProtocol";
 import { DEFAULT_VOICE, isCallVoice, type CallVoice } from "./lib/callVoices";
+import { describeLocation, significantMove, toCallLocation, type CallLocation } from "./lib/callLocation";
 import type { CallControlMessage } from "./lib/audioBridge";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
@@ -521,6 +522,8 @@ export default function App() {
   const [shareStatus, setShareStatus] = useState("");
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [knownPlaces, setKnownPlaces] = useState<KnownPlace[]>([]);
+  const knownPlacesRef = useRef<KnownPlace[]>([]);
+  knownPlacesRef.current = knownPlaces;
   const [locationExpanded, setLocationExpanded] = useState(false);
   const [gymTimerVisible, setGymTimerVisible] = useState(false);
   const [timerIntent, setTimerIntent] = useState<{
@@ -580,6 +583,60 @@ export default function App() {
       ),
     [callLog],
   );
+  // Where Igor is, for the call (#107): one fix while it dials, one more per
+  // significant move while it is up. Never a reason for a call not to start.
+  useEffect(() => {
+    let watch: Location.LocationSubscription | null = null;
+    let last: CallLocation | null = null;
+    let cancelled = false;
+    let active = false;
+    const offer = (loc: Location.LocationObject) => {
+      const next = toCallLocation(loc.coords, loc.timestamp, knownPlacesRef.current);
+      if (!significantMove(last, next)) return;
+      last = next;
+      callSession.setLocation(next);
+    };
+    const begin = async () => {
+      try {
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== "granted") {
+          callSession.note("location: no permission");
+          return;
+        }
+        const fix = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (cancelled || !active) return;
+        callSession.note(`location: ${describeLocation(toCallLocation(fix.coords, fix.timestamp, knownPlacesRef.current))}`);
+        offer(fix);
+        const sub = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.Balanced, distanceInterval: 100 },
+          (loc) => {
+            if (active) offer(loc);
+          },
+        );
+        if (cancelled || !active) sub.remove();
+        else watch = sub;
+      } catch (e) {
+        callSession.note(`location: unavailable (${e instanceof Error ? e.message : String(e)})`);
+      }
+    };
+    const unsubscribe = callSession.subscribe((snap) => {
+      const up = snap.state === "connecting" || snap.state === "live";
+      if (up && !active) {
+        active = true;
+        last = null;
+        void begin();
+      } else if (!up && active) {
+        active = false;
+        watch?.remove();
+        watch = null;
+      }
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+      watch?.remove();
+    };
+  }, [callSession]);
   const [callBackend, setCallBackend] = useState<CallBackend>(DEFAULT_BACKEND);
   const callBackendRef = useRef<CallBackend>(DEFAULT_BACKEND);
   callBackendRef.current = callBackend;

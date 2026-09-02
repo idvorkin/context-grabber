@@ -8,6 +8,7 @@
 **Changes:** [Call deep link](2026-08-28-cockpit-call-deep-link-design.md) — `grabber://call` now lands here, not on the Cockpit page
 **Amended:** 2026-08-29, [#90](https://github.com/idvorkin/context-grabber/issues/90) — a calling treatment while the bridge answers; mute folds into the voice indicator; a round red hang-up
 **Amended:** 2026-08-29, [#98](https://github.com/idvorkin/context-grabber/issues/98) — a voice picker beside the microphone picker
+**Amended:** 2026-09-02, [#107](https://github.com/idvorkin/context-grabber/issues/107) — the call tells the bridge where Igor is
 **Amended:** 2026-09-02, [#95](https://github.com/idvorkin/context-grabber/issues/95) / [#105](https://github.com/idvorkin/context-grabber/issues/105) / [#106](https://github.com/idvorkin/context-grabber/issues/106) — audio that stops mid-call heals itself; the greeting waits for the speaker; the log counts both directions and survives a freeze
 
 ## Summary
@@ -422,6 +423,28 @@ the Call tab and the call starts on the remembered backend — from the home
 screen to Larry in one tap, no unlock-and-hunt. The rest of the widget is
 unchanged; the pill is the only new tap zone.
 
+### Where Igor is
+
+Igor, walking to school on a call, 2026-09-02 07:52: *"Can you read my
+location? … Let's add the ability to pass my location in as a context
+grabber feature, and also have the ability to give that to Larry. If you
+have the location at the start of the call, you might as well give it to
+Larry so he knows where you are."*
+([#107](https://github.com/idvorkin/context-grabber/issues/107))
+
+When a call starts, the phone's current position — coordinates, how
+accurate, when — goes to the bridge with the call, resolved on the phone
+against the known places (*Home*, *Work*, *Kettlebility*, *Flow Fitness*)
+so the bridge gets a name when there is one. It is fetched while the call
+is dialling and never delays it: if the fix is in hand when the bridge
+answers it rides the start; if it lands later it follows as its own small
+message. During the call, a **significant move** — a different known
+place, or 200 m from the last fix — sends one more; a walk to school is a
+handful of messages, not a stream. Diagnostics logs each one (*location:
+Home (±12 m)*). No fix is ever a reason for a call not to start: without
+location permission, or with no fix in time, the call simply carries no
+location. What Larry does with it is the bridge's.
+
 ### One call at a time
 
 If a call is live on the Cockpit *page* (its own Call tab, in the web
@@ -625,3 +648,53 @@ back. The calling treatment in the middle of the screen stays; the big
     *previous run, recovered from disk*, followed by `app launched, build
     …`. Place a call and hang up: the dump the bridge receives contains
     those lines.
+
+41. **Where Igor is.** Start a call at home: the bridge's record of the
+    session carries *Home* with coordinates and an accuracy; Diagnostics
+    shows `location: Home (±… m)` before or shortly after `live`. Walk out
+    of the Home radius mid-call: within a minute one more location message
+    reaches the bridge and the log; standing still sends none. With
+    location permission off, the call starts exactly as before and the
+    log says `location: no permission`.
+
+## Rationale and risks
+**Why native rather than fixing the web view.** WebKit on iOS suspends
+`getUserMedia` capture when the app leaves the foreground, and `WKWebView`
+exposes no way to opt out — Safari got background WebRTC; embedded web
+views did not. Holding a native audio session open (#73's proposal) keeps
+the *process* alive but not the page's microphone. The keep-awake spec
+already records the symptom: "iOS then suspends the web view's audio
+capture, and the call dies." The only fix is for the app, not the page, to
+own the microphone and the speaker.
+
+**Why this is small.** The bridge was built page-agnostic: one socket,
+raw audio both ways, a dozen JSON message types, no auth on the tailnet.
+There is no conversation logic to port. The app already ships the audio
+engine (`react-native-audio-api`, used for the Gym Timer's tones), the
+native route module (the audio bridge), the `audio` background mode (the
+Gym Timer), and the deep-link routing. This is a screen and a socket.
+
+**Risks.**
+
+- *Audio under the lock.* The app keeps running while locked only while
+  its audio session is active in a recording-capable category. If the
+  session ever deactivates mid-call (an interruption not handled, a route
+  change mishandled), iOS suspends the app within seconds and the bridge
+  hangs up on the silence. Acceptance 3–6 and 15 are the guard.
+- *The tailnet under the lock.* Tailscale's iOS VPN stays up in the
+  background, but the socket is over it; a phone that drops Wi-Fi for
+  cellular will re-home the VPN and may drop the socket. Phase 1 reports
+  *connection lost* rather than reconnecting.
+- *Echo.* On the speaker with the microphone open, the vendor's VAD hears
+  Larry and barges in on himself — the first native calls did exactly that
+  ([#80](https://github.com/idvorkin/context-grabber/issues/80): Gemini
+  transcribed its own sentences as Igor and restarted them six times). The
+  session mode alone does not cancel echo; the audio engine has to run its
+  I/O through iOS's voice-processing unit, the same one the web view and
+  every VoIP app use. The native screen does, so speakerphone works without
+  headphones; headphones remain the quieter option.
+- *Two clients, one bridge.* The bridge supports several sessions, but the
+  app polices only its own side (the one-call rule above).
+- *Vendor limits are unchanged.* Gemini's ~15 minutes, ElevenLabs's cut at
+  ~10 minutes observed; a native client that survives the lock will hit
+  them more often than a page that dies first.
