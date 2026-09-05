@@ -48,6 +48,10 @@ type Props = {
   /** The voice the call answers in — Tony or Igor (#98). */
   voice?: CallVoice;
   onVoiceChange?: (voice: CallVoice) => void;
+  /** Upload the log as a private gist; resolves with the URL. Absent = no token saved, no button. */
+  onUpload?: () => Promise<string>;
+  /** The last upload's URL, shown under the buttons. */
+  lastUploadUrl?: string | null;
   /** A call is live on the Cockpit *page*; two microphones on one phone is a no. */
   cockpitCallLive: boolean;
   /** The Cockpit web view exists in this app session (it may hold a mic). Logged per call for #88. */
@@ -132,6 +136,8 @@ export function CallScreen({
   onBackendChange,
   voice = DEFAULT_VOICE,
   onVoiceChange,
+  onUpload,
+  lastUploadUrl = null,
   cockpitCallLive,
   cockpitMounted = false,
 }: Props) {
@@ -343,6 +349,34 @@ export function CallScreen({
     });
   }, [session, backend, voice, cockpitMounted, cockpitCallLive]);
 
+  /* ---------- upload to a gist ---------- */
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "uploaded" | "failed">("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const uploadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (uploadTimer.current) clearTimeout(uploadTimer.current);
+    },
+    [],
+  );
+  const upload = useCallback(async () => {
+    if (!onUpload) return;
+    setUploadState("uploading");
+    setUploadError(null);
+    try {
+      const url = await onUpload();
+      setUploadedUrl(url);
+      setUploadState("uploaded");
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : String(e));
+      setUploadState("failed");
+    }
+    if (uploadTimer.current) clearTimeout(uploadTimer.current);
+    uploadTimer.current = setTimeout(() => setUploadState("idle"), 2500);
+  }, [onUpload]);
+  const shownUrl = uploadedUrl ?? lastUploadUrl;
+
   const [priming, setPriming] = useState(false);
   const primeAudio = useCallback(async () => {
     setPriming(true);
@@ -513,6 +547,26 @@ export function CallScreen({
                 >
                   <Text style={styles.diagCopyText}>{copied ? "Copied" : "Copy diagnostics"}</Text>
                 </Pressable>
+                {onUpload && (
+                  <Pressable
+                    onPress={() => void upload()}
+                    disabled={uploadState === "uploading"}
+                    style={[styles.diagCopy, uploadState === "uploading" && styles.buttonDisabled]}
+                    testID="call-diag-upload"
+                    accessibilityRole="button"
+                    accessibilityLabel="Upload diagnostics"
+                  >
+                    <Text style={styles.diagCopyText}>
+                      {uploadState === "uploading"
+                        ? "Uploading…"
+                        : uploadState === "uploaded"
+                          ? "Uploaded"
+                          : uploadState === "failed"
+                            ? "Upload failed"
+                            : "Upload"}
+                    </Text>
+                  </Pressable>
+                )}
                 {!active && (
                   <Pressable
                     onPress={() => void primeAudio()}
@@ -526,6 +580,14 @@ export function CallScreen({
                   </Pressable>
                 )}
               </View>
+              {shownUrl && (
+                <Text style={styles.uploadUrl} selectable numberOfLines={1} testID="call-diag-upload-url">
+                  {shownUrl}
+                </Text>
+              )}
+              {uploadError && (
+                <CopyableError message={uploadError} context="CallScreen.upload" style={styles.uploadError} />
+              )}
             </View>
           )}
         </View>
@@ -895,7 +957,9 @@ const styles = StyleSheet.create({
   diag: { gap: 6, paddingBottom: 6 },
   diagScroll: { maxHeight: 180, backgroundColor: "#0c121f", borderRadius: 8, padding: 8 },
   diagLine: { color: "#9fb3c8", fontSize: 11, fontFamily: "Menlo", lineHeight: 15 },
-  diagButtons: { flexDirection: "row", gap: 8 },
+  diagButtons: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  uploadUrl: { color: "#9fb3c8", fontSize: 12, fontFamily: "Menlo" },
+  uploadError: { marginTop: 4 },
   diagCopy: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: "#243447" },
   diagCopyText: { color: "#4cc9f0", fontSize: 13, fontWeight: "600" },
   deviceRow: { flexDirection: "row", alignItems: "center", gap: 8 },

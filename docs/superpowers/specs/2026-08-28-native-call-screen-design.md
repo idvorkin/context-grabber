@@ -214,6 +214,11 @@ its lines. On the next launch those lines come back at the top of the log
 under a *previous run, recovered from disk* rule, and go out with the next
 dump like any other call's.
 
+**The dump can reach a gist on its own.** When the bridge is not filing
+the dump — it never has — the log can go up as a private gist instead:
+on demand from the fold, or on its own after a troubled call. That is
+its own spec: [Diagnostics gist upload](2026-09-05-diagnostics-gist-upload-design.md).
+
 **The dump reaches the bridge on its own.** At every hang-up, at every
 automatic redial, and when the bridge fails to acknowledge the microphone,
 the app sends the dump to the bridge over the call's own socket before

@@ -41,7 +41,7 @@ const route = AudioRoute as unknown as { listeners: ((p: unknown) => void)[]; se
 type Backend = "eleven" | "gemini" | "openai" | "drill";
 type Voice = "tony" | "igor";
 
-function setup(props: { cockpitCallLive?: boolean; backend?: Backend; voice?: Voice } = {}) {
+function setup(props: { cockpitCallLive?: boolean; backend?: Backend; voice?: Voice; onUpload?: () => Promise<string>; lastUploadUrl?: string } = {}) {
   const socket = new FakeSocket();
   const log = new CallLog();
   const session = new CallSession({ connect: () => socket, audio, log }, "wss://h/bridge");
@@ -55,6 +55,8 @@ function setup(props: { cockpitCallLive?: boolean; backend?: Backend; voice?: Vo
       onBackendChange={onBackendChange}
       voice={o.voice ?? props.voice}
       onVoiceChange={onVoiceChange}
+      onUpload={props.onUpload}
+      lastUploadUrl={props.lastUploadUrl}
       cockpitCallLive={props.cockpitCallLive ?? false}
     />
   );
@@ -414,6 +416,33 @@ describe("CallScreen", () => {
     await goLive(t);
     expect(t.r.getByTestId("call-status").props.children).toMatch(/^live · \d+:\d\d · Gemini$/);
     expect(t.r.getByTestId("call-devices-summary").props.children).toBe("iPhone Microphone · Speaker");
+  });
+
+  it("Upload in the Diagnostics fold: only with a token; the URL shows; a failure is copyable", async () => {
+    const none = setup();
+    await settle();
+    fireEvent.press(none.r.getByTestId("call-diag-toggle"));
+    expect(none.r.queryByTestId("call-diag-upload")).toBeNull();
+    none.r.unmount();
+
+    const onUpload = jest.fn(async () => "https://gist.github.com/idvorkin/abc123");
+    const t = setup({ onUpload, lastUploadUrl: "https://gist.github.com/idvorkin/older" });
+    await settle();
+    fireEvent.press(t.r.getByTestId("call-diag-toggle"));
+    expect(t.r.getByTestId("call-diag-upload-url").props.children).toBe("https://gist.github.com/idvorkin/older");
+    await act(async () => {
+      fireEvent.press(t.r.getByTestId("call-diag-upload"));
+    });
+    expect(onUpload).toHaveBeenCalledTimes(1);
+    expect(t.r.getByText("Uploaded")).toBeTruthy();
+    expect(t.r.getByTestId("call-diag-upload-url").props.children).toBe("https://gist.github.com/idvorkin/abc123");
+
+    onUpload.mockRejectedValueOnce(new Error("GitHub said 401: Bad credentials"));
+    await act(async () => {
+      fireEvent.press(t.r.getByTestId("call-diag-upload"));
+    });
+    expect(t.r.getByText("Upload failed")).toBeTruthy();
+    expect(t.r.getByText("GitHub said 401: Bad credentials")).toBeTruthy();
   });
 
   it("Restart hangs up and redials on the same backend in one tap", async () => {

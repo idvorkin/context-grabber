@@ -13,7 +13,9 @@ import {
 import HealthKit from "@kingstinct/react-native-healthkit";
 import type { CategoryTypeIdentifier } from "@kingstinct/react-native-healthkit";
 import type * as SQLite from "expo-sqlite";
+import * as Clipboard from "expo-clipboard";
 import { setSetting, pruneLocations, getLocationCount, setSleepTarget } from "../lib/db";
+import type { Upload } from "../lib/gistUpload";
 
 const CTI_SLEEP =
   "HKCategoryTypeIdentifierSleepAnalysis" as CategoryTypeIdentifier;
@@ -35,6 +37,13 @@ type SettingsModalProps = {
   stopTracking: () => Promise<boolean>;
   sleepTargetHours: number;
   setSleepTargetHours: (hours: number) => void;
+  /* Diagnostics uploads — spec: docs/superpowers/specs/2026-09-05-diagnostics-gist-upload-design.md */
+  gistToken?: string | null;
+  onGistTokenChange?: (token: string) => Promise<void>;
+  gistAutoUpload?: boolean;
+  onGistAutoUploadChange?: (on: boolean) => void;
+  gistUploads?: Upload[];
+  onDeleteUploads?: () => Promise<string>;
 };
 
 export default function SettingsModal({
@@ -54,7 +63,27 @@ export default function SettingsModal({
   stopTracking,
   sleepTargetHours,
   setSleepTargetHours,
+  gistToken = null,
+  onGistTokenChange,
+  gistAutoUpload = true,
+  onGistAutoUploadChange,
+  gistUploads = [],
+  onDeleteUploads,
 }: SettingsModalProps) {
+  const [uploadsExpanded, setUploadsExpanded] = useState(false);
+  const [tokenDraft, setTokenDraft] = useState("");
+  const [tokenNote, setTokenNote] = useState<string | null>(null);
+  const [deleteNote, setDeleteNote] = useState<string | null>(null);
+  const saveToken = async () => {
+    if (!onGistTokenChange) return;
+    try {
+      await onGistTokenChange(tokenDraft);
+      setTokenDraft("");
+      setTokenNote(tokenDraft.trim() ? "token saved" : "token cleared");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
   const [sleepExpanded, setSleepExpanded] = useState(false);
   const [trackingExpanded, setTrackingExpanded] = useState(false);
   const [debugExpanded, setDebugExpanded] = useState(false);
@@ -171,6 +200,75 @@ export default function SettingsModal({
                   {locationCount} location{locationCount !== 1 ? "s" : ""} tracked
                   {locationStorageBytes > 0 ? ` (${locationStorageBytes > 1024 * 1024 ? `${(locationStorageBytes / (1024 * 1024)).toFixed(1)} MB` : locationStorageBytes > 1024 ? `${(locationStorageBytes / 1024).toFixed(1)} KB` : `${locationStorageBytes} B`})` : ""}
                 </Text>
+              </>
+            )}
+          </View>
+
+          <View style={styles.card}>
+            <TouchableOpacity onPress={() => setUploadsExpanded(!uploadsExpanded)} style={styles.settingRow} testID="settings-uploads-toggle">
+              <Text style={styles.sectionTitle}>Diagnostics uploads</Text>
+              <Text style={{ color: "#888", fontSize: 16 }}>{uploadsExpanded ? "\u25B2" : "\u25BC"}</Text>
+            </TouchableOpacity>
+            {uploadsExpanded && (
+              <>
+                <Text style={styles.countText}>
+                  A GitHub classic token with only the gist scope. Fine-grained tokens cannot create gists. Kept in the Keychain; never shown again.
+                </Text>
+                <View style={styles.settingRow}>
+                  <Text style={styles.settingText}>{gistToken ? "GitHub token · saved" : "GitHub token"}</Text>
+                  <TextInput
+                    style={[styles.retentionInput, { width: 140 }]}
+                    value={tokenDraft}
+                    onChangeText={setTokenDraft}
+                    onEndEditing={() => void saveToken()}
+                    onSubmitEditing={() => void saveToken()}
+                    placeholder={gistToken ? "paste to replace, blank to clear" : "ghp_…"}
+                    placeholderTextColor="#666"
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    testID="settings-gist-token"
+                  />
+                </View>
+                {tokenNote && <Text style={styles.countText}>{tokenNote}</Text>}
+                {gistToken && (
+                  <>
+                    <View style={styles.settingRow}>
+                      <Text style={styles.settingText}>Upload after a troubled call</Text>
+                      <Switch
+                        value={gistAutoUpload}
+                        onValueChange={(v) => onGistAutoUploadChange?.(v)}
+                        trackColor={{ false: "#555", true: "#4361ee" }}
+                        thumbColor="#fff"
+                        testID="settings-gist-auto"
+                      />
+                    </View>
+                    {gistUploads[0] && (
+                      <View style={styles.settingRow}>
+                        <Text style={[styles.countText, { flex: 1 }]} numberOfLines={1}>
+                          last: {gistUploads[0].url}
+                        </Text>
+                        <TouchableOpacity onPress={() => void Clipboard.setStringAsync(gistUploads[0].url)} testID="settings-gist-copy">
+                          <Text style={{ color: "#4cc9f0", fontSize: 14, fontWeight: "600" }}>Copy</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      style={[styles.actionButton, { marginTop: 8, backgroundColor: "#3d405b" }]}
+                      disabled={gistUploads.length === 0}
+                      onPress={() => {
+                        setDeleteNote("deleting…");
+                        onDeleteUploads?.()
+                          .then(setDeleteNote)
+                          .catch((e) => setDeleteNote(`delete failed: ${e instanceof Error ? e.message : String(e)}`));
+                      }}
+                      testID="settings-gist-delete"
+                    >
+                      <Text style={styles.actionButtonText}>Delete uploaded diagnostics ({gistUploads.length})</Text>
+                    </TouchableOpacity>
+                    {deleteNote && <Text style={styles.countText}>{deleteNote}</Text>}
+                  </>
+                )}
               </>
             )}
           </View>

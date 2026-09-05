@@ -103,6 +103,10 @@ import { CallLog } from "./lib/callLog";
 import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./lib/callProtocol";
 import { DEFAULT_VOICE, isCallVoice, type CallVoice } from "./lib/callVoices";
 import { describeLocation, significantMove, toCallLocation, type CallLocation } from "./lib/callLocation";
+import { getGistToken, setGistToken } from "./lib/gistToken";
+import { callHadTrouble, deleteGist, parseUploads, pruneUploads, renderDiagnosticsGist, uploadGist, type Upload } from "./lib/gistUpload";
+import { describeRoute } from "./lib/callDevices";
+import AudioRoute from "./modules/audio-route";
 import type { CallControlMessage } from "./lib/audioBridge";
 import type { ContextSnapshot, LocationData } from "./lib/appTypes";
 
@@ -637,6 +641,94 @@ export default function App() {
       watch?.remove();
     };
   }, [callSession]);
+  /* ---------- diagnostics uploads (a private gist per troubled call) ----------
+     Spec: docs/superpowers/specs/2026-09-05-diagnostics-gist-upload-design.md */
+  const [gistToken, setGistTokenState] = useState<string | null>(null);
+  const [gistAutoUpload, setGistAutoUploadState] = useState(true);
+  const [gistUploads, setGistUploads] = useState<Upload[]>([]);
+  const gistRef = useRef({ token: null as string | null, auto: true, uploads: [] as Upload[] });
+  gistRef.current = { token: gistToken, auto: gistAutoUpload, uploads: gistUploads };
+  useEffect(() => {
+    void getGistToken().then((t) => setGistTokenState(t));
+  }, []);
+  const handleGistTokenChange = useCallback(async (token: string) => {
+    await setGistToken(token);
+    setGistTokenState(token.trim() || null);
+  }, []);
+  const handleGistAutoUploadChange = useCallback(
+    (on: boolean) => {
+      setGistAutoUploadState(on);
+      if (db) void setSetting(db, "gist_auto_upload", on ? "true" : "false").catch(() => {});
+    },
+    [db],
+  );
+  const rememberUploads = useCallback(
+    (list: Upload[]) => {
+      setGistUploads(list);
+      if (db) void setSetting(db, "gist_uploads", JSON.stringify(list)).catch(() => {});
+    },
+    [db],
+  );
+  /** The whole log as a secret gist; the URL on the clipboard and in the log. Throws with the reason. */
+  const uploadDiagnostics = useCallback(
+    async (why: string): Promise<string> => {
+      const token = gistRef.current.token;
+      if (!token) throw new Error("no GitHub token — Settings → Diagnostics uploads");
+      const build = getBuildInfo();
+      const snap = callSession.snapshot;
+      let route = "unknown";
+      try {
+        if (AudioRoute) route = describeRoute(AudioRoute.getDevices());
+      } catch {
+        // no session yet
+      }
+      const text = callLog.render({
+        build: `${build.shortSha} (${build.branch})`,
+        state: snap.state,
+        backend: snap.backend,
+        ended: snap.endedReason,
+        problem: snap.problem,
+        route,
+      });
+      try {
+        const up = await uploadGist(token, renderDiagnosticsGist({ at: new Date(), why, text }));
+        callLog.add(`uploaded → ${up.url}`);
+        await Clipboard.setStringAsync(up.url).catch(() => {});
+        const { keep, drop } = pruneUploads([up, ...gistRef.current.uploads]);
+        rememberUploads(keep);
+        for (const old of drop) void deleteGist(token, old.id).catch(() => {});
+        return up.url;
+      } catch (e) {
+        callLog.add(`upload FAILED: ${e instanceof Error ? e.message : String(e)}`);
+        throw e;
+      }
+    },
+    [callLog, callSession, rememberUploads],
+  );
+  // After a troubled call, on its own. The trigger is what the log says.
+  useEffect(() => {
+    let prev = callSession.snapshot.state;
+    return callSession.subscribe((snap) => {
+      const was = prev;
+      prev = snap.state;
+      if (snap.state !== "ended" || was === "ended") return;
+      const { token, auto } = gistRef.current;
+      if (!token || !auto || !callHadTrouble(callLog.current)) return;
+      void uploadDiagnostics("troubled call").catch(() => {});
+    });
+  }, [callSession, callLog, uploadDiagnostics]);
+  const deleteUploads = useCallback(async (): Promise<string> => {
+    const { token, uploads } = gistRef.current;
+    if (!token) throw new Error("no GitHub token");
+    let deleted = 0;
+    let gone = 0;
+    for (const u of uploads) {
+      if (await deleteGist(token, u.id)) deleted += 1;
+      else gone += 1;
+    }
+    rememberUploads([]);
+    return `deleted ${deleted} of ${uploads.length}${gone ? ` — ${gone} already gone` : ""}`;
+  }, [rememberUploads]);
   const [callBackend, setCallBackend] = useState<CallBackend>(DEFAULT_BACKEND);
   const callBackendRef = useRef<CallBackend>(DEFAULT_BACKEND);
   callBackendRef.current = callBackend;
@@ -691,6 +783,8 @@ export default function App() {
         if (isCallBackend(rememberedBackend)) setCallBackend(rememberedBackend);
         const rememberedVoice = await getSetting(database, "call_voice", DEFAULT_VOICE);
         if (isCallVoice(rememberedVoice)) setCallVoice(rememberedVoice);
+        setGistAutoUploadState((await getSetting(database, "gist_auto_upload", "true")) !== "false");
+        setGistUploads(parseUploads(await getSetting(database, "gist_uploads", "")));
         const enabled = await getSetting(database, "tracking_enabled", "false");
         setTrackingEnabled(enabled === "true");
 
@@ -2054,6 +2148,8 @@ export default function App() {
           onBackendChange={handleCallBackendChange}
           voice={callVoice}
           onVoiceChange={handleCallVoiceChange}
+          onUpload={gistToken ? () => uploadDiagnostics("upload requested") : undefined}
+          lastUploadUrl={gistUploads[0]?.url ?? null}
           cockpitCallLive={cockpitCallLive}
           cockpitMounted={cockpitMounted}
         />
@@ -2123,6 +2219,12 @@ export default function App() {
         locationCount={locationCount}
         setLocationCount={setLocationCount}
         locationStorageBytes={locationStorageBytes}
+        gistToken={gistToken}
+        onGistTokenChange={handleGistTokenChange}
+        gistAutoUpload={gistAutoUpload}
+        onGistAutoUploadChange={handleGistAutoUploadChange}
+        gistUploads={gistUploads}
+        onDeleteUploads={deleteUploads}
         setError={setError}
         startTracking={startTracking}
         stopTracking={stopTracking}
