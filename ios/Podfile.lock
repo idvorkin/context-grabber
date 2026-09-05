@@ -3,12 +3,12 @@ PODS:
     - ExpoModulesCore
   - EASClient (55.0.2):
     - ExpoModulesCore
-  - EXConstants (55.0.11):
+  - EXConstants (55.0.17):
     - ExpoModulesCore
   - EXJSONUtils (55.0.0)
   - EXManifests (55.0.9):
     - ExpoModulesCore
-  - Expo (55.0.6):
+  - Expo (55.0.30):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -41,11 +41,11 @@ PODS:
     - ExpoModulesCore
   - ExpoCloudKit (0.20.8):
     - ExpoModulesCore
-  - ExpoDomWebView (55.0.3):
+  - ExpoDomWebView (55.0.6):
     - ExpoModulesCore
   - ExpoFileSystem (55.0.11):
     - ExpoModulesCore
-  - ExpoFont (55.0.4):
+  - ExpoFont (55.0.8):
     - ExpoModulesCore
   - ExpoKeepAwake (55.0.6):
     - ExpoModulesCore
@@ -53,9 +53,9 @@ PODS:
     - ExpoModulesCore
   - ExpoLocation (55.1.2):
     - ExpoModulesCore
-  - ExpoLogBox (55.0.7):
+  - ExpoLogBox (55.0.13):
     - React-Core
-  - ExpoModulesCore (55.0.15):
+  - ExpoModulesCore (55.0.25):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -79,11 +79,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (55.0.15):
+  - ExpoModulesJSI (55.0.25):
     - hermes-engine
     - React-Core
     - React-runtimescheduler
     - ReactCommon
+  - ExpoSecureStore (55.0.18):
+    - ExpoModulesCore
   - ExpoSharing (55.0.14):
     - ExpoModulesCore
   - ExpoSQLite (55.0.10):
@@ -2117,7 +2119,7 @@ PODS:
 DEPENDENCIES:
   - AudioRoute (from `../modules/audio-route/ios`)
   - EASClient (from `../node_modules/expo-eas-client/ios`)
-  - EXConstants (from `../node_modules/expo-constants/ios`)
+  - EXConstants (from `../node_modules/expo/node_modules/expo-constants/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
@@ -2134,6 +2136,7 @@ DEPENDENCIES:
   - "ExpoLogBox (from `../node_modules/expo/node_modules/@expo/log-box`)"
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoModulesJSI (from `../node_modules/expo-modules-core`)
+  - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
   - ExpoSharing (from `../node_modules/expo-sharing/ios`)
   - ExpoSQLite (from `../node_modules/expo-sqlite/ios`)
   - ExpoTaskManager (from `../node_modules/expo-task-manager/ios`)
@@ -2231,7 +2234,7 @@ EXTERNAL SOURCES:
   EASClient:
     :path: "../node_modules/expo-eas-client/ios"
   EXConstants:
-    :path: "../node_modules/expo-constants/ios"
+    :path: "../node_modules/expo/node_modules/expo-constants/ios"
   EXJSONUtils:
     :path: "../node_modules/expo-json-utils/ios"
   EXManifests:
@@ -2264,6 +2267,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-modules-core"
   ExpoModulesJSI:
     :path: "../node_modules/expo-modules-core"
+  ExpoSecureStore:
+    :path: "../node_modules/expo-secure-store/ios"
   ExpoSharing:
     :path: "../node_modules/expo-sharing/ios"
   ExpoSQLite:
@@ -2439,23 +2444,24 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AudioRoute: 20d7b6e63e4d8306cae017406f02e65a475ad8b3
   EASClient: 7eead1417d9970757ad2654d1eddee4de796d1ee
-  EXConstants: 9813b8a316e5b7bb562731c7a45e236f54195185
+  EXConstants: 49a092f564eb895b79ab416f53ba54f7e6935197
   EXJSONUtils: 0080c14b673cfa9a6be5e3fe429768ffe3d42dfb
   EXManifests: 2b53302deb6d7275ae26005b8014f5a1aee42a0e
-  Expo: 9a502b466698a5e33c0ba6b749ef50d7f8a02477
+  Expo: 31d0b8b2cf39e2becaac955ec3b9593650772d54
   ExpoAsset: 63f22b029eb9aa68d5048f77ff9430f42c770d2c
   ExpoAudio: a826903abdeba843cde8602bd1c077d808b31f1d
   ExpoClipboard: 5d1b0cd2686406f21e616f2d9b3431259dee2e6a
   ExpoCloudKit: fa9643c3838570ee806ef758062be975807c528a
-  ExpoDomWebView: f101fb3db4b6eec4163fca51f7507189b7e48661
+  ExpoDomWebView: b2e9d601f9cb77d3c97da73234e175b64be91928
   ExpoFileSystem: ccbe192dde132e6e97bedcd51018a1642f4fa01c
-  ExpoFont: 1aa465cf9f8ac6b670405becba8b15473581b2dd
+  ExpoFont: a7e34a75bdfb703fa07a0e87807f836236608c76
   ExpoKeepAwake: a1baf9810a2dee1905aa9bdd336852598f7220e9
   ExpoLiveActivity: d0dd0e8e1460b6b26555b611c4826cdb1036eea2
   ExpoLocation: ac9ed9d974a7370210a215a2b09e81ae7a6ad724
-  ExpoLogBox: 89b634d5a8a64c4a6a7caad8f9985a28463c7002
-  ExpoModulesCore: b40499585cec5bfd14d45ce04f0c42d3d2ec22bb
-  ExpoModulesJSI: 46dab6c6d9e181bf94757367a0d569bfc7fffd99
+  ExpoLogBox: 4bb2f041d3281b8c27ed494fae3b6f217ba79857
+  ExpoModulesCore: 998d0fbf7f687b1ff715b87cec779fc92be628ac
+  ExpoModulesJSI: 964334271fc77832736f66ee1785761cdc778dbe
+  ExpoSecureStore: 422f8e24d8ba1693600bc3720f0a71a17ddcbea0
   ExpoSharing: a706da94ade9646338a63bbaa4320d4f1db02c45
   ExpoSQLite: 77506d3d056c57118280d1e2a2d76cc06e4926b3
   ExpoTaskManager: 6038b80fbe63915383dcf57fa0156b23e2615fab
