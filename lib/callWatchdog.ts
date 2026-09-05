@@ -89,15 +89,25 @@ export const AUDIO_NOT_ARRIVING = "Tony's audio is not arriving from the bridge"
 export const AUDIO_NOT_PLAYING = "Tony's audio is arriving but not playing";
 
 export type PlaybackStats = {
-  /** Seconds of Larry scheduled so far. */
+  /** Seconds of Larry scheduled so far (flushed audio not counted). */
   scheduledS: number;
   /** Seconds the clock has rendered of that. */
   playedS: number;
   clockRunning: boolean;
+  /** Seconds of Larry held back, waiting for a clock. */
+  pendingS: number;
 };
 
-/** The output side in one clause for the periodic log line. */
+/**
+ * The output side in one clause for the periodic log line. "clock not
+ * running" only when something is actually waiting on it; before Larry has
+ * said anything there is nothing to run for.
+ */
 export function describePlayback(s: PlaybackStats | null): string {
   if (!s) return "no playback";
-  return `played ${s.playedS.toFixed(1)}s of ${s.scheduledS.toFixed(1)}s${s.clockRunning ? "" : " (clock not running)"}`;
+  const base = `played ${s.playedS.toFixed(1)}s of ${s.scheduledS.toFixed(1)}s`;
+  if (s.clockRunning) return base;
+  if (s.pendingS > 0) return `${base} (${s.pendingS.toFixed(1)}s held, clock not running)`;
+  if (s.scheduledS === 0) return `${base} (nothing to play yet)`;
+  return `${base} (clock not running)`;
 }

@@ -253,7 +253,10 @@ can**:
   and the wait is logged (*output clock running after 120 ms*). If the
   clock has not started after two seconds, playback is reopened once and
   the held audio plays from there. Nothing Tony says in his first two
-  seconds is lost to a speaker that was still waking up.
+  seconds is lost to a speaker that was still waking up — nor to the
+  microphone reset that can fire in the same breath: what was held rides
+  through the reset and plays on the speaker that comes back (the phone's
+  log of 2026-09-05 showed a greeting lost exactly there).
 - **Audio that is not arriving at all** — Tony's words keep arriving as
   text, but no audio has come down the socket for five seconds — is not
   the phone's to heal. The screen says *Tony's audio is not arriving from
