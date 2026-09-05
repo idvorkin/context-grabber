@@ -465,8 +465,8 @@ describe("CallSession — both directions in the log (#106) and the audio layer'
       const t = setup();
       const lines: string[] = [];
       const log = { add: (l: string) => lines.push(l), all: lines };
-      const audio = t.audio as typeof t.audio & { stats?: () => { scheduledS: number; playedS: number; clockRunning: boolean } };
-      audio.stats = () => ({ scheduledS: 1.5, playedS: 1.2, clockRunning: true });
+      const audio = t.audio as typeof t.audio & { stats?: () => { scheduledS: number; playedS: number; clockRunning: boolean; pendingS: number } };
+      audio.stats = () => ({ scheduledS: 1.5, playedS: 1.2, clockRunning: true, pendingS: 0 });
       const session = new CallSession({ connect: t.connect, audio: t.audio, log, now: () => Date.now() }, "wss://h/bridge");
       await session.start("eleven");
       t.socket.open();

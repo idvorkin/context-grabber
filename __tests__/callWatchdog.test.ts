@@ -69,11 +69,18 @@ describe("audioAbsent (#105)", () => {
 });
 
 describe("describePlayback (#106)", () => {
-  it("says played of scheduled, and flags a clock that is not running", () => {
+  it("says played of scheduled; a stopped clock only when something waits on it", () => {
     expect(describePlayback(null)).toBe("no playback");
-    expect(describePlayback({ scheduledS: 12.34, playedS: 10, clockRunning: true })).toBe("played 10.0s of 12.3s");
-    expect(describePlayback({ scheduledS: 2, playedS: 0, clockRunning: false })).toBe(
+    expect(describePlayback({ scheduledS: 12.34, playedS: 10, clockRunning: true, pendingS: 0 })).toBe("played 10.0s of 12.3s");
+    expect(describePlayback({ scheduledS: 2, playedS: 0, clockRunning: false, pendingS: 0 })).toBe(
       "played 0.0s of 2.0s (clock not running)",
+    );
+    expect(describePlayback({ scheduledS: 0, playedS: 0, clockRunning: false, pendingS: 2.65 })).toBe(
+      "played 0.0s of 0.0s (2.6s held, clock not running)",
+    );
+    // before Larry has said anything, nothing is wrong
+    expect(describePlayback({ scheduledS: 0, playedS: 0, clockRunning: false, pendingS: 0 })).toBe(
+      "played 0.0s of 0.0s (nothing to play yet)",
     );
   });
 });

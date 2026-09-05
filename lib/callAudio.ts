@@ -247,7 +247,7 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
      * mic re-armed — because the second call is the one that always works.
      */
     async restartMic() {
-      log.add("mic reset: session down, playback reopened, mic re-armed");
+      log.add(`mic reset: session down, playback reopened, mic re-armed${pendingS ? ` (${pendingS.toFixed(2)}s of Larry held)` : ""}`);
       disarmRecorder();
       const rate = outRate;
       closePlayback();
@@ -279,21 +279,23 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
      * moves, then all of them are scheduled gaplessly from there.
      */
     play(pcm) {
-      const c = ctx;
-      if (!c) return;
       const samples = pcm16ToFloat(pcm);
       if (samples.length === 0) return;
-      if (clockLive) {
+      const c = ctx;
+      if (c && clockLive) {
         schedule(c, samples);
         return;
       }
+      // No context yet (a reset in progress), or a clock that has not
+      // started: hold it. Nothing Larry says is dropped for a speaker that
+      // is between lives.
       pending.push(samples);
       pendingS += samples.length / outRate;
       while (pendingS > PENDING_MAX_S && pending.length > 1) {
         const dropped = pending.shift()!;
         pendingS -= dropped.length / outRate;
       }
-      if (!clockPoll) startClock(c);
+      if (c && !clockPoll) startClock(c);
     },
 
     flush,
@@ -302,7 +304,7 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
       const c = ctx;
       if (!c) return null;
       const queued = Math.max(0, playhead - c.currentTime);
-      return { scheduledS, playedS: Math.max(0, scheduledS - queued), clockRunning: clockLive };
+      return { scheduledS, playedS: Math.max(0, scheduledS - queued), clockRunning: clockLive, pendingS };
     },
 
     async stop() {
@@ -314,6 +316,8 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
       routeChange = null;
       disarmRecorder();
       closePlayback();
+      pending = [];
+      pendingS = 0;
       interruption?.remove();
       interruption = null;
       paused = false;
@@ -436,6 +440,11 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
 
   /* ---------- playback ---------- */
 
+  /**
+   * A fresh context. What Larry said while there was none — a reset in
+   * progress, a clock that never started — is still in `pending` and goes
+   * out as soon as this clock runs.
+   */
   function openContext(rate: number): void {
     outRate = rate;
     ctx = new AudioContext({ sampleRate: rate });
@@ -448,8 +457,7 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     clockLive = false;
     clockPrev = 0;
     clockAdvancedAt = Date.now();
-    pending = [];
-    pendingS = 0;
+    if (pending.length) startClock(ctx);
   }
 
   /** Kick the engine with a sliver of silence and wait for the clock to move. */
@@ -485,13 +493,8 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
       if (!reopenedAtOpen) {
         reopenedAtOpen = true;
         log.add(`output clock has not started after ${CLOCK_START_MS} ms → reopening playback`);
-        const keep = pending;
-        const keepS = pendingS;
         closePlayback();
-        openContext(outRate);
-        pending = keep;
-        pendingS = keepS;
-        if (ctx) startClock(ctx);
+        openContext(outRate); // pending survives; a waiting queue starts the new clock
         return;
       }
       // Twice is a fact. Schedule anyway so nothing is lost if it does come
@@ -533,11 +536,10 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     scheduled.add(src);
   }
 
+  /** The context goes; what is still held in `pending` does not — the next context plays it. */
   function closePlayback(): void {
     stopClockPoll();
-    flush();
-    pending = [];
-    pendingS = 0;
+    dropScheduled();
     const c = ctx;
     ctx = null;
     gain = null;
@@ -545,7 +547,10 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     if (c) void c.close().catch(() => {});
   }
 
-  function flush(): void {
+  /** Stop what is scheduled and count only what actually rendered. */
+  function dropScheduled(): void {
+    const c = ctx;
+    if (c) scheduledS = Math.max(0, scheduledS - Math.max(0, playhead - c.currentTime));
     for (const src of scheduled) {
       try {
         src.stop();
@@ -555,6 +560,13 @@ export function createNativeCallAudio(log: Pick<CallLog, "add"> = NO_LOG): CallA
     }
     scheduled.clear();
     playhead = 0;
+  }
+
+  /** Barge-in: everything of Larry's not yet heard — scheduled or still held — goes. */
+  function flush(): void {
+    dropScheduled();
+    pending = [];
+    pendingS = 0;
   }
 
   /* ---------- the watchdog (#95) ---------- */
