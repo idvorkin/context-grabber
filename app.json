@@ -61,7 +61,8 @@
         {
           "microphonePermission": "Context Grabber records short voice notes when you log an affirmation or gratitude, so you can capture thoughts hands-free."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "android": {
       "adaptiveIcon": {

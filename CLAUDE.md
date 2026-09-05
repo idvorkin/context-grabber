@@ -24,6 +24,8 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `lib/callProtocol.ts` — Voice-bridge wire format for the native Call tab (frames both ways, ending text, bridge URL). Source of truth: `handle_browser` docstring in the Cockpit repo's `voice_bridge.py`
 - `lib/pcm.ts` — Float32 ↔ PCM16 LE, linear resample to the bridge's 16 kHz
 - `lib/callVoices.ts` — The voice a call answers in: Tony (bridge default) or Igor (his clone, implies `eleven_v3_conversational`); what rides the start frame per backend
+- `lib/gistUpload.ts` — The call log as a private gist: trouble detection, the delete-me note, create/delete, the app's own list (spec `2026-09-05-diagnostics-gist-upload-design.md`)
+- `lib/gistToken.ts` — The gist token in the iOS Keychain (`expo-secure-store`; null on a binary without it)
 - `lib/callSession.ts` — The call's state machine (socket + mic + playback + captions), platform-free; fake socket/audio in tests
 - `lib/callAudio.ts` — Native audio half of a call on `react-native-audio-api` + `modules/audio-route`: `.playAndRecord`/`.voiceChat` session, mic capture, scheduled playback, interruption resume
 
@@ -46,6 +48,7 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - `expo-file-system` — database file access for export
 - `expo-sharing` — iOS share sheet for database export
 - `expo-updates` — OTA update delivery
+- `expo-secure-store` — Keychain, for the diagnostics-upload token
 - `react-native-webview` — hosts the Cockpit tab (tailnet-only web dashboard)
 - Jest + ts-jest — testing
 - Maestro — iOS simulator UI testing

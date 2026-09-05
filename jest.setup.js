@@ -179,6 +179,21 @@ jest.mock('react-native-webview', () => {
   return { __esModule: true, WebView, default: WebView, __mock: handle };
 });
 
+// Mock expo-secure-store (the diagnostics-upload token lives in the Keychain).
+const mockSecureStore = { items: {} };
+jest.mock('expo-secure-store', () => ({
+  __esModule: true,
+  AFTER_FIRST_UNLOCK: 1,
+  getItemAsync: jest.fn(async (k) => mockSecureStore.items[k] ?? null),
+  setItemAsync: jest.fn(async (k, v) => {
+    mockSecureStore.items[k] = v;
+  }),
+  deleteItemAsync: jest.fn(async (k) => {
+    delete mockSecureStore.items[k];
+  }),
+  __mock: mockSecureStore,
+}));
+
 // Mock the local audio-route Expo module (no AVAudioSession in tests). The
 // default snapshot is a phone with AirPods paired — the shape that matters,
 // since a phone with nothing attached is the case where the pickers have
