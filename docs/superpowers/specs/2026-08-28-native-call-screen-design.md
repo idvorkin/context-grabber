@@ -355,7 +355,9 @@ The screen is the conversation and nothing else (Cockpit DESIGN P23/P24):
   while there is still time to say it again. When the turn settles (Tony
   answers, or the turn ends) the box empties and the sentence drops into
   the transcript as an ordinary *Igor* row. With nothing pending the box
-  reads *listening…*, faint; muted, it reads *muted*. When the line runs
+  reads *listening…*, faint. Muted, it reads *muted* — plainly, a state,
+  not a placeholder — whatever the recognizer had heard before the mic was
+  cut, since those words are no longer being sent. When the line runs
   past the box, the newest words stay in view and the oldest scroll off
   the top. The box is gone with the call.
 - **The voice control — which is the mute.** At the bottom, left of the

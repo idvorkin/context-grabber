@@ -31,7 +31,7 @@ export type MatchResult = {
 export function matchPointToPlace(
   lat: number,
   lng: number,
-  knownPlaces: KnownPlace[],
+  knownPlaces: readonly KnownPlace[],
 ): MatchResult {
   let bestIndex = -1;
   let bestDistance = Infinity;

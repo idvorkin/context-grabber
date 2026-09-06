@@ -142,6 +142,30 @@ export function pruneUploads(uploads: readonly Upload[], keep = KEEP_UPLOADS): {
   return { keep: sorted.slice(0, keep), drop: sorted.slice(keep) };
 }
 
+/**
+ * After an upload: the newest KEEP_UPLOADS stay, the rest are deleted from GitHub. A delete that fails
+ * (offline, GitHub down) keeps its gist on the list — *Delete uploaded diagnostics* still counts it and
+ * the next upload tries again. One already gone (404) is dropped: that is the intended outcome.
+ */
+export async function retireOldUploads(
+  token: string,
+  uploads: readonly Upload[],
+  deleteFn: (token: string, id: string) => Promise<boolean> = deleteGist,
+): Promise<Upload[]> {
+  const { keep, drop } = pruneUploads(uploads);
+  const stuck = await Promise.all(
+    drop.map(async (u) => {
+      try {
+        await deleteFn(token, u.id);
+        return null;
+      } catch {
+        return u;
+      }
+    }),
+  );
+  return [...keep, ...stuck.filter((u): u is Upload => u !== null)];
+}
+
 export function parseUploads(raw: string | null | undefined): Upload[] {
   if (!raw) return [];
   try {
