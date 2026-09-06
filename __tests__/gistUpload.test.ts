@@ -5,6 +5,7 @@ import {
   parseGistResponse,
   parseUploads,
   pruneUploads,
+  retireOldUploads,
   readerNote,
   renderDiagnosticsGist,
   uploadGist,
@@ -96,6 +97,23 @@ describe("the app's own list", () => {
     expect(drop).toHaveLength(3);
     expect(keep[0].at >= keep[keep.length - 1].at).toBe(true);
     expect(drop.every((d) => d.at <= keep[keep.length - 1].at)).toBe(true);
+  });
+
+  it("retireOldUploads: the newest stay, the rest go; a failed delete keeps its gist on the list, a 404 does not", async () => {
+    const list = Array.from({ length: KEEP_UPLOADS + 3 }, (_, i) => u(`g${i}`, `2026-09-01T00:00:${String(i).padStart(2, "0")}Z`));
+    const tried: string[] = [];
+    const del = jest.fn(async (_t: string, id: string) => {
+      tried.push(id);
+      if (id === "g1") throw new Error("delete failed: offline");
+      return id !== "g0"; // g0: already gone (404)
+    });
+    const kept = await retireOldUploads("t", list, del);
+    expect(tried.sort()).toEqual(["g0", "g1", "g2"]);
+    expect(kept).toHaveLength(KEEP_UPLOADS + 1);
+    expect(kept.map((k) => k.id)).toContain("g1");
+    expect(kept.map((k) => k.id)).not.toContain("g0");
+    expect(kept.map((k) => k.id)).not.toContain("g2");
+    expect(kept[0].id).toBe(`g${KEEP_UPLOADS + 2}`); // newest first
   });
 
   it("parseUploads tolerates junk", () => {

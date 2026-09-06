@@ -104,7 +104,7 @@ import { DEFAULT_BACKEND, bridgeUrl, isCallBackend, type CallBackend } from "./l
 import { DEFAULT_VOICE, isCallVoice, type CallVoice } from "./lib/callVoices";
 import { describeLocation, significantMove, toCallLocation, type CallLocation } from "./lib/callLocation";
 import { getGistToken, setGistToken } from "./lib/gistToken";
-import { callHadTrouble, deleteGist, parseUploads, pruneUploads, renderDiagnosticsGist, uploadGist, type Upload } from "./lib/gistUpload";
+import { callHadTrouble, deleteGist, parseUploads, renderDiagnosticsGist, retireOldUploads, uploadGist, type Upload } from "./lib/gistUpload";
 import { describeRoute } from "./lib/callDevices";
 import AudioRoute from "./modules/audio-route";
 import type { CallControlMessage } from "./lib/audioBridge";
@@ -603,6 +603,7 @@ export default function App() {
     const begin = async () => {
       try {
         const { status } = await Location.getForegroundPermissionsAsync();
+        if (cancelled || !active) return;
         if (status !== "granted") {
           callSession.note("location: no permission");
           return;
@@ -620,7 +621,7 @@ export default function App() {
         if (cancelled || !active) sub.remove();
         else watch = sub;
       } catch (e) {
-        callSession.note(`location: unavailable (${e instanceof Error ? e.message : String(e)})`);
+        if (!cancelled && active) callSession.note(`location: unavailable (${e instanceof Error ? e.message : String(e)})`);
       }
     };
     const unsubscribe = callSession.subscribe((snap) => {
@@ -694,9 +695,7 @@ export default function App() {
         const up = await uploadGist(token, renderDiagnosticsGist({ at: new Date(), why, text }));
         callLog.add(`uploaded → ${up.url}`);
         await Clipboard.setStringAsync(up.url).catch(() => {});
-        const { keep, drop } = pruneUploads([up, ...gistRef.current.uploads]);
-        rememberUploads(keep);
-        for (const old of drop) void deleteGist(token, old.id).catch(() => {});
+        rememberUploads(await retireOldUploads(token, [up, ...gistRef.current.uploads]));
         return up.url;
       } catch (e) {
         callLog.add(`upload FAILED: ${e instanceof Error ? e.message : String(e)}`);
