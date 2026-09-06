@@ -150,6 +150,8 @@ Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; imp
 - **Ignore recurring `bd doctor` warnings for `Dolt Status / Dolt Locks: config: modified`.** Every `bd` read (including `bd doctor` itself) re-creates that state; `bd vc commit` clears it but the next read brings it back. Cosmetic, not actionable.
 - **Sanity-check geometry thresholds against `__tests__/fixtures/context-grabber.db` + `locations.json`** before shipping clustering / place-matching / distance rules. The fixture carries 36K real GPS points + 4 real known places — synthetic tests miss edge cases real data exposes. (Example: the place-merge gate moved from 50m → 500m because the tight gate caught 0/10 unmatched stays in the fixture.)
 
+- **Dependabot PRs here all edit `package-lock.json`, so they conflict with each other and go stale; clear the alerts in bulk instead.** On a branch: `npm update --package-lock-only <the vulnerable packages>` — not `npm audit fix`, which also bumps `expo` / `expo-modules-core` patch versions (pods → a native build, not OTA) — then `npm ci`, `npx tsc --noEmit`, `just test`, and `npx expo export --platform ios` so Metro still bundles. Dependabot closes its own PRs once main is clean. Alerts left in the `@expo/*` / `metro` / `xcode` chain are pinned by the SDK and wait for the SDK upgrade (#46). A scratch `git worktree` needs `git submodule update --init` first, or Metro fails on the empty `vendor/igor-timer`.
+
 ## Data Collected
 
 - Steps, heart rate, sleep (hours + bedtime + wake time + per-source breakdown), active energy, walking distance
