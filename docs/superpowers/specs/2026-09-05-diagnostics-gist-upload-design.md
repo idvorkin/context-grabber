@@ -47,7 +47,9 @@ telling whoever reads it to delete it when they are done.
 ### The token, once
 
 Settings gains a **Diagnostics uploads** section with one field, *GitHub
-token*, masked. It takes a classic personal access token with only the
+token*, masked. Like every other section of Settings it is folded by
+default; a tap on its heading opens it. It takes a classic personal access
+token with only the
 `gist` scope — the section says so, and says that fine-grained tokens
 cannot create gists. Once a token is saved the section shows *token
 saved* (never the token), an **Upload after a troubled call** switch (on
@@ -107,7 +109,10 @@ in Settings deletes every gist it created, one request each, and
 reports *deleted N* (or *deleted 3 of 5 — 2 already gone*, which is fine:
 a gist the reader deleted first is the intended outcome). On every
 upload the app also deletes its oldest gists beyond the ten most recent,
-so a bad week cannot pile up a hundred. Deleting is only ever of gists
+so a bad week cannot pile up a hundred. A delete that fails (offline,
+GitHub down) leaves that gist on the app's list — *Delete uploaded
+diagnostics* still counts it, and the next upload tries it again.
+Deleting is only ever of gists
 this app created; it never lists or touches anything else on the
 account.
 
@@ -122,7 +127,8 @@ account.
 2. **Upload on demand.** With a token, after any call, Diagnostics →
    **Upload**: within a few seconds the button reads *Uploaded*, the URL
    is on the clipboard, a *uploaded → …* line is in the log, and the URL
-   shows under the buttons. Open it on a laptop: a secret gist, one file,
+   shows under the buttons (always the app's latest upload: an automatic
+   one after a later call replaces it). Open it on a laptop: a secret gist, one file,
    the note at the top, then the same text *Copy diagnostics* gives.
 3. **Auto after trouble.** Switch on. Force a troubled call (kill the
    bridge mid-call → *connection lost*): as the call ends the app

@@ -34,7 +34,7 @@ export function toCallLocation(
   timestamp: number,
   knownPlaces: readonly KnownPlace[],
 ): CallLocation {
-  const match = matchPointToPlace(coords.latitude, coords.longitude, knownPlaces as KnownPlace[]);
+  const match = matchPointToPlace(coords.latitude, coords.longitude, knownPlaces);
   return {
     lat: Number(coords.latitude.toFixed(6)),
     lon: Number(coords.longitude.toFixed(6)),

@@ -328,6 +328,8 @@ export function CallScreen({
   // the transcript and into a big box under the call line. The session
   // already keeps them as the one pending Igor row; the screen just moves it.
   const liveRow = snap.captions.find((r) => r.who === "igor" && r.pending) ?? null;
+  // Muted is a state, shown plainly; the words heard before the cut are not left on show.
+  const liveText = snap.muted ? "muted" : liveRow?.text || "";
   const transcript = snap.captions.filter((r) => r !== liveRow);
 
   const backendLabel = BACKENDS.find((b) => b.id === (snap.backend ?? backend))?.label ?? "";
@@ -352,7 +354,6 @@ export function CallScreen({
   /* ---------- upload to a gist ---------- */
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "uploaded" | "failed">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const uploadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -365,8 +366,7 @@ export function CallScreen({
     setUploadState("uploading");
     setUploadError(null);
     try {
-      const url = await onUpload();
-      setUploadedUrl(url);
+      await onUpload();
       setUploadState("uploaded");
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : String(e));
@@ -375,7 +375,6 @@ export function CallScreen({
     if (uploadTimer.current) clearTimeout(uploadTimer.current);
     uploadTimer.current = setTimeout(() => setUploadState("idle"), 2500);
   }, [onUpload]);
-  const shownUrl = uploadedUrl ?? lastUploadUrl;
 
   const [priming, setPriming] = useState(false);
   const primeAudio = useCallback(async () => {
@@ -442,12 +441,12 @@ export function CallScreen({
         <View style={styles.live} testID="call-live" accessibilityLabel="What you are saying">
           <Text style={styles.liveLabel}>you</Text>
           <Text
-            style={[styles.liveText, !liveRow?.text && styles.liveHint]}
+            style={[styles.liveText, !liveText && styles.liveHint]}
             numberOfLines={3}
             ellipsizeMode="head"
             testID="call-live-text"
           >
-            {liveRow?.text || (snap.muted ? "muted" : "listening…")}
+            {liveText || "listening…"}
           </Text>
         </View>
       )}
@@ -580,9 +579,9 @@ export function CallScreen({
                   </Pressable>
                 )}
               </View>
-              {shownUrl && (
+              {lastUploadUrl && (
                 <Text style={styles.uploadUrl} selectable numberOfLines={1} testID="call-diag-upload-url">
-                  {shownUrl}
+                  {lastUploadUrl}
                 </Text>
               )}
               {uploadError && (

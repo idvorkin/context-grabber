@@ -47,7 +47,7 @@ function setup(props: { cockpitCallLive?: boolean; backend?: Backend; voice?: Vo
   const session = new CallSession({ connect: () => socket, audio, log }, "wss://h/bridge");
   const onBackendChange = jest.fn();
   const onVoiceChange = jest.fn();
-  const element = (o: { backend?: Backend; voice?: Voice } = {}) => (
+  const element = (o: { backend?: Backend; voice?: Voice; lastUploadUrl?: string } = {}) => (
     <CallScreen
       session={session}
       log={log}
@@ -56,12 +56,12 @@ function setup(props: { cockpitCallLive?: boolean; backend?: Backend; voice?: Vo
       voice={o.voice ?? props.voice}
       onVoiceChange={onVoiceChange}
       onUpload={props.onUpload}
-      lastUploadUrl={props.lastUploadUrl}
+      lastUploadUrl={o.lastUploadUrl ?? props.lastUploadUrl}
       cockpitCallLive={props.cockpitCallLive ?? false}
     />
   );
   const r = render(element());
-  const rerender = (o: { backend?: Backend; voice?: Voice }) => r.rerender(element(o));
+  const rerender = (o: { backend?: Backend; voice?: Voice; lastUploadUrl?: string }) => r.rerender(element(o));
   return { r, socket, session, onBackendChange, onVoiceChange, log, rerender };
 }
 
@@ -134,6 +134,13 @@ describe("CallScreen", () => {
     fireEvent.press(t.r.getByTestId("call-mute"));
     t.socket.say({ type: "stt_partial", text: "so I was" });
     t.socket.say({ type: "stt_partial", text: "so I was thinking" });
+    expect(t.r.getByTestId("call-live-text").props.children).toBe("so I was thinking");
+    // muted with words pending: the box says so, plainly, and does not leave the words on show
+    fireEvent.press(t.r.getByTestId("call-mute"));
+    const mutedText = t.r.getByTestId("call-live-text");
+    expect(mutedText.props.children).toBe("muted");
+    expect((StyleSheet.flatten(mutedText.props.style) as { fontStyle?: string }).fontStyle).not.toBe("italic"); // not the faint placeholder
+    fireEvent.press(t.r.getByTestId("call-mute"));
     expect(t.r.getByTestId("call-live-text").props.children).toBe("so I was thinking");
     fireEvent.press(t.r.getByTestId("call-hangup"));
     await settle();
@@ -435,7 +442,12 @@ describe("CallScreen", () => {
     });
     expect(onUpload).toHaveBeenCalledTimes(1);
     expect(t.r.getByText("Uploaded")).toBeTruthy();
+    // the link under the buttons is the app's latest upload, whatever the app says that is — a later automatic upload replaces it
+    expect(t.r.getByTestId("call-diag-upload-url").props.children).toBe("https://gist.github.com/idvorkin/older");
+    t.rerender({ lastUploadUrl: "https://gist.github.com/idvorkin/abc123" });
     expect(t.r.getByTestId("call-diag-upload-url").props.children).toBe("https://gist.github.com/idvorkin/abc123");
+    t.rerender({ lastUploadUrl: "https://gist.github.com/idvorkin/auto456" });
+    expect(t.r.getByTestId("call-diag-upload-url").props.children).toBe("https://gist.github.com/idvorkin/auto456");
 
     onUpload.mockRejectedValueOnce(new Error("GitHub said 401: Bad credentials"));
     await act(async () => {
