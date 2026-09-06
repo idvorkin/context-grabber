@@ -157,9 +157,22 @@ function MapSurface({
 }: SurfaceProps) {
   const mapRef = useRef<MapView>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  // Transient hint shown when a location-dependent control is tapped before
+  // there's a live GPS fix (the controls stay visible so they don't vanish).
+  const [hint, setHint] = useState<string | null>(null);
+
+  const NO_LOCK = "Waiting for a live GPS lock…";
+
+  function showHint(msg: string) {
+    setHint(msg);
+    setTimeout(() => setHint(null), 1800);
+  }
 
   function handleFindMe() {
-    if (!currentLocation) return;
+    if (!currentLocation) {
+      showHint(NO_LOCK);
+      return;
+    }
     mapRef.current?.animateToRegion(
       {
         latitude: currentLocation.latitude,
@@ -172,7 +185,10 @@ function MapSurface({
   }
 
   async function handleCopyCoords() {
-    if (!currentLocation) return;
+    if (!currentLocation) {
+      showHint(NO_LOCK);
+      return;
+    }
     const text = `${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`;
     await Clipboard.setStringAsync(text);
     setCopyState("copied");
@@ -249,30 +265,34 @@ function MapSurface({
         <Text style={styles.controlGlyph}>{fullscreen ? "⤡" : "⤢"}</Text>
       </TouchableOpacity>
 
-      {currentLocation && (
-        <TouchableOpacity
-          onPress={handleFindMe}
-          style={[styles.control, pos.findMe]}
-          testID={`${idPrefix}find-me`}
-          accessibilityLabel="Recenter map on my location"
-          hitSlop={8}
-        >
-          <Text style={styles.controlGlyph}>◎</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        onPress={handleFindMe}
+        style={[styles.control, pos.findMe, !currentLocation && styles.controlIdle]}
+        testID={`${idPrefix}find-me`}
+        accessibilityLabel="Recenter map on my location"
+        hitSlop={8}
+      >
+        <Text style={styles.controlGlyph}>◎</Text>
+      </TouchableOpacity>
 
-      {currentLocation && (
-        <TouchableOpacity
-          onPress={handleCopyCoords}
-          style={[styles.control, pos.copy]}
-          testID={`${idPrefix}copy-coords`}
-          accessibilityLabel="Copy current coordinates"
-          hitSlop={8}
-        >
-          <Text style={styles.controlGlyph}>
-            {copyState === "copied" ? "✓" : "⧉"}
-          </Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        onPress={handleCopyCoords}
+        style={[styles.control, pos.copy, !currentLocation && styles.controlIdle]}
+        testID={`${idPrefix}copy-coords`}
+        accessibilityLabel="Copy current coordinates"
+        hitSlop={8}
+      >
+        <Text style={styles.controlGlyph}>
+          {copyState === "copied" ? "✓" : "⧉"}
+        </Text>
+      </TouchableOpacity>
+
+      {hint && (
+        <View style={styles.hintWrap} pointerEvents="none">
+          <View style={styles.hintBubble} testID={`${idPrefix}hint`}>
+            <Text style={styles.hintText}>{hint}</Text>
+          </View>
+        </View>
       )}
     </View>
   );
@@ -390,6 +410,24 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
   },
+  // Dimmed slightly when there's no live fix yet — still tappable (taps show
+  // the "waiting for a lock" hint) but visually signals it's not ready.
+  controlIdle: { opacity: 0.55 },
+  hintWrap: {
+    position: "absolute",
+    bottom: 10,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  hintBubble: {
+    maxWidth: 240,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    backgroundColor: "rgba(20, 20, 30, 0.88)",
+  },
+  hintText: { color: "#fff", fontSize: 12, textAlign: "center" },
 });
 
 // All three controls stack at the top-right, out of the way of the map

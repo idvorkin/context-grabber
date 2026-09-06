@@ -41,7 +41,8 @@ The embedded map is small and, once you pan/zoom around, there's no quick way ba
 - A **locate control** (standard locate/target icon) sits as an overlay on the map.
 - Tapping it **animates** the camera to center on the current location at a **street-level zoom** (closer than the default fit-to-content view), so "You" is centered and the immediate surroundings are legible.
 - The known-place pins, the "You" pin, and the today's-path polyline are unaffected — the control only moves the camera.
-- If there is no current location, the control is not shown (there's nothing to center on).
+- The control is **always visible** (so it never vanishes between fixes). If there's no current location yet, tapping it shows a brief **"Waiting for a live GPS lock…"** hint instead of moving the camera, and the control dims slightly to signal it's not ready. *(Amended 2026-05-31: previously hidden without a location; hiding made the buttons disappear whenever a grab missed a fix. We don't fall back to last-known — stale coordinates would mislead.)*
+- The **copy-coordinates** control behaves the same: always visible, and tapping it without a fix shows the same hint (there's nothing to copy until there's a location).
 
 ### Fullscreen
 
@@ -63,7 +64,7 @@ The embedded map is small and, once you pan/zoom around, there's no quick way ba
 A non-technical reader should be able to walk these on the device:
 
 - **Find me recenters:** On the Today screen, drag the map far away from your position and zoom out. Tap the locate button. The map animates back so the "You" pin is centered and zoomed to street level. The path and place pins are still drawn.
-- **Find me hidden without location:** With no current location (fresh install, no grab yet), the map's empty state shows and no locate button appears.
+- **No-lock hint:** With no current location (no fix yet), the locate and copy buttons are still visible (slightly dimmed). Tapping either shows a brief "Waiting for a live GPS lock…" hint and does nothing else. Once a fix arrives, both work normally.
 - **Fullscreen expands:** Tap the expand button. The map fills the screen, showing the same path and pins.
 - **Fullscreen find-me works:** While fullscreen, pan away, tap locate — it recenters within the fullscreen map.
 - **Collapse returns:** Tap the collapse/close control (or swipe down) — the map returns to its embedded size on the underlying screen, unchanged.
