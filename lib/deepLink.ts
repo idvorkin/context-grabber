@@ -19,6 +19,7 @@
  *   call                           → Call tab, start a Larry call (remembered backend)
  *   call?via=<backend>             → …on that backend: eleven | gemini | openai | drill
  *   cockpit                        → Cockpit tab (the dashboard); sub-paths and queries ignored
+ *   card                           → the memdeck card screen, a fresh card dealt; sub-paths and queries ignored
  *
  * Unknown URLs return { kind: "unknown" } — callers should treat as "open main".
  */
@@ -37,6 +38,7 @@ export type DeepLinkRoute =
   | { kind: "reflect"; surface: ReflectSurface }
   | { kind: "call"; via: CallBackend | null }
   | { kind: "cockpit" }
+  | { kind: "card" }
   | { kind: "unknown" };
 
 const KNOWN_PRESETS = new Set(["30sec", "1min", "2min", "5-1"]);
@@ -100,6 +102,11 @@ export function parseDeepLink(url: string | null | undefined): DeepLinkRoute {
   if (segments[0] === "cockpit") {
     // One link, one tab. Igor: "a shortcut that takes me to Cockpit."
     return { kind: "cockpit" };
+  }
+
+  if (segments[0] === "card") {
+    // The lock-screen widgets' tap: the app, on a freshly dealt memdeck card.
+    return { kind: "card" };
   }
 
   if (segments[0] === "timer") {

@@ -68,6 +68,7 @@ import { configureCloudKit, cloudKitAccountStatus, pingCloudKit, syncJournal, sy
 import { getAllEntries, getAllAudio, countEntries, tallyByContextFromDb } from "./lib/journalDb";
 import { buildJournalExport } from "./lib/journalExport";
 import { AffirmationCard } from "./components/AffirmationCard";
+import { CardModal } from "./components/CardModal";
 import { GratefulCard } from "./components/GratefulCard";
 import { JournalScreen } from "./components/JournalScreen";
 import { CopyableError } from "./components/CopyableError";
@@ -539,6 +540,8 @@ export default function App() {
   const [counterValue, setCounterValue] = useState(0);
   const [journalReloadKey, setJournalReloadKey] = useState(0);
   const [affirmationVisible, setAffirmationVisible] = useState(false);
+  // The memdeck card screen — the lock-screen widgets' tap lands here (grabber://card).
+  const [cardVisible, setCardVisible] = useState(false);
   const [gratefulVisible, setGratefulVisible] = useState(false);
   const [journalVisible, setJournalVisible] = useState(false);
   const [reflectTally, setReflectTally] = useState({ opportunity: 0, didit: 0, grateful: 0 });
@@ -922,6 +925,8 @@ export default function App() {
         const via = route.via ?? callBackendRef.current;
         if (route.via) handleCallBackendChangeRef.current(route.via);
         void callSession.start(via, callVoiceRef.current);
+      } else if (route.kind === "card") {
+        setCardVisible(true);
       } else if (route.kind === "cockpit") {
         // Igor: "a shortcut that takes me to Cockpit, not just call."
         setGymTimerVisible(false);
@@ -2174,6 +2179,7 @@ export default function App() {
         onJournalCounts={handleJournalCounts}
       />
 
+      <CardModal visible={cardVisible} onClose={() => setCardVisible(false)} />
       <AffirmationCard
         visible={affirmationVisible}
         onClose={() => {

@@ -19,8 +19,10 @@ struct DealCardIntent: AppIntent {
   static var title: LocalizedStringResource = "Deal a new card"
   static var description = IntentDescription("Show a different random card on the memdeck widgets.")
   static var openAppWhenRun: Bool = false
-  /// Widget-only; not a Shortcuts action.
-  static var isDiscoverable: Bool = false
+  // Discoverable (the default), like the +1: it shows in Shortcuts as "Deal a
+  // new card", which is fine. (`isDiscoverable = false` was tried and removed
+  // while chasing a tap that opened the app; the culprit turned out to be
+  // `invalidatableContent()` on the button's label — see TapToDeal.)
 
   func perform() async throws -> some IntentResult {
     DealStore.set(CardDeal.nonceAfterTap(at: Date(), nonce: DealStore.nonce()))

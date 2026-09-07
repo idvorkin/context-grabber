@@ -8,10 +8,10 @@ import WidgetKit
 
 // MARK: - A tap deals
 
-/// On iOS 17+ a tap on the card deals a new one in place (the intent), and the
-/// card dims the moment the tap lands so the wait for WidgetKit's redraw never
-/// reads as a dead tap; before iOS 17 the widget's own link — open the app —
-/// is what a tap does.
+/// On iOS 17+ a tap on the card deals a new one in place (the intent); before
+/// iOS 17 the widget's own link — open the app — is what a tap does. No
+/// `invalidatableContent()` on the label: with it, the tap opened the app
+/// instead of running the intent.
 ///
 /// Home-screen widgets only. iPhone lock-screen widgets run no in-place
 /// actions: a button there dims the card as "changing" and nothing ever
@@ -22,7 +22,7 @@ struct TapToDeal<Content: View>: View {
   var body: some View {
     #if canImport(AppIntents)
     if #available(iOS 17.0, *) {
-      Button(intent: DealCardIntent()) { content().invalidatableContent() }
+      Button(intent: DealCardIntent()) { content() }
         .buttonStyle(.plain)
     } else {
       content()
@@ -103,8 +103,9 @@ struct MemdeckCardProvider: TimelineProvider {
 }
 
 /// The lock screen draws in one tint, so the suit is a shape, not a colour.
-/// No button here (see `TapToDeal`): a tap opens the app, and the big widget's
-/// deal reaches this one through the intent's reload.
+/// No button here (see `TapToDeal`): a tap opens the app on its card screen,
+/// which deals; the big widget's deal reaches this one through the intent's
+/// reload, the app's through its sync when the card screen closes.
 struct MemdeckCardView: View {
   let entry: MemdeckCardEntry
   @Environment(\.widgetFamily) var family
@@ -144,7 +145,7 @@ struct MemdeckCardView: View {
       }
     }
     .accessibilityLabel("Memdeck card: \(entry.card.label)")
-    .widgetURL(URL(string: "grabber://main")!)
+    .widgetURL(URL(string: "grabber://card")!)  // the app, on a fresh card (D5)
     .accessoryBackgroundCompat()
   }
 }

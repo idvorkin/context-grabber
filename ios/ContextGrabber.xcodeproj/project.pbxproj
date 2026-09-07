@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09BE50B9A3436BA3AF62884E /* PlayingCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11076B6AA3BAB297C913EE67 /* PlayingCard.swift */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		25DDCECE25A31A7EA1F67007 /* libPods-ContextGrabber.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1C112DCC3F60EF15EB00618C /* libPods-ContextGrabber.a */; };
 		2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B5A22B94E3C33440FF8B522D /* WidgetBridge.m */; };
@@ -463,6 +464,7 @@
 				2C7BF1008392725FFFABA76E /* WidgetBridge.m in Sources */,
 				ABE2603F49802D4B81ED8B88 /* ExpoModulesProvider.swift in Sources */,
 				465E9DAE6A2BFC07EFCBC89E /* CallLarryIntent.swift in Sources */,
+				09BE50B9A3436BA3AF62884E /* PlayingCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

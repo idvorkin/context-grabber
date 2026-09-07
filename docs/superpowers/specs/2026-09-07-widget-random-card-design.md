@@ -6,7 +6,10 @@
 > always have a random card."* Decided the same day (D1–D3 below): just the
 > card, on the big widget **and** the lock screen. Amended the same evening —
 > *"Can it flip faster. If I click it can it switch to a new random one?"* —
-> every five minutes, and a tap on the card deals a new one.
+> every five minutes, and a tap on the card deals a new one. Then, from the
+> lock screen: *"When I open from the card tap on lock screen take me to a
+> randomly chosen card. And have a button to switch in 10s."* — the card, in
+> the app (D5, D6).
 
 ## Summary
 
@@ -38,8 +41,8 @@ of clubs, find it in the stack. Nothing to open, nothing to tap.
   and there is nothing to flip. The Drill is where he is scored.
 - **Not the medium widget.** The smaller layout stays exactly as it is.
 - **Not the app's business.** A Grab, a call, a journal entry — nothing the
-  app does deals a card. The clock deals, and a tap on the card deals; that
-  is all.
+  app does on its own deals a card. The clock deals, and a tap on a card
+  deals — on the widget or on the app's card screen; that is all.
 
 ## User-visible behavior
 
@@ -57,11 +60,12 @@ card at the same time — it is one card, seen from three places.
 
 **A new card on demand.** Tap the card on the big widget and within a
 second it is a different card, on every surface at once, without the app
-opening. The moment the tap lands the card dims, so it never feels like a
-dead tap while iOS draws the new one. The clock keeps dealing from there.
+opening — about a second, the time iOS takes to run the action and redraw.
+The clock keeps dealing from there.
 The lock-screen widgets are not tappable in place — iPhone lock-screen
 widgets run no actions of their own — so a tap on any of them opens the
-app; the deal is the big widget's, and the lock screen follows it.
+app; the deal is the big widget's, and the lock screen follows it. The
+deal is also a Shortcuts action, *Deal a new card*.
 
 **Fair.** Every card comes up as often as every other: left to the clock,
 over any 52 cards each of the 52 appears once. No card is held back and
@@ -73,6 +77,22 @@ beside it so a stranger's glance reads it as a prompt and not a game. The
 lock screen draws widgets in one tint, so the suits there are shapes, not
 colours; the round variant shows just the rank and suit, the one-line
 variant (above the clock) reads e.g. *7♣ memdeck*.
+
+**The card, in the app.** A tap on the round or rectangular lock-screen
+widget opens the app straight onto a card screen: the whole screen is one
+big playing card — red suits red — dealt fresh on arrival, so it is not the
+card the lock screen was showing. Tap the card: another. **Every 10 s**: a
+button that keeps dealing a new card every ten seconds until it is tapped
+again (it reads *Stop* while it runs) or the screen closes — a timed drill.
+*Done* closes the screen and the app is wherever it was. The widgets are
+brought in line with the last card the screen dealt when the screen closes
+or the phone locks with it open, so the lock screen next shows what the app
+last dealt; they are not redrawn on every ten-second tick (iOS gives an app
+a few dozen widget refreshes a day, and a drill would spend them in
+minutes). The screen is also a link, `grabber://card`, so a Shortcut can
+open it. On a binary older than this feature, the screen says it needs the
+newer build rather than showing a card. The big widget's own tap still
+deals in place; it does not open this screen.
 
 **Tapping anything else** on the widget does what it did before: the
 block around the card opens the app, the tiles and the ☎ pill are
@@ -87,8 +107,8 @@ unchanged. Nothing on a widget starts a call.
    between. Two glances a few seconds apart show the same card.
 3. **No stutter.** The card never shows the same card twice in a row — not
    on the clock, and not on a tap.
-3a. **A tap deals.** Tap the card on the big widget: it dims at once, and
-   within a second it is a different card, and the lock screen and the other home page show that
+3a. **A tap deals.** Tap the card on the big widget: within a second it is a
+   different card, and the lock screen and the other home page show that
    same new card. Tap again: different again. A tap on any of the
    lock-screen widgets opens the app.
 4. **Every surface agrees.** The widget on home-screen page 1, the one on
@@ -107,6 +127,17 @@ unchanged. Nothing on a widget starts a call.
    the timer tiles and the ☎ pill all still work exactly as before.
 9. **A native build.** This is widget code; it ships with `just deploy`, not
    over the air.
+10. **From the lock screen.** Tap the round or rectangular lock-screen widget:
+   the app opens onto a big card, a different one from what the lock screen
+   showed. Tap the card: another, at once. *Done*: the app is where it was.
+   Lock the phone: within a few seconds the lock-screen widget shows the card
+   the app last dealt.
+11. **Every 10 s.** Tap *Every 10 s*: the card changes every ten seconds on
+   its own and the button reads *Stop*; tap it and the card stays put.
+   Closing the screen stops it too.
+12. **Older binary.** Open `grabber://card` on a build older than this one:
+   the screen shows a copyable note that it needs the newer build, not a
+   blank or a crash.
 
 ## Decisions (Igor, 2026-09-07)
 
@@ -122,6 +153,14 @@ unchanged. Nothing on a widget starts a call.
   blank — iPhone lock-screen widgets do not run in-place actions, so a tap
   there marked the card as changing and nothing ever changed it — so on the
   lock screen a tap opens the app.
+- **D5 — The lock-screen tap opens the app on a fresh card.** iPhone
+  lock-screen widgets cannot deal in place (D3), so the tap goes through the
+  app: it opens onto the card screen with a new card already dealt, and the
+  widgets follow when the screen closes.
+- **D6 — *Every 10 s*.** *"A button to switch in 10s"* read as a repeating
+  ten-second deal until stopped — the drill — rather than a one-shot "change
+  once, ten seconds from now"; the one-shot is the same button followed by
+  *Stop*.
 - **D4 — Every five minutes.** *"Can it flip faster"* — five minutes is as
   fast as iOS reliably turns a widget's page on its own; faster than that
   is what the tap is for.
