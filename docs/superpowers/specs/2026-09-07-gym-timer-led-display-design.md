@@ -133,5 +133,7 @@ the display does not flicker between orientations near 45°. No permission
 prompt: reading the accelerometer needs none.
 
 **Risk: the mirror.** Which way "top to the left" turns the display is a
-sign convention that is easy to get backwards; the first build is checked
-on the phone both ways (criterion 5).
+sign convention that is easy to get backwards — and the first build had it
+backwards, reading upside down both ways (Igor: *"rotation math seems
+off"*). The phone turned counter-clockwise needs the display turned
+clockwise relative to it. Criterion 5 is the check.

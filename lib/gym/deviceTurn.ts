@@ -14,13 +14,19 @@
 
 export type Turn = "upright" | "left" | "right";
 
-/** Degrees to rotate a portrait-laid-out display so it reads upright. */
+/**
+ * Degrees to rotate a portrait-laid-out display so it reads upright. The
+ * phone turned counter-clockwise (top to the left) needs the display turned
+ * *clockwise* relative to the phone — +90 in React Native's clockwise-positive
+ * `rotate` — to undo it; the first build had this backwards and read upside
+ * down both ways.
+ */
 export function rotationFor(turn: Turn): 0 | 90 | -90 {
   switch (turn) {
     case "left":
-      return -90; // top of the phone to the left: the display turns counter-clockwise
-    case "right":
       return 90;
+    case "right":
+      return -90;
     default:
       return 0;
   }
