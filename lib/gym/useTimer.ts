@@ -11,8 +11,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useAudio } from "./useAudio";
 import { audioService } from "./audioService";
-import { duckWindow, startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
-import { CUE_HOLD_MS, FINISH_HOLD_MS } from "./duck";
+import { duckWindow, isKeepaliveActive, startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
+import { CUE_HOLD_MS, FINISH_HOLD_MS, OPEN_EARLY_HOLD_MS, START_HOLD_MS } from "./duck";
 import { timerLog } from "./timerLog";
 import {
   deriveTimerState,
@@ -100,6 +100,12 @@ export function useTimer(profile: TimerProfile) {
     // Audio cues — only when not silent (silent path is for catch-up after
     // background, where we don't want to spam beeps post-hoc).
     if (!opts?.silent) {
+      // The duck window opens a silent second before the ticks: the audio
+      // engine rebuilds itself when the session's options change, and a
+      // tone scheduled at that instant is lost.
+      if (d.phase !== "idle" && d.phase !== "done" && d.timeLeft === 4 && d.timeLeft !== prevTimeLeft) {
+        duckWindow.hold(OPEN_EARLY_HOLD_MS);
+      }
       // Final-3 tick cue: when timeLeft just dropped through 3 / 2 / 1.
       if (
         d.phase !== "idle" &&
@@ -173,9 +179,17 @@ export function useTimer(profile: TimerProfile) {
 
   const start = useCallback(() => {
     audioService.ensureRunning();
-    void startTimerKeepalive();
-
     const wasPaused = pausedAtMsRef.current != null;
+    // A fresh start's GO has no countdown before it: open the window before
+    // the session comes up, so it is one configuration and no rebuild; the
+    // tones wait for the session to be active. (If the session was somehow
+    // already up, the options change rebuilds the engine: give that a beat.)
+    const sessionWasUp = isKeepaliveActive();
+    if (!wasPaused) duckWindow.hold(START_HOLD_MS);
+    void startTimerKeepalive().then(() => {
+      if (!wasPaused) setTimeout(playStartBeep, sessionWasUp ? 400 : 0);
+    });
+
     if (wasPaused) {
       // Resume from pause: extend the paused-accum window.
       const pausedMs = Date.now() - pausedAtMsRef.current!;
@@ -188,8 +202,6 @@ export function useTimer(profile: TimerProfile) {
       pausedAtMsRef.current = null;
       lastPhaseRef.current = "idle";
       lastTimeLeftRef.current = profileRef.current.prepTime;
-      duckWindow.hold(CUE_HOLD_MS); // START's GO has no countdown before it
-      playStartBeep();
     }
 
     clearInterval_();

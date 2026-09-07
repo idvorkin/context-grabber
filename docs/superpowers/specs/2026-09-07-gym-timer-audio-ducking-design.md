@@ -114,7 +114,7 @@ suspend the app in the background.
 
 - Start a workout with music playing: the music keeps playing at full
   volume through the ready phase and the work phase.
-- At three seconds left the music fades down; the ticks and the *rest* cue
+- At four seconds left the music fades down; the ticks and the *rest* cue
   are clear over it; about a second after the cue the music fades back up.
   Same at the end of rest into the next round, with the *GO* cue.
 - The finish fanfare plays over a dip; the music is back within a couple of
@@ -139,9 +139,10 @@ suspend the app in the background.
 
 1. **Music keeps playing.** Music on; open the Gym Timer; START a 30-second
    round: the music plays on at full volume through *rEAdY* and *GO*.
-2. **The dip.** At three seconds left the music fades down; the three ticks
-   and the rest cue are clear over it; about a second after the cue it is
-   back at full volume. Same at the end of rest into the next round.
+2. **The dip.** At four seconds left the music fades down; the three ticks
+   and the rest cue are clear over it — every one of them audible; about a
+   second after the cue it is back at full volume. Same at the end of rest
+   into the next round.
 3. **The finish.** The fanfare plays over a dip; the music is back within a
    couple of seconds of the fanfare ending.
 4. **A podcast pauses and resumes.** A podcast on instead of music: it pauses
@@ -160,7 +161,7 @@ suspend the app in the background.
    the Live Activity, the LED face.
 9. **The log.** After a round with music: *Log* → paste somewhere: a build
    line, then the session going active with `[mixWithOthers]`, the window
-   opening at 3 with the duck options, held twice, closing, the session
+   opening at 4 with the duck options, held by each tick and the cue, closing, the session
    letting go and coming back, the loop restarting — and nothing marked
    FAILED.
 
@@ -170,10 +171,16 @@ suspend the app in the background.
   window and resume it. Igor: *"C′"*.
 - **D2 — No setting.** One behaviour. The timer has no settings today and
   the cues are its point.
-- **D3 — The window.** Opens at the 3 tick (or at a cue with no countdown
-  before it, like START's *GO*) and closes about a second after the last
-  cue in it; each tick or cue inside the window extends it. Per tick would
-  make the music pump.
+- **D3 — The window.** Opens at *four* seconds left — one silent second
+  before the 3 tick — and closes about a second after the last cue in it;
+  each tick or cue inside the window extends it. Per tick would make the
+  music pump. Why a second early: the engine behind the tones rebuilds
+  itself whenever the session's options change, and a tone scheduled at
+  that instant is lost (the first build: *"volume drops, but no sound is
+  played"*). Opened during silence, the rebuild is over before the ticks.
+  START's *GO*, which has no countdown before it, opens the window before
+  the session comes up — one configuration, no rebuild — and sounds once
+  the session is active.
 - **D4 — The window closes by letting go of the session.** A paused podcast
   resumes only when the session that interrupted it deactivates with the
   notify flag, so closing the window is a real deactivate-and-reactivate of
