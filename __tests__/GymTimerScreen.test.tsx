@@ -40,7 +40,7 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     await hold(-1, 0); // top of the phone to the left
     const box = r.getByTestId("timer-turned-box");
     const style = StyleSheet.flatten(box.props.style) as { width: number; height: number; transform: { rotate: string }[] };
-    expect(style.transform).toEqual([{ rotate: "-90deg" }]);
+    expect(style.transform).toEqual([{ rotate: "90deg" }]); // undoing a counter-clockwise turn
     expect(style.width).toBeGreaterThan(style.height); // laid out along the long edge
     expect(r.getByTestId("timer-screen-turned")).toBeTruthy();
     expect(r.queryByText("Gym Timer")).toBeNull(); // no chrome
@@ -57,7 +57,7 @@ describe("GymTimerScreen — the LED look and the turn", () => {
 
     await hold(1, 0); // top to the right
     expect((StyleSheet.flatten(r.getByTestId("timer-turned-box").props.style) as { transform: { rotate: string }[] }).transform).toEqual([
-      { rotate: "90deg" },
+      { rotate: "-90deg" },
     ]);
 
     r.unmount();

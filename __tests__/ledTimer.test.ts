@@ -63,9 +63,9 @@ describe("which way the phone is turned", () => {
     expect(classifyTurn(-1, 0, "right")).toBe("left");
   });
 
-  it("rotation: top to the left turns the display counter-clockwise", () => {
-    expect(rotationFor("left")).toBe(-90);
-    expect(rotationFor("right")).toBe(90);
+  it("rotation: the phone turned counter-clockwise (top left) needs the display turned clockwise (+90) to undo it", () => {
+    expect(rotationFor("left")).toBe(90);
+    expect(rotationFor("right")).toBe(-90);
     expect(rotationFor("upright")).toBe(0);
   });
 });
