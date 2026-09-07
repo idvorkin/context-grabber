@@ -6,14 +6,14 @@ import { CopyableError } from "../components/CopyableError";
 /**
  * The Card tab — where a tap on a lock-screen widget lands (grabber://card).
  * One big card, dealt fresh every time the tab opens; tap it for another.
- * "Think of a card": the card goes face down, a count runs from ten, and a
- * new card is face up ten seconds later — the one they thought of. The
+ * "Think of a card": the card goes face down, a count runs from five, and a
+ * new card is face up five seconds later — the one they thought of. The
  * widgets are brought in line once, when the tab is left or the phone locks
  * on it — not on every deal.
  * Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
  */
 
-export const THINK_MS = 10_000;
+export const THINK_MS = 5_000;
 
 type Props = {
   /** Tests hand in a fake; the app uses the native bridge. */
@@ -51,7 +51,7 @@ export function CardScreen({ bridge = cardBridge }: Props) {
     return () => sub.remove();
   }, [bridge]);
 
-  // Think of a card: face down, a count from ten, then the new card face up.
+  // Think of a card: face down, a count from five, then the new card face up.
   useEffect(() => {
     if (!thinking) return;
     setLeft(THINK_MS / 1000);

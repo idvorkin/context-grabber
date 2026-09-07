@@ -9,7 +9,7 @@
 > every five minutes, and a tap on the card deals a new one. Then, from the
 > lock screen: *"When I open from the card tap on lock screen take me to a
 > randomly chosen card. And have a button to switch in 10s."* — the card, in
-> the app (D5, D6).
+> the app (D5, D6; the wait became five seconds the same day).
 
 ## Summary
 
@@ -85,7 +85,7 @@ time the tab opens, a fresh card: the whole screen is one big playing card
 — red suits red — so it is never the card the lock screen was showing. Tap
 the card: another. **Think of a card**: a button for the trick — press it
 as you would ask someone to think of a card; the card turns face down and
-a count runs from ten; ten seconds later, time enough to shuffle, a new
+a count runs from five; five seconds later, time enough to shuffle, a new
 card is face up — the one they thought of. Press again while it counts and
 it stops, the last card face up again. The widgets are brought in line with
 the last card the tab dealt when you leave the tab or the phone locks on it
@@ -134,7 +134,7 @@ unchanged. Nothing on a widget starts a call.
    tab and back: a fresh card. Lock the phone from the Card tab: within a few
    seconds the lock-screen widget shows the card the app last dealt.
 11. **Think of a card.** Tap it: the card turns face down and counts down
-   from ten; at zero a new card is face up. Tap it again mid-count: the
+   from five; at zero a new card is face up. Tap it again mid-count: the
    count stops and the previous card is face up again. Leaving the tab
    mid-count stops it.
 12. **Older binary.** Open `grabber://card` on a build older than this one:
@@ -165,7 +165,8 @@ unchanged. Nothing on a widget starts a call.
   as a repeating drill. Igor: *"the use case is I press it and 10 seconds
   later I get a new card, representing me asking someone — let the button be
   me saying think of a card, giving me a few [seconds] to shuffle."* So: one
-  press, the card face down, ten seconds, a new card face up.
+  press, the card face down, five seconds (first ten; Igor: *"do a 5s timer
+  instead"*), a new card face up.
 - **D4 — Every five minutes.** *"Can it flip faster"* — five minutes is as
   fast as iOS reliably turns a widget's page on its own; faster than that
   is what the tap is for.

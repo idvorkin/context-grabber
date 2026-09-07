@@ -55,7 +55,7 @@ describe("CardScreen — the Card tab", () => {
     expect(bridge.syncs).toBe(1);
   });
 
-  it("Think of a card: face down, a count from ten, a new card face up ten seconds later", async () => {
+  it("Think of a card: face down, a count from five, a new card face up five seconds later", async () => {
     jest.useFakeTimers();
     try {
       const bridge = fakeBridge();
@@ -66,13 +66,13 @@ describe("CardScreen — the Card tab", () => {
       fireEvent.press(r.getByTestId("card-think"));
       expect(r.queryByTestId("card-face")).toBeNull();
       expect(r.getByTestId("card-back")).toBeTruthy();
-      expect(r.getByTestId("card-count").props.children).toBe(10);
+      expect(r.getByTestId("card-count").props.children).toBe(5);
       expect(r.getByText("Never mind")).toBeTruthy();
 
       await act(async () => {
         jest.advanceTimersByTime(3000);
       });
-      expect(r.getByTestId("card-count").props.children).toBe(7);
+      expect(r.getByTestId("card-count").props.children).toBe(2);
       expect(bridge.deals).toHaveLength(1); // nothing dealt yet
 
       await act(async () => {
