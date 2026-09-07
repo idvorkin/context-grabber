@@ -8,15 +8,18 @@ import WidgetKit
 
 // MARK: - A tap deals
 
-/// On iOS 17+ a tap on the card deals a new one in place (the intent); before
-/// that the widget's own link — open the app — is what a tap does.
+/// On iOS 17+ a tap on the card deals a new one in place (the intent), and the
+/// card dims the moment the tap lands so the wait for WidgetKit's redraw never
+/// reads as a dead tap; before iOS 17 the widget's own link — open the app —
+/// is what a tap does. `kind` is the widget this sits in.
 struct TapToDeal<Content: View>: View {
+  let kind: String
   @ViewBuilder let content: () -> Content
 
   var body: some View {
     #if canImport(AppIntents)
     if #available(iOS 17.0, *) {
-      Button(intent: DealCardIntent()) { content() }
+      Button(intent: DealCardIntent(from: kind)) { content().invalidatableContent() }
         .buttonStyle(.plain)
     } else {
       content()
@@ -107,7 +110,7 @@ struct MemdeckCardView: View {
         // One line above the clock: "7♣ memdeck".
         Text("\(entry.card.label) memdeck")
       case .accessoryCircular:
-        TapToDeal {
+        TapToDeal(kind: MemdeckCardWidget.kind) {
           ZStack {
             AccessoryWidgetBackground()
             Text(entry.card.label)
@@ -120,7 +123,7 @@ struct MemdeckCardView: View {
       default:
         // Rectangular: the card as big as the row allows, "memdeck" beside it.
         HStack(alignment: .center, spacing: 10) {
-          TapToDeal {
+          TapToDeal(kind: MemdeckCardWidget.kind) {
             Text(entry.card.label)
               .font(.system(size: 34, weight: .heavy, design: .rounded))
               .minimumScaleFactor(0.7)
@@ -158,9 +161,10 @@ private extension View {
 }
 
 struct MemdeckCardWidget: Widget {
-  let kind = "MemdeckCardWidget"
+  /// `nonisolated`: the deal intent reads this off the main actor.
+  nonisolated static let kind = "MemdeckCardWidget"
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: kind, provider: MemdeckCardProvider()) { entry in
+    StaticConfiguration(kind: Self.kind, provider: MemdeckCardProvider()) { entry in
       MemdeckCardView(entry: entry)
     }
     .configurationDisplayName("Memdeck card")

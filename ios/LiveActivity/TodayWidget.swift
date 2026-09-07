@@ -336,7 +336,7 @@ struct TodayWidgetView: View {
               .font(.system(size: 14, weight: .medium))
           }
         }
-        TapToDeal { PlayingCardView(card: entry.card) }
+        TapToDeal(kind: TodayWidget.kind) { PlayingCardView(card: entry.card) }
       }
 
       Divider()
@@ -587,9 +587,10 @@ struct CallLarryPill: View {
 }
 
 struct TodayWidget: Widget {
-  let kind = "TodayWidget"
+  /// `nonisolated`: the deal intent reads this off the main actor.
+  nonisolated static let kind = "TodayWidget"
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: kind, provider: TodayProvider()) { entry in
+    StaticConfiguration(kind: Self.kind, provider: TodayProvider()) { entry in
       TodayWidgetView(entry: entry)
     }
     .configurationDisplayName("Today")

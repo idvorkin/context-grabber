@@ -58,7 +58,8 @@ card at the same time — it is one card, seen from three places.
 **A new card on demand.** Tap the card — on the big widget, or on the
 rectangular or round lock-screen widget — and within a second it is a
 different card, on every surface at once, without the app opening. The
-clock keeps dealing from there. (The one-line lock-screen widget cannot be
+moment the tap lands the card dims, so it never feels like a dead tap while
+iOS draws the new one. The clock keeps dealing from there. (The one-line lock-screen widget cannot be
 tapped in place; a tap on it opens the app.)
 
 **Fair.** Every card comes up as often as every other: left to the clock,
@@ -85,8 +86,8 @@ unchanged. Nothing on a widget starts a call.
    between. Two glances a few seconds apart show the same card.
 3. **No stutter.** The card never shows the same card twice in a row — not
    on the clock, and not on a tap.
-3a. **A tap deals.** Tap the card on the big widget: within a second it is a
-   different card, and the lock screen and the other home page show that
+3a. **A tap deals.** Tap the card on the big widget: it dims at once, and
+   within a second it is a different card, and the lock screen and the other home page show that
    same new card. Tap again: different again. The round and rectangular
    lock-screen widgets deal on a tap the same way; the one-line one opens
    the app.
