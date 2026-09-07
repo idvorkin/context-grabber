@@ -84,6 +84,20 @@ function readWav(file) {
   return out;
 }
 
+/**
+ * Strip the silence a renderer pads a word with (ElevenLabs leaves up to half
+ * a second either side), so the count's words do not run into each other a
+ * second apart. Keeps a short tail so the last consonant is not clipped.
+ */
+function trimmed(samples, threshold = 0.01, tailSeconds = 0.03) {
+  let start = 0;
+  while (start < samples.length && Math.abs(samples[start]) < threshold) start++;
+  let end = samples.length;
+  while (end > start && Math.abs(samples[end - 1]) < threshold) end--;
+  const tail = Math.round(tailSeconds * RATE);
+  return samples.slice(Math.max(0, start - tail), Math.min(samples.length, end + tail));
+}
+
 function normalized(samples, peak) {
   let max = 0;
   for (const v of samples) max = Math.max(max, Math.abs(v));
@@ -125,7 +139,7 @@ function wav(samples) {
   return Buffer.concat([header, pcm]);
 }
 
-const word = (name) => normalized(readWav(join(WORDS, `${name}.wav`)), WORD_PEAK);
+const word = (name) => trimmed(normalized(readWav(join(WORDS, `${name}.wav`)), WORD_PEAK));
 const gap = (seconds) => new Float64Array(Math.round(seconds * RATE));
 
 mkdirSync(ROOT, { recursive: true });

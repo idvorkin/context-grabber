@@ -189,11 +189,14 @@ suspend the app in the background.
 - **D6 — The cues are spoken.** Igor: *"how about 3-2-1 GO and 3-2-1 DONE
   words."* The countdown into every boundary says *three, two, one*, then
   the boundary says *go!*, *rest*, or *done* — and *done* keeps the fanfare
-  after the word. The words are rendered once on the Mac (`scripts/
-  make-timer-words.sh`, the system voice, offline) and composed into the cue
-  files; the voice is a one-line change there. Option E from the table,
-  arrived at from the other direction: once the cues were files, words cost
-  nothing.
+  after the word. The words are rendered once, **in Igor's own voice** —
+  his ElevenLabs clone, the same one Larry can answer in — by
+  `scripts/make-timer-words.sh`, and composed into the cue files with the
+  padding trimmed so the count's words do not run into each other; the
+  Mac's system voice stands in when no ElevenLabs key is at hand. Igor:
+  *"Use eleven labs to generate the voices, let them be in my voice!"*
+  Option E from the table, arrived at from the other direction: once the
+  cues were files, words cost nothing.
 - **D4 — The window closes by letting go of the session.** A paused podcast
   resumes only when the session that interrupted it deactivates with the
   notify flag, so closing the window is a real deactivate-and-reactivate of
