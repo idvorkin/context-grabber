@@ -9,7 +9,7 @@
  *   (empty) | main                 → main dashboard
  *   grab                           → main, auto-trigger Grab Context
  *   timer                          → Gym Timer, rounds mode
- *   timer?preset=<id>              → Gym Timer with preset selected
+ *   timer?preset=<id>              → Gym Timer with preset selected (30sec | 1min | 2min | 5-1 | custom)
  *   timer?preset=<id>&autostart=1  → Gym Timer with preset AND auto-start
  *   timer/stopwatch                → Gym Timer, stopwatch mode
  *   timer/sets                     → Gym Timer, sets mode
@@ -41,7 +41,7 @@ export type DeepLinkRoute =
   | { kind: "card" }
   | { kind: "unknown" };
 
-const KNOWN_PRESETS = new Set(["30sec", "1min", "2min", "5-1"]);
+const KNOWN_PRESETS = new Set(["30sec", "1min", "2min", "5-1", "custom"]);
 const KNOWN_BACKENDS = new Set<CallBackend>(["eleven", "gemini", "openai", "drill"]);
 const KNOWN_SCHEMES = ["com.idvorkin.contextgrabber://", "grabber://"];
 

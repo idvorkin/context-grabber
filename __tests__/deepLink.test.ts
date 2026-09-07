@@ -222,3 +222,9 @@ describe("parseDeepLink — reflect routes", () => {
     expect(parseDeepLink("grabber://reflect/whatever")).toEqual({ kind: "unknown" });
   });
 });
+
+describe("parseDeepLink — the custom preset", () => {
+  it("timer?preset=custom is a preset like the others", () => {
+    expect(parseDeepLink("grabber://timer?preset=custom&autostart=1")).toEqual({ kind: "timer", mode: "rounds", preset: "custom", autostart: true });
+  });
+});

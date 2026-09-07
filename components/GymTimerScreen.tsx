@@ -13,6 +13,18 @@ import { timerLog } from "../lib/gym/timerLog";
 import { TimerFace, TurnedTimer, LED, ledColorFor } from "./TimerFace";
 import { ledPhaseWord } from "../lib/gym/sevenSegment";
 import { useDeviceTurn } from "../lib/gym/useDeviceTurn";
+import {
+  CUSTOM_PRESET_ID,
+  REST_RANGE,
+  ROUNDS_RANGE,
+  STEP_SECONDS,
+  WORK_RANGE,
+  customProfile,
+  formatSeconds,
+  type CustomPreset,
+} from "../lib/gym/customPreset";
+import { loadChosenPreset, loadCustomPreset, saveChosenPreset, saveCustomPreset } from "../lib/gym/customPresetStorage";
+import { StepSlider } from "./StepSlider";
 import type { Turn } from "../lib/gym/deviceTurn";
 import { useTimer, type TimerProfile, type Phase } from "../lib/gym/useTimer";
 import { useStopwatch, formatStopwatchTime } from "../lib/gym/useStopwatch";
@@ -40,6 +52,9 @@ const PRESETS: { id: string; name: string; profile: TimerProfile }[] = [
   { id: "2min", name: "2 MIN", profile: { name: "2min", workTime: 120, restTime: 15, rounds: 4, cycles: 1, prepTime: 10 } },
   { id: "5-1", name: "5-1", profile: { name: "5-1", workTime: 300, restTime: 60, rounds: 3, cycles: 1, prepTime: 10 } },
 ];
+/** The fifth chip: its profile comes from the remembered sliders (lib/gym/customPreset.ts). */
+const CUSTOM_CHIP = { id: CUSTOM_PRESET_ID, name: "CUSTOM" };
+const PRESET_IDS = [...PRESETS.map((p) => p.id), CUSTOM_CHIP.id];
 
 // --- Helpers ---
 
@@ -61,7 +76,9 @@ function phaseLabel(phase: Phase): string {
 
 // --- Sub-components ---
 
-function RoundsMode({ profile, onReset, autostart, turn }: { profile: TimerProfile; onReset: () => void; autostart?: boolean; turn: Turn }) {
+type CustomControls = { value: CustomPreset; onChange: (next: CustomPreset) => void };
+
+function RoundsMode({ profile, onReset, autostart, turn, custom }: { profile: TimerProfile; onReset: () => void; autostart?: boolean; turn: Turn; custom?: CustomControls }) {
   const { state, toggle, reset } = useTimer(profile);
   const autostartFiredRef = useRef(false);
   useEffect(() => {
@@ -123,8 +140,17 @@ function RoundsMode({ profile, onReset, autostart, turn }: { profile: TimerProfi
   if (turn !== "upright") {
     return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={state.isRunning ? "tap to stop" : "tap to start"} />;
   }
+  // The Custom preset's controls: live while idle, dim and inert once running or paused.
+  const locked = state.isRunning || state.isPaused;
   return (
     <View style={styles.modeContainer}>
+      {custom && (
+        <View style={styles.customControls} testID="custom-controls">
+          <StepSlider label="Work" value={custom.value.work} min={WORK_RANGE.min} max={WORK_RANGE.max} step={STEP_SECONDS} format={formatSeconds} disabled={locked} onChange={(work) => custom.onChange({ ...custom.value, work })} testID="custom-work" />
+          <StepSlider label="Rest" value={custom.value.rest} min={REST_RANGE.min} max={REST_RANGE.max} step={STEP_SECONDS} format={formatSeconds} disabled={locked} onChange={(rest) => custom.onChange({ ...custom.value, rest })} testID="custom-rest" />
+          <StepSlider label="Rounds" value={custom.value.rounds} min={ROUNDS_RANGE.min} max={ROUNDS_RANGE.max} step={1} disabled={locked} onChange={(rounds) => custom.onChange({ ...custom.value, rounds })} testID="custom-rounds" />
+        </View>
+      )}
       <TimerFace {...face} maxHeight={150} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity style={styles.resetBtn} onPress={() => { reset(); onReset(); }}>
@@ -278,7 +304,7 @@ export default function GymTimerScreen({
     configureAudioSessionForBackground();
   }, []);
   const [mode, setMode] = useState<Mode>(initialMode ?? "rounds");
-  const initialPresetIsValid = initialPreset != null && PRESETS.some(p => p.id === initialPreset);
+  const initialPresetIsValid = initialPreset != null && PRESET_IDS.includes(initialPreset);
   const [activePreset, setActivePreset] = useState(
     initialPresetIsValid ? initialPreset! : "30sec",
   );
@@ -291,7 +317,30 @@ export default function GymTimerScreen({
     onIntentConsumed?.();
   }, [onIntentConsumed]);
 
-  const currentProfile = PRESETS.find(p => p.id === activePreset)?.profile ?? PRESETS[0].profile;
+  // Custom: the sliders' values, remembered — and which chip was chosen, unless a link chose one.
+  const [custom, setCustom] = useState<CustomPreset | null>(null);
+  useEffect(() => {
+    void loadCustomPreset().then(setCustom);
+    if (initialPreset == null) {
+      void loadChosenPreset().then((id) => {
+        if (id && PRESET_IDS.includes(id)) setActivePreset(id);
+      });
+    }
+  }, [initialPreset]);
+  const choosePreset = useCallback((id: string) => {
+    setActivePreset(id);
+    void saveChosenPreset(id);
+  }, []);
+  const changeCustom = useCallback((next: CustomPreset) => {
+    setCustom(next);
+    void saveCustomPreset(next);
+  }, []);
+  const customControls: CustomControls | undefined =
+    activePreset === CUSTOM_PRESET_ID && custom ? { value: custom, onChange: changeCustom } : undefined;
+  const currentProfile =
+    activePreset === CUSTOM_PRESET_ID
+      ? customProfile(custom ?? { work: 60, rest: 10, rounds: 5 })
+      : (PRESETS.find(p => p.id === activePreset)?.profile ?? PRESETS[0].profile);
   // Which way the phone is held. Turned, the mode fills the screen sideways and
   // the chrome goes; the mode components stay where they are in the tree so
   // their timers survive the turn.
@@ -321,11 +370,12 @@ export default function GymTimerScreen({
       {/* Presets (only in rounds mode) */}
       {!turned && mode === "rounds" && (
         <View style={styles.presetRow}>
-          {PRESETS.map(p => (
+          {[...PRESETS, CUSTOM_CHIP].map(p => (
             <TouchableOpacity
               key={p.id}
               style={[styles.presetBtn, activePreset === p.id && styles.presetActive]}
-              onPress={() => setActivePreset(p.id)}
+              onPress={() => choosePreset(p.id)}
+              testID={`preset-${p.id}`}
             >
               <Text style={[styles.presetText, activePreset === p.id && styles.presetTextActive]}>
                 {p.name}
@@ -337,7 +387,7 @@ export default function GymTimerScreen({
 
       {/* Mode content */}
       <View style={styles.content}>
-        {mode === "rounds" && <RoundsMode profile={currentProfile} onReset={() => {}} autostart={autostart} turn={turn} />}
+        {mode === "rounds" && <RoundsMode profile={currentProfile} onReset={() => {}} autostart={autostart} turn={turn} custom={customControls} />}
         {mode === "stopwatch" && <StopwatchMode turn={turn} />}
         {mode === "sets" && <SetsMode turn={turn} />}
       </View>
@@ -394,6 +444,7 @@ const styles = StyleSheet.create({
   presetTextActive: { color: "#fff" },
   content: { flex: 1, justifyContent: "center", alignItems: "center" },
   modeContainer: { alignItems: "center", width: "100%", paddingHorizontal: 24 },
+  customControls: { width: "100%", marginBottom: 8 },
   controlsRow: {
     flexDirection: "row",
     gap: 16,

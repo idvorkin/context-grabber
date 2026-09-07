@@ -53,6 +53,34 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(phone.__listenerCount()).toBe(0);
   });
 
+  it("Custom: a fifth chip with sliders in tens starting at 1:00; the face follows; locked while running", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} />);
+    await settle();
+    expect(r.queryByTestId("custom-controls")).toBeNull();
+    fireEvent.press(r.getByTestId("preset-custom"));
+    await settle();
+    expect(r.getByTestId("custom-controls")).toBeTruthy();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:00");
+    expect(r.getByTestId("timer-time").props.accessibilityLabel).toBe("1:00");
+
+    fireEvent.press(r.getByTestId("custom-work-plus"));
+    await settle();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:10");
+    expect(r.getByTestId("timer-time").props.accessibilityLabel).toBe("1:10"); // the face follows while idle
+
+    fireEvent.press(r.getByText("START"));
+    await settle();
+    fireEvent.press(r.getByTestId("custom-work-plus")); // locked: nothing changes
+    await settle();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:10");
+
+    fireEvent.press(r.getByText("RESET"));
+    await settle();
+    fireEvent.press(r.getByTestId("custom-work-minus"));
+    await settle();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:00"); // live again, and remembered through RESET
+  });
+
   it("Log copies the timer log with a build header to the clipboard", async () => {
     const r = render(<GymTimerScreen onExit={jest.fn()} />);
     await settle();
