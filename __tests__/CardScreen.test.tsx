@@ -1,6 +1,6 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { AUTO_DEAL_MS, CardModal } from "../components/CardModal";
+import { CardScreen, THINK_MS } from "../screens/CardScreen";
 import { NEEDS_NEWER_BUILD, type CardBridge, type DealtCard } from "../lib/cardBridge";
 
 // A fake deal: a fixed sequence, so the test can say which card is showing.
@@ -36,11 +36,10 @@ function fakeBridge(available = true) {
 
 const settle = () => act(async () => {});
 
-describe("CardModal — the memdeck card screen", () => {
-  it("arrives on a fresh card, deals another on a tap, and syncs the widgets once on close", async () => {
+describe("CardScreen — the Card tab", () => {
+  it("opens on a fresh card, deals another on a tap, and syncs the widgets once on leaving", async () => {
     const bridge = fakeBridge();
-    const onClose = jest.fn();
-    const r = render(<CardModal visible bridge={bridge} onClose={onClose} />);
+    const r = render(<CardScreen bridge={bridge} />);
     await settle();
     expect(bridge.deals).toEqual(["7♣"]);
     expect(r.getByTestId("card-label").props.children).toBe("♣");
@@ -51,49 +50,61 @@ describe("CardModal — the memdeck card screen", () => {
     expect(r.getByTestId("card-label").props.children).toBe("♥");
     expect(bridge.syncs).toBe(0); // not on every deal
 
-    fireEvent.press(r.getByTestId("card-done"));
-    expect(onClose).toHaveBeenCalledTimes(1);
-    r.rerender(<CardModal visible={false} bridge={bridge} onClose={onClose} />);
+    r.unmount();
     await settle();
     expect(bridge.syncs).toBe(1);
   });
 
-  it("Every 10 s keeps dealing until Stop, and stops when the screen closes", async () => {
+  it("Think of a card: face down, a count from ten, a new card face up ten seconds later", async () => {
     jest.useFakeTimers();
     try {
       const bridge = fakeBridge();
-      const r = render(<CardModal visible bridge={bridge} onClose={() => {}} />);
+      const r = render(<CardScreen bridge={bridge} />);
       await settle();
       expect(bridge.deals).toHaveLength(1);
 
-      fireEvent.press(r.getByTestId("card-auto"));
-      expect(r.getByText("Stop")).toBeTruthy();
-      await act(async () => {
-        jest.advanceTimersByTime(AUTO_DEAL_MS);
-      });
-      await settle();
-      expect(bridge.deals).toHaveLength(2);
-      await act(async () => {
-        jest.advanceTimersByTime(AUTO_DEAL_MS * 2);
-      });
-      await settle();
-      expect(bridge.deals).toHaveLength(4);
+      fireEvent.press(r.getByTestId("card-think"));
+      expect(r.queryByTestId("card-face")).toBeNull();
+      expect(r.getByTestId("card-back")).toBeTruthy();
+      expect(r.getByTestId("card-count").props.children).toBe(10);
+      expect(r.getByText("Never mind")).toBeTruthy();
 
-      fireEvent.press(r.getByTestId("card-auto"));
-      expect(r.getByText("Every 10 s")).toBeTruthy();
       await act(async () => {
-        jest.advanceTimersByTime(AUTO_DEAL_MS * 3);
+        jest.advanceTimersByTime(3000);
       });
-      await settle();
-      expect(bridge.deals).toHaveLength(4); // stopped
+      expect(r.getByTestId("card-count").props.children).toBe(7);
+      expect(bridge.deals).toHaveLength(1); // nothing dealt yet
 
-      fireEvent.press(r.getByTestId("card-auto"));
-      r.rerender(<CardModal visible={false} bridge={bridge} onClose={() => {}} />);
       await act(async () => {
-        jest.advanceTimersByTime(AUTO_DEAL_MS * 3);
+        jest.advanceTimersByTime(THINK_MS - 3000);
       });
       await settle();
-      expect(bridge.deals).toHaveLength(4); // closing stops it too
+      expect(bridge.deals).toEqual(["7♣", "Q♥"]);
+      expect(r.getByTestId("card-face")).toBeTruthy();
+      expect(r.getByTestId("card-label").props.children).toBe("♥");
+      expect(r.getByText("Think of a card")).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("Never mind mid-count: the count stops and the previous card is face up, nothing dealt", async () => {
+    jest.useFakeTimers();
+    try {
+      const bridge = fakeBridge();
+      const r = render(<CardScreen bridge={bridge} />);
+      await settle();
+      fireEvent.press(r.getByTestId("card-think"));
+      await act(async () => {
+        jest.advanceTimersByTime(4000);
+      });
+      fireEvent.press(r.getByTestId("card-think"));
+      expect(r.getByTestId("card-label").props.children).toBe("♣");
+      await act(async () => {
+        jest.advanceTimersByTime(THINK_MS);
+      });
+      await settle();
+      expect(bridge.deals).toEqual(["7♣"]);
     } finally {
       jest.useRealTimers();
     }
@@ -101,7 +112,7 @@ describe("CardModal — the memdeck card screen", () => {
 
   it("on a binary without the deal, says so — copyable, not blank", async () => {
     const bridge = fakeBridge(false);
-    const r = render(<CardModal visible bridge={bridge} onClose={() => {}} />);
+    const r = render(<CardScreen bridge={bridge} />);
     await settle();
     expect(r.queryByTestId("card-face")).toBeNull();
     expect(r.getByText(NEEDS_NEWER_BUILD)).toBeTruthy();

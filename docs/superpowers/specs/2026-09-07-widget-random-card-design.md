@@ -78,21 +78,22 @@ lock screen draws widgets in one tint, so the suits there are shapes, not
 colours; the round variant shows just the rank and suit, the one-line
 variant (above the clock) reads e.g. *7♣ memdeck*.
 
-**The card, in the app.** A tap on the round or rectangular lock-screen
-widget opens the app straight onto a card screen: the whole screen is one
-big playing card — red suits red — dealt fresh on arrival, so it is not the
-card the lock screen was showing. Tap the card: another. **Every 10 s**: a
-button that keeps dealing a new card every ten seconds until it is tapped
-again (it reads *Stop* while it runs) or the screen closes — a timed drill.
-*Done* closes the screen and the app is wherever it was. The widgets are
-brought in line with the last card the screen dealt when the screen closes
-or the phone locks with it open, so the lock screen next shows what the app
-last dealt; they are not redrawn on every ten-second tick (iOS gives an app
-a few dozen widget refreshes a day, and a drill would spend them in
-minutes). The screen is also a link, `grabber://card`, so a Shortcut can
-open it. On a binary older than this feature, the screen says it needs the
-newer build rather than showing a card. The big widget's own tap still
-deals in place; it does not open this screen.
+**The Card tab.** The card has a tab of its own — *Card*, ♠, beside
+*Call* — so there is always a way to it from inside the app. A tap on the
+round or rectangular lock-screen widget opens the app on that tab. Every
+time the tab opens, a fresh card: the whole screen is one big playing card
+— red suits red — so it is never the card the lock screen was showing. Tap
+the card: another. **Think of a card**: a button for the trick — press it
+as you would ask someone to think of a card; the card turns face down and
+a count runs from ten; ten seconds later, time enough to shuffle, a new
+card is face up — the one they thought of. Press again while it counts and
+it stops, the last card face up again. The widgets are brought in line with
+the last card the tab dealt when you leave the tab or the phone locks on it
+— not on every deal (iOS gives an app a few dozen widget refreshes a day).
+The tab is also a link, `grabber://card`, so a Shortcut can open it. On a
+binary older than this feature, the tab says it needs the newer build
+rather than showing a card. The big widget's own tap still deals in place;
+it does not switch tabs.
 
 **Tapping anything else** on the widget does what it did before: the
 block around the card opens the app, the tiles and the ☎ pill are
@@ -128,15 +129,16 @@ unchanged. Nothing on a widget starts a call.
 9. **A native build.** This is widget code; it ships with `just deploy`, not
    over the air.
 10. **From the lock screen.** Tap the round or rectangular lock-screen widget:
-   the app opens onto a big card, a different one from what the lock screen
-   showed. Tap the card: another, at once. *Done*: the app is where it was.
-   Lock the phone: within a few seconds the lock-screen widget shows the card
-   the app last dealt.
-11. **Every 10 s.** Tap *Every 10 s*: the card changes every ten seconds on
-   its own and the button reads *Stop*; tap it and the card stays put.
-   Closing the screen stops it too.
+   the app opens on the *Card* tab with a big card, a different one from what
+   the lock screen showed. Tap the card: another, at once. Switch to another
+   tab and back: a fresh card. Lock the phone from the Card tab: within a few
+   seconds the lock-screen widget shows the card the app last dealt.
+11. **Think of a card.** Tap it: the card turns face down and counts down
+   from ten; at zero a new card is face up. Tap it again mid-count: the
+   count stops and the previous card is face up again. Leaving the tab
+   mid-count stops it.
 12. **Older binary.** Open `grabber://card` on a build older than this one:
-   the screen shows a copyable note that it needs the newer build, not a
+   the Card tab shows a copyable note that it needs the newer build, not a
    blank or a crash.
 
 ## Decisions (Igor, 2026-09-07)
@@ -153,14 +155,17 @@ unchanged. Nothing on a widget starts a call.
   blank — iPhone lock-screen widgets do not run in-place actions, so a tap
   there marked the card as changing and nothing ever changed it — so on the
   lock screen a tap opens the app.
-- **D5 — The lock-screen tap opens the app on a fresh card.** iPhone
+- **D5 — The lock-screen tap opens the app on the Card tab.** iPhone
   lock-screen widgets cannot deal in place (D3), so the tap goes through the
-  app: it opens onto the card screen with a new card already dealt, and the
-  widgets follow when the screen closes.
-- **D6 — *Every 10 s*.** *"A button to switch in 10s"* read as a repeating
-  ten-second deal until stopped — the drill — rather than a one-shot "change
-  once, ten seconds from now"; the one-shot is the same button followed by
-  *Stop*.
+  app. First built as a modal; Igor: *"I assumed it'd have to be a new tab…
+  let's create a new tab for that, and click card from lock screen takes me
+  there, else I have some menu way to get there."* A tab it is, with a fresh
+  card every time it opens; the widgets follow when the tab is left.
+- **D6 — *Think of a card*.** *"A button to switch in 10s"* was first read
+  as a repeating drill. Igor: *"the use case is I press it and 10 seconds
+  later I get a new card, representing me asking someone — let the button be
+  me saying think of a card, giving me a few [seconds] to shuffle."* So: one
+  press, the card face down, ten seconds, a new card face up.
 - **D4 — Every five minutes.** *"Can it flip faster"* — five minutes is as
   fast as iOS reliably turns a widget's page on its own; faster than that
   is what the tap is for.

@@ -357,24 +357,21 @@ describe("Tab navigation", () => {
     expect(result.getByTestId("tab-cockpit").props.accessibilityState.selected).toBe(true);
   });
 
-  it("a grabber://card link brings up the memdeck card screen", async () => {
+  it("a grabber://card link lands on the Card tab", async () => {
     const { Linking } = require("react-native");
     (Linking.addEventListener as jest.Mock).mockClear();
     const result = await renderApp();
-    expect(result.queryByTestId("card-done")).toBeNull();
+    expect(result.getByTestId("tab-card").props.accessibilityState.selected).toBe(false);
+    expect(result.queryByTestId("card-think")).toBeNull();
     const urlCalls = (Linking.addEventListener as jest.Mock).mock.calls.filter((c: unknown[]) => c[0] === "url");
     const onUrl = urlCalls[urlCalls.length - 1][1] as (ev: { url: string }) => void;
     await act(async () => {
       onUrl({ url: "grabber://card" });
       await flushPromises();
     });
-    // Under jest there is no native bridge, so the screen shows its needs-a-newer-build note — still the screen.
-    expect(result.getByTestId("card-done")).toBeTruthy();
-    fireEvent.press(result.getByTestId("card-done"));
-    await act(async () => {
-      await flushPromises();
-    });
-    expect(result.queryByTestId("card-done")).toBeNull();
+    expect(result.getByTestId("tab-card").props.accessibilityState.selected).toBe(true);
+    // Under jest there is no native bridge, so the tab shows its needs-a-newer-build note — still the tab.
+    expect(result.getByTestId("card-think")).toBeTruthy();
   });
 
   it("the Cockpit page opening grabber://call lands on the native Call tab, page untouched", async () => {
