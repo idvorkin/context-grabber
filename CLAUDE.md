@@ -178,6 +178,7 @@ Specs live in `docs/superpowers/specs/` as `YYYY-MM-DD-<feature>-design.md`; imp
 - **Settings Modal:** location tracking toggle, retention days, debug sleep data
 - **About Modal:** build info, OTA updates, repository link
 - **Call tab:** a Larry call with no web view (`screens/CallScreen.tsx`) — speaks the voice bridge directly, so the call survives screen lock / backgrounding under the `audio` background mode. `grabber://call` lands here. One `CallSession` lives in `App.tsx` and outlives the tab. Spec: `docs/superpowers/specs/2026-08-28-native-call-screen-design.md`.
+- **Widgets (`ios/LiveActivity/`):** Today (medium/large; the large one carries the memdeck card) and the lock-screen Memdeck card. The card is the clock's — one per quarter hour, the same on every surface, no shared state (`PlayingCard.swift`). Spec: `docs/superpowers/specs/2026-09-07-widget-random-card-design.md`.
 - **Cockpit tab:** WKWebView on the tailnet-only Cockpit dashboard (`screens/CockpitScreen.tsx`). Mounted lazily on first visit and kept mounted (hidden) afterwards so the web session survives tab switches. Carries the audio bridge — the page can list and choose real microphones and outputs (`docs/cockpit-audio-bridge.md`).
 
 

@@ -19,12 +19,27 @@ struct TodayEntry: TimelineEntry {
   let reflectOpp: Int
   let reflectDid: Int
   let reflectGrateful: Int
+  /// The memdeck prompt: the quarter hour's card, dealt from `date`.
+  /// Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
+  let card: PlayingCard
 
   static var empty: TodayEntry {
     TodayEntry(
       date: Date(), steps: nil, sleepHours: nil, exerciseMinutes: nil,
       grabbedAt: nil, counter: 0,
-      reflectOpp: 0, reflectDid: 0, reflectGrateful: 0
+      reflectOpp: 0, reflectDid: 0, reflectGrateful: 0,
+      card: CardDeal.card(at: Date())
+    )
+  }
+
+  /// The same snapshot at another moment — the numbers stay, the card is that
+  /// moment's. What a timeline is made of.
+  func at(_ moment: Date) -> TodayEntry {
+    TodayEntry(
+      date: moment, steps: steps, sleepHours: sleepHours, exerciseMinutes: exerciseMinutes,
+      grabbedAt: grabbedAt, counter: counter,
+      reflectOpp: reflectOpp, reflectDid: reflectDid, reflectGrateful: reflectGrateful,
+      card: CardDeal.card(at: moment)
     )
   }
 
@@ -59,7 +74,8 @@ struct TodayEntry: TimelineEntry {
       grabbedAt: grabbedAt, counter: counter,
       reflectOpp: isReflectFresh ? opp : 0,
       reflectDid: isReflectFresh ? did : 0,
-      reflectGrateful: isReflectFresh ? grateful : 0
+      reflectGrateful: isReflectFresh ? grateful : 0,
+      card: CardDeal.card(at: Date())
     )
   }
 
@@ -81,10 +97,13 @@ struct TodayProvider: TimelineProvider {
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
-    let entry = TodayEntry.load()
+    let snapshot = TodayEntry.load()
+    // The numbers are the app's last snapshot; the card turns on the quarter
+    // hour on its own, so the timeline carries twelve hours of them.
+    let entries = CardDeal.moments(from: Date(), count: 48).map { snapshot.at($0) }
     // Safety net: refresh every 30 min even without an explicit reload from the app.
     let next = Date().addingTimeInterval(30 * 60)
-    completion(Timeline(entries: [entry], policy: .after(next)))
+    completion(Timeline(entries: entries, policy: .after(next)))
   }
 }
 
@@ -284,30 +303,38 @@ struct TodayWidgetView: View {
   @ViewBuilder
   private var largeBody: some View {
     VStack(alignment: .leading, spacing: 12) {
-      // Header — date + arrow affordance.
-      HStack {
-        Text("Today · \(Self.dayFormatter.string(from: entry.grabbedAt ?? entry.date))")
-          .font(.system(size: 14, weight: .semibold))
-          .foregroundColor(.secondary)
-        Spacer()
-        CallLarryPill()
-        Image(systemName: "arrow.up.right")
-          .font(.system(size: 12, weight: .bold))
-          .foregroundColor(.secondary)
-      }
+      // Header and metrics on the left, the memdeck card on the right. The card
+      // is as tall as those two lines together, so nothing below it moves.
+      // Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
+      HStack(alignment: .center, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
+          // Header — date + arrow affordance.
+          HStack {
+            Text("Today · \(Self.dayFormatter.string(from: entry.grabbedAt ?? entry.date))")
+              .font(.system(size: 14, weight: .semibold))
+              .foregroundColor(.secondary)
+            Spacer()
+            CallLarryPill()
+            Image(systemName: "arrow.up.right")
+              .font(.system(size: 12, weight: .bold))
+              .foregroundColor(.secondary)
+          }
 
-      // Metrics — same compact line as medium.
-      HStack(spacing: 8) {
-        Text(entry.steps.map { formatInt($0) } ?? "—")
-          .font(.system(size: 19, weight: .bold))
-        Text("steps").font(.system(size: 13)).foregroundColor(.secondary)
-        Text("·").foregroundColor(.secondary)
-        Text(entry.sleepHours.map { String(format: "%.1fh", $0) } ?? "—")
-          .font(.system(size: 19, weight: .bold))
-        Text("sleep").font(.system(size: 13)).foregroundColor(.secondary)
-        Text("·").foregroundColor(.secondary)
-        Text(entry.exerciseMinutes.map { "\($0) min" } ?? "—")
-          .font(.system(size: 14, weight: .medium))
+          // Metrics — same compact line as medium.
+          HStack(spacing: 8) {
+            Text(entry.steps.map { formatInt($0) } ?? "—")
+              .font(.system(size: 19, weight: .bold))
+            Text("steps").font(.system(size: 13)).foregroundColor(.secondary)
+            Text("·").foregroundColor(.secondary)
+            Text(entry.sleepHours.map { String(format: "%.1fh", $0) } ?? "—")
+              .font(.system(size: 19, weight: .bold))
+            Text("sleep").font(.system(size: 13)).foregroundColor(.secondary)
+            Text("·").foregroundColor(.secondary)
+            Text(entry.exerciseMinutes.map { "\($0) min" } ?? "—")
+              .font(.system(size: 14, weight: .medium))
+          }
+        }
+        PlayingCardView(card: entry.card)
       }
 
       Divider()

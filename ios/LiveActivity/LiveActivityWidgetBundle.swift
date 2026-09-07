@@ -6,5 +6,6 @@ struct LiveActivityWidgetBundle: WidgetBundle {
   var body: some Widget {
     LiveActivityWidget()
     TodayWidget()
+    MemdeckCardWidget()
   }
 }
