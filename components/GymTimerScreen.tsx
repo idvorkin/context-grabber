@@ -5,8 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  useWindowDimensions,
 } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
+import { TimerFace, TurnedTimer, LED, ledColorFor } from "./TimerFace";
+import { ledPhaseWord } from "../lib/gym/sevenSegment";
+import { useDeviceTurn } from "../lib/gym/useDeviceTurn";
+import type { Turn } from "../lib/gym/deviceTurn";
 import { useTimer, type TimerProfile, type Phase } from "../lib/gym/useTimer";
 import { useStopwatch, formatStopwatchTime } from "../lib/gym/useStopwatch";
 import { useSets } from "../lib/gym/useSets";
@@ -42,16 +47,6 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function phaseColor(phase: Phase): string {
-  switch (phase) {
-    case "work": return "#4361ee";
-    case "rest": return "#06d6a0";
-    case "prep": return "#f77f00";
-    case "done": return "#f72585";
-    default: return "#e0e0e0";
-  }
-}
-
 function phaseLabel(phase: Phase): string {
   switch (phase) {
     case "prep": return "GET READY";
@@ -64,8 +59,9 @@ function phaseLabel(phase: Phase): string {
 
 // --- Sub-components ---
 
-function RoundsMode({ profile, onReset, autostart }: { profile: TimerProfile; onReset: () => void; autostart?: boolean }) {
+function RoundsMode({ profile, onReset, autostart, turn }: { profile: TimerProfile; onReset: () => void; autostart?: boolean; turn: Turn }) {
   const { state, toggle, reset } = useTimer(profile);
+  const { width } = useWindowDimensions();
   const autostartFiredRef = useRef(false);
   useEffect(() => {
     if (!autostart || autostartFiredRef.current) return;
@@ -117,19 +113,18 @@ function RoundsMode({ profile, onReset, autostart }: { profile: TimerProfile; on
   // Cleanup on unmount
   useEffect(() => () => { laStop(); }, [laStop]);
 
+  const face = {
+    word: ledPhaseWord(state.phase),
+    time: state.phase === "idle" ? formatTime(profile.workTime) : formatTime(state.timeLeft),
+    color: ledColorFor(state.phase),
+    sub: `Round ${state.currentRound} of ${state.totalRounds}`,
+  };
+  if (turn !== "upright") {
+    return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={state.isRunning ? "tap to stop" : "tap to start"} />;
+  }
   return (
     <View style={styles.modeContainer}>
-      {state.phase !== "idle" && (
-        <Text style={[styles.phaseText, { color: phaseColor(state.phase) }]}>
-          {phaseLabel(state.phase)}
-        </Text>
-      )}
-      <Text style={[styles.mainTime, { color: phaseColor(state.phase) }]}>
-        {state.phase === "idle" ? formatTime(profile.workTime) : formatTime(state.timeLeft)}
-      </Text>
-      <Text style={styles.roundText}>
-        Round {state.currentRound} of {state.totalRounds}
-      </Text>
+      <TimerFace {...face} width={width - 48} maxHeight={150} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity style={styles.resetBtn} onPress={() => { reset(); onReset(); }}>
           <Text style={styles.resetBtnText}>RESET</Text>
@@ -147,15 +142,18 @@ function RoundsMode({ profile, onReset, autostart }: { profile: TimerProfile; on
   );
 }
 
-function StopwatchMode() {
+function StopwatchMode({ turn }: { turn: Turn }) {
   const { state, toggle, reset, lap } = useStopwatch();
+  const { width } = useWindowDimensions();
   const time = formatStopwatchTime(state.elapsedMs);
+  const face = { time: time.main, fraction: time.fraction, color: state.isRunning ? LED.red : LED.white };
+  if (turn !== "upright") {
+    return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={state.isRunning ? "tap to stop" : "tap to start"} />;
+  }
 
   return (
     <View style={styles.modeContainer}>
-      <Text style={styles.mainTime}>
-        {time.main}<Text style={styles.fractionText}>{time.fraction}</Text>
-      </Text>
+      <TimerFace {...face} width={width - 48} maxHeight={130} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity
           style={[styles.resetBtn, !state.isRunning && styles.disabledBtn]}
@@ -191,10 +189,23 @@ function StopwatchMode() {
   );
 }
 
-function SetsMode() {
+function SetsMode({ turn }: { turn: Turn }) {
   const { state, increment, undo, reset } = useSets(15);
+  const { width } = useWindowDimensions();
   const { count, maxCount } = state;
   const isMaxed = count >= maxCount;
+  if (turn !== "upright") {
+    return (
+      <TurnedTimer
+        time={String(count)}
+        color={LED.green}
+        sub={isMaxed ? "max reached" : undefined}
+        turn={turn}
+        onTap={() => { if (!isMaxed) increment(); }}
+        hint={isMaxed ? "max reached" : "tap to count"}
+      />
+    );
+  }
 
   // Build tally groups (5 per group)
   const fullGroups = Math.floor(count / 5);
@@ -230,7 +241,7 @@ function SetsMode() {
         )}
         {isMaxed && <Text style={styles.maxText}>MAX REACHED!</Text>}
       </TouchableOpacity>
-      <Text style={styles.setsCount}>{count}</Text>
+      <TimerFace time={String(count)} color={LED.green} width={Math.min(width - 48, 220)} maxHeight={90} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity
           style={[styles.resetBtn, count === 0 && styles.disabledBtn]}
@@ -289,20 +300,25 @@ export default function GymTimerScreen({
   }, [onIntentConsumed]);
 
   const currentProfile = PRESETS.find(p => p.id === activePreset)?.profile ?? PRESETS[0].profile;
+  // Which way the phone is held. Turned, the mode fills the screen sideways and
+  // the chrome goes; the mode components stay where they are in the tree so
+  // their timers survive the turn.
+  const turn = useDeviceTurn();
+  const turned = turn !== "upright";
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} testID={turned ? "timer-screen-turned" : "timer-screen-upright"}>
       {/* Header */}
-      <View style={styles.header}>
+      {!turned && <View style={styles.header}>
         <TouchableOpacity onPress={onExit} style={styles.exitBtn}>
           <Text style={styles.exitText}>Done</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gym Timer</Text>
         <View style={{ width: 50 }} />
-      </View>
+      </View>}
 
       {/* Presets (only in rounds mode) */}
-      {mode === "rounds" && (
+      {!turned && mode === "rounds" && (
         <View style={styles.presetRow}>
           {PRESETS.map(p => (
             <TouchableOpacity
@@ -320,13 +336,13 @@ export default function GymTimerScreen({
 
       {/* Mode content */}
       <View style={styles.content}>
-        {mode === "rounds" && <RoundsMode profile={currentProfile} onReset={() => {}} autostart={autostart} />}
-        {mode === "stopwatch" && <StopwatchMode />}
-        {mode === "sets" && <SetsMode />}
+        {mode === "rounds" && <RoundsMode profile={currentProfile} onReset={() => {}} autostart={autostart} turn={turn} />}
+        {mode === "stopwatch" && <StopwatchMode turn={turn} />}
+        {mode === "sets" && <SetsMode turn={turn} />}
       </View>
 
       {/* Bottom nav */}
-      <View style={styles.bottomNav}>
+      {!turned && <View style={styles.bottomNav}>
         {(["rounds", "stopwatch", "sets"] as Mode[]).map(m => (
           <TouchableOpacity
             key={m}
@@ -338,7 +354,7 @@ export default function GymTimerScreen({
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </View>}
     </SafeAreaView>
   );
 }
@@ -346,7 +362,7 @@ export default function GymTimerScreen({
 // --- Styles ---
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1a1a2e" },
+  container: { flex: 1, backgroundColor: "#000" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -376,10 +392,6 @@ const styles = StyleSheet.create({
   presetTextActive: { color: "#fff" },
   content: { flex: 1, justifyContent: "center", alignItems: "center" },
   modeContainer: { alignItems: "center", width: "100%", paddingHorizontal: 24 },
-  phaseText: { fontSize: 18, fontWeight: "700", marginBottom: 8 },
-  mainTime: { fontSize: 72, fontWeight: "200", color: "#e0e0e0", fontVariant: ["tabular-nums"] },
-  fractionText: { fontSize: 36, color: "#888" },
-  roundText: { color: "#888", fontSize: 16, marginTop: 8 },
   controlsRow: {
     flexDirection: "row",
     gap: 16,
@@ -421,7 +433,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   setsPlaceholder: { color: "#555", fontSize: 24, fontWeight: "600" },
-  setsCount: { color: "#e0e0e0", fontSize: 48, fontWeight: "700", marginTop: 12 },
   maxText: { color: "#f72585", fontSize: 16, fontWeight: "700", marginTop: 8 },
   tallyContainer: { flexDirection: "row", flexWrap: "wrap", gap: 16, justifyContent: "center" },
   tallyGroup: {
