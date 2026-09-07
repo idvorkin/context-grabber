@@ -55,12 +55,13 @@ clock, whether or not the app is opened, and never repeats the card it just
 showed. Both of Igor's home-screen pages and the lock screen show the same
 card at the same time — it is one card, seen from three places.
 
-**A new card on demand.** Tap the card — on the big widget, or on the
-rectangular or round lock-screen widget — and within a second it is a
-different card, on every surface at once, without the app opening. The
-moment the tap lands the card dims, so it never feels like a dead tap while
-iOS draws the new one. The clock keeps dealing from there. (The one-line lock-screen widget cannot be
-tapped in place; a tap on it opens the app.)
+**A new card on demand.** Tap the card on the big widget and within a
+second it is a different card, on every surface at once, without the app
+opening. The moment the tap lands the card dims, so it never feels like a
+dead tap while iOS draws the new one. The clock keeps dealing from there.
+The lock-screen widgets are not tappable in place — iPhone lock-screen
+widgets run no actions of their own — so a tap on any of them opens the
+app; the deal is the big widget's, and the lock screen follows it.
 
 **Fair.** Every card comes up as often as every other: left to the clock,
 over any 52 cards each of the 52 appears once. No card is held back and
@@ -88,9 +89,8 @@ unchanged. Nothing on a widget starts a call.
    on the clock, and not on a tap.
 3a. **A tap deals.** Tap the card on the big widget: it dims at once, and
    within a second it is a different card, and the lock screen and the other home page show that
-   same new card. Tap again: different again. The round and rectangular
-   lock-screen widgets deal on a tap the same way; the one-line one opens
-   the app.
+   same new card. Tap again: different again. A tap on any of the
+   lock-screen widgets opens the app.
 4. **Every surface agrees.** The widget on home-screen page 1, the one on
    page 2, and the lock-screen widget show the same card at the same time.
 5. **Legible.** From arm's length, red suits are visibly red on the big
@@ -100,8 +100,8 @@ unchanged. Nothing on a widget starts a call.
 6. **Lock screen.** Add the widget to the lock screen (Customize → the row
    under the clock): the rectangular one shows the card and *memdeck*, the
    round one the card alone, the inline one a single line above the clock.
-   A tap on the rectangular or round one deals; on the inline one, opens the
-   app.
+   A tap on any of them opens the app. None of them is ever blank — not
+   after a tap, not after hours untouched.
 7. **The medium widget is untouched.**
 8. **Nothing else regresses.** Steps, sleep, exercise, the +1 tally, Reflect,
    the timer tiles and the ☎ pill all still work exactly as before.
@@ -117,7 +117,11 @@ unchanged. Nothing on a widget starts a call.
 - **D3 — A tap deals a new card.** Amended the same day: the first answer
   was "opens the app", then *"if I click it can it switch to a new random
   one?"* Not the Drill call: the ☎ pill already calls, and a card that
-  dials Larry on a mis-tap is a card that gets removed.
+  dials Larry on a mis-tap is a card that gets removed. On the big widget
+  only: the build that put the button on the lock-screen widgets left them
+  blank — iPhone lock-screen widgets do not run in-place actions, so a tap
+  there marked the card as changing and nothing ever changed it — so on the
+  lock screen a tap opens the app.
 - **D4 — Every five minutes.** *"Can it flip faster"* — five minutes is as
   fast as iOS reliably turns a widget's page on its own; faster than that
   is what the tap is for.

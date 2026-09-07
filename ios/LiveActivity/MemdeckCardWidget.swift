@@ -11,15 +11,18 @@ import WidgetKit
 /// On iOS 17+ a tap on the card deals a new one in place (the intent), and the
 /// card dims the moment the tap lands so the wait for WidgetKit's redraw never
 /// reads as a dead tap; before iOS 17 the widget's own link — open the app —
-/// is what a tap does. `kind` is the widget this sits in.
+/// is what a tap does.
+///
+/// Home-screen widgets only. iPhone lock-screen widgets run no in-place
+/// actions: a button there dims the card as "changing" and nothing ever
+/// changes it, which on the lock screen's one-tint rendering is a blank widget.
 struct TapToDeal<Content: View>: View {
-  let kind: String
   @ViewBuilder let content: () -> Content
 
   var body: some View {
     #if canImport(AppIntents)
     if #available(iOS 17.0, *) {
-      Button(intent: DealCardIntent(from: kind)) { content().invalidatableContent() }
+      Button(intent: DealCardIntent()) { content().invalidatableContent() }
         .buttonStyle(.plain)
     } else {
       content()
@@ -90,15 +93,18 @@ struct MemdeckCardProvider: TimelineProvider {
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<MemdeckCardEntry>) -> Void) {
-    // A card per five minutes for the next twelve hours; then ask again. A tap
-    // reloads this, and the new tap count deals the rest of the run afresh.
+    // A card per five minutes for the next twelve hours. A tap on the big
+    // widget reloads this with the new tap count. Ask again within the hour
+    // regardless, so nothing stale ever sits on the lock screen for long.
     let nonce = DealStore.nonce()
     let entries = CardDeal.moments(from: Date(), count: 144).map { MemdeckCardEntry.at($0, nonce: nonce) }
-    completion(Timeline(entries: entries, policy: .atEnd))
+    completion(Timeline(entries: entries, policy: .after(Date().addingTimeInterval(60 * 60))))
   }
 }
 
 /// The lock screen draws in one tint, so the suit is a shape, not a colour.
+/// No button here (see `TapToDeal`): a tap opens the app, and the big widget's
+/// deal reaches this one through the intent's reload.
 struct MemdeckCardView: View {
   let entry: MemdeckCardEntry
   @Environment(\.widgetFamily) var family
@@ -110,30 +116,26 @@ struct MemdeckCardView: View {
         // One line above the clock: "7♣ memdeck".
         Text("\(entry.card.label) memdeck")
       case .accessoryCircular:
-        TapToDeal(kind: MemdeckCardWidget.kind) {
-          ZStack {
-            AccessoryWidgetBackground()
-            Text(entry.card.label)
-              .font(.system(size: 20, weight: .heavy, design: .rounded))
-              .minimumScaleFactor(0.6)
-              .lineLimit(1)
-              .widgetAccentable()
-          }
+        ZStack {
+          AccessoryWidgetBackground()
+          Text(entry.card.label)
+            .font(.system(size: 20, weight: .heavy, design: .rounded))
+            .minimumScaleFactor(0.6)
+            .lineLimit(1)
+            .widgetAccentable()
         }
       default:
         // Rectangular: the card as big as the row allows, "memdeck" beside it.
         HStack(alignment: .center, spacing: 10) {
-          TapToDeal(kind: MemdeckCardWidget.kind) {
-            Text(entry.card.label)
-              .font(.system(size: 34, weight: .heavy, design: .rounded))
-              .minimumScaleFactor(0.7)
-              .lineLimit(1)
-              .widgetAccentable()
-          }
+          Text(entry.card.label)
+            .font(.system(size: 34, weight: .heavy, design: .rounded))
+            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+            .widgetAccentable()
           VStack(alignment: .leading, spacing: 0) {
             Text("memdeck")
               .font(.system(size: 13, weight: .semibold))
-            Text("tap: deal")
+            Text("find it")
               .font(.system(size: 11))
               .opacity(0.7)
           }
@@ -168,7 +170,7 @@ struct MemdeckCardWidget: Widget {
       MemdeckCardView(entry: entry)
     }
     .configurationDisplayName("Memdeck card")
-    .description("A random card every five minutes, or tap for a new one — find it in the stack.")
+    .description("A random card every five minutes — find it in the stack. Tap the card on the Today widget for a new one.")
     .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryInline])
   }
 }

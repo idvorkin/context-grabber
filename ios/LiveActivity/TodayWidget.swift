@@ -336,7 +336,7 @@ struct TodayWidgetView: View {
               .font(.system(size: 14, weight: .medium))
           }
         }
-        TapToDeal(kind: TodayWidget.kind) { PlayingCardView(card: entry.card) }
+        TapToDeal { PlayingCardView(card: entry.card) }
       }
 
       Divider()
