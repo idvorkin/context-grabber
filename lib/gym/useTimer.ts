@@ -12,7 +12,7 @@ import { AppState } from "react-native";
 import { useAudio } from "./useAudio";
 import { audioService } from "./audioService";
 import { duckWindow, startTimerKeepalive, stopTimerAudio } from "./keepalive";
-import { CUE_HOLD_MS, FINISH_HOLD_MS, OPEN_EARLY_HOLD_MS, START_HOLD_MS } from "./duck";
+import { CUE_HOLD_MS, FINISH_HOLD_MS, OPEN_EARLY_HOLD_MS } from "./duck";
 import { timerLog } from "./timerLog";
 import {
   deriveTimerState,
@@ -177,13 +177,10 @@ export function useTimer(profile: TimerProfile) {
   const start = useCallback(() => {
     audioService.ensureRunning();
     const wasPaused = pausedAtMsRef.current != null;
-    // A fresh start's GO has no countdown before it: open the window before
-    // the session comes up, so it is one configuration and no rebuild; the
-    // tones wait for the session to be active.
-    if (!wasPaused) duckWindow.hold(START_HOLD_MS);
-    void startTimerKeepalive().then(() => {
-      if (!wasPaused) playStartBeep();
-    });
+    // START says nothing itself: the ready count's three, two, one leads to
+    // the first go!, and a profile with no ready count goes straight to work,
+    // whose phase change says it (applyDerived below).
+    void startTimerKeepalive();
 
     if (wasPaused) {
       // Resume from pause: extend the paused-accum window.

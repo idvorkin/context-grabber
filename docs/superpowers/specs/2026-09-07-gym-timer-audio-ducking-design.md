@@ -175,8 +175,10 @@ suspend the app in the background.
   before the 3 tick, so the first tick is never lost while the session
   settles into its ducked options — and closes about a second after the
   last cue in it; each tick or cue inside the window extends it. Per tick
-  would make the music pump. START's *GO*, which has no countdown before
-  it, opens the window before the session comes up and sounds once it is.
+  would make the music pump. START itself says nothing: the ready count's
+  *three, two, one* leads to the first *go!*, like every boundary after it
+  (the first build said *go!* on the press as well — Igor: *"I have a
+  spurious go when I start"*).
 - **D5 — The cues are sounds, not synthesis.** The first build of C′ ducked
   the music and played nothing: with the session mixed with other audio,
   the engine that synthesised the tones went silent, every cue requested

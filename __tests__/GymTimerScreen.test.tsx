@@ -92,7 +92,8 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     const copied = (Clipboard.setStringAsync as jest.Mock).mock.calls.at(-1)?.[0] as string;
     expect(copied).toMatch(/^build: /);
     expect(copied).toContain("mode: rounds");
-    expect(copied).toMatch(/duck window open/); // START's GO opened one
+    expect(copied).toMatch(/phase idle → prep/); // START ran the ready count
+    expect(copied).not.toMatch(/cue go/); // and said nothing itself
     expect(r.getByText("Copied")).toBeTruthy();
   });
 

@@ -19,8 +19,6 @@ export const CUE_HOLD_MS = 1500;
 export const FINISH_HOLD_MS = 2400;
 /** Opened a silent second before the 3 tick: reach the tick with room to spare. */
 export const OPEN_EARLY_HOLD_MS = 2600;
-/** START's GO: opened before the session comes up; long enough for activation plus the tones. */
-export const START_HOLD_MS = 2500;
 
 export type DuckSession = {
   /** Put the window's options on the session (`true`) or the base ones (`false`). */
