@@ -4,7 +4,7 @@ import WidgetKit
 // MARK: - Entry
 
 struct TodayEntry: TimelineEntry {
-  let date: Date
+  var date: Date
   let steps: Int?
   let sleepHours: Double?
   let exerciseMinutes: Int?
@@ -19,35 +19,32 @@ struct TodayEntry: TimelineEntry {
   let reflectOpp: Int
   let reflectDid: Int
   let reflectGrateful: Int
-  /// The memdeck prompt: the moment's card, dealt from `date` and the tap count.
+  /// The memdeck prompt: the moment's card (PlayingCard.swift deals it).
   /// Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
-  let card: PlayingCard
+  var card: PlayingCard
 
   static var empty: TodayEntry {
     TodayEntry(
       date: Date(), steps: nil, sleepHours: nil, exerciseMinutes: nil,
       grabbedAt: nil, counter: 0,
       reflectOpp: 0, reflectDid: 0, reflectGrateful: 0,
-      card: CardDeal.card(at: Date(), nonce: DealStore.nonce())
+      card: PlayingCard(rank: "7", suit: .clubs)
     )
   }
 
-  /// The same snapshot at another moment — the numbers stay, the card is that
-  /// moment's. What a timeline is made of.
-  func at(_ moment: Date, nonce: Int) -> TodayEntry {
-    TodayEntry(
-      date: moment, steps: steps, sleepHours: sleepHours, exerciseMinutes: exerciseMinutes,
-      grabbedAt: grabbedAt, counter: counter,
-      reflectOpp: reflectOpp, reflectDid: reflectDid, reflectGrateful: reflectGrateful,
-      card: CardDeal.card(at: moment, nonce: nonce)
-    )
+  /// The same snapshot at another moment with that moment's card — what a
+  /// timeline is made of.
+  func at(_ moment: Date, card: PlayingCard) -> TodayEntry {
+    var entry = self
+    entry.date = moment
+    entry.card = card
+    return entry
   }
 
   /// Attempt to load a snapshot the app wrote to shared UserDefaults.
   /// Returns an empty entry if the App Group hasn't been set up yet.
   static func load() -> TodayEntry {
-    let suite = UserDefaults(suiteName: "group.com.idvorkin.contextgrabber")
-    guard let suite = suite else { return .empty }
+    guard let suite = UserDefaults(suiteName: AppGroup.suite) else { return .empty }
     let steps = suite.object(forKey: "steps") as? Int
     let sleep = suite.object(forKey: "sleepHours") as? Double
     let ex = suite.object(forKey: "exerciseMinutes") as? Int
@@ -75,7 +72,7 @@ struct TodayEntry: TimelineEntry {
       reflectOpp: isReflectFresh ? opp : 0,
       reflectDid: isReflectFresh ? did : 0,
       reflectGrateful: isReflectFresh ? grateful : 0,
-      card: CardDeal.card(at: Date(), nonce: DealStore.nonce())
+      card: CardDeal.card(at: Date(), nonce: DealStore.nonce(in: suite))
     )
   }
 
@@ -98,11 +95,9 @@ struct TodayProvider: TimelineProvider {
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
     let snapshot = TodayEntry.load()
-    // The numbers are the app's last snapshot; the card turns every five
-    // minutes on its own, so the timeline carries twelve hours of them. A tap
-    // on the card reloads this with a new tap count.
-    let nonce = DealStore.nonce()
-    let entries = CardDeal.moments(from: Date(), count: 144).map { snapshot.at($0, nonce: nonce) }
+    // The numbers are the app's last snapshot; the card turns on its own, so
+    // the entries carry the whole horizon. A tap on the card reloads this.
+    let entries = CardDeal.timeline(from: Date(), nonce: DealStore.nonce()).map { snapshot.at($0.date, card: $0.card) }
     // Safety net: refresh every 30 min even without an explicit reload from the app.
     let next = Date().addingTimeInterval(30 * 60)
     completion(Timeline(entries: entries, policy: .after(next)))
@@ -549,14 +544,14 @@ struct TallyMarksView: View {
 /// `containerBackground(for: .widget)` is iOS 17+; the deployment target supports older OSes,
 /// so fall back to a plain `background(...)` on older systems where the new API is absent.
 extension View {
+  /// iOS 17 wants every widget to name its container background. The lock
+  /// screen's is the system's own: pass `.clear` there.
   @ViewBuilder
-  func widgetBackgroundCompat() -> some View {
+  func widgetBackgroundCompat(_ color: Color = Color(UIColor.systemBackground)) -> some View {
     if #available(iOS 17.0, *) {
-      self.containerBackground(for: .widget) {
-        Color(UIColor.systemBackground)
-      }
+      self.containerBackground(for: .widget) { color }
     } else {
-      self.background(Color(UIColor.systemBackground))
+      self.background(color)
     }
   }
 }
@@ -587,10 +582,8 @@ struct CallLarryPill: View {
 }
 
 struct TodayWidget: Widget {
-  /// `nonisolated`: the deal intent reads this off the main actor.
-  nonisolated static let kind = "TodayWidget"
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: Self.kind, provider: TodayProvider()) { entry in
+    StaticConfiguration(kind: WidgetKind.today, provider: TodayProvider()) { entry in
       TodayWidgetView(entry: entry)
     }
     .configurationDisplayName("Today")

@@ -68,18 +68,4 @@ describe("the duck window", () => {
     await flush();
     expect(log).toEqual(["duck", "base", "release"]);
   });
-
-  it("forget: the timer lets go itself — base options back, no release of our own, no timer left", async () => {
-    const { session, log } = fakeSession();
-    const w = new DuckWindow(session);
-    w.hold();
-    w.forget();
-    expect(w.isOpen).toBe(false);
-    expect(log).toEqual(["duck", "base"]);
-    jest.advanceTimersByTime(TICK_HOLD_MS * 2);
-    await flush();
-    expect(log).toEqual(["duck", "base"]);
-    w.forget(); // idempotent
-    expect(log).toEqual(["duck", "base"]);
-  });
 });

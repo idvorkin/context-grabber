@@ -878,17 +878,27 @@ export default function App() {
   // The page's ☎︎ while the app's own call is live (#99): focus the call,
   // never a second dial. A page asking to *start* one goes through the same
   // path as grabber://call — a no-op start when a call is already live.
-  const handleCallControl = useCallback((m: CallControlMessage) => {
-    if (m.type === "call.start") {
-      handleDeepLinkRef.current(`grabber://call${m.via ? `?via=${m.via}` : ""}`);
-      return;
-    }
-    setGymTimerVisible(false);
-    setAffirmationVisible(false);
-    setGratefulVisible(false);
-    setJournalVisible(false);
-    setActiveTab("call");
-  }, []);
+  /** A link or a page asking for a tab: nothing may sit over it. */
+  const goToTab = useCallback(
+    (tab: TabId) => {
+      setGymTimerVisible(false);
+      setAffirmationVisible(false);
+      setGratefulVisible(false);
+      setJournalVisible(false);
+      handleTabChange(tab);
+    },
+    [handleTabChange],
+  );
+  const handleCallControl = useCallback(
+    (m: CallControlMessage) => {
+      if (m.type === "call.start") {
+        handleDeepLinkRef.current(`grabber://call${m.via ? `?via=${m.via}` : ""}`);
+        return;
+      }
+      goToTab("call");
+    },
+    [goToTab],
+  );
   useEffect(() => {
     const handle = (url: string | null) => {
       const route = parseDeepLink(url);
@@ -914,29 +924,16 @@ export default function App() {
         // that could sit over the Call tab, bring it up, and start the call
         // natively. A link that finds a call already live joins it —
         // start() is a no-op while connecting or live.
-        setGymTimerVisible(false);
-        setAffirmationVisible(false);
-        setGratefulVisible(false);
-        setJournalVisible(false);
-        setActiveTab("call");
+        goToTab("call");
         const via = route.via ?? callBackendRef.current;
         if (route.via) handleCallBackendChangeRef.current(route.via);
         void callSession.start(via, callVoiceRef.current);
       } else if (route.kind === "card") {
         // The lock-screen widgets' tap: the Card tab, which deals on arrival.
-        setGymTimerVisible(false);
-        setAffirmationVisible(false);
-        setGratefulVisible(false);
-        setJournalVisible(false);
-        setActiveTab("card");
+        goToTab("card");
       } else if (route.kind === "cockpit") {
         // Igor: "a shortcut that takes me to Cockpit, not just call."
-        setGymTimerVisible(false);
-        setAffirmationVisible(false);
-        setGratefulVisible(false);
-        setJournalVisible(false);
-        setCockpitMounted(true);
-        setActiveTab("cockpit");
+        goToTab("cockpit");
       }
       // kind === "unknown" → no-op (already on whatever screen)
     };
@@ -944,7 +941,7 @@ export default function App() {
     void Linking.getInitialURL().then(handle);
     const sub = Linking.addEventListener("url", (ev) => handle(ev.url));
     return () => sub.remove();
-  }, []);
+  }, [goToTab]);
 
   // Prune on app foreground + sync counter (daily reset + pull any +1's that
   // came from the widget while the app was backgrounded) + refresh stale data.

@@ -17,9 +17,6 @@ function fakeBridge(available = true) {
     available,
     deals,
     syncs: 0,
-    async currentCard() {
-      return deck[(i - 1 + deck.length) % deck.length];
-    },
     async dealCard() {
       if (!available) throw new Error(NEEDS_NEWER_BUILD);
       const card = deck[i % deck.length];
@@ -42,12 +39,12 @@ describe("CardScreen — the Card tab", () => {
     const r = render(<CardScreen bridge={bridge} />);
     await settle();
     expect(bridge.deals).toEqual(["7♣"]);
-    expect(r.getByTestId("card-label").props.children).toBe("♣");
+    expect(r.getByTestId("card-face").props.accessibilityLabel).toBe("Memdeck card 7♣; tap for another");
 
     fireEvent.press(r.getByTestId("card-face"));
     await settle();
     expect(bridge.deals).toEqual(["7♣", "Q♥"]);
-    expect(r.getByTestId("card-label").props.children).toBe("♥");
+    expect(r.getByTestId("card-face").props.accessibilityLabel).toBe("Memdeck card Q♥; tap for another");
     expect(bridge.syncs).toBe(0); // not on every deal
 
     r.unmount();
@@ -81,7 +78,7 @@ describe("CardScreen — the Card tab", () => {
       await settle();
       expect(bridge.deals).toEqual(["7♣", "Q♥"]);
       expect(r.getByTestId("card-face")).toBeTruthy();
-      expect(r.getByTestId("card-label").props.children).toBe("♥");
+      expect(r.getByTestId("card-face").props.accessibilityLabel).toBe("Memdeck card Q♥; tap for another");
       expect(r.getByText("Think of a card")).toBeTruthy();
     } finally {
       jest.useRealTimers();
@@ -99,7 +96,7 @@ describe("CardScreen — the Card tab", () => {
         jest.advanceTimersByTime(4000);
       });
       fireEvent.press(r.getByTestId("card-think"));
-      expect(r.getByTestId("card-label").props.children).toBe("♣");
+      expect(r.getByTestId("card-face").props.accessibilityLabel).toBe("Memdeck card 7♣; tap for another");
       await act(async () => {
         jest.advanceTimersByTime(THINK_MS);
       });
@@ -108,6 +105,22 @@ describe("CardScreen — the Card tab", () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it("syncs the widgets once per stretch of dealing, not once per lifecycle event", async () => {
+    const { AppState } = require("react-native");
+    const bridge = fakeBridge();
+    const r = render(<CardScreen bridge={bridge} />);
+    await settle();
+    const calls = (AppState.addEventListener as jest.Mock).mock.calls;
+    const onChange = calls[calls.length - 1][1] as (s: string) => void;
+    onChange("inactive"); // a lock sends this…
+    onChange("background"); // …then this
+    await settle();
+    expect(bridge.syncs).toBe(1);
+    r.unmount();
+    await settle();
+    expect(bridge.syncs).toBe(1); // nothing dealt since: nothing to sync
   });
 
   it("on a binary without the deal, says so — copyable, not blank", async () => {

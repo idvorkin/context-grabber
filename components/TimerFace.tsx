@@ -43,16 +43,20 @@ type FaceProps = {
   color: string;
   /** Ordinary small type under the time — "Round 2 of 5". */
   sub?: string;
-  /** The width to fill and the height not to exceed. */
-  width: number;
+  /** The width to fill (the window's, less the timer's padding, by default) and the height not to exceed. */
+  width?: number;
   maxHeight: number;
   testID?: string;
 };
 
+/** The timer's own side padding: what a face fills when no width is given. */
+const FACE_INSET = 48;
+
 export function TimerFace({ word, time, fraction, color, sub, width, maxHeight, testID }: FaceProps) {
-  // The fraction rides at half height; sizing the pair as if full-size keeps it inside `width`.
-  const mainH = ledHeightToFit(time + (fraction ?? ""), width, maxHeight);
-  const wordH = word ? Math.round(mainH * 0.32) : 0;
+  const window = useWindowDimensions();
+  // The fraction rides at half height; sizing the pair as if full-size keeps it inside the width.
+  const mainH = ledHeightToFit(time + (fraction ?? ""), width ?? window.width - FACE_INSET, maxHeight);
+  const wordH = Math.round(mainH * 0.32);
   return (
     <View style={styles.face} testID={testID}>
       {word ? <LedDisplay text={word} color={LED.green} height={wordH} style={styles.word} testID="timer-word" /> : null}

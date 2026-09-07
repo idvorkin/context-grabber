@@ -9,6 +9,8 @@ type AudioBufferSourceNode = ReturnType<
 >;
 
 let bufferSource: AudioBufferSourceNode | null = null;
+/** One second of near-silence, made once: any number of loops can play it. */
+let noiseBuffer: ReturnType<InstanceType<typeof import("react-native-audio-api").AudioContext>["createBuffer"]> | null = null;
 let active = false;
 let sessionConfigured = false;
 
@@ -104,16 +106,17 @@ export async function startTimerKeepalive(): Promise<void> {
     // 1 second of very low-amplitude white noise. Amplitude 0.0005 is
     // ~-66dB relative to full-scale: detectable by iOS as live output but
     // imperceptible in any normal listening environment.
-    const seconds = 1;
-    const sampleRate = ctx.sampleRate;
-    const buffer = ctx.createBuffer(1, sampleRate * seconds, sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) {
-      data[i] = (Math.random() - 0.5) * 0.001;
+    if (!noiseBuffer) {
+      const sampleRate = ctx.sampleRate;
+      noiseBuffer = ctx.createBuffer(1, sampleRate, sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() - 0.5) * 0.001;
+      }
     }
 
     bufferSource = ctx.createBufferSource();
-    bufferSource.buffer = buffer;
+    bufferSource.buffer = noiseBuffer;
     bufferSource.loop = true;
     bufferSource.connect(ctx.destination);
     bufferSource.start();
@@ -151,4 +154,14 @@ export function stopTimerKeepalive(): void {
 
 export function isKeepaliveActive(): boolean {
   return active;
+}
+
+/**
+ * The timer letting go — reset, done, leaving: the keepalive's own
+ * deactivation carries the resume for others, so the window closes after
+ * it and its release finds nothing left to let go of.
+ */
+export function stopTimerAudio(): void {
+  stopTimerKeepalive();
+  void duckWindow.close();
 }

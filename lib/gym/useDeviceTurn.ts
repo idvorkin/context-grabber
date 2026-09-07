@@ -9,12 +9,11 @@ import { classifyTurn, type Turn } from "./deviceTurn";
  * turns. No permission is involved.
  * Spec: docs/superpowers/specs/2026-09-07-gym-timer-led-display-design.md
  */
-export function useDeviceTurn(enabled = true): Turn {
+export function useDeviceTurn(): Turn {
   const [turn, setTurn] = useState<Turn>("upright");
   const turnRef = useRef<Turn>("upright");
 
   useEffect(() => {
-    if (!enabled) return;
     let cancelled = false;
     let sub: { remove(): void } | null = null;
     void (async () => {
@@ -35,7 +34,7 @@ export function useDeviceTurn(enabled = true): Turn {
       cancelled = true;
       sub?.remove();
     };
-  }, [enabled]);
+  }, []);
 
   return turn;
 }

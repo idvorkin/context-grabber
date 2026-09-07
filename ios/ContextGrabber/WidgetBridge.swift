@@ -8,7 +8,7 @@ import WidgetKit
 @objc(WidgetBridge)
 class WidgetBridge: NSObject {
 
-  private static let suite = "group.com.idvorkin.contextgrabber"
+  private static let suite = AppGroup.suite
 
   @objc
   static func requiresMainQueueSetup() -> Bool { false }
@@ -91,12 +91,6 @@ class WidgetBridge: NSObject {
     ["label": card.label, "rank": card.rank, "suit": card.suit.rawValue, "isRed": card.isRed]
   }
 
-  /// The card the widgets show right now.
-  @objc(currentCard:rejecter:)
-  func currentCard(resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
-    resolve(payload(CardDeal.card(at: Date(), nonce: DealStore.nonce())))
-  }
-
   /// Deal a new card — what a tap on the big widget does — and hand it back.
   /// Does not redraw the widgets: the app's card screen deals every ten
   /// seconds in its drill, and iOS gives an app a few dozen widget refreshes a
@@ -109,11 +103,12 @@ class WidgetBridge: NSObject {
     resolve(payload(CardDeal.card(at: now, nonce: nonce)))
   }
 
-  /// Bring the widgets in line with the last deal.
+  /// Bring the two card-carrying widgets in line with the last deal.
   @objc(syncCardWidgets:rejecter:)
   func syncCardWidgets(resolver resolve: RCTPromiseResolveBlock, rejecter reject: RCTPromiseRejectBlock) {
     if #available(iOS 14.0, *) {
-      WidgetCenter.shared.reloadAllTimelines()
+      WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.today)
+      WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.memdeckCard)
     }
     resolve(nil)
   }

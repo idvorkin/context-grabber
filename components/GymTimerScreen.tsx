@@ -5,11 +5,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  useWindowDimensions,
 } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
 import * as Clipboard from "expo-clipboard";
-import { getBuildInfo } from "../lib/version";
+import { buildLabel } from "../lib/version";
 import { timerLog } from "../lib/gym/timerLog";
 import { TimerFace, TurnedTimer, LED, ledColorFor } from "./TimerFace";
 import { ledPhaseWord } from "../lib/gym/sevenSegment";
@@ -64,7 +63,6 @@ function phaseLabel(phase: Phase): string {
 
 function RoundsMode({ profile, onReset, autostart, turn }: { profile: TimerProfile; onReset: () => void; autostart?: boolean; turn: Turn }) {
   const { state, toggle, reset } = useTimer(profile);
-  const { width } = useWindowDimensions();
   const autostartFiredRef = useRef(false);
   useEffect(() => {
     if (!autostart || autostartFiredRef.current) return;
@@ -127,7 +125,7 @@ function RoundsMode({ profile, onReset, autostart, turn }: { profile: TimerProfi
   }
   return (
     <View style={styles.modeContainer}>
-      <TimerFace {...face} width={width - 48} maxHeight={150} testID="timer-face" />
+      <TimerFace {...face} maxHeight={150} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity style={styles.resetBtn} onPress={() => { reset(); onReset(); }}>
           <Text style={styles.resetBtnText}>RESET</Text>
@@ -147,7 +145,6 @@ function RoundsMode({ profile, onReset, autostart, turn }: { profile: TimerProfi
 
 function StopwatchMode({ turn }: { turn: Turn }) {
   const { state, toggle, reset, lap } = useStopwatch();
-  const { width } = useWindowDimensions();
   const time = formatStopwatchTime(state.elapsedMs);
   const face = { time: time.main, fraction: time.fraction, color: state.isRunning ? LED.red : LED.white };
   if (turn !== "upright") {
@@ -156,7 +153,7 @@ function StopwatchMode({ turn }: { turn: Turn }) {
 
   return (
     <View style={styles.modeContainer}>
-      <TimerFace {...face} width={width - 48} maxHeight={130} testID="timer-face" />
+      <TimerFace {...face} maxHeight={130} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity
           style={[styles.resetBtn, !state.isRunning && styles.disabledBtn]}
@@ -194,20 +191,12 @@ function StopwatchMode({ turn }: { turn: Turn }) {
 
 function SetsMode({ turn }: { turn: Turn }) {
   const { state, increment, undo, reset } = useSets(15);
-  const { width } = useWindowDimensions();
   const { count, maxCount } = state;
   const isMaxed = count >= maxCount;
+  const face = { time: String(count), color: LED.green };
+  const maxed = isMaxed ? "max reached" : undefined;
   if (turn !== "upright") {
-    return (
-      <TurnedTimer
-        time={String(count)}
-        color={LED.green}
-        sub={isMaxed ? "max reached" : undefined}
-        turn={turn}
-        onTap={() => { if (!isMaxed) increment(); }}
-        hint={isMaxed ? "max reached" : "tap to count"}
-      />
-    );
+    return <TurnedTimer {...face} sub={maxed} turn={turn} onTap={() => { if (!isMaxed) increment(); }} hint={maxed ?? "tap to count"} />;
   }
 
   // Build tally groups (5 per group)
@@ -244,7 +233,7 @@ function SetsMode({ turn }: { turn: Turn }) {
         )}
         {isMaxed && <Text style={styles.maxText}>MAX REACHED!</Text>}
       </TouchableOpacity>
-      <TimerFace time={String(count)} color={LED.green} width={Math.min(width - 48, 220)} maxHeight={90} testID="timer-face" />
+      <TimerFace {...face} maxHeight={90} testID="timer-face" />
       <View style={styles.controlsRow}>
         <TouchableOpacity
           style={[styles.resetBtn, count === 0 && styles.disabledBtn]}
@@ -311,8 +300,7 @@ export default function GymTimerScreen({
   // Copy log: the audio session's and the duck window's doings, behind a build header.
   const [logCopied, setLogCopied] = useState(false);
   const copyLog = useCallback(async () => {
-    const b = getBuildInfo();
-    await Clipboard.setStringAsync(timerLog.render({ build: `${b.shortSha} (${b.branch})`, mode, preset: mode === "rounds" ? activePreset : undefined }));
+    await Clipboard.setStringAsync(timerLog.render({ build: buildLabel(), mode, preset: mode === "rounds" ? activePreset : undefined }));
     setLogCopied(true);
     setTimeout(() => setLogCopied(false), 1500);
   }, [mode, activePreset]);

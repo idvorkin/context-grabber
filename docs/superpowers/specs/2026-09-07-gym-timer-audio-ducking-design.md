@@ -172,15 +172,11 @@ suspend the app in the background.
 - **D2 — No setting.** One behaviour. The timer has no settings today and
   the cues are its point.
 - **D3 — The window.** Opens at *four* seconds left — one silent second
-  before the 3 tick — and closes about a second after the last cue in it;
-  each tick or cue inside the window extends it. Per tick would make the
-  music pump. Why a second early: the engine behind the tones rebuilds
-  itself whenever the session's options change, and a tone scheduled at
-  that instant is lost (the first build: *"volume drops, but no sound is
-  played"*). Opened during silence, the rebuild is over before the ticks.
-  START's *GO*, which has no countdown before it, opens the window before
-  the session comes up — one configuration, no rebuild — and sounds once
-  the session is active.
+  before the 3 tick, so the first tick is never lost while the session
+  settles into its ducked options — and closes about a second after the
+  last cue in it; each tick or cue inside the window extends it. Per tick
+  would make the music pump. START's *GO*, which has no countdown before
+  it, opens the window before the session comes up and sounds once it is.
 - **D4 — The window closes by letting go of the session.** A paused podcast
   resumes only when the session that interrupted it deactivates with the
   notify flag, so closing the window is a real deactivate-and-reactivate of

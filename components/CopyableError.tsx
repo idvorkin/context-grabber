@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import { getBuildInfo } from "../lib/version";
+import { buildLabel } from "../lib/version";
 
 type Props = {
   /** The raw error string. Rendered in red, selectable. */
@@ -30,11 +30,10 @@ export function CopyableError({ message, context, extra, style }: Props) {
   const [hint, setHint] = useState<string | null>(null);
 
   async function handleCopy() {
-    const buildInfo = getBuildInfo();
     const lines: string[] = [
       context ? `where: ${context}` : null,
       `error: ${message}`,
-      `build: ${buildInfo.shortSha} (${buildInfo.branch})`,
+      `build: ${buildLabel()}`,
     ].filter(Boolean) as string[];
     if (extra) {
       for (const [k, v] of Object.entries(extra)) {

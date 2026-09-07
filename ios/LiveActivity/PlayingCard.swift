@@ -12,6 +12,17 @@ import Foundation
 // neighbour. A tap bumps the number until the card in hand changes, and the
 // clock deals on from there.
 
+/// Compiled into the app and the widget extension alike: the one home of
+/// the names both sides use.
+enum AppGroup {
+  static let suite = "group.com.idvorkin.contextgrabber"
+}
+
+enum WidgetKind {
+  static let today = "TodayWidget"
+  static let memdeckCard = "MemdeckCardWidget"
+}
+
 struct PlayingCard: Equatable {
   enum Suit: String, CaseIterable {
     case spades = "♠", hearts = "♥", diamonds = "♦", clubs = "♣"
@@ -46,6 +57,25 @@ enum CardDeal {
   /// The start of the five minutes that `date` is in.
   static func slotStart(containing date: Date) -> Date {
     Date(timeIntervalSince1970: Double(slot(containing: date)) * slotSeconds)
+  }
+
+  /// A widget timeline's worth of entries: twelve hours of five-minute slots,
+  /// in case iOS never honours the reload policy. Deals are computed once per
+  /// run of 52, not once per entry.
+  static let timelineSlots = 144
+
+  static func timeline(from now: Date, nonce: Int) -> [(date: Date, card: PlayingCard)] {
+    var deals: [Int: [Int]] = [:]
+    return moments(from: now, count: timelineSlots).map { moment in
+      let s = slot(containing: moment)
+      let run = floorDiv(s, cardsPerRun)
+      let deal = deals[run] ?? {
+        let d = fixedDeal(run: run, nonce: nonce)
+        deals[run] = d
+        return d
+      }()
+      return (moment, PlayingCard.deck[deal[s - run * cardsPerRun]])
+    }
   }
 
   /// `count` moments to show a card at: `from` itself, then each five-minute
@@ -124,15 +154,19 @@ enum CardDeal {
 /// The tap count, shared through the App Group so every widget deals alike.
 /// Missing (a fresh install) reads as zero, which is a deal like any other.
 enum DealStore {
-  static let suite = "group.com.idvorkin.contextgrabber"
   static let key = "memdeckDealNonce"
 
   static func nonce() -> Int {
-    UserDefaults(suiteName: suite)?.object(forKey: key) as? Int ?? 0
+    UserDefaults(suiteName: AppGroup.suite).map(nonce(in:)) ?? 0
+  }
+
+  /// From a suite the caller already holds open.
+  static func nonce(in defaults: UserDefaults) -> Int {
+    defaults.object(forKey: key) as? Int ?? 0
   }
 
   static func set(_ nonce: Int) {
-    UserDefaults(suiteName: suite)?.set(nonce, forKey: key)
+    UserDefaults(suiteName: AppGroup.suite)?.set(nonce, forKey: key)
   }
 }
 

@@ -12,6 +12,14 @@ ota message="OTA update": generate-version
 test:
     npx jest
 
+# The memdeck deal's promises (no repeats, one of each per run, taps always change the card), under plain swiftc
+check-deal:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=$(mktemp -d)
+    xcrun swiftc -O -module-name carddeal ios/LiveActivity/PlayingCard.swift scripts/card-deal-check/main.swift -o "$out/check"
+    "$out/check"
+
 # Build release and deploy to physical iPhone (supports OTA updates)
 # NOTE: ios/ is committed to git. Do NOT run `expo prebuild` here — it wipes
 # DEVELOPMENT_TEAM from pbxproj and breaks expo-live-activity. Use

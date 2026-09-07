@@ -98,3 +98,11 @@ describe("the log on disk (#106)", () => {
     expect(log.all.at(-1)).toBe("+0.0s now");
   });
 });
+
+describe("a log with its own size", () => {
+  it("keeps only the last `maxLines` lines", () => {
+    const log = new CallLog(() => 0, 3);
+    for (let i = 0; i < 5; i++) log.add(`line ${i}`);
+    expect(log.all).toEqual(["+0.0s line 2", "+0.0s line 3", "+0.0s line 4"]);
+  });
+});

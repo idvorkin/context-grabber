@@ -72,20 +72,4 @@ export class DuckWindow {
     await this.session.release();
     this.log("duck window released");
   }
-
-  /**
-   * The timer is letting go of the session itself (reset, done, leaving):
-   * drop the window without a release of our own — the timer's deactivation
-   * carries the resume for others — but put the base options back.
-   */
-  forget(): void {
-    if (this.closeTimer) {
-      clearTimeout(this.closeTimer);
-      this.closeTimer = null;
-    }
-    if (!this.open) return;
-    this.open = false;
-    this.log("duck window forgotten (the timer is letting go itself)");
-    this.session.setDucking(false);
-  }
 }

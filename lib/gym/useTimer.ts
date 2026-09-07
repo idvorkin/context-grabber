@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useAudio } from "./useAudio";
 import { audioService } from "./audioService";
-import { duckWindow, isKeepaliveActive, startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
+import { duckWindow, startTimerKeepalive, stopTimerAudio } from "./keepalive";
 import { CUE_HOLD_MS, FINISH_HOLD_MS, OPEN_EARLY_HOLD_MS, START_HOLD_MS } from "./duck";
 import { timerLog } from "./timerLog";
 import {
@@ -148,8 +148,7 @@ export function useTimer(profile: TimerProfile) {
 
     if (d.done) {
       clearInterval_();
-      duckWindow.forget();
-    stopTimerKeepalive();
+      stopTimerAudio();
     }
 
     stateRef.current = next;
@@ -165,8 +164,7 @@ export function useTimer(profile: TimerProfile) {
 
   const reset = useCallback(() => {
     clearInterval_();
-    duckWindow.forget();
-    stopTimerKeepalive();
+    stopTimerAudio();
     startedAtMsRef.current = null;
     pausedAccumMsRef.current = 0;
     pausedAtMsRef.current = null;
@@ -182,12 +180,10 @@ export function useTimer(profile: TimerProfile) {
     const wasPaused = pausedAtMsRef.current != null;
     // A fresh start's GO has no countdown before it: open the window before
     // the session comes up, so it is one configuration and no rebuild; the
-    // tones wait for the session to be active. (If the session was somehow
-    // already up, the options change rebuilds the engine: give that a beat.)
-    const sessionWasUp = isKeepaliveActive();
+    // tones wait for the session to be active.
     if (!wasPaused) duckWindow.hold(START_HOLD_MS);
     void startTimerKeepalive().then(() => {
-      if (!wasPaused) setTimeout(playStartBeep, sessionWasUp ? 400 : 0);
+      if (!wasPaused) playStartBeep();
     });
 
     if (wasPaused) {
@@ -228,8 +224,7 @@ export function useTimer(profile: TimerProfile) {
   // Cleanup on unmount.
   useEffect(() => () => {
     clearInterval_();
-    duckWindow.forget();
-    stopTimerKeepalive();
+    stopTimerAudio();
   }, [clearInterval_]);
 
   // AppState catch-up: when the app comes back to the foreground while the

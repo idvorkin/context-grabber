@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { cardBridge, type CardBridge, type DealtCard } from "../lib/cardBridge";
 import { CopyableError } from "../components/CopyableError";
@@ -25,31 +25,40 @@ export function CardScreen({ bridge = cardBridge }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
   const [left, setLeft] = useState(THINK_MS / 1000);
+  // The widgets are behind the app from the first deal until the next sync.
+  const behind = useRef(false);
 
   const deal = useCallback(async () => {
     try {
       setCard(await bridge.dealCard());
+      behind.current = true;
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
   }, [bridge]);
 
+  // Widgets in line — once per stretch of dealing, whichever way the tab is left
+  // (a lock sends both "inactive" and "background"; a refresh is a scarce thing).
+  const sync = useCallback(() => {
+    if (!behind.current) return;
+    behind.current = false;
+    void bridge.syncCardWidgets();
+  }, [bridge]);
+
   // Arrive on a fresh card; leave with the widgets in line.
   useEffect(() => {
     void deal();
-    return () => {
-      void bridge.syncCardWidgets();
-    };
-  }, [deal, bridge]);
+    return sync;
+  }, [deal, sync]);
 
   // The phone locking (or the app leaving) on this tab counts as leaving it.
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
-      if (state !== "active") void bridge.syncCardWidgets();
+      if (state !== "active") sync();
     });
     return () => sub.remove();
-  }, [bridge]);
+  }, [sync]);
 
   // Think of a card: face down, a count from five, then the new card face up.
   useEffect(() => {
@@ -78,7 +87,7 @@ export function CardScreen({ bridge = cardBridge }: Props) {
           style={styles.error}
         />
       ) : thinking ? (
-        <View style={styles.back} testID="card-back" accessibilityLabel={`Think of a card; ${left} seconds`}>
+        <View style={[styles.cardBase, styles.back]} testID="card-back" accessibilityLabel={`Think of a card; ${left} seconds`}>
           <View style={styles.backInner}>
             <Text style={styles.backCount} testID="card-count">
               {left}
@@ -89,7 +98,7 @@ export function CardScreen({ bridge = cardBridge }: Props) {
       ) : (
         <Pressable
           onPress={() => void deal()}
-          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          style={({ pressed }) => [styles.cardBase, styles.face, pressed && styles.cardPressed]}
           testID="card-face"
           accessibilityRole="button"
           accessibilityLabel={card ? `Memdeck card ${card.label}; tap for another` : "Dealing"}
@@ -137,16 +146,15 @@ const CARD_H = 336;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#0f172a", alignItems: "center", justifyContent: "center", padding: 24 },
-  card: {
+  cardBase: {
     width: CARD_W,
     height: CARD_H,
     backgroundColor: "#ffffff",
     borderRadius: 18,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.25)",
-    alignItems: "center",
-    justifyContent: "center",
   },
+  face: { alignItems: "center", justifyContent: "center" },
   cardPressed: { opacity: 0.85 },
   corner: { position: "absolute", fontSize: 28, fontWeight: "800", lineHeight: 30, textAlign: "center" },
   cornerTop: { top: 12, left: 14 },
@@ -155,15 +163,7 @@ const styles = StyleSheet.create({
   red: { color: "#cc1722" },
   black: { color: "#141414" },
   // The back: a plain blue card with a white frame, as a deck has.
-  back: {
-    width: CARD_W,
-    height: CARD_H,
-    backgroundColor: "#ffffff",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.25)",
-    padding: 12,
-  },
+  back: { padding: 12 },
   backInner: {
     flex: 1,
     borderRadius: 10,

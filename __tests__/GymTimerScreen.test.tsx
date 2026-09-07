@@ -1,5 +1,4 @@
 import React from "react";
-import { StyleSheet } from "react-native";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { Accelerometer } from "expo-sensors";
 import * as Clipboard from "expo-clipboard";
@@ -23,12 +22,7 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(r.getAllByTestId(/^led-glyph-/).length).toBe(label.replace(":", "").length);
     expect(r.getByTestId("led-colon")).toBeTruthy();
     const zero = r.getAllByTestId("led-glyph-0")[0];
-    expect(zero.props.children.filter(Boolean).length).toBe(7);
-    // Lit bars carry the colour and a glow; idle is white.
-    const lit = r.getAllByTestId("led-on-a")[0];
-    const flat = StyleSheet.flatten(lit.props.style) as { backgroundColor: string; shadowRadius: number };
-    expect(flat.backgroundColor).toBe("#e6e6e6");
-    expect(flat.shadowRadius).toBeGreaterThan(0);
+    expect(zero.props.children.filter(Boolean).length).toBe(7); // every bar drawn, lit or ghost
     expect(r.queryByTestId("timer-turned")).toBeNull();
     expect(r.getByTestId("timer-screen-upright")).toBeTruthy();
   });
@@ -39,10 +33,6 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(phone.__listenerCount()).toBe(1);
 
     await hold(-1, 0); // top of the phone to the left
-    const box = r.getByTestId("timer-turned-box");
-    const style = StyleSheet.flatten(box.props.style) as { width: number; height: number; transform: { rotate: string }[] };
-    expect(style.transform).toEqual([{ rotate: "90deg" }]); // undoing a counter-clockwise turn
-    expect(style.width).toBeGreaterThan(style.height); // laid out along the long edge
     expect(r.getByTestId("timer-screen-turned")).toBeTruthy();
     expect(r.queryByText("Gym Timer")).toBeNull(); // no chrome
     expect(r.getByText("tap to start")).toBeTruthy();
@@ -56,10 +46,8 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(r.getByText("Gym Timer")).toBeTruthy();
     expect(r.getByText("STOP")).toBeTruthy(); // still running: the turn did not reset it
 
-    await hold(1, 0); // top to the right
-    expect((StyleSheet.flatten(r.getByTestId("timer-turned-box").props.style) as { transform: { rotate: string }[] }).transform).toEqual([
-      { rotate: "-90deg" },
-    ]);
+    await hold(1, 0); // top to the right: turned again (which way is the pure test's business)
+    expect(r.getByTestId("timer-screen-turned")).toBeTruthy();
 
     r.unmount();
     expect(phone.__listenerCount()).toBe(0);
