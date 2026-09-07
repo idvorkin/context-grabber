@@ -78,6 +78,24 @@ jest.mock('expo-live-activity', () => ({
   stopActivity: jest.fn(),
 }));
 
+// Mock expo-sensors — the Gym Timer reads the accelerometer to turn its LED
+// display with the phone. Tests drive the listener by hand via __emit.
+jest.mock('expo-sensors', () => {
+  const listeners = new Set();
+  return {
+    Accelerometer: {
+      isAvailableAsync: jest.fn(async () => true),
+      setUpdateInterval: jest.fn(),
+      addListener: jest.fn((fn) => {
+        listeners.add(fn);
+        return { remove: () => listeners.delete(fn) };
+      }),
+      __emit: (reading) => listeners.forEach((fn) => fn(reading)),
+      __listenerCount: () => listeners.size,
+    },
+  };
+});
+
 // Mock expo-keep-awake
 jest.mock('expo-keep-awake', () => ({
   useKeepAwake: jest.fn(),

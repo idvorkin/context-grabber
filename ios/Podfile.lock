@@ -86,6 +86,8 @@ PODS:
     - ReactCommon
   - ExpoSecureStore (55.0.18):
     - ExpoModulesCore
+  - ExpoSensors (55.0.19):
+    - ExpoModulesCore
   - ExpoSharing (55.0.14):
     - ExpoModulesCore
   - ExpoSQLite (55.0.10):
@@ -2137,6 +2139,7 @@ DEPENDENCIES:
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoModulesJSI (from `../node_modules/expo-modules-core`)
   - ExpoSecureStore (from `../node_modules/expo-secure-store/ios`)
+  - ExpoSensors (from `../node_modules/expo-sensors/ios`)
   - ExpoSharing (from `../node_modules/expo-sharing/ios`)
   - ExpoSQLite (from `../node_modules/expo-sqlite/ios`)
   - ExpoTaskManager (from `../node_modules/expo-task-manager/ios`)
@@ -2269,6 +2272,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-modules-core"
   ExpoSecureStore:
     :path: "../node_modules/expo-secure-store/ios"
+  ExpoSensors:
+    :path: "../node_modules/expo-sensors/ios"
   ExpoSharing:
     :path: "../node_modules/expo-sharing/ios"
   ExpoSQLite:
@@ -2462,6 +2467,7 @@ SPEC CHECKSUMS:
   ExpoModulesCore: 998d0fbf7f687b1ff715b87cec779fc92be628ac
   ExpoModulesJSI: 964334271fc77832736f66ee1785761cdc778dbe
   ExpoSecureStore: 422f8e24d8ba1693600bc3720f0a71a17ddcbea0
+  ExpoSensors: 54a9a139bbfadefe0d2c45e8b1ce566a1917a273
   ExpoSharing: a706da94ade9646338a63bbaa4320d4f1db02c45
   ExpoSQLite: 77506d3d056c57118280d1e2a2d76cc06e4926b3
   ExpoTaskManager: 6038b80fbe63915383dcf57fa0156b23e2615fab

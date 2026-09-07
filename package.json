@@ -21,6 +21,7 @@
     "expo-live-activity": "^0.4.2",
     "expo-location": "^55.1.2",
     "expo-secure-store": "~55.0.18",
+    "expo-sensors": "~55.0.19",
     "expo-sharing": "~55.0.14",
     "expo-sqlite": "^55.0.10",
     "expo-status-bar": "~55.0.4",
