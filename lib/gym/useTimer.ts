@@ -11,7 +11,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useAudio } from "./useAudio";
 import { audioService } from "./audioService";
-import { startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
+import { duckWindow, startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
+import { CUE_HOLD_MS, FINISH_HOLD_MS } from "./duck";
 import {
   deriveTimerState,
   type DerivedState,
@@ -106,14 +107,18 @@ export function useTimer(profile: TimerProfile) {
         d.timeLeft > 0 &&
         d.timeLeft !== prevTimeLeft
       ) {
+        duckWindow.hold(); // the window opens at 3 and each tick keeps it open
         playCountdownBeep();
       }
       if (d.phase !== prevPhase) {
         if (d.phase === "work") {
+          duckWindow.hold(CUE_HOLD_MS);
           playStartBeep();
         } else if (d.phase === "rest") {
+          duckWindow.hold(CUE_HOLD_MS);
           playEndBeep();
         } else if (d.phase === "done") {
+          duckWindow.hold(FINISH_HOLD_MS);
           playEndBeep();
           playFinishBeep();
         }
@@ -135,7 +140,8 @@ export function useTimer(profile: TimerProfile) {
 
     if (d.done) {
       clearInterval_();
-      stopTimerKeepalive();
+      duckWindow.forget();
+    stopTimerKeepalive();
     }
 
     stateRef.current = next;
@@ -151,6 +157,7 @@ export function useTimer(profile: TimerProfile) {
 
   const reset = useCallback(() => {
     clearInterval_();
+    duckWindow.forget();
     stopTimerKeepalive();
     startedAtMsRef.current = null;
     pausedAccumMsRef.current = 0;
@@ -179,6 +186,7 @@ export function useTimer(profile: TimerProfile) {
       pausedAtMsRef.current = null;
       lastPhaseRef.current = "idle";
       lastTimeLeftRef.current = profileRef.current.prepTime;
+      duckWindow.hold(CUE_HOLD_MS); // START's GO has no countdown before it
       playStartBeep();
     }
 
@@ -206,6 +214,7 @@ export function useTimer(profile: TimerProfile) {
   // Cleanup on unmount.
   useEffect(() => () => {
     clearInterval_();
+    duckWindow.forget();
     stopTimerKeepalive();
   }, [clearInterval_]);
 
