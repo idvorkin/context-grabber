@@ -77,10 +77,6 @@ struct PlayingCardView: View {
 struct MemdeckCardEntry: TimelineEntry {
   let date: Date
   let card: PlayingCard
-
-  static func at(_ moment: Date, nonce: Int) -> MemdeckCardEntry {
-    MemdeckCardEntry(date: moment, card: CardDeal.card(at: moment, nonce: nonce))
-  }
 }
 
 struct MemdeckCardProvider: TimelineProvider {
@@ -89,15 +85,14 @@ struct MemdeckCardProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (MemdeckCardEntry) -> Void) {
-    completion(.at(Date(), nonce: DealStore.nonce()))
+    let now = Date()
+    completion(MemdeckCardEntry(date: now, card: CardDeal.card(at: now, nonce: DealStore.nonce())))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<MemdeckCardEntry>) -> Void) {
-    // A card per five minutes for the next twelve hours. A tap on the big
-    // widget reloads this with the new tap count. Ask again within the hour
-    // regardless, so nothing stale ever sits on the lock screen for long.
-    let nonce = DealStore.nonce()
-    let entries = CardDeal.moments(from: Date(), count: 144).map { MemdeckCardEntry.at($0, nonce: nonce) }
+    // The whole horizon of cards, in case iOS never honours the reload policy;
+    // a tap on the big widget reloads this. Ask again within the hour regardless.
+    let entries = CardDeal.timeline(from: Date(), nonce: DealStore.nonce()).map { MemdeckCardEntry(date: $0.date, card: $0.card) }
     completion(Timeline(entries: entries, policy: .after(Date().addingTimeInterval(60 * 60))))
   }
 }
@@ -146,28 +141,13 @@ struct MemdeckCardView: View {
     }
     .accessibilityLabel("Memdeck card: \(entry.card.label)")
     .widgetURL(URL(string: "grabber://card")!)  // the app, on a fresh card (D5)
-    .accessoryBackgroundCompat()
-  }
-}
-
-private extension View {
-  /// iOS 17 wants every widget to name its container background; the lock
-  /// screen's is the system's own, so it is clear here.
-  @ViewBuilder
-  func accessoryBackgroundCompat() -> some View {
-    if #available(iOS 17.0, *) {
-      self.containerBackground(for: .widget) { Color.clear }
-    } else {
-      self
-    }
+    .widgetBackgroundCompat(.clear)
   }
 }
 
 struct MemdeckCardWidget: Widget {
-  /// `nonisolated`: the deal intent reads this off the main actor.
-  nonisolated static let kind = "MemdeckCardWidget"
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: Self.kind, provider: MemdeckCardProvider()) { entry in
+    StaticConfiguration(kind: WidgetKind.memdeckCard, provider: MemdeckCardProvider()) { entry in
       MemdeckCardView(entry: entry)
     }
     .configurationDisplayName("Memdeck card")

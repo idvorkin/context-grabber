@@ -25,7 +25,16 @@ type WidgetBridgeModule = {
     counter: number | null;
     counterDate: string | null;
   }>;
+  /** The memdeck card (lib/cardBridge.ts); absent on a binary older than 2026-09-07. */
+  dealCard?: () => Promise<{ label: string; rank: string; suit: string; isRed: boolean }>;
+  syncCardWidgets?: () => Promise<void>;
 };
+
+/** The native module, or nothing off iOS / on a binary without it. */
+export function widgetBridge(): WidgetBridgeModule | undefined {
+  if (Platform.OS !== "ios") return undefined;
+  return (NativeModules as { WidgetBridge?: WidgetBridgeModule }).WidgetBridge;
+}
 
 /**
  * Read whatever the App Group currently holds. Used to reconcile widget-side
@@ -37,8 +46,7 @@ export async function readWidgetSnapshot(): Promise<{
   counter: number | null;
   counterDate: string | null;
 }> {
-  if (Platform.OS !== "ios") return { counter: null, counterDate: null };
-  const bridge = (NativeModules as { WidgetBridge?: WidgetBridgeModule }).WidgetBridge;
+  const bridge = widgetBridge();
   if (!bridge?.readSnapshot) return { counter: null, counterDate: null };
   try {
     return await bridge.readSnapshot();
@@ -64,8 +72,7 @@ type SnapshotInput = {
  * the widget catches up between full health grabs.
  */
 export async function writeReflectToWidget(opp: number, didIt: number, grateful: number): Promise<void> {
-  if (Platform.OS !== "ios") return;
-  const bridge = (NativeModules as { WidgetBridge?: WidgetBridgeModule }).WidgetBridge;
+  const bridge = widgetBridge();
   if (!bridge) return;
   try {
     await bridge.writeSnapshot({
@@ -89,8 +96,7 @@ function todayLocalDateKey(): string {
 }
 
 export async function writeWidgetSnapshot(input: SnapshotInput): Promise<void> {
-  if (Platform.OS !== "ios") return;
-  const bridge = (NativeModules as { WidgetBridge?: WidgetBridgeModule }).WidgetBridge;
+  const bridge = widgetBridge();
   if (!bridge) return; // Module missing at runtime (e.g. old binary without P2).
   const payload: Parameters<WidgetBridgeModule["writeSnapshot"]>[0] = {
     grabbedAt: Date.now(),

@@ -6,11 +6,41 @@ generate-version:
 
 # Deploy OTA update to production channel (used by `just deploy` builds)
 ota message="OTA update": generate-version
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # An OTA bundle must match the binary it lands on. Refuse when the native
+    # surface changed since the last `just deploy` from this Mac (the marker
+    # it leaves), and always when app.json and Expo.plist disagree on the
+    # runtime version. See docs/superpowers/specs/2026-09-07-ota-first-architecture-design.md
+    scripts/check-runtime-version.sh
+    if [ -f .native-build-sha ]; then
+      base=$(cat .native-build-sha)
+      if ! git diff --quiet "$base" HEAD -- ios modules patches package.json app.json; then
+        echo "==> REFUSING: the native surface changed since the last native build ($base):" >&2
+        git diff --stat "$base" HEAD -- ios modules patches package.json app.json >&2
+        echo "==> Run 'just deploy' (and scripts/bump-runtime-version.sh if you have not) instead." >&2
+        exit 1
+      fi
+    else
+      echo "==> NOTE: no record of a native build from this Mac (.native-build-sha); trusting you." >&2
+    fi
     CI=1 npx eas-cli update --branch production --message "{{message}}" --environment production --platform ios
 
 # Run tests
 test:
     npx jest
+
+# Re-render the Gym Timer's spoken cues (macOS `say`) and compose the cue files
+timer-cues:
+    scripts/make-timer-words.sh
+
+# The memdeck deal's promises (no repeats, one of each per run, taps always change the card), under plain swiftc
+check-deal:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=$(mktemp -d)
+    xcrun swiftc -O -module-name carddeal ios/LiveActivity/PlayingCard.swift scripts/card-deal-check/main.swift -o "$out/check"
+    "$out/check"
 
 # Build release and deploy to physical iPhone (supports OTA updates)
 # NOTE: ios/ is committed to git. Do NOT run `expo prebuild` here — it wipes
@@ -29,6 +59,7 @@ deploy device="Igor iPhone 17" udid="856A38BD-04D3-5D27-8485-E09FEF892783": gene
     if ! git diff --quiet -- ios/Podfile.lock; then
       echo "==> NOTE: pod install changed ios/Podfile.lock — commit it so the next clone builds correctly."
     fi
+    scripts/check-runtime-version.sh
     echo "==> Building release..."
     DERIVED_DATA="$HOME/Library/Developer/Xcode/DerivedData"
     xcodebuild -workspace ios/ContextGrabber.xcworkspace \
@@ -39,6 +70,8 @@ deploy device="Igor iPhone 17" udid="856A38BD-04D3-5D27-8485-E09FEF892783": gene
     echo "==> Installing on {{device}}..."
     APP=$(find "$DERIVED_DATA" -path "*/ContextGrabber-*/Build/Products/Release-iphoneos/ContextGrabber.app" -maxdepth 5 | head -1)
     xcrun devicectl device install app --device "{{udid}}" "$APP"
+    # What the phone now carries, for `just ota`'s native-surface check.
+    git rev-parse HEAD > .native-build-sha
 
 # Re-sync native iOS project from app.json after plugin/config changes.
 # Destructive: wipes ios/, re-runs prebuild cleanly, reinstalls Pods.

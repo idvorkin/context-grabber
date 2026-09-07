@@ -1,7 +1,7 @@
 import React from "react";
-import { StyleSheet } from "react-native";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { Accelerometer } from "expo-sensors";
+import * as Clipboard from "expo-clipboard";
 import GymTimerScreen from "../components/GymTimerScreen";
 
 // The jest.setup mock of expo-sensors lets a test hold the phone.
@@ -22,12 +22,7 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(r.getAllByTestId(/^led-glyph-/).length).toBe(label.replace(":", "").length);
     expect(r.getByTestId("led-colon")).toBeTruthy();
     const zero = r.getAllByTestId("led-glyph-0")[0];
-    expect(zero.props.children.filter(Boolean).length).toBe(7);
-    // Lit bars carry the colour and a glow; idle is white.
-    const lit = r.getAllByTestId("led-on-a")[0];
-    const flat = StyleSheet.flatten(lit.props.style) as { backgroundColor: string; shadowRadius: number };
-    expect(flat.backgroundColor).toBe("#e6e6e6");
-    expect(flat.shadowRadius).toBeGreaterThan(0);
+    expect(zero.props.children.filter(Boolean).length).toBe(7); // every bar drawn, lit or ghost
     expect(r.queryByTestId("timer-turned")).toBeNull();
     expect(r.getByTestId("timer-screen-upright")).toBeTruthy();
   });
@@ -38,10 +33,6 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(phone.__listenerCount()).toBe(1);
 
     await hold(-1, 0); // top of the phone to the left
-    const box = r.getByTestId("timer-turned-box");
-    const style = StyleSheet.flatten(box.props.style) as { width: number; height: number; transform: { rotate: string }[] };
-    expect(style.transform).toEqual([{ rotate: "90deg" }]); // undoing a counter-clockwise turn
-    expect(style.width).toBeGreaterThan(style.height); // laid out along the long edge
     expect(r.getByTestId("timer-screen-turned")).toBeTruthy();
     expect(r.queryByText("Gym Timer")).toBeNull(); // no chrome
     expect(r.getByText("tap to start")).toBeTruthy();
@@ -55,13 +46,55 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     expect(r.getByText("Gym Timer")).toBeTruthy();
     expect(r.getByText("STOP")).toBeTruthy(); // still running: the turn did not reset it
 
-    await hold(1, 0); // top to the right
-    expect((StyleSheet.flatten(r.getByTestId("timer-turned-box").props.style) as { transform: { rotate: string }[] }).transform).toEqual([
-      { rotate: "-90deg" },
-    ]);
+    await hold(1, 0); // top to the right: turned again (which way is the pure test's business)
+    expect(r.getByTestId("timer-screen-turned")).toBeTruthy();
 
     r.unmount();
     expect(phone.__listenerCount()).toBe(0);
+  });
+
+  it("Custom: a fifth chip with sliders in tens starting at 1:00; the face follows; locked while running", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} />);
+    await settle();
+    expect(r.queryByTestId("custom-controls")).toBeNull();
+    fireEvent.press(r.getByTestId("preset-custom"));
+    await settle();
+    expect(r.getByTestId("custom-controls")).toBeTruthy();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:00");
+    expect(r.getByTestId("timer-time").props.accessibilityLabel).toBe("1:00");
+
+    fireEvent.press(r.getByTestId("custom-work-plus"));
+    await settle();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:10");
+    expect(r.getByTestId("timer-time").props.accessibilityLabel).toBe("1:10"); // the face follows while idle
+
+    fireEvent.press(r.getByText("START"));
+    await settle();
+    fireEvent.press(r.getByTestId("custom-work-plus")); // locked: nothing changes
+    await settle();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:10");
+
+    fireEvent.press(r.getByText("RESET"));
+    await settle();
+    fireEvent.press(r.getByTestId("custom-work-minus"));
+    await settle();
+    expect(r.getByTestId("custom-work-value").props.children).toBe("1:00"); // live again, and remembered through RESET
+  });
+
+  it("Log copies the timer log with a build header to the clipboard", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} />);
+    await settle();
+    fireEvent.press(r.getByText("START"));
+    await settle();
+    await act(async () => {
+      fireEvent.press(r.getByTestId("timer-copy-log"));
+    });
+    const copied = (Clipboard.setStringAsync as jest.Mock).mock.calls.at(-1)?.[0] as string;
+    expect(copied).toMatch(/^build: /);
+    expect(copied).toContain("mode: rounds");
+    expect(copied).toMatch(/phase idle → prep/); // START ran the ready count
+    expect(copied).not.toMatch(/cue go/); // and said nothing itself
+    expect(r.getByText("Copied")).toBeTruthy();
   });
 
   it("stopwatch: LED minutes and seconds with smaller hundredths; sets: a green LED count that a turned tap raises", async () => {

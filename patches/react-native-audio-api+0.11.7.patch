@@ -909,3 +909,20 @@ index ae0da0c..d502ed8 100644
    for (id sourceNodeId in self.sourceNodes) {
      AVAudioSourceNode *sourceNode = [self.sourceNodes valueForKey:sourceNodeId];
      AVAudioFormat *format = [self.sourceFormats valueForKey:sourceNodeId];
+diff --git a/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioSessionManager.mm b/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioSessionManager.mm
+index d8c4430..ab6889e 100644
+--- a/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioSessionManager.mm
++++ b/node_modules/react-native-audio-api/ios/audioapi/ios/system/AudioSessionManager.mm
+@@ -129,7 +129,11 @@ static AudioSessionManager *_sharedInstance = nil;
+     }
+   }
+ 
+-  success = [self.audioSession setActive:active error:error];
++  // Patched (context-grabber): on deactivation, tell other apps they may resume —
++  // a podcast the timer's duck window paused comes back only with this flag.
++  success = [self.audioSession setActive:active
++                            withOptions:(active ? 0 : AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation)
++                                  error:error];
+ 
+   if (success) {
+     self.isActive = active;

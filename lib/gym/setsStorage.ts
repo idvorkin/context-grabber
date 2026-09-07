@@ -5,25 +5,28 @@
  */
 import { getSetting, setSetting } from "../db";
 import type { SQLiteDatabase } from "expo-sqlite";
+import { getGymDb, setGymDb } from "./gymDb";
 
-let _db: SQLiteDatabase | null = null;
-
+/** The gym's one database handle (gymDb.ts); kept under its old name for App.tsx. */
 export function setSetsDb(db: SQLiteDatabase) {
-  _db = db;
+  setGymDb(db);
 }
 
 export async function loadSetsCount(): Promise<number> {
-  if (!_db) return 0;
-  const val = await getSetting(_db, "gym_sets_count", "0");
+  const db = getGymDb();
+  if (!db) return 0;
+  const val = await getSetting(db, "gym_sets_count", "0");
   return parseInt(val, 10);
 }
 
 export async function saveSetsCount(count: number): Promise<void> {
-  if (!_db) return;
-  await setSetting(_db, "gym_sets_count", String(count));
+  const db = getGymDb();
+  if (!db) return;
+  await setSetting(db, "gym_sets_count", String(count));
 }
 
 export async function clearSetsCount(): Promise<void> {
-  if (!_db) return;
-  await setSetting(_db, "gym_sets_count", "0");
+  const db = getGymDb();
+  if (!db) return;
+  await setSetting(db, "gym_sets_count", "0");
 }

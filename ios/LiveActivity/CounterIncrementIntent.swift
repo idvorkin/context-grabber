@@ -17,7 +17,7 @@ struct CounterIncrementIntent: AppIntent {
   static var openAppWhenRun: Bool = false
 
   func perform() async throws -> some IntentResult {
-    let suite = "group.com.idvorkin.contextgrabber"
+    let suite = AppGroup.suite
     guard let defaults = UserDefaults(suiteName: suite) else {
       return .result()
     }

@@ -29,6 +29,12 @@ export function getBuildInfo(): BuildInfo {
   };
 }
 
+/** "abc1234 (main)" — the build line every copied diagnostic starts with. */
+export function buildLabel(): string {
+  const b = getBuildInfo();
+  return `${b.shortSha} (${b.branch})`;
+}
+
 export function formatBuildTimestamp(timestamp: string): string {
   if (!timestamp) return "";
   const date = new Date(timestamp);

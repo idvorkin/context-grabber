@@ -11,7 +11,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useAudio } from "./useAudio";
 import { audioService } from "./audioService";
-import { startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
+import { duckWindow, startTimerKeepalive, stopTimerAudio } from "./keepalive";
+import { CUE_HOLD_MS, FINISH_HOLD_MS, OPEN_EARLY_HOLD_MS } from "./duck";
+import { timerLog } from "./timerLog";
 import {
   deriveTimerState,
   type DerivedState,
@@ -63,7 +65,7 @@ export function useTimer(profile: TimerProfile) {
   useEffect(() => { stateRef.current = state; });
   useEffect(() => { profileRef.current = profile; });
 
-  const { playStartBeep, playEndBeep, playCountdownBeep, playFinishBeep } = useAudio();
+  const { playStartBeep, playEndBeep, playCountdown, playFinishBeep } = useAudio();
 
   const calculateTotalTime = useCallback(() => {
     return ((profile.workTime + profile.restTime) * profile.rounds * profile.cycles) + profile.prepTime;
@@ -98,6 +100,12 @@ export function useTimer(profile: TimerProfile) {
     // Audio cues — only when not silent (silent path is for catch-up after
     // background, where we don't want to spam beeps post-hoc).
     if (!opts?.silent) {
+      // The duck window opens a silent second before the ticks: the audio
+      // engine rebuilds itself when the session's options change, and a
+      // tone scheduled at that instant is lost.
+      if (d.phase !== "idle" && d.phase !== "done" && d.timeLeft === 4 && d.timeLeft !== prevTimeLeft) {
+        duckWindow.hold(OPEN_EARLY_HOLD_MS);
+      }
       // Final-3 tick cue: when timeLeft just dropped through 3 / 2 / 1.
       if (
         d.phase !== "idle" &&
@@ -106,16 +114,20 @@ export function useTimer(profile: TimerProfile) {
         d.timeLeft > 0 &&
         d.timeLeft !== prevTimeLeft
       ) {
-        playCountdownBeep();
+        duckWindow.hold(); // opened at 4; each spoken count keeps it open
+        playCountdown(d.timeLeft);
       }
       if (d.phase !== prevPhase) {
+        timerLog.add(`phase ${prevPhase} → ${d.phase}, round ${d.currentRound}`);
         if (d.phase === "work") {
+          duckWindow.hold(CUE_HOLD_MS);
           playStartBeep();
         } else if (d.phase === "rest") {
+          duckWindow.hold(CUE_HOLD_MS);
           playEndBeep();
         } else if (d.phase === "done") {
-          playEndBeep();
-          playFinishBeep();
+          duckWindow.hold(FINISH_HOLD_MS);
+          playFinishBeep(); // "done", then the fanfare
         }
       }
     }
@@ -135,13 +147,13 @@ export function useTimer(profile: TimerProfile) {
 
     if (d.done) {
       clearInterval_();
-      stopTimerKeepalive();
+      stopTimerAudio();
     }
 
     stateRef.current = next;
     setState(next);
     return d;
-  }, [playStartBeep, playEndBeep, playCountdownBeep, playFinishBeep, clearInterval_]);
+  }, [playStartBeep, playEndBeep, playCountdown, playFinishBeep, clearInterval_]);
 
   const tick = useCallback(() => {
     if (pausedAtMsRef.current != null) return;
@@ -151,7 +163,7 @@ export function useTimer(profile: TimerProfile) {
 
   const reset = useCallback(() => {
     clearInterval_();
-    stopTimerKeepalive();
+    stopTimerAudio();
     startedAtMsRef.current = null;
     pausedAccumMsRef.current = 0;
     pausedAtMsRef.current = null;
@@ -164,9 +176,12 @@ export function useTimer(profile: TimerProfile) {
 
   const start = useCallback(() => {
     audioService.ensureRunning();
+    const wasPaused = pausedAtMsRef.current != null;
+    // START says nothing itself: the ready count's three, two, one leads to
+    // the first go!, and a profile with no ready count goes straight to work,
+    // whose phase change says it (applyDerived below).
     void startTimerKeepalive();
 
-    const wasPaused = pausedAtMsRef.current != null;
     if (wasPaused) {
       // Resume from pause: extend the paused-accum window.
       const pausedMs = Date.now() - pausedAtMsRef.current!;
@@ -179,7 +194,6 @@ export function useTimer(profile: TimerProfile) {
       pausedAtMsRef.current = null;
       lastPhaseRef.current = "idle";
       lastTimeLeftRef.current = profileRef.current.prepTime;
-      playStartBeep();
     }
 
     clearInterval_();
@@ -206,7 +220,7 @@ export function useTimer(profile: TimerProfile) {
   // Cleanup on unmount.
   useEffect(() => () => {
     clearInterval_();
-    stopTimerKeepalive();
+    stopTimerAudio();
   }, [clearInterval_]);
 
   // AppState catch-up: when the app comes back to the foreground while the

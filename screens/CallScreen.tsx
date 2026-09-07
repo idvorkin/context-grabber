@@ -21,7 +21,7 @@ import * as Clipboard from "expo-clipboard";
 import { describeRoute, offeredOutputs, preferredInput } from "../lib/callDevices";
 import type { CallLog } from "../lib/callLog";
 import { DEFAULT_VOICE, VOICES, hasVoicePick, voiceLabel, type CallVoice } from "../lib/callVoices";
-import { getBuildInfo } from "../lib/version";
+import { buildLabel } from "../lib/version";
 import {
   BACKENDS,
   endingText,
@@ -289,9 +289,8 @@ export function CallScreen({
     [],
   );
   const copyDiagnostics = useCallback(async () => {
-    const build = getBuildInfo();
     const text = log.render({
-      build: `${build.shortSha} (${build.branch})`,
+      build: buildLabel(),
       state: snap.state,
       backend: snap.backend,
       ended: snap.endedReason,

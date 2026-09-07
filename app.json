@@ -88,7 +88,7 @@
         "expo-channel-name": "production"
       }
     },
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": "2026.09.07",
     "extra": {
       "eas": {
         "projectId": "e732edf7-361c-4fab-9075-c784d9f1bf50"

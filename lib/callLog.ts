@@ -31,9 +31,12 @@ export class CallLog {
   private sinkDelayMs = 500;
   private sinkTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(now: () => number = () => Date.now()) {
+  private readonly maxLines: number;
+
+  constructor(now: () => number = () => Date.now(), maxLines = CALL_LOG_LINES) {
     this.now = now;
     this.t0 = now();
+    this.maxLines = maxLines;
   }
 
   /**
@@ -59,7 +62,7 @@ export class CallLog {
   }
 
   private cap(): void {
-    if (this.lines.length > CALL_LOG_LINES) this.lines.splice(0, this.lines.length - CALL_LOG_LINES);
+    if (this.lines.length > this.maxLines) this.lines.splice(0, this.lines.length - this.maxLines);
   }
 
   private touch(): void {
