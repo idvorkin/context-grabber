@@ -9,14 +9,14 @@ describe("the timer's cues, as files", () => {
     made.mockClear();
     loadCues();
     loadCues();
-    expect(made).toHaveBeenCalledTimes(4); // go, rest, tick, done — under jest every file is the same stub
+    expect(made).toHaveBeenCalledTimes(6); // three, two, one, go, rest, done — under jest every file is the same stub
     expect(made.mock.calls.every((c) => c[1]?.keepAudioSessionActive === true)).toBe(true);
 
-    const tickPlayer = made.mock.results[2].value; // the third cue made is the tick
-    playCue("tick");
-    playCue("tick");
-    expect(tickPlayer.seekTo).toHaveBeenCalledWith(0);
-    expect(tickPlayer.play).toHaveBeenCalledTimes(2);
-    expect(made).toHaveBeenCalledTimes(4); // no new player for a repeat
+    const three = made.mock.results[0].value; // the first cue made is "three"
+    playCue("three");
+    playCue("three");
+    expect(three.seekTo).toHaveBeenCalledWith(0);
+    expect(three.play).toHaveBeenCalledTimes(2);
+    expect(made).toHaveBeenCalledTimes(6); // no new player for a repeat
   });
 });

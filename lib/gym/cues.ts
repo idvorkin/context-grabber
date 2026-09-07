@@ -1,23 +1,26 @@
 /**
- * The Gym Timer's cues — GO, rest, the 3-2-1 tick, the finish — as sound
- * files played through the ordinary media player, not synthesised. The
+ * The Gym Timer's cues — "three, two, one", "go!", "rest", "done" (with its
+ * fanfare) — as sound files played through the ordinary media player, not
+ * synthesised. The
  * Web-Audio engine went silent as soon as the session mixed with other
  * audio (the log of 2026-09-07 showed every cue requested and none heard);
  * a file player does not depend on that engine at all.
  *
- * The files are rendered by scripts/make-timer-cues.mjs from the same note
- * recipes the synthesis used, so the cues sound as they always have.
+ * The words are rendered by scripts/make-timer-words.sh (macOS `say`) and
+ * composed into cue files by scripts/make-timer-cues.mjs.
  * Spec: docs/superpowers/specs/2026-09-07-gym-timer-audio-ducking-design.md
  */
 import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 import { timerLog } from "./timerLog";
 
-export type Cue = "go" | "rest" | "tick" | "done";
+export type Cue = "three" | "two" | "one" | "go" | "rest" | "done";
 
 const SOURCES: Record<Cue, number> = {
+  three: require("../../assets/audio/timer/three.wav"),
+  two: require("../../assets/audio/timer/two.wav"),
+  one: require("../../assets/audio/timer/one.wav"),
   go: require("../../assets/audio/timer/go.wav"),
   rest: require("../../assets/audio/timer/rest.wav"),
-  tick: require("../../assets/audio/timer/tick.wav"),
   done: require("../../assets/audio/timer/done.wav"),
 };
 

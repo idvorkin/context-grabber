@@ -1,33 +1,31 @@
 #!/usr/bin/env node
 /**
- * Render the Gym Timer's cues to WAV files — the same tones the timer used to
- * synthesise live, pre-rendered so they play as files through the ordinary
- * media path. Deterministic: run it again and the bytes are identical.
+ * Compose the Gym Timer's cue files from the spoken words that
+ * scripts/make-timer-words.sh renders (three, two, one, go, rest, done) and
+ * one synthesised flourish — the finish fanfare that follows "done". Also the
+ * second of near-silence the background keepalive loops. Deterministic: the
+ * same inputs give the same bytes.
  *
- *   node scripts/make-timer-cues.mjs        → assets/audio/timer/*.wav
+ *   node scripts/make-timer-cues.mjs       → assets/audio/timer/*.wav
  *
  * Spec: docs/superpowers/specs/2026-09-07-gym-timer-audio-ducking-design.md
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RATE = 44_100;
-const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "audio", "timer");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "audio", "timer");
+const WORDS = join(ROOT, "words");
 
-/** One sine note: frequency, length, level, start offset — as playTone took them. */
+/** Spoken words come out of `say` at a modest level; bring their peak up to this so they cut through. */
+const WORD_PEAK = 0.9;
+
+/** One sine note: frequency, length, level, start offset. */
 const note = (hz, seconds, level, at = 0) => ({ hz, seconds, level, at });
 
-const CUES = {
-  // "GO!" — three rising notes.
-  go: [note(800, 0.15, 0.8, 0), note(1000, 0.15, 0.8, 0.1), note(1200, 0.25, 0.9, 0.2)],
-  // Rest — two falling notes.
-  rest: [note(800, 0.2, 0.7, 0), note(600, 0.3, 0.7, 0.2)],
-  // The 3-2-1 tick.
-  tick: [note(660, 0.08, 0.6, 0)],
-  // All done — C E G high C.
-  done: [note(523, 0.2, 0.8, 0), note(659, 0.2, 0.8, 0.15), note(784, 0.2, 0.8, 0.3), note(1047, 0.4, 0.9, 0.45)],
-};
+/** All done — C E G high C, after the word. */
+const FANFARE = [note(523, 0.2, 0.8, 0), note(659, 0.2, 0.8, 0.15), note(784, 0.2, 0.8, 0.3), note(1047, 0.4, 0.9, 0.45)];
 
 /** A short fade at each end of a note keeps it from clicking. */
 const FADE = 0.004;
@@ -64,6 +62,46 @@ function keepaliveNoise(seconds) {
   return out;
 }
 
+/** Read a 16-bit mono 44.1 kHz WAV (what afconvert wrote) as samples in -1..1. */
+function readWav(file) {
+  const buf = readFileSync(file);
+  if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WAVE") throw new Error(`${file}: not a WAV`);
+  let pos = 12;
+  let format = null;
+  let data = null;
+  while (pos + 8 <= buf.length) {
+    const id = buf.toString("ascii", pos, pos + 4);
+    const size = buf.readUInt32LE(pos + 4);
+    const body = buf.subarray(pos + 8, pos + 8 + size);
+    if (id === "fmt ") format = { channels: buf.readUInt16LE(pos + 10), rate: buf.readUInt32LE(pos + 12), bits: buf.readUInt16LE(pos + 22) };
+    if (id === "data") data = body;
+    pos += 8 + size + (size % 2);
+  }
+  if (!format || !data) throw new Error(`${file}: no fmt/data`);
+  if (format.channels !== 1 || format.rate !== RATE || format.bits !== 16) throw new Error(`${file}: want mono 16-bit ${RATE} Hz, got ${JSON.stringify(format)}`);
+  const out = new Float64Array(data.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = data.readInt16LE(i * 2) / 32768;
+  return out;
+}
+
+function normalized(samples, peak) {
+  let max = 0;
+  for (const v of samples) max = Math.max(max, Math.abs(v));
+  if (max === 0) return samples;
+  const g = peak / max;
+  return samples.map((v) => v * g);
+}
+
+function concat(...parts) {
+  const out = new Float64Array(parts.reduce((n, p) => n + p.length, 0));
+  let at = 0;
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.length;
+  }
+  return out;
+}
+
 function wav(samples) {
   const pcm = Buffer.alloc(samples.length * 2);
   for (let i = 0; i < samples.length; i++) {
@@ -87,11 +125,20 @@ function wav(samples) {
   return Buffer.concat([header, pcm]);
 }
 
-mkdirSync(OUT, { recursive: true });
-for (const [name, notes] of Object.entries(CUES)) {
-  const file = join(OUT, `${name}.wav`);
-  writeFileSync(file, wav(render(notes)));
-  console.log(`${name}.wav`);
+const word = (name) => normalized(readWav(join(WORDS, `${name}.wav`)), WORD_PEAK);
+const gap = (seconds) => new Float64Array(Math.round(seconds * RATE));
+
+mkdirSync(ROOT, { recursive: true });
+const cues = {
+  three: word("three"),
+  two: word("two"),
+  one: word("one"),
+  go: word("go"),
+  rest: word("rest"),
+  done: concat(word("done"), gap(0.08), render(FANFARE)),
+  keepalive: keepaliveNoise(1),
+};
+for (const [name, samples] of Object.entries(cues)) {
+  writeFileSync(join(ROOT, `${name}.wav`), wav(samples));
+  console.log(`${name}.wav  ${(samples.length / RATE).toFixed(2)}s`);
 }
-writeFileSync(join(OUT, "keepalive.wav"), wav(keepaliveNoise(1)));
-console.log("keepalive.wav");

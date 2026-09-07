@@ -65,7 +65,7 @@ export function useTimer(profile: TimerProfile) {
   useEffect(() => { stateRef.current = state; });
   useEffect(() => { profileRef.current = profile; });
 
-  const { playStartBeep, playEndBeep, playCountdownBeep, playFinishBeep } = useAudio();
+  const { playStartBeep, playEndBeep, playCountdown, playFinishBeep } = useAudio();
 
   const calculateTotalTime = useCallback(() => {
     return ((profile.workTime + profile.restTime) * profile.rounds * profile.cycles) + profile.prepTime;
@@ -114,8 +114,8 @@ export function useTimer(profile: TimerProfile) {
         d.timeLeft > 0 &&
         d.timeLeft !== prevTimeLeft
       ) {
-        duckWindow.hold(); // the window opens at 3 and each tick keeps it open
-        playCountdownBeep();
+        duckWindow.hold(); // opened at 4; each spoken count keeps it open
+        playCountdown(d.timeLeft);
       }
       if (d.phase !== prevPhase) {
         timerLog.add(`phase ${prevPhase} → ${d.phase}, round ${d.currentRound}`);
@@ -127,8 +127,7 @@ export function useTimer(profile: TimerProfile) {
           playEndBeep();
         } else if (d.phase === "done") {
           duckWindow.hold(FINISH_HOLD_MS);
-          playEndBeep();
-          playFinishBeep();
+          playFinishBeep(); // "done", then the fanfare
         }
       }
     }
@@ -154,7 +153,7 @@ export function useTimer(profile: TimerProfile) {
     stateRef.current = next;
     setState(next);
     return d;
-  }, [playStartBeep, playEndBeep, playCountdownBeep, playFinishBeep, clearInterval_]);
+  }, [playStartBeep, playEndBeep, playCountdown, playFinishBeep, clearInterval_]);
 
   const tick = useCallback(() => {
     if (pausedAtMsRef.current != null) return;

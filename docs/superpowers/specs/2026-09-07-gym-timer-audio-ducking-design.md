@@ -49,11 +49,11 @@ library deactivates the session without the notify flag — the music does
 **not** come back when the workout ends or you leave the timer. That is the
 current behaviour, and half of any option below is fixing the second part.
 
-**How the timer makes its sounds.** They are generated tones, not files,
-through the app's Web-Audio engine: the start cue (three rising notes,
-0.45 s), the rest cue (two falling notes, 0.5 s), the countdown ticks at
-3, 2, 1 (80 ms each, one per second), and the finish fanfare (four notes,
-0.85 s). All short; the ticks very short.
+**How the timer made its sounds.** Originally generated tones through the
+app's Web-Audio engine: the start cue (three rising notes, 0.45 s), the
+rest cue (two falling notes, 0.5 s), the countdown ticks at 3, 2, 1 (80 ms
+each, one per second), and the finish fanfare (four notes, 0.85 s). They
+are sound files now, and spoken (D5, D6).
 
 **The keepalive complication.** To keep running in the background the
 timer plays a near-silent loop through that same session for the whole
@@ -114,8 +114,8 @@ suspend the app in the background.
 
 - Start a workout with music playing: the music keeps playing at full
   volume through the ready phase and the work phase.
-- At four seconds left the music fades down; the ticks and the *rest* cue
-  are clear over it; about a second after the cue the music fades back up.
+- At four seconds left the music fades down; *three, two, one, rest* are
+  clear over it; about a second after the last word the music fades back up.
   Same at the end of rest into the next round, with the *GO* cue.
 - The finish fanfare plays over a dip; the music is back within a couple of
   seconds of it ending.
@@ -139,12 +139,12 @@ suspend the app in the background.
 
 1. **Music keeps playing.** Music on; open the Gym Timer; START a 30-second
    round: the music plays on at full volume through *rEAdY* and *GO*.
-2. **The dip.** At four seconds left the music fades down; the three ticks
-   and the rest cue are clear over it — every one of them audible; about a
-   second after the cue it is back at full volume. Same at the end of rest
-   into the next round.
-3. **The finish.** The fanfare plays over a dip; the music is back within a
-   couple of seconds of the fanfare ending.
+2. **The dip.** At four seconds left the music fades down; *three, two,
+   one, rest* are clear over it — every word audible; about a second after
+   the last it is back at full volume. Same at the end of rest into the next
+   round, ending in *go!*.
+3. **The finish.** *Three, two, one, done* and the fanfare play over a dip;
+   the music is back within a couple of seconds of the fanfare ending.
 4. **A podcast pauses and resumes.** A podcast on instead of music: it pauses
    at the three-second mark and resumes, where it stopped, a second or so
    after the cue. It is not audible under the ticks.
@@ -186,6 +186,14 @@ suspend the app in the background.
   timer alive in the background. Nothing audible depends on that engine
   now. Igor: *"should we just play sounds vs tones you can generate and
   record and then play 'em"*. They sound exactly as before.
+- **D6 — The cues are spoken.** Igor: *"how about 3-2-1 GO and 3-2-1 DONE
+  words."* The countdown into every boundary says *three, two, one*, then
+  the boundary says *go!*, *rest*, or *done* — and *done* keeps the fanfare
+  after the word. The words are rendered once on the Mac (`scripts/
+  make-timer-words.sh`, the system voice, offline) and composed into the cue
+  files; the voice is a one-line change there. Option E from the table,
+  arrived at from the other direction: once the cues were files, words cost
+  nothing.
 - **D4 — The window closes by letting go of the session.** A paused podcast
   resumes only when the session that interrupted it deactivates with the
   notify flag, so closing the window is a real deactivate-and-reactivate of

@@ -12,6 +12,10 @@ ota message="OTA update": generate-version
 test:
     npx jest
 
+# Re-render the Gym Timer's spoken cues (macOS `say`) and compose the cue files
+timer-cues:
+    scripts/make-timer-words.sh
+
 # The memdeck deal's promises (no repeats, one of each per run, taps always change the card), under plain swiftc
 check-deal:
     #!/usr/bin/env bash
