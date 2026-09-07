@@ -1,16 +1,22 @@
 import { AudioManager } from "react-native-audio-api";
 import { Platform } from "react-native";
-import { getAudioContext } from "./audioContext";
+import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 import { DuckWindow, type DuckSession } from "./duck";
 import { timerLog } from "./timerLog";
 
-type AudioBufferSourceNode = ReturnType<
-  InstanceType<typeof import("react-native-audio-api").AudioContext>["createBufferSource"]
->;
+/**
+ * The timer's audio session and its background keepalive.
+ *
+ * The session — category, the mixing and ducking options, activation and the
+ * notify-others deactivation — is steered through react-native-audio-api's
+ * AudioManager, which applies option changes to the live session and carries
+ * the repo's patch. Nothing audible goes through that library's engine any
+ * more: the cues (cues.ts) and the keepalive loop below are files played by
+ * expo-audio's player, which the engine's state cannot silence.
+ * Spec: docs/superpowers/specs/2026-09-07-gym-timer-audio-ducking-design.md
+ */
 
-let bufferSource: AudioBufferSourceNode | null = null;
-/** One second of near-silence, made once: any number of loops can play it. */
-let noiseBuffer: ReturnType<InstanceType<typeof import("react-native-audio-api").AudioContext>["createBuffer"]> | null = null;
+let loop: AudioPlayer | null = null;
 let active = false;
 let sessionConfigured = false;
 
@@ -37,9 +43,7 @@ function applySessionOptions(ducking: boolean): void {
 /**
  * Configure the iOS audio session for `playback` so the app is eligible to
  * keep running in the background under `UIBackgroundModes: audio`. Mixed
- * with others: a workout no longer pauses the music (spec: audio ducking,
- * 2026-09-07). Idempotent. Safe to call before any AudioContext is created —
- * applies session-wide.
+ * with others: a workout no longer pauses the music. Idempotent.
  */
 export function configureAudioSessionForBackground(): void {
   if (sessionConfigured) return;
@@ -51,8 +55,9 @@ export function configureAudioSessionForBackground(): void {
  * The timer's side of the duck window (lib/gym/duck.ts): the options on the
  * live session, and — because a paused podcast resumes only when the session
  * that paused it lets go — a deactivate-and-reactivate with the keepalive
- * loop restarted after it. Nothing to let go of when the keepalive is not
- * running: the final deactivation in `stopTimerKeepalive` carries the flag.
+ * loop restarted after it, the deactivation awaited so the two never cross.
+ * Nothing to let go of when the keepalive is not running: the final
+ * deactivation in `stopTimerKeepalive` carries the flag.
  */
 const timerDuckSession: DuckSession = {
   setDucking: applySessionOptions,
@@ -61,7 +66,7 @@ const timerDuckSession: DuckSession = {
       timerLog.add("release: keepalive not running, nothing to let go of");
       return;
     }
-    stopTimerKeepalive();
+    await stopTimerKeepalive();
     await startTimerKeepalive();
   },
 };
@@ -70,19 +75,9 @@ const timerDuckSession: DuckSession = {
 export const duckWindow = new DuckWindow(timerDuckSession, (m) => timerLog.add(m));
 
 /**
- * Start a continuously-playing very-low-amplitude audio buffer to keep iOS
- * believing the app is actively producing audio. With the playback session
- * active and the `audio` UIBackgroundMode entry in Info.plist, this keeps
- * the JS thread alive while the app is backgrounded so timer ticks (and
- * Live Activity updates) keep firing.
- *
- * Why a buffer instead of an oscillator: low-frequency oscillators below the
- * speaker's reproduction range can be treated as effective silence by iOS's
- * "is the app actually outputting audio" heuristic. A buffer of low-level
- * white noise pumps real samples at the configured sample rate, which iOS
- * unambiguously sees as live audio output.
- *
- * Idempotent — repeat calls while active are a no-op.
+ * Keep the app alive in the background: activate the session and loop a
+ * second of -66 dB noise (assets/audio/timer/keepalive.wav — real samples,
+ * which iOS counts as live output; digital silence it may not). Idempotent.
  */
 export async function startTimerKeepalive(): Promise<void> {
   if (active) return;
@@ -101,25 +96,12 @@ export async function startTimerKeepalive(): Promise<void> {
   }
 
   try {
-    const ctx = getAudioContext();
-
-    // 1 second of very low-amplitude white noise. Amplitude 0.0005 is
-    // ~-66dB relative to full-scale: detectable by iOS as live output but
-    // imperceptible in any normal listening environment.
-    if (!noiseBuffer) {
-      const sampleRate = ctx.sampleRate;
-      noiseBuffer = ctx.createBuffer(1, sampleRate, sampleRate);
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) {
-        data[i] = (Math.random() - 0.5) * 0.001;
-      }
+    if (!loop) {
+      loop = createAudioPlayer(require("../../assets/audio/timer/keepalive.wav"), { keepAudioSessionActive: true });
+      loop.loop = true;
     }
-
-    bufferSource = ctx.createBufferSource();
-    bufferSource.buffer = noiseBuffer;
-    bufferSource.loop = true;
-    bufferSource.connect(ctx.destination);
-    bufferSource.start();
+    void loop.seekTo(0);
+    loop.play();
     timerLog.add("keepalive loop started");
   } catch (e) {
     // No audio backend available; silent fallback.
@@ -127,27 +109,23 @@ export async function startTimerKeepalive(): Promise<void> {
   }
 }
 
-export function stopTimerKeepalive(): void {
+/** Stop the loop and let go of the session; resolves once the session is inactive. */
+export async function stopTimerKeepalive(): Promise<void> {
   if (!active) return;
   active = false;
   try {
-    if (bufferSource) {
-      bufferSource.stop();
-      bufferSource.disconnect();
-    }
+    loop?.pause();
   } catch {
     // ignore teardown errors
   }
-  bufferSource = null;
   timerLog.add("keepalive loop stopped");
 
   if (Platform.OS === "ios") {
     try {
-      void AudioManager.setAudioSessionActivity(false)
-        .then(() => timerLog.add("session inactive (others told they may resume)"))
-        .catch((e: unknown) => timerLog.add(`session deactivate FAILED: ${e instanceof Error ? e.message : String(e)}`));
-    } catch {
-      // ignore
+      await AudioManager.setAudioSessionActivity(false);
+      timerLog.add("session inactive (others told they may resume)");
+    } catch (e) {
+      timerLog.add(`session deactivate FAILED: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 }
@@ -162,6 +140,6 @@ export function isKeepaliveActive(): boolean {
  * it and its release finds nothing left to let go of.
  */
 export function stopTimerAudio(): void {
-  stopTimerKeepalive();
+  void stopTimerKeepalive();
   void duckWindow.close();
 }

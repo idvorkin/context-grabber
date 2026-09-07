@@ -121,7 +121,20 @@ jest.mock('expo-audio', () => {
     seekTo: jest.fn().mockResolvedValue(undefined),
     replace: jest.fn(),
   };
+  // A fresh player per file: the timer keeps one per cue and one for its keepalive loop.
+  const createAudioPlayer = jest.fn((source) => ({
+    source,
+    play: jest.fn(),
+    pause: jest.fn(),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+    remove: jest.fn(),
+    loop: false,
+    volume: 1,
+    playing: false,
+    isLoaded: true,
+  }));
   return {
+    createAudioPlayer,
     RecordingPresets: { HIGH_QUALITY: {}, LOW_QUALITY: {} },
     useAudioRecorder: jest.fn(() => recorder),
     useAudioRecorderState: jest.fn(() => ({ isRecording: false, durationMillis: 0 })),

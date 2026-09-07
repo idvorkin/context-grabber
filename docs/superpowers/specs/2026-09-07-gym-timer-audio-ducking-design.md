@@ -177,6 +177,15 @@ suspend the app in the background.
   last cue in it; each tick or cue inside the window extends it. Per tick
   would make the music pump. START's *GO*, which has no countdown before
   it, opens the window before the session comes up and sounds once it is.
+- **D5 — The cues are sounds, not synthesis.** The first build of C′ ducked
+  the music and played nothing: with the session mixed with other audio,
+  the engine that synthesised the tones went silent, every cue requested
+  and none heard (the log said so). The cues are now rendered once to
+  sound files — the same notes, from the same recipes — and played through
+  the ordinary media player, as is the near-silent loop that keeps the
+  timer alive in the background. Nothing audible depends on that engine
+  now. Igor: *"should we just play sounds vs tones you can generate and
+  record and then play 'em"*. They sound exactly as before.
 - **D4 — The window closes by letting go of the session.** A paused podcast
   resumes only when the session that interrupted it deactivates with the
   notify flag, so closing the window is a real deactivate-and-reactivate of
@@ -196,6 +205,7 @@ suspend the app in the background.
 - Its deactivation calls the plain `setActive:false` — no notify-others
   flag. The repo already carries a patch for this library (echo
   cancellation), so a second small patch is the established path.
-- Cues: four generated tones as listed above; the countdown tick fires at
-  3, 2, 1 seconds left in the timer's tick logic, so the "duck window" has
-  a natural opener.
+- Cues: four sounds (assets/audio/timer, rendered by
+  scripts/make-timer-cues.mjs from the note recipes listed above); the
+  countdown tick fires at 3, 2, 1 seconds left in the timer's tick logic,
+  so the "duck window" has a natural opener.
