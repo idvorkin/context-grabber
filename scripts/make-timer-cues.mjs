@@ -10,7 +10,7 @@
  *
  * Spec: docs/superpowers/specs/2026-09-07-gym-timer-audio-ducking-design.md
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -85,17 +85,21 @@ function readWav(file) {
 }
 
 /**
- * Strip the silence a renderer pads a word with (ElevenLabs leaves up to half
- * a second either side), so the count's words do not run into each other a
- * second apart. Keeps a short tail so the last consonant is not clipped.
+ * Cut a word down to the word. A renderer pads it with silence (ElevenLabs:
+ * up to half a second either side), and a clone may breathe before it and
+ * hum after — both quiet next to the word itself. The start is the first
+ * real onset (a tenth of the peak), walked back a little for the consonant's
+ * attack; the end is the last sample that is not near-silence, plus a short
+ * tail. Samples come in normalised, so the thresholds are absolute.
  */
-function trimmed(samples, threshold = 0.01, tailSeconds = 0.03) {
+function trimmed(samples, onset = 0.1, floor = 0.02, attackSeconds = 0.02, tailSeconds = 0.03) {
   let start = 0;
-  while (start < samples.length && Math.abs(samples[start]) < threshold) start++;
+  while (start < samples.length && Math.abs(samples[start]) < onset) start++;
+  start = Math.max(0, start - Math.round(attackSeconds * RATE));
   let end = samples.length;
-  while (end > start && Math.abs(samples[end - 1]) < threshold) end--;
-  const tail = Math.round(tailSeconds * RATE);
-  return samples.slice(Math.max(0, start - tail), Math.min(samples.length, end + tail));
+  while (end > start && Math.abs(samples[end - 1]) < floor) end--;
+  end = Math.min(samples.length, end + Math.round(tailSeconds * RATE));
+  return samples.slice(start, end);
 }
 
 function normalized(samples, peak) {
@@ -139,7 +143,16 @@ function wav(samples) {
   return Buffer.concat([header, pcm]);
 }
 
-const word = (name) => trimmed(normalized(readWav(join(WORDS, `${name}.wav`)), WORD_PEAK));
+/** Of the takes rendered for a word, the shortest once trimmed: a filler always adds length. */
+function word(name) {
+  const takes = readdirSync(WORDS).filter((f) => f === `${name}.wav` || new RegExp(`^${name}\\.\\d+\\.wav$`).test(f));
+  if (takes.length === 0) throw new Error(`no takes for "${name}" in ${WORDS} — run scripts/make-timer-words.sh`);
+  const trimmedTakes = takes.map((f) => ({ f, s: trimmed(normalized(readWav(join(WORDS, f)), WORD_PEAK)) }));
+  trimmedTakes.sort((a, b) => a.s.length - b.s.length);
+  const best = trimmedTakes[0];
+  console.log(`${name}: ${best.f} (${(best.s.length / RATE).toFixed(2)}s of ${trimmedTakes.map((t) => (t.s.length / RATE).toFixed(2)).join("/")})`);
+  return best.s;
+}
 const gap = (seconds) => new Float64Array(Math.round(seconds * RATE));
 
 mkdirSync(ROOT, { recursive: true });
