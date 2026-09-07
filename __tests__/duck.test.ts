@@ -2,6 +2,7 @@ import { CUE_HOLD_MS, DuckWindow, FINISH_HOLD_MS, TICK_HOLD_MS, type DuckSession
 
 function fakeSession() {
   const log: string[] = [];
+  const lines: string[] = [];
   const session: DuckSession = {
     setDucking(on) {
       log.push(on ? "duck" : "base");
@@ -10,7 +11,7 @@ function fakeSession() {
       log.push("release");
     },
   };
-  return { session, log };
+  return { session, log, lines };
 }
 
 // Drain microtasks only — under fake timers a real setTimeout never fires.
@@ -23,8 +24,8 @@ describe("the duck window", () => {
   afterEach(() => jest.useRealTimers());
 
   it("opens on the first hold, stays open across the 3-2-1 ticks and the cue, and lets go a beat after the last", async () => {
-    const { session, log } = fakeSession();
-    const w = new DuckWindow(session);
+    const { session, log, lines } = fakeSession();
+    const w = new DuckWindow(session, (m) => lines.push(m));
     expect(w.isOpen).toBe(false);
 
     w.hold(); // 3
@@ -45,6 +46,9 @@ describe("the duck window", () => {
     await flush();
     expect(w.isOpen).toBe(false);
     expect(log).toEqual(["duck", "base", "release"]);
+    expect(lines[0]).toMatch(/^duck window open/);
+    expect(lines.filter((l) => l.startsWith("duck window held"))).toHaveLength(3);
+    expect(lines.at(-1)).toBe("duck window released");
   });
 
   it("a tick's hold outlasts the second to the next tick; the finish holds longest", () => {

@@ -127,6 +127,13 @@ suspend the app in the background.
 - Larry's Call tab is untouched: its session (play-and-record, voice chat)
   is its own, and the timer's session options never apply to a call.
 - Stopwatch and Sets make no sound, so nothing dips or pauses there.
+- **A log.** *Log*, top right of the timer, copies the timer's diagnostics
+  to the clipboard behind a build header: every session option change,
+  activation and deactivation (and their failures), the keepalive loop
+  starting and stopping, the duck window opening, holding, closing and
+  letting go, and each phase change — so "the music stopped" can be
+  answered from the phone, the way the Call tab's log answers a bad call.
+  It reads *Copied* for a moment.
 
 ## Acceptance criteria
 
@@ -151,6 +158,11 @@ suspend the app in the background.
    the call.
 8. **Nothing else about the timer changed.** Cues, beeps, phases, presets,
    the Live Activity, the LED face.
+9. **The log.** After a round with music: *Log* → paste somewhere: a build
+   line, then the session going active with `[mixWithOthers]`, the window
+   opening at 3 with the duck options, held twice, closing, the session
+   letting go and coming back, the loop restarting — and nothing marked
+   FAILED.
 
 ## Decisions
 

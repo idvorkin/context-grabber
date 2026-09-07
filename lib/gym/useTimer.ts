@@ -13,6 +13,7 @@ import { useAudio } from "./useAudio";
 import { audioService } from "./audioService";
 import { duckWindow, startTimerKeepalive, stopTimerKeepalive } from "./keepalive";
 import { CUE_HOLD_MS, FINISH_HOLD_MS } from "./duck";
+import { timerLog } from "./timerLog";
 import {
   deriveTimerState,
   type DerivedState,
@@ -111,6 +112,7 @@ export function useTimer(profile: TimerProfile) {
         playCountdownBeep();
       }
       if (d.phase !== prevPhase) {
+        timerLog.add(`phase ${prevPhase} → ${d.phase}, round ${d.currentRound}`);
         if (d.phase === "work") {
           duckWindow.hold(CUE_HOLD_MS);
           playStartBeep();

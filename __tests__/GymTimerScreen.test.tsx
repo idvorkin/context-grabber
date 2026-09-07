@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet } from "react-native";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { Accelerometer } from "expo-sensors";
+import * as Clipboard from "expo-clipboard";
 import GymTimerScreen from "../components/GymTimerScreen";
 
 // The jest.setup mock of expo-sensors lets a test hold the phone.
@@ -62,6 +63,21 @@ describe("GymTimerScreen — the LED look and the turn", () => {
 
     r.unmount();
     expect(phone.__listenerCount()).toBe(0);
+  });
+
+  it("Log copies the timer log with a build header to the clipboard", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} />);
+    await settle();
+    fireEvent.press(r.getByText("START"));
+    await settle();
+    await act(async () => {
+      fireEvent.press(r.getByTestId("timer-copy-log"));
+    });
+    const copied = (Clipboard.setStringAsync as jest.Mock).mock.calls.at(-1)?.[0] as string;
+    expect(copied).toMatch(/^build: /);
+    expect(copied).toContain("mode: rounds");
+    expect(copied).toMatch(/duck window open/); // START's GO opened one
+    expect(r.getByText("Copied")).toBeTruthy();
   });
 
   it("stopwatch: LED minutes and seconds with smaller hundredths; sets: a green LED count that a turned tap raises", async () => {

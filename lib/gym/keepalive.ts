@@ -2,6 +2,7 @@ import { AudioManager } from "react-native-audio-api";
 import { Platform } from "react-native";
 import { getAudioContext } from "./audioContext";
 import { DuckWindow, type DuckSession } from "./duck";
+import { timerLog } from "./timerLog";
 
 type AudioBufferSourceNode = ReturnType<
   InstanceType<typeof import("react-native-audio-api").AudioContext>["createBufferSource"]
@@ -18,13 +19,16 @@ const DUCK_OPTIONS = ["mixWithOthers", "duckOthers", "interruptSpokenAudioAndMix
 
 function applySessionOptions(ducking: boolean): void {
   if (Platform.OS !== "ios") return;
+  const options = [...(ducking ? DUCK_OPTIONS : BASE_OPTIONS)];
   try {
     AudioManager.setAudioSessionOptions({
       iosCategory: "playback",
-      iosOptions: [...(ducking ? DUCK_OPTIONS : BASE_OPTIONS)],
+      iosOptions: options,
     });
-  } catch {
+    timerLog.add(`session options: playback [${options.join(", ")}]`);
+  } catch (e) {
     // simulator / unsupported — silent fallback.
+    timerLog.add(`session options FAILED: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -51,14 +55,17 @@ export function configureAudioSessionForBackground(): void {
 const timerDuckSession: DuckSession = {
   setDucking: applySessionOptions,
   async release() {
-    if (!active) return;
+    if (!active) {
+      timerLog.add("release: keepalive not running, nothing to let go of");
+      return;
+    }
     stopTimerKeepalive();
     await startTimerKeepalive();
   },
 };
 
 /** Hold it open around each cue; it closes itself a moment after the last one. */
-export const duckWindow = new DuckWindow(timerDuckSession);
+export const duckWindow = new DuckWindow(timerDuckSession, (m) => timerLog.add(m));
 
 /**
  * Start a continuously-playing very-low-amplitude audio buffer to keep iOS
@@ -84,8 +91,10 @@ export async function startTimerKeepalive(): Promise<void> {
   if (Platform.OS === "ios") {
     try {
       await AudioManager.setAudioSessionActivity(true);
-    } catch {
+      timerLog.add("session active");
+    } catch (e) {
       // simulator / unsupported — silent fallback.
+      timerLog.add(`session activate FAILED: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -108,8 +117,10 @@ export async function startTimerKeepalive(): Promise<void> {
     bufferSource.loop = true;
     bufferSource.connect(ctx.destination);
     bufferSource.start();
-  } catch {
+    timerLog.add("keepalive loop started");
+  } catch (e) {
     // No audio backend available; silent fallback.
+    timerLog.add(`keepalive loop FAILED: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -125,10 +136,13 @@ export function stopTimerKeepalive(): void {
     // ignore teardown errors
   }
   bufferSource = null;
+  timerLog.add("keepalive loop stopped");
 
   if (Platform.OS === "ios") {
     try {
-      void AudioManager.setAudioSessionActivity(false);
+      void AudioManager.setAudioSessionActivity(false)
+        .then(() => timerLog.add("session inactive (others told they may resume)"))
+        .catch((e: unknown) => timerLog.add(`session deactivate FAILED: ${e instanceof Error ? e.message : String(e)}`));
     } catch {
       // ignore
     }

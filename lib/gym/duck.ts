@@ -29,7 +29,11 @@ export class DuckWindow {
   private closeTimer: ReturnType<typeof setTimeout> | null = null;
   private open = false;
 
-  constructor(private readonly session: DuckSession) {}
+  constructor(
+    private readonly session: DuckSession,
+    /** A line for the diagnostics log, if anyone is keeping one. */
+    private readonly log: (message: string) => void = () => {},
+  ) {}
 
   get isOpen(): boolean {
     return this.open;
@@ -39,7 +43,10 @@ export class DuckWindow {
   hold(holdMs: number = TICK_HOLD_MS): void {
     if (!this.open) {
       this.open = true;
+      this.log(`duck window open (hold ${holdMs} ms)`);
       this.session.setDucking(true);
+    } else {
+      this.log(`duck window held (${holdMs} ms)`);
     }
     if (this.closeTimer) clearTimeout(this.closeTimer);
     this.closeTimer = setTimeout(() => {
@@ -56,8 +63,10 @@ export class DuckWindow {
     }
     if (!this.open) return;
     this.open = false;
+    this.log("duck window close → base options, letting go of the session");
     this.session.setDucking(false);
     await this.session.release();
+    this.log("duck window released");
   }
 
   /**
@@ -72,6 +81,7 @@ export class DuckWindow {
     }
     if (!this.open) return;
     this.open = false;
+    this.log("duck window forgotten (the timer is letting go itself)");
     this.session.setDucking(false);
   }
 }

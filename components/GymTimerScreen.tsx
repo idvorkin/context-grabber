@@ -8,6 +8,9 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useKeepAwake } from "expo-keep-awake";
+import * as Clipboard from "expo-clipboard";
+import { getBuildInfo } from "../lib/version";
+import { timerLog } from "../lib/gym/timerLog";
 import { TimerFace, TurnedTimer, LED, ledColorFor } from "./TimerFace";
 import { ledPhaseWord } from "../lib/gym/sevenSegment";
 import { useDeviceTurn } from "../lib/gym/useDeviceTurn";
@@ -305,6 +308,14 @@ export default function GymTimerScreen({
   // their timers survive the turn.
   const turn = useDeviceTurn();
   const turned = turn !== "upright";
+  // Copy log: the audio session's and the duck window's doings, behind a build header.
+  const [logCopied, setLogCopied] = useState(false);
+  const copyLog = useCallback(async () => {
+    const b = getBuildInfo();
+    await Clipboard.setStringAsync(timerLog.render({ build: `${b.shortSha} (${b.branch})`, mode, preset: mode === "rounds" ? activePreset : undefined }));
+    setLogCopied(true);
+    setTimeout(() => setLogCopied(false), 1500);
+  }, [mode, activePreset]);
 
   return (
     <SafeAreaView style={styles.container} testID={turned ? "timer-screen-turned" : "timer-screen-upright"}>
@@ -314,7 +325,9 @@ export default function GymTimerScreen({
           <Text style={styles.exitText}>Done</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gym Timer</Text>
-        <View style={{ width: 50 }} />
+        <TouchableOpacity onPress={() => void copyLog()} style={styles.exitBtn} testID="timer-copy-log" accessibilityLabel="Copy timer log">
+          <Text style={styles.logText}>{logCopied ? "Copied" : "Log"}</Text>
+        </TouchableOpacity>
       </View>}
 
       {/* Presets (only in rounds mode) */}
@@ -374,6 +387,7 @@ const styles = StyleSheet.create({
   },
   exitBtn: { padding: 4 },
   exitText: { color: "#4361ee", fontSize: 16, fontWeight: "600" },
+  logText: { color: "#555", fontSize: 14, fontWeight: "600", minWidth: 50, textAlign: "right" },
   headerTitle: { color: "#e0e0e0", fontSize: 18, fontWeight: "700" },
   presetRow: {
     flexDirection: "row",
