@@ -71,4 +71,7 @@ beads_report_*.md
 
 # Beads / Dolt files (added by bd init)
 .beads/proxieddb/
-\n\n# `just deploy` records the commit the phone carries; `just ota` checks the native surface against it\n.native-build-sha\n
+
+
+# `just deploy` records the commit the phone carries; `just ota` checks the native surface against it
+.native-build-sha
