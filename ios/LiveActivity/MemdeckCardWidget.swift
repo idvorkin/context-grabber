@@ -6,6 +6,27 @@ import WidgetKit
 // screen's one tint). Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
 // The deal itself is PlayingCard.swift; nothing here chooses a card.
 
+// MARK: - A tap deals
+
+/// On iOS 17+ a tap on the card deals a new one in place (the intent); before
+/// that the widget's own link — open the app — is what a tap does.
+struct TapToDeal<Content: View>: View {
+  @ViewBuilder let content: () -> Content
+
+  var body: some View {
+    #if canImport(AppIntents)
+    if #available(iOS 17.0, *) {
+      Button(intent: DealCardIntent()) { content() }
+        .buttonStyle(.plain)
+    } else {
+      content()
+    }
+    #else
+    content()
+    #endif
+  }
+}
+
 // MARK: - The card on the big widget
 
 /// A small white playing card: rank and suit in the corner, the suit large in
@@ -51,8 +72,8 @@ struct MemdeckCardEntry: TimelineEntry {
   let date: Date
   let card: PlayingCard
 
-  static func at(_ moment: Date) -> MemdeckCardEntry {
-    MemdeckCardEntry(date: moment, card: CardDeal.card(at: moment))
+  static func at(_ moment: Date, nonce: Int) -> MemdeckCardEntry {
+    MemdeckCardEntry(date: moment, card: CardDeal.card(at: moment, nonce: nonce))
   }
 }
 
@@ -62,12 +83,14 @@ struct MemdeckCardProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (MemdeckCardEntry) -> Void) {
-    completion(.at(Date()))
+    completion(.at(Date(), nonce: DealStore.nonce()))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<MemdeckCardEntry>) -> Void) {
-    // A card per quarter hour for the next twelve hours; then ask again.
-    let entries = CardDeal.moments(from: Date(), count: 48).map(MemdeckCardEntry.at)
+    // A card per five minutes for the next twelve hours; then ask again. A tap
+    // reloads this, and the new tap count deals the rest of the run afresh.
+    let nonce = DealStore.nonce()
+    let entries = CardDeal.moments(from: Date(), count: 144).map { MemdeckCardEntry.at($0, nonce: nonce) }
     completion(Timeline(entries: entries, policy: .atEnd))
   }
 }
@@ -84,26 +107,30 @@ struct MemdeckCardView: View {
         // One line above the clock: "7♣ memdeck".
         Text("\(entry.card.label) memdeck")
       case .accessoryCircular:
-        ZStack {
-          AccessoryWidgetBackground()
-          Text(entry.card.label)
-            .font(.system(size: 20, weight: .heavy, design: .rounded))
-            .minimumScaleFactor(0.6)
-            .lineLimit(1)
-            .widgetAccentable()
+        TapToDeal {
+          ZStack {
+            AccessoryWidgetBackground()
+            Text(entry.card.label)
+              .font(.system(size: 20, weight: .heavy, design: .rounded))
+              .minimumScaleFactor(0.6)
+              .lineLimit(1)
+              .widgetAccentable()
+          }
         }
       default:
         // Rectangular: the card as big as the row allows, "memdeck" beside it.
         HStack(alignment: .center, spacing: 10) {
-          Text(entry.card.label)
-            .font(.system(size: 34, weight: .heavy, design: .rounded))
-            .minimumScaleFactor(0.7)
-            .lineLimit(1)
-            .widgetAccentable()
+          TapToDeal {
+            Text(entry.card.label)
+              .font(.system(size: 34, weight: .heavy, design: .rounded))
+              .minimumScaleFactor(0.7)
+              .lineLimit(1)
+              .widgetAccentable()
+          }
           VStack(alignment: .leading, spacing: 0) {
             Text("memdeck")
               .font(.system(size: 13, weight: .semibold))
-            Text("find it")
+            Text("tap: deal")
               .font(.system(size: 11))
               .opacity(0.7)
           }
@@ -137,7 +164,7 @@ struct MemdeckCardWidget: Widget {
       MemdeckCardView(entry: entry)
     }
     .configurationDisplayName("Memdeck card")
-    .description("A random card every quarter hour — find it in the stack.")
+    .description("A random card every five minutes, or tap for a new one — find it in the stack.")
     .supportedFamilies([.accessoryRectangular, .accessoryCircular, .accessoryInline])
   }
 }

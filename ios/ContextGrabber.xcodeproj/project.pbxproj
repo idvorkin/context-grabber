@@ -29,6 +29,7 @@
 		B4F7025DD9024FFBBAB96AA2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4DFC3AE9E2B74D568A4D3BDC /* Assets.xcassets */; };
 		B6FD345A08564D6685C41660 /* View+applyIfPresent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FD47BA835714582B01BCE8A /* View+applyIfPresent.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C0F43C33CEB697EFC1D03BCB /* DealCardIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 333765D40BAA757C471F1F0C /* DealCardIntent.swift */; };
 		D4060797DFE746B29012C884 /* LiveActivityWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76C5665F99DD40D8926454AF /* LiveActivityWidgetBundle.swift */; };
 		E3BA8072BB9B0CBEBEAA4A0C /* CounterIncrementIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2275BB3BE8143D0FCF632D56 /* CounterIncrementIntent.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -71,6 +72,7 @@
 		2275BB3BE8143D0FCF632D56 /* CounterIncrementIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterIncrementIntent.swift; sourceTree = "<group>"; };
 		276AFF31D71A0D929EA15ADB /* Pods-ContextGrabber.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ContextGrabber.release.xcconfig"; path = "Target Support Files/Pods-ContextGrabber/Pods-ContextGrabber.release.xcconfig"; sourceTree = "<group>"; };
 		300321A7EE624CD1B0B2F2AE /* Image+dynamic.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = "Image+dynamic.swift"; sourceTree = "<group>"; };
+		333765D40BAA757C471F1F0C /* DealCardIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DealCardIntent.swift; sourceTree = "<group>"; };
 		38E399933CA04FD2A21966C7 /* LiveActivityView.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = LiveActivityView.swift; sourceTree = "<group>"; };
 		45C777F6CDCB1C157B209AE8 /* MemdeckCardWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MemdeckCardWidget.swift; sourceTree = "<group>"; };
 		4DFC3AE9E2B74D568A4D3BDC /* Assets.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 				145792FCAED14F9E978E9D9F /* LiveActivity.entitlements */,
 				11076B6AA3BAB297C913EE67 /* PlayingCard.swift */,
 				45C777F6CDCB1C157B209AE8 /* MemdeckCardWidget.swift */,
+				333765D40BAA757C471F1F0C /* DealCardIntent.swift */,
 			);
 			path = LiveActivity;
 			sourceTree = "<group>";
@@ -480,6 +483,7 @@
 				8BE9431286B74189B5AD4F2F /* ViewHelpers.swift in Sources */,
 				4325CF626072FE8509B719BB /* PlayingCard.swift in Sources */,
 				B30A29B9DB64C54A71D7F091 /* MemdeckCardWidget.swift in Sources */,
+				C0F43C33CEB697EFC1D03BCB /* DealCardIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

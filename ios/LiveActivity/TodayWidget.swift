@@ -19,7 +19,7 @@ struct TodayEntry: TimelineEntry {
   let reflectOpp: Int
   let reflectDid: Int
   let reflectGrateful: Int
-  /// The memdeck prompt: the quarter hour's card, dealt from `date`.
+  /// The memdeck prompt: the moment's card, dealt from `date` and the tap count.
   /// Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
   let card: PlayingCard
 
@@ -28,18 +28,18 @@ struct TodayEntry: TimelineEntry {
       date: Date(), steps: nil, sleepHours: nil, exerciseMinutes: nil,
       grabbedAt: nil, counter: 0,
       reflectOpp: 0, reflectDid: 0, reflectGrateful: 0,
-      card: CardDeal.card(at: Date())
+      card: CardDeal.card(at: Date(), nonce: DealStore.nonce())
     )
   }
 
   /// The same snapshot at another moment — the numbers stay, the card is that
   /// moment's. What a timeline is made of.
-  func at(_ moment: Date) -> TodayEntry {
+  func at(_ moment: Date, nonce: Int) -> TodayEntry {
     TodayEntry(
       date: moment, steps: steps, sleepHours: sleepHours, exerciseMinutes: exerciseMinutes,
       grabbedAt: grabbedAt, counter: counter,
       reflectOpp: reflectOpp, reflectDid: reflectDid, reflectGrateful: reflectGrateful,
-      card: CardDeal.card(at: moment)
+      card: CardDeal.card(at: moment, nonce: nonce)
     )
   }
 
@@ -75,7 +75,7 @@ struct TodayEntry: TimelineEntry {
       reflectOpp: isReflectFresh ? opp : 0,
       reflectDid: isReflectFresh ? did : 0,
       reflectGrateful: isReflectFresh ? grateful : 0,
-      card: CardDeal.card(at: Date())
+      card: CardDeal.card(at: Date(), nonce: DealStore.nonce())
     )
   }
 
@@ -98,9 +98,11 @@ struct TodayProvider: TimelineProvider {
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
     let snapshot = TodayEntry.load()
-    // The numbers are the app's last snapshot; the card turns on the quarter
-    // hour on its own, so the timeline carries twelve hours of them.
-    let entries = CardDeal.moments(from: Date(), count: 48).map { snapshot.at($0) }
+    // The numbers are the app's last snapshot; the card turns every five
+    // minutes on its own, so the timeline carries twelve hours of them. A tap
+    // on the card reloads this with a new tap count.
+    let nonce = DealStore.nonce()
+    let entries = CardDeal.moments(from: Date(), count: 144).map { snapshot.at($0, nonce: nonce) }
     // Safety net: refresh every 30 min even without an explicit reload from the app.
     let next = Date().addingTimeInterval(30 * 60)
     completion(Timeline(entries: entries, policy: .after(next)))
@@ -334,7 +336,7 @@ struct TodayWidgetView: View {
               .font(.system(size: 14, weight: .medium))
           }
         }
-        PlayingCardView(card: entry.card)
+        TapToDeal { PlayingCardView(card: entry.card) }
       }
 
       Divider()
