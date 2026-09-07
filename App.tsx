@@ -695,7 +695,15 @@ export default function App() {
         const up = await uploadGist(token, renderDiagnosticsGist({ at: new Date(), why, text }));
         callLog.add(`uploaded → ${up.url}`);
         await Clipboard.setStringAsync(up.url).catch(() => {});
-        rememberUploads(await retireOldUploads(token, [up, ...gistRef.current.uploads]));
+        // The link shows at once; the oldest gists are retired behind it, and
+        // the pruned list lands unless Settings → Delete cleared it meanwhile.
+        const all = [up, ...gistRef.current.uploads];
+        rememberUploads(all);
+        void retireOldUploads(token, all)
+          .then((kept) => {
+            if (gistRef.current.uploads.some((u) => u.id === up.id)) rememberUploads(kept);
+          })
+          .catch(() => {});
         return up.url;
       } catch (e) {
         callLog.add(`upload FAILED: ${e instanceof Error ? e.message : String(e)}`);
