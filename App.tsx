@@ -68,6 +68,7 @@ import { configureCloudKit, cloudKitAccountStatus, pingCloudKit, syncJournal, sy
 import { getAllEntries, getAllAudio, countEntries, tallyByContextFromDb } from "./lib/journalDb";
 import { buildJournalExport } from "./lib/journalExport";
 import { AffirmationCard } from "./components/AffirmationCard";
+import { CardScreen } from "./screens/CardScreen";
 import { GratefulCard } from "./components/GratefulCard";
 import { JournalScreen } from "./components/JournalScreen";
 import { CopyableError } from "./components/CopyableError";
@@ -921,6 +922,13 @@ export default function App() {
         const via = route.via ?? callBackendRef.current;
         if (route.via) handleCallBackendChangeRef.current(route.via);
         void callSession.start(via, callVoiceRef.current);
+      } else if (route.kind === "card") {
+        // The lock-screen widgets' tap: the Card tab, which deals on arrival.
+        setGymTimerVisible(false);
+        setAffirmationVisible(false);
+        setGratefulVisible(false);
+        setJournalVisible(false);
+        setActiveTab("card");
       } else if (route.kind === "cockpit") {
         // Igor: "a shortcut that takes me to Cockpit, not just call."
         setGymTimerVisible(false);
@@ -2139,6 +2147,7 @@ export default function App() {
       {activeTab === "roles" && (
         <RolesScreen db={db} weeklyCache={weeklyCache} />
       )}
+      {activeTab === "card" && <CardScreen />}
       {activeTab === "call" && (
         <CallScreen
           session={callSession}

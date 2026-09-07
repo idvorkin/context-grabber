@@ -357,6 +357,23 @@ describe("Tab navigation", () => {
     expect(result.getByTestId("tab-cockpit").props.accessibilityState.selected).toBe(true);
   });
 
+  it("a grabber://card link lands on the Card tab", async () => {
+    const { Linking } = require("react-native");
+    (Linking.addEventListener as jest.Mock).mockClear();
+    const result = await renderApp();
+    expect(result.getByTestId("tab-card").props.accessibilityState.selected).toBe(false);
+    expect(result.queryByTestId("card-think")).toBeNull();
+    const urlCalls = (Linking.addEventListener as jest.Mock).mock.calls.filter((c: unknown[]) => c[0] === "url");
+    const onUrl = urlCalls[urlCalls.length - 1][1] as (ev: { url: string }) => void;
+    await act(async () => {
+      onUrl({ url: "grabber://card" });
+      await flushPromises();
+    });
+    expect(result.getByTestId("tab-card").props.accessibilityState.selected).toBe(true);
+    // Under jest there is no native bridge, so the tab shows its needs-a-newer-build note — still the tab.
+    expect(result.getByTestId("card-think")).toBeTruthy();
+  });
+
   it("the Cockpit page opening grabber://call lands on the native Call tab, page untouched", async () => {
     const result = await renderApp();
     await gotoTab(result, "cockpit");

@@ -1,5 +1,13 @@
 import { parseDeepLink } from "../lib/deepLink";
 
+describe("parseDeepLink — the memdeck card", () => {
+  it("grabber://card is the card screen; sub-paths and queries are ignored", () => {
+    expect(parseDeepLink("grabber://card")).toEqual({ kind: "card" });
+    expect(parseDeepLink("grabber://card/anything?x=1")).toEqual({ kind: "card" });
+    expect(parseDeepLink("com.idvorkin.contextgrabber://card")).toEqual({ kind: "card" });
+  });
+});
+
 describe("parseDeepLink — scheme handling", () => {
   it("parses both schemes identically for the same path", () => {
     const short = parseDeepLink("grabber://timer?preset=1min&autostart=1");
