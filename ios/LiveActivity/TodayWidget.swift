@@ -66,13 +66,14 @@ struct TodayEntry: TimelineEntry {
     let grateful = suite.object(forKey: "reflectGrateful") as? Int ?? 0
     let isReflectFresh = (reflectDate == today)
 
+    let now = Date()
     return TodayEntry(
-      date: Date(), steps: steps, sleepHours: sleep, exerciseMinutes: ex,
+      date: now, steps: steps, sleepHours: sleep, exerciseMinutes: ex,
       grabbedAt: grabbedAt, counter: counter,
       reflectOpp: isReflectFresh ? opp : 0,
       reflectDid: isReflectFresh ? did : 0,
       reflectGrateful: isReflectFresh ? grateful : 0,
-      card: CardDeal.card(at: Date(), nonce: DealStore.nonce(in: suite))
+      card: CardDeal.card(at: now, nonce: DealStore.nonce(in: suite))
     )
   }
 

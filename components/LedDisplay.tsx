@@ -137,7 +137,8 @@ function Glyph({ ch, geometry, ink }: { ch: string; geometry: Geometry; ink: Ink
 }
 
 function Separator({ kind, geometry, ink }: { kind: "colon" | "dot"; geometry: Geometry; ink: Ink }) {
-  const dot = { width: geometry.bar, height: geometry.bar, borderRadius: geometry.bar / 2 };
+  // Absolutely placed, so centred by hand: alignItems does not reach them.
+  const dot = { width: geometry.bar, height: geometry.bar, borderRadius: geometry.bar / 2, left: (geometry.sepWidth - geometry.bar) / 2 };
   return (
     <View style={{ width: geometry.sepWidth, height: geometry.height, alignItems: "center" }} testID={`led-${kind}`}>
       {kind === "colon" ? (

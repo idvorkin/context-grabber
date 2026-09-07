@@ -544,6 +544,8 @@ export default function App() {
   const [journalVisible, setJournalVisible] = useState(false);
   const [reflectTally, setReflectTally] = useState({ opportunity: 0, didit: 0, grateful: 0 });
   const [activeTab, setActiveTab] = useState<TabId>("today");
+  // The Card tab deals on mount; a link to it while it is already up remounts it.
+  const [cardArrival, setCardArrival] = useState(0);
   // The native Larry call. One per app, outliving the Call tab's screen so a
   // call keeps going while another tab is showing — or the phone is locked.
   // Spec: docs/superpowers/specs/2026-08-28-native-call-screen-design.md.
@@ -929,8 +931,10 @@ export default function App() {
         if (route.via) handleCallBackendChangeRef.current(route.via);
         void callSession.start(via, callVoiceRef.current);
       } else if (route.kind === "card") {
-        // The lock-screen widgets' tap: the Card tab, which deals on arrival.
+        // The lock-screen widgets' tap: the Card tab, which deals on arrival —
+        // also when the tab was already up (the phone locked on it).
         goToTab("card");
+        setCardArrival((n) => n + 1);
       } else if (route.kind === "cockpit") {
         // Igor: "a shortcut that takes me to Cockpit, not just call."
         goToTab("cockpit");
@@ -2144,7 +2148,7 @@ export default function App() {
       {activeTab === "roles" && (
         <RolesScreen db={db} weeklyCache={weeklyCache} />
       )}
-      {activeTab === "card" && <CardScreen />}
+      {activeTab === "card" && <CardScreen key={cardArrival} />}
       {activeTab === "call" && (
         <CallScreen
           session={callSession}

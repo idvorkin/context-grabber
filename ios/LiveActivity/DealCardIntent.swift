@@ -7,9 +7,8 @@ import WidgetKit
 /// The tap on the big widget's memdeck card: deal a different card, on every
 /// surface, without launching the app. Bumps the shared tap count until the
 /// card in hand changes (`CardDeal.nonceAfterTap`), then asks WidgetKit to
-/// redraw the lock-screen widget — the tapped Today widget WidgetKit reloads
-/// itself once this returns, and asking for it too put a second timeline fetch
-/// on the tap's critical path.
+/// redraw every card-carrying widget — the Today widget on both home pages,
+/// not only the instance that was tapped, and the lock screen.
 /// Spec: docs/superpowers/specs/2026-09-07-widget-random-card-design.md
 ///
 /// iOS 17+ only — before that the card is not tappable in place and the
@@ -23,6 +22,7 @@ struct DealCardIntent: AppIntent {
 
   func perform() async throws -> some IntentResult {
     DealStore.set(CardDeal.nonceAfterTap(at: Date(), nonce: DealStore.nonce()))
+    WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.today)
     WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.memdeckCard)
     return .result()
   }
