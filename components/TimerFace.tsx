@@ -37,6 +37,8 @@ export function ledColorFor(phase: Phase): string {
 type FaceProps = {
   /** The seven-segment phase word (GO, rESt, …); nothing for none. */
   word?: string;
+  /** Stopped mid-way: PAUSEd in amber, taller than a phase word, in place of `word`. */
+  paused?: boolean;
   time: string;
   /** Smaller digits after the time — the stopwatch's hundredths. */
   fraction?: string;
@@ -52,14 +54,22 @@ type FaceProps = {
 /** The timer's own side padding: what a face fills when no width is given. */
 const FACE_INSET = 48;
 
-export function TimerFace({ word, time, fraction, color, sub, width, maxHeight, testID }: FaceProps) {
+/** What the display says when stopped mid-way — spelled the way seven segments can. */
+export const PAUSED_WORD = "PAUSEd";
+
+export function TimerFace({ word, paused, time, fraction, color, sub, width, maxHeight, testID }: FaceProps) {
   const window = useWindowDimensions();
   // The fraction rides at half height; sizing the pair as if full-size keeps it inside the width.
   const mainH = ledHeightToFit(time + (fraction ?? ""), width ?? window.width - FACE_INSET, maxHeight);
-  const wordH = Math.round(mainH * 0.32);
+  // The paused word is half again as tall as a phase word: it has to read from across the room.
+  const wordH = Math.round(mainH * (paused ? 0.48 : 0.32));
   return (
     <View style={styles.face} testID={testID}>
-      {word ? <LedDisplay text={word} color={LED.green} height={wordH} style={styles.word} testID="timer-word" /> : null}
+      {paused ? (
+        <LedDisplay text={PAUSED_WORD} color={LED.amber} height={wordH} style={styles.word} testID="timer-paused" />
+      ) : word ? (
+        <LedDisplay text={word} color={LED.green} height={wordH} style={styles.word} testID="timer-word" />
+      ) : null}
       <View style={styles.timeRow}>
         <LedDisplay text={time} color={color} height={mainH} testID="timer-time" />
         {fraction ? (
@@ -75,7 +85,7 @@ type TurnedProps = Omit<FaceProps, "width" | "maxHeight" | "testID"> & {
   turn: Turn;
   /** The one control while turned: a tap anywhere. */
   onTap: () => void;
-  /** "tap to start" / "tap to stop" / "tap to count". */
+  /** "tap to start" / "tap to stop" / "tap to resume" / "tap to count". */
   hint: string;
 };
 

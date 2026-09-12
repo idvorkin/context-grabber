@@ -6,6 +6,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Modal,
+  ScrollView,
 } from "react-native";
 import type { SQLiteDatabase } from "expo-sqlite";
 import { useKeepAwake } from "expo-keep-awake";
@@ -33,7 +34,14 @@ import { useStopwatch, formatStopwatchTime } from "../lib/gym/useStopwatch";
 import { useSets } from "../lib/gym/useSets";
 import { useLiveActivity } from "../lib/gym/useLiveActivity";
 import { configureAudioSessionForBackground } from "../lib/gym/keepalive";
-import { ACCESSORY_ITEMS, logAccessoryItems } from "../lib/gym/accessoryLog";
+import {
+  ACCESSORY_ITEMS,
+  ACCESSORY_LOG_WINDOW_DAYS,
+  getAccessoryLog,
+  groupAccessoryLog,
+  logAccessoryItems,
+  type AccessoryLogDay,
+} from "../lib/gym/accessoryLog";
 import { CopyableError } from "./CopyableError";
 
 // --- Types ---
@@ -68,6 +76,11 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/** The one line at the edge of a turned timer. */
+function tapHint(running: boolean, paused: boolean): string {
+  return running ? "tap to stop" : paused ? "tap to resume" : "tap to start";
 }
 
 function phaseLabel(phase: Phase): string {
@@ -139,12 +152,13 @@ function RoundsMode({ profile, onReset, autostart, turn, custom }: { profile: Ti
 
   const face = {
     word: ledPhaseWord(state.phase),
+    paused: state.isPaused,
     time: state.phase === "idle" ? formatTime(profile.workTime) : formatTime(state.timeLeft),
     color: ledColorFor(state.phase),
     sub: `Round ${state.currentRound} of ${state.totalRounds}`,
   };
   if (turn !== "upright") {
-    return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={state.isRunning ? "tap to stop" : "tap to start"} />;
+    return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={tapHint(state.isRunning, state.isPaused)} />;
   }
   // The Custom preset's controls: live while idle, dim and inert once running or paused.
   const locked = state.isRunning || state.isPaused;
@@ -178,9 +192,10 @@ function RoundsMode({ profile, onReset, autostart, turn, custom }: { profile: Ti
 function StopwatchMode({ turn }: { turn: Turn }) {
   const { state, toggle, reset, lap } = useStopwatch();
   const time = formatStopwatchTime(state.elapsedMs);
-  const face = { time: time.main, fraction: time.fraction, color: state.isRunning ? LED.red : LED.white };
+  const paused = !state.isRunning && state.elapsedMs > 0;
+  const face = { time: time.main, fraction: time.fraction, color: state.isRunning ? LED.red : LED.white, paused };
   if (turn !== "upright") {
-    return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={state.isRunning ? "tap to stop" : "tap to start"} />;
+    return <TurnedTimer {...face} turn={turn} onTap={toggle} hint={tapHint(state.isRunning, paused)} />;
   }
 
   return (
@@ -314,15 +329,31 @@ function AccessoryLogSheet({
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The recent log, grouped for reading; null until it has loaded (or with no db).
+  const [history, setHistory] = useState<AccessoryLogDay[] | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
-  // Reset the checklist whenever the sheet (re)opens.
+  // Reset the checklist and reload the recent log whenever the sheet (re)opens.
   useEffect(() => {
-    if (visible) {
-      setChecked({});
-      setError(null);
-      setSaving(false);
-    }
-  }, [visible]);
+    if (!visible) return;
+    setChecked({});
+    setError(null);
+    setSaving(false);
+    setHistory(null);
+    setHistoryError(null);
+    if (!db) return;
+    let cancelled = false;
+    const since = Date.now() - ACCESSORY_LOG_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+    getAccessoryLog(db, since).then(
+      (entries) => { if (!cancelled) setHistory(groupAccessoryLog(entries)); },
+      (e: any) => {
+        if (cancelled) return;
+        setHistory([]);
+        setHistoryError(e?.message ?? "Failed to read accessory log");
+      },
+    );
+    return () => { cancelled = true; };
+  }, [visible, db]);
 
   const toggle = useCallback((id: string) => {
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -383,6 +414,31 @@ function AccessoryLogSheet({
               </TouchableOpacity>
             );
           })}
+          {history && (
+            <View style={styles.historySection} testID="accessory-history">
+              <Text style={styles.historyTitle}>LAST {ACCESSORY_LOG_WINDOW_DAYS} DAYS</Text>
+              {historyError && (
+                <CopyableError message={historyError} context="GymTimerScreen.accessoryHistory" />
+              )}
+              {!historyError && history.length === 0 && (
+                <Text style={styles.historyEmpty}>Nothing logged in the last {ACCESSORY_LOG_WINDOW_DAYS} days</Text>
+              )}
+              {history.length > 0 && (
+                <ScrollView style={styles.historyList}>
+                  {history.map((day) => (
+                    <View key={day.dateKey} style={styles.historyDay}>
+                      <Text style={styles.historyDayLabel}>{day.label}</Text>
+                      {day.sessions.map((session) => (
+                        <Text key={session.loggedAt} style={styles.historyLine}>
+                          {session.time} · {session.items.join(", ")}
+                        </Text>
+                      ))}
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          )}
           {error && (
             <CopyableError
               message={error}
@@ -746,6 +802,18 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "500",
   },
+  historySection: {
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#2a3a6e",
+  },
+  historyTitle: { color: "#888", fontSize: 12, fontWeight: "700", letterSpacing: 1.5, marginBottom: 8 },
+  historyEmpty: { color: "#666", fontSize: 14 },
+  historyList: { maxHeight: 180 },
+  historyDay: { marginBottom: 10 },
+  historyDayLabel: { color: "#e0e0e0", fontSize: 14, fontWeight: "700", marginBottom: 4 },
+  historyLine: { color: "#bbb", fontSize: 14, lineHeight: 20 },
   logActions: {
     flexDirection: "row",
     justifyContent: "flex-end",

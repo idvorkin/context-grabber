@@ -11,9 +11,12 @@
 import {
   ACCESSORY_ITEMS,
   accessoryDateKey,
+  accessoryDayLabel,
+  groupAccessoryLog,
   initAccessoryLogTable,
   logAccessoryItems,
   getAccessoryLog,
+  type AccessoryLogEntry,
 } from "../lib/gym/accessoryLog";
 
 type Row = {
@@ -170,5 +173,69 @@ describe("logAccessoryItems + getAccessoryLog round-trip", () => {
 
     const entries = await getAccessoryLog(db as any);
     expect(entries.map((e) => e.loggedAt)).toEqual([t2, t1]);
+  });
+});
+
+describe("accessoryDayLabel", () => {
+  const now = new Date(2026, 8, 12, 15, 0); // Sat Sep 12
+  it("today and yesterday by name", () => {
+    expect(accessoryDayLabel("2026-09-12", now)).toBe("Today");
+    expect(accessoryDayLabel("2026-09-11", now)).toBe("Yesterday");
+  });
+  it("older days carry the weekday and date", () => {
+    expect(accessoryDayLabel("2026-09-08", now)).toBe("Tue Sep 8");
+    expect(accessoryDayLabel("2026-08-31", now)).toBe("Mon Aug 31");
+  });
+  it("yesterday across a month boundary", () => {
+    expect(accessoryDayLabel("2026-08-31", new Date(2026, 8, 1, 9, 0))).toBe("Yesterday");
+  });
+});
+
+describe("groupAccessoryLog", () => {
+  const now = new Date(2026, 8, 12, 18, 0);
+  const at = (y: number, m: number, d: number, h: number, min: number) => new Date(y, m - 1, d, h, min).getTime();
+  const entry = (id: number, itemName: string, loggedAt: number): AccessoryLogEntry => ({
+    id,
+    itemId: itemName.toLowerCase().replace(/ /g, "_"),
+    itemName,
+    loggedAt,
+    dateKey: accessoryDateKey(new Date(loggedAt)),
+  });
+
+  it("empty in, empty out", () => {
+    expect(groupAccessoryLog([], now)).toEqual([]);
+  });
+
+  it("one save with two items is one line under Today, items in checklist order", () => {
+    const t = at(2026, 9, 12, 15, 12);
+    const days = groupAccessoryLog([entry(1, "Half Lotus", t), entry(2, "Dead Hangs", t)], now);
+    expect(days).toEqual([
+      { dateKey: "2026-09-12", label: "Today", sessions: [{ loggedAt: t, time: "3:12pm", items: ["Half Lotus", "Dead Hangs"] }] },
+    ]);
+  });
+
+  it("days newest first, saves within a day newest first, regardless of input order", () => {
+    const morning = at(2026, 9, 12, 7, 30);
+    const evening = at(2026, 9, 12, 17, 0);
+    const yesterday = at(2026, 9, 11, 8, 0);
+    const lastWeek = at(2026, 9, 8, 12, 0);
+    const days = groupAccessoryLog(
+      [entry(1, "Pigeon Stretch", lastWeek), entry(2, "Half Lotus", morning), entry(3, "McGill Big 3", yesterday), entry(4, "Dead Hangs", evening)],
+      now,
+    );
+    expect(days.map((d) => d.label)).toEqual(["Today", "Yesterday", "Tue Sep 8"]);
+    expect(days[0].sessions.map((s) => s.time)).toEqual(["5pm", "7:30am"]);
+    expect(days[0].sessions[0].items).toEqual(["Dead Hangs"]);
+    expect(days[1].sessions[0].items).toEqual(["McGill Big 3"]);
+    expect(days[2].sessions[0].items).toEqual(["Pigeon Stretch"]);
+  });
+
+  it("round-trips through the store: what was saved is what is grouped", async () => {
+    const { db } = makeStatefulDb();
+    const t = at(2026, 9, 12, 15, 12);
+    await logAccessoryItems(db as any, ["half_lotus", "dead_hangs"], t);
+    const days = groupAccessoryLog(await getAccessoryLog(db as any), now);
+    expect(days).toHaveLength(1);
+    expect(days[0].sessions[0].items).toEqual(["Half Lotus", "Dead Hangs"]);
   });
 });

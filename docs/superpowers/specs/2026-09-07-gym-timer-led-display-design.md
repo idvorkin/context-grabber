@@ -65,6 +65,16 @@ line in ordinary type at the edge says *tap to start* / *tap to stop* /
 returns, with its buttons, exactly where it was — the timer never noticed.
 Laying the phone flat leaves the display as it was last turned.
 
+**Paused.** Stop a running timer — STOP in portrait, a tap while turned —
+and the display says so, big: the green phase word above the time gives
+way to *PAUSEd* in amber LED letters, half again as tall as the phase
+words, with the time frozen in its phase colour under it and the round
+line still there. Resume and the phase word is back. Turned, the line at
+the edge reads *tap to resume* rather than *tap to start*. The stopwatch
+does the same when stopped with time on it: *PAUSEd* over the white
+digits; reset to zero and it is gone. Before the first start there is no
+paused word — an idle timer is idle, not paused.
+
 **What does not turn.** The phone's own window stays portrait the whole
 time: the status bar, the notch, and every other screen of the app are
 exactly as before. Only the timer's display turns, drawn sideways inside
@@ -100,6 +110,11 @@ LAP, +1 / UNDO, the mode bar, *Done* — is unchanged.
    minutes and seconds are readable and the phase colour is obvious.
 9. **Nothing regresses.** Presets, autostart from the widget tiles and deep
    links, background timing, beeps, laps, sets, *Done*.
+10. **Paused, read across the room.** Start a round, press STOP: an amber
+    *PAUSEd* in LED letters stands above the frozen red time, taller than
+    *GO* was; RESUME and *GO* is back. Turned, the same, and the edge line
+    says *tap to resume*. Stopwatch: START, STOP: *PAUSEd* over the white
+    digits; RESET: gone. An idle timer shows no paused word.
 
 ## Decisions
 
@@ -118,6 +133,14 @@ LAP, +1 / UNDO, the mode bar, *Done* — is unchanged.
 - **D4 — Black.** The timer screen goes from navy to black; LEDs want black
   behind them. The chrome (header, mode bar, buttons) keeps its colours.
   *Proposed.*
+
+- **D5 — Paused is a word on the face, not a button state.** The RESUME
+  button and the Live Activity's *PAUSED* were the only signs, and neither
+  reads from across a room or exists while turned (Igor, 2026-09-12: *"when
+  I'm paused give me a larger paused thing"*). The phase-word slot is
+  already the display's voice; *PAUSEd* in amber — the getting-ready
+  colour, the one that means *not going yet* — and taller than the phase
+  words makes the state obvious at a glance without a second layout.
 
 ## Rationale and risks
 

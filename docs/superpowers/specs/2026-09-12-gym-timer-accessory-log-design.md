@@ -34,7 +34,8 @@ to look back on.
 - Any change to the main timer behavior (rounds / stopwatch / sets), the Live
   Activity / Dynamic Island lifecycle, keep-awake, deep links, or presets.
 - Cross-device sync of the accessory log (local-only for now).
-- A separate "PAUSED" landscape indicator on this screen (tracked separately).
+- The timer's paused indicator — that is the LED display spec's
+  (`2026-09-07-gym-timer-led-display-design.md`, *Paused*).
 
 ## Behavior
 
@@ -56,9 +57,20 @@ items currently checked, stamped with the moment of saving, and dismisses the
 sheet. A **Cancel** action dismisses without recording anything. Saving with
 nothing checked records nothing and simply closes.
 
-The recorded entries persist locally and survive app restarts. Nothing about
-the record is shown back to the user in-app beyond a brief confirmation on save
-(the log's audience is the coaching export, not an in-app history screen).
+The recorded entries persist locally and survive app restarts. Saving shows a
+brief confirmation on the button.
+
+**Seeing what was logged.** Under the checklist, the same sheet lists the
+recent log — the same seven-day window the coaching export carries, so what
+the user sees is what the coach sees. Entries are grouped by day, newest day
+first, headed *Today*, *Yesterday*, or the weekday and date (*Tue Sep 8*);
+under each day, one line per save, with the wall-clock time and the items
+saved together on it (*3:12pm · Half Lotus, Dead Hangs*). Nothing logged in
+the window reads *Nothing logged in the last 7 days*. The list is read-only —
+there is no editing or deleting from it (a non-goal above). It is fresh on
+every open, so a save shows up the next time the sheet opens. If the log
+cannot be read, the sheet still offers the checklist and shows the failure
+through the copyable error affordance.
 
 When the user runs "Grab Context" and shares the summary, the summary payload
 includes the accessory work logged in the recent (7-day) window. Each entry
@@ -87,6 +99,15 @@ payload.
 - Existing timer behavior (rounds / stopwatch / sets), Live Activity, keep-awake,
   deep links, and presets are unchanged.
 - A save failure is rendered via the copyable-error affordance.
+- With nothing logged in the last 7 days, the sheet says so under the
+  checklist.
+- After saving Half Lotus and Dead Hangs and reopening the sheet, a *Today*
+  group lists one line with the save's wall-clock time and both names; an
+  entry from eight days ago is not listed.
+- Two saves on the same day are two lines under one day heading, newest
+  first; yesterday's save is under *Yesterday*; older days carry their
+  weekday and date.
+- A read failure leaves the checklist usable and shows a copyable error.
 
 ## Rationale
 
