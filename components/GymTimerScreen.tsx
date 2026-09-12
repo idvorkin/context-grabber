@@ -5,13 +5,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Modal,
 } from "react-native";
+import type { SQLiteDatabase } from "expo-sqlite";
 import { useKeepAwake } from "expo-keep-awake";
 import { useTimer, type TimerProfile, type Phase } from "../lib/gym/useTimer";
 import { useStopwatch, formatStopwatchTime } from "../lib/gym/useStopwatch";
 import { useSets } from "../lib/gym/useSets";
 import { useLiveActivity } from "../lib/gym/useLiveActivity";
 import { configureAudioSessionForBackground } from "../lib/gym/keepalive";
+import { ACCESSORY_ITEMS, logAccessoryItems } from "../lib/gym/accessoryLog";
+import { CopyableError } from "./CopyableError";
 
 // --- Types ---
 
@@ -23,6 +27,8 @@ type GymTimerScreenProps = {
   initialPreset?: string;
   autostart?: boolean;
   onIntentConsumed?: () => void;
+  /** SQLite handle for persisting the accessory-work log. */
+  db?: SQLiteDatabase | null;
 };
 
 // --- Presets ---
@@ -258,6 +264,127 @@ function SetsMode() {
   );
 }
 
+// --- Accessory log sheet ---
+
+/**
+ * Post-workout checklist for accessory / mobility work. Tap items to toggle,
+ * Save records only the checked ones (each stamped with the save time), Cancel
+ * dismisses without recording. Starts empty each time it opens.
+ */
+function AccessoryLogSheet({
+  visible,
+  db,
+  onClose,
+  onSaved,
+}: {
+  visible: boolean;
+  db?: SQLiteDatabase | null;
+  onClose: () => void;
+  onSaved: (count: number) => void;
+}) {
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset the checklist whenever the sheet (re)opens.
+  useEffect(() => {
+    if (visible) {
+      setChecked({});
+      setError(null);
+      setSaving(false);
+    }
+  }, [visible]);
+
+  const toggle = useCallback((id: string) => {
+    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
+
+  const save = useCallback(async () => {
+    const ids = ACCESSORY_ITEMS.filter((it) => checked[it.id]).map((it) => it.id);
+    setError(null);
+    if (ids.length === 0) {
+      // Nothing checked — just close, record nothing.
+      onClose();
+      return;
+    }
+    if (!db) {
+      setError("No database available to save the accessory log.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await logAccessoryItems(db, ids);
+      onSaved(ids.length);
+      onClose();
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to save accessory log");
+    } finally {
+      setSaving(false);
+    }
+  }, [checked, db, onClose, onSaved]);
+
+  const checkedList = ACCESSORY_ITEMS.filter((it) => checked[it.id])
+    .map((it) => it.id)
+    .join(",");
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.logOverlay}>
+        <View style={styles.logSheet}>
+          <Text style={styles.logTitle}>Log Accessory Work</Text>
+          {ACCESSORY_ITEMS.map((it) => {
+            const on = !!checked[it.id];
+            return (
+              <TouchableOpacity
+                key={it.id}
+                style={styles.logRow}
+                onPress={() => toggle(it.id)}
+                activeOpacity={0.7}
+                testID={`accessory-item-${it.id}`}
+              >
+                <View style={[styles.checkbox, on && styles.checkboxOn]}>
+                  {on && <Text style={styles.checkboxMark}>✓</Text>}
+                </View>
+                <Text style={styles.logItemLabel}>{it.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+          {error && (
+            <CopyableError
+              message={error}
+              context="GymTimerScreen.accessoryLog"
+              extra={{ checked: checkedList }}
+            />
+          )}
+          <View style={styles.logActions}>
+            <TouchableOpacity
+              style={styles.logCancelBtn}
+              onPress={onClose}
+              disabled={saving}
+              testID="accessory-cancel"
+            >
+              <Text style={styles.logCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.logSaveBtn, saving && styles.disabledBtn]}
+              onPress={save}
+              disabled={saving}
+              testID="accessory-save"
+            >
+              <Text style={styles.logSaveText}>{saving ? "Saving..." : "Save"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 // --- Main Screen ---
 
 export default function GymTimerScreen({
@@ -266,6 +393,7 @@ export default function GymTimerScreen({
   initialPreset,
   autostart,
   onIntentConsumed,
+  db,
 }: GymTimerScreenProps) {
   useKeepAwake();
   // Configure the iOS audio session for `playback` BEFORE any audio plays so
@@ -278,6 +406,24 @@ export default function GymTimerScreen({
   const initialPresetIsValid = initialPreset != null && PRESETS.some(p => p.id === initialPreset);
   const [activePreset, setActivePreset] = useState(
     initialPresetIsValid ? initialPreset! : "30sec",
+  );
+
+  // Accessory-work log: persistent button + checklist sheet, available in
+  // every mode. `logConfirm` briefly flashes a confirmation after a save.
+  const [logVisible, setLogVisible] = useState(false);
+  const [logConfirm, setLogConfirm] = useState(false);
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleAccessorySaved = useCallback((count: number) => {
+    if (count <= 0) return;
+    setLogConfirm(true);
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    confirmTimerRef.current = setTimeout(() => setLogConfirm(false), 1800);
+  }, []);
+  useEffect(
+    () => () => {
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    },
+    [],
   );
 
   // Consume the intent once so re-opens from deep links don't replay stale state.
@@ -324,6 +470,26 @@ export default function GymTimerScreen({
         {mode === "stopwatch" && <StopwatchMode />}
         {mode === "sets" && <SetsMode />}
       </View>
+
+      {/* Accessory-work log — persistent, available in every mode */}
+      <View style={styles.logBar}>
+        <TouchableOpacity
+          style={[styles.logAccessoryBtn, logConfirm && styles.logAccessoryBtnDone]}
+          onPress={() => setLogVisible(true)}
+          testID="open-accessory-log"
+        >
+          <Text style={styles.logAccessoryText}>
+            {logConfirm ? "Logged ✓" : "＋ Log Accessory Work"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <AccessoryLogSheet
+        visible={logVisible}
+        db={db}
+        onClose={() => setLogVisible(false)}
+        onSaved={handleAccessorySaved}
+      />
 
       {/* Bottom nav */}
       <View style={styles.bottomNav}>
@@ -444,6 +610,105 @@ const styles = StyleSheet.create({
     top: "45%",
     left: "-10%",
     transform: [{ rotate: "-30deg" }],
+  },
+  logBar: {
+    paddingHorizontal: 24,
+    paddingBottom: 4,
+    alignItems: "center",
+  },
+  logAccessoryBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: "#16213e",
+    borderWidth: 1,
+    borderColor: "#4361ee",
+  },
+  logAccessoryBtnDone: {
+    backgroundColor: "#06d6a0",
+    borderColor: "#06d6a0",
+  },
+  logAccessoryText: {
+    color: "#e0e0e0",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  logOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+  },
+  logSheet: {
+    backgroundColor: "#16213e",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 36,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  logTitle: {
+    color: "#e0e0e0",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  logRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1a1a2e",
+  },
+  checkbox: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#4361ee",
+    marginRight: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxOn: {
+    backgroundColor: "#4361ee",
+  },
+  checkboxMark: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  logItemLabel: {
+    color: "#e0e0e0",
+    fontSize: 17,
+    fontWeight: "500",
+  },
+  logActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+    marginTop: 24,
+  },
+  logCancelBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: "#1a1a2e",
+  },
+  logCancelText: {
+    color: "#888",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  logSaveBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: "#4361ee",
+  },
+  logSaveText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
   },
   bottomNav: {
     flexDirection: "row",

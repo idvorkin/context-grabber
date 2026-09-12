@@ -1,6 +1,7 @@
-import { dayOfWeek, buildDailyExport, buildSummaryExport, buildTodayHeadline, buildWeeklyStats, buildRolesExportBlock, type WeeklyDataMap } from "../lib/share";
+import { dayOfWeek, buildDailyExport, buildSummaryExport, buildTodayHeadline, buildWeeklyStats, buildRolesExportBlock, buildAccessoryLogExport, type WeeklyDataMap } from "../lib/share";
 import type { HealthData } from "../lib/health";
 import type { HeartRateDaily } from "../lib/weekly";
+import type { AccessoryLogEntry } from "../lib/gym/accessoryLog";
 
 const EMPTY_HEALTH: HealthData = {
   steps: null,
@@ -274,6 +275,25 @@ describe("buildSummaryExport", () => {
     expect(result.days).toHaveLength(7);
   });
 
+  it("accessory section is null when caller passes none", () => {
+    const result = buildSummaryExport(makeData(), EMPTY_HEALTH, null);
+    expect(result).toHaveProperty("accessory");
+    expect(result.accessory).toBeNull();
+  });
+
+  it("carries the accessory log when caller provides it", () => {
+    const accessory = buildAccessoryLogExport([
+      { id: 1, itemId: "half_lotus", itemName: "Half Lotus", loggedAt: Date.UTC(2026, 2, 15, 17, 5, 0), dateKey: "2026-03-15" },
+    ]);
+    const result = buildSummaryExport(makeData(), EMPTY_HEALTH, null, null, accessory);
+    expect(result.accessory).toHaveLength(1);
+    expect(result.accessory?.[0]).toEqual({
+      name: "Half Lotus",
+      timestamp: "2026-03-15T17:05:00.000Z",
+      date: "2026-03-15",
+    });
+  });
+
   it("today headline uses the last date in the 7-day window", () => {
     const result = buildSummaryExport(makeData(), EMPTY_HEALTH, null);
     expect(result.today.date).toBe("2026-03-15");
@@ -332,6 +352,32 @@ describe("buildSummaryExport", () => {
     // formatTime uses UTC — 06:00 → "6am", 14:30 → "2:30pm"
     expect(today.bedtime).toBe("6am");
     expect(today.wakeTime).toBe("2:30pm");
+  });
+});
+
+describe("buildAccessoryLogExport", () => {
+  const entries: AccessoryLogEntry[] = [
+    { id: 2, itemId: "dead_hangs", itemName: "Dead Hangs", loggedAt: Date.UTC(2026, 2, 15, 18, 0, 0), dateKey: "2026-03-15" },
+    { id: 1, itemId: "half_lotus", itemName: "Half Lotus", loggedAt: Date.UTC(2026, 2, 15, 17, 5, 0), dateKey: "2026-03-15" },
+  ];
+
+  it("maps each entry to name + ISO timestamp + session date", () => {
+    const out = buildAccessoryLogExport(entries);
+    expect(out).toEqual([
+      { name: "Dead Hangs", timestamp: "2026-03-15T18:00:00.000Z", date: "2026-03-15" },
+      { name: "Half Lotus", timestamp: "2026-03-15T17:05:00.000Z", date: "2026-03-15" },
+    ]);
+  });
+
+  it("emits ISO-8601 UTC timestamps from unix-ms input", () => {
+    const out = buildAccessoryLogExport(entries);
+    for (const e of out) {
+      expect(e.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    }
+  });
+
+  it("returns an empty array for no entries", () => {
+    expect(buildAccessoryLogExport([])).toEqual([]);
   });
 });
 

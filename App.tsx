@@ -56,7 +56,8 @@ import {
   formatDateKey,
   daysSinceLastDailyValue,
 } from "./lib/weekly";
-import { buildSummaryExport, buildRolesExportBlock, type WeeklyDataMap, type LocationSummary, type PlacesSummary, type RolesExportBlock } from "./lib/share";
+import { buildSummaryExport, buildRolesExportBlock, buildAccessoryLogExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary, type RolesExportBlock, type AccessoryLogExportEntry } from "./lib/share";
+import { getAccessoryLog } from "./lib/gym/accessoryLog";
 import { ROLES, computeWeekActivity } from "./lib/roles";
 import { getMomentsInRange } from "./lib/roleMoments";
 import { getCurrentWeekIntentions } from "./lib/intentions";
@@ -1605,8 +1606,21 @@ export default function App() {
       } catch {
         // Roles block is optional — fall through with null
       }
+      // Accessory / mobility work logged from the gym timer — best-effort,
+      // last 7 days to match the summary window. Never blocks the share.
+      let accessoryBlock: AccessoryLogExportEntry[] | null = null;
+      try {
+        if (db) {
+          const sevenDaysAgo = Date.now() - 7 * 24 * 3600 * 1000;
+          accessoryBlock = buildAccessoryLogExport(
+            await getAccessoryLog(db, sevenDaysAgo),
+          );
+        }
+      } catch {
+        // Accessory block is optional — fall through with null
+      }
       setShareStatus("Sharing...");
-      const summaryExport = buildSummaryExport(weeklyData, snapshot.health, places, rolesBlock);
+      const summaryExport = buildSummaryExport(weeklyData, snapshot.health, places, rolesBlock, accessoryBlock);
       // Compact JSON — pretty-print is a debugger affordance, not a delivery format.
       const json = JSON.stringify(summaryExport);
       await Share.share({
@@ -1774,6 +1788,7 @@ export default function App() {
   if (gymTimerVisible) {
     return (
       <GymTimerScreen
+        db={db}
         onExit={() => {
           setGymTimerVisible(false);
           setTimerIntent(null);

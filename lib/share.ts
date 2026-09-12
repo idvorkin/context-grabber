@@ -8,6 +8,7 @@ import type { PlaceCluster, PlaceVisit } from "./clustering";
 import type { HealthData, WorkoutEntry } from "./health";
 import { computeBoxPlotStats, extractValues, type BoxPlotStats } from "./stats";
 import { formatTime } from "./summary";
+import type { AccessoryLogEntry } from "./gym/accessoryLog";
 
 export type DailyExportEntry = {
   date: string; // "YYYY-MM-DD"
@@ -109,11 +110,19 @@ export type RolesExportBlock = {
   intentions: RoleIntentionExportEntry[];
 };
 
+/** One logged accessory / mobility item, coach-readable. */
+export type AccessoryLogExportEntry = {
+  name: string; // "Half Lotus"
+  timestamp: string; // ISO-8601 UTC — when it was logged
+  date: string; // "YYYY-MM-DD" — local session date
+};
+
 export type SummaryExport = {
   roles: RolesExportBlock | null;
   today: TodayHeadline;
   days: DailyExportEntry[];
   places: PlacesSummary | null;
+  accessory: AccessoryLogExportEntry[] | null;
 };
 
 export type RawExport = {
@@ -225,6 +234,7 @@ export function buildSummaryExport(
   health: HealthData,
   places: PlacesSummary | null,
   roles: RolesExportBlock | null = null,
+  accessory: AccessoryLogExportEntry[] | null = null,
 ): SummaryExport {
   // Canonical "today" is the last date in the 7-day window (data is sorted ascending).
   const todayDate = data.steps[data.steps.length - 1]?.date ?? "";
@@ -233,7 +243,22 @@ export function buildSummaryExport(
     today: buildTodayHeadline(health, todayDate),
     days: buildDailyExport(data),
     places,
+    accessory,
   };
+}
+
+/**
+ * Convert stored accessory-log entries to the coach-readable export shape:
+ * item name, ISO-8601 UTC timestamp, and the local session date.
+ */
+export function buildAccessoryLogExport(
+  entries: AccessoryLogEntry[],
+): AccessoryLogExportEntry[] {
+  return entries.map((e) => ({
+    name: e.itemName,
+    timestamp: new Date(e.loggedAt).toISOString(),
+    date: e.dateKey,
+  }));
 }
 
 /**

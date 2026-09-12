@@ -2,6 +2,7 @@ import * as SQLite from "expo-sqlite";
 import { pruneThreshold } from "./location";
 import { initCacheTables } from "./healthCache";
 import { initJournalTables } from "./journalDb";
+import { initAccessoryLogTable } from "./gym/accessoryLog";
 import { type KnownPlace } from "./places";
 
 export const DB_NAME = "context-grabber.db";
@@ -88,6 +89,7 @@ export async function initDB(db: SQLite.SQLiteDatabase): Promise<void> {
   `);
   await initCacheTables(db);
   await initJournalTables(db);
+  await initAccessoryLogTable(db);
 }
 
 export async function getSetting(
