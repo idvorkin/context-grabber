@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { Accelerometer } from "expo-sensors";
 import * as Clipboard from "expo-clipboard";
 import GymTimerScreen from "../components/GymTimerScreen";
@@ -111,5 +111,121 @@ describe("GymTimerScreen — the LED look and the turn", () => {
     fireEvent.press(r.getByTestId("timer-turned"));
     await settle();
     expect(r.getByTestId("timer-time").props.accessibilityLabel).toBe("1");
+  });
+});
+
+describe("GymTimerScreen — paused, said big", () => {
+  it("rounds: STOP puts an amber PAUSEd over the frozen time in place of the phase word; RESUME brings the word back; turned, the edge says tap to resume", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} />);
+    await settle();
+    expect(r.queryByTestId("timer-paused")).toBeNull(); // idle is idle, not paused
+
+    fireEvent.press(r.getByText("START"));
+    await settle();
+    expect(r.getByTestId("timer-word").props.accessibilityLabel).toBe("rEAdY");
+    expect(r.queryByTestId("timer-paused")).toBeNull();
+
+    fireEvent.press(r.getByText("STOP"));
+    await settle();
+    expect(r.getByTestId("timer-paused").props.accessibilityLabel).toBe("PAUSEd");
+    expect(r.queryByTestId("timer-word")).toBeNull();
+    expect(r.getByText("RESUME")).toBeTruthy();
+
+    await hold(-1, 0); // turned while paused
+    expect(r.getByText("tap to resume")).toBeTruthy();
+    expect(r.getByTestId("timer-paused")).toBeTruthy();
+    fireEvent.press(r.getByTestId("timer-turned")); // resume
+    await settle();
+    expect(r.getByText("tap to stop")).toBeTruthy();
+    expect(r.queryByTestId("timer-paused")).toBeNull();
+    expect(r.getByTestId("timer-word").props.accessibilityLabel).toBe("rEAdY");
+    await hold(0, -1);
+  });
+
+  it("stopwatch: stopped with time on it is paused; reset clears it", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} initialMode="stopwatch" />);
+    await settle();
+    fireEvent.press(r.getByText("START"));
+    await act(async () => { await new Promise((res) => setTimeout(res, 30)); });
+    expect(r.queryByTestId("timer-paused")).toBeNull();
+    fireEvent.press(r.getByText("STOP"));
+    await settle();
+    expect(r.getByTestId("timer-paused").props.accessibilityLabel).toBe("PAUSEd");
+    fireEvent.press(r.getByText("RESET"));
+    await settle();
+    expect(r.queryByTestId("timer-paused")).toBeNull();
+  });
+});
+
+describe("GymTimerScreen — the accessory log, read back", () => {
+  type Row = { id: number; item_id: string; item_name: string; logged_at: number; date_key: string };
+  /** The same in-memory store the lib tests use: inserts land, reads honour the since-filter. */
+  function makeDb(seed: Row[] = []) {
+    const rows: Row[] = [...seed];
+    let nextId = rows.length + 1;
+    return {
+      execAsync: jest.fn(async () => undefined),
+      runAsync: jest.fn(async (sql: string, params: unknown[] = []) => {
+        if (/INSERT\s+INTO\s+accessory_log/i.test(sql)) {
+          const [item_id, item_name, logged_at, date_key] = params as [string, string, number, string];
+          rows.push({ id: nextId++, item_id, item_name, logged_at, date_key });
+        }
+        return { changes: 1, lastInsertRowId: nextId - 1 };
+      }),
+      getAllAsync: jest.fn(async (sql: string, params: unknown[] = []) => {
+        let out = [...rows];
+        if (/WHERE\s+logged_at\s*>=\s*\?/i.test(sql)) out = out.filter((r) => r.logged_at >= (params[0] as number));
+        return out.sort((a, b) => b.logged_at - a.logged_at);
+      }),
+      getFirstAsync: jest.fn(),
+    };
+  }
+  const dateKey = (ms: number) => {
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  it("empty: the sheet says nothing was logged in the last 7 days", async () => {
+    const r = render(<GymTimerScreen onExit={jest.fn()} db={makeDb() as any} />);
+    await settle();
+    fireEvent.press(r.getByTestId("open-accessory-log"));
+    await settle();
+    expect(r.getByText("Nothing logged in the last 7 days")).toBeTruthy();
+  });
+
+  it("a save shows up under Today on the next open, with its time and both names; an eight-day-old entry does not", async () => {
+    const stale = Date.now() - 8 * 24 * 3600 * 1000;
+    const db = makeDb([{ id: 1, item_id: "pigeon_stretch", item_name: "Pigeon Stretch", logged_at: stale, date_key: dateKey(stale) }]);
+    const r = render(<GymTimerScreen onExit={jest.fn()} db={db as any} />);
+    await settle();
+
+    fireEvent.press(r.getByTestId("open-accessory-log"));
+    await settle();
+    expect(r.getByText("Nothing logged in the last 7 days")).toBeTruthy(); // the stale row is outside the window
+    fireEvent.press(r.getByTestId("accessory-item-half_lotus"));
+    fireEvent.press(r.getByTestId("accessory-item-dead_hangs"));
+    fireEvent.press(r.getByTestId("accessory-save"));
+    await settle();
+    expect(r.queryByTestId("accessory-history")).toBeNull(); // the sheet closed
+
+    fireEvent.press(r.getByTestId("open-accessory-log"));
+    await settle();
+    const history = within(r.getByTestId("accessory-history"));
+    expect(history.getByText("Today")).toBeTruthy();
+    expect(history.getByText(/^\d{1,2}(:\d\d)?(am|pm) · Half Lotus, Dead Hangs$/)).toBeTruthy();
+    expect(history.queryByText(/Pigeon Stretch/)).toBeNull();
+    expect(history.queryByText(/Nothing logged/)).toBeNull();
+  });
+
+  it("a read failure keeps the checklist and shows a copyable error", async () => {
+    const db = makeDb();
+    db.getAllAsync.mockRejectedValueOnce(new Error("disk says no"));
+    const r = render(<GymTimerScreen onExit={jest.fn()} db={db as any} />);
+    await settle();
+    fireEvent.press(r.getByTestId("open-accessory-log"));
+    await settle();
+    expect(r.getByText("disk says no")).toBeTruthy();
+    expect(r.getByTestId("accessory-item-half_lotus")).toBeTruthy();
+    expect(r.queryByText(/Nothing logged/)).toBeNull();
   });
 });

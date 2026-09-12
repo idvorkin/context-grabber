@@ -13,6 +13,10 @@
  */
 
 import type { SQLiteDatabase } from "expo-sqlite";
+import { formatLocalTime } from "../summary";
+
+/** How far back the export and the in-sheet history look. */
+export const ACCESSORY_LOG_WINDOW_DAYS = 7;
 
 export type AccessoryItemDef = {
   /** Stable storage key — append-only. Renaming an id orphans historical rows. */
@@ -142,4 +146,65 @@ export async function getAccessoryLog(
       ORDER BY logged_at DESC`,
   );
   return rows.map(rowToEntry);
+}
+
+// --- The log as the user reads it ---
+
+/** One Save: the items checked together, stamped once. */
+export type AccessoryLogSession = {
+  /** UTC unix milliseconds — the shared timestamp of the save. */
+  loggedAt: number;
+  /** Wall-clock time of the save, "3:12pm". */
+  time: string;
+  /** Display names, in checklist order. */
+  items: string[];
+};
+
+/** One local day of the log, newest save first. */
+export type AccessoryLogDay = {
+  dateKey: string;
+  /** "Today", "Yesterday", or "Tue Sep 8". */
+  label: string;
+  sessions: AccessoryLogSession[];
+};
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "Today", "Yesterday", or the weekday and date ("Tue Sep 8") for a local date key, as of `now`. */
+export function accessoryDayLabel(dateKey: string, now: Date = new Date()): string {
+  if (dateKey === accessoryDateKey(now)) return "Today";
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (dateKey === accessoryDateKey(yesterday)) return "Yesterday";
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const day = new Date(y, m - 1, d);
+  return `${WEEKDAYS[day.getDay()]} ${MONTHS[day.getMonth()]} ${d}`;
+}
+
+/**
+ * Group log entries for display: by local day, newest first; within a day
+ * by save (entries sharing a timestamp are one session), newest first; the
+ * items of a session in the order they were written (checklist order).
+ */
+export function groupAccessoryLog(
+  entries: readonly AccessoryLogEntry[],
+  now: Date = new Date(),
+): AccessoryLogDay[] {
+  const sorted = [...entries].sort((a, b) => b.loggedAt - a.loggedAt || a.id - b.id);
+  const days: AccessoryLogDay[] = [];
+  for (const e of sorted) {
+    let day = days[days.length - 1];
+    if (!day || day.dateKey !== e.dateKey) {
+      day = { dateKey: e.dateKey, label: accessoryDayLabel(e.dateKey, now), sessions: [] };
+      days.push(day);
+    }
+    let session = day.sessions[day.sessions.length - 1];
+    if (!session || session.loggedAt !== e.loggedAt) {
+      session = { loggedAt: e.loggedAt, time: formatLocalTime(new Date(e.loggedAt).toISOString()), items: [] };
+      day.sessions.push(session);
+    }
+    session.items.push(e.itemName);
+  }
+  return days;
 }

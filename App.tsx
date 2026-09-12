@@ -57,7 +57,7 @@ import {
   daysSinceLastDailyValue,
 } from "./lib/weekly";
 import { buildSummaryExport, buildRolesExportBlock, buildAccessoryLogExport, type WeeklyDataMap, type LocationSummary, type PlacesSummary, type RolesExportBlock, type AccessoryLogExportEntry } from "./lib/share";
-import { getAccessoryLog } from "./lib/gym/accessoryLog";
+import { ACCESSORY_LOG_WINDOW_DAYS, getAccessoryLog } from "./lib/gym/accessoryLog";
 import { ROLES, computeWeekActivity } from "./lib/roles";
 import { getMomentsInRange } from "./lib/roleMoments";
 import { getCurrentWeekIntentions } from "./lib/intentions";
@@ -1904,7 +1904,7 @@ export default function App() {
       let accessoryBlock: AccessoryLogExportEntry[] | null = null;
       try {
         if (db) {
-          const sevenDaysAgo = Date.now() - 7 * 24 * 3600 * 1000;
+          const sevenDaysAgo = Date.now() - ACCESSORY_LOG_WINDOW_DAYS * 24 * 3600 * 1000;
           accessoryBlock = buildAccessoryLogExport(
             await getAccessoryLog(db, sevenDaysAgo),
           );
