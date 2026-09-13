@@ -60,6 +60,11 @@ The app serves two consumers with different needs: an AI life coach (Larry) who 
 
 ## User Stories
 
+> Superseded 2026-09-12 by [docs/stories/](stories/README.md) — Cohn + Gherkin stories per journey, each with its
+> status and commits. The CC-* and DB-* stories below are kept as the original framing of the two consumers; the
+> stories directory is the spec.
+
+
 ### Coach Context Stories
 
 **CC-1: Session Context Grab**
