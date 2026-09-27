@@ -7,10 +7,10 @@ the host too; only what genuinely needs HealthKit, GPS, an audio session, a widg
 
 | Rung | What runs | Command | Time | Answers |
 |---|---|---|---|---|
-| 1 Host, unit | ts-jest over `lib/` (jest project `unit`) | `just test`, or `npx jest __tests__/<file>` | ~20 s for everything, seconds for one file | health math, sleep, weekly bucketing, clustering and places against real GPS data, stats, the export shape, summary text, the call's state machine (fake socket and audio), the bridge and call wire formats, the gist upload, the accessory log, deep links, the LED geometry |
+| 1 Host, unit | ts-jest over `lib/` (jest project `unit`) | `just test` (every rung-1 row), or `npx jest __tests__/<file>` | ~12 s for `just test` after `npm ci`, seconds for one file | health math, sleep, weekly bucketing, clustering and places against real GPS data, stats, the export shape, summary text, the call's state machine (fake socket and audio), the bridge and call wire formats, the gist upload, the accessory log, deep links, the LED geometry |
 | 1 Host, component | React Native Testing Library over `screens/` and `components/` (jest project `component`, same command) | same | same | rendering, taps, the Gym Timer screen (the turn through the mocked accelerometer, paused, the accessory sheet), metric cards, App interactions |
-| 1 Type check | `npx tsc --noEmit` (also run by `just test`) | ~30 s | every prop and wire shape |
-| 1 Swift | `just check-deal` — the memdeck deal's promises under plain `swiftc` | seconds | no repeats, one of each per run, a tap always changes the card |
+| 1 Type check | the TypeScript compiler over the whole app | `npx tsc --noEmit` (also run by `just test`) | part of `just test` | every prop and wire shape |
+| 1 Swift | the memdeck deal's promises under plain `swiftc` | `just check-deal` (also run by `just test`) | seconds | no repeats, one of each per run, a tap always changes the card |
 | 2 Simulator | Maestro flows in `.maestro/` | `maestro test .maestro/<flow>.yaml` | ~1 min each | launch, tapping through by `testID`, screenshots of the About screen, the location sheet, the database export |
 | 3 Phone | the app on Igor's iPhone | `just ota` (JavaScript) · `just deploy` (native) · `just build` + `just dev` (debug, Metro) | minutes + a person | HealthKit, GPS and background location, the audio session (ducking, echo cancellation, the keepalive with the screen locked), Live Activities, widgets, Shortcuts, the Cockpit page, the voice bridge, the Keychain |
 
