@@ -1,0 +1,84 @@
+# no-mistakes gate config. commands, review, document, protected_paths,
+# test.instructions and no_ci are read only from main, so edits here take
+# effect once merged.
+
+commands:
+  # The gate worktree has tracked files only. `npm ci` also runs patch-package
+  # (postinstall). The vendor/igor-timer submodule is not needed: tsc excludes
+  # vendor/ and no test imports it.
+  prepare: "npm ci --no-audit --no-fund"
+  # Every host check (TESTING.md rung 1): generates lib/generated_version.ts,
+  # then jest (unit and component), the type check, the memdeck deal under
+  # plain swiftc, and the runtimeVersion agreement. Maestro (rung 2) needs the
+  # Simulator and is left out. ~12 s after prepare.
+  test: "just test"
+
+# No .github/workflows in this repo; the gate's test step is the only automated check.
+no_ci: true
+
+# Automatic fix commits must not touch the native surface: a change there is a
+# native build plus a runtime-version bump, which is Igor's call (AGENTS.md, OTA-first).
+protected_paths:
+  - "ios/**"
+  - "modules/**"
+  - "patches/**"
+  - "package.json"
+  - "package-lock.json"
+  - "app.json"
+
+review:
+  path_instructions:
+    - path: "docs/stories/*.md"
+      instructions: |
+        These files are the spec of what the app does now. Mike Cohn use case plus Gherkin, exactly one
+        Scenario per story with one When and one Then. A changed behaviour edits that story's acceptance
+        criteria and adds its commit to the Status line; a new capability or new condition is a new story
+        taking the next free ID in its journey's range (table in docs/stories/README.md). IDs are never
+        reused. Status is either "implemented in <commits>; verified by <tests / simulator / the phone>" or
+        "not implemented" with the asking issue; it lives only here. A bug goes on the story's Issues line.
+        A code change that alters visible behaviour without a story edit is incomplete ("no story, not done").
+    - path: "docs/superpowers/specs/*.md"
+      instructions: |
+        Design specs describe functionality, not implementation: user-visible behaviour, flows, edge cases,
+        acceptance criteria, goals and non-goals. Flag file paths, prop or type names, function signatures,
+        cache keys or component names here; those belong in docs/superpowers/plans/ or the code. A code
+        change to a feature with a spec should carry the spec update in the same PR.
+    - path: "lib/**"
+      instructions: |
+        Pure logic tested on the host; a behaviour change needs a jest test in __tests__/. Never import at the
+        top of a file a native module some supported binary might lack: require it inside a function behind a
+        try and degrade (lib/gistToken.ts and lib/gym/useDeviceTurn.ts are the pattern). Clustering, place
+        matching and distance thresholds must be checked against the real fixtures
+        (__tests__/fixtures/locations.json, context-grabber.db), not only synthetic points. Day bucketing is
+        local time, sleep is noon-to-noon, stored timestamps are UTC milliseconds. The export JSON built in
+        lib/share.ts is a contract Larry depends on (docs/user-needs.md, Export Contract).
+    - path: "*.tsx"
+      instructions: |
+        Every user-visible error renders through <CopyableError> (components/CopyableError.tsx) with a
+        context="Screen.operation" and the relevant state in extra, never a bare red Text.
+    - path: "ios/**"
+      instructions: |
+        Native surface: needs `just deploy`, not OTA, and a runtime-version bump in both app.json and
+        ios/ContextGrabber/Supporting/Expo.plist (scripts/bump-runtime-version.sh); the same holds for
+        modules/, patches/, package.json and app.json. Never an `expo prebuild` (wipes DEVELOPMENT_TEAM);
+        new widgets are Widget structs in the existing LiveActivity bundle, not a new target. Never put
+        invalidatableContent() on a Button(intent:) label. PlayingCard.swift is compiled into both the app and
+        the widget; its promises are checked by `just check-deal`.
+
+document:
+  instructions: |
+    Ownership: docs/TESTING.md owns the test ladder and which change is verified where; docs/DEBUGGING.md
+    owns the logs and the bug-to-issue flow; docs/stories/ owns what the app does and every story's status
+    (no other status table); docs/superpowers/specs/ owns functional design, docs/superpowers/plans/ the
+    implementation detail; docs/jtbd.md owns why. A pure refactor with no visible change needs no doc edit.
+
+test:
+  instructions: |
+    This is an iOS app; the real product runs on Igor's phone and cannot be driven from the gate. Do not
+    launch the iOS Simulator or Maestro, and do not run `just deploy`, `just build`, `just dev`, `just ota`,
+    `just setup`, `just resync-native` or `just timer-cues` (they need a device, publish an update, open
+    windows, or rewrite committed files). Validate on the host: `npx jest __tests__/<file>` for the touched
+    module, and for UI changes a React Native Testing Library test in __tests__/*.test.tsx (the component
+    project mocks the native modules in jest.setup.js). Report which rung verified the change, and list what
+    only the phone can show (HealthKit, GPS, the audio session, widgets, Live Activities, Shortcuts, the
+    voice bridge) as still to verify by Igor.
