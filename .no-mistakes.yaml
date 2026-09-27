@@ -10,7 +10,7 @@ commands:
   # Every host check (TESTING.md rung 1): generates lib/generated_version.ts,
   # then jest (unit and component), the type check, the memdeck deal under
   # plain swiftc, and the runtimeVersion agreement. Maestro (rung 2) needs the
-  # Simulator and is left out. ~12 s after prepare.
+  # Simulator and is left out. ~15 s warm, ~35 s on a cold cache.
   test: "just test"
 
 # No .github/workflows in this repo; the gate's test step is the only automated check.
