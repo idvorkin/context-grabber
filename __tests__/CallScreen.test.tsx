@@ -26,7 +26,9 @@ class FakeSocket implements BridgeSocket {
   }
 }
 
-const audio: CallAudio = {
+// Fresh per test: an earlier test's session is never hung up, and its timers can
+// still reach its audio late on a loaded machine — they must not count here.
+const makeAudio = (): CallAudio => ({
   prepare: jest.fn(async () => {}),
   startMic: jest.fn(async () => {}),
   restartMic: jest.fn(async () => {}),
@@ -34,7 +36,8 @@ const audio: CallAudio = {
   play: jest.fn(),
   flush: jest.fn(),
   stop: jest.fn(async () => {}),
-};
+});
+let audio = makeAudio();
 
 const route = AudioRoute as unknown as { listeners: ((p: unknown) => void)[]; setOutput: jest.Mock; setInput: jest.Mock; getDevices: jest.Mock };
 
@@ -78,6 +81,7 @@ async function goLive(t: ReturnType<typeof setup>) {
 describe("CallScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    audio = makeAudio();
     route.listeners = [];
   });
 
