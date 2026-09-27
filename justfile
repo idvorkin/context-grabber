@@ -26,9 +26,12 @@ ota message="OTA update": generate-version
     fi
     CI=1 npx eas-cli update --branch production --message "{{message}}" --environment production --platform ios
 
-# Run tests
-test:
+# Every host check: jest (unit + component), the type check, the Swift deal check, runtimeVersion agreement
+test: generate-version
     npx jest
+    npx tsc --noEmit
+    just check-deal
+    scripts/check-runtime-version.sh
 
 # Re-render the Gym Timer's spoken cues (macOS `say`) and compose the cue files
 timer-cues:

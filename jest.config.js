@@ -1,5 +1,9 @@
 /** @type {import('jest').Config} */
 module.exports = {
+  // A cold transform cache (every fresh worktree) babel-compiles react-native in every
+  // worker at once; the contention pushes CallScreen render tests past the 5 s default.
+  // Global only: jest-circus ignores a per-project testTimeout.
+  testTimeout: 30000,
   projects: [
     {
       displayName: "unit",

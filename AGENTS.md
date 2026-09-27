@@ -18,7 +18,7 @@ Igor merges the PRs and ships them himself; work lands on a branch as one PR per
 
 ## Rules
 
-- **Test ladder**: host `just test` (~20 s; one file in seconds) and `npx tsc --noEmit` → Maestro on the simulator
+- **Test ladder**: host `just test` (jest, `tsc --noEmit`, `check-deal`, runtime-version check; one jest file in seconds) → Maestro on the simulator
   (`.maestro/`, no HealthKit, cannot tap system dialogs) → the phone (`just ota` for JavaScript, `just deploy` for
   anything native). Verify on the cheapest rung that can see the change and **say which rung you used**. Audio
   session behaviour, HealthKit, GPS, widgets, Live Activities, Shortcuts and the voice bridge exist only on the
