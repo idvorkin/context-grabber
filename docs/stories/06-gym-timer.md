@@ -408,7 +408,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 182:
 
 - **Summary:** Choose the voice that counts the workout
-- **Status:** native app only: implemented in (this change); verified by `just native-test` (`CountVoiceTests`), a simulator screenshot of the sheet, and `just native-test-sim`'s `voice: adam` check on its one run with working simulator audio (the `aussie` hook check is written but the Mac's audio was down for every later run, main's build included); hearing each voice and the sample on the phone still to be checked by Igor
+- **Status:** native app only: implemented in [d6ce5b6](https://github.com/idvorkin/context-grabber/commit/d6ce5b6); verified by `just native-test` (`CountVoiceTests`), a simulator screenshot of the sheet, and `just native-test-sim`'s `voice: adam` check on its one run with working simulator audio (the `aussie` hook check is written but the Mac's audio was down for every later run, main's build included); hearing each voice and the sample on the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter who hears the count from across the gym
