@@ -11,7 +11,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 160:
 
 - **Summary:** Follow a circle through a box-breathing session
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathPlanTests`, `BreathRunTests`) and on the simulator (`just native-test-sim`: every step on its second); redesigned circle in [4e39f6d](https://github.com/idvorkin/context-grabber/commit/4e39f6d), seen in simulator screenshots (inhale, hold); not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathPlanTests`, `BreathRunTests`) and on the simulator (`just native-test-sim`: every step on its second); redesigned circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), seen in simulator screenshots (inhale, hold); not yet on the phone
 
 #### Use Case:
 - **As someone** who wants to settle before a hard conversation
@@ -29,7 +29,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 161:
 
 - **Summary:** Choose the breath and the session, and see where it will end
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathPlanTests`); session length up to 15 minutes and the redesigned sliders in [4e39f6d](https://github.com/idvorkin/context-grabber/commit/4e39f6d), verified by host tests (`testTheLongestSessionIsFifteenMinutes`) and a simulator screenshot of Setup; not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathPlanTests`); session length up to 15 minutes and the redesigned sliders in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), verified by host tests (`testTheLongestSessionIsFifteenMinutes`) and a simulator screenshot of Setup; not yet on the phone
 
 #### Use Case:
 - **As someone** with five minutes, or two
@@ -51,7 +51,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 162:
 
 - **Summary:** Know how long is left, and pause without losing my place
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathRunTests`: pause freezes, resume continues mid-step, the session's length is unchanged); pause moved into the circle in [4e39f6d](https://github.com/idvorkin/context-grabber/commit/4e39f6d), verified on the simulator (`just native-test-sim`: paused mid-inhale, nothing moved on) and a screenshot of the paused circle; the tap itself not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: pause freezes, resume continues mid-step, the session's length is unchanged); pause moved into the circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), verified on the simulator (`just native-test-sim`: paused mid-inhale, nothing moved on) and a screenshot of the paused circle; the tap itself not yet on the phone
 
 #### Use Case:
 - **As someone** interrupted mid-breath
@@ -73,7 +73,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 163:
 
 - **Summary:** See the session finished
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathRunTests`: finishes once, on time, 30 cycles without drift) and on the simulator (`just native-test-sim`: `breath_finished` on its second); redesigned Done in [4e39f6d](https://github.com/idvorkin/context-grabber/commit/4e39f6d), seen in a simulator screenshot; not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: finishes once, on time, 30 cycles without drift) and on the simulator (`just native-test-sim`: `breath_finished` on its second); redesigned Done in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), seen in a simulator screenshot; not yet on the phone
 
 #### Use Case:
 - **As someone** breathing with my attention elsewhere
@@ -91,7 +91,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 164:
 
 - **Summary:** Breathe with my eyes closed, by tone
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathToneTests`) and on the simulator (`just native-test-sim`: a `breath_cue` per step, each played); not yet heard on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathToneTests`) and on the simulator (`just native-test-sim`: a `breath_cue` per step, each played); not yet heard on the phone
 
 #### Use Case:
 - **As someone** who settles faster with eyes shut
@@ -109,7 +109,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 165:
 
 - **Summary:** Be talked through it by a calm voice
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c) with the Mac's Australian voice (Karen); the bundled clips since re-rendered with an ElevenLabs calm, gently spoken Australian woman's voice (eleven_v3, best of four takes) in [4e39f6d](https://github.com/idvorkin/context-grabber/commit/4e39f6d); verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37) with the Mac's Australian voice (Karen); the bundled clips since re-rendered with an ElevenLabs calm, gently spoken Australian woman's voice (eleven_v3, best of four takes) in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97); verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone
 
 #### Use Case:
 - **As someone** who finds tones clinical
