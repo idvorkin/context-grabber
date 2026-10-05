@@ -56,6 +56,57 @@ else bad "report: note '$got_note' log '$got_log' screen '$screen' screenshot '$
 errors=$(jq -c 'select(.type=="error")' "$f")
 if [ -z "$errors" ]; then ok "report: no error events"; else bad "report: error events: $errors"; fi
 
+# Stories 096, 097, 200: the Cockpit screen on the bundled bridge test page, which speaks only the protocol
+# (docs/cockpit-audio-bridge.md): it asks for the roster on audio.ready, sets an output and an input, asks for a
+# missing microphone, says its call went live and ended, and reports the round trip as getRoute("roundtrip:<inputs>:
+# tagged|untagged") — so the log alone shows the page received a device list and its address carried the tag.
+wait_jq() {  # like wait_for, on any jq filter
+  local waited=0
+  while [ "$waited" -lt "$2" ]; do
+    sleep 1; waited=$((waited + 1))
+    local f; f=$(newest_log)
+    [ -n "$f" ] && [ "$f" != "$previous_log" ] && [ -n "$(jq -c "$1" "$f" 2>/dev/null)" ] && return 0
+  done
+  fail=1
+  return 1
+}
+SIMCTL_CHILD_GRABBER_COCKPIT=open SIMCTL_CHILD_GRABBER_COCKPIT_URL=cockpit-bridge-test relaunch
+wait_jq 'select(.type=="cockpit_bridge" and .dir=="in" and ((.request_id // "") | startswith("roundtrip:")))' 30 \
+  || echo "      (timed out waiting for the page's roundtrip)"
+sleep 2  # the answers to the last requests
+f=$(newest_log)
+load=$(jq -sr '[.[] | select(.type=="cockpit_load")][0] | "\(.ok) \(.url)"' "$f")
+if [[ "$load" == "true "*"client=context-grabber&v="* ]]; then ok "cockpit: page loaded with the client tag"
+else bad "cockpit: load '$load'"; fi
+ready=$(jq -s '[.[] | select(.type=="cockpit_bridge" and .dir=="out" and .kind=="audio.ready")] | length' "$f")
+listed=$(jq -sr '[.[] | select(.type=="cockpit_bridge" and .dir=="out" and .kind=="audio.devices" and .request_id=="smoke-list")][0].inputs // 0' "$f")
+trip=$(jq -sr '[.[] | select(.type=="cockpit_bridge" and .dir=="in" and ((.request_id // "") | startswith("roundtrip:")))][0].request_id // ""' "$f")
+if [ "$ready" = "1" ] && [ "$listed" -ge 1 ] && [[ "$trip" =~ ^roundtrip:[1-9][0-9]*:tagged$ ]]; then
+  ok "cockpit: handshake, $listed microphone(s) delivered, page says $trip"
+else bad "cockpit: ready $ready, smoke-list inputs '$listed', page roundtrip '$trip'"; fi
+# Every request with a requestId gets exactly one answer; a missing microphone is an audio.error, never silence.
+asked=$(jq -s '[.[] | select(.type=="cockpit_bridge" and .dir=="in" and .request_id != null)] | length' "$f")
+answered=$(jq -s '[.[] | select(.type=="cockpit_bridge" and .dir=="out" and .request_id != null)] | length' "$f")
+missing=$(jq -sr '[.[] | select(.type=="cockpit_bridge" and .dir=="out" and .request_id=="smoke-missing")][0].kind // ""' "$f")
+if [ "$asked" -ge 5 ] && [ "$asked" = "$answered" ] && [ "$missing" = "audio.error" ]; then
+  ok "cockpit: $asked requests, $answered answers, a missing mic is audio.error"
+else bad "cockpit: $asked requests, $answered answers, missing mic answered '$missing'"; fi
+roster=$(jq -sr '[.[] | select(.type=="audio_route" and .action=="audio.listDevices")][0] | "\(.inputs | length) \(.output)"' "$f")
+awake=$(jq -sr '[.[] | select(.type=="keep_awake" and .reason=="cockpit_call") | .on] | map(tostring) | join(",")' "$f")
+if [[ "$roster" =~ ^[1-9] ]] && [ "$awake" = "true,false" ]; then
+  ok "cockpit: audio_route logged ($roster), screen held for the call and let go"
+else bad "cockpit: audio_route '$roster', keep_awake '$awake'"; fi
+errors=$(jq -c 'select(.type=="error")' "$f")
+if [ -z "$errors" ]; then ok "cockpit: no error events"; else bad "cockpit: error events: $errors"; fi
+
+# Story 096: an unreachable Cockpit is the error panel with its reason, never a blank page.
+SIMCTL_CHILD_GRABBER_COCKPIT=open SIMCTL_CHILD_GRABBER_COCKPIT_URL=https://127.0.0.1:65530/ relaunch
+wait_for cockpit_load 30 || echo "      (timed out waiting for cockpit_load)"
+f=$(newest_log)
+failed_load=$(jq -sr '[.[] | select(.type=="cockpit_load")][0] | "\(.ok) \(.error)"' "$f")
+if [[ "$failed_load" == "false "* ]] && [[ "$failed_load" != "false null" ]]; then ok "cockpit: unreachable → '${failed_load#false }'"
+else bad "cockpit: unreachable load '$failed_load'"; fi
+
 # Stories 100, 104, 105: a 10 s work / 10 s rest / 2 round workout started as a widget tile would. Every cue
 # falls on its second (within 0.4 s), the duck window opens once per boundary, and the session is let go at the end.
 SIMCTL_CHILD_GRABBER_TIMER="10,10,2" relaunch

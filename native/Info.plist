@@ -6,6 +6,8 @@
 	<string>$(GIT_SHA)</string>
 	<key>GitBranch</key>
 	<string>$(GIT_BRANCH)</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>The Cockpit's voice controls use the microphone to talk to Larry.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

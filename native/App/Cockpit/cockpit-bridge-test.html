@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- A stand-in Cockpit page for the simulator (GRABBER_COCKPIT_URL=cockpit-bridge-test): it speaks the audio bridge
+     the way the real page does (docs/cockpit-audio-bridge.md) and only with its messages, so sim-smoke.sh can judge
+     the round trip from the session log. Inert unless the hook names it. -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cockpit bridge test</title>
+<style>
+  body { background: #1a1a2e; color: #eee; font: 15px -apple-system, sans-serif; margin: 0; padding: 20px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .muted { color: #888; font-size: 13px; }
+  li { margin: 4px 0; }
+  .ok { color: #7ee787; } .bad { color: #ff7b72; }
+  code { color: #4cc9f0; word-break: break-all; }
+</style>
+</head>
+<body>
+<h1>Cockpit bridge test</h1>
+<div class="muted">A test page in the app bundle, not the Cockpit.</div>
+<p>Bridge: <span id="bridge" class="bad">absent</span> · tag: <span id="tag" class="bad">missing</span></p>
+<p>Address: <code id="addr"></code></p>
+<h3>Microphones</h3><ul id="inputs"><li class="muted">waiting…</li></ul>
+<h3>Outputs</h3><ul id="outputs"><li class="muted">waiting…</li></ul>
+<p>Live: <span id="live">–</span></p>
+<p class="muted" id="steps"></p>
+<script>
+  var b = window.CockpitAudioBridge;
+  var tagged = /[?&]client=context-grabber(&|$)/.test(location.search) && /[?&]v=/.test(location.search);
+  document.getElementById("addr").textContent = location.search;
+  document.getElementById("tag").textContent = tagged ? "client=context-grabber" : "missing";
+  document.getElementById("tag").className = tagged ? "ok" : "bad";
+  function step(s) { document.getElementById("steps").textContent += s + " · "; }
+  function list(id, items) {
+    var ul = document.getElementById(id); ul.innerHTML = "";
+    (items || []).forEach(function (d) {
+      var li = document.createElement("li"); li.textContent = d.name + " (" + d.type + ")"; ul.appendChild(li);
+    });
+  }
+  if (b && b.version >= 1) {
+    document.getElementById("bridge").textContent = "v" + b.version + " " + b.platform;
+    document.getElementById("bridge").className = "ok";
+    window.addEventListener("cockpit-audio", function (e) {
+      var m = e.detail;
+      step(m.type + (m.requestId ? ":" + m.requestId : ""));
+      if (m.type === "audio.ready") b.listDevices("smoke-list");
+      if (m.type === "audio.devices" || m.type === "audio.routeChanged") {
+        list("inputs", m.inputs); list("outputs", m.outputs);
+        document.getElementById("live").textContent =
+          (m.current.input ? m.current.input.name : "no input") + " → " + (m.current.output ? m.current.output.name : "no output");
+      }
+      if (m.type === "audio.devices" && m.requestId === "smoke-list") {
+        b.setOutput("speaker", "smoke-speaker");
+        if (m.inputs.length) b.setInput(m.inputs[0].id, "smoke-input");
+        b.setInput("no-such-mic", "smoke-missing");  // must come back as audio.error, never silence
+        // The round trip, said in the protocol's own words: how many microphones arrived and whether the tag did.
+        b.getRoute("roundtrip:" + m.inputs.length + ":" + (tagged ? "tagged" : "untagged"));
+        b.post({ type: "call.state", live: true });
+        b.post({ type: "call.state", live: false });
+      }
+    });
+  }
+</script>
+</body>
+</html>

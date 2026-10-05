@@ -124,6 +124,12 @@ Acceptance for step 2: each of stories 100–105, 107–113, 115 and 116 holds i
 whole workout with music playing, the phone locked for a round, leaves a session log with every phase and cue
 at its true second and no `error`.
 
+## The Cockpit in the native app (step 7)
+
+The Cockpit is ported ahead of the rest of step 7, as Igor called it critical: the page with real microphones and
+outputs, the same bridge and client tag so the page needs no change, opened from the home screen and kept for the
+launch when closed. What it does and how it differs: [the native Cockpit spec](2026-10-05-native-cockpit-design.md).
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

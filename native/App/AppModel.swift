@@ -15,6 +15,13 @@ final class AppModel: ObservableObject {
   @Published var status = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
+  /// True while the Cockpit covers the app. The page itself outlives this: see `cockpit`.
+  @Published var showCockpit = false
+
+  /// Made on the first open and kept for the launch, so closing the Cockpit hides the page rather than closing it.
+  /// `GRABBER_COCKPIT_URL` points it elsewhere (a URL, or a page in the app bundle) for the simulator's checks.
+  private(set) lazy var cockpit = CockpitModel(
+    log: log, override: ProcessInfo.processInfo.environment["GRABBER_COCKPIT_URL"])
 
   init() {
     database = AppDatabase(log: log)
@@ -53,6 +60,21 @@ final class AppModel: ObservableObject {
     gymTimer = nil
   }
 
+  func openCockpit(from source: String) {
+    log.event("ui", ["action": "open_cockpit", "from": source, "first": !cockpitOpened])
+    cockpitOpened = true
+    screen = "cockpit"
+    showCockpit = true
+  }
+
+  func closeCockpit() {
+    log.event("ui", ["action": "close_cockpit"])
+    screen = "home"
+    showCockpit = false
+  }
+
+  private var cockpitOpened = false
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
@@ -68,6 +90,7 @@ final class AppModel: ObservableObject {
       }
       openGymTimer(launch, from: "hook")
     }
+    if env["GRABBER_COCKPIT"] == "open" { openCockpit(from: "hook") }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {
         try? await Task.sleep(for: .seconds(2))  // the first frame must be on screen for the picture
