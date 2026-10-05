@@ -18,12 +18,24 @@ final class BridgeWebSocket: NSObject, BridgeSocket, URLSessionWebSocketDelegate
   private var opened = false
   private var gone = false
 
+  /// The Cockpit refuses a socket with no Origin and no bearer token (its write boundary, #136). A browser on the
+  /// Cockpit page sends the page's origin, and so does the React Native app's socket; URLSession sends none.
+  static func request(_ url: URL) -> URLRequest {
+    var request = URLRequest(url: url)
+    if var parts = URLComponents(url: url, resolvingAgainstBaseURL: false), let host = parts.host {
+      parts.scheme = parts.scheme == "ws" ? "http" : "https"
+      parts.path = ""; parts.query = nil; parts.fragment = nil
+      request.setValue(parts.string ?? "https://\(host)", forHTTPHeaderField: "Origin")
+    }
+    return request
+  }
+
   init(url: URL) {
     super.init()
     let config = URLSessionConfiguration.default
     config.waitsForConnectivity = false
     session = URLSession(configuration: config, delegate: self, delegateQueue: .main)
-    task = session.webSocketTask(with: url)
+    task = session.webSocketTask(with: Self.request(url))
     task.maximumMessageSize = 8 * 1024 * 1024
     task.resume()
     receive()

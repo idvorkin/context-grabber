@@ -209,6 +209,9 @@ Acceptance for step 3: stories 080–085 and 087–095 hold in the native app on
 a call placed with the phone then locked for two minutes leaves a session log with the start, `ready`, the
 microphone and speaker counts every five seconds while locked, and the ending, and no `error`.
 
+
+**The call is let in as the Cockpit's own.** The bridge refuses a connection that does not come from the Cockpit's page or carry a client credential (#136). The native call presents itself as the Cockpit page does, so a call connects with nothing to set up on the phone.
+
 ## The mirror and Grab Context in the native app (step 4)
 
 The mirror does what stories 002–009, 013 and 019 say, and Grab Context what stories 020, 021 and 024–029 say,
