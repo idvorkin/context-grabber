@@ -117,6 +117,13 @@ public struct TimerEngine {
   /// True from START until RESET or the finish: a run is in progress or stopped mid-way.
   public var isEngaged: Bool { state.isRunning || state.isPaused }
 
+  /// When the current phase ends, on the caller's clock, to the fraction of a second: the boundary's whole second
+  /// since the start, moved by the time spent paused. nil unless running (a paused phase has no end yet).
+  public var phaseEndsAt: Double? {
+    guard let startedAt, pausedAt == nil, state.isRunning else { return nil }
+    return startedAt + pausedAccum + Double(state.totalElapsed + state.timeLeft)
+  }
+
   /// A new preset. Ignored while a run is in progress: the chips and sliders are inert then. After the finish
   /// it clears the done face, as RESET does.
   public mutating func setProfile(_ next: TimerProfile) {

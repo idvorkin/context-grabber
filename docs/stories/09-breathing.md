@@ -66,7 +66,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Leaving
 - **Given:** a session in progress
 - **When:** I tap the back chevron, or leave the app
-- **Then:** back returns to the sliders at once with no question asked; leaving the app pauses the session until I return and tap the circle
+- **Then:** back returns to the sliders at once with no question asked; leaving the app or locking the phone does not pause: the session and its cues carry on, and coming back finds the circle where the session is (story 166)
 
 ---
 
@@ -125,3 +125,25 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the app was built without one of the voice files
 - **When:** that step starts
 - **Then:** the phone's own Australian voice says the phrase, and the log names the missing file
+
+---
+
+### User Story 166:
+
+- **Summary:** Breathe with the phone locked, and see the step on the lock screen
+- **Status:** not yet implemented
+
+#### Use Case:
+- **As someone** who wants the screen dark while breathing
+- **I want to** lock the phone and still hear each step, and glance at the lock screen or the Dynamic Island to see where I am
+- **so that** a session does not need a lit screen, and a glance is enough
+
+#### Acceptance Criteria:
+- **Scenario:** A locked session
+- **Given:** a 5-minute session at 8 s with the voice, in its third cycle
+- **When:** I lock the phone
+- **Then:** the voice keeps saying each step on time; the lock screen shows *Exhale*, *Cycle 3 of 9* and a countdown that reaches zero as *Hold* is said; the Dynamic Island shows *OUT 3/9* and the countdown while another app is in front
+- **Scenario:** Paused, finished, gone
+- **Given:** a session showing on the lock screen
+- **When:** I tap the circle to pause, then later finish the session, and then tap Back to start
+- **Then:** paused, the card reads *PAUSED*, *Inhale · Cycle 3 of 9* and a still time; finished, it reads *Done* and *4 min 48 s · 9 cycles* and goes by itself a few minutes later; Back, or closing the screen, removes it at once; a tap on the card while the session runs opens the app on the breathing screen

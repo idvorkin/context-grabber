@@ -28,6 +28,7 @@ final class BreatheModel: ObservableObject {
   private let log: SessionLog
   private let database: AppDatabase
   private let audio: BreatheAudio
+  private let liveActivity: LiveActivityController
   private var run: BreathRun?
   private var clock: Timer?
   private var pauseAt: Double?
@@ -38,9 +39,10 @@ final class BreatheModel: ObservableObject {
   /// Room for "Let's begin" before the first inhale.
   private static let voiceLeadIn = 2.0
 
-  init(log: SessionLog, database: AppDatabase) {
+  init(log: SessionLog, database: AppDatabase, liveActivity: LiveActivityController) {
     self.log = log
     self.database = database
+    self.liveActivity = liveActivity
     audio = BreatheAudio(log: log)
     breathSeconds = database.setting(Self.breathKey).flatMap(Int.init) ?? BreathPlan.defaultBreath
     sessionMinutes = database.setting(Self.sessionKey).flatMap(Int.init) ?? BreathPlan.defaultSession
@@ -101,6 +103,7 @@ final class BreatheModel: ObservableObject {
     keepAwake(true)
     audio.hush()  // a sample still sounding
     if cue == .voice { audio.say(.begin) }
+    audio.keepAlive(true)
     startClock()
     tick()
   }
@@ -112,15 +115,12 @@ final class BreatheModel: ObservableObject {
       log.event("breath_resume", ["time_left": run.moment(now: now).secondsLeft])
       self.run = run
       paused = false
+      audio.keepAlive(true)
       startClock()
+      syncLiveActivity()
     } else {
       pause(reason: "circle")
     }
-  }
-
-  /// The app left the front: the session waits, as a tap on pause would make it.
-  func leftForeground() {
-    if stage == .session, !paused { pause(reason: "background") }
   }
 
   /// The back chevron: out at once, no question.
@@ -129,17 +129,20 @@ final class BreatheModel: ObservableObject {
     log.event("breath_exit", ["elapsed_ms": Int(max(0, run.elapsed(now: now)) * 1000), "paused": paused])
     endSession()
     stage = .setup
+    liveActivity.end(.breathe, reason: "back")
   }
 
   func backToStart() {
     audio.hush()
     stage = .setup
+    liveActivity.end(.breathe, reason: "back")
   }
 
   /// Leaving the screen altogether.
   func disappear() {
     if stage == .session { back() }
     audio.stop()
+    liveActivity.end(.breathe, reason: "leave")
   }
 
   /// Where the ring is at `date`; frozen while paused.
@@ -161,10 +164,22 @@ final class BreatheModel: ObservableObject {
     paused = true
     stopClock()
     audio.hush()
+    audio.keepAlive(false)
     let m = run.moment(now: now)
     log.event(
       "breath_pause",
       ["reason": reason, "phase": "\(m.phase)", "cycle": m.cycle, "time_left": m.secondsLeft])
+    syncLiveActivity()
+  }
+
+  /// What the lock screen and the island show (story 166): pushed only when the step, the pause or the finish
+  /// changed, which the controller works out from the content's key.
+  private func syncLiveActivity() {
+    guard let run else { return }
+    let t = now
+    liveActivity.sync(
+      LiveActivityContent(breath: run.plan, elapsed: run.elapsed(now: t), paused: paused, finished: run.isFinished),
+      kind: .breathe, stepEndsAt: run.stepEndsAt(now: t))
   }
 
   private func startClock() {
@@ -214,6 +229,7 @@ final class BreatheModel: ObservableObject {
         }
       }
     }
+    if !effects.isEmpty { syncLiveActivity() }
     if let at = pauseAt, stage == .session, run.elapsed(now: now) >= at {
       pauseAt = nil
       pause(reason: "hook")
@@ -224,6 +240,7 @@ final class BreatheModel: ObservableObject {
     pauseAt = nil
     stopClock()
     audio.hush()
+    audio.keepAlive(false)
     paused = false
     keepAwake(false)
   }

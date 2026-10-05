@@ -21,8 +21,8 @@ empties with you and, if you want, tells you each step by voice or by tone so yo
 - No history, streaks, reminders or HealthKit mindful minutes. (The mirror already reads meditation from Health;
   writing to it is a separate decision.)
 - No other patterns (4-7-8, unequal sides). Every side of the box is the same length.
-- No running with the screen locked or the app in the background. The screen stays on instead.
-- No widget or Shortcut.
+- No widget or Shortcut. (The lock screen and the Dynamic Island do show the session:
+  [Native Live Activity](2026-10-04-native-live-activity-design.md).)
 
 ## What you see
 
@@ -60,6 +60,9 @@ A near-black screen with one dark circle in the middle and a white ring that dra
 - With **Tone**, each step starts with its tone and the session ends with a closing tone. With **Off**, silence.
 - Music or a podcast already playing keeps playing; the cues sound over it.
 - The screen stays on for the whole session and goes back to the phone's own setting afterwards.
+- **Locking the phone or leaving the app does not pause.** The session keeps time and its cues keep sounding with
+  the phone locked or another app in front, and the lock screen and the Dynamic Island show the step, the cycle
+  and a countdown (story 166). Coming back finds the circle exactly where the session is.
 - **Pause lives in the circle.** Tapping the circle pauses; tapping it again resumes. There is no separate pause
   button. While running, a small, faint pause mark sits low in the circle, so it reads as something to tap without
   competing with the word. While paused, the circle says so plainly: a play mark, **"Paused"** in place of the
@@ -68,8 +71,7 @@ A near-black screen with one dark circle in the middle and a white ring that dra
   that point in the step: nothing jumps and the step is not announced again.
 - For VoiceOver the circle is one button, labelled **Pause** while running and **Resume** while paused, with the
   step's word as its value.
-- Leaving the app (a notification pulled down, the home gesture) pauses the session the same way; tapping the
-  circle resumes it.
+- Only a tap on the circle pauses. A paused session stays paused with the phone locked; a running one runs on.
 - **Back** (top left) leaves at once for Setup, with no confirmation.
 
 ### Done

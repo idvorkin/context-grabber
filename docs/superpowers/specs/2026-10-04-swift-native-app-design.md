@@ -110,9 +110,9 @@ The timer does what stories 100–116 say, with these differences while the two 
   current app keeps the finished face until RESET.
 - **Coming back to the app never costs a cue.** What fell while the app was away is not replayed, and what
   falls in the second Igor comes back is still said.
-- **The lock-screen countdown (106) and one-tap starts from widgets and links (114) wait for step 7**, when the
-  widgets move. Until then the native timer keeps time and speaks with the screen locked, but shows nothing on
-  the lock screen.
+- **The lock-screen countdown and the Dynamic Island (106) came forward** and are their own spec:
+  [Native Live Activity](2026-10-04-native-live-activity-design.md). One-tap starts from widgets
+  and links (114) still wait for step 7, when the widgets move.
 - **Sets, the Custom preset and the accessory log are the native app's own** until the cutover: what is logged
   in one app is not in the other, and the native app's accessory work is not in Grab Context until step 4.
 

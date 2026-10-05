@@ -21,7 +21,10 @@ final class GymTimerModel: ObservableObject {
   @Published var mode: GymMode = .rounds
   @Published private(set) var presetId = "30sec"
   @Published private(set) var custom = CustomPreset.default
-  @Published private(set) var timer: TimerState
+  /// Every change reaches the lock screen from here, and only from here (story 106).
+  @Published private(set) var timer: TimerState {
+    didSet { syncLiveActivity() }
+  }
   @Published private(set) var stopwatch = Stopwatch()
   @Published private(set) var sets = 0
   @Published private(set) var turn = DeviceTurn.upright
@@ -29,6 +32,7 @@ final class GymTimerModel: ObservableObject {
   private var engine: TimerEngine
   private var clock: Timer?
   private let audio: GymAudio
+  private let liveActivity: LiveActivityController
   private let log: SessionLog
   private let database: AppDatabase
   private let motion = CMMotionManager()
@@ -45,9 +49,10 @@ final class GymTimerModel: ObservableObject {
   private static let chosenKey = "gym_active_preset"
   private static let setsKey = "gym_sets_count"
 
-  init(log: SessionLog, database: AppDatabase) {
+  init(log: SessionLog, database: AppDatabase, liveActivity: LiveActivityController) {
     self.log = log
     self.database = database
+    self.liveActivity = liveActivity
     audio = GymAudio(log: log)
     let first = TimerProfile.presets[0].profile
     engine = TimerEngine(profile: first)
@@ -149,6 +154,12 @@ final class GymTimerModel: ObservableObject {
     log.event("timer_reset")
   }
 
+  /// Pushes only when the phase, round or pause changed: the card counts down by itself between.
+  private func syncLiveActivity() {
+    liveActivity.sync(
+      LiveActivityContent(timer: timer, profile: engine.profile), kind: .gymTimer, stepEndsAt: engine.phaseEndsAt)
+  }
+
   private func tick() {
     perform(engine.tick(now: now))
   }
@@ -231,6 +242,8 @@ final class GymTimerModel: ObservableObject {
     clock = nil
     audio.stop()
     duck.close()
+    // The card lives only while the timer covers the app, so a tap on it always lands here (story 125).
+    liveActivity.end(.gymTimer, reason: "leave")
   }
 
   // MARK: - accessory work

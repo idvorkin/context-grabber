@@ -1,7 +1,8 @@
 //  The breathing screen's sound (stories 164, 165): a tone or a spoken phrase at the start of each step.
 //
-//  The session is `playback` mixed with others, so music keeps playing under the cues. Nothing here keeps the
-//  app alive in the background: the screen stays on instead. The phrases are sound files rendered ahead of time
+//  The session is `playback` mixed with others, so music keeps playing under the cues. While a session runs a
+//  near-silent loop plays (the Gym Timer's keepalive.wav, real samples iOS counts as live output), so the app keeps
+//  running, and speaking, with the phone locked (story 166); pausing or ending the session stops it. The phrases are sound files rendered ahead of time
 //  (scripts/make-breath-words.sh); a missing file falls back to the phone's own Australian voice. The tones are
 //  synthesised once (ContextCore's BreathTone) and played like files.
 //
@@ -49,6 +50,7 @@ final class BreatheAudio: @unchecked Sendable {
   private var phrases: [BreathPhrase: AVAudioPlayer] = [:]
   private var missing: Set<BreathPhrase> = []
   private var tones: [BreathTone: AVAudioPlayer] = [:]
+  private var loop: AVAudioPlayer?
   private let speech = AVSpeechSynthesizer()
 
   init(log: SessionLog) {
@@ -93,6 +95,33 @@ final class BreatheAudio: @unchecked Sendable {
     }
   }
 
+  /// A session running: the keepalive loops, so the app is not suspended with the phone locked. Off when paused,
+  /// finished or left. Idempotent.
+  func keepAlive(_ on: Bool) {
+    queue.async { [self] in
+      if on {
+        activate()
+        if loop == nil {
+          do {
+            guard let url = Bundle.main.url(forResource: "keepalive", withExtension: "wav") else {
+              throw CocoaError(.fileNoSuchFile)
+            }
+            loop = try AVAudioPlayer(contentsOf: url)
+            loop?.numberOfLoops = -1
+          } catch {
+            log.event("breath_keepalive", ["action": "start", "ok": false, "message": "keepalive.wav: \(error)"])
+            return
+          }
+        }
+        guard let loop, !loop.isPlaying else { return }
+        log.event("breath_keepalive", ["action": "start", "ok": loop.play()])
+      } else if let loop, loop.isPlaying {
+        loop.pause()
+        log.event("breath_keepalive", ["action": "stop", "ok": true])
+      }
+    }
+  }
+
   /// A pause: whatever is sounding stops with the ring.
   func hush() {
     queue.async { [self] in silence() }
@@ -102,6 +131,10 @@ final class BreatheAudio: @unchecked Sendable {
   func stop() {
     queue.async { [self] in
       silence()
+      if let loop, loop.isPlaying {
+        loop.pause()
+        log.event("breath_keepalive", ["action": "stop", "ok": true])
+      }
       guard active else { return }
       active = false
       do {

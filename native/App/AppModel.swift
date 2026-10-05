@@ -7,6 +7,8 @@ import SwiftUI
 final class AppModel: ObservableObject {
   let log = SessionLog()
   let database: AppDatabase
+  /// The lock-screen card and the Dynamic Island, shared by the Gym Timer and Box breathing.
+  let liveActivity: LiveActivityController
   private let bugReporter: BugReporter
 
   /// The screen in front, as a report and the log name it. Each ported journey sets it when it appears.
@@ -20,10 +22,12 @@ final class AppModel: ObservableObject {
 
   init() {
     database = AppDatabase(log: log)
+    liveActivity = LiveActivityController(log: log)
     bugReporter = BugReporter(log: log)
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
+    LiveActivityController.endLeftovers(log: log)
     runLaunchHooks()
   }
 

@@ -38,13 +38,12 @@ struct BreatheView: View {
   let launch: BreatheLaunch
   let onExit: () -> Void
   @StateObject private var model: BreatheModel
-  @Environment(\.scenePhase) private var scenePhase
 
   init(app: AppModel, launch: BreatheLaunch, onExit: @escaping () -> Void) {
     self.app = app
     self.launch = launch
     self.onExit = onExit
-    _model = StateObject(wrappedValue: BreatheModel(log: app.log, database: app.database))
+    _model = StateObject(wrappedValue: BreatheModel(log: app.log, database: app.database, liveActivity: app.liveActivity))
   }
 
   var body: some View {
@@ -59,9 +58,6 @@ struct BreatheView: View {
     .preferredColorScheme(.dark)
     .onAppear { if launch.plan != nil { model.begin(launch) } }
     .onDisappear { model.disappear() }
-    .onChange(of: scenePhase) { _, phase in
-      if phase != .active { model.leftForeground() }
-    }
   }
 }
 
