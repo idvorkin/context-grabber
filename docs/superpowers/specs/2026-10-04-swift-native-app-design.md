@@ -90,6 +90,12 @@ the Mac (the call).
 **Which build.** The Diagnostics screen shows the commit and branch the build was made from. The log's first
 line carries the same.
 
+## Links back to the current app
+
+A journey not yet ported can still be one tap away. The native app's home screen lists **Think of a card**,
+which opens Context Grabber on its Card tab (the same link its lock-screen widgets use). If Context Grabber is
+not installed the row says so instead of doing nothing. The row goes when the Card tab is ported.
+
 ## The Gym Timer in the native app (step 2)
 
 The timer does what stories 100–116 say, with these differences while the two apps live side by side:

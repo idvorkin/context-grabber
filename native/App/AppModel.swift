@@ -71,6 +71,15 @@ final class AppModel: ObservableObject {
     breathe = nil
   }
 
+  /// A journey still in Context Grabber, opened there by its own link.
+  func openInContextGrabber(_ link: String, what: String) {
+    guard let url = URL(string: link) else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_context_grabber", "what": what, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Context Grabber is not installed, so the \(what) cannot open." } }
+    }
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
