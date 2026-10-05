@@ -62,7 +62,7 @@ A near-black screen with one dark circle in the middle and a white ring that dra
 - The screen stays on for the whole session and goes back to the phone's own setting afterwards.
 - **Locking the phone or leaving the app does not pause.** The session keeps time and its cues keep sounding with
   the phone locked or another app in front, and the lock screen and the Dynamic Island show the step, the cycle
-  and a countdown (story 166). Coming back finds the circle exactly where the session is.
+  and a countdown (story 166). Coming back finds the circle exactly where the session is (story 169).
 - **Pause lives in the circle.** Tapping the circle pauses; tapping it again resumes. There is no separate pause
   button. While running, a small, faint pause mark sits low in the circle, so it reads as something to tap without
   competing with the word. While paused, the circle says so plainly: a play mark, **"Paused"** in place of the

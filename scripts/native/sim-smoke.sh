@@ -109,7 +109,7 @@ want_said="breath-begin breath-in breath-hold breath-out breath-hold-low breath-
 awake=$(jq -sr '[.[] | select(.type=="keep_awake") | "\(.on)"] | join(" ")' "$f")
 if [ "$said" = "$want_said" ] && [ "$awake" = "true false" ]; then ok "breathe: 10 phrases from their files, screen lock given back"
 else bad "breathe: said '$said', keep_awake '$awake'"; fi
-# Story 166: the keepalive runs for the session, so a locked phone keeps it going, and stops at the end.
+# Story 169: the keepalive runs for the session, so a locked phone keeps it going, and stops at the end.
 alive=$(jq -sr '[.[] | select(.type=="breath_keepalive") | "\(.action)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
 if [ "$alive" = "start stop" ]; then ok "breathe: keepalive for the session, stopped at the end"
 else bad "breathe: keepalive '$alive'"; fi

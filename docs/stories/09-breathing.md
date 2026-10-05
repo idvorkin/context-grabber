@@ -316,19 +316,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ### User Story 177:
 
-- **Summary:** The card goes when I close the breathing screen
-- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); not yet verified on the simulator or the phone
-
-#### Use Case:
-- **As someone** who is done with breathing for now
-- **I want to** have the card go when I close the breathing screen
-- **so that** a card never outlives its screen
-
-#### Acceptance Criteria:
-- **Scenario:** Closing the screen
-- **Given:** a session running with its card on the lock screen
-- **When:** I close the breathing screen
-- **Then:** the session ends and the card is removed at once
+- **Retired:** covered by 173 and 176
 
 ---
 
