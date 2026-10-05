@@ -9,7 +9,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 001:
 
 - **Summary:** Open the app and see where I am, my tally, and a way to reflect — before any tab tap
-- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [fb33625](https://github.com/idvorkin/context-grabber/commit/fb33625); verified by `App.test.tsx`, `StylizedMap.test.tsx` and on the phone (daily use). The "day in a sentence" headline and the Fresh / Stale chip from the tabbed-app spec are not built.
+- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [fb33625](https://github.com/idvorkin/context-grabber/commit/fb33625); verified by `App.test.tsx`, `StylizedMap.test.tsx` and on the phone (daily use). The "day in a sentence" headline and the Fresh / Stale chip from the tabbed-app spec are not built; native app: not yet — Today has no map, tally or Reflect row (context-grabber-3ss.19).
 
 #### Use Case:
 - **As** someone opening the phone at the end of the day
@@ -27,7 +27,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 002:
 
 - **Summary:** Glance the body in one scroll, grouped the way Larry reads it
-- **Status:** implemented in [cb58e1e](https://github.com/idvorkin/context-grabber/commit/cb58e1e), [11a9c11](https://github.com/idvorkin/context-grabber/commit/11a9c11), [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `App.test.tsx` and on the phone (daily use). Supersedes DB-1 in `docs/user-needs.md`.
+- **Status:** implemented in [cb58e1e](https://github.com/idvorkin/context-grabber/commit/cb58e1e), [11a9c11](https://github.com/idvorkin/context-grabber/commit/11a9c11), [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `App.test.tsx` and on the phone (daily use). Supersedes DB-1 in `docs/user-needs.md`; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`MirrorTextTests`) and a simulator screenshot; the week strip's gym-day dots not yet (context-grabber-3ss.20); the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone checking in before bed
@@ -45,7 +45,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 003:
 
 - **Summary:** Tap any metric for its last seven days
-- **Status:** implemented in [ad6c48c](https://github.com/idvorkin/context-grabber/commit/ad6c48c), [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified by `weekly.test.ts` and on the phone (daily use). Supersedes DB-2.
+- **Status:** implemented in [ad6c48c](https://github.com/idvorkin/context-grabber/commit/ad6c48c), [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified by `weekly.test.ts` and on the phone (daily use). Supersedes DB-2; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`WeeklyTests`) and a simulator screenshot; the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone who noticed a low number
@@ -63,7 +63,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 004:
 
 - **Summary:** See a metric's range, not just its average
-- **Status:** implemented in [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0), [6d9b60b](https://github.com/idvorkin/context-grabber/commit/6d9b60b); verified by `stats.test.ts` and on the phone
+- **Status:** implemented in [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0), [6d9b60b](https://github.com/idvorkin/context-grabber/commit/6d9b60b); verified by `stats.test.ts` and on the phone; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`StatsTests`) and a simulator screenshot; the phone still to be checked by Igor.
 - **Issues:** [#10](https://github.com/idvorkin/context-grabber/issues/10), [#30](https://github.com/idvorkin/context-grabber/issues/30)
 
 #### Use Case:
@@ -82,7 +82,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 005:
 
 - **Summary:** Movement is one card, not three
-- **Status:** implemented in [955611a](https://github.com/idvorkin/context-grabber/commit/955611a), [6d9b60b](https://github.com/idvorkin/context-grabber/commit/6d9b60b); verified by `weekly.test.ts` and on the phone
+- **Status:** implemented in [955611a](https://github.com/idvorkin/context-grabber/commit/955611a), [6d9b60b](https://github.com/idvorkin/context-grabber/commit/6d9b60b); verified by `weekly.test.ts` and on the phone; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`testMovementOverlay`) and the simulator; the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone asking "did I move today?"
@@ -100,7 +100,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 006:
 
 - **Summary:** Sleep is counted noon to noon and per source, so a Watch and a phone don't double the night
-- **Status:** implemented in [14e81d0](https://github.com/idvorkin/context-grabber/commit/14e81d0), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9), [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified by `sleep.test.ts`, `health.test.ts`, `weekly.test.ts` and on the phone (issue reports from real nights)
+- **Status:** implemented in [14e81d0](https://github.com/idvorkin/context-grabber/commit/14e81d0), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9), [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified by `sleep.test.ts`, `health.test.ts`, `weekly.test.ts` and on the phone (issue reports from real nights); native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`SleepTests`, `MirrorFixtureTests` with two sources) and a simulator screenshot; sources keep their Health names; the phone still to be checked by Igor.
 - **Issues:** [#11](https://github.com/idvorkin/context-grabber/issues/11), [#6](https://github.com/idvorkin/context-grabber/issues/6)
 
 #### Use Case:
@@ -119,7 +119,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 007:
 
 - **Summary:** See how I slept, not only how long: stages, debt against a target, and bedtime consistency
-- **Status:** implemented in [18ed07b](https://github.com/idvorkin/context-grabber/commit/18ed07b); verified by `sleep.test.ts` and on the phone
+- **Status:** implemented in [18ed07b](https://github.com/idvorkin/context-grabber/commit/18ed07b); verified by `sleep.test.ts` and on the phone; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`testSleepDebt`, `testConsistencyWrapsAroundMidnight`) and a simulator screenshot; the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone trying to keep a steady bedtime
@@ -138,7 +138,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 008:
 
 - **Summary:** Zoom into one night
-- **Status:** implemented in [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified on the phone
+- **Status:** implemented in [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified on the phone; native app: [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213) (tap a bar or a row), built and drawn on the simulator; the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone who woke up rough
@@ -156,7 +156,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 009:
 
 - **Summary:** The sleep view never contradicts itself
-- **Status:** implemented in [20245f9](https://github.com/idvorkin/context-grabber/commit/20245f9), [2897738](https://github.com/idvorkin/context-grabber/commit/2897738), [4c4ae84](https://github.com/idvorkin/context-grabber/commit/4c4ae84); verified by `sleep.test.ts` and on the phone (Igor's own nights, issue closed)
+- **Status:** implemented in [20245f9](https://github.com/idvorkin/context-grabber/commit/20245f9), [2897738](https://github.com/idvorkin/context-grabber/commit/2897738), [4c4ae84](https://github.com/idvorkin/context-grabber/commit/4c4ae84); verified by `sleep.test.ts` and on the phone (Igor's own nights, issue closed); native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), verified by `just native-test` (`testOnset`, `testTrackingGap`, `testMainSessionIgnoresNoise`, `MirrorTextTests`); the phone still to be checked by Igor.
 - **Issues:** [#28](https://github.com/idvorkin/context-grabber/issues/28)
 
 #### Use Case:
@@ -175,7 +175,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 010:
 
 - **Summary:** Exercise shows the workouts themselves, by type, with the day's timeline
-- **Status:** implemented in [238cd20](https://github.com/idvorkin/context-grabber/commit/238cd20), [b3f5146](https://github.com/idvorkin/context-grabber/commit/b3f5146), [a459445](https://github.com/idvorkin/context-grabber/commit/a459445), [03348f8](https://github.com/idvorkin/context-grabber/commit/03348f8); verified by `activity.test.ts`, `health.test.ts` and on the phone
+- **Status:** implemented in [238cd20](https://github.com/idvorkin/context-grabber/commit/238cd20), [b3f5146](https://github.com/idvorkin/context-grabber/commit/b3f5146), [a459445](https://github.com/idvorkin/context-grabber/commit/a459445), [03348f8](https://github.com/idvorkin/context-grabber/commit/03348f8); verified by `activity.test.ts`, `health.test.ts` and on the phone; native app: partly — the Exercise sheet lists each day's workouts ([cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213)); the activity timeline not yet (context-grabber-3ss.20).
 - **Issues:** [#7](https://github.com/idvorkin/context-grabber/issues/7)
 
 #### Use Case:
@@ -194,7 +194,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 011:
 
 - **Summary:** Tap a workout and see the sets it contained, inferred from the heart rate alone
-- **Status:** implemented in [a85c07e](https://github.com/idvorkin/context-grabber/commit/a85c07e), [f3d3ee9](https://github.com/idvorkin/context-grabber/commit/f3d3ee9), [bf819a0](https://github.com/idvorkin/context-grabber/commit/bf819a0), [dfb8217](https://github.com/idvorkin/context-grabber/commit/dfb8217), [c7fc808](https://github.com/idvorkin/context-grabber/commit/c7fc808); verified by `workoutAnalysis.test.ts` against the real two-day HR fixture (Igor's 10× swings recovered exactly) and on the phone. Phase 3 of the parent issue — handing the sets to Larry automatically — is not built.
+- **Status:** implemented in [a85c07e](https://github.com/idvorkin/context-grabber/commit/a85c07e), [f3d3ee9](https://github.com/idvorkin/context-grabber/commit/f3d3ee9), [bf819a0](https://github.com/idvorkin/context-grabber/commit/bf819a0), [dfb8217](https://github.com/idvorkin/context-grabber/commit/dfb8217), [c7fc808](https://github.com/idvorkin/context-grabber/commit/c7fc808); verified by `workoutAnalysis.test.ts` against the real two-day HR fixture (Igor's 10× swings recovered exactly) and on the phone. Phase 3 of the parent issue — handing the sets to Larry automatically — is not built; native app: not yet (context-grabber-3ss.20).
 - **Issues:** [#34](https://github.com/idvorkin/context-grabber/issues/34), [#35](https://github.com/idvorkin/context-grabber/issues/35)
 
 #### Use Case:
@@ -213,7 +213,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 012:
 
 - **Summary:** Heart rate by the hour, resting rate alongside, and the raw samples when I want them
-- **Status:** implemented in [ffa18a7](https://github.com/idvorkin/context-grabber/commit/ffa18a7), [03e40a5](https://github.com/idvorkin/context-grabber/commit/03e40a5), [66c3a0f](https://github.com/idvorkin/context-grabber/commit/66c3a0f); verified by `stats.test.ts` and on the phone
+- **Status:** implemented in [ffa18a7](https://github.com/idvorkin/context-grabber/commit/ffa18a7), [03e40a5](https://github.com/idvorkin/context-grabber/commit/03e40a5), [66c3a0f](https://github.com/idvorkin/context-grabber/commit/66c3a0f); verified by `stats.test.ts` and on the phone; native app: partly — resting heart rate in the Heart Rate sheet ([cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213)); hourly box plots and the raw HR export not yet (context-grabber-3ss.20).
 
 #### Use Case:
 - **As** someone wondering whether the afternoon spike was the gym or the meeting
@@ -231,7 +231,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 013:
 
 - **Summary:** Tiles never go blank, and they refresh themselves
-- **Status:** implemented in [f318e94](https://github.com/idvorkin/context-grabber/commit/f318e94), [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0), [81434c4](https://github.com/idvorkin/context-grabber/commit/81434c4), [ec1acfc](https://github.com/idvorkin/context-grabber/commit/ec1acfc); verified by `snapshot.test.ts` and on the phone (issues closed after use)
+- **Status:** implemented in [f318e94](https://github.com/idvorkin/context-grabber/commit/f318e94), [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0), [81434c4](https://github.com/idvorkin/context-grabber/commit/81434c4), [ec1acfc](https://github.com/idvorkin/context-grabber/commit/ec1acfc); verified by `snapshot.test.ts` and on the phone (issues closed after use); native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213): the last grab shows at once, grabs on open, foreground, every 30 min and on pull, past days from the same cache tables; verified by `just native-test` (`HealthCacheTests`, the warm-cache half of `MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 - **Issues:** [#33](https://github.com/idvorkin/context-grabber/issues/33), [#31](https://github.com/idvorkin/context-grabber/issues/31), [#32](https://github.com/idvorkin/context-grabber/issues/32)
 
 #### Use Case:
@@ -250,7 +250,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 014:
 
 - **Summary:** Meditation flatline is a card, not a buried number
-- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified on the phone. Supersedes the in-app half of CC-3.
+- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified on the phone. Supersedes the in-app half of CC-3; native app: not yet (context-grabber-3ss.20).
 
 #### Use Case:
 - **As** someone whose practice quietly stops when stress rises
@@ -268,7 +268,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 015:
 
 - **Summary:** Log mood and energy in two taps
-- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `moodLog.test.ts` and on the phone
+- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `moodLog.test.ts` and on the phone; native app: not yet (context-grabber-3ss.19).
 
 #### Use Case:
 - **As** someone noticing my energy dip at 3 pm
@@ -286,7 +286,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 016:
 
 - **Summary:** A label-free daily tally, on Move and Today, that resets at midnight
-- **Status:** implemented in [d00e45b](https://github.com/idvorkin/context-grabber/commit/d00e45b), [c6fc609](https://github.com/idvorkin/context-grabber/commit/c6fc609), [c48d01b](https://github.com/idvorkin/context-grabber/commit/c48d01b); verified by `counter.test.ts` and on the phone (widget +1 in daily use). The five-minute timer preset half of the issue is a Gym Timer story.
+- **Status:** implemented in [d00e45b](https://github.com/idvorkin/context-grabber/commit/d00e45b), [c6fc609](https://github.com/idvorkin/context-grabber/commit/c6fc609), [c48d01b](https://github.com/idvorkin/context-grabber/commit/c48d01b); verified by `counter.test.ts` and on the phone (widget +1 in daily use). The five-minute timer preset half of the issue is a Gym Timer story; native app: not yet (context-grabber-3ss.19).
 - **Issues:** [#29](https://github.com/idvorkin/context-grabber/issues/29)
 
 #### Use Case:
@@ -305,7 +305,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 017:
 
 - **Summary:** Move is where training starts: presets one tap away and the week's minutes as a ring
-- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `App.test.tsx` and on the phone (daily use). The timer's own behaviour is the Gym Timer journey.
+- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `App.test.tsx` and on the phone (daily use). The timer's own behaviour is the Gym Timer journey; native app: not yet; the timer opens from the home screen (context-grabber-3ss.19).
 
 #### Use Case:
 - **As** someone walking into the gym
@@ -323,7 +323,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 018:
 
 - **Summary:** See what I reflected on in the last day, right where I log it
-- **Status:** implemented in [c48d01b](https://github.com/idvorkin/context-grabber/commit/c48d01b); verified by `JournalRecentList.test.tsx` and on the phone
+- **Status:** implemented in [c48d01b](https://github.com/idvorkin/context-grabber/commit/c48d01b); verified by `JournalRecentList.test.tsx` and on the phone; native app: not yet (context-grabber-3ss.19).
 
 #### Use Case:
 - **As** someone who just logged a gratitude
@@ -341,7 +341,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 019:
 
 - **Summary:** Settings and About: tracking, retention, the sleep target, and what build is running
-- **Status:** implemented in [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9), [18ed07b](https://github.com/idvorkin/context-grabber/commit/18ed07b), [2bb7f2b](https://github.com/idvorkin/context-grabber/commit/2bb7f2b), [bafc357](https://github.com/idvorkin/context-grabber/commit/bafc357), [d87ad0b](https://github.com/idvorkin/context-grabber/commit/d87ad0b), [0bb87bf](https://github.com/idvorkin/context-grabber/commit/0bb87bf); verified by `version.test.ts` and on the phone (every OTA)
+- **Status:** implemented in [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9), [18ed07b](https://github.com/idvorkin/context-grabber/commit/18ed07b), [2bb7f2b](https://github.com/idvorkin/context-grabber/commit/2bb7f2b), [bafc357](https://github.com/idvorkin/context-grabber/commit/bafc357), [d87ad0b](https://github.com/idvorkin/context-grabber/commit/d87ad0b), [0bb87bf](https://github.com/idvorkin/context-grabber/commit/0bb87bf); verified by `version.test.ts` and on the phone (every OTA); native app: the sleep target in Today's settings and the build in About ([cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213)); tracking and retention move with Places; no OTA in the native app, so no update check (dropped by the design spec).
 
 #### Use Case:
 - **As** someone who just got told "it's fixed, reload"

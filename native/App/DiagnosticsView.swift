@@ -17,6 +17,12 @@ struct DiagnosticsView: View {
           }
           .accessibilityIdentifier("home-call")
           Button {
+            model.openToday(from: "home")
+          } label: {
+            Label("Today", systemImage: "heart.text.square").font(.title3.weight(.semibold)).padding(.vertical, 6)
+          }
+          .accessibilityIdentifier("open-today")
+          Button {
             model.openGymTimer(from: "home")
           } label: {
             Label("Gym Timer", systemImage: "timer").font(.title3.weight(.semibold)).padding(.vertical, 6)
@@ -105,6 +111,9 @@ struct DiagnosticsView: View {
         CallView(call: model.call, onDone: model.closeCall)
           .background(ShakeDetector { model.startBugReport(from: "shake") })
           .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
+      }
+      .navigationDestination(isPresented: $model.showToday) {
+        TodayView(app: model, mirror: model.mirror)
       }
     }
     .fullScreenCover(

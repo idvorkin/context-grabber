@@ -48,6 +48,8 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_CARD=open\|think\|never_mind` | open the memdeck card full screen; `think` also presses *Think of a card*; `never_mind` presses it and then *Never mind* two seconds into the count. `just native-test-sim` runs `think` and `never_mind` and reads `card_open`, `card_deal` and `card_think` |
 | `GRABBER_CALL=<ws url>` | open the call screen and, a second later, call that bridge as a tap on *Call Larry* would; hang up after `GRABBER_CALL_SECONDS` (default 8). `just native-test-sim` points it at `scripts/native/fake-bridge.py` on `ws://localhost:8799` and reads the `call_*` events and the bridge's own report |
 | `GRABBER_CALL_AUDIO=synthetic` | with `GRABBER_CALL`: a 220 Hz tone for the mic and counted, unplayed playback instead of the audio engine, so the protocol path is checked whatever the simulator's audio does; the smoke run makes the call once this way and once on the real engine |
+| `GRABBER_MIRROR=fixture\|healthkit` | open Today and grab the mirror's fixture week (`mirror-fixture.json`, moved to this week): `fixture` answers from the file, `healthkit` first saves it into the simulator's Health store (never on the phone) and grabs from HealthKit. Either writes `Documents/exports/{fixture,summary,raw}.json` and logs `mirror_fixture_done`; `make-mirror-expected.mjs --fixture` computes what the React Native code makes of the same `fixture.json`, and `sim-smoke.sh` compares bytes. Health's access sheet needs one tap a script cannot make: `just native-sim-health` (a UI test) makes it once per simulator |
+| `GRABBER_METRIC=<key>` | with `GRABBER_MIRROR`: open that metric's sheet after the grab (`sleep`, `movement`, `heartRate`, …), for a screenshot |
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 | `GRABBER_COUNT_VOICE=adam\|igor\|aussie` | with `GRABBER_TIMER` or `GRABBER_TIMER_SETTINGS`: count in that voice for this launch, not remembered and with no sample (story 182); `just native-test-sim` runs `aussie` and reads the first `timer_cue`'s `voice` |
 | `GRABBER_TIMER_SETTINGS=1` | open the Gym Timer, not started, with *Timer settings* up (logs `ui` action: timer_settings), for a screenshot of the sheet |
@@ -114,6 +116,16 @@ What the native rungs can and cannot see of the call:
 | The watchdog's verdicts, the call log's lines and trouble rule, the gist body, requests, GitHub's answers, the ten-gist cap | Host | `CallWatchdogTests`, `CallEventLogTests`, `GistTests` |
 | A whole call in the app: start frame with the client tag, mic frames up, PCM down scheduled, captions, the hang-up's dump, `stt_stop` and `stop` | Simulator | the `call (synthetic)` and `call (real audio)` checks in `sim-smoke.sh` against `scripts/native/fake-bridge.py` |
 | Echo cancellation, the call with the phone locked, interruptions, AirPods and route changes, a real call to Larry, the Keychain token and a real gist, the Call Larry Shortcut | Phone only | call Larry, lock for two minutes, `just pull-logs`, read `call_audio` / `call_stats` / `call_heal`; Diagnostics → Upload |
+
+What the native rungs can and cannot see of the mirror and Grab Context:
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| Health math, sleep nights, the week's series, box plots, card and sheet text, the cache | Host | `MirrorHealthTests`, `MirrorWeeklyTests`, `MirrorBasicsTests` (ports of the jest cases, pinned to America/Los_Angeles) |
+| The export, byte for byte with the React Native app | Host | `MirrorFixtureTests`: the native grab over `mirror-fixture.json` against `mirror-{summary,raw}-expected.json`, which `TZ=America/Los_Angeles node scripts/native/make-mirror-expected.mjs` writes by running the React Native app's own `lib/` (and a transcript of App.tsx's grab) over the same fixture |
+| HealthKit's answers (units, overlap, order) giving the same bytes | Simulator | `just native-sim-health` once (a UI test grants Health's two-page access sheet — topics, then *All Recorded Data* — which simctl cannot tap), then the `mirror:` checks in `sim-smoke.sh` |
+| Today and a sheet, drawn | Simulator screenshot | `SIMCTL_CHILD_GRABBER_MIRROR=fixture SIMCTL_CHILD_GRABBER_METRIC=sleep xcrun simctl launch …`, then `simctl io screenshot` |
+| Igor's own Health: the cards equal the current app's Body tab; sources, preferred units; Health's access sheet | Phone only | grab in both apps, compare; `just pull-logs`, read `mirror_grabbed`, `health_query_failed` |
 
 A new behaviour that only a tap can reach gets a hook and a log event in the same change; a check without an event
 to wait on is not a check. `GrabberNative.xcodeproj` is generated from `native/project.yml` by XcodeGen

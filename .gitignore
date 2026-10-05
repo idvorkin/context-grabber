@@ -57,6 +57,7 @@ yarn-error.*
 # The native app: the project is generated from native/project.yml (just native-project)
 /native/GrabberNative.xcodeproj/
 /native/Build/
+/native/GrabberNative.entitlements
 /native/ContextCore/.build/
 
 # worktrees

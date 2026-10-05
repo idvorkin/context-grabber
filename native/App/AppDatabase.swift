@@ -12,6 +12,8 @@ final class AppDatabase {
   let locations: LocationStore?
   /// The file itself, for the database export.
   let url: URL
+  /// The health cache, on its own connection to the same file: a grab reads and writes it off the main actor.
+  let healthCache: HealthCache?
   private let log: SessionLog
 
   init(log: SessionLog) {
@@ -22,12 +24,14 @@ final class AppDatabase {
     let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("SQLite", isDirectory: true)
     url = dir.appendingPathComponent("context-grabber.db")
+    var healthCache: HealthCache?
     do {
       try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
       let db = try SQLiteDatabase(path: url.path)
       settings = try SettingsStore(db: db)
       accessoryLog = try AccessoryLog(db: db)
       locations = try LocationStore(db: db)
+      healthCache = try HealthCache(db: SQLiteDatabase(path: dir.appendingPathComponent("context-grabber.db").path))
     } catch {
       // Without it nothing is remembered; the screens still work and every write says so again.
       log.event("error", ["where": "database", "message": "\(error)"])
@@ -35,6 +39,7 @@ final class AppDatabase {
     self.settings = settings
     self.accessoryLog = accessoryLog
     self.locations = locations
+    self.healthCache = healthCache
   }
 
   func setting(_ key: String) -> String? {

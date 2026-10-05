@@ -10,7 +10,7 @@ let package = Package(
   ],
   targets: [
     .target(name: "ContextCore"),
-    .testTarget(name: "ContextCoreTests", dependencies: ["ContextCore"]),
+    .testTarget(name: "ContextCoreTests", dependencies: ["ContextCore"], exclude: ["Fixtures"]),
   ],
   swiftLanguageModes: [.v5]
 )

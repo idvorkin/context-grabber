@@ -209,6 +209,52 @@ Acceptance for step 3: stories 080–085 and 087–095 hold in the native app on
 a call placed with the phone then locked for two minutes leaves a session log with the start, `ready`, the
 microphone and speaker counts every five seconds while locked, and the ending, and no `error`.
 
+## The mirror and Grab Context in the native app (step 4)
+
+The mirror does what stories 002–009, 013 and 019 say, and Grab Context what stories 020, 021 and 024–029 say,
+with these differences while the two apps live side by side:
+
+- **Today opens from the native app's home screen**, as the Gym Timer does, and the home screen stays the
+  Diagnostics list. Whether Today becomes the home screen (with Diagnostics behind a button) is Igor's call and
+  waits for it.
+- **Today is one screen**: a header with when the last grab finished and a phase while one runs, a summary line,
+  the body cards (Movement, Exercise, Heart Rate, HRV, Sleep, Meditation, Weight) with the same values, sublabels
+  and box plots as the current Body tab, and *Share summary* / *Share raw*. The current app's tabs (Today, Body,
+  Move, Mind) are not rebuilt yet; what lives on them besides the cards waits for its own step (below).
+- **A grab** asks for Health access the first time (the same read types as the current app), reads today live and
+  the past six days from its own cache, and never fails as a whole: a metric Health will not give reads "—". It
+  runs when Today opens, when the app comes back to the front, every thirty minutes while Today is open, and on a
+  pull. The last grab's cards show at once on the next open.
+- **The detail sheets** are drawn with the system's charts: bars for counts, a line with each day's range for
+  heart rate, HRV, resting heart rate and weight, the normalized three-line Movement chart, and for Sleep the
+  stacked stages, the per-source tabs with *All*, the sleep debt against the target, the bedtime-and-wake chart
+  with its ±, the onset and gap tags, and a tapped night's zoom card. Heart Rate carries resting heart rate under
+  its chart.
+- **The exports are the current app's, byte for byte**, for the same Health data and the same accessory log:
+  the summary is the same single line of JSON, the raw share the same indented JSON. The share sheet receives the
+  text, as in the current app.
+- **What the native export does not carry yet**: `roles` is null until roles move (step 6) — the current app sends
+  them; `places` is null until the native Places has its weekly and recent summaries (after step 5); in the raw
+  share `location` and `locationClusters` are null until step 5. Every key is still present with the same shape.
+- **Carried over unchanged, on purpose**, because the export must match the current app's byte for byte; each is
+  filed to decide with Igor rather than fixed silently: each day's `sleepHours` in `days` is counted midnight to
+  midnight (the headline's last night is noon to noon, as story 025 asks); `bedtime` and `wakeTime` in the
+  headline are clock times in UTC; `walkingDistanceKm` is in the phone's preferred distance unit (miles on a phone
+  set to US units); and a day's steps, energy and distance in `days` keep two decimals.
+- **Settings for the mirror** is the sleep target, kept where the current app keeps it. The current app's About and
+  update check have no place here: the native app has no over-the-air updates, and Diagnostics names the build.
+- **Not in this step**, each with its own issue: the map, tally and Reflect row on Today (001, with Places, the
+  tally and the journal), the Exercise sheet's activity timeline and workout analysis (010's timeline, 011), the
+  hourly heart-rate box plots and the raw heart-rate export (012), the meditation flatline card (014), mood and
+  energy (015), the tally (016), the Move tab (017), recent reflections (018), and the week strip's gym-day dots
+  (002).
+
+Acceptance for step 4: for the fixture data — a real week of heart rate, HRV, resting heart rate and energy, plus
+steps, distance, sleep from two sources, mindful minutes, weigh-ins, workouts (one crossing midnight) and accessory
+entries — the native summary and raw exports equal the current app's, byte for byte, on the Mac and from the
+simulator's Health store; on the phone the cards show the same numbers as the current app's Body tab after a grab
+in both.
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

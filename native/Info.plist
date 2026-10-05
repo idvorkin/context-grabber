@@ -8,6 +8,10 @@
 	<string>$(GIT_BRANCH)</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Grabber Native uses the microphone for calls with Larry.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Grabber Native reads your steps, heart rate, sleep, workouts, mindful minutes and weight to show your week and share it with your coach.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Only the simulator's test week is ever written to Health; the app on your phone never writes.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
