@@ -302,6 +302,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
         "input_available": session.isInputAvailable, "route": Self.describeRoute(),
       ])
     firstBufferLogged = false
+    let wasRunning = engine.isRunning
     input.installTap(onBus: 0, bufferSize: AVAudioFrameCount(rate / 10), format: format) { [weak self] buffer, _ in
       guard let self, let data = buffer.floatChannelData else { return }
       let samples = Array(UnsafeBufferPointer(start: data[0], count: Int(buffer.frameLength)))
@@ -310,6 +311,13 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     tapInstalled = true
     armedAt = nowMs
     lastBufferAt = 0
+    // #146: with voice processing on, the engine started for playback is stopped again by the time the mic arms
+    // (before the tap or by it); started again as it was, the player kept its clock but fed the mixer silence
+    // (rx_peak 0.87, mix_peak 0 on the phone). Whatever stopped it, connect the player afresh before the start.
+    if !engine.isRunning, playerFormat != nil {
+      log("call_audio", ["action": "reconnect_player", "why": "engine stopped before the mic started it", "was_running": wasRunning])
+      try connectPlayer()
+    }
     try startEngine(why: "mic")
     if playerFormat != nil, let player, !player.isPlaying { player.play() }
   }
@@ -433,6 +441,8 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   /// #146: what came in, what the mixer rendered, and everything between the mixer and the speaker.
   private func logOutputLevel() {
     guard let engine else { return }
+    // #146's net: Larry's audio arrived and was scheduled, yet the mixer rendered nothing for five seconds.
+    let silentMixer = rxPeak > 0.01 && mixBuffers > 0 && mixPeak == 0
     let out = engine.outputNode
     let outFormat = out.outputFormat(forBus: 0)
     let outputs = session.currentRoute.outputs.map { "\($0.portName) [\($0.portType.rawValue)]" }
@@ -449,6 +459,14 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     rxPeak = 0
     mixPeak = 0
     mixBuffers = 0
+    if silentMixer, nowMs - lastReopenAt >= CallWatchdog.reopenMinGapMs {
+      lastReopenAt = nowMs
+      log("call_heal", ["action": "reopen_playback", "why": "mixer silent while Larry's audio arrives"])
+      setHealth(CallWatchdog.audioNotPlaying)
+      do { try rebuild(why: "silent mixer") } catch {
+        log("call_heal", ["action": "reopen_playback", "ok": false, "message": describe(error)])
+      }
+    }
   }
 
   // MARK: - interruptions and route changes
