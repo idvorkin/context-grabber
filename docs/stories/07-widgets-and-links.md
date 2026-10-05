@@ -172,8 +172,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 129:
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported — its home screen links to Context Grabber's Card tab ([0c97606](https://github.com/idvorkin/context-grabber/commit/0c97606), build only; the tap on the phone) until the widgets step
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone. Grabber Native: implemented in [9f7f2d2](https://github.com/idvorkin/context-grabber/commit/9f7f2d2); verified by `CardDealTests` (host) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone; the widget clause waits for the widgets step — see story 133
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported, by Igor's choice (2026-10-05) — see story 133
 
 #### Use Case:
 - **As a** man about to do the trick for someone
@@ -190,19 +189,19 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ### User Story 133:
 
-- **Summary:** Think of a card in Grabber Native, before the widgets move
-- **Status:** implemented in [9f7f2d2](https://github.com/idvorkin/context-grabber/commit/9f7f2d2); verified by `CardDealTests` (host: every `just check-deal` promise, and the deal pinned to the old app's) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone
+- **Summary:** Think of a card in Grabber Native opens Igor's trainer
+- **Status:** implemented in COMMIT; verified by the simulator build; the tap on the phone not yet
 
 #### Use Case:
 - **As a** man about to do the trick, with Grabber Native open
-- **I want to** open *Think of a card* from its home screen and get the same big card, the same tap-for-another and the same five-second count as the old app's Card tab
-- **so that** the trick moves to the native app without waiting for the widgets to move
+- **I want to** tap *Think of a card* and be in Think a Card Trainer with the beat already started
+- **so that** I practise with the trainer I built for it, not a second card app
 
 #### Acceptance Criteria:
-- **Scenario:** The card in the native app
-- **Given:** Grabber Native's home screen lists *Think of a card* under *Ported so far*
-- **When:** I tap it, tap the card, press *Think of a card* and later *Never mind*, then *Done*
-- **Then:** a full-screen playing card opens face up (rank and suit in two corners, the pips laid out as a deck lays them or a framed letter for a jack, queen or king, hearts and diamonds red) and differs from the card the last visit ended on; a tap deals a different card; *Think of a card* turns it face down counting five, four, three…, and a different card is face up at zero; *Never mind* mid-count leaves the previous card face up; *Done* returns home; the tap count survives a relaunch; and until the widgets step the old app's widgets are neither read nor brought in line, so they may show a different card
+- **Scenario:** The row
+- **Given:** Think a Card Trainer is installed on the phone
+- **When:** I tap *Think of a card* on Grabber Native's home screen
+- **Then:** the trainer comes to the front and starts "think of a card" as its watch complication's tap does, and if the trainer is not installed the home screen says so instead
 
 ---
 

@@ -50,7 +50,7 @@ struct DiagnosticsView: View {
               .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
           }
           Button {
-            model.openCard(from: "home")
+            model.openThinkACard(from: "home")
           } label: {
             Label("Think of a card", systemImage: "suit.spade.fill").font(.title3.weight(.semibold))
               .padding(.vertical, 6)
@@ -93,14 +93,6 @@ struct DiagnosticsView: View {
         }
       }
       .navigationTitle("Grabber Native")
-      // One cover per view: the card's hangs here, the timer's on the stack.
-      .fullScreenCover(
-        isPresented: Binding(get: { model.card != nil }, set: { if !$0 { model.closeCard() } })
-      ) {
-        CardView(app: model, launch: model.card ?? CardLaunch(), onExit: model.closeCard)
-          .background(ShakeDetector { model.startBugReport(from: "shake") })
-          .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
-      }
       // Its own presenter: one view cannot hold two full-screen covers.
       .fullScreenCover(isPresented: Binding(get: { model.showCockpit }, set: { if !$0 { model.closeCockpit() } })) {
         CockpitView(model: model.cockpit, onDone: model.closeCockpit)

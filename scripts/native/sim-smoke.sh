@@ -270,41 +270,6 @@ failed=$(jq -c 'select(.type=="error")' "$f")
 if [ -z "$failed" ]; then ok "places: no error events"; else bad "places: $failed"; fi
 xcrun simctl location "$SIM" clear >/dev/null 2>&1 || true
 
-# Stories 129, 133: the card. An open deals; Think of a card counts five seconds face down and deals a different card;
-# Never mind mid-count leaves the open's card face up; the tap count is remembered across launches.
-SIMCTL_CHILD_GRABBER_CARD=think relaunch
-wait_for card_think 20 || echo "      (timed out waiting for card_think)"
-sleep 7  # the count is five seconds
-f=$(newest_log)
-opened=$(jq -sr '[.[] | select(.type=="card_open")][0] | "\(.from) \(.think)"' "$f")
-dealt=$(jq -sr '[.[] | select(.type=="card_deal") | "\(.how):\(.card)"] | join(" ")' "$f")
-think=$(jq -sr '[.[] | select(.type=="card_think") | .action] | join(" ")' "$f")
-open_card=$(jq -sr '[.[] | select(.type=="card_deal" and .how=="open")][0].card' "$f")
-think_card=$(jq -sr '[.[] | select(.type=="card_deal" and .how=="think")][0].card' "$f")
-ms=$(jq -s '([.[] | select(.type=="card_think" and .action=="start")][0].t) as $a
-  | ([.[] | select(.type=="card_think" and .action=="done")][0].t) as $b | $b - $a' "$f")
-if [ "$opened" = "hook true" ] && [ "$think" = "start done" ] && [ "$dealt" = "open:$open_card think:$think_card" ] \
-  && [ "$open_card" != "$think_card" ] && [ "$ms" -ge 4900 ] && [ "$ms" -le 5400 ]; then
-  ok "card: open deals $open_card, think reveals $think_card after $ms ms"
-else bad "card: open '$opened', deals '$dealt', think '$think', $ms ms"; fi
-nonce1=$(jq -sr '[.[] | select(.type=="card_deal")][-1].nonce' "$f")
-
-SIMCTL_CHILD_GRABBER_CARD=never_mind relaunch
-wait_for card_think 20 || echo "      (timed out waiting for card_think)"
-sleep 4  # cancelled two seconds in
-f=$(newest_log)
-think=$(jq -sr '[.[] | select(.type=="card_think") | .action] | join(" ")' "$f")
-open_card=$(jq -sr '[.[] | select(.type=="card_deal" and .how=="open")][0].card' "$f")
-kept=$(jq -sr '[.[] | select(.type=="card_think" and .action=="cancel")][0] | "\(.card) \(.why) \(.left)"' "$f")
-deals=$(jq -s '[.[] | select(.type=="card_deal")] | length' "$f")
-nonce2=$(jq -sr '[.[] | select(.type=="card_deal")][0].nonce' "$f")
-if [ "$think" = "start cancel" ] && [ "$kept" = "$open_card never_mind 3" ] && [ "$deals" = "1" ] \
-  && [ "$nonce2" -gt "$nonce1" ]; then
-  ok "card: never mind keeps $open_card face up; tap count $nonce1 → $nonce2 across launches"
-else bad "card: think '$think', cancel '$kept' (open $open_card), $deals deals, count $nonce1 → $nonce2"; fi
-failed=$(jq -c 'select(.type=="error")' "$f")
-if [ -z "$failed" ]; then ok "card: no error events"; else bad "card: $failed"; fi
-
 # Stories 080–084, 093: a call to a fake bridge on this Mac (scripts/native/fake-bridge.py), started by the launch
 # hook and hung up by it after 8 s. Judged from the session log and the bridge's own report: the start frame went up
 # with the client tag, mic frames flowed up, PCM came down and was scheduled, captions arrived, and the hang-up

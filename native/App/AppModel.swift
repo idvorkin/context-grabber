@@ -24,8 +24,6 @@ final class AppModel: ObservableObject {
   @Published var breathe: BreatheLaunch?
   @Published var showPlaces = false
   @Published var showPlacesMap = false
-  /// Non-nil while the memdeck card covers the app.
-  @Published var card: CardLaunch?
   /// True while the Cockpit covers the app. The page itself outlives this: see `cockpit`.
   @Published var showCockpit = false
 
@@ -140,16 +138,13 @@ final class AppModel: ObservableObject {
     }
   }
 
-  func openCard(_ launch: CardLaunch = CardLaunch(), from source: String) {
-    log.event("card_open", ["from": source, "think": launch.think])
-    screen = "card"
-    card = launch
-  }
-
-  func closeCard() {
-    log.event("ui", ["action": "close_card"])
-    screen = "home"
-    card = nil
+  /// Think a Card Trainer, Igor's own app, opened straight into "think of a card" (its story 063).
+  func openThinkACard(from source: String) {
+    guard let url = URL(string: "thinkacard://think") else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_think_a_card", "from": source, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Think a Card is not installed, so the card cannot open." } }
+    }
   }
 
   func openCockpit(from source: String) {
@@ -251,10 +246,6 @@ final class AppModel: ObservableObject {
       // Prepares the file as Export database does, without the share sheet a script cannot dismiss.
       places.prepareExport(from: "hook")
       places.exportFile = nil
-    }
-    if let mode = env["GRABBER_CARD"], ["open", "think", "never_mind"].contains(mode) {
-      // never_mind: think, then press Never mind two seconds into the count.
-      openCard(CardLaunch(think: mode != "open", neverMindAfter: mode == "never_mind" ? .seconds(2) : nil), from: "hook")
     }
     if env["GRABBER_COCKPIT"] == "open" { openCockpit(from: "hook") }
     if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
