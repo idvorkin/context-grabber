@@ -6,6 +6,16 @@ export and over a voice call. Also a gym timer. `lib/` is the platform-free half
 host); `screens/` and `components/` the UI; `modules/audio-route/` and `ios/LiveActivity/` the native capability.
 Igor merges the PRs and ships them himself; work lands on a branch as one PR per issue.
 
+**The app is being rewritten Swift-native** (Igor, 2026-10-04; bead `context-grabber-3ss`, spec
+`docs/superpowers/specs/2026-10-04-swift-native-app-design.md`). `native/` holds Grabber Native, a second app
+installed beside this one: `native/ContextCore/` is the platform-free SwiftPM package (host tests),
+`native/App/` the SwiftUI app, `native/project.yml` the XcodeGen spec (the `.xcodeproj` is generated, never
+committed or hand-edited). Journeys move over one at a time, then it takes this app's bundle id. New work on a
+journey that has moved goes to `native/`; the React Native tree gets fixes only when Igor asks. Rewrite where a
+native design is better — the stories are what must stay true, not the TypeScript. Native recipes: `just
+native-test`, `native-test-sim`, `native-run-device`, `pull-logs`, `bugs-check`, `file-bugs`. The OTA rules below
+apply to the React Native app only; the native app has no OTA.
+
 ## Read these before working
 
 | File | What it settles |

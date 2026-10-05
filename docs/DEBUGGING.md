@@ -26,6 +26,53 @@ grep -n -E 'heal|reset|redial|FAILED|lost' call.log
 Header lines say which build the evidence came from; match them against `git log` before reading anything else — a
 log from a build before the fix proves nothing about the fix.
 
+## The native app: one session log, a shake, and issues
+
+Grabber Native (`native/`, built beside this app; [design spec](superpowers/specs/2026-10-04-swift-native-app-design.md),
+stories [140–145](stories/08-reporting-problems.md)) replaces the logs above with Exercise Analyzer's scheme. As a
+journey is ported its log moves into the session log and its row above goes.
+
+- **One file per launch**: `Documents/logs/grabber-<yyyyMMdd-HHmmss>.jsonl` in the app container, visible in the
+  Files app. JSON Lines, one event per line: `{"type": "<event>", "t": <ms since launch>, ...fields}`. Numbers stay
+  numbers. Writer: `native/App/SessionLog.swift`; what a line can carry: `SessionLogLine` in `ContextCore`.
+- **Logs older than 30 days** are deleted at launch, except a file a report in `bugs.jsonl` names.
+- **Crashes**: MetricKit payloads land in `Documents/crashes/<stamp>.json`; the app's own `signal-<epoch>.txt` and
+  `exception-<epoch>.txt` cover the days MetricKit takes on a development build. Each is announced once as
+  `crash_report`. A log that simply stops, with no crash file, is a kill from outside (memory).
+
+```bash
+just pull-logs                  # phone → ~/tmp/agent/grabber-logs/ (logs/, bugs.jsonl, bugs/<stamp>/, crashes/); the phone's id: DEVICE=<udid> or scripts/native/phone-udid.local
+just pull-logs-sim              # simulator → ~/tmp/agent/grabber-logs/sim/
+just log-summary <file.jsonl>
+jq -c 'select(.t > 57000 and .t < 60000)' <file>     # around a moment (a report's session_t_ms)
+just symbolicate ~/tmp/agent/grabber-logs/crashes/<stamp>.json
+```
+
+| Area | Events (key fields) |
+|---|---|
+| Launch | `session_start` (device, system, app, sha, branch, started), `logs_pruned` (count, bytes, kept_for_reports; logged even when zero) |
+| Reports | `ui` (action: report_problem, from: shake / button, screen), `bug_report` (note, screen, build, log, screenshot) |
+| Gym Timer | `ui` (action: open_timer with from: home / hook and autostart; close_timer), `keep_awake` (on, reason: gym_timer), `timer_start` (preset, work, rest, rounds, prep, resumed), `timer_pause` (phase, round, time_left), `timer_reset` (RESET, or a preset chosen after the finish), `timer_phase` (from, to, round: logged at the boundary's true second; work to work is a new round with no rest), `timer_cue` (cue: three / two / one / go / rest / done; ok: false with a message when no player could be made), `timer_finished` (rounds), `timer_catchup` (phase, round, time_left: the app came back to the front mid-run and the state moved without replaying cues), `timer_turn` (turn: upright / left / right), `stopwatch` (running, elapsed_ms), `accessory_saved` (count, items) |
+| Gym Timer audio | `timer_session` (action: options with the option names, active with other_audio: whether music was playing, inactive: let go with notify-others; ok, and message when it failed), `timer_keepalive` (action: start / stop, ok), `timer_duck` (action: open / held / close / released, hold_ms: the window that turns music down around the cues; `released` is the request, the `timer_session` inactive → active pair after it is the session doing it), `timer_interruption` (kind: began / ended, wanted: whether the timer still needed the session; a phone call) |
+| Failures | `error` (where: log (a field JSON could not carry, with its type under `event`) / bug_images / bug_report (bugs.jsonl could not be written; the report is still in this log) / logs_prune / database (the SQLite file did not open: nothing is remembered this launch) / settings (key) / timer_audio (a cue file missing from the bundle or unreadable) / accessory_save (items) / accessory_history, message), `crash_report` (kind: crash / hang / signal / exception, file; `top`: the file's first lines for the app's own files) |
+
+Adding one: `log.event("snake_case_type", ["field": value])`, and a row here in the same change. The rules under
+*Adding a line* hold: numbers in fields, a failure once per spell, boundaries rather than ticks.
+
+**From a shake to an issue.** A shake (or *Report a problem* on Diagnostics) captures the window, and *Log it*
+writes a `bug_report` event, a line in `Documents/bugs.jsonl` (note, screen, build, `log`, `session_t_ms`,
+`screenshot`) and the picture under `Documents/bugs/<stamp>/`. While Igor is on the phone, arm
+
+```
+Monitor(command: "scripts/native/bugs-monitor.sh", description: "new shake reports on the phone", persistent: true)
+```
+
+which polls `bugs.jsonl` every minute and prints one line per report that is not yet an issue (`just bugs-check`
+is the same look, once; "phone not reachable" is not a failure). On a line: `just pull-logs && just file-bugs` —
+one issue per report, carrying the note, the screen, the build and the log's name. The repo is public, so the
+screenshot is never uploaded: the issue names its path under `~/tmp/agent/grabber-logs/` on the Mac. The marker `<!-- bug:<reported_at> -->` makes filing
+idempotent. Then steps 3–5 of *Bug reports* below, reading the log at the report's `session_t_ms`.
+
 ## Adding a line
 
 `log.add("...")` inside the call (the session, the audio layer and the screen share one `CallLog`);

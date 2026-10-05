@@ -14,6 +14,47 @@ the host too; only what genuinely needs HealthKit, GPS, an audio session, a widg
 | 2 Simulator | Maestro flows in `.maestro/` | `maestro test .maestro/<flow>.yaml` | ~1 min each | launch, tapping through by `testID`, screenshots of the About screen, the location sheet, the database export |
 | 3 Phone | the app on Igor's iPhone | `just ota` (JavaScript) · `just deploy` (native) · `just build` + `just dev` (debug, Metro) | minutes + a person | HealthKit, GPS and background location, the audio session (ducking, echo cancellation, the keepalive with the screen locked), Live Activities, widgets, Shortcuts, the Cockpit page, the voice bridge, the Keychain |
 
+## The native app's ladder
+
+The Swift-native app (`native/`, [design spec](superpowers/specs/2026-10-04-swift-native-app-design.md)) is built
+beside this one and has the same three rungs, after Exercise Analyzer's. As journeys move over, their rows in the
+tables below move here.
+
+| Rung | What runs | Command | Time | Answers |
+|---|---|---|---|---|
+| 1 Host | `ContextCore` XCTest (`native/ContextCore`, the platform-free package) | `just native-test` (also run by `just test`) | seconds | everything pure: what a log line can carry, log retention; each ported `lib/` module's logic |
+| 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, no `error` event |
+| 3 Phone | Grabber Native on the iPhone, beside Context Grabber | `just native-run-device`, then `just pull-logs` | minutes + a person | the shake, and everything the phone-only rows below list |
+
+The phone recipes (`native-run-device`, `pull-logs`, `bugs-check`) need the iPhone's hardware UDID: `DEVICE=<udid>`
+in the environment, or one line in `scripts/native/phone-udid.local`, which is gitignored because the repo is
+public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so.
+
+The simulator cannot be shaken or tapped from a script, so the app reads **launch hooks** from the environment
+(pass them through `simctl` as `SIMCTL_CHILD_<name>`); checks wait for an event in a *new* launch's log instead of
+sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim-smoke.sh`](../scripts/native/sim-smoke.sh)).
+
+| Hook | Effect |
+|---|---|
+| `GRABBER_BUG=text` | two seconds after launch, file a problem report with that note, as a shake and *Log it* would |
+| `GRABBER_TIMER=<chip>` | open the Gym Timer on that chip (`30sec`, `1min`, `2min`, `5-1`, `custom`) and start it, as a widget tile would. `GRABBER_TIMER=work,rest,rounds` (seconds, seconds, count) runs that shape as Custom without remembering it: `10,10,2` is a whole workout in 35 s, which is what `just native-test-sim` runs and reads `timer_cue`, `timer_duck` and `timer_session` from |
+| `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
+
+What the native rungs can and cannot see of the Gym Timer:
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| Phases, rounds, when each cue and duck hold falls, pause and resume, the catch-up after being away | Host | `TimerEngineTests`, `DeriveTimerStateTests` (the engine takes the clock as an argument) |
+| The duck window's opening, holding and letting go | Host | `DuckWindowTests` with a hand-advanced clock |
+| Custom preset snapping, the LED glyphs and geometry, the turn's margins, the stopwatch, the accessory log's SQL and grouping | Host | `CustomPresetTests`, `SevenSegmentTests`, `DeviceTurnTests`, `StopwatchTests`, `AccessoryLogTests` (real SQLite, in memory, in a pinned time zone) |
+| The timer in the app: cues on their seconds, one window per boundary, the session let go at the end | Simulator | the `timer:` checks in `sim-smoke.sh` |
+| The face, upright and turned | Simulator screenshot | `SIMCTL_CHILD_GRABBER_TIMER=10,10,2 SIMCTL_CHILD_GRABBER_TURN=left xcrun simctl launch …`, then `simctl io screenshot` |
+| Music dipping and coming back, a podcast pausing and resuming, cues with the phone locked, the real turn, the screen staying lit | Phone only | run a workout with music, lock for a round, `just pull-logs`, read `timer_session` / `timer_duck` / `timer_cue` / `timer_interruption` |
+
+A new behaviour that only a tap can reach gets a hook and a log event in the same change; a check without an event
+to wait on is not a check. `GrabberNative.xcodeproj` is generated from `native/project.yml` by XcodeGen
+(`just native-project`, run by the build recipes) and is not committed.
+
 ## What kind of test goes where
 
 | Change | Where it must be verified | How |

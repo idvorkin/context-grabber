@@ -56,6 +56,15 @@ review:
       instructions: |
         Every user-visible error renders through <CopyableError> (components/CopyableError.tsx) with a
         context="Screen.operation" and the relevant state in extra, never a bare red Text.
+    - path: "native/**"
+      instructions: |
+        The Swift-native app, built beside the React Native one (spec 2026-10-04-swift-native-app-design.md).
+        Pure logic belongs in native/ContextCore with an XCTest (`just native-test`); native/App holds only
+        what needs UIKit, SwiftUI or a device framework. A new behaviour reachable only by a tap needs a
+        launch hook (GRABBER_*) and a session-log event so the simulator smoke can check it, and every new
+        event gets a row in docs/DEBUGGING.md. Failures go to the session log as `error` with a `where`,
+        once per spell. GrabberNative.xcodeproj is generated from native/project.yml and must not be
+        committed. None of the OTA / runtime-version rules apply here.
     - path: "ios/**"
       instructions: |
         Native surface: needs `just deploy`, not OTA, and a runtime-version bump in both app.json and

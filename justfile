@@ -32,6 +32,101 @@ test: generate-version
     npx tsc --noEmit
     just check-deal
     scripts/check-runtime-version.sh
+    just native-test
+
+# --- The native app (native/, docs/superpowers/specs/2026-10-04-swift-native-app-design.md) ---
+
+native_sim := env("SIM", "iPhone 17")
+# The phone's hardware UDID is DEVICE=<udid>, else the untracked scripts/native/phone-udid.local (the repo is
+# public, so it is not committed); scripts/native/phone-udid.sh reads it for the recipes and the scripts.
+native_device := `scripts/native/phone-udid.sh 2>/dev/null || true`
+native_bundle := "com.idvorkin.grabbernative"
+native_sim_app := "native/Build/Build/Products/Debug-iphonesimulator/GrabberNative.app"
+native_device_app := "native/Build/Build/Products/Debug-iphoneos/GrabberNative.app"
+native_logs := "~/tmp/agent/grabber-logs"
+
+# Native rung 1: ContextCore's host tests on the Mac (seconds)
+native-test:
+    #!/usr/bin/env bash
+    # pipefail: a failing suite must fail the recipe instead of hiding behind tail's exit 0.
+    set -uo pipefail
+    cd native/ContextCore && swift test 2>&1 | grep -E "Test Suite 'All tests'|Executed|failed|error" | tail -20
+
+# GrabberNative.xcodeproj is generated from native/project.yml and not committed
+native-project:
+    cd native && xcodegen --quiet
+
+native-build-sim: native-project
+    #!/usr/bin/env bash
+    # The grep alone would exit 0 on "BUILD FAILED" and let the smoke run install the previous bundle.
+    set -uo pipefail
+    out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
+      -derivedDataPath native/Build -destination "platform=iOS Simulator,id=$(scripts/native/sim-udid.sh "{{native_sim}}")" \
+      CODE_SIGNING_ALLOWED=NO GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" build 2>&1)
+    echo "$out" | grep -E "error:|BUILD"
+    echo "$out" | grep -q "BUILD SUCCEEDED"
+
+# Native rung 2: the simulator build driven by launch hooks, judged from its session log
+native-test-sim: native-build-sim
+    bash scripts/native/sim-smoke.sh "{{native_sim}}" {{native_bundle}} {{native_sim_app}}
+
+# Stops a phone recipe with how to name the phone when it has no id
+_phone:
+    @scripts/native/phone-udid.sh >/dev/null
+
+native-build-device: _phone native-project
+    #!/usr/bin/env bash
+    set -uo pipefail
+    out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
+      -derivedDataPath native/Build -destination "platform=iOS,id={{native_device}}" \
+      -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
+      GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" build 2>&1)
+    echo "$out" | grep -E "error:|BUILD"
+    echo "$out" | grep -q "BUILD SUCCEEDED"
+
+# Native rung 3: build, install and launch Grabber Native on the iPhone (a locked phone fails the launch only)
+native-run-device: native-build-device
+    xcrun devicectl device install app --device {{native_device}} {{native_device_app}}
+    xcrun devicectl device process launch --device {{native_device}} {{native_bundle}}
+
+# Copy the native app's session logs, bug reports and crash files from the iPhone to ~/tmp/agent/grabber-logs
+pull-logs: _phone
+    mkdir -p {{native_logs}}
+    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
+      --domain-identifier {{native_bundle}} --source Documents/logs --destination {{native_logs}}/logs
+    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
+      --domain-identifier {{native_bundle}} --source Documents/bugs.jsonl --destination {{native_logs}}/bugs.jsonl || true
+    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
+      --domain-identifier {{native_bundle}} --source Documents/bugs --destination {{native_logs}}/bugs || true
+    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
+      --domain-identifier {{native_bundle}} --source Documents/crashes --destination {{native_logs}}/crashes || true
+    \ls -t {{native_logs}}/logs | head -5
+    @echo "--- bug reports (newest last); each names its log file:"
+    @tail -5 {{native_logs}}/bugs.jsonl 2>/dev/null | jq -c '{reported_at, note, log, screen}' || true
+
+# The same from the simulator
+pull-logs-sim:
+    mkdir -p {{native_logs}}/sim
+    cp -Rf "$(xcrun simctl get_app_container "$(scripts/native/sim-udid.sh "{{native_sim}}")" {{native_bundle}} data)/Documents/." {{native_logs}}/sim/
+    \ls -t {{native_logs}}/sim/logs | head -5
+
+# Print a session log, one event per line
+log-summary file:
+    @jq -c . {{file}}
+
+# Quick check for unfiled bug reports on the phone (exit 1 when there are any)
+bugs-check: _phone
+    scripts/native/bugs-check.sh {{native_device}}
+
+# File each new shake report from the pulled bugs.jsonl as a GitHub issue (skips ones already filed)
+file-bugs:
+    scripts/native/file-bugs.sh
+
+# Resolve a MetricKit crash JSON's addresses with the last device build's dSYM
+symbolicate file:
+    scripts/native/symbolicate.sh {{file}}
+
+# --- The React Native app ---
 
 # Re-render the Gym Timer's spoken cues (macOS `say`) and compose the cue files
 timer-cues:
