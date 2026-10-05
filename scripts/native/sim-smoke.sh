@@ -82,12 +82,12 @@ if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed";
 
 # Story 106: the Live Activity is requested with the ready count, pushed once at each phase (not every second),
 # and ended on DONE!, each accepted. A card an earlier launch left behind is ended at launch (reason leftover) and
-# is not part of this workout. With Live Activities off, one `unavailable` line is what the app must say instead.
+# is not part of this workout. With Live Activities off, one `unavailable` line per session is what the app must say instead.
 la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "gymTimer")
   | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
 if [ "$la" = "start:GET READY update:WORK update:REST update:WORK end:DONE!" ]; then
   ok "live activity: started, pushed at 3 phases, ended on DONE!"
-elif [ "$la" = "unavailable:" ]; then ok "live activity: Live Activities are off on this simulator (logged once)"
+elif [ "$la" = "unavailable:" ]; then ok "live activity: Live Activities are off on this simulator (logged once per session)"
 else bad "live activity: '$la'"; fi
 
 # Stories 160, 163, 165: two cycles of 2 s breaths with the voice. Every step is noticed on its second, each
@@ -109,16 +109,16 @@ want_said="breath-begin breath-in breath-hold breath-out breath-hold-low breath-
 awake=$(jq -sr '[.[] | select(.type=="keep_awake") | "\(.on)"] | join(" ")' "$f")
 if [ "$said" = "$want_said" ] && [ "$awake" = "true false" ]; then ok "breathe: 10 phrases from their files, screen lock given back"
 else bad "breathe: said '$said', keep_awake '$awake'"; fi
-# Story 166: the keepalive runs for the session, so a locked phone keeps it going, and stops at the end.
+# Story 169: the keepalive runs for the session, so a locked phone keeps it going, and stops at the end.
 alive=$(jq -sr '[.[] | select(.type=="breath_keepalive") | "\(.action)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
 if [ "$alive" = "start stop" ]; then ok "breathe: keepalive for the session, stopped at the end"
 else bad "breathe: keepalive '$alive'"; fi
-# Story 166: the Live Activity appears with the first inhale, is pushed once per step, and ends on Done.
+# Story 166: the Live Activity appears at Begin saying Ready, is pushed once per step, and ends on Done.
 la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "breathe")
   | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
-if [ "$la" = "start:Inhale update:Hold update:Exhale update:Hold update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
-  ok "breathe: live activity started, pushed at 7 steps, ended on Done"
-elif [ "$la" = "unavailable:" ]; then ok "breathe: Live Activities are off on this simulator (logged once)"
+if [ "$la" = "start:Ready update:Inhale update:Hold update:Exhale update:Hold update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
+  ok "breathe: live activity started at Begin, pushed at 8 steps, ended on Done"
+elif [ "$la" = "unavailable:" ]; then ok "breathe: Live Activities are off on this simulator (logged once per session)"
 else bad "breathe: live activity '$la'"; fi
 
 # Story 164: the same with tones, one cycle of 1 s breaths.

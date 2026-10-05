@@ -117,7 +117,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 106:
 
 - **Summary:** The countdown lives in the Dynamic Island and on the lock screen
-- **Status:** implemented in [4d1f7aa](https://github.com/idvorkin/context-grabber/commit/4d1f7aa), [7d921fb](https://github.com/idvorkin/context-grabber/commit/7d921fb), [83e2bdc](https://github.com/idvorkin/context-grabber/commit/83e2bdc), [2ef4a17](https://github.com/idvorkin/context-grabber/commit/2ef4a17); verified on the phone; native app: [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689), verified by `just native-test` (`GymTimerActivityContentTests`, `PhaseEndsAtTests`), `just native-test-sim` (the card started, pushed at each phase, ended on DONE!) and a simulator screenshot of the compact island (*WORK 1/5*, *0:52*); the lock-screen card, the expanded island and DONE! not yet seen, not yet on the phone
+- **Status:** implemented in [4d1f7aa](https://github.com/idvorkin/context-grabber/commit/4d1f7aa), [7d921fb](https://github.com/idvorkin/context-grabber/commit/7d921fb), [83e2bdc](https://github.com/idvorkin/context-grabber/commit/83e2bdc), [2ef4a17](https://github.com/idvorkin/context-grabber/commit/2ef4a17); verified on the phone; native app: [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689), verified by `just native-test` (`GymTimerActivityContentTests`, `PhaseEndsAtTests`), `just native-test-sim` (the card started, pushed at each phase, ended on DONE!) and a simulator screenshot of the compact island (*WORK 1/5*, *0:52*); a refused card is logged once and not asked for again until the next workout: [5d2978b](https://github.com/idvorkin/context-grabber/commit/5d2978b), not yet produced on the simulator or the phone; the lock-screen card, the expanded island and DONE! not yet seen, not yet on the phone
 
 #### Use Case:
 - **As a** lifter with the phone locked on the bench
@@ -365,6 +365,25 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** CUSTOM is chosen with Work 0:10, Rest 0:00 and 3 rounds
 - **When:** I tap START and let it run to the end
 - **Then:** I hear the ready count and *go*, then *three, two, one, go* into round 2 and again into round 3, then *three, two, one, done*, the face reads *Round n of 3* for each, and the session log has a `timer_phase` line for each new round
+
+---
+
+### User Story 181:
+
+- **Summary:** Reset the timer without turning the phone back upright
+- **Status:** native app only: implemented in [bfc46ae](https://github.com/idvorkin/context-grabber/commit/bfc46ae), [6784c5d](https://github.com/idvorkin/context-grabber/commit/6784c5d) (the paused face shrinks further so RESET fits); verified by `just native-test-sim` and a simulator screenshot of the turned, finished face; the phone still to be checked by Igor
+- **Issues:** [#132](https://github.com/idvorkin/context-grabber/issues/132)
+
+#### Use Case:
+- **As a** lifter with the phone propped sideways on a water bottle
+- **I want to** reset a paused or finished workout where the phone stands
+- **so that** starting the next one does not mean picking the phone up and turning it
+
+#### Acceptance Criteria:
+- **Scenario:** Paused on its side
+- **Given:** the phone is on its side and a workout is paused mid-round
+- **When:** I tap RESET under the hint
+- **Then:** the face shows the preset ready from its first round, the session log has a `timer_reset` line, a tap anywhere else would have resumed instead, and while the workout runs no RESET is shown
 
 ---
 

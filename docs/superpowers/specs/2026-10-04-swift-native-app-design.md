@@ -114,6 +114,10 @@ The timer does what stories 100–116 say, with these differences while the two 
 - **Choosing a preset after the finish goes back to ready.** With *donE* on the face, a tap on a chip or a
   move of a Custom slider clears it and shows the new preset's time and *Round 1 of N*, as RESET would. The
   current app keeps the finished face until RESET.
+- **Turned on its side, RESET is still there** (#132). While the rounds timer is paused or finished, or the
+  stopwatch is stopped with time on it, a RESET button sits under the hint, turned with the face; a tap
+  anywhere else still starts and stops. While running there is no RESET, so a tap across the room cannot clear a
+  workout. The current app has no RESET in its turned view.
 - **Coming back to the app never costs a cue.** What fell while the app was away is not replayed, and what
   falls in the second Igor comes back is still said.
 - **The lock-screen countdown and the Dynamic Island (106) came forward** and are their own spec:

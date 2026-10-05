@@ -55,8 +55,10 @@ The colours are the timer face's: red working, green resting, amber getting read
 | Exhale | *Exhale*, *Cycle 3 of 9*, … | *OUT 3/9* · countdown |
 | Second hold | *Hold*, *Cycle 3 of 9*, … | *HOLD 3/9* · countdown |
 
-Breathing's card is white on black, as quiet as its screen. The card appears with the first inhale, not during
-the moment of quiet before it.
+Breathing's card is white on black, as quiet as its screen. The card appears at Begin, while the app is still in
+front: through the moment of quiet before the first inhale it reads *Ready*, *Cycle 1 of 9* and counts down the
+seconds to the first inhale (*READY 1/9* on the island), so a phone locked straight after Begin still has its
+card.
 
 ### Both
 
@@ -93,7 +95,11 @@ goes by itself.
 ### When Live Activities are off
 
 With Live Activities switched off for Grabber Native in Settings, both screens run exactly as before and nothing
-shows on the lock screen. The session log says so once.
+shows on the lock screen. The session log says so once per session.
+
+If iOS refuses the card for any other reason, the screen runs on without one and the log has one error saying
+why. The card is not asked for again until that screen's next session, so a refusal never repeats at every step
+or from a locked phone.
 
 ### The tap
 
@@ -114,7 +120,10 @@ the app is opening that screen.
 - RESET, Back, leaving the screen, or a preset chosen after the finish remove the card at once.
 - A tap on the card while it runs opens the app on its screen.
 - After the app is swiped away mid-session and opened again, no card from that session remains.
+- A breathing session locked straight after Begin shows *Ready* and the seconds to the first inhale, then the
+  steps.
 - With Live Activities off in Settings both screens run and nothing fails.
+- A refused card is one error line in the log, not one per step.
 - The session log has one line when the card appears, one at each step, pause and resume, and one when it goes,
   each saying whether iOS accepted it.
 
