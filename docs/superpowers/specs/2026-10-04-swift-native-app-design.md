@@ -164,6 +164,12 @@ small. What it does in the native app:
   agree again.
 - **The lock-screen widget still opens the old app's Card tab** until step 7.
 
+## The Cockpit in the native app (step 7)
+
+The Cockpit is ported ahead of the rest of step 7, as Igor called it critical: the page with real microphones and
+outputs, the same bridge and client tag so the page needs no change, opened from the home screen and kept for the
+launch when closed. What it does and how it differs: [the native Cockpit spec](2026-10-05-native-cockpit-design.md).
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

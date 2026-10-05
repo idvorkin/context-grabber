@@ -316,7 +316,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 096:
 
 - **Summary:** The Cockpit dashboard lives in a tab and keeps its place
-- **Status:** implemented in [a11f583](https://github.com/idvorkin/context-grabber/commit/a11f583), [4e12d89](https://github.com/idvorkin/context-grabber/commit/4e12d89); verified by `CockpitScreen.test.tsx` and on the phone
+- **Status:** implemented in [a11f583](https://github.com/idvorkin/context-grabber/commit/a11f583), [4e12d89](https://github.com/idvorkin/context-grabber/commit/4e12d89); verified by `CockpitScreen.test.tsx` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (a screen kept for the launch, story 200); verified by `CockpitBridgeTests` (host) and the `cockpit:` checks in `sim-smoke.sh` (simulator) and a simulator screenshot of the tailnet page; on the phone: not yet
 
 #### Use Case:
 - **As a** Larry's client answering a decision on the phone between errands
@@ -334,7 +334,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 097:
 
 - **Summary:** The Cockpit page gets real microphones and outputs, and knows it is inside the app
-- **Status:** implemented in [19533fc](https://github.com/idvorkin/context-grabber/commit/19533fc), [f8d2f3a](https://github.com/idvorkin/context-grabber/commit/f8d2f3a); verified by `audioBridge.test.ts`, `cockpitClient.test.ts` and on the phone
+- **Status:** implemented in [19533fc](https://github.com/idvorkin/context-grabber/commit/19533fc), [f8d2f3a](https://github.com/idvorkin/context-grabber/commit/f8d2f3a); verified by `audioBridge.test.ts`, `cockpitClient.test.ts` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a); verified by `CockpitBridgeTests` (host) and the `cockpit:` checks in `sim-smoke.sh` (simulator) (a device list delivered and acknowledged, the tag on the address) and the real tailnet page asking the native bridge for its roster on the simulator; real headsets on the phone: not yet
 
 #### Use Case:
 - **As a** Larry's client using the Cockpit's own call from the tab
@@ -354,7 +354,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 098:
 
 - **Summary:** A call from a link, a Shortcut, the widget, or the Cockpit page's own ☎ lands on the native Call tab
-- **Status:** implemented in [cef19fc](https://github.com/idvorkin/context-grabber/commit/cef19fc), [8d35bb6](https://github.com/idvorkin/context-grabber/commit/8d35bb6), [a902080](https://github.com/idvorkin/context-grabber/commit/a902080), [b10e8d5](https://github.com/idvorkin/context-grabber/commit/b10e8d5); verified by `deepLink.test.ts`, `audioBridge.test.ts` and on the phone
+- **Status:** implemented in [cef19fc](https://github.com/idvorkin/context-grabber/commit/cef19fc), [8d35bb6](https://github.com/idvorkin/context-grabber/commit/8d35bb6), [a902080](https://github.com/idvorkin/context-grabber/commit/a902080), [b10e8d5](https://github.com/idvorkin/context-grabber/commit/b10e8d5); verified by `deepLink.test.ts`, `audioBridge.test.ts` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) parses `call.start` / `call.focus` and hands the page's `grabber://call` to iOS, which opens Context Grabber's Call tab until the native call lands; verified by `BridgeParseTests`, `CockpitPageTests` (host); on the phone: not yet
 
 #### Use Case:
 - **As a** Larry's client on the home screen
@@ -388,3 +388,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Then:** Larry's record shows the arrival within a few minutes, and a note Larry sends back appears on the phone
 
 - **Issues:** [#84](https://github.com/idvorkin/context-grabber/issues/84) — shape to be discussed first
+
+---
+
+### User Story 200:
+
+- **Summary:** In Grabber Native the Cockpit is a full-screen page from the home screen, and Done keeps it
+- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet
+- **Spec:** [native Cockpit](../superpowers/specs/2026-10-05-native-cockpit-design.md)
+
+#### Use Case:
+- **As a** Larry's client trying the native app beside Context Grabber
+- **I want to** open the Cockpit from the native app's home screen, step back to it, and find the dashboard as I left it
+- **so that** the native app carries the decision queue — with the real microphone and output pickers — before it replaces the old one
+
+#### Acceptance Criteria:
+- **Scenario:** Done and back
+- **Given:** I opened *Cockpit* on Grabber Native's home screen, scrolled down and expanded a row
+- **When:** I tap *Done* in the footer and then *Cockpit* again
+- **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs, and the page's ☎ hands the call to Context Grabber's Call tab until the native call exists

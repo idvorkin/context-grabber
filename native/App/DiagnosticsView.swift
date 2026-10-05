@@ -43,6 +43,13 @@ struct DiagnosticsView: View {
             Label("Think of a card", systemImage: "suit.spade.fill").font(.title3.weight(.semibold))
               .padding(.vertical, 6)
           }
+          Button {
+            model.openCockpit(from: "home")
+          } label: {
+            Label("Cockpit", systemImage: "gauge.with.dots.needle.67percent").font(.title3.weight(.semibold))
+              .padding(.vertical, 6)
+          }
+          .accessibilityIdentifier("home-cockpit")
         } header: {
           Text("Ported so far")
         } footer: {
@@ -74,6 +81,12 @@ struct DiagnosticsView: View {
         isPresented: Binding(get: { model.card != nil }, set: { if !$0 { model.closeCard() } })
       ) {
         CardView(app: model, launch: model.card ?? CardLaunch(), onExit: model.closeCard)
+          .background(ShakeDetector { model.startBugReport(from: "shake") })
+          .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
+      }
+      // Its own presenter: one view cannot hold two full-screen covers.
+      .fullScreenCover(isPresented: Binding(get: { model.showCockpit }, set: { if !$0 { model.closeCockpit() } })) {
+        CockpitView(model: model.cockpit, onDone: model.closeCockpit)
           .background(ShakeDetector { model.startBugReport(from: "shake") })
           .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
       }
