@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-05-03T19:45:00.000Z",
+  "health": {
+    "steps": 2631,
+    "heartRate": 71,
+    "sleepHours": 6.8,
+    "bedtime": "2026-05-03T05:28:07.000Z",
+    "wakeTime": "2026-05-03T12:23:07.000Z",
+    "sleepBySource": {
+      "igor’s  Watch ultra": {
+        "bedtime": "2026-05-03T05:35:07.000Z",
+        "wakeTime": "2026-05-03T12:23:07.000Z",
+        "coreHours": 3.8,
+        "deepHours": 1.1,
+        "remHours": 1.4,
+        "awakeHours": 0.5
+      },
+      "AutoSleep": {
+        "bedtime": "2026-05-03T05:28:07.000Z",
+        "wakeTime": "2026-05-03T12:12:07.000Z",
+        "coreHours": 0,
+        "deepHours": 0,
+        "remHours": 0,
+        "awakeHours": 0
+      }
+    },
+    "activeEnergy": 50,
+    "walkingDistance": 2,
+    "weight": 81.45,
+    "weightDaysLast7": 4,
+    "meditationMinutes": null,
+    "hrv": 22.4,
+    "restingHeartRate": 69,
+    "exerciseMinutes": 55,
+    "workouts": [
+      {
+        "activityType": "HIIT",
+        "durationMinutes": 25,
+        "energyBurned": 290,
+        "distanceKm": null,
+        "startTime": "2026-05-03T17:00:30.000Z",
+        "endTime": "2026-05-03T17:25:30.000Z"
+      },
+      {
+        "activityType": "Yoga",
+        "durationMinutes": 45,
+        "energyBurned": 95,
+        "distanceKm": null,
+        "startTime": "2026-05-03T06:40:00.000Z",
+        "endTime": "2026-05-03T07:25:00.000Z"
+      }
+    ]
+  },
+  "location": null,
+  "locationClusters": null
+}
