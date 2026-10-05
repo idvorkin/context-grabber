@@ -37,7 +37,7 @@ public enum BreathCue: String, CaseIterable, Equatable, Sendable {
 
 public struct BreathPlan: Equatable, Sendable {
   public static let breathRange = 5...15
-  public static let sessionRange = 2...10
+  public static let sessionRange = 2...15
   public static let defaultBreath = 8
   public static let defaultSession = 5
 

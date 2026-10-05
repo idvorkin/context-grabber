@@ -41,6 +41,10 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the breathing screen, never used before
 - **When:** I look at it, then drag Breath length from 8 to 15 seconds
 - **Then:** it opens at 8 seconds and 5 minutes with "9 cycles · ends at 4 min 48 s", and after the drag reads "5 cycles · ends at 5 min 0 s"; a session is always whole cycles, never fewer than one, and the sliders are where I left them the next time I open the app
+- **Scenario:** A long sit
+- **Given:** the breathing screen at 8 seconds
+- **When:** I drag Session length all the way to the right
+- **Then:** it stops at 15 minutes and reads "28 cycles · ends at 14 min 56 s"
 
 ---
 
@@ -56,13 +60,13 @@ Part of the [user stories](README.md); persona and format are described there.
 
 #### Acceptance Criteria:
 - **Scenario:** Pause and resume
-- **Given:** a session halfway through an inhale, showing "4:44 left"
-- **When:** I tap pause, wait a minute, and tap resume
-- **Then:** while paused the ring, the circle and "4:44 left" do not move; on resume the ring continues from halfway with no jump and the inhale is not announced again
+- **Given:** a session halfway through an inhale, showing "4:44 left", with a faint pause mark low in the circle and no pause button anywhere else
+- **When:** I tap the circle, wait a minute, and tap the circle again
+- **Then:** while paused the circle shows a play mark, "Paused" and "tap to resume", and the ring, the circle and "4:44 left" do not move; on the second tap the ring continues from halfway with no jump and the inhale is not announced again; VoiceOver reads the circle as a "Pause" button while running and "Resume" while paused
 - **Scenario:** Leaving
 - **Given:** a session in progress
 - **When:** I tap the back chevron, or leave the app
-- **Then:** back returns to the sliders at once with no question asked; leaving the app pauses the session until I return and resume
+- **Then:** back returns to the sliders at once with no question asked; leaving the app pauses the session until I return and tap the circle
 
 ---
 
@@ -105,7 +109,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 165:
 
 - **Summary:** Be talked through it by a calm voice
-- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c) with the Mac's Australian voice (Karen) as the bundled clips, since no ElevenLabs female Australian voice has been chosen; verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c) with the Mac's Australian voice (Karen); the bundled clips since re-rendered with an ElevenLabs calm, gently spoken Australian woman's voice (eleven_v3, best of four takes); verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone
 
 #### Use Case:
 - **As someone** who finds tones clinical

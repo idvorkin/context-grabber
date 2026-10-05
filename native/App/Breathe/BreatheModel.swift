@@ -9,6 +9,8 @@ import SwiftUI
 struct BreatheLaunch: Equatable {
   var plan: BreathPlan?
   var cue: BreathCue?
+  /// Pause by itself this many seconds into the breathing, so a script can see the paused circle.
+  var pauseAt: Double?
 }
 
 @MainActor
@@ -28,6 +30,7 @@ final class BreatheModel: ObservableObject {
   private let audio: BreatheAudio
   private var run: BreathRun?
   private var clock: Timer?
+  private var pauseAt: Double?
 
   private static let breathKey = "breathe_breath_seconds"
   private static let sessionKey = "breathe_session_minutes"
@@ -81,6 +84,7 @@ final class BreatheModel: ObservableObject {
   func begin(_ launch: BreatheLaunch = BreatheLaunch()) {
     if let hooked = launch.cue { cue = hooked }
     let plan = launch.plan ?? plan
+    pauseAt = launch.pauseAt
     let leadIn = cue == .voice ? Self.voiceLeadIn : 0
     var run = BreathRun(plan: plan, leadIn: leadIn)
     run.start(now: now)
@@ -110,7 +114,7 @@ final class BreatheModel: ObservableObject {
       paused = false
       startClock()
     } else {
-      pause(reason: "button")
+      pause(reason: "circle")
     }
   }
 
@@ -210,9 +214,14 @@ final class BreatheModel: ObservableObject {
         }
       }
     }
+    if let at = pauseAt, stage == .session, run.elapsed(now: now) >= at {
+      pauseAt = nil
+      pause(reason: "hook")
+    }
   }
 
   private func endSession() {
+    pauseAt = nil
     stopClock()
     audio.hush()
     paused = false

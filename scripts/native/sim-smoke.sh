@@ -111,5 +111,16 @@ else bad "breathe: tones '$tones'"; fi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("breath_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "breathe: nothing failed"; else bad "breathe: $failed"; fi
 
+# Story 162: paused 3 s into a 6 s inhale (as a tap on the circle would), the session stays put: no further step,
+# no finish, while well past when the hold was due.
+SIMCTL_CHILD_GRABBER_BREATHE="6,1,off,3" relaunch
+wait_for breath_pause 20 || echo "      (timed out waiting for breath_pause)"
+sleep 5
+f=$(newest_log)
+paused=$(jq -sr '[.[] | select(.type=="breath_pause") | "\(.reason):\(.phase)"] | join(" ")' "$f")
+after=$(jq -sr '[.[] | select(.type=="breath_phase" or .type=="breath_finished") | .phase // "done"] | join(" ")' "$f")
+if [ "$paused" = "hook:inhale" ] && [ "$after" = "inhale" ]; then ok "breathe: paused mid-inhale, nothing moved on"
+else bad "breathe: pauses '$paused', steps '$after'"; fi
+
 xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
 exit $fail

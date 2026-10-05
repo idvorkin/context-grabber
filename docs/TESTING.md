@@ -38,7 +38,7 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 |---|---|
 | `GRABBER_BUG=text` | two seconds after launch, file a problem report with that note, as a shake and *Log it* would |
 | `GRABBER_TIMER=<chip>` | open the Gym Timer on that chip (`30sec`, `1min`, `2min`, `5-1`, `custom`) and start it, as a widget tile would. `GRABBER_TIMER=work,rest,rounds` (seconds, seconds, count) runs that shape as Custom without remembering it: `10,10,2` is a whole workout in 35 s, which is what `just native-test-sim` runs and reads `timer_cue`, `timer_duck` and `timer_session` from |
-| `GRABBER_BREATHE=breath,cycles[,cue]` | open Box breathing and begin exactly that session (seconds a side, whole cycles, `voice` / `tone` / `off`; the cue is used but not remembered): `2,2,voice` is a whole session in 18 s, which `just native-test-sim` runs and reads `breath_phase`, `breath_cue` and `breath_finished` from. Any other value (`open`) just opens the sliders, for a screenshot |
+| `GRABBER_BREATHE=breath,cycles[,cue[,pause_at_seconds]]` | open Box breathing and begin exactly that session (seconds a side, whole cycles, `voice` / `tone` / `off`; the cue is used but not remembered): `2,2,voice` is a whole session in 18 s, which `just native-test-sim` runs and reads `breath_phase`, `breath_cue` and `breath_finished` from. A fourth field pauses the session by itself that many seconds into the breathing, as a tap on the circle would (`breath_pause` with reason `hook`): `6,1,off,3` shows the paused circle mid-inhale, for a screenshot. Any other value (`open`) just opens the sliders, for a screenshot |
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 
 What the native rungs can and cannot see of the Gym Timer:
@@ -60,7 +60,7 @@ What the native rungs can and cannot see of Box breathing:
 | Steps called on their seconds, 30 cycles without drift, pause and resume mid-step, the lead-in, a late look | Host | `BreathRunTests` (the run takes the clock as an argument) |
 | The tones: length, quiet edges, no clipping, a valid WAV | Host | `BreathToneTests` |
 | The session in the app: steps on their seconds, every phrase from its file, every tone played, the screen lock given back | Simulator | the `breathe:` checks in `sim-smoke.sh` |
-| The look of Setup, the circle and Done | Simulator screenshot | `SIMCTL_CHILD_GRABBER_BREATHE=6,1,off xcrun simctl launch …`, then `simctl io screenshot` |
+| The look of Setup, the circle (running, on a hold, paused) and Done | Simulator screenshot | `SIMCTL_CHILD_GRABBER_BREATHE=open` for Setup; `6,1,off` and a screenshot at ~3 s (inhale), ~8 s (hold) and ~26 s (Done); `6,1,off,3` for the paused circle; then `simctl io screenshot` |
 | How the voice and tones sound, cues over playing music, the screen staying lit, pause by leaving the app, Reduce Motion, VoiceOver | Phone only | a session with music on, `just pull-logs`, read `breath_session` (other_audio) / `breath_cue` / `breath_pause` |
 
 A new behaviour that only a tap can reach gets a hook and a log event in the same change; a check without an event

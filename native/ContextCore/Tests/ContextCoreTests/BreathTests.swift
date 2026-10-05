@@ -23,12 +23,22 @@ final class BreathPlanTests: XCTestCase {
       }
     }
     XCTAssertEqual(BreathPlan(breathSeconds: 5, sessionMinutes: 10).cycles, 30)
+    XCTAssertEqual(BreathPlan.sessionRange, 2...15)
+  }
+
+  func testTheLongestSessionIsFifteenMinutes() {
+    XCTAssertEqual(BreathPlan(breathSeconds: 8, sessionMinutes: 15).summary, "28 cycles · ends at 14 min 56 s")
+    XCTAssertEqual(BreathPlan(breathSeconds: 5, sessionMinutes: 15).cycles, 45)
+    XCTAssertEqual(BreathPlan(breathSeconds: 5, sessionMinutes: 15).totalSeconds, 900)
+    XCTAssertEqual(BreathPlan(breathSeconds: 15, sessionMinutes: 15).cycles, 15)
+    XCTAssertEqual(BreathPlan(breathSeconds: 5, sessionMinutes: 15).moment(at: 0).timeLeftText, "15:00 left")
   }
 
   func testTheSlidersStopAtTheirEnds() {
     XCTAssertEqual(BreathPlan(breathSeconds: 1, sessionMinutes: 5).breathSeconds, 5)
     XCTAssertEqual(BreathPlan(breathSeconds: 99, sessionMinutes: 5).breathSeconds, 15)
-    XCTAssertEqual(BreathPlan(breathSeconds: 15, sessionMinutes: 99).cycles, 10)
+    XCTAssertEqual(BreathPlan(breathSeconds: 15, sessionMinutes: 99).cycles, 15)
+    XCTAssertEqual(BreathPlan(breathSeconds: 15, sessionMinutes: 0).cycles, 2)
     XCTAssertEqual(BreathPlan(breathSeconds: 8, cycles: 1).summary, "1 cycle · ends at 0 min 32 s")
   }
 

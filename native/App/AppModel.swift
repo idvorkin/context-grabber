@@ -72,12 +72,13 @@ final class AppModel: ObservableObject {
   private func runLaunchHooks() {
     let env = ProcessInfo.processInfo.environment
     if let spec = env["GRABBER_BREATHE"], !spec.isEmpty {
-      // "breath,cycles[,cue]" begins that exact session; anything else just opens the sliders.
+      // "breath,cycles[,cue[,pause_at_seconds]]" begins that exact session; anything else just opens the sliders.
       let parts = spec.split(separator: ",").map(String.init)
       var launch = BreatheLaunch()
       if parts.count >= 2, let breath = Int(parts[0]), let cycles = Int(parts[1]) {
         launch.plan = BreathPlan(breathSeconds: breath, cycles: cycles)
         launch.cue = parts.count > 2 ? BreathCue(rawValue: parts[2]) : nil
+        launch.pauseAt = parts.count > 3 ? Double(parts[3]) : nil
       }
       openBreathe(launch, from: "hook")
     }
