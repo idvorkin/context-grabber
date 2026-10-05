@@ -134,9 +134,11 @@ final class AppModel: ObservableObject {
       }
       openBreathe(launch, from: "hook")
     }
+    let voice = env["GRABBER_COUNT_VOICE"].flatMap(CountVoice.init(rawValue:))
     if let spec = env["GRABBER_TIMER"], !spec.isEmpty {
       // A chip's id starts it as a tap on a widget tile would; "work,rest,rounds" runs that shape as Custom.
-      var launch = GymTimerLaunch(autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)))
+      var launch = GymTimerLaunch(
+        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice)
       let numbers = spec.split(separator: ",").compactMap { Int($0) }
       if numbers.count == 3 {
         launch.custom = CustomPreset(work: numbers[0], rest: numbers[1], rounds: numbers[2])
@@ -144,6 +146,8 @@ final class AppModel: ObservableObject {
         launch.preset = spec
       }
       openGymTimer(launch, from: "hook")
+    } else if env["GRABBER_TIMER_SETTINGS"] == "1" {
+      openGymTimer(GymTimerLaunch(voice: voice, settings: true), from: "hook")
     }
     // Places (docs/TESTING.md): import first, so the other hooks see the imported trail.
     if let spec = env["GRABBER_IMPORT_DB"], !spec.isEmpty {

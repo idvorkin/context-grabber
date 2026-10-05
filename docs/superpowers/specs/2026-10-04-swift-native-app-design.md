@@ -118,6 +118,11 @@ The timer does what stories 100–116 say, with these differences while the two 
   stopwatch is stopped with time on it, a RESET button sits under the hint, turned with the face; a tap
   anywhere else still starts and stops. While running there is no RESET, so a tap across the room cannot clear a
   workout. The current app has no RESET in its turned view.
+- **The count can be Adam, Igor or an Australian woman; Adam by default for now.** A gear on the timer's top
+  bar (upright) opens *Timer settings*, where *Count voice* lists the three with a checkmark on the chosen one.
+  Choosing one plays its *go* as a sample, is remembered across launches, and takes effect on the next cue — a
+  running workout switches voice mid-count. Only the spoken words change: the fanfare after *done*, the timing
+  and the music's ducking are the same for all three. The current app keeps Igor's voice.
 - **Coming back to the app never costs a cue.** What fell while the app was away is not replayed, and what
   falls in the second Igor comes back is still said.
 - **The lock-screen countdown and the Dynamic Island (106) came forward** and are their own spec:

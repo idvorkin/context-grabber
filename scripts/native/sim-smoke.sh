@@ -58,6 +58,8 @@ if [ -z "$errors" ]; then ok "report: no error events"; else bad "report: error 
 
 # Stories 100, 104, 105: a 10 s work / 10 s rest / 2 round workout started as a widget tile would. Every cue
 # falls on its second (within 0.4 s), the duck window opens once per boundary, and the session is let go at the end.
+# Story 182: with no voice chosen Adam counts; a choice left by hand on this simulator is forgotten first.
+sqlite3 "$DOCS/SQLite/context-grabber.db" "DELETE FROM settings WHERE key='gym_count_voice'" 2>/dev/null || true
 SIMCTL_CHILD_GRABBER_TIMER="10,10,2" relaunch
 wait_for timer_finished 70 || echo "      (timed out waiting for timer_finished)"
 sleep 4  # "done" sounds, then the window lets go of the session
@@ -79,6 +81,17 @@ if [ "$opens" = "4" ] && [ "$closes" = "4" ] && [ "$last_session" = "inactive tr
 else bad "timer: $opens opens, $closes releases, last session event '$last_session'"; fi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("timer_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed"; fi
+voices=$(jq -sr '[.[] | select(.type=="timer_cue") | .voice] | unique | join(",")' "$f")
+if [ "$voices" = "adam" ]; then ok "voice: every cue by adam, the default"; else bad "voice: cues by '$voices'"; fi
+
+# Story 182: a launch hook picks the Australian woman for this visit; her first cue plays from her own file.
+SIMCTL_CHILD_GRABBER_COUNT_VOICE=aussie SIMCTL_CHILD_GRABBER_TIMER="10,10,2" relaunch
+wait_for timer_cue 20 || echo "      (timed out waiting for timer_cue)"
+f=$(newest_log)
+first=$(jq -sr '[.[] | select(.type=="timer_cue")][0] | "\(.cue) \(.voice) \(.ok)"' "$f")
+errors=$(jq -c 'select(.type=="error")' "$f")
+if [ "$first" = "three aussie true" ] && [ -z "$errors" ]; then ok "voice: the hook's aussie says three"
+else bad "voice: first cue '$first', errors '$errors'"; fi
 
 # Story 106: the Live Activity is requested with the ready count, pushed once at each phase (not every second),
 # and ended on DONE!, each accepted. A card an earlier launch left behind is ended at launch (reason leftover) and

@@ -402,3 +402,27 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** 30 SEC ran to the end and the face reads *donE*, 0:00 and *Round 6 of 6*
 - **When:** I tap the 1 MIN chip
 - **Then:** the face clears *donE* and shows 1:00 and *Round 1 of 5*, exactly as RESET followed by the tap would, the session log has a `timer_reset` line, and choosing CUSTOM and moving its Work slider after another finish does the same with the slider's time
+
+---
+
+### User Story 182:
+
+- **Summary:** Choose the voice that counts the workout
+- **Status:** native app only: implemented in [d6ce5b6](https://github.com/idvorkin/context-grabber/commit/d6ce5b6); verified by `just native-test` (`CountVoiceTests`), a simulator screenshot of the sheet, and `just native-test-sim`'s `voice: adam` check on its one run with working simulator audio (the `aussie` hook check is written but the Mac's audio was down for every later run, main's build included); hearing each voice and the sample on the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** lifter who hears the count from across the gym
+- **I want to** pick who calls *three, two, one, go* — Adam, my own voice, or an excited Australian woman
+- **so that** the count sounds the way I want to hear it today, without anything else about the timer changing
+
+#### Acceptance Criteria:
+- **Scenario:** Adam by default
+- **Given:** I have never chosen a count voice
+- **When:** I start a workout
+- **Then:** Adam says *three, two, one, go*, *rest* and *done*, and each `timer_cue` line in the session log has `voice: adam`
+
+- **Scenario:** Choosing another voice
+- **Given:** the Gym Timer is upright
+- **When:** I tap the gear, then *Australian woman* under *Count voice*
+- **Then:** the checkmark moves to her row, she says *go* once as a sample, the session log has a `ui` line with `action: count_voice` and `voice: aussie`, the next cue is in her voice, and after quitting and reopening the app she is still the one counting
+

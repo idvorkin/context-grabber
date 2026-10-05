@@ -8,14 +8,19 @@
  *
  *   node scripts/make-timer-cues.mjs       → assets/audio/timer/*.wav
  *
+ * TIMER_DIR moves both ends: words from $TIMER_DIR/words, cues to $TIMER_DIR
+ * (scripts/make-timer-voice.sh renders the native app's other voices so).
+ *
  * Spec: docs/superpowers/specs/2026-09-07-gym-timer-audio-ducking-design.md
  */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RATE = 44_100;
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "audio", "timer");
+const ROOT = process.env.TIMER_DIR
+  ? resolve(process.env.TIMER_DIR)
+  : join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "audio", "timer");
 const WORDS = join(ROOT, "words");
 
 /** Spoken words come out of `say` at a modest level; bring their peak up to this so they cut through. */
