@@ -9,7 +9,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 020:
 
 - **Summary:** One tap sends Larry today's headline and the last seven days
-- **Status:** implemented in [7b52df6](https://github.com/idvorkin/context-grabber/commit/7b52df6), [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `share.test.ts`, `snapshot.test.ts` and on the phone (every coaching call). Supersedes CC-1 in `docs/user-needs.md`.
+- **Status:** implemented in [7b52df6](https://github.com/idvorkin/context-grabber/commit/7b52df6), [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `share.test.ts`, `snapshot.test.ts` and on the phone (every coaching call). Supersedes CC-1 in `docs/user-needs.md`; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** Larry's client five minutes before the call
@@ -27,7 +27,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 021:
 
 - **Summary:** The summary reads as a briefing, not a data dump
-- **Status:** implemented in [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `share.test.ts` and on the phone (payload fits in an iMessage)
+- **Status:** implemented in [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `share.test.ts` and on the phone (payload fits in an iMessage); native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone pasting the export into a chat
@@ -45,7 +45,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 022:
 
 - **Summary:** Where the week went, as text a coach can read
-- **Status:** implemented in [06a20b0](https://github.com/idvorkin/context-grabber/commit/06a20b0), [ff18ef3](https://github.com/idvorkin/context-grabber/commit/ff18ef3), [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `clustering_v2.test.ts` (real fixture) and on the phone. Supersedes CC-5.
+- **Status:** implemented in [06a20b0](https://github.com/idvorkin/context-grabber/commit/06a20b0), [ff18ef3](https://github.com/idvorkin/context-grabber/commit/ff18ef3), [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `clustering_v2.test.ts` (real fixture) and on the phone. Supersedes CC-5; native app: not yet — `places` is null until the native Places writes its weekly and recent summaries (context-grabber-3ss.13).
 
 #### Use Case:
 - **As** someone whose "home by 6pm" goal Larry checks
@@ -63,7 +63,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 023:
 
 - **Summary:** Roles lead the export — who I have been being, before the numbers
-- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `roles.test.ts`, `share.test.ts` and on the phone
+- **Status:** implemented in [54861c5](https://github.com/idvorkin/context-grabber/commit/54861c5); verified by `roles.test.ts`, `share.test.ts` and on the phone; native app: not yet — `roles` is null until roles move (context-grabber-3ss.18).
 
 #### Use Case:
 - **As** the eulogy version of me
@@ -82,7 +82,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 024:
 
 - **Summary:** The mobility work I logged after training rides along
-- **Status:** implemented in [dc6546e](https://github.com/idvorkin/context-grabber/commit/dc6546e); verified by `accessoryLog.test.ts`, `share.test.ts` and on the phone
+- **Status:** implemented in [dc6546e](https://github.com/idvorkin/context-grabber/commit/dc6546e); verified by `accessoryLog.test.ts`, `share.test.ts` and on the phone; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store), from the native accessory log; the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone who does the McGill Big 3 but never mentions it
@@ -100,7 +100,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 025:
 
 - **Summary:** Sleep hours in the export are real sleep, noon to noon
-- **Status:** implemented in [14e81d0](https://github.com/idvorkin/context-grabber/commit/14e81d0), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9); verified by `health.test.ts`, `sleep.test.ts` and on the phone. Supersedes CC-7.
+- **Status:** implemented in [14e81d0](https://github.com/idvorkin/context-grabber/commit/14e81d0), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9); verified by `health.test.ts`, `sleep.test.ts` and on the phone. Supersedes CC-7; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 - **Issues:** [#11](https://github.com/idvorkin/context-grabber/issues/11)
 
 #### Use Case:
@@ -119,7 +119,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 026:
 
 - **Summary:** Meditation and exercise per day, with the zeros visible
-- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4), [7b52df6](https://github.com/idvorkin/context-grabber/commit/7b52df6), [238cd20](https://github.com/idvorkin/context-grabber/commit/238cd20); verified by `health.test.ts`, `weekly.test.ts` and on the phone. Supersedes CC-2 and CC-3.
+- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4), [7b52df6](https://github.com/idvorkin/context-grabber/commit/7b52df6), [238cd20](https://github.com/idvorkin/context-grabber/commit/238cd20); verified by `health.test.ts`, `weekly.test.ts` and on the phone. Supersedes CC-2 and CC-3; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone whose practice stopping is the earliest stress signal
@@ -137,7 +137,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 027:
 
 - **Summary:** Weight in pounds, HRV and resting heart rate every day
-- **Status:** implemented in [7b52df6](https://github.com/idvorkin/context-grabber/commit/7b52df6), [b3f5146](https://github.com/idvorkin/context-grabber/commit/b3f5146); verified by `share.test.ts` and on the phone. Supersedes CC-4 and closes Larry's "HRV always null" gap from `docs/user-needs.md`.
+- **Status:** implemented in [7b52df6](https://github.com/idvorkin/context-grabber/commit/7b52df6), [b3f5146](https://github.com/idvorkin/context-grabber/commit/b3f5146); verified by `share.test.ts` and on the phone. Supersedes CC-4 and closes Larry's "HRV always null" gap from `docs/user-needs.md`; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** someone tracking toward 180 lb with a coach who reads pounds
@@ -155,7 +155,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 028:
 
 - **Summary:** Today's workouts in the headline, not just minutes
-- **Status:** implemented in [b3f5146](https://github.com/idvorkin/context-grabber/commit/b3f5146), [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `share.test.ts` and on the phone. The per-set breakdown from the workout-analysis spec is not in the summary export (the analysis screen's own Share JSON carries it).
+- **Status:** implemented in [b3f5146](https://github.com/idvorkin/context-grabber/commit/b3f5146), [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59); verified by `share.test.ts` and on the phone. The per-set breakdown from the workout-analysis spec is not in the summary export (the analysis screen's own Share JSON carries it); native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); the phone still to be checked by Igor.
 - **Issues:** [#34](https://github.com/idvorkin/context-grabber/issues/34)
 
 #### Use Case:
@@ -174,7 +174,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 029:
 
 - **Summary:** The raw share, for a machine
-- **Status:** implemented in [381d143](https://github.com/idvorkin/context-grabber/commit/381d143), [c6c0106](https://github.com/idvorkin/context-grabber/commit/c6c0106), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9); verified by `snapshot.test.ts` and on the phone
+- **Status:** implemented in [381d143](https://github.com/idvorkin/context-grabber/commit/381d143), [c6c0106](https://github.com/idvorkin/context-grabber/commit/c6c0106), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9); verified by `snapshot.test.ts` and on the phone; native app: [258a66b](https://github.com/idvorkin/context-grabber/commit/258a66b), [cb8e213](https://github.com/idvorkin/context-grabber/commit/cb8e213), byte-identical to the TypeScript export: verified by `just native-test` (`MirrorFixtureTests`) and `just native-test-sim` (fixture and the simulator's Health store); `location` and `locationClusters` are null until Places moves (step 5); the phone still to be checked by Igor.
 
 #### Use Case:
 - **As** an engineer debugging a number Larry questioned
@@ -192,7 +192,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 030:
 
 - **Summary:** Copy my current coordinates, fresh, in one tap
-- **Status:** implemented in [7d1b64d](https://github.com/idvorkin/context-grabber/commit/7d1b64d), [0e85a51](https://github.com/idvorkin/context-grabber/commit/0e85a51), [863631b](https://github.com/idvorkin/context-grabber/commit/863631b), [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0); verified on the phone (issues closed after use)
+- **Status:** implemented in [7d1b64d](https://github.com/idvorkin/context-grabber/commit/7d1b64d), [0e85a51](https://github.com/idvorkin/context-grabber/commit/0e85a51), [863631b](https://github.com/idvorkin/context-grabber/commit/863631b), [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0); verified on the phone (issues closed after use); native app: with Places (step 5).
 - **Issues:** [#26](https://github.com/idvorkin/context-grabber/issues/26), [#14](https://github.com/idvorkin/context-grabber/issues/14)
 
 #### Use Case:
@@ -211,7 +211,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 031:
 
 - **Summary:** Copy the daily places breakdown as plain text
-- **Status:** implemented in [5f00862](https://github.com/idvorkin/context-grabber/commit/5f00862); verified by `places_summary.test.ts` and on the phone
+- **Status:** implemented in [5f00862](https://github.com/idvorkin/context-grabber/commit/5f00862); verified by `places_summary.test.ts` and on the phone; native app: with Places (step 5).
 
 #### Use Case:
 - **As** someone answering "where did the week go?" in a chat
@@ -229,7 +229,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 032:
 
 - **Summary:** Copy the full location detail as JSON when I want the machine shape
-- **Status:** implemented in [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59), [5f00862](https://github.com/idvorkin/context-grabber/commit/5f00862); verified on the phone
+- **Status:** implemented in [22bbf59](https://github.com/idvorkin/context-grabber/commit/22bbf59), [5f00862](https://github.com/idvorkin/context-grabber/commit/5f00862); verified on the phone; native app: with Places (step 5).
 
 #### Use Case:
 - **As** someone running my own analysis
