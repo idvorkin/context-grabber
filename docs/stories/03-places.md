@@ -9,7 +9,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 040:
 
 - **Summary:** Opt in to background tracking once, then forget it
-- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4), [97b33b0](https://github.com/idvorkin/context-grabber/commit/97b33b0); verified by `location.test.ts`, `db.test.ts` and on the phone (months of trail)
+- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4), [97b33b0](https://github.com/idvorkin/context-grabber/commit/97b33b0); verified by `location.test.ts`, `db.test.ts` and on the phone (months of trail); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified on the simulator (`just native-test-sim`: tracking on with Always, points stored as the simulator moves, recording resumed at launch) and `LocationStoreTests` (settings keys); background points with the app closed and the Always prompt flow are the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone who wants the location story captured implicitly
@@ -27,7 +27,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 041:
 
 - **Summary:** Keep only the last N days of trail
-- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4); verified by `location.test.ts` and on the phone
+- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4); verified by `location.test.ts` and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `GeoTests`, `LocationStoreTests` and on the simulator (`just native-test-sim`: retention 7 pruned at once); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone who does not want a permanent location log on the phone
@@ -45,7 +45,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 042:
 
 - **Summary:** A precise fix on every foreground
-- **Status:** implemented in [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0); verified on the phone (issue closed after use)
+- **Status:** implemented in [ae0c1d0](https://github.com/idvorkin/context-grabber/commit/ae0c1d0); verified on the phone (issue closed after use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), a precise fix each foreground (`location_fix`), seen on the simulator; You moving to it is the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#32](https://github.com/idvorkin/context-grabber/issues/32)
 
 #### Use Case:
@@ -64,7 +64,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 043:
 
 - **Summary:** Breadcrumbs become stays: where I was, from when to when
-- **Status:** implemented in [88c1bbd](https://github.com/idvorkin/context-grabber/commit/88c1bbd), [ff18ef3](https://github.com/idvorkin/context-grabber/commit/ff18ef3); verified by `clustering_v2.test.ts` against the 36 000-point real fixture and on the phone (daily use). The v1 grid clustering ([08be4fd](https://github.com/idvorkin/context-grabber/commit/08be4fd)) is kept only for the Raw share.
+- **Status:** implemented in [88c1bbd](https://github.com/idvorkin/context-grabber/commit/88c1bbd), [ff18ef3](https://github.com/idvorkin/context-grabber/commit/ff18ef3); verified by `clustering_v2.test.ts` against the 36 000-point real fixture and on the phone (daily use). The v1 grid clustering ([08be4fd](https://github.com/idvorkin/context-grabber/commit/08be4fd)) is kept only for the Raw share.; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), verified by `StayClusteringTests` and `PlacesFixtureTests` (the 36 601-point fixture gives the TypeScript's 34 stays exactly) and on the simulator (`places_open`: 34 stays after import); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#9](https://github.com/idvorkin/context-grabber/issues/9)
 
 #### Use Case:
@@ -83,7 +83,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 044:
 
 - **Summary:** A silent night at home is one stay, not two with a hole
-- **Status:** implemented in [ebbd97c](https://github.com/idvorkin/context-grabber/commit/ebbd97c); verified by `clustering_v2.test.ts` (Thursday in the real fixture: one Home stay across a 5 h 23 m gap) and on the phone
+- **Status:** implemented in [ebbd97c](https://github.com/idvorkin/context-grabber/commit/ebbd97c); verified by `clustering_v2.test.ts` (Thursday in the real fixture: one Home stay across a 5 h 23 m gap) and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), verified by `StayClusteringTests` and `PlacesFixtureTests` (same stays as the TypeScript on the real fixture); the overnight on the phone is the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone whose phone stops reporting while it charges on the nightstand
@@ -101,7 +101,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 045:
 
 - **Summary:** My places by name: Home, Office, Gym
-- **Status:** implemented in [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [363c94f](https://github.com/idvorkin/context-grabber/commit/363c94f); verified by `places.test.ts` and on the phone. Supersedes DB-5 in `docs/user-needs.md`.
+- **Status:** implemented in [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [363c94f](https://github.com/idvorkin/context-grabber/commit/363c94f); verified by `places.test.ts` and on the phone. Supersedes DB-5 in `docs/user-needs.md`.; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `KnownPlacesTests` and `LocationStoreTests`; Use current at a real place is the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#12](https://github.com/idvorkin/context-grabber/issues/12), [#14](https://github.com/idvorkin/context-grabber/issues/14)
 
 #### Use Case:
@@ -120,7 +120,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 046:
 
 - **Summary:** Every day's hours add up: stays, transit, no data, on a 24-hour strip
-- **Status:** implemented in [16388d2](https://github.com/idvorkin/context-grabber/commit/16388d2), [75ec6f5](https://github.com/idvorkin/context-grabber/commit/75ec6f5), [16f1be3](https://github.com/idvorkin/context-grabber/commit/16f1be3), [e2e6a88](https://github.com/idvorkin/context-grabber/commit/e2e6a88), [46d38e5](https://github.com/idvorkin/context-grabber/commit/46d38e5); verified by `places_summary.test.ts` and on the phone (issue closed after use)
+- **Status:** implemented in [16388d2](https://github.com/idvorkin/context-grabber/commit/16388d2), [75ec6f5](https://github.com/idvorkin/context-grabber/commit/75ec6f5), [16f1be3](https://github.com/idvorkin/context-grabber/commit/16f1be3), [e2e6a88](https://github.com/idvorkin/context-grabber/commit/e2e6a88), [46d38e5](https://github.com/idvorkin/context-grabber/commit/46d38e5); verified by `places_summary.test.ts` and on the phone (issue closed after use); native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `PlacesDailyTests` and `PlacesFixtureTests` (all 14 day cards and strips equal the TypeScript's) and a simulator screenshot; days now follow the calendar (23/25 h when the clocks change); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#40](https://github.com/idvorkin/context-grabber/issues/40)
 
 #### Use Case:
@@ -139,7 +139,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 047:
 
 - **Summary:** Name an unknown place from the breakdown, or grow the known place it belongs to
-- **Status:** implemented in [5d920bc](https://github.com/idvorkin/context-grabber/commit/5d920bc), [75ec6f5](https://github.com/idvorkin/context-grabber/commit/75ec6f5), [34f7e70](https://github.com/idvorkin/context-grabber/commit/34f7e70); verified by `places.test.ts` (the merge circle) and `places_summary.test.ts`, checked against the real fixture (the 500 m gate catches "Place 2", 160 m from Milstead), and on the phone
+- **Status:** implemented in [5d920bc](https://github.com/idvorkin/context-grabber/commit/5d920bc), [75ec6f5](https://github.com/idvorkin/context-grabber/commit/75ec6f5), [34f7e70](https://github.com/idvorkin/context-grabber/commit/34f7e70); verified by `places.test.ts` (the merge circle) and `places_summary.test.ts`, checked against the real fixture (the 500 m gate catches "Place 2", 160 m from Milstead), and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `KnownPlacesTests` (the 500 m offer, the grown radius and shift); the card itself only built, the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone looking at "Place 3" in amber for the third day running
@@ -157,7 +157,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 048:
 
 - **Summary:** A real map with my places on it, each in its own colour
-- **Status:** implemented in [4cb8641](https://github.com/idvorkin/context-grabber/commit/4cb8641), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [dc781bb](https://github.com/idvorkin/context-grabber/commit/dc781bb), [48c9372](https://github.com/idvorkin/context-grabber/commit/48c9372); verified by `StylizedMap.test.tsx` and on the phone (daily use)
+- **Status:** implemented in [4cb8641](https://github.com/idvorkin/context-grabber/commit/4cb8641), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [dc781bb](https://github.com/idvorkin/context-grabber/commit/dc781bb), [48c9372](https://github.com/idvorkin/context-grabber/commit/48c9372); verified by `StylizedMap.test.tsx` and on the phone (daily use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), MapKit; seen in simulator screenshots (pins in their bar colours, icons, You); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone who recognises streets faster than coordinates
@@ -175,7 +175,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 049:
 
 - **Summary:** Today's path follows where I actually went
-- **Status:** implemented in [067a04e](https://github.com/idvorkin/context-grabber/commit/067a04e), [c7b768c](https://github.com/idvorkin/context-grabber/commit/c7b768c); verified by `location.test.ts` (route thinning) and on the phone
+- **Status:** implemented in [067a04e](https://github.com/idvorkin/context-grabber/commit/067a04e), [c7b768c](https://github.com/idvorkin/context-grabber/commit/c7b768c); verified by `location.test.ts` (route thinning) and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `TodaysRouteTests` and a simulator screenshot of a simulated drive; the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#42](https://github.com/idvorkin/context-grabber/issues/42)
 
 #### Use Case:
@@ -194,7 +194,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 050:
 
 - **Summary:** Find me, and go fullscreen
-- **Status:** implemented in [b11dafc](https://github.com/idvorkin/context-grabber/commit/b11dafc), [d190517](https://github.com/idvorkin/context-grabber/commit/d190517); verified by `StylizedMap.test.tsx` and on the phone (issues closed after use)
+- **Status:** implemented in [b11dafc](https://github.com/idvorkin/context-grabber/commit/b11dafc), [d190517](https://github.com/idvorkin/context-grabber/commit/d190517); verified by `StylizedMap.test.tsx` and on the phone (issues closed after use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), seen in a simulator screenshot of the full-screen map (hook `GRABBER_PLACES=map`); the taps and the swipe down are the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#50](https://github.com/idvorkin/context-grabber/issues/50), [#51](https://github.com/idvorkin/context-grabber/issues/51)
 
 #### Use Case:
@@ -213,7 +213,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 051:
 
 - **Summary:** Copy my coordinates from the map itself
-- **Status:** implemented in [fb33625](https://github.com/idvorkin/context-grabber/commit/fb33625), [c95247c](https://github.com/idvorkin/context-grabber/commit/c95247c), [d190517](https://github.com/idvorkin/context-grabber/commit/d190517); verified on the phone
+- **Status:** implemented in [fb33625](https://github.com/idvorkin/context-grabber/commit/fb33625), [c95247c](https://github.com/idvorkin/context-grabber/commit/c95247c), [d190517](https://github.com/idvorkin/context-grabber/commit/d190517); verified on the phone; native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), the copy control on the map (`PlaceStyleTests` for the text); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone sending "meet me here"
@@ -231,7 +231,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 052:
 
 - **Summary:** Export the whole database for my own tools
-- **Status:** implemented in [98c26d2](https://github.com/idvorkin/context-grabber/commit/98c26d2), [95521bf](https://github.com/idvorkin/context-grabber/commit/95521bf), [363c94f](https://github.com/idvorkin/context-grabber/commit/363c94f); verified by the Maestro flow `export-db.yaml` and on the phone (the test fixture came out of it). Supersedes DB-4.
+- **Status:** implemented in [98c26d2](https://github.com/idvorkin/context-grabber/commit/98c26d2), [95521bf](https://github.com/idvorkin/context-grabber/commit/95521bf), [363c94f](https://github.com/idvorkin/context-grabber/commit/363c94f); verified by the Maestro flow `export-db.yaml` and on the phone (the test fixture came out of it). Supersedes DB-4.; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `LocationStoreTests` and on the simulator (`just native-test-sim`: the exported file holds all 36 601 points and 4 places); the share sheet to the Mac is the phone still to be checked by Igor (bead context-grabber-3ss.12)
 - **Issues:** [#18](https://github.com/idvorkin/context-grabber/issues/18)
 
 #### Use Case:
@@ -250,7 +250,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 053:
 
 - **Summary:** The Location sheet shows structure, not a debug dump
-- **Status:** implemented in [432ef9c](https://github.com/idvorkin/context-grabber/commit/432ef9c), [46d38e5](https://github.com/idvorkin/context-grabber/commit/46d38e5); verified on the phone
+- **Status:** implemented in [432ef9c](https://github.com/idvorkin/context-grabber/commit/432ef9c), [46d38e5](https://github.com/idvorkin/context-grabber/commit/46d38e5); verified on the phone; native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), one Places screen instead of a tab and a sheet: the map's copy control and Copy daily summary; Copy Location Details waits for Grab Context (bead context-grabber-3ss.13); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone opening the sheet for the copy buttons
@@ -268,7 +268,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 054:
 
 - **Summary:** Today's path on the home screen
-- **Status:** not implemented; asks: [#45](https://github.com/idvorkin/context-grabber/issues/45), [#42](https://github.com/idvorkin/context-grabber/issues/42). Needs a native build (a MapKit widget).
+- **Status:** not implemented; asks: [#45](https://github.com/idvorkin/context-grabber/issues/45), [#42](https://github.com/idvorkin/context-grabber/issues/42). Needs a native build (a MapKit widget).; native app: not yet — a widget, so it waits for the widgets step (bead context-grabber-3ss.14)
 
 #### Use Case:
 - **As** someone glancing at the lock screen
@@ -286,7 +286,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 055:
 
 - **Summary:** Bring my trail and places into the native app
-- **Status:** not implemented
+- **Status:** implemented in [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f); verified by `PlacesFixtureTests` (the real export imports 36 601 points and 4 places, a second time adds none), `LocationStoreTests` (a same-named native place is kept; a non-database is refused) and on the simulator (`just native-test-sim`: the hook imports the fixture twice); sharing the file into the app from Context Grabber or Files is the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone moving from Context Grabber to Grabber Native, which keeps its own trail until the cutover
