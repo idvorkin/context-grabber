@@ -11,7 +11,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 160:
 
 - **Summary:** Follow a circle through a box-breathing session
-- **Status:** implemented in COMMIT; verified by host tests (`BreathPlanTests`, `BreathRunTests`) and on the simulator (`just native-test-sim`: every step on its second); not yet on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathPlanTests`, `BreathRunTests`) and on the simulator (`just native-test-sim`: every step on its second); not yet on the phone
 
 #### Use Case:
 - **As someone** who wants to settle before a hard conversation
@@ -29,7 +29,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 161:
 
 - **Summary:** Choose the breath and the session, and see where it will end
-- **Status:** implemented in COMMIT; verified by host tests (`BreathPlanTests`); not yet on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathPlanTests`); not yet on the phone
 
 #### Use Case:
 - **As someone** with five minutes, or two
@@ -47,7 +47,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 162:
 
 - **Summary:** Know how long is left, and pause without losing my place
-- **Status:** implemented in COMMIT; verified by host tests (`BreathRunTests`: pause freezes, resume continues mid-step, the session's length is unchanged); not yet on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathRunTests`: pause freezes, resume continues mid-step, the session's length is unchanged); not yet on the phone
 
 #### Use Case:
 - **As someone** interrupted mid-breath
@@ -69,7 +69,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 163:
 
 - **Summary:** See the session finished
-- **Status:** implemented in COMMIT; verified by host tests (`BreathRunTests`: finishes once, on time, 30 cycles without drift) and on the simulator (`just native-test-sim`: `breath_finished` on its second); not yet on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathRunTests`: finishes once, on time, 30 cycles without drift) and on the simulator (`just native-test-sim`: `breath_finished` on its second); not yet on the phone
 
 #### Use Case:
 - **As someone** breathing with my attention elsewhere
@@ -87,7 +87,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 164:
 
 - **Summary:** Breathe with my eyes closed, by tone
-- **Status:** implemented in COMMIT; verified by host tests (`BreathToneTests`) and on the simulator (`just native-test-sim`: a `breath_cue` per step, each played); not yet heard on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c); verified by host tests (`BreathToneTests`) and on the simulator (`just native-test-sim`: a `breath_cue` per step, each played); not yet heard on the phone
 
 #### Use Case:
 - **As someone** who settles faster with eyes shut
@@ -105,7 +105,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 165:
 
 - **Summary:** Be talked through it by a calm voice
-- **Status:** implemented in COMMIT with the Mac's Australian voice (Karen) as the bundled clips, since no ElevenLabs female Australian voice has been chosen; verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone
+- **Status:** implemented in [a197e0c](https://github.com/idvorkin/context-grabber/commit/a197e0c) with the Mac's Australian voice (Karen) as the bundled clips, since no ElevenLabs female Australian voice has been chosen; verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone
 
 #### Use Case:
 - **As someone** who finds tones clinical
