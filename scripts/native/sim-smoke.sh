@@ -135,15 +135,6 @@ if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed";
 voices=$(jq -sr '[.[] | select(.type=="timer_cue") | .voice] | unique | join(",")' "$f")
 if [ "$voices" = "adam" ]; then ok "voice: every cue by adam, the default"; else bad "voice: cues by '$voices'"; fi
 
-# Story 182: a launch hook picks the Australian woman for this visit; her first cue plays from her own file.
-SIMCTL_CHILD_GRABBER_COUNT_VOICE=aussie SIMCTL_CHILD_GRABBER_TIMER="10,10,2" relaunch
-wait_for timer_cue 20 || echo "      (timed out waiting for timer_cue)"
-f=$(newest_log)
-first=$(jq -sr '[.[] | select(.type=="timer_cue")][0] | "\(.cue) \(.voice) \(.ok)"' "$f")
-errors=$(jq -c 'select(.type=="error")' "$f")
-if [ "$first" = "three aussie true" ] && [ -z "$errors" ]; then ok "voice: the hook's aussie says three"
-else bad "voice: first cue '$first', errors '$errors'"; fi
-
 # Story 106: the Live Activity is requested with the ready count, pushed once at each phase (not every second),
 # and ended on DONE!, each accepted. A card an earlier launch left behind is ended at launch (reason leftover) and
 # is not part of this workout. With Live Activities off, one `unavailable` line per session is what the app must say instead.
@@ -153,6 +144,15 @@ if [ "$la" = "start:GET READY update:WORK update:REST update:WORK end:DONE!" ]; 
   ok "live activity: started, pushed at 3 phases, ended on DONE!"
 elif [ "$la" = "unavailable:" ]; then ok "live activity: Live Activities are off on this simulator (logged once per session)"
 else bad "live activity: '$la'"; fi
+
+# Story 182: a launch hook picks the Australian woman for this visit; her first cue plays from her own file.
+SIMCTL_CHILD_GRABBER_COUNT_VOICE=aussie SIMCTL_CHILD_GRABBER_TIMER="10,10,2" relaunch
+wait_for timer_cue 20 || echo "      (timed out waiting for timer_cue)"
+f=$(newest_log)
+first=$(jq -sr '[.[] | select(.type=="timer_cue")][0] | "\(.cue) \(.voice) \(.ok)"' "$f")
+errors=$(jq -c 'select(.type=="error")' "$f")
+if [ "$first" = "three aussie true" ] && [ -z "$errors" ]; then ok "voice: the hook's aussie says three"
+else bad "voice: first cue '$first', errors '$errors'"; fi
 
 # Stories 160, 163, 165: two cycles of 2 s breaths with the voice. Every step is noticed on its second, each
 # phrase is a bundled file that played (none fell back to the phone's voice), and the screen lock is given back.
