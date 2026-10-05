@@ -81,16 +81,14 @@ final class GymTimerModel: ObservableObject {
     guard !locked, Self.isPreset(id) else { return }
     presetId = id
     database.setSetting(Self.chosenKey, id)
-    engine.setProfile(profile)
-    timer = engine.state
+    applyProfile()
   }
 
   func changeCustom(_ next: CustomPreset) {
     guard !locked else { return }
     custom = next.normalized
     database.setSetting(Self.presetKey, custom.encoded)
-    engine.setProfile(profile)
-    timer = engine.state
+    applyProfile()
   }
 
   /// For a link or a launch hook: a profile that is not on a chip, chosen as Custom without being remembered.
@@ -98,8 +96,17 @@ final class GymTimerModel: ObservableObject {
     guard !locked else { return }
     custom = preset.normalized
     presetId = CustomPreset.id
-    engine.setProfile(profile)
-    timer = engine.state
+    applyProfile()
+  }
+
+  /// The chosen preset onto the face. After a finish that is a RESET: donE goes and the new preset stands ready.
+  private func applyProfile() {
+    if timer.phase == .done {
+      resetTimer()
+    } else {
+      engine.setProfile(profile)
+      timer = engine.state
+    }
   }
 
   func toggleTimer() {

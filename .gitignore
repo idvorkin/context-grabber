@@ -80,3 +80,6 @@ beads_report_*.md
 
 # `just deploy` records the commit the phone carries; `just ota` checks the native surface against it
 .native-build-sha
+
+# The iPhone's hardware UDID for the native recipes (scripts/native/phone-udid.sh); the repo is public
+scripts/native/phone-udid.local

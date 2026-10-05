@@ -37,8 +37,9 @@ test: generate-version
 # --- The native app (native/, docs/superpowers/specs/2026-10-04-swift-native-app-design.md) ---
 
 native_sim := env("SIM", "iPhone 17")
-# The phone's hardware UDID lives in scripts/native/phone-udid, read by the scripts too; DEVICE=<udid> overrides it.
-native_device := env("DEVICE", `cat scripts/native/phone-udid`)
+# The phone's hardware UDID is DEVICE=<udid>, else the untracked scripts/native/phone-udid.local (the repo is
+# public, so it is not committed); scripts/native/phone-udid.sh reads it for the recipes and the scripts.
+native_device := `scripts/native/phone-udid.sh 2>/dev/null || true`
 native_bundle := "com.idvorkin.grabbernative"
 native_sim_app := "native/Build/Build/Products/Debug-iphonesimulator/GrabberNative.app"
 native_device_app := "native/Build/Build/Products/Debug-iphoneos/GrabberNative.app"
@@ -69,7 +70,11 @@ native-build-sim: native-project
 native-test-sim: native-build-sim
     bash scripts/native/sim-smoke.sh "{{native_sim}}" {{native_bundle}} {{native_sim_app}}
 
-native-build-device: native-project
+# Stops a phone recipe with how to name the phone when it has no id
+_phone:
+    @scripts/native/phone-udid.sh >/dev/null
+
+native-build-device: _phone native-project
     #!/usr/bin/env bash
     set -uo pipefail
     out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
@@ -85,7 +90,7 @@ native-run-device: native-build-device
     xcrun devicectl device process launch --device {{native_device}} {{native_bundle}}
 
 # Copy the native app's session logs, bug reports and crash files from the iPhone to ~/tmp/agent/grabber-logs
-pull-logs:
+pull-logs: _phone
     mkdir -p {{native_logs}}
     xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
       --domain-identifier {{native_bundle}} --source Documents/logs --destination {{native_logs}}/logs
@@ -110,7 +115,7 @@ log-summary file:
     @jq -c . {{file}}
 
 # Quick check for unfiled bug reports on the phone (exit 1 when there are any)
-bugs-check:
+bugs-check: _phone
     scripts/native/bugs-check.sh {{native_device}}
 
 # File each new shake report from the pulled bugs.jsonl as a GitHub issue (skips ones already filed)

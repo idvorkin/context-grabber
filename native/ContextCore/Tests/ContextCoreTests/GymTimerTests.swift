@@ -191,6 +191,19 @@ final class TimerEngineTests: XCTestCase {
     XCTAssertEqual(engine.state.totalRounds, 5)
   }
 
+  func testAPresetChosenAfterTheFinishGoesBackToReady() {
+    var engine = TimerEngine(profile: profile)
+    _ = engine.start(now: 0)
+    _ = engine.tick(now: 115)
+    XCTAssertEqual(engine.state.phase, .done)
+    engine.setProfile(TimerProfile(name: "other", workTime: 60, restTime: 10, rounds: 5, prepTime: 5))
+    XCTAssertEqual(engine.state, TimerState(totalRounds: 5))
+    XCTAssertEqual(engine.tick(now: 116), [])
+    XCTAssertEqual(engine.state.phase, .idle)
+    XCTAssertEqual(engine.start(now: 200), [.phaseChanged(from: .idle, to: .prep, round: 1)])
+    XCTAssertEqual(engine.state.timeLeft, 5)
+  }
+
   func testStartAfterDoneRunsAgainFromTheTop() {
     var engine = TimerEngine(profile: profile)
     _ = engine.start(now: 0)

@@ -105,6 +105,9 @@ The timer does what stories 100–116 say, with these differences while the two 
 - **A phone call mid-workout**: when the call ends the timer takes its audio back and keeps speaking.
 - **With no rest, every round is still called.** A Custom preset with Rest 0:00 says *go* at the start of each
   round. The current app counts three, two, one and then says nothing.
+- **Choosing a preset after the finish goes back to ready.** With *donE* on the face, a tap on a chip or a
+  move of a Custom slider clears it and shows the new preset's time and *Round 1 of N*, as RESET would. The
+  current app keeps the finished face until RESET.
 - **Coming back to the app never costs a cue.** What fell while the app was away is not replayed, and what
   falls in the second Igor comes back is still said.
 - **The lock-screen countdown (106) and one-tap starts from widgets and links (114) wait for step 7**, when the

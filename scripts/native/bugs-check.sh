@@ -2,7 +2,7 @@
 # Quick dirty check: copies only bugs.jsonl from the phone and counts reports not yet filed as issues.
 # Exit 1 when there are new reports (so a loop or a prompt can tell at a glance), 0 when clean.
 set -euo pipefail
-DEVICE=${1:-${DEVICE:-$(cat "$(dirname "$0")/phone-udid")}}
+DEVICE=${1:-$("$(dirname "$0")/phone-udid.sh")}
 REPO=${REPO:-idvorkin/context-grabber}
 OUT=$HOME/tmp/agent/grabber-logs/bugs.jsonl
 mkdir -p "$(dirname "$OUT")"

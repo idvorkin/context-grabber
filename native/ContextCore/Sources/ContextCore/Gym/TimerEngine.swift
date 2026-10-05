@@ -117,11 +117,12 @@ public struct TimerEngine {
   /// True from START until RESET or the finish: a run is in progress or stopped mid-way.
   public var isEngaged: Bool { state.isRunning || state.isPaused }
 
-  /// A new preset. Ignored while a run is in progress: the chips and sliders are inert then.
+  /// A new preset. Ignored while a run is in progress: the chips and sliders are inert then. After the finish
+  /// it clears the done face, as RESET does.
   public mutating func setProfile(_ next: TimerProfile) {
     guard !isEngaged else { return }
     profile = next
-    if state.phase == .idle { state.totalRounds = next.rounds }
+    reset()
   }
 
   /// START, or RESUME after a stop. START itself says nothing: the ready count's three, two, one leads to the

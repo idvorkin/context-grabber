@@ -81,7 +81,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 104:
 
 - **Summary:** Hear the cues in my own voice: three, two, one, go — rest — done
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `timer.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor; each boundary is called in the second it falls by whichever look sees it first, and one found later is not replayed: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`)
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `timer.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor; each boundary is called in the second it falls by whichever look sees it first, and one found later is not replayed: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`); the clock keeps ticking while a finger drags the lap list or the accessory sheet, so no cue is lost to a scroll: [6fed157](https://github.com/idvorkin/context-grabber/commit/6fed157), verified by build only (the simulator smoke does not scroll), the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter mid-set with my eyes on the bell, not the phone
@@ -137,7 +137,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 107:
 
 - **Summary:** The timer keeps time and keeps speaking with the screen off
-- **Status:** implemented in [08c9bda](https://github.com/idvorkin/context-grabber/commit/08c9bda), [243ffa0](https://github.com/idvorkin/context-grabber/commit/243ffa0); verified by `timer.test.ts` (wall-clock derivation) and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor; a cue due in the second the app comes back is still said, what fell while it was away is not replayed: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`)
+- **Status:** implemented in [08c9bda](https://github.com/idvorkin/context-grabber/commit/08c9bda), [243ffa0](https://github.com/idvorkin/context-grabber/commit/243ffa0); verified by `timer.test.ts` (wall-clock derivation) and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor; a cue due in the second the app comes back is still said, what fell while it was away is not replayed: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`); the clock keeps ticking while a finger drags the lap list or the accessory sheet, so no cue is lost to a scroll: [6fed157](https://github.com/idvorkin/context-grabber/commit/6fed157), verified by build only (the simulator smoke does not scroll), the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter who puts the phone face down for a whole workout
@@ -326,9 +326,9 @@ Part of the [user stories](README.md); persona and format are described there.
 
 #### Acceptance Criteria:
 - **Scenario:** A chip tapped mid-round
-- **Given:** 1 MIN is running in round 2 with 0:42 left
-- **When:** I tap the 2 MIN chip, then tap STOP and move the Custom sliders
-- **Then:** 1 MIN stays the chosen chip, the clock and *Round 2 of 5* are unchanged, the sliders do not move, and after RESET the chips and sliders answer again
+- **Given:** CUSTOM is the chosen chip with Work 1:00 and 5 rounds, and it is running in round 2 with 0:42 left
+- **When:** I tap the 2 MIN chip, try to drag the Work slider, then tap STOP and try the slider and the chip again
+- **Then:** CUSTOM stays the chosen chip, Work still reads 1:00, the clock and *Round 2 of 5* are unchanged by the taps, and after RESET the chips and sliders answer again
 
 ---
 
@@ -365,3 +365,21 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** CUSTOM is chosen with Work 0:10, Rest 0:00 and 3 rounds
 - **When:** I tap START and let it run to the end
 - **Then:** I hear the ready count and *go*, then *three, two, one, go* into round 2 and again into round 3, then *three, two, one, done*, the face reads *Round n of 3* for each, and the session log has a `timer_phase` line for each new round
+
+---
+
+### User Story 120:
+
+- **Summary:** Choosing a preset after the finish goes back to ready
+- **Status:** native app only: verified by `just native-test` (`TimerEngineTests`), the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** lifter who finished one workout and wants a different one next
+- **I want to** tap a chip or move a Custom slider and see that preset ready on the face
+- **so that** the face never shows *donE* for a workout I am no longer looking at, and I do not have to tap RESET first
+
+#### Acceptance Criteria:
+- **Scenario:** A chip after the finish
+- **Given:** 30 SEC ran to the end and the face reads *donE*, 0:00 and *Round 6 of 6*
+- **When:** I tap the 1 MIN chip
+- **Then:** the face clears *donE* and shows 1:00 and *Round 1 of 5*, exactly as RESET followed by the tap would, the session log has a `timer_reset` line, and choosing CUSTOM and moving its Work slider after another finish does the same with the slider's time

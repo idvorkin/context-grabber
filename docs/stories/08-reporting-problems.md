@@ -65,7 +65,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 143:
 
 - **Summary:** A report becomes a GitHub issue once (technical)
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet; the issue names the screenshot's path on the Mac and uploads no picture: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by running the script's body against a sample report; a failed look at the existing issues stops the filing instead of filing everything again
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet; the issue names the screenshot's path on the Mac and uploads no picture: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by running the script's body against a sample report; a failed look at the existing issues stops the filing instead of filing everything again: [6fed157](https://github.com/idvorkin/context-grabber/commit/6fed157), verified by running the script against a `gh` that fails (it exits before filing)
 
 #### Use Case:
 - **As a** developer with the phone near the Mac
