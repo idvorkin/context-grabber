@@ -23,6 +23,11 @@ targets:
     platform: iOS
     sources:
       - App
+      # The Gym Timer's cues and keepalive loop, shared with the React Native app until the cutover.
+      - path: ../assets/audio/timer
+        excludes:
+          - "words/**"
+        buildPhase: resources
     dependencies:
       - package: ContextCore
     settings:

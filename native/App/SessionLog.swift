@@ -35,6 +35,11 @@ final class SessionLog: @unchecked Sendable {
       ])
   }
 
+  /// The log as written so far, every queued event included.
+  func snapshot() -> String {
+    queue.sync { (try? String(contentsOf: url, encoding: .utf8)) ?? "" }
+  }
+
   func event(_ type: String, _ fields: [String: Any] = [:]) {
     let t = Int(Date().timeIntervalSince(startedAt) * 1000)
     queue.async { [self] in

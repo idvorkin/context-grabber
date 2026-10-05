@@ -89,6 +89,29 @@ the Mac (the call).
 **Which build.** The Diagnostics screen shows the commit and branch the build was made from. The log's first
 line carries the same.
 
+## The Gym Timer in the native app (step 2)
+
+The timer does what stories 100–116 say, with these differences while the two apps live side by side:
+
+- **It opens from the native app's home screen**, full screen, and *Done* returns there.
+- **The timer's log is the session log.** What the audio session, the duck window, the cues and the phases did is
+  written there as events, so a shake attaches it. The *Log* button stays for the gym, where the Mac is not: it
+  copies this launch's timer events behind a build line.
+- **The preset chips are inert from START until RESET or the finish**, like the Custom sliders. In the current
+  app a chip tapped mid-run silently changes the workout under the running clock.
+- **A boundary is called within a tenth of a second of its true time.** The current app looks once a second, so
+  a cue can be most of a second late.
+- **A phone call mid-workout**: when the call ends the timer takes its audio back and keeps speaking.
+- **The lock-screen countdown (106) and one-tap starts from widgets and links (114) wait for step 7**, when the
+  widgets move. Until then the native timer keeps time and speaks with the screen locked, but shows nothing on
+  the lock screen.
+- **Sets, the Custom preset and the accessory log are the native app's own** until the cutover: what is logged
+  in one app is not in the other, and the native app's accessory work is not in Grab Context until step 4.
+
+Acceptance for step 2: each of stories 100–105, 107–113, 115 and 116 holds in the native app on the phone; a
+whole workout with music playing, the phone locked for a round, leaves a session log with every phase and cue
+at its true second and no `error`.
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

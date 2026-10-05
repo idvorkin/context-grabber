@@ -6,6 +6,10 @@
 	<string>$(GIT_SHA)</string>
 	<key>GitBranch</key>
 	<string>$(GIT_BRANCH)</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
