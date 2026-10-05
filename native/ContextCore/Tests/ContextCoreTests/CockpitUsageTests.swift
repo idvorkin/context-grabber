@@ -54,4 +54,27 @@ final class CockpitUsageTests: XCTestCase {
     XCTAssertEqual(strip.bars[1].text, "0%")
     XCTAssertEqual(strip.bars[1].left, 0)
   }
+
+  func testUnspentQuotaNearTheResetSaysToSpend() throws {
+    let reset = "2026-10-05T21:59:59-07:00"
+    let at = try XCTUnwrap(ISO8601DateFormatter().date(from: reset))
+    let usage = CockpitUsage(present: true, weeklyPct: 69, resetsIn: "13H", resets: reset, pacing: "On track")
+    XCTAssertEqual(UsageStrip(usage, now: at.addingTimeInterval(-13 * 3600))?.spendNote, "31% to spend")
+    // Two days out: not yet.
+    XCTAssertNil(UsageStrip(usage, now: at.addingTimeInterval(-48 * 3600))?.spendNote)
+    // Under 20% left: nothing worth nudging.
+    var low = usage
+    low.weeklyPct = 85
+    XCTAssertNil(UsageStrip(low, now: at.addingTimeInterval(-3600))?.spendNote)
+    // Past the reset (a stale reading's instant): nothing.
+    XCTAssertNil(UsageStrip(usage, now: at.addingTimeInterval(60))?.spendNote)
+    // A stale reading does not nudge.
+    var old = usage
+    old.stale = true
+    XCTAssertNil(UsageStrip(old, now: at.addingTimeInterval(-3600))?.spendNote)
+  }
+
+  func testServedReadingDecodesTheResetInstant() throws {
+    XCTAssertEqual(try CockpitUsage.decode(Data(served.utf8)).resets, "2026-10-05T21:59:59-07:00")
+  }
 }

@@ -30,6 +30,10 @@ struct UsageStripView: View {
             ProgressView().controlSize(.mini)
             Text("refreshing…")
           } else {
+            if let spend = strip.spendNote {
+              Text(spend).fontWeight(.semibold).foregroundStyle(.green)
+              Text("·").foregroundStyle(.secondary)
+            }
             if let note = strip.claudeNote {
               Text(note).foregroundStyle(strip.claudeStale ? .orange : .secondary)
             }

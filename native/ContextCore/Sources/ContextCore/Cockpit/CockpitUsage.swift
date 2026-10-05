@@ -16,6 +16,8 @@ public struct CockpitUsage: Decodable, Equatable, Sendable {
   public var fablePct: Double?
   public var modelName: String?
   public var resetsIn: String?
+  /// The weekly reset as an ISO instant with its offset ("2026-10-05T21:59:59-07:00").
+  public var resets: String?
   public var pacing: String?
   public var age: String?
   public var stale: Bool?
@@ -29,7 +31,7 @@ public struct CockpitUsage: Decodable, Equatable, Sendable {
   public var elStale: Bool?
 
   enum CodingKeys: String, CodingKey {
-    case present, pacing, age, stale, pending
+    case present, pacing, age, stale, pending, resets
     case weeklyPct = "weekly_pct", modelPct = "model_pct", fablePct = "fable_pct", modelName = "model_name"
     case resetsIn = "resets_in", elPct = "el_pct", elMinutesLeft = "el_minutes_left", elResetsIn = "el_resets_in"
     case elAge = "el_age", elStale = "el_stale"
@@ -37,12 +39,12 @@ public struct CockpitUsage: Decodable, Equatable, Sendable {
 
   public init(
     present: Bool? = nil, weeklyPct: Double? = nil, modelPct: Double? = nil, fablePct: Double? = nil,
-    modelName: String? = nil, resetsIn: String? = nil, pacing: String? = nil, age: String? = nil,
+    modelName: String? = nil, resetsIn: String? = nil, resets: String? = nil, pacing: String? = nil, age: String? = nil,
     stale: Bool? = nil, pending: Bool? = nil, elPct: Double? = nil, elMinutesLeft: Double? = nil,
     elResetsIn: String? = nil, elAge: String? = nil, elStale: Bool? = nil
   ) {
     self.present = present; self.weeklyPct = weeklyPct; self.modelPct = modelPct; self.fablePct = fablePct
-    self.modelName = modelName; self.resetsIn = resetsIn; self.pacing = pacing; self.age = age
+    self.modelName = modelName; self.resetsIn = resetsIn; self.resets = resets; self.pacing = pacing; self.age = age
     self.stale = stale; self.pending = pending; self.elPct = elPct; self.elMinutesLeft = elMinutesLeft
     self.elResetsIn = elResetsIn; self.elAge = elAge; self.elStale = elStale
   }
@@ -71,6 +73,12 @@ public struct UsageStrip: Equatable, Sendable {
   /// "voice resets in 23D10H", or its age when stale.
   public var voiceNote: String?
   public var voiceStale: Bool
+  /// "31% to spend" when the week resets within a day with more than 20% left: quota about to go to waste.
+  public var spendNote: String?
+
+  /// Under a day to the reset and more than this left: say it is there to spend.
+  public static let spendWithinHours = 24.0
+  public static let spendAbove = 0.2
 
   /// Under 20% left is low, under 10% critical.
   public static func level(left: Double) -> Level {
@@ -78,7 +86,7 @@ public struct UsageStrip: Equatable, Sendable {
   }
 
   /// Nil when there is nothing to draw: no Claude reading and no voice reading.
-  public init?(_ u: CockpitUsage) {
+  public init?(_ u: CockpitUsage, now: Date = Date()) {
     var bars: [Bar] = []
     func percentBar(_ label: String, used: Double) -> Bar {
       let left = max(0, min(1, 1 - used / 100))
@@ -102,6 +110,14 @@ public struct UsageStrip: Equatable, Sendable {
     self.bars = bars
 
     claudeStale = claudeDrawn && u.stale == true
+    spendNote = nil
+    if claudeDrawn, !claudeStale, let w = u.weeklyPct, let at = u.resets.flatMap(Self.instant) {
+      let left = max(0, min(1, 1 - w / 100))
+      let hours = at.timeIntervalSince(now) / 3600
+      if hours > 0, hours < Self.spendWithinHours, left > Self.spendAbove {
+        spendNote = "\(Int((left * 100).rounded()))% to spend"
+      }
+    }
     if !claudeDrawn {
       claudeNote = nil
     } else if claudeStale {
@@ -119,6 +135,14 @@ public struct UsageStrip: Equatable, Sendable {
     } else {
       voiceNote = u.elResetsIn.flatMap { $0.isEmpty ? nil : "voice resets in \($0)" }
     }
+  }
+
+  static func instant(_ s: String) -> Date? {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime]
+    if let d = f.date(from: s) { return d }
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f.date(from: s)
   }
 
   /// Hours with one decimal from an hour up ("3.8h"), whole minutes under it ("45m").

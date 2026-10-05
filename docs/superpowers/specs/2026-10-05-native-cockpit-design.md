@@ -76,6 +76,10 @@ what is **left**, at a glance, without opening the dashboard.
   Under them, one line: when the weekly allowance resets (*resets in 14H*), the Cockpit's pacing verdict (*On
   track*), and when the voice budget resets.
 - **Low is loud.** A bar with under 20% left is orange, under 10% red.
+- **Unspent is loud too** (Igor, 2026-10-05: *"If I have quota, I'm going to lose"*). When the week resets in under
+  24 hours and more than 20% of it is still left, the line under the bars leads with what is about to go to waste,
+  in green: *31% to spend · resets in 13H · On track*. The allowance does not roll over, so this is a nudge to use
+  it, not a warning.
 - **Old is loud.** If the Cockpit says a reading is stale, that half of the strip says how old it is (*2h old*) in
   orange rather than looking current. A reading the Cockpit does not have is not drawn — never shown as 0%.
 - **Fresh enough on its own.** It loads when the app opens or comes back to the front, and again every five minutes
@@ -99,6 +103,8 @@ Acceptance (strip):
 9. A bar under 20% left is orange; under 10% red; a stale reading says its age.
 10. Tapping the strip shows *refreshing…* until the Cockpit's new reading lands (about a minute), then shows it.
 11. Off the tailnet the home screen has no strip and no error; back on, the next foreground shows it.
+12. With 31% of the week left and the reset 13 hours away, the line reads *31% to spend · resets in 13H* with the
+    first part green; with 2 days to the reset, or 15% left, it does not say *to spend*.
 
 ## Non-goals
 

@@ -466,6 +466,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I open Grabber Native
 - **Then:** above the rows a strip shows Week, the model and Voice left as bars with their numbers, when the week resets and the pacing verdict; a bar under 20% is orange, under 10% red; a stale reading says its age
 
+- **Scenario:** Quota about to go to waste
+- **Given:** the week resets in 13 hours and 31% of it is left
+- **When:** I open Grabber Native
+- **Then:** the line under the bars starts with *31% to spend* in green; a day earlier, or with under 20% left, it does not
+
 - **Scenario:** Refresh and off the tailnet
 - **Given:** the strip is showing
 - **When:** I tap it
