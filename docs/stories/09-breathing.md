@@ -38,9 +38,9 @@ Part of the [user stories](README.md); persona and format are described there.
 
 #### Acceptance Criteria:
 - **Scenario:** The sliders
-- **Given:** the breathing screen, never used before
-- **When:** I look at it, then drag Breath length from 8 to 15 seconds
-- **Then:** it opens at 8 seconds and 5 minutes with "9 cycles · ends at 4 min 48 s", and after the drag reads "5 cycles · ends at 5 min 0 s"; a session is always whole cycles, never fewer than one, and the sliders are where I left them the next time I open the app
+- **Given:** the breathing screen, never used before, open at 8 seconds and 5 minutes with "9 cycles · ends at 4 min 48 s"
+- **When:** I drag Breath length from 8 to 15 seconds
+- **Then:** it reads "5 cycles · ends at 5 min 0 s"; a session is always whole cycles, never fewer than one, and the sliders are where I left them the next time I open the app
 
 ---
 
@@ -57,8 +57,8 @@ Part of the [user stories](README.md); persona and format are described there.
 #### Acceptance Criteria:
 - **Scenario:** Pause and resume
 - **Given:** a session halfway through an inhale, showing "4:44 left", with a faint pause mark low in the circle and no pause button anywhere else
-- **When:** I tap the circle, wait a minute, and tap the circle again
-- **Then:** while paused the circle shows a play mark, "Paused" and "tap to resume", and the ring, the circle and "4:44 left" do not move; on the second tap the ring continues from halfway with no jump and the inhale is not announced again; VoiceOver reads the circle as a "Pause" button while running and "Resume" while paused
+- **When:** I tap the circle
+- **Then:** the circle shows a play mark, "Paused" and "tap to resume", and the ring, the circle and "4:44 left" do not move for as long as it stays paused; VoiceOver reads the circle as a "Pause" button while running and "Resume" while paused
 
 ---
 
@@ -119,7 +119,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 166:
 
 - **Summary:** Breathe with the phone locked, and see the step on the lock screen
-- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified by `just native-test` (`BreatheActivityContentTests`), `just native-test-sim` (the keepalive for the session; the card pushed at each step) and a simulator screenshot of the compact island running (*OUT 1/3*, *0:06*); the card now starts at Begin and says *Ready* through the lead-in, verified by `just native-test` (`testTheQuietBeforeTheFirstInhaleSaysReadyAndTheTimeToIt`); the lock-screen card and the voice with the phone locked not yet on the phone
+- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified by `just native-test` (`BreatheActivityContentTests`), `just native-test-sim` (the keepalive for the session; the card pushed at each step) and a simulator screenshot of the compact island running (*OUT 1/3*, *0:06*); the card starts at Begin and says *Ready* through the lead-in: [5d2978b](https://github.com/idvorkin/context-grabber/commit/5d2978b), verified by `just native-test` (`testTheQuietBeforeTheFirstInhaleSaysReadyAndTheTimeToIt`); the lock-screen card and the voice with the phone locked not yet on the phone
 
 #### Use Case:
 - **As someone** who wants the screen dark while breathing
@@ -254,8 +254,8 @@ Part of the [user stories](README.md); persona and format are described there.
 
 #### Acceptance Criteria:
 - **Scenario:** Back
-- **Given:** a session, running, paused or finished, showing on the lock screen
-- **When:** I tap Back, Back to start, or close the breathing screen
+- **Given:** a session running with its card on the lock screen
+- **When:** I tap the back chevron
 - **Then:** the card is removed at once
 
 ---
@@ -281,7 +281,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 175:
 
 - **Summary:** Keep breathing through a phone call or Siri
-- **Status:** native app only: the keepalive restarts when an interruption ends during a session (`breath_interruption` in the log), mirroring the Gym Timer (story 118); not yet on the phone
+- **Status:** native app only: implemented in [5d2978b](https://github.com/idvorkin/context-grabber/commit/5d2978b) (the keepalive restarts when an interruption ends during a session, `breath_interruption` in the log, mirroring the Gym Timer, story 118); verified by `just native-build-sim` (it builds); not yet on the phone
 
 #### Use Case:
 - **As someone** breathing with the phone locked
@@ -293,3 +293,75 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a session running with the phone locked
 - **When:** a phone call comes in and ends
 - **Then:** the voice says the next step at its true time with the phone still locked, and the session log has `breath_interruption` began and ended with the session going active again after it
+
+---
+
+### User Story 176:
+
+- **Summary:** The finished card goes when I go back to start
+- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); not yet verified on the simulator or the phone
+
+#### Use Case:
+- **As someone** who has finished a session
+- **I want to** have the *Done* card go as soon as I start over
+- **so that** the lock screen never shows a session that is behind me
+
+#### Acceptance Criteria:
+- **Scenario:** Back to start
+- **Given:** a finished session with its *Done* card on the lock screen
+- **When:** I tap Back to start
+- **Then:** the card is removed at once rather than a few minutes later
+
+---
+
+### User Story 177:
+
+- **Summary:** The card goes when I close the breathing screen
+- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); not yet verified on the simulator or the phone
+
+#### Use Case:
+- **As someone** who is done with breathing for now
+- **I want to** have the card go when I close the breathing screen
+- **so that** a card never outlives its screen
+
+#### Acceptance Criteria:
+- **Scenario:** Closing the screen
+- **Given:** a session running with its card on the lock screen
+- **When:** I close the breathing screen
+- **Then:** the session ends and the card is removed at once
+
+---
+
+### User Story 178:
+
+- **Summary:** Breathe on when the lock-screen card is refused
+- **Status:** native app only: implemented in [5d2978b](https://github.com/idvorkin/context-grabber/commit/5d2978b); verified by `just native-build-sim` (it builds); a refusal not yet produced on the simulator or the phone
+
+#### Use Case:
+- **As someone** whose phone will not show the card (Live Activities off, or iOS refusing it)
+- **I want to** have the session run as normal without it, and the log say why once
+- **so that** a missing card neither breaks the session nor floods the log
+
+#### Acceptance Criteria:
+- **Scenario:** A refused card
+- **Given:** iOS refuses the breathing card when I tap Begin
+- **When:** the session runs through its steps
+- **Then:** the session speaks and moves as normal with no card; the log has one line saying why (an `error` with where: live_activity, or `unavailable` when Live Activities are off), and the card is asked for again only when I next tap Begin, never from the locked phone
+
+---
+
+### User Story 179:
+
+- **Summary:** Resume exactly where I paused
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: resume continues mid-step, the session's length is unchanged); resume by a tap on the circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97); the tap not yet on the phone
+
+#### Use Case:
+- **As someone** coming back from an interruption
+- **I want to** pick the breath up from the exact point I stopped
+- **so that** the pause costs me nothing
+
+#### Acceptance Criteria:
+- **Scenario:** Resume
+- **Given:** a session paused for a minute halfway through an inhale, showing "4:44 left"
+- **When:** I tap the circle
+- **Then:** the ring continues from halfway with no jump, "4:44 left" counts down again, and the inhale is not announced again

@@ -95,7 +95,7 @@ goes by itself.
 ### When Live Activities are off
 
 With Live Activities switched off for Grabber Native in Settings, both screens run exactly as before and nothing
-shows on the lock screen. The session log says so once.
+shows on the lock screen. The session log says so once per session.
 
 If iOS refuses the card for any other reason, the screen runs on without one and the log has one error saying
 why. The card is not asked for again until that screen's next session, so a refusal never repeats at every step
