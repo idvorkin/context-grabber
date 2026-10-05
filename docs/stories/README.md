@@ -25,6 +25,7 @@ its `Issues:` line.
 | [The Gym Timer](06-gym-timer.md) | Presets, cues in Igor's voice, the LED face and the turn, music that keeps playing, the accessory-work log. | 100–119, 180–199 |
 | [From the home screen](07-widgets-and-links.md) | Widgets, the memdeck card, deep links and Shortcuts. | 120–139 |
 | [Reporting problems](08-reporting-problems.md) | The native app beside this one: the session log, the shake, crashes, reports that become issues. | 140–159 |
+| [Breathing](09-breathing.md) | The native app's box-breathing screen: the circle, the sliders, pause, tones and the voice. | 160–179 |
 
 New stories take the next free ID in their journey's range; a journey that outgrows its range takes the next
 unused block of twenty.

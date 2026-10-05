@@ -80,5 +80,36 @@ else bad "timer: $opens opens, $closes releases, last session event '$last_sessi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("timer_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed"; fi
 
+# Stories 160, 163, 165: two cycles of 2 s breaths with the voice. Every step is noticed on its second, each
+# phrase is a bundled file that played (none fell back to the phone's voice), and the screen lock is given back.
+SIMCTL_CHILD_GRABBER_BREATHE="2,2,voice" relaunch
+wait_for breath_finished 40 || echo "      (timed out waiting for breath_finished)"
+sleep 1
+f=$(newest_log)
+steps=$(jq -sr '
+  ([.[] | select(.type=="breath_start")][0]) as $s |
+  [.[] | select(.type=="breath_phase" or .type=="breath_finished")
+       | "\(((.t - $s.t - $s.lead_in_ms) / 1000 + 0.3) | floor):\(.phase // "done")"] | join(" ")' "$f")
+want="0:inhale 2:holdFull 4:exhale 6:holdEmpty 8:inhale 10:holdFull 12:exhale 14:holdEmpty 16:done"
+late=$(jq -s '[.[] | select(.type=="breath_phase" or .type=="breath_finished") | .late_ms] | max' "$f")
+if [ "$steps" = "$want" ] && [ "${late:-999}" -le 150 ] 2>/dev/null; then ok "breathe: 8 steps and the finish, each on its second (worst ${late} ms late)"
+else bad "breathe: steps '$steps' (worst ${late} ms late)"; fi
+said=$(jq -sr '[.[] | select(.type=="breath_cue") | "\(.name)\(if .ok and (.fallback|not) then "" else "!" end)"] | join(" ")' "$f")
+want_said="breath-begin breath-in breath-hold breath-out breath-hold-low breath-in breath-hold breath-out breath-hold-low breath-done"
+awake=$(jq -sr '[.[] | select(.type=="keep_awake") | "\(.on)"] | join(" ")' "$f")
+if [ "$said" = "$want_said" ] && [ "$awake" = "true false" ]; then ok "breathe: 10 phrases from their files, screen lock given back"
+else bad "breathe: said '$said', keep_awake '$awake'"; fi
+
+# Story 164: the same with tones, one cycle of 1 s breaths.
+SIMCTL_CHILD_GRABBER_BREATHE="1,1,tone" relaunch
+wait_for breath_finished 20 || echo "      (timed out waiting for breath_finished)"
+sleep 1
+f=$(newest_log)
+tones=$(jq -sr '[.[] | select(.type=="breath_cue") | "\(.name)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
+if [ "$tones" = "rising tick falling tick closing" ]; then ok "breathe: a tone per step and the closing tone"
+else bad "breathe: tones '$tones'"; fi
+failed=$(jq -c 'select(.type=="error" or ((.type|startswith("breath_")) and .ok == false))' "$f")
+if [ -z "$failed" ]; then ok "breathe: nothing failed"; else bad "breathe: $failed"; fi
+
 xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
 exit $fail

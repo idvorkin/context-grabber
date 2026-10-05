@@ -15,6 +15,8 @@ final class AppModel: ObservableObject {
   @Published var status = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
+  /// Non-nil while the breathing screen covers the app.
+  @Published var breathe: BreatheLaunch?
 
   init() {
     database = AppDatabase(log: log)
@@ -53,10 +55,32 @@ final class AppModel: ObservableObject {
     gymTimer = nil
   }
 
+  func openBreathe(_ launch: BreatheLaunch = BreatheLaunch(), from source: String) {
+    log.event("ui", ["action": "open_breathe", "from": source, "autostart": launch.plan != nil])
+    screen = "breathe"
+    breathe = launch
+  }
+
+  func closeBreathe() {
+    log.event("ui", ["action": "close_breathe"])
+    screen = "home"
+    breathe = nil
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
     let env = ProcessInfo.processInfo.environment
+    if let spec = env["GRABBER_BREATHE"], !spec.isEmpty {
+      // "breath,cycles[,cue]" begins that exact session; anything else just opens the sliders.
+      let parts = spec.split(separator: ",").map(String.init)
+      var launch = BreatheLaunch()
+      if parts.count >= 2, let breath = Int(parts[0]), let cycles = Int(parts[1]) {
+        launch.plan = BreathPlan(breathSeconds: breath, cycles: cycles)
+        launch.cue = parts.count > 2 ? BreathCue(rawValue: parts[2]) : nil
+      }
+      openBreathe(launch, from: "hook")
+    }
     if let spec = env["GRABBER_TIMER"], !spec.isEmpty {
       // A chip's id starts it as a tap on a widget tile would; "work,rest,rounds" runs that shape as Custom.
       var launch = GymTimerLaunch(autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)))

@@ -28,6 +28,9 @@ targets:
         excludes:
           - "words/**"
         buildPhase: resources
+      # The breathing screen's six spoken phrases (scripts/make-breath-words.sh).
+      - path: ../assets/audio/breathe
+        buildPhase: resources
     dependencies:
       - package: ContextCore
     settings:
