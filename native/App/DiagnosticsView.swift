@@ -27,6 +27,16 @@ struct DiagnosticsView: View {
               .background(ShakeDetector { model.startBugReport(from: "shake") })
               .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
           }
+          Button {
+            model.openPlaces(from: "home")
+          } label: {
+            Label("Places", systemImage: "map").font(.title3.weight(.semibold)).padding(.vertical, 6)
+          }
+          .fullScreenCover(isPresented: Binding(get: { model.showPlaces }, set: { if !$0 { model.closePlaces() } })) {
+            PlacesView(app: model, places: model.places, tracker: model.tracker, onExit: model.closePlaces)
+              .background(ShakeDetector { model.startBugReport(from: "shake") })
+              .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
+          }
           // Not ported yet: Context Grabber's Card tab, by the link its lock-screen widgets use (story 129).
           Button {
             model.openInContextGrabber("grabber://card", what: "card")

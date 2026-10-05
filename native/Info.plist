@@ -9,6 +9,54 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>location</string>
+	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Places shows where you are on the map and can name a place from where you stand.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>With Background Tracking on, Places records where you go while the app is closed, so your days read as time at named places. The trail stays on this phone.</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Context Grabber database</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.idvorkin.grabber.database</string>
+				<string>public.database</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.idvorkin.grabber.database</string>
+			<key>UTTypeDescription</key>
+			<string>SQLite database</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.database</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>db</string>
+					<string>sqlite</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-sqlite3</string>
+					<string>application/vnd.sqlite3</string>
+				</array>
+			</dict>
+		</dict>
 	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>

@@ -143,5 +143,68 @@ after=$(jq -sr '[.[] | select(.type=="breath_phase" or .type=="breath_finished")
 if [ "$paused" = "hook:inhale" ] && [ "$after" = "inhale" ]; then ok "breathe: paused mid-inhale, nothing moved on"
 else bad "breathe: pauses '$paused', steps '$after'"; fi
 
+# Places (stories 040-047, 052, 055). A clean trail, then Context Grabber's real export (the 36 601-point fixture)
+# imported by the hook, shifted by whole weeks so it falls in the last seven days.
+FIXTURE="$(dirname "$0")/../../__tests__/fixtures/context-grabber.db"
+xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
+rm -f "$DOCS/SQLite/context-grabber.db" "$DOCS/SQLite/context-grabber.db-journal"
+cp -f "$FIXTURE" "$DOCS/import-fixture.db"
+xcrun simctl privacy "$SIM" grant location-always "$BUNDLE" >/dev/null 2>&1 || true
+xcrun simctl location "$SIM" set 47.641901,-122.304481
+SIMCTL_CHILD_GRABBER_IMPORT_DB="import-fixture.db,recent" SIMCTL_CHILD_GRABBER_PLACES=open relaunch
+wait_for places_open 30 || echo "      (timed out waiting for places_open)"
+f=$(newest_log)
+imp=$(jq -sr '[.[] | select(.type=="import")][0] | "\(.ok) \(.points_added) \(.points_already) \(.places_added)"' "$f")
+opened=$(jq -sr '[.[] | select(.type=="places_open")][-1] | "\(.points) \(.known) \(.stays)"' "$f")
+if [ "$imp" = "true 36601 0 4" ] && [ "$opened" = "36601 4 34" ]; then ok "places: imported 36601 points and 4 places; 34 stays, as the TypeScript makes"
+else bad "places: import '$imp', open (points known stays) '$opened'"; fi
+# Story 055: the same file again adds nothing.
+SIMCTL_CHILD_GRABBER_IMPORT_DB="import-fixture.db,recent" SIMCTL_CHILD_GRABBER_PLACES=open relaunch
+wait_for places_open 30 || echo "      (timed out waiting for places_open)"
+f=$(newest_log)
+imp=$(jq -sr '[.[] | select(.type=="import")][0] | "\(.ok) \(.points_added) \(.points_already) \(.places_added) \(.places_already)"' "$f")
+if [ "$imp" = "true 0 36601 0 4" ]; then ok "places: a second import adds nothing"
+else bad "places: second import '$imp'"; fi
+failed=$(jq -c 'select(.type=="error")' "$f")
+if [ -z "$failed" ]; then ok "places: no error events"; else bad "places: $failed"; fi
+
+# Story 052: the export is a consistent copy with the whole trail and the places.
+SIMCTL_CHILD_GRABBER_EXPORT=1 relaunch
+wait_for export 20 || echo "      (timed out waiting for export)"
+f=$(newest_log)
+path=$(jq -sr '[.[] | select(.type=="export")][0].path // ""' "$f")
+rows=$( [ -s "$path" ] && sqlite3 "$path" "select (select count(*) from locations) || ' ' || (select count(*) from known_places)" 2>/dev/null || echo "none")
+if [ "$rows" = "36601 4" ]; then ok "places: export holds 36601 points and 4 places"
+else bad "places: export '$path' rows '$rows'"; fi
+
+# Story 040: the switch with Always granted records points as the simulator moves.
+SIMCTL_CHILD_GRABBER_TRACKING=on relaunch
+wait_for tracking 20 || echo "      (timed out waiting for tracking)"
+xcrun simctl location "$SIM" start --speed=15 --interval=2 47.641901,-122.304481 47.6450,-122.3100 47.6500,-122.3200 >/dev/null 2>&1
+wait_for location_point 30 || echo "      (timed out waiting for location_point)"
+f=$(newest_log)
+on=$(jq -sr '[.[] | select(.type=="tracking")][0] | "\(.on) \(.reason) \(.permission)"' "$f")
+pts=$(jq -sr '[.[] | select(.type=="location_point")][0].count // 0' "$f")
+if [ "$on" = "true hook always" ] && [ "$pts" -gt 0 ] 2>/dev/null; then ok "tracking: on with Always, $pts points stored in the first batch"
+else bad "tracking: '$on', first batch '$pts'"; fi
+# The switch survives a relaunch: recording resumes at launch.
+relaunch
+wait_for tracking 20 || echo "      (timed out waiting for tracking)"
+f=$(newest_log)
+on=$(jq -sr '[.[] | select(.type=="tracking")][0] | "\(.on) \(.reason)"' "$f")
+if [ "$on" = "true launch" ]; then ok "tracking: resumed at launch"; else bad "tracking: relaunch '$on'"; fi
+
+# Story 041: lowering retention to 7 days prunes at once (the fixture spans twelve days).
+SIMCTL_CHILD_GRABBER_RETENTION=7 SIMCTL_CHILD_GRABBER_TRACKING=off relaunch
+wait_for places_open 30 || echo "      (timed out waiting for places_open)"
+f=$(newest_log)
+pruned=$(jq -sr '[.[] | select(.type=="prune" and .reason=="lowered")][0] | "\(.retention_days) \(.removed)"' "$f")
+off=$(jq -sr '[.[] | select(.type=="tracking")][-1] | "\(.on)"' "$f")
+if [ "${pruned%% *}" = "7" ] && [ "${pruned##* }" -gt 0 ] 2>/dev/null && [ "$off" = "false" ]; then ok "places: retention 7 pruned ${pruned##* } points at once; tracking off"
+else bad "places: prune '$pruned', tracking '$off'"; fi
+failed=$(jq -c 'select(.type=="error")' "$f")
+if [ -z "$failed" ]; then ok "places: no error events"; else bad "places: $failed"; fi
+xcrun simctl location "$SIM" clear >/dev/null 2>&1 || true
+
 xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
 exit $fail

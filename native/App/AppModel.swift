@@ -9,6 +9,9 @@ final class AppModel: ObservableObject {
   let database: AppDatabase
   /// The lock-screen card and the Dynamic Island, shared by the Gym Timer and Box breathing.
   let liveActivity: LiveActivityController
+  /// The trail: recording runs whatever screen is in front, and iOS may launch the app just to deliver points.
+  let tracker: LocationTracker
+  let places: PlacesModel
   private let bugReporter: BugReporter
 
   /// The screen in front, as a report and the log name it. Each ported journey sets it when it appears.
@@ -19,16 +22,52 @@ final class AppModel: ObservableObject {
   @Published var gymTimer: GymTimerLaunch?
   /// Non-nil while the breathing screen covers the app.
   @Published var breathe: BreatheLaunch?
+  @Published var showPlaces = false
+  @Published var showPlacesMap = false
 
   init() {
     database = AppDatabase(log: log)
     liveActivity = LiveActivityController(log: log)
+    tracker = LocationTracker(log: log, store: database.locations)
+    places = PlacesModel(log: log, database: database)
     bugReporter = BugReporter(log: log)
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
     LiveActivityController.endLeftovers(log: log)
+    places.prune(reason: "launch")
     runLaunchHooks()
+  }
+
+  /// The app came to the front (not the launch itself): prune, settle a pending permission, ask for a fix.
+  func foreground() {
+    places.prune(reason: "foreground")
+    tracker.foreground()
+    if showPlaces { places.reload(reason: "foreground") }
+  }
+
+  func openPlaces(from source: String) {
+    log.event("ui", ["action": "open_places", "from": source])
+    screen = "places"
+    showPlaces = true
+    places.reload(reason: "open")
+    // Places is where You lives: the first open asks for While Using (the switch asks for Always).
+    tracker.requestFix(reason: tracker.authorization == .notDetermined ? "places_open" : "foreground")
+  }
+
+  func closePlaces() {
+    log.event("ui", ["action": "close_places"])
+    screen = "home"
+    showPlaces = false
+    showPlacesMap = false
+  }
+
+  /// A file shared to the app or opened in it from Files: Context Grabber's database export (story 055).
+  func open(url: URL) {
+    log.event("ui", ["action": "open_url", "scheme": url.scheme ?? "", "file": url.isFileURL ? url.lastPathComponent : ""])
+    guard url.isFileURL else { return }
+    if !showPlaces { openPlaces(from: "file") }
+    places.importDatabase(url, from: "file")
   }
 
   /// A shake or the button: the picture is taken before the sheet covers the screen.
@@ -105,6 +144,30 @@ final class AppModel: ObservableObject {
         launch.preset = spec
       }
       openGymTimer(launch, from: "hook")
+    }
+    // Places (docs/TESTING.md): import first, so the other hooks see the imported trail.
+    if let spec = env["GRABBER_IMPORT_DB"], !spec.isEmpty {
+      // "<file>[,recent]": a path, absolute or under Documents; "recent" shifts it by whole weeks into the last seven days.
+      let parts = spec.split(separator: ",").map(String.init)
+      let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      let url = parts[0].hasPrefix("/") ? URL(fileURLWithPath: parts[0]) : docs.appendingPathComponent(parts[0])
+      places.importDatabase(url, from: "hook", recent: parts.dropFirst().contains("recent"))
+    }
+    if let spec = env["GRABBER_RETENTION"], let days = Int(spec) {
+      places.setRetention(days, from: "hook")
+    }
+    if let spec = env["GRABBER_TRACKING"], !spec.isEmpty {
+      tracker.setTracking(spec == "on", from: "hook")
+    }
+    if let spec = env["GRABBER_PLACES"], !spec.isEmpty {
+      // "open" opens the screen; "map" also opens the map full screen.
+      openPlaces(from: "hook")
+      if spec == "map" { showPlacesMap = true }
+    }
+    if env["GRABBER_EXPORT"] == "1" {
+      // Prepares the file as Export database does, without the share sheet a script cannot dismiss.
+      places.prepareExport(from: "hook")
+      places.exportFile = nil
     }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {
