@@ -319,7 +319,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 037:
 
 - **Summary:** What I finished — workouts and breathing sessions — rides along to Larry
-- **Status:** not implemented
+- **Status:** native app only: implemented in [0ddda7b](https://github.com/idvorkin/context-grabber/commit/0ddda7b); verified by `ActivityLogTests` and `MirrorFixtureTests` (the fixture week's summary plus the trailing section, and the old export unchanged without it), and on the simulator (a 2 s × 2 breathing session and a one-round custom workout each wrote an `activity_logged` line and a row); a shared summary from the phone still to be checked by Igor
 - **Issues:** [#139](https://github.com/idvorkin/context-grabber/issues/139)
 - **Spec:** [Swift-native app — step 4](../superpowers/specs/2026-10-04-swift-native-app-design.md#the-mirror-and-grab-context-in-the-native-app-step-4)
 
