@@ -139,18 +139,31 @@ struct GymTimerView: View {
 
   // MARK: - turned: only the time
 
+  /// RESET on its side (story 181): only while stopped with something to clear.
+  private var roundsReset: (() -> Void)? {
+    guard model.timer.isPaused || model.timer.phase == .done else { return nil }
+    return { model.resetTimer() }
+  }
+
+  private var stopwatchReset: (() -> Void)? {
+    guard model.stopwatch.isPaused else { return nil }
+    return { model.resetStopwatch() }
+  }
+
   @ViewBuilder private var turned: some View {
     switch model.mode {
     case .rounds:
       TurnedTimer(
         content: roundsFace(model), turn: model.turn,
         hint: model.timer.isRunning ? "tap to stop" : model.timer.isPaused ? "tap to resume" : "tap to start",
+        onReset: roundsReset,
         onTap: model.toggleTimer)
     case .stopwatch:
       TimelineView(.animation(paused: !model.stopwatch.isRunning)) { timeline in
         TurnedTimer(
           content: stopwatchFace(model, at: timeline.date), turn: model.turn,
           hint: model.stopwatch.isRunning ? "tap to stop" : model.stopwatch.isPaused ? "tap to resume" : "tap to start",
+          onReset: stopwatchReset,
           onTap: model.toggleStopwatch)
       }
     case .sets:

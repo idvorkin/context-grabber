@@ -368,6 +368,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 181:
+
+- **Summary:** Reset the timer without turning the phone back upright
+- **Status:** native app only: implemented in [bfc46ae](https://github.com/idvorkin/context-grabber/commit/bfc46ae), [6784c5d](https://github.com/idvorkin/context-grabber/commit/6784c5d) (the paused face shrinks further so RESET fits); verified by `just native-test-sim` and a simulator screenshot of the turned, finished face; the phone still to be checked by Igor
+- **Issues:** [#132](https://github.com/idvorkin/context-grabber/issues/132)
+
+#### Use Case:
+- **As a** lifter with the phone propped sideways on a water bottle
+- **I want to** reset a paused or finished workout where the phone stands
+- **so that** starting the next one does not mean picking the phone up and turning it
+
+#### Acceptance Criteria:
+- **Scenario:** Paused on its side
+- **Given:** the phone is on its side and a workout is paused mid-round
+- **When:** I tap RESET under the hint
+- **Then:** the face shows the preset ready from its first round, the session log has a `timer_reset` line, a tap anywhere else would have resumed instead, and while the workout runs no RESET is shown
+
+---
+
 ### User Story 180:
 
 - **Summary:** Choosing a preset after the finish goes back to ready

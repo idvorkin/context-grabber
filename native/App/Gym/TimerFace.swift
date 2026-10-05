@@ -122,6 +122,8 @@ struct TurnedTimer: View {
   let turn: DeviceTurn
   /// "tap to start" / "tap to stop" / "tap to resume" / "tap to count".
   let hint: String
+  /// Shown only while stopped with something to clear (story 181), so a tap across the room cannot reset a run.
+  var onReset: (() -> Void)? = nil
   let onTap: () -> Void
 
   var body: some View {
@@ -129,8 +131,21 @@ struct TurnedTimer: View {
       let long = max(geo.size.width, geo.size.height)
       let short = min(geo.size.width, geo.size.height)
       VStack(spacing: 18) {
-        TimerFace(content: content, width: long * 0.9, maxHeight: short * 0.6)
+        // The button needs room on the short edge: the face gives some up while it shows, more when the
+        // tall PAUSEd word sits above the time.
+        TimerFace(
+          content: content, width: long * 0.9,
+          maxHeight: short * (onReset == nil ? 0.6 : content.paused ? 0.36 : 0.46))
         Text(hint.uppercased()).font(.system(size: 13)).tracking(2).foregroundStyle(Color(white: 0.33))
+        if let onReset {
+          Button(action: onReset) {
+            Text("RESET").font(.system(size: 15, weight: .semibold)).tracking(2)
+              .padding(.horizontal, 28).padding(.vertical, 12)
+              .overlay(Capsule().stroke(Color(white: 0.4), lineWidth: 1))
+          }
+          .foregroundStyle(Color(white: 0.75))
+          .accessibilityIdentifier("timer-turned-reset")
+        }
       }
       .frame(width: long, height: short)
       .rotationEffect(.degrees(turn.rotationDegrees))
