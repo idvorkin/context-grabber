@@ -51,7 +51,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 162:
 
 - **Summary:** Know how long is left, and pause without losing my place
-- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: pause freezes, resume continues mid-step, the session's length is unchanged); pause moved into the circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), verified on the simulator (`just native-test-sim`: paused mid-inhale, nothing moved on) and a screenshot of the paused circle; the tap itself not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: pause freezes, resume continues mid-step, the session's length is unchanged); pause moved into the circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), verified on the simulator (`just native-test-sim`: paused mid-inhale, nothing moved on) and a screenshot of the paused circle; the tap itself not yet on the phone; leaving the app or locking the phone no longer pauses: [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689), verified on the simulator (`just native-test-sim`: the keepalive runs for the session and stops at its end), the locked phone not yet checked
 
 #### Use Case:
 - **As someone** interrupted mid-breath
@@ -131,7 +131,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 166:
 
 - **Summary:** Breathe with the phone locked, and see the step on the lock screen
-- **Status:** not yet implemented
+- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified by `just native-test` (`BreatheActivityContentTests`), `just native-test-sim` (the keepalive for the session; the card started with the first inhale, pushed at each step, ended on Done) and simulator screenshots of the compact island running (*OUT 1/3*, *0:06*) and paused (*PAUSED 1/1*, *0:03*); the lock-screen card, the voice with the phone locked and the tap not yet on the phone
 
 #### Use Case:
 - **As someone** who wants the screen dark while breathing

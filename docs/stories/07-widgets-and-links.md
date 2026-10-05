@@ -100,7 +100,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 125:
 
 - **Summary:** Tap the Live Activity and land on the timer
-- **Status:** implemented in [a5ff68d](https://github.com/idvorkin/context-grabber/commit/a5ff68d); verified on the phone
+- **Status:** implemented in [a5ff68d](https://github.com/idvorkin/context-grabber/commit/a5ff68d); verified on the phone; native app: [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689), by construction rather than a link — the card lives only while the timer's full screen is up (RESET and leaving end it, a killed launch's card is ended at the next launch), so opening the app is opening the timer; verified by reading the code only, the tap not yet on the phone
 
 #### Use Case:
 - **As a** lifter watching the countdown in the Dynamic Island
