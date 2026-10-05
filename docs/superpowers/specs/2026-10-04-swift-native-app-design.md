@@ -170,6 +170,45 @@ The Cockpit is ported ahead of the rest of step 7, as Igor called it critical: t
 outputs, the same bridge and client tag so the page needs no change, opened from the home screen and kept for the
 launch when closed. What it does and how it differs: [the native Cockpit spec](2026-10-05-native-cockpit-design.md).
 
+## Calling Larry in the native app (step 3)
+
+The call does what stories 080–095 say, against the same bridge and the same wire format, with these
+differences while the two apps live side by side:
+
+- **It opens from the native app's home screen**, full screen, and *Done* returns there. The call belongs to
+  the app, not the screen: leaving the call screen with a call live keeps the call, the home screen's Call row
+  then reads *live · 1:17*, and a tap on it returns to the same captions and the same timer.
+- **The call's log is the session log.** What the socket, the bridge, the microphone, the speaker, the audio
+  session and the self-heals did is written there as events, so a shake attaches it. The Diagnostics fold on
+  the call screen shows this launch's call events, oldest first, a rule before each call; *Copy diagnostics*
+  and *Upload* carry the same text behind a header (build, state, ending, problem, route). A call that froze
+  the app is in that launch's log file, which `pull-logs` brings to the Mac; the fold and the upload carry
+  this launch only.
+- **Echo cancellation is on from the first buffer.** The call's audio runs through iOS's voice-processing unit
+  from before the engine first starts, every call, so the first call after launch is built exactly like the
+  tenth. Larry's voice comes out of the speaker unless a headset is on.
+- **The microphone that never delivers, the mic that goes quiet, the speaker that stalls, audio that is not
+  arriving** are watched and healed by the same rules as stories 087–090, with the same thresholds.
+- **The voice and the backend** are chosen on the call screen and remembered (stories 085, 091). The
+  devices line names the current microphone and output; choosing them by hand, and a USB microphone taking
+  over on its own (story 086), wait for a later step — until then the call goes wherever iOS routes it.
+- **Where Igor is (story 092) waits for step 5**, when the native app has locations and known places. Until
+  then the call carries no location.
+- **Prime audio is not ported.** It was an experiment for the silent first call in the React Native audio
+  engine (#88); the native call builds its audio the same way every time.
+- **The gist token** is entered on the native home screen under *Diagnostics uploads* and kept in the native
+  app's own Keychain; the old app's token is not shared until the cutover. Automatic upload after a troubled
+  call, the delete-me note, the ten-gist cap and *Delete uploaded diagnostics* behave as stories 094 and 095
+  say.
+- **"Call Larry" is a Shortcuts action of the native app too**: it opens Grabber Native on the call screen
+  and starts the call on the remembered backend, or brings a live call forward. Links and the widget's ☎ wait
+  for step 7.
+- **One call at a time** is the native app's own: there is no Cockpit tab in it yet to police.
+
+Acceptance for step 3: stories 080–085 and 087–095 hold in the native app on the phone (086 and 092 as above);
+a call placed with the phone then locked for two minutes leaves a session log with the start, `ready`, the
+microphone and speaker counts every five seconds while locked, and the ending, and no `error`.
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

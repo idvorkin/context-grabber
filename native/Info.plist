@@ -7,7 +7,7 @@
 	<key>GitBranch</key>
 	<string>$(GIT_BRANCH)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>The Cockpit's voice controls use the microphone to talk to Larry.</string>
+	<string>Grabber Native uses the microphone for calls with Larry.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

@@ -9,7 +9,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 080:
 
 - **Summary:** A Larry call keeps going when the phone locks or goes in a pocket
-- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0); verified by `callSession.test.ts` and on the phone (daily calls)
+- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0); verified by `callSession.test.ts` and on the phone (daily calls); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (`CallSession*Tests`) and `just native-test-sim` (a call to the fake bridge, [9939b6a](https://github.com/idvorkin/context-grabber/commit/9939b6a)); the lock is the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client walking to school with the phone in a pocket
@@ -30,7 +30,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 081:
 
 - **Summary:** Call Larry with one tap, and see the phone calling the way the Phone app does
-- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [fac48db](https://github.com/idvorkin/context-grabber/commit/fac48db), [b15175c](https://github.com/idvorkin/context-grabber/commit/b15175c); verified by `CallScreen.test.tsx` and on the phone
+- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [fac48db](https://github.com/idvorkin/context-grabber/commit/fac48db), [b15175c](https://github.com/idvorkin/context-grabber/commit/b15175c); verified by `CallScreen.test.tsx` and on the phone; native app: [d782599](https://github.com/idvorkin/context-grabber/commit/d782599), the ring still under Reduce Motion; verified by `just native-test-sim` and a simulator screenshot; the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client opening the Call tab
@@ -48,7 +48,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 082:
 
 - **Summary:** One compact call line, with mute, restart and hang-up as small icons
-- **Status:** implemented in [fac48db](https://github.com/idvorkin/context-grabber/commit/fac48db), [e858a9d](https://github.com/idvorkin/context-grabber/commit/e858a9d); verified by `CallScreen.test.tsx` and on the phone
+- **Status:** implemented in [fac48db](https://github.com/idvorkin/context-grabber/commit/fac48db), [e858a9d](https://github.com/idvorkin/context-grabber/commit/e858a9d); verified by `CallScreen.test.tsx` and on the phone; native app: [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by a simulator screenshot of the live call line; the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client reading captions on a live call
@@ -68,7 +68,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 083:
 
 - **Summary:** The voice level is the mute
-- **Status:** implemented in [fac48db](https://github.com/idvorkin/context-grabber/commit/fac48db), [8a0a09e](https://github.com/idvorkin/context-grabber/commit/8a0a09e); verified by `CallScreen.test.tsx` and on the phone
+- **Status:** implemented in [fac48db](https://github.com/idvorkin/context-grabber/commit/fac48db), [8a0a09e](https://github.com/idvorkin/context-grabber/commit/8a0a09e); verified by `CallScreen.test.tsx` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (mute and level tests); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client wondering whether my microphone is working
@@ -86,7 +86,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 084:
 
 - **Summary:** See what the recognizer is hearing me say, big, before it is sent
-- **Status:** implemented in [4715141](https://github.com/idvorkin/context-grabber/commit/4715141); verified by `CallScreen.test.tsx` and on the phone
+- **Status:** implemented in [4715141](https://github.com/idvorkin/context-grabber/commit/4715141); verified by `CallScreen.test.tsx` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (caption tests) and `just native-test-sim` (the fake bridge's partial and final become one Igor row); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client talking on a noisy street
@@ -104,7 +104,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 085:
 
 - **Summary:** Pick the voice that answers — Tony or my own clone
-- **Status:** implemented in [3d0c38d](https://github.com/idvorkin/context-grabber/commit/3d0c38d); verified by `callVoices.test.ts` and on the phone
+- **Status:** implemented in [3d0c38d](https://github.com/idvorkin/context-grabber/commit/3d0c38d); verified by `callVoices.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599), the pick remembered in the settings table under the old app's key; verified by `just native-test` (voice tests); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client who has heard his own cloned voice perform
@@ -124,7 +124,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 086:
 
 - **Summary:** Choose the microphone and speaker by name, folded away until needed
-- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0), [0a3812b](https://github.com/idvorkin/context-grabber/commit/0a3812b); verified by `callDevices.test.ts` and on the phone
+- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0), [0a3812b](https://github.com/idvorkin/context-grabber/commit/0a3812b); verified by `callDevices.test.ts` and on the phone; native app: not yet — the devices line names the route read-only; picking by hand and the USB default wait for a later step (swift-native spec, step 3)
 
 #### Use Case:
 - **As a** Larry's client who just put AirPods in
@@ -143,7 +143,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 087:
 
 - **Summary:** The first call after launch works like every other call
-- **Status:** implemented in [62953e1](https://github.com/idvorkin/context-grabber/commit/62953e1), [ae01372](https://github.com/idvorkin/context-grabber/commit/ae01372), [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts`, `callWatchdog.test.ts` and on the phone — the silent first call still recurs
+- **Status:** implemented in [62953e1](https://github.com/idvorkin/context-grabber/commit/62953e1), [ae01372](https://github.com/idvorkin/context-grabber/commit/ae01372), [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts`, `callWatchdog.test.ts` and on the phone — the silent first call still recurs; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599), voice processing on from prepare every call; verified by `just native-test` (no-first-frame and zeros tests); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client placing the day's first call
@@ -164,7 +164,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 088:
 
 - **Summary:** Audio that stops mid-call heals itself, in either direction
-- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d), [9c50345](https://github.com/idvorkin/context-grabber/commit/9c50345); verified by `callSession.test.ts` and on the phone
+- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d), [9c50345](https://github.com/idvorkin/context-grabber/commit/9c50345); verified by `callSession.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599) (tap re-armed up to three times, the graph rebuilt on an interruption or a configuration change); verified by `just native-test` (`CallWatchdogTests`); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client whose microphone went quiet after the route settled
@@ -182,7 +182,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 089:
 
 - **Summary:** Tony's greeting is heard in full, every call
-- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d), [9c50345](https://github.com/idvorkin/context-grabber/commit/9c50345); verified by `callSession.test.ts` and on the phone
+- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d), [9c50345](https://github.com/idvorkin/context-grabber/commit/9c50345); verified by `callSession.test.ts` and on the phone; native app: [d782599](https://github.com/idvorkin/context-grabber/commit/d782599) (`clock_running` with after_ms before the first frame; reopened once after 2 s); verified by `just native-test-sim` (real audio: the clock ran and the bridge's second of PCM was scheduled); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client answering on speaker
@@ -200,7 +200,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead
-- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts` and on the phone
+- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3); verified by `just native-test` (audio not arriving test); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client on a call where the words come and the sound does not
@@ -220,7 +220,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 091:
 
 - **Summary:** Restart a bad call with one tap
-- **Status:** implemented in [e858a9d](https://github.com/idvorkin/context-grabber/commit/e858a9d); verified by `callSession.test.ts` and on the phone
+- **Status:** implemented in [e858a9d](https://github.com/idvorkin/context-grabber/commit/e858a9d); verified by `callSession.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (restart test); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client on a call with echo or a stuck consult
@@ -238,7 +238,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 092:
 
 - **Summary:** The call tells Larry where I am
-- **Status:** implemented in [b88f34e](https://github.com/idvorkin/context-grabber/commit/b88f34e); verified by `callLocation.test.ts` and on the phone
+- **Status:** implemented in [b88f34e](https://github.com/idvorkin/context-grabber/commit/b88f34e); verified by `callLocation.test.ts` and on the phone; native app: waits for step 5 (no locations or known places in the native app yet); the start and location frames are ported and tested in `CallSessionLocationTests`
 
 #### Use Case:
 - **As a** Larry's client calling from the walk to school
@@ -258,7 +258,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 093:
 
 - **Summary:** Read the call's log on the phone, with both directions counted
-- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [6df0f65](https://github.com/idvorkin/context-grabber/commit/6df0f65), [ae01372](https://github.com/idvorkin/context-grabber/commit/ae01372), [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callLog.test.ts` and on the phone (every bug from #88 on was read from it)
+- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [6df0f65](https://github.com/idvorkin/context-grabber/commit/6df0f65), [ae01372](https://github.com/idvorkin/context-grabber/commit/ae01372), [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callLog.test.ts` and on the phone (every bug from #88 on was read from it); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599) — the call's log is the session log, the fold shows this launch's `call_*` events with a rule between calls; verified by `just native-test` (`CallEventLogTests`) and `just native-test-sim` (the bridge received the dump at the hang-up); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client whose call just went silent
@@ -278,7 +278,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 094:
 
 - **Summary:** A troubled call uploads its log as a private gist on its own
-- **Status:** implemented in [7504fa6](https://github.com/idvorkin/context-grabber/commit/7504fa6), [8a0a09e](https://github.com/idvorkin/context-grabber/commit/8a0a09e), [670084c](https://github.com/idvorkin/context-grabber/commit/670084c); verified by `gistUpload.test.ts` and on the phone (a device build: the Keychain is native)
+- **Status:** implemented in [7504fa6](https://github.com/idvorkin/context-grabber/commit/7504fa6), [8a0a09e](https://github.com/idvorkin/context-grabber/commit/8a0a09e), [670084c](https://github.com/idvorkin/context-grabber/commit/670084c); verified by `gistUpload.test.ts` and on the phone (a device build: the Keychain is native); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599), the token entered under Diagnostics uploads on the native home screen; verified by `just native-test` (`GistTests`, the trouble rule in `CallEventLogTests`); a real gist is the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client who just hung up on a call that went wrong
@@ -298,7 +298,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 095:
 
 - **Summary:** Delete what the phone uploaded, and never pile up gists
-- **Status:** implemented in [7504fa6](https://github.com/idvorkin/context-grabber/commit/7504fa6), [8a0a09e](https://github.com/idvorkin/context-grabber/commit/8a0a09e), [670084c](https://github.com/idvorkin/context-grabber/commit/670084c); verified by `gistUpload.test.ts` and on the phone
+- **Status:** implemented in [7504fa6](https://github.com/idvorkin/context-grabber/commit/7504fa6), [8a0a09e](https://github.com/idvorkin/context-grabber/commit/8a0a09e), [670084c](https://github.com/idvorkin/context-grabber/commit/670084c); verified by `gistUpload.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (`GistTests`: prune, retire, already gone); the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** Larry's client whose call transcripts are sitting in secret gists
@@ -355,6 +355,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** A call from a link, a Shortcut, the widget, or the Cockpit page's own ☎ lands on the native Call tab
 - **Status:** implemented in [cef19fc](https://github.com/idvorkin/context-grabber/commit/cef19fc), [8d35bb6](https://github.com/idvorkin/context-grabber/commit/8d35bb6), [a902080](https://github.com/idvorkin/context-grabber/commit/a902080), [b10e8d5](https://github.com/idvorkin/context-grabber/commit/b10e8d5); verified by `deepLink.test.ts`, `audioBridge.test.ts` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) parses `call.start` / `call.focus` and hands the page's `grabber://call` to iOS, which opens Context Grabber's Call tab until the native call lands; verified by `BridgeParseTests`, `CockpitPageTests` (host); on the phone: not yet
+- **Status:** implemented in [cef19fc](https://github.com/idvorkin/context-grabber/commit/cef19fc), [8d35bb6](https://github.com/idvorkin/context-grabber/commit/8d35bb6), [a902080](https://github.com/idvorkin/context-grabber/commit/a902080), [b10e8d5](https://github.com/idvorkin/context-grabber/commit/b10e8d5); verified by `deepLink.test.ts`, `audioBridge.test.ts` and on the phone; native app: the Call Larry Shortcut only (story 202); links and the widget wait for step 7
 
 #### Use Case:
 - **As a** Larry's client on the home screen
@@ -407,3 +408,39 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** I opened *Cockpit* on Grabber Native's home screen, scrolled down and expanded a row
 - **When:** I tap *Done* in the footer and then *Cockpit* again
 - **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs, and the page's ☎ hands the call to Context Grabber's Call tab until the native call exists
+
+---
+
+### User Story 201:
+
+- **Summary:** Leave the call screen and come back to the same call
+- **Status:** native app only: implemented in [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by build and the simulator smoke (the call is owned by the app model, the screen only shows it), leaving and returning not exercised by a script; the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** Larry's client who wants to check the timer or report a problem mid-call
+- **I want to** close the call screen without ending the call and find it again from the home screen
+- **so that** the call is the app's, not a screen I must keep open
+
+#### Acceptance Criteria:
+- **Scenario:** Done mid-call
+- **Given:** a call is live in Grabber Native and Tony is talking
+- **When:** I tap *Done* and look at the home screen
+- **Then:** Tony keeps talking, the Call row reads *live · 0:42 · ElevenLabs · Tony* and counts on, and a tap on it shows the same captions and the same timer, with the session log showing `close_call` and `open_call` and no `call_ended` between them
+
+---
+
+### User Story 202:
+
+- **Summary:** Call Larry from a Shortcut in the native app
+- **Status:** native app only: implemented in [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by build only (Shortcuts cannot run on the simulator from a script); the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** Larry's client with the Action Button set to a Shortcut
+- **I want to** run *Call Larry* from Grabber Native's actions
+- **so that** the call that survives the lock is one press away while the native app replaces the old one
+
+#### Acceptance Criteria:
+- **Scenario:** The Shortcut with no call up
+- **Given:** Grabber Native is closed and ElevenLabs is the remembered backend
+- **When:** I run Grabber Native's *Call Larry* action from the Shortcuts app
+- **Then:** the app opens on the call screen and the call goes *live* on ElevenLabs without a tap, the session log shows `open_call` from shortcut and `call_start`, and running it again mid-call brings the call forward without a second `call_start`

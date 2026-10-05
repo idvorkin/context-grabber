@@ -33,6 +33,9 @@ final class AppModel: ObservableObject {
   /// `GRABBER_COCKPIT_URL` points it elsewhere (a URL, or a page in the app bundle) for the simulator's checks.
   private(set) lazy var cockpit = CockpitModel(
     log: log, override: ProcessInfo.processInfo.environment["GRABBER_COCKPIT_URL"])
+  /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
+  @Published var callOpen = false
+  let call: CallModel
 
   init() {
     database = AppDatabase(log: log)
@@ -40,11 +43,13 @@ final class AppModel: ObservableObject {
     tracker = LocationTracker(log: log, store: database.locations)
     places = PlacesModel(log: log, database: database)
     bugReporter = BugReporter(log: log)
+    call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
     places.prune(reason: "launch")
     liveActivity.endLeftovers()
+    CallLauncher.handler = { [weak self] backend in self?.callFromShortcut(backend) }
     runLaunchHooks()
   }
 
@@ -155,6 +160,27 @@ final class AppModel: ObservableObject {
 
   private var cockpitOpened = false
 
+  func openCall(from source: String) {
+    log.event("ui", ["action": "open_call", "from": source, "state": call.snapshot.state.rawValue])
+    if gymTimer != nil { closeGymTimer() }
+    screen = "call"
+    callOpen = true
+  }
+
+  func closeCall() {
+    log.event("ui", ["action": "close_call", "state": call.snapshot.state.rawValue])
+    screen = "home"
+    callOpen = false
+  }
+
+  /// The "Call Larry" Shortcut: the call screen, and a call unless one is already up (it is brought forward).
+  private func callFromShortcut(_ backend: CallBackend?) {
+    openCall(from: "shortcut")
+    guard !call.snapshot.isActive else { return }
+    if let backend { call.backend = backend }
+    call.start(from: "shortcut")
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
@@ -214,6 +240,17 @@ final class AppModel: ObservableObject {
       openCard(CardLaunch(think: mode != "open", neverMindAfter: mode == "never_mind" ? .seconds(2) : nil), from: "hook")
     }
     if env["GRABBER_COCKPIT"] == "open" { openCockpit(from: "hook") }
+    if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
+      // A call to that bridge (the smoke run's fake one), hung up after GRABBER_CALL_SECONDS (default 8).
+      openCall(from: "hook")
+      let seconds = Double(env["GRABBER_CALL_SECONDS"] ?? "") ?? 8
+      Task {
+        try? await Task.sleep(for: .seconds(1))
+        call.start(from: "hook")
+        try? await Task.sleep(for: .seconds(seconds))
+        if call.snapshot.isActive { call.hangUp(from: "hook") }
+      }
+    }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {
         try? await Task.sleep(for: .seconds(2))  // the first frame must be on screen for the picture
