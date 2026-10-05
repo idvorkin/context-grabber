@@ -97,6 +97,12 @@ card**, which opens his Think a Card Trainer app straight into "think of a card"
 app's Card tab and memdeck widgets are not ported. If the trainer is not installed the row says so instead of
 doing nothing.
 
+## Exercise Analyzer, one tap away
+
+Igor, 2026-10-05 (#142): *"You should also be able to launch Exercise Analyzer."* The home screen lists **Exercise
+Analyzer** under *Think of a card*; it opens Igor's Exercise Analyzer app where it was (that app's story 069). Like
+the trainer, it is not installed → the row says so instead of doing nothing.
+
 ## The Gym Timer in the native app (step 2)
 
 The timer does what stories 100–116 say, with these differences while the two apps live side by side:
