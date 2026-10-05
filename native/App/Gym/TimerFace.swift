@@ -131,8 +131,11 @@ struct TurnedTimer: View {
       let long = max(geo.size.width, geo.size.height)
       let short = min(geo.size.width, geo.size.height)
       VStack(spacing: 18) {
-        // The button needs room on the short edge: the face gives some up while it shows.
-        TimerFace(content: content, width: long * 0.9, maxHeight: short * (onReset == nil ? 0.6 : 0.46))
+        // The button needs room on the short edge: the face gives some up while it shows, more when the
+        // tall PAUSEd word sits above the time.
+        TimerFace(
+          content: content, width: long * 0.9,
+          maxHeight: short * (onReset == nil ? 0.6 : content.paused ? 0.36 : 0.46))
         Text(hint.uppercased()).font(.system(size: 13)).tracking(2).foregroundStyle(Color(white: 0.33))
         if let onReset {
           Button(action: onReset) {
