@@ -28,6 +28,15 @@ targets:
         excludes:
           - "words/**"
         buildPhase: resources
+      # The mirror's fixture week, for the simulator hook (GRABBER_MIRROR); the host tests read the same file.
+      - path: ContextCore/Tests/ContextCoreTests/Fixtures/mirror-fixture.json
+        buildPhase: resources
+    # Health: the mirror reads it (step 4). XcodeGen writes the file from these properties.
+    entitlements:
+      path: GrabberNative.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     dependencies:
       - package: ContextCore
     settings:
@@ -42,10 +51,28 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
+  # Simulator only: grants Health access through Health's own sheet, the one tap a script cannot make
+  # (`just native-sim-health`; docs/TESTING.md).
+  GrabberNativeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: GrabberNative
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: GrabberNative
+        CODE_SIGN_STYLE: Automatic
 schemes:
   GrabberNative:
     build:
       targets:
         GrabberNative: all
+    test:
+      targets:
+        - GrabberNativeUITests
     run:
       config: Debug

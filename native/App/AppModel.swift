@@ -15,6 +15,12 @@ final class AppModel: ObservableObject {
   @Published var status = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
+  /// Today (the mirror) is on screen.
+  @Published var showToday = false
+  /// The metric whose week is open over Today.
+  @Published var openMetricKey: MetricSheetItem?
+  /// The mirror: the last grab and the exports. Set at the end of init (it reads the database and the log).
+  private(set) var mirror: MirrorModel!
 
   init() {
     database = AppDatabase(log: log)
@@ -22,6 +28,7 @@ final class AppModel: ObservableObject {
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
+    mirror = MirrorModel(app: self)
     runLaunchHooks()
   }
 
@@ -53,6 +60,16 @@ final class AppModel: ObservableObject {
     gymTimer = nil
   }
 
+  func openToday(from source: String) {
+    log.event("ui", ["action": "open_today", "from": source])
+    showToday = true
+  }
+
+  func openMetric(_ key: MetricKey, from source: String) {
+    log.event("ui", ["action": "open_metric", "metric": key.rawValue, "from": source])
+    openMetricKey = MetricSheetItem(key: key)
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
@@ -68,6 +85,17 @@ final class AppModel: ObservableObject {
       }
       openGymTimer(launch, from: "hook")
     }
+    if let mode = env["GRABBER_MIRROR"], !mode.isEmpty {
+      // Today on screen, a grab of the fixture week (moved to this week), both exports written to
+      // Documents/exports/; GRABBER_METRIC=<key> then opens that metric's sheet, for a screenshot.
+      mirror.hookStatus = "running"  // before Today appears, so its own grab waits for the hook's
+      openToday(from: "hook")
+      let metric = env["GRABBER_METRIC"].flatMap(MetricKey.init(rawValue:))
+      Task {
+        await mirror.runFixtureHook(mode)
+        if let metric { openMetric(metric, from: "hook") }
+      }
+    }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {
         try? await Task.sleep(for: .seconds(2))  // the first frame must be on screen for the picture
@@ -76,4 +104,9 @@ final class AppModel: ObservableObject {
       }
     }
   }
+}
+
+struct MetricSheetItem: Identifiable, Equatable {
+  let key: MetricKey
+  var id: String { key.rawValue }
 }

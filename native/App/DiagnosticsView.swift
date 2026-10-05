@@ -11,6 +11,12 @@ struct DiagnosticsView: View {
       Form {
         Section {
           Button {
+            model.openToday(from: "home")
+          } label: {
+            Label("Today", systemImage: "heart.text.square").font(.title3.weight(.semibold)).padding(.vertical, 6)
+          }
+          .accessibilityIdentifier("open-today")
+          Button {
             model.openGymTimer(from: "home")
           } label: {
             Label("Gym Timer", systemImage: "timer").font(.title3.weight(.semibold)).padding(.vertical, 6)
@@ -41,6 +47,9 @@ struct DiagnosticsView: View {
         }
       }
       .navigationTitle("Grabber Native")
+      .navigationDestination(isPresented: $model.showToday) {
+        TodayView(app: model, mirror: model.mirror)
+      }
     }
     .fullScreenCover(
       isPresented: Binding(get: { model.gymTimer != nil }, set: { if !$0 { model.closeGymTimer() } })
