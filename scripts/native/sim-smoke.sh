@@ -80,5 +80,34 @@ else bad "timer: $opens opens, $closes releases, last session event '$last_sessi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("timer_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed"; fi
 
+# Stories 020, 029 (spec step 4): the exports equal, byte for byte, what the React Native app's own code makes of
+# the same week. `fixture` answers from the file; `healthkit` from the simulator's Health store, which needs the
+# access `just native-sim-health` grants once (skipped with a note when it has not). Needs typescript from
+# node_modules (`npm ci`, or NODE_PATH pointing at a checkout that has it).
+root="$(cd "$(dirname "$0")/../.." && pwd)"
+expected="$HOME/tmp/agent/skill/mirror-smoke"
+mirror_check() {  # $1 = fixture | healthkit
+  local before=$fail
+  SIMCTL_CHILD_GRABBER_MIRROR="$1" relaunch
+  if ! wait_for mirror_fixture_done 120; then
+    if [ "$1" = healthkit ]; then fail=$before; echo "skip  mirror ($1): no Health access on this simulator; run just native-sim-health"; return; fi
+    bad "mirror ($1): no mirror_fixture_done"; return
+  fi
+  f=$(newest_log)
+  mkdir -p "$expected/$1"
+  TZ=$(jq -r .timeZone "$DOCS/exports/fixture.json") node --no-warnings "$root/scripts/native/make-mirror-expected.mjs" \
+    --fixture "$DOCS/exports/fixture.json" --out "$expected/$1" >/dev/null
+  if cmp -s "$DOCS/exports/summary.json" "$expected/$1/mirror-summary-expected.json" \
+    && cmp -s "$DOCS/exports/raw.json" "$expected/$1/mirror-raw-expected.json"; then
+    ok "mirror ($1): summary $(wc -c <"$DOCS/exports/summary.json" | tr -d ' ') B and raw byte-identical to the TypeScript"
+  else bad "mirror ($1): exports differ from $expected/$1 (diff them)"; fi
+  grabbed=$(jq -c 'select(.type=="mirror_grabbed") | {series, failed_queries}' "$f" | tail -1)
+  errors=$(jq -c 'select(.type=="error" or .type=="health_query_failed")' "$f")
+  if [ "$(jq -r .series <<<"$grabbed")" = "10" ] && [ -z "$errors" ]; then ok "mirror ($1): 10 series, nothing failed"
+  else bad "mirror ($1): $grabbed $errors"; fi
+}
+mirror_check fixture
+mirror_check healthkit
+
 xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
 exit $fail

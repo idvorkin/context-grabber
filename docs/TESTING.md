@@ -38,6 +38,8 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 |---|---|
 | `GRABBER_BUG=text` | two seconds after launch, file a problem report with that note, as a shake and *Log it* would |
 | `GRABBER_TIMER=<chip>` | open the Gym Timer on that chip (`30sec`, `1min`, `2min`, `5-1`, `custom`) and start it, as a widget tile would. `GRABBER_TIMER=work,rest,rounds` (seconds, seconds, count) runs that shape as Custom without remembering it: `10,10,2` is a whole workout in 35 s, which is what `just native-test-sim` runs and reads `timer_cue`, `timer_duck` and `timer_session` from |
+| `GRABBER_MIRROR=fixture\|healthkit` | open Today and grab the mirror's fixture week (`mirror-fixture.json`, moved to this week): `fixture` answers from the file, `healthkit` first saves it into the simulator's Health store (never on the phone) and grabs from HealthKit. Either writes `Documents/exports/{fixture,summary,raw}.json` and logs `mirror_fixture_done`; `make-mirror-expected.mjs --fixture` computes what the React Native code makes of the same `fixture.json`, and `sim-smoke.sh` compares bytes. Health's access sheet needs one tap a script cannot make: `just native-sim-health` (a UI test) makes it once per simulator |
+| `GRABBER_METRIC=<key>` | with `GRABBER_MIRROR`: open that metric's sheet after the grab (`sleep`, `movement`, `heartRate`, …), for a screenshot |
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 
 What the native rungs can and cannot see of the Gym Timer:
@@ -50,6 +52,16 @@ What the native rungs can and cannot see of the Gym Timer:
 | The timer in the app: cues on their seconds, one window per boundary, the session let go at the end | Simulator | the `timer:` checks in `sim-smoke.sh` |
 | The face, upright and turned | Simulator screenshot | `SIMCTL_CHILD_GRABBER_TIMER=10,10,2 SIMCTL_CHILD_GRABBER_TURN=left xcrun simctl launch …`, then `simctl io screenshot` |
 | Music dipping and coming back, a podcast pausing and resuming, cues with the phone locked, the real turn, the screen staying lit | Phone only | run a workout with music, lock for a round, `just pull-logs`, read `timer_session` / `timer_duck` / `timer_cue` / `timer_interruption` |
+
+What the native rungs can and cannot see of the mirror and Grab Context:
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| Health math, sleep nights, the week's series, box plots, card and sheet text, the cache | Host | `MirrorHealthTests`, `MirrorWeeklyTests`, `MirrorBasicsTests` (ports of the jest cases, pinned to America/Los_Angeles) |
+| The export, byte for byte with the React Native app | Host | `MirrorFixtureTests`: the native grab over `mirror-fixture.json` against `mirror-{summary,raw}-expected.json`, which `TZ=America/Los_Angeles node scripts/native/make-mirror-expected.mjs` writes by running the React Native app's own `lib/` (and a transcript of App.tsx's grab) over the same fixture |
+| HealthKit's answers (units, overlap, order) giving the same bytes | Simulator | `just native-sim-health` once (a UI test grants Health's two-page access sheet — topics, then *All Recorded Data* — which simctl cannot tap), then the `mirror:` checks in `sim-smoke.sh` |
+| Today and a sheet, drawn | Simulator screenshot | `SIMCTL_CHILD_GRABBER_MIRROR=fixture SIMCTL_CHILD_GRABBER_METRIC=sleep xcrun simctl launch …`, then `simctl io screenshot` |
+| Igor's own Health: the cards equal the current app's Body tab; sources, preferred units; Health's access sheet | Phone only | grab in both apps, compare; `just pull-logs`, read `mirror_grabbed`, `health_query_failed` |
 
 A new behaviour that only a tap can reach gets a hook and a log event in the same change; a check without an event
 to wait on is not a check. `GrabberNative.xcodeproj` is generated from `native/project.yml` by XcodeGen
