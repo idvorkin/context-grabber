@@ -76,8 +76,9 @@ deleted at launch, except a log a problem report names.
 **Reporting a problem.** A shake anywhere, or *Report a problem* on the Diagnostics screen, opens a sheet with
 one text field and a list of what will be attached. *Log it* stores the note, a picture of the screen as it was
 at the shake, the screen Igor was on, the build, and the name and moment of the session log. On the Mac the
-report becomes one GitHub issue with the note, the context and the picture; filing twice never makes two
-issues.
+report becomes one GitHub issue with the note and the context; filing twice never makes two issues. The
+picture stays on the Mac and the issue says where: the issues are public, and a screen can show health, places
+or the journal.
 
 **Crashes.** When the app crashed or hung, the next launch's log says so and names a file with the stack; the
 file comes to the Mac with the logs.
@@ -102,6 +103,10 @@ The timer does what stories 100–116 say, with these differences while the two 
 - **A boundary is called within a tenth of a second of its true time.** The current app looks once a second, so
   a cue can be most of a second late.
 - **A phone call mid-workout**: when the call ends the timer takes its audio back and keeps speaking.
+- **With no rest, every round is still called.** A Custom preset with Rest 0:00 says *go* at the start of each
+  round. The current app counts three, two, one and then says nothing.
+- **Coming back to the app never costs a cue.** What fell while the app was away is not replayed, and what
+  falls in the second Igor comes back is still said.
 - **The lock-screen countdown (106) and one-tap starts from widgets and links (114) wait for step 7**, when the
   widgets move. Until then the native timer keeps time and speaks with the screen locked, but shows nothing on
   the lock screen.

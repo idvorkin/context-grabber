@@ -105,7 +105,7 @@ final class TimerEngineTests: XCTestCase {
     XCTAssertFalse(engine.state.isRunning)
     XCTAssertEqual(engine.tick(now: 500), [])
     XCTAssertEqual(engine.state.timeLeft, 20)
-    XCTAssertEqual(engine.start(now: 600), [])  // resume replays nothing
+    XCTAssertEqual(engine.start(now: 600), [])  // nothing fell: resume says nothing
     XCTAssertTrue(engine.state.isRunning)
     XCTAssertEqual(engine.state.timeLeft, 20)
     _ = engine.tick(now: 601.6)
@@ -113,22 +113,67 @@ final class TimerEngineTests: XCTestCase {
     XCTAssertEqual(engine.state.currentRound, 1)
   }
 
-  func testASilentCatchUpMovesTheStateAndReplaysNothingThenCuesGoOn() {
+  func testACatchUpMovesTheStateAndReplaysNothingThenCuesGoOn() {
     var engine = TimerEngine(profile: profile)
     _ = engine.start(now: 0)
     _ = engine.tick(now: 20)
-    XCTAssertEqual(engine.tick(now: 50, silent: true), [])
+    XCTAssertEqual(engine.tick(now: 50), [])
     XCTAssertEqual(engine.state.phase, .work)
     XCTAssertEqual(engine.state.currentRound, 2)
     XCTAssertEqual(engine.state.timeLeft, 25)
     XCTAssertEqual(engine.tick(now: 50.5), [])  // the round it landed in is not announced late
   }
 
-  func testASilentCatchUpPastTheEndStillFinishes() {
+  func testACatchUpPastTheEndStillFinishes() {
     var engine = TimerEngine(profile: profile)
     _ = engine.start(now: 0)
-    XCTAssertEqual(engine.tick(now: 1000, silent: true), [.finished])
+    XCTAssertEqual(engine.tick(now: 1000), [.finished])
     XCTAssertEqual(engine.tick(now: 1001), [])
+  }
+
+  private let goEffects: [TimerEffect] = [.duckHold(ms: DuckWindow.cueHoldMs), .cue(.go)]
+
+  func testComingBackInABoundarysSecondStillCallsItOnce() {
+    var engine = TimerEngine(profile: profile)
+    _ = engine.start(now: 0)
+    _ = engine.tick(now: 4.95)
+    // The app comes to the front at 5.02, before the clock's own tick at 5.05.
+    XCTAssertEqual(engine.tick(now: 5.02), [.phaseChanged(from: .prep, to: .work, round: 1)] + goEffects)
+    XCTAssertEqual(engine.tick(now: 5.05), [])
+  }
+
+  func testComingBackAfterALongGapInABoundarysSecondCallsOnlyThatBoundary() {
+    var engine = TimerEngine(profile: profile)
+    _ = engine.start(now: 0)
+    _ = engine.tick(now: 20)
+    // Away across rest and "go"; back as round 2's work ends and its rest begins (t=75).
+    XCTAssertEqual(
+      engine.tick(now: 75.3),
+      [.phaseChanged(from: .work, to: .rest, round: 2), .duckHold(ms: DuckWindow.cueHoldMs), .cue(.rest)])
+  }
+
+  func testAStopJustAfterABoundaryNoTickSawCallsItOnResume() {
+    var engine = TimerEngine(profile: profile)
+    _ = engine.start(now: 0)
+    _ = engine.tick(now: 4.95)
+    engine.pause(now: 5.02)
+    XCTAssertEqual(engine.start(now: 60), [.phaseChanged(from: .prep, to: .work, round: 1)] + goEffects)
+    XCTAssertEqual(engine.tick(now: 60.1), [])
+  }
+
+  func testWithNoRestEveryNewRoundSaysGo() {
+    var engine = TimerEngine(profile: TimerProfile(name: "x", workTime: 10, restTime: 0, rounds: 3, prepTime: 0))
+    XCTAssertEqual(engine.start(now: 0), [.phaseChanged(from: .idle, to: .work, round: 1)] + goEffects)
+    let effects = run(&engine, from: 0.25, to: 30)
+    XCTAssertEqual(
+      cues(effects),
+      [
+        "7:three", "8:two", "9:one", "10:go",
+        "17:three", "18:two", "19:one", "20:go",
+        "27:three", "28:two", "29:one", "30:done",
+      ])
+    XCTAssertEqual(
+      effects.filter { $0.0 == 10 }.map(\.1), [.phaseChanged(from: .work, to: .work, round: 2)] + goEffects)
   }
 
   func testResetReturnsToIdleAndAPresetChangeIsIgnoredMidRun() {

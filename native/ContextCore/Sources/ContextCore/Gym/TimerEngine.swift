@@ -106,6 +106,7 @@ public struct TimerEngine {
   private var pausedAccum: Double = 0
   private var pausedAt: Double?
   private var lastPhase: TimerPhase = .idle
+  private var lastRound = 1
   private var lastTimeLeft = 0
 
   public init(profile: TimerProfile) {
@@ -130,11 +131,12 @@ public struct TimerEngine {
     if let paused = pausedAt {
       pausedAccum += now - paused
       pausedAt = nil
-      return tick(now: now, silent: true)
+      return tick(now: now)
     }
     startedAt = now
     pausedAccum = 0
     lastPhase = .idle
+    lastRound = 1
     lastTimeLeft = profile.prepTime
     return tick(now: now)
   }
@@ -151,47 +153,51 @@ public struct TimerEngine {
     pausedAccum = 0
     pausedAt = nil
     lastPhase = .idle
+    lastRound = 1
     lastTimeLeft = 0
     state = TimerState(totalRounds: profile.rounds)
   }
 
-  /// Bring the state to `now` and say what to do about it. `silent` is the catch-up after the app was away:
-  /// the state moves, nothing is replayed.
-  public mutating func tick(now: Double, silent: Bool = false) -> [TimerEffect] {
+  /// Bring the state to `now` and say what to do about it. A boundary is called in the second it falls, by
+  /// whichever tick sees it first; one found later (the app was away) moves the state and is not replayed.
+  /// A new round with no rest between is a boundary too, and says go.
+  public mutating func tick(now: Double) -> [TimerEffect] {
     guard let startedAt else { return [] }
     let elapsed = (pausedAt ?? now) - startedAt - pausedAccum
-    let d = deriveTimerState(profile, elapsedSec: max(0, Int(elapsed.rounded(.down))))
+    let sec = max(0, Int(elapsed.rounded(.down)))
+    let d = deriveTimerState(profile, elapsedSec: sec)
     var effects: [TimerEffect] = []
 
-    if !silent {
-      let counting = d.phase != .idle && d.phase != .done
-      // The window opens a silent second before the count, so the session's change is done before a word plays.
-      if counting, d.timeLeft == 4, d.timeLeft != lastTimeLeft {
-        effects.append(.duckHold(ms: DuckWindow.openEarlyHoldMs))
-      }
-      if counting, (1...3).contains(d.timeLeft), d.timeLeft != lastTimeLeft {
-        effects.append(.duckHold(ms: DuckWindow.tickHoldMs))
-        effects.append(.cue([.one, .two, .three][d.timeLeft - 1]))
-      }
-      if d.phase != lastPhase {
-        effects.append(.phaseChanged(from: lastPhase, to: d.phase, round: d.currentRound))
-        switch d.phase {
-        case .work:
-          effects.append(.duckHold(ms: DuckWindow.cueHoldMs))
-          effects.append(.cue(.go))
-        case .rest:
-          effects.append(.duckHold(ms: DuckWindow.cueHoldMs))
-          effects.append(.cue(.rest))
-        case .done:
-          effects.append(.duckHold(ms: DuckWindow.finishHoldMs))
-          effects.append(.cue(.done))
-        default: break
-        }
+    let counting = d.phase != .idle && d.phase != .done
+    // The window opens a silent second before the count, so the session's change is done before a word plays.
+    if counting, d.timeLeft == 4, d.timeLeft != lastTimeLeft {
+      effects.append(.duckHold(ms: DuckWindow.openEarlyHoldMs))
+    }
+    if counting, (1...3).contains(d.timeLeft), d.timeLeft != lastTimeLeft {
+      effects.append(.duckHold(ms: DuckWindow.tickHoldMs))
+      effects.append(.cue([.one, .two, .three][d.timeLeft - 1]))
+    }
+    let before = sec > 0 ? deriveTimerState(profile, elapsedSec: sec - 1) : nil
+    let fellThisSecond = before?.phase != d.phase || before?.currentRound != d.currentRound
+    if fellThisSecond, d.phase != lastPhase || d.currentRound != lastRound {
+      effects.append(.phaseChanged(from: lastPhase, to: d.phase, round: d.currentRound))
+      switch d.phase {
+      case .work:
+        effects.append(.duckHold(ms: DuckWindow.cueHoldMs))
+        effects.append(.cue(.go))
+      case .rest:
+        effects.append(.duckHold(ms: DuckWindow.cueHoldMs))
+        effects.append(.cue(.rest))
+      case .done:
+        effects.append(.duckHold(ms: DuckWindow.finishHoldMs))
+        effects.append(.cue(.done))
+      default: break
       }
     }
     if d.done, lastPhase != .done { effects.append(.finished) }
 
     lastPhase = d.phase
+    lastRound = d.currentRound
     lastTimeLeft = d.timeLeft
     state = TimerState(
       isRunning: !d.done && pausedAt == nil, isPaused: pausedAt != nil && !d.done, phase: d.phase,

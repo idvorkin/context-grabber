@@ -1,8 +1,9 @@
 //  Crash reports without a service (story 144). MetricKit hands the app its own crash and hang diagnostics on a
 //  later launch; each payload is written under Documents/crashes/ and announced in the session log as
 //  `crash_report`. MetricKit can take days on a development build, so the app also keeps its own last-resort
-//  files in the same folder: `signal-<epoch>.txt` (the crashing thread's raw backtrace) and, for an Objective-C
-//  exception, `exception-<epoch>.txt` with its name, reason and stack. `just pull-logs` copies the folder.
+//  files in the same folder: `signal-<epoch>.txt` (the crashing thread's raw backtrace) or, for an Objective-C
+//  exception, `exception-<epoch>.txt` with its name, reason and stack — one file per crash. `just pull-logs`
+//  copies the folder.
 
 import Darwin
 import Foundation
@@ -11,6 +12,9 @@ import MetricKit
 /// The folder's path for the signal handler, which may only make async-signal-safe calls.
 private var crashFolderPath = [CChar](repeating: 0, count: 1024)
 
+/// Set once the exception file is on disk: the abort that follows is the same crash and writes no second file.
+private var exceptionFileWritten: sig_atomic_t = 0
+
 private func writeAll(_ fd: Int32, _ text: String) {
   text.utf8CString.withUnsafeBufferPointer { buffer in
     _ = write(fd, buffer.baseAddress, buffer.count - 1)
@@ -18,6 +22,12 @@ private func writeAll(_ fd: Int32, _ text: String) {
 }
 
 private func crashSignalHandler(_ signal: Int32) {
+  if exceptionFileWritten == 0 { writeSignalFile(signal) }
+  Darwin.signal(signal, SIG_DFL)
+  raise(signal)
+}
+
+private func writeSignalFile(_ signal: Int32) {
   var path = crashFolderPath
   let name = "/signal-\(Int(time(nil))).txt"
   name.utf8CString.withUnsafeBufferPointer { src in
@@ -26,14 +36,12 @@ private func crashSignalHandler(_ signal: Int32) {
     for i in 0..<src.count { path[base + i] = src[i] }
   }
   let fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0o644)
-  guard fd >= 0 else { _exit(128 + signal) }
+  guard fd >= 0 else { return }
   writeAll(fd, "signal \(signal)\n")
   var frames = [UnsafeMutableRawPointer?](repeating: nil, count: 128)
   let count = backtrace(&frames, Int32(frames.count))
   backtrace_symbols_fd(&frames, count, fd)
   close(fd)
-  Darwin.signal(signal, SIG_DFL)
-  raise(signal)
 }
 
 final class CrashReports: NSObject, MXMetricManagerSubscriber {
@@ -58,9 +66,8 @@ final class CrashReports: NSObject, MXMetricManagerSubscriber {
       let text =
         "exception \(exception.name.rawValue)\n\(exception.reason ?? "")\n"
         + exception.callStackSymbols.joined(separator: "\n") + "\n"
-      try? text.write(
-        to: CrashReports.folder.appendingPathComponent("exception-\(Int(Date().timeIntervalSince1970)).txt"),
-        atomically: true, encoding: .utf8)
+      let file = CrashReports.folder.appendingPathComponent("exception-\(Int(Date().timeIntervalSince1970)).txt")
+      if (try? text.write(to: file, atomically: true, encoding: .utf8)) != nil { exceptionFileWritten = 1 }
     }
   }
 

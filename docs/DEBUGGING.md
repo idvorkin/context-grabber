@@ -52,7 +52,7 @@ just symbolicate ~/tmp/agent/grabber-logs/crashes/<stamp>.json
 |---|---|
 | Launch | `session_start` (device, system, app, sha, branch, started), `logs_pruned` (count, bytes, kept_for_reports; logged even when zero) |
 | Reports | `ui` (action: report_problem, from: shake / button, screen), `bug_report` (note, screen, build, log, screenshot) |
-| Gym Timer | `ui` (action: open_timer with from: home / hook and autostart; close_timer), `keep_awake` (on, reason: gym_timer), `timer_start` (preset, work, rest, rounds, prep, resumed), `timer_pause` (phase, round, time_left), `timer_reset`, `timer_phase` (from, to, round: logged at the boundary's true second), `timer_cue` (cue: three / two / one / go / rest / done; ok: false with a message when no player could be made), `timer_finished` (rounds), `timer_catchup` (phase, round, time_left: the app came back to the front mid-run and the state moved without replaying cues), `timer_turn` (turn: upright / left / right), `stopwatch` (running, elapsed_ms), `accessory_saved` (count, items) |
+| Gym Timer | `ui` (action: open_timer with from: home / hook and autostart; close_timer), `keep_awake` (on, reason: gym_timer), `timer_start` (preset, work, rest, rounds, prep, resumed), `timer_pause` (phase, round, time_left), `timer_reset`, `timer_phase` (from, to, round: logged at the boundary's true second; work to work is a new round with no rest), `timer_cue` (cue: three / two / one / go / rest / done; ok: false with a message when no player could be made), `timer_finished` (rounds), `timer_catchup` (phase, round, time_left: the app came back to the front mid-run and the state moved without replaying cues), `timer_turn` (turn: upright / left / right), `stopwatch` (running, elapsed_ms), `accessory_saved` (count, items) |
 | Gym Timer audio | `timer_session` (action: options with the option names, active with other_audio: whether music was playing, inactive: let go with notify-others; ok, and message when it failed), `timer_keepalive` (action: start / stop, ok), `timer_duck` (action: open / held / close / released, hold_ms: the window that turns music down around the cues; `released` is the request, the `timer_session` inactive → active pair after it is the session doing it), `timer_interruption` (kind: began / ended, wanted: whether the timer still needed the session; a phone call) |
 | Failures | `error` (where: log (a field JSON could not carry, with its type under `event`) / bug_images / bug_report (bugs.jsonl could not be written; the report is still in this log) / logs_prune / database (the SQLite file did not open: nothing is remembered this launch) / settings (key) / timer_audio (a cue file missing from the bundle or unreadable) / accessory_save (items) / accessory_history, message), `crash_report` (kind: crash / hang / signal / exception, file; `top`: the file's first lines for the app's own files) |
 
@@ -69,7 +69,8 @@ Monitor(command: "scripts/native/bugs-monitor.sh", description: "new shake repor
 
 which polls `bugs.jsonl` every minute and prints one line per report that is not yet an issue (`just bugs-check`
 is the same look, once; "phone not reachable" is not a failure). On a line: `just pull-logs && just file-bugs` —
-one issue per report, with the screenshot on a gist; the marker `<!-- bug:<reported_at> -->` makes filing
+one issue per report, carrying the note, the screen, the build and the log's name. The repo is public, so the
+screenshot is never uploaded: the issue names its path under `~/tmp/agent/grabber-logs/` on the Mac. The marker `<!-- bug:<reported_at> -->` makes filing
 idempotent. Then steps 3–5 of *Bug reports* below, reading the log at the report's `session_t_ms`.
 
 ## Adding a line

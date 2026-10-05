@@ -134,19 +134,20 @@ final class GymTimerModel: ObservableObject {
     engine.reset()
     engine.setProfile(profile)
     timer = engine.state
-    duck.close()
     audio.stop()
+    duck.close()
     log.event("timer_reset")
   }
 
-  private func tick(silent: Bool = false) {
-    perform(engine.tick(now: now, silent: silent))
+  private func tick() {
+    perform(engine.tick(now: now))
   }
 
-  /// The app came back to the front: move the state to now without replaying what was missed (story 107).
+  /// The app came back to the front: move the state to now. The engine replays nothing that was missed and
+  /// still calls what is due this second (story 107).
   func catchUp() {
     guard timer.isRunning else { return }
-    tick(silent: true)
+    tick()
     log.event(
       "timer_catchup", ["phase": timer.phase.rawValue, "round": timer.currentRound, "time_left": timer.timeLeft])
   }
@@ -218,8 +219,8 @@ final class GymTimerModel: ObservableObject {
     log.event("keep_awake", ["on": false, "reason": "gym_timer"])
     clock?.invalidate()
     clock = nil
-    duck.close()
     audio.stop()
+    duck.close()
   }
 
   // MARK: - accessory work

@@ -65,18 +65,18 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 143:
 
 - **Summary:** A report becomes a GitHub issue once (technical)
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet; the issue names the screenshot's path on the Mac and uploads no picture, verified by running the script's body against a sample report
 
 #### Use Case:
 - **As a** developer with the phone near the Mac
-- **I want to** have every new report filed as an issue with its note, context and screenshot
-- **so that** nothing Igor reported is lost and nothing is filed twice
+- **I want to** have every new report filed as an issue with its note and context, and told where its screenshot is on the Mac
+- **so that** nothing Igor reported is lost, nothing is filed twice, and no picture of his health, places or journal lands in a public issue
 
 #### Acceptance Criteria:
 - **Scenario:** Filing after a session at the gym
 - **Given:** two reports are on the phone and one of them is already an issue
 - **When:** I run `just pull-logs` and `just file-bugs`
-- **Then:** exactly one new issue is created, carrying the note, the screen, the build, the log's name and the screenshot, and running `just file-bugs` again creates none
+- **Then:** exactly one new issue is created, carrying the note, the screen, the build, the log's name and the screenshot's path under `~/tmp/agent/grabber-logs/` on the Mac, no picture is uploaded anywhere, and running `just file-bugs` again creates none
 
 ---
 

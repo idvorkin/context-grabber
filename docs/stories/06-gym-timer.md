@@ -311,3 +311,39 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a round ran with music playing
 - **When:** I tap *Log* at the top right of the timer and paste somewhere
 - **Then:** the paste opens with a build line, then the session going active with `[mixWithOthers]`, the duck window opening at four seconds, holding through the ticks and the cue, closing, the session letting go and coming back, the keepalive loop restarting — and nothing marked FAILED; the button read *Copied* for a moment
+
+---
+
+### User Story 117:
+
+- **Summary:** The preset cannot change under a running clock
+- **Status:** native app only: implemented in [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5); verified by `just native-test` (`TimerEngineTests`), the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** lifter whose thumb brushes the chip row mid-round
+- **I want to** have the preset chips and the Custom sliders do nothing from START until RESET or the finish
+- **so that** the workout I started is the workout that runs
+
+#### Acceptance Criteria:
+- **Scenario:** A chip tapped mid-round
+- **Given:** 1 MIN is running in round 2 with 0:42 left
+- **When:** I tap the 2 MIN chip, then tap STOP and move the Custom sliders
+- **Then:** 1 MIN stays the chosen chip, the clock and *Round 2 of 5* are unchanged, the sliders do not move, and after RESET the chips and sliders answer again
+
+---
+
+### User Story 118:
+
+- **Summary:** A phone call does not end the workout's cues
+- **Status:** native app only: implemented in [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5); a phone call exists only on the phone, which is still to be checked by Igor
+
+#### Use Case:
+- **As a** lifter who takes a short call between rounds
+- **I want to** have the timer take its audio back when the call ends
+- **so that** the next count is spoken and the timer keeps running with the screen locked
+
+#### Acceptance Criteria:
+- **Scenario:** A call during a workout
+- **Given:** the 5-1 preset is running and a phone call comes in
+- **When:** I take the call, hang up, and lock the phone
+- **Then:** the clock kept time through the call, the next three, two, one and cue are spoken at their true times with the phone still locked, and the session log has `timer_interruption` began and ended with the session going active again after it
