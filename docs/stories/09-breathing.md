@@ -359,7 +359,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 240:
 
 - **Summary:** A thicker ring, and a cog to pick its style
-- **Status:** not implemented
+- **Status:** native app only: implemented in [685be3e](https://github.com/idvorkin/context-grabber/commit/685be3e); verified by `BreathStyleTests` (host), `BreatheStyleUITests` (pick Tide through the cog, relaunch, still Tide) and simulator screenshots of all four styles mid-inhale and the picker; the phone still to be checked by Igor
 - **Issues:** [#147](https://github.com/idvorkin/context-grabber/issues/147)
 - **Spec:** [Box breathing — ring styles](../superpowers/specs/2026-10-04-box-breathing-design.md#ring-styles)
 
