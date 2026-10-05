@@ -45,6 +45,12 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   private var lastScheduledAt = 0.0
   private var lastReopenAt = 0.0
   private var firstBufferLogged = false
+  /// #146 (a call that "played" Tony with nothing heard): per five seconds, the loudest sample the bridge sent and
+  /// the loudest the mixer rendered, so the log says whether silence came in or sound got lost on the way out.
+  private var rxPeak: Float = 0
+  private var mixPeak: Float = 0
+  private var mixBuffers = 0
+  private var mixTapInstalled = false
 
   /// The output, read from main for the stats line: guarded by `lock`.
   private let lock = NSLock()
@@ -139,6 +145,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     queue.async { [self] in
       guard let player, let format = playerFormat, let engine, engine.isRunning else { return }
       let samples = PCM.pcm16ToFloat(pcm)
+      for x in samples { rxPeak = max(rxPeak, abs(x)) }
       guard !samples.isEmpty,
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count))
       else { return }
@@ -249,6 +256,20 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     }
     engine.connect(player, to: engine.mainMixerNode, format: format)
     playerFormat = format
+    let mixer = engine.mainMixerNode
+    if mixTapInstalled { mixer.removeTap(onBus: 0) }
+    mixer.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, _ in
+      guard let self, let data = buffer.floatChannelData else { return }
+      var peak: Float = 0
+      for c in 0..<Int(buffer.format.channelCount) {
+        for i in 0..<Int(buffer.frameLength) { peak = max(peak, abs(data[c][i])) }
+      }
+      self.queue.async {
+        self.mixPeak = max(self.mixPeak, peak)
+        self.mixBuffers += 1
+      }
+    }
+    mixTapInstalled = true
   }
 
   private func startEngine(why: String) throws {
@@ -367,6 +388,8 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     ticks += 1
     guard ticks % 10 == 0 else { return }  // the rest twice a second
 
+    if ticks % 100 == 0, playerFormat != nil { logOutputLevel() }
+
     // The mic: a tap that went quiet gets re-armed; three times and it is a fact.
     let mic = CallWatchdog.mic(
       now: now, armed: tapInstalled && micListener != nil, paused: paused, armedAt: armedAt, lastBufferAt: lastBufferAt)
@@ -405,6 +428,27 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       setHealth(CallWatchdog.audioNotPlaying)
       try? rebuild(why: "output stall")
     }
+  }
+
+  /// #146: what came in, what the mixer rendered, and everything between the mixer and the speaker.
+  private func logOutputLevel() {
+    guard let engine else { return }
+    let out = engine.outputNode
+    let outFormat = out.outputFormat(forBus: 0)
+    let outputs = session.currentRoute.outputs.map { "\($0.portName) [\($0.portType.rawValue)]" }
+    log(
+      "call_out_level",
+      [
+        "rx_peak": (Double(rxPeak) * 1000).rounded() / 1000, "mix_peak": (Double(mixPeak) * 1000).rounded() / 1000,
+        "mix_buffers": mixBuffers, "engine_running": engine.isRunning, "player_playing": player?.isPlaying ?? false,
+        "player_volume": player?.volume ?? -1, "mixer_volume": engine.mainMixerNode.outputVolume,
+        "session_volume": session.outputVolume, "out_rate": outFormat.sampleRate, "out_channels": Int(outFormat.channelCount),
+        "out_vp": out.isVoiceProcessingEnabled, "in_vp": engine.inputNode.isVoiceProcessingEnabled,
+        "category": session.category.rawValue, "mode": session.mode.rawValue, "outputs": outputs,
+      ])
+    rxPeak = 0
+    mixPeak = 0
+    mixBuffers = 0
   }
 
   // MARK: - interruptions and route changes
@@ -499,10 +543,12 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     configObserver = nil
     if let engine {
       if tapInstalled { engine.inputNode.removeTap(onBus: 0) }
+      if mixTapInstalled { engine.mainMixerNode.removeTap(onBus: 0) }
       player?.stop()
       engine.stop()
     }
     tapInstalled = false
+    mixTapInstalled = false
     engine = nil
     player = nil
     playerFormat = nil
