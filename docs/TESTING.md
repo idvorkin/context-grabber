@@ -24,6 +24,7 @@ tables below move here.
 |---|---|---|---|---|
 | 1 Host | `ContextCore` XCTest (`native/ContextCore`, the platform-free package) | `just native-test` (also run by `just test`) | seconds | everything pure: what a log line can carry, log retention; each ported `lib/` module's logic |
 | 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, no `error` event; the timer's and breathing's cues and Live Activity events |
+| 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, the timer's cues, the card's deal and count, no `error` event |
 | 3 Phone | Grabber Native on the iPhone, beside Context Grabber | `just native-run-device`, then `just pull-logs` | minutes + a person | the shake, and everything the phone-only rows below list |
 
 The phone recipes (`native-run-device`, `pull-logs`, `bugs-check`) need the iPhone's hardware UDID: `DEVICE=<udid>`
@@ -44,6 +45,7 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_TRACKING=on\|off` | flip the Background Tracking switch as a tap would; with `xcrun simctl privacy <udid> grant location-always com.idvorkin.grabbernative` first, `on` starts recording, and `xcrun simctl location <udid> start …` moves the simulator so points arrive (`location_point`) |
 | `GRABBER_RETENTION=<days>` | set retention as the stepper would; lowering it prunes at once (`prune` with reason `lowered`) |
 | `GRABBER_EXPORT=1` | make the export file as *Export database* does, without the share sheet; `export` names its path, which the smoke opens with `sqlite3` |
+| `GRABBER_CARD=open\|think\|never_mind` | open the memdeck card full screen; `think` also presses *Think of a card*; `never_mind` presses it and then *Never mind* two seconds into the count. `just native-test-sim` runs `think` and `never_mind` and reads `card_open`, `card_deal` and `card_think` |
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 | `GRABBER_COUNT_VOICE=adam\|igor\|aussie` | with `GRABBER_TIMER` or `GRABBER_TIMER_SETTINGS`: count in that voice for this launch, not remembered and with no sample (story 182); `just native-test-sim` runs `aussie` and reads the first `timer_cue`'s `voice` |
 | `GRABBER_TIMER_SETTINGS=1` | open the Gym Timer, not started, with *Timer settings* up (logs `ui` action: timer_settings), for a screenshot of the sheet |
@@ -60,6 +62,9 @@ What the native rungs can and cannot see of the Gym Timer:
 | Timer settings: the gear, the three rows and the checkmark | Simulator screenshot | `SIMCTL_CHILD_GRABBER_TIMER_SETTINGS=1 xcrun simctl launch …`, then `simctl io screenshot` |
 | Hearing each voice, the sample on a tap, a change taking effect mid-workout | Phone only | choose each voice in the sheet, start 30 SEC, `just pull-logs`, read `ui` count_voice / `timer_voice_sample` / `timer_cue` voice |
 | The face, upright and turned | Simulator screenshot | `SIMCTL_CHILD_GRABBER_TIMER=10,10,2 SIMCTL_CHILD_GRABBER_TURN=left xcrun simctl launch …`, then `simctl io screenshot` |
+| The memdeck deal: every `just check-deal` promise, the native deal equal to the old app's, the five-second count | Host | `CardDealTests` (golden vectors from `scripts/card-deal-check/golden/`), `ThinkCountTests` |
+| The card screen: an open deals, the count reveals a different card at five seconds, *Never mind* keeps the card, the tap count survives a relaunch | Simulator | the `card:` checks in `sim-smoke.sh` |
+| The card's face and back | Simulator screenshot | `SIMCTL_CHILD_GRABBER_CARD=open` (or `think`) `xcrun simctl launch …`, then `simctl io screenshot` |
 | Music dipping and coming back, a podcast pausing and resuming, cues with the phone locked, the real turn, the screen staying lit | Phone only | run a workout with music, lock for a round, `just pull-logs`, read `timer_session` / `timer_duck` / `timer_cue` / `timer_interruption` |
 
 What the native rungs can and cannot see of Box breathing:
