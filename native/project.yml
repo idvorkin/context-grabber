@@ -1,0 +1,46 @@
+# XcodeGen spec for the native app. GrabberNative.xcodeproj is generated from this (the just recipes run
+# `xcodegen` first) and is not committed: a new Swift file under App/ needs no project edit.
+name: GrabberNative
+options:
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+packages:
+  ContextCore:
+    path: ContextCore
+settings:
+  base:
+    DEVELOPMENT_TEAM: 45P6D3439T
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Overridden on the xcodebuild line by the just recipes; Info.plist carries them to BuildInfo.
+    GIT_SHA: dev
+    GIT_BRANCH: dev
+targets:
+  GrabberNative:
+    type: application
+    platform: iOS
+    sources:
+      - App
+    dependencies:
+      - package: ContextCore
+    settings:
+      base:
+        # Its own id until the cutover, so it installs beside Context Grabber (story 140).
+        PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative
+        INFOPLIST_FILE: Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Grabber Native
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+schemes:
+  GrabberNative:
+    build:
+      targets:
+        GrabberNative: all
+    run:
+      config: Debug

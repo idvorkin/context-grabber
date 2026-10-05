@@ -54,6 +54,11 @@ yarn-error.*
 /ios/**/xcuserdata/
 /android
 
+# The native app: the project is generated from native/project.yml (just native-project)
+/native/GrabberNative.xcodeproj/
+/native/Build/
+/native/ContextCore/.build/
+
 # worktrees
 .worktrees/
 
