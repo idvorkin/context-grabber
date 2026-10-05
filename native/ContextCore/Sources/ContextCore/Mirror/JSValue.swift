@@ -153,6 +153,18 @@ extension JSValue {
     return parser.atEnd ? value : nil
   }
 
+  /// From JSONSerialization's objects; object keys come out sorted (their order is lost).
+  public static func unordered(_ any: Any) -> JSValue {
+    switch any {
+    case let d as [String: Any]: return .object(d.keys.sorted().map { ($0, unordered(d[$0]!)) })
+    case let a as [Any]: return .array(a.map(unordered))
+    case let s as String: return .string(s)
+    case let n as NSNumber:
+      return CFGetTypeID(n) == CFBooleanGetTypeID() ? .bool(n.boolValue) : .number(n.doubleValue)
+    default: return .null
+    }
+  }
+
   public subscript(key: String) -> JSValue? {
     if case .object(let fields) = self { return fields.first { $0.0 == key }?.1 }
     return nil

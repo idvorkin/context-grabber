@@ -71,7 +71,11 @@ public struct HealthFixture: Sendable {
   public var accessory: [(itemId: String, itemName: String, loggedAt: Int64, dateKey: String)]
 
   public init?(json text: String) {
-    guard let root = JSValue.parse(text), let tz = root["timeZone"]?.string, let now = root["now"]?.double else {
+    // Foundation's parser: the fixture is large and its key order does not matter (JSValue.parse keeps order and
+    // is slow in a debug build).
+    guard let data = text.data(using: .utf8), let any = try? JSONSerialization.jsonObject(with: data),
+      let root = Optional(JSValue.unordered(any)), let tz = root["timeZone"]?.string, let now = root["now"]?.double
+    else {
       return nil
     }
     timeZone = tz
@@ -160,5 +164,49 @@ public struct FixtureHealthSource: HealthSource {
 
   public func workouts(from: Double, to: Double) async throws -> [WorkoutRecord] {
     Self.newestFirst(fixture.workouts.filter { Self.overlaps($0.start, $0.end, from, to) }, \.start)
+  }
+}
+
+extension HealthFixture {
+  /// The fixture as the script reads it (`make-mirror-expected.mjs --fixture`): what the simulator hook saved.
+  public var json: JSValue {
+    func q(_ s: QuantitySampleRecord) -> JSValue {
+      var f: [(String, JSValue)] = [("start", .number(s.start)), ("end", .number(s.end)), ("value", .number(s.quantity))]
+      if let src = s.source { f.append(("source", .string(src))) }
+      return .object(f)
+    }
+    return .object([
+      ("timeZone", .string(timeZone)),
+      ("now", .number(now)),
+      ("quantity", .object(QuantityKind.allCases.map { ($0.rawValue, .array((quantities[$0] ?? []).map(q))) })),
+      ("sleep", .array(sleep.map { s in
+        var f: [(String, JSValue)] = [("start", .number(s.start)), ("end", .number(s.end)), ("value", .int(s.value))]
+        if let src = s.source { f.append(("source", .string(src))) }
+        return .object(f)
+      })),
+      ("mindful", .array(mindful.map { .object([("start", .number($0.start)), ("end", .number($0.end))]) })),
+      ("workouts", .array(workouts.map {
+        .object([
+          ("activityType", .int($0.activityType)), ("start", .number($0.start)), ("end", .number($0.end)),
+          ("durationSeconds", .number($0.durationSeconds)), ("energyKcal", .num($0.energyKcal)),
+          ("distanceMeters", .num($0.distanceMeters)),
+        ])
+      })),
+      ("accessory", .array(accessory.map {
+        .object([
+          ("itemId", .string($0.itemId)), ("itemName", .string($0.itemName)), ("loggedAt", .number(Double($0.loggedAt))),
+          ("dateKey", .string($0.dateKey)),
+        ])
+      })),
+    ])
+  }
+
+  /// As Health will hold it once one app saved it all: every sample from that app, and only the kinds it may write.
+  public func asSavedBy(source: String, dropping: Set<QuantityKind>) -> HealthFixture {
+    var f = self
+    f.quantities = quantities.filter { !dropping.contains($0.key) }.mapValues { $0.map { var s = $0; s.source = source; return s } }
+    for k in dropping { f.quantities[k] = [] }
+    f.sleep = sleep.map { var s = $0; s.source = source; return s }
+    return f
   }
 }

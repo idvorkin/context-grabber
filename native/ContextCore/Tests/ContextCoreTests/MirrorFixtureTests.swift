@@ -64,3 +64,23 @@ final class MirrorFixtureTests: XCTestCase {
     XCTAssertTrue(weight.compactMap(\.value).allSatisfy { $0 == $0.rounded() })
   }
 }
+
+final class HealthFixtureTests: XCTestCase {
+  func testFixtureWritesBackWhatItRead() throws {
+    let text = try MirrorFixtureTests.text("mirror-fixture.json")
+    let fx = try XCTUnwrap(HealthFixture(json: text))
+    let again = try XCTUnwrap(HealthFixture(json: fx.json.stringify()))
+    XCTAssertEqual(again.json, fx.json)
+    XCTAssertEqual(fx.json.stringify() + "\n", text)
+  }
+
+  func testShiftedAndSavedBy() throws {
+    let fx = try XCTUnwrap(HealthFixture(json: MirrorFixtureTests.text("mirror-fixture.json")))
+    let week = 7 * 86_400_000.0
+    let moved = fx.shifted(by: week, clock: la).asSavedBy(source: "Grabber Native", dropping: [.exerciseTime])
+    XCTAssertEqual(moved.now, fx.now + week)
+    XCTAssertEqual(moved.quantities[.exerciseTime], [])
+    XCTAssertEqual(Set(moved.sleep.compactMap(\.source)), ["Grabber Native"])
+    XCTAssertEqual(moved.accessory.first?.dateKey, la.dateKey(Double(fx.accessory[0].loggedAt) + week))
+  }
+}

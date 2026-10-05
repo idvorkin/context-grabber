@@ -20,6 +20,9 @@ public enum SummaryText {
     return clock(local.hour(ms), local.minute(ms))
   }
 
+  /// "11pm", "6:15am" from an hour and minute.
+  public static func clockLabel(_ hours: Int, _ minutes: Int) -> String { clock(hours, minutes) }
+
   static func clock(_ hours: Int, _ minutes: Int) -> String {
     let period = hours >= 12 ? "pm" : "am"
     let display = hours % 12 == 0 ? 12 : hours % 12
