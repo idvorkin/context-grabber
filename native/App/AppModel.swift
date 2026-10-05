@@ -15,6 +15,8 @@ final class AppModel: ObservableObject {
   @Published var status = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
+  /// Non-nil while the memdeck card covers the app.
+  @Published var card: CardLaunch?
 
   init() {
     database = AppDatabase(log: log)
@@ -53,6 +55,18 @@ final class AppModel: ObservableObject {
     gymTimer = nil
   }
 
+  func openCard(_ launch: CardLaunch = CardLaunch(), from source: String) {
+    log.event("card_open", ["from": source, "think": launch.think])
+    screen = "card"
+    card = launch
+  }
+
+  func closeCard() {
+    log.event("ui", ["action": "close_card"])
+    screen = "home"
+    card = nil
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
@@ -67,6 +81,10 @@ final class AppModel: ObservableObject {
         launch.preset = spec
       }
       openGymTimer(launch, from: "hook")
+    }
+    if let mode = env["GRABBER_CARD"], ["open", "think", "never_mind"].contains(mode) {
+      // never_mind: think, then press Never mind two seconds into the count.
+      openCard(CardLaunch(think: mode != "open", neverMindAfter: mode == "never_mind" ? .seconds(2) : nil), from: "hook")
     }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {

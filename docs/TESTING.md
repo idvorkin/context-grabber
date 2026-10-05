@@ -23,7 +23,7 @@ tables below move here.
 | Rung | What runs | Command | Time | Answers |
 |---|---|---|---|---|
 | 1 Host | `ContextCore` XCTest (`native/ContextCore`, the platform-free package) | `just native-test` (also run by `just test`) | seconds | everything pure: what a log line can carry, log retention; each ported `lib/` module's logic |
-| 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, no `error` event |
+| 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, the timer's cues, the card's deal and count, no `error` event |
 | 3 Phone | Grabber Native on the iPhone, beside Context Grabber | `just native-run-device`, then `just pull-logs` | minutes + a person | the shake, and everything the phone-only rows below list |
 
 The phone recipes (`native-run-device`, `pull-logs`, `bugs-check`) need the iPhone's hardware UDID: `DEVICE=<udid>`
@@ -38,6 +38,7 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 |---|---|
 | `GRABBER_BUG=text` | two seconds after launch, file a problem report with that note, as a shake and *Log it* would |
 | `GRABBER_TIMER=<chip>` | open the Gym Timer on that chip (`30sec`, `1min`, `2min`, `5-1`, `custom`) and start it, as a widget tile would. `GRABBER_TIMER=work,rest,rounds` (seconds, seconds, count) runs that shape as Custom without remembering it: `10,10,2` is a whole workout in 35 s, which is what `just native-test-sim` runs and reads `timer_cue`, `timer_duck` and `timer_session` from |
+| `GRABBER_CARD=open\|think\|never_mind` | open the memdeck card full screen; `think` also presses *Think of a card*; `never_mind` presses it and then *Never mind* two seconds into the count. `just native-test-sim` runs `think` and `never_mind` and reads `card_open`, `card_deal` and `card_think` |
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 
 What the native rungs can and cannot see of the Gym Timer:
@@ -49,6 +50,9 @@ What the native rungs can and cannot see of the Gym Timer:
 | Custom preset snapping, the LED glyphs and geometry, the turn's margins, the stopwatch, the accessory log's SQL and grouping | Host | `CustomPresetTests`, `SevenSegmentTests`, `DeviceTurnTests`, `StopwatchTests`, `AccessoryLogTests` (real SQLite, in memory, in a pinned time zone) |
 | The timer in the app: cues on their seconds, one window per boundary, the session let go at the end | Simulator | the `timer:` checks in `sim-smoke.sh` |
 | The face, upright and turned | Simulator screenshot | `SIMCTL_CHILD_GRABBER_TIMER=10,10,2 SIMCTL_CHILD_GRABBER_TURN=left xcrun simctl launch …`, then `simctl io screenshot` |
+| The memdeck deal: every `just check-deal` promise, the native deal equal to the old app's, the five-second count | Host | `CardDealTests` (golden vectors from `scripts/card-deal-check/golden/`), `ThinkCountTests` |
+| The card screen: an open deals, the count reveals a different card at five seconds, *Never mind* keeps the card, the tap count survives a relaunch | Simulator | the `card:` checks in `sim-smoke.sh` |
+| The card's face and back | Simulator screenshot | `SIMCTL_CHILD_GRABBER_CARD=open` (or `think`) `xcrun simctl launch …`, then `simctl io screenshot` |
 | Music dipping and coming back, a podcast pausing and resuming, cues with the phone locked, the real turn, the screen staying lit | Phone only | run a workout with music, lock for a round, `just pull-logs`, read `timer_session` / `timer_duck` / `timer_cue` / `timer_interruption` |
 
 A new behaviour that only a tap can reach gets a hook and a log event in the same change; a check without an event

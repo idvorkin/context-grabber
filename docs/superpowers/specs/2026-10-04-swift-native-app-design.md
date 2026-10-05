@@ -124,6 +124,29 @@ Acceptance for step 2: each of stories 100–105, 107–113, 115 and 116 holds i
 whole workout with music playing, the phone locked for a round, leaves a session log with every phase and cue
 at its true second and no `error`.
 
+## The memdeck card in the native app
+
+Igor, 2026-10-04: *"use native think a card app"*. The Card tab ([widget card spec](2026-09-07-widget-random-card-design.md),
+story 129) moves ahead of the widgets step, because the lock-screen widget's tap is where it is most used and it is
+small. What it does in the native app:
+
+- **It opens from the native app's home screen**, full screen — *Think of a card* under *Ported so far* — and
+  *Done* returns there.
+- **Every open deals a fresh card**, face up, filling the screen: a real playing card — the rank and suit in two
+  opposite corners, a large suit in the middle (the letter for a jack, queen or king), hearts and diamonds red,
+  spades and clubs black. A tap on the card deals another; it is never the card it replaces.
+- **Think of a card** turns the card face down with a count from five; at zero a new card is face up. *Never
+  mind* mid-count stops it with the previous card face up again. Leaving the screen mid-count stops the count.
+- **The deal is the same deal.** The same card for the same five minutes and the same tap count as the old
+  app's widgets and Card tab, by the same rules: one card per five minutes, every card once in a run of 52,
+  never the same card twice in a row, a tap always a different card.
+- **Its tap count is its own until the widgets step.** The old app keeps the count in a store shared with its
+  widgets; the native app has no such store yet, so it keeps its count in its own settings, where it survives a
+  relaunch. Until step 7 the native card and the old app's widgets can show different cards, and leaving the
+  native screen does not bring any widget in line. At step 7 the native app takes the shared store over and they
+  agree again.
+- **The lock-screen widget still opens the old app's Card tab** until step 7.
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

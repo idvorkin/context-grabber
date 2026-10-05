@@ -172,7 +172,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 129:
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone. Grabber Native: implemented in COMMIT_SHA; verified by `CardDealTests` (host) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone; the widget clause waits for the widgets step — see story 133
 
 #### Use Case:
 - **As a** man about to do the trick for someone
@@ -184,6 +184,24 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the Card tab is open on a fresh card (every open deals one; a tap deals another)
 - **When:** I press *Think of a card*
 - **Then:** the card goes face down counting five, four, three…, a new card is face up at zero, pressing *Never mind* mid-count stops it with the previous card face up, and on leaving the tab or locking the phone the widgets show the last card the tab dealt
+
+---
+
+### User Story 133:
+
+- **Summary:** Think of a card in Grabber Native, before the widgets move
+- **Status:** implemented in COMMIT_SHA; verified by `CardDealTests` (host: every `just check-deal` promise, and the deal pinned to the old app's) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone
+
+#### Use Case:
+- **As a** man about to do the trick, with Grabber Native open
+- **I want to** open *Think of a card* from its home screen and get the same big card, the same tap-for-another and the same five-second count as the old app's Card tab
+- **so that** the trick moves to the native app without waiting for the widgets to move
+
+#### Acceptance Criteria:
+- **Scenario:** The card in the native app
+- **Given:** Grabber Native's home screen lists *Think of a card* under *Ported so far*
+- **When:** I tap it, tap the card, press *Think of a card* and later *Never mind*, then *Done*
+- **Then:** a full-screen playing card opens face up (rank and suit in two corners, the pips laid out as a deck lays them or a framed letter for a jack, queen or king, hearts and diamonds red) and differs from the card the last visit ended on; a tap deals a different card; *Think of a card* turns it face down counting five, four, three…, and a different card is face up at zero; *Never mind* mid-count leaves the previous card face up; *Done* returns home; the tap count survives a relaunch; and until the widgets step the old app's widgets are neither read nor brought in line, so they may show a different card
 
 ---
 

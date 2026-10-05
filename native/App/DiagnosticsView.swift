@@ -15,6 +15,12 @@ struct DiagnosticsView: View {
           } label: {
             Label("Gym Timer", systemImage: "timer").font(.title3.weight(.semibold)).padding(.vertical, 6)
           }
+          Button {
+            model.openCard(from: "home")
+          } label: {
+            Label("Think of a card", systemImage: "suit.spade.fill").font(.title3.weight(.semibold))
+              .padding(.vertical, 6)
+          }
         } header: {
           Text("Ported so far")
         } footer: {
@@ -41,6 +47,14 @@ struct DiagnosticsView: View {
         }
       }
       .navigationTitle("Grabber Native")
+      // One cover per view: the card's hangs here, the timer's on the stack.
+      .fullScreenCover(
+        isPresented: Binding(get: { model.card != nil }, set: { if !$0 { model.closeCard() } })
+      ) {
+        CardView(app: model, launch: model.card ?? CardLaunch(), onExit: model.closeCard)
+          .background(ShakeDetector { model.startBugReport(from: "shake") })
+          .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
+      }
     }
     .fullScreenCover(
       isPresented: Binding(get: { model.gymTimer != nil }, set: { if !$0 { model.closeGymTimer() } })
