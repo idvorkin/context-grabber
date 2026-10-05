@@ -172,7 +172,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 129:
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone. Grabber Native: implemented in COMMIT_SHA; verified by `CardDealTests` (host) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone; the widget clause waits for the widgets step — see story 133
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone. Grabber Native: implemented in [9f7f2d2](https://github.com/idvorkin/context-grabber/commit/9f7f2d2); verified by `CardDealTests` (host) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone; the widget clause waits for the widgets step — see story 133
 
 #### Use Case:
 - **As a** man about to do the trick for someone
@@ -190,7 +190,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 133:
 
 - **Summary:** Think of a card in Grabber Native, before the widgets move
-- **Status:** implemented in COMMIT_SHA; verified by `CardDealTests` (host: every `just check-deal` promise, and the deal pinned to the old app's) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone
+- **Status:** implemented in [9f7f2d2](https://github.com/idvorkin/context-grabber/commit/9f7f2d2); verified by `CardDealTests` (host: every `just check-deal` promise, and the deal pinned to the old app's) and the `card:` checks of `just native-test-sim` (simulator), not yet on the phone
 
 #### Use Case:
 - **As a** man about to do the trick, with Grabber Native open
