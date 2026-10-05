@@ -114,7 +114,7 @@ struct StageStrip: View {
 }
 
 /// The system share sheet with text, as the current app's Share.share({ message }).
-struct ShareSheet: UIViewControllerRepresentable {
+struct TextShareSheet: UIViewControllerRepresentable {
   let text: String
   func makeUIViewController(context: Context) -> UIActivityViewController {
     UIActivityViewController(activityItems: [text], applicationActivities: nil)

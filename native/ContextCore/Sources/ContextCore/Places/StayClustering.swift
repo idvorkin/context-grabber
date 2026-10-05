@@ -52,12 +52,6 @@ public struct StayClusters: Equatable, Sendable {
   public var transit: [TransitSegment]
 }
 
-/// JavaScript's Math.round: the nearest integer, halves toward +infinity.
-@inlinable func jsRound(_ x: Double) -> Double {
-  let f = floor(x)
-  return x - f >= 0.5 ? f + 1 : f
-}
-
 public enum StayClustering {
   public static let stayRadius = 100.0  // metres
   public static let minStayMs = 5 * 60 * 1000.0

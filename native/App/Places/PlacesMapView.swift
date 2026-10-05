@@ -5,14 +5,6 @@ import ContextCore
 import MapKit
 import SwiftUI
 
-extension Color {
-  /// "#4361ee".
-  init(hex: String) {
-    let v = UInt32(hex.dropFirst(), radix: 16) ?? 0
-    self.init(red: Double((v >> 16) & 0xFF) / 255, green: Double((v >> 8) & 0xFF) / 255, blue: Double(v & 0xFF) / 255)
-  }
-}
-
 extension Coordinate {
   var cl: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: latitude, longitude: longitude) }
 }

@@ -34,7 +34,7 @@ struct TodayView: View {
               Button {
                 app.openMetric(card.key, from: "card")
               } label: {
-                CardView(card: card)
+                MetricCardView(card: card)
               }
               .buttonStyle(.plain)
               .accessibilityIdentifier("card-\(card.key.rawValue)")
@@ -71,7 +71,7 @@ struct TodayView: View {
     .sheet(item: $app.openMetricKey) { item in
       MetricDetailView(app: app, mirror: mirror, metric: item.key)
     }
-    .sheet(item: $shareText) { item in ShareSheet(text: item.text) }
+    .sheet(item: $shareText) { item in TextShareSheet(text: item.text) }
     .sheet(isPresented: $showSettings) { MirrorSettingsView(mirror: mirror) }
   }
 
@@ -129,7 +129,7 @@ struct ShareItem: Identifiable {
   let text: String
 }
 
-struct CardView: View {
+struct MetricCardView: View {
   let card: MetricCard
 
   var body: some View {

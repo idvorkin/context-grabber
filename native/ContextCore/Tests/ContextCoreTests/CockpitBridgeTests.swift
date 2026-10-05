@@ -146,13 +146,13 @@ private final class FakePage {
   }
 
   @discardableResult
-  func run(_ script: String) -> JSValue? {
+  func run(_ script: String) -> JavaScriptCore.JSValue? {
     let fn = context.evaluateScript("(function (window, CustomEvent) {\n\(script)\n})")
     return fn?.call(withArguments: [context.objectForKeyedSubscript("win")!, context.objectForKeyedSubscript("CustomEvent")!])
   }
 
-  func eval(_ js: String) -> JSValue { context.evaluateScript(js) }
-  var exception: JSValue? { context.exception }
+  func eval(_ js: String) -> JavaScriptCore.JSValue { context.evaluateScript(js) }
+  var exception: JavaScriptCore.JSValue? { context.exception }
   var sent: [String] { eval("sent").toArray() as? [String] ?? [] }
 }
 
