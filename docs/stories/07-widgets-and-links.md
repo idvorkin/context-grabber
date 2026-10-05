@@ -172,7 +172,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 129:
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported — its home screen links to Context Grabber's Card tab (COMMIT) until the widgets step
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported — its home screen links to Context Grabber's Card tab ([0c97606](https://github.com/idvorkin/context-grabber/commit/0c97606), build only; the tap on the phone) until the widgets step
 
 #### Use Case:
 - **As a** man about to do the trick for someone
