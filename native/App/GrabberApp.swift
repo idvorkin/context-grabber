@@ -23,8 +23,10 @@ struct GrabberApp: App {
         .onChange(of: scenePhase) { _, phase in
           // The first activation is the launch, which pruned already; every later one is a foreground.
           if phase == .active {
-            if wasActive { model.foreground() } else { model.tracker.foreground() }
+            if wasActive { model.foreground() } else { model.tracker.foreground(); model.usage.resume(reason: "launch") }
             wasActive = true
+          } else if phase == .background {
+            model.usage.pause()
           }
         }
     }

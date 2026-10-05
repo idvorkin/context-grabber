@@ -31,6 +31,8 @@ final class AppModel: ObservableObject {
   /// `GRABBER_COCKPIT_URL` points it elsewhere (a URL, or a page in the app bundle) for the simulator's checks.
   private(set) lazy var cockpit = CockpitModel(
     log: log, override: ProcessInfo.processInfo.environment["GRABBER_COCKPIT_URL"])
+  /// The usage strip on the home screen (story 203). `GRABBER_USAGE_URL` points it at another Cockpit.
+  lazy var usage = UsageModel(log: log, override: ProcessInfo.processInfo.environment["GRABBER_USAGE_URL"])
   /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
   @Published var callOpen = false
   let call: CallModel
@@ -60,6 +62,7 @@ final class AppModel: ObservableObject {
 
   /// The app came to the front (not the launch itself): prune, settle a pending permission, ask for a fix.
   func foreground() {
+    usage.resume(reason: "foreground")
     places.prune(reason: "foreground")
     tracker.foreground()
     if showPlaces { places.reload(reason: "foreground") }

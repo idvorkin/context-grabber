@@ -6,7 +6,7 @@
 ported, with real microphones and outputs."*
 **Ports:** [Cockpit Tab](2026-08-27-cockpit-tab-design.md), [Cockpit Audio Bridge](2026-08-28-cockpit-audio-bridge-design.md),
 [Keep Awake](2026-08-28-cockpit-keep-awake-design.md), [Open Cockpit and the page's hand-off](2026-08-29-open-cockpit-and-page-handoff-design.md)
-**Stories:** 096, 097, 098 (native lines), 200 (new)
+**Stories:** 096, 097, 098 (native lines), 200, 203 (new)
 
 ## Summary
 
@@ -59,6 +59,46 @@ Everything the four specs above promise, with the tab replaced by a screen:
   Cockpit leaves the audio alone.
 - **Everything it does is in the session log** — each load and how long it took or why it failed, each bridge
   message both ways, the roster and route each time it is sent — so a shake from the Cockpit attaches the evidence.
+
+## The usage strip on the home screen
+
+The first piece of the Cockpit that lives in the app itself rather than in the page (Igor, 2026-10-05: *"better
+inline cockpit features by exposing cockpit APIs? I'd love to see the remaining usage as a strip"*). The Cockpit
+already tracks how much of Claude's weekly allowance and of the ElevenLabs voice budget is used; the strip shows
+what is **left**, at a glance, without opening the dashboard.
+
+- **Where:** the top of Grabber Native's home screen, above the rows.
+- **What it says:** three bars, each a fill of what remains with its number beside it —
+  - **Week** — the weekly Claude allowance left, in percent;
+  - **the current model** (Fable today; named as the Cockpit names it) — that model's allowance left, in percent;
+  - **Voice** — the ElevenLabs budget left, in hours (or minutes under an hour).
+
+  Under them, one line: when the weekly allowance resets (*resets in 14H*), the Cockpit's pacing verdict (*On
+  track*), and when the voice budget resets.
+- **Low is loud.** A bar with under 20% left is orange, under 10% red.
+- **Old is loud.** If the Cockpit says a reading is stale, that half of the strip says how old it is (*2h old*) in
+  orange rather than looking current. A reading the Cockpit does not have is not drawn — never shown as 0%.
+- **Fresh enough on its own.** It loads when the app opens or comes back to the front, and again every five minutes
+  while the home screen is up.
+- **Tap to refresh.** Tapping the strip asks the Cockpit for a new reading — the same ask as the Cockpit's own
+  refresh button, so Larry takes it, which takes about a minute. The strip says *refreshing…* while the Cockpit
+  says the ask is outstanding, checking every ten seconds, and shows the new reading when it lands; after five
+  minutes it stops waiting and keeps the reading it had.
+- **Off the tailnet it steps aside.** If the Cockpit cannot be reached the strip is not drawn at all — the home
+  screen still works — and the failure is in the session log. A strip that had loaded keeps its last reading,
+  marked with its age.
+- **In the session log:** each load, what it showed or why it failed, and each tap to refresh.
+
+Non-goals for the strip: a widget or lock-screen version (later, with the widgets step), history or charts, any
+change to the Cockpit's server.
+
+Acceptance (strip):
+
+8. On the tailnet, opening Grabber Native shows the strip above the rows with Week, the model and Voice left,
+   matching the Cockpit's own usage panel.
+9. A bar under 20% left is orange; under 10% red; a stale reading says its age.
+10. Tapping the strip shows *refreshing…* until the Cockpit's new reading lands (about a minute), then shows it.
+11. Off the tailnet the home screen has no strip and no error; back on, the next foreground shows it.
 
 ## Non-goals
 
