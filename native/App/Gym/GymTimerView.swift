@@ -14,6 +14,7 @@ struct GymTimerView: View {
   @StateObject private var model: GymTimerModel
   @Environment(\.scenePhase) private var scenePhase
   @State private var showAccessory = false
+  @State private var showSettings = false
   @State private var logged = false
   @State private var copied = false
   private let launch: GymTimerLaunch
@@ -41,8 +42,11 @@ struct GymTimerView: View {
         }
       }
     }
+    .sheet(isPresented: $showSettings) { TimerSettingsSheet(model: model) }
     .onAppear {
       model.appear(forcedTurn: launch.turn)
+      if let voice = launch.voice { model.useCountVoiceOnce(voice) }
+      if launch.settings { openSettings(from: "hook") }
       if let preset = launch.preset { model.choosePreset(preset) }
       if let custom = launch.custom { model.useCustomOnce(custom) }
       if launch.autostart { model.toggleTimer() }
@@ -53,15 +57,25 @@ struct GymTimerView: View {
     }
   }
 
+  private func openSettings(from source: String) {
+    model.openedSettings(from: source)
+    showSettings = true
+  }
+
   // MARK: - upright: the whole screen
 
   private var upright: some View {
     VStack(spacing: 0) {
-      HStack {
+      HStack(spacing: 16) {
         Button("Done", action: onExit).font(.system(size: 16, weight: .semibold)).foregroundStyle(accent)
         Spacer()
-        Text("Gym Timer").font(.system(size: 18, weight: .bold)).foregroundStyle(LED.white)
-        Spacer()
+        Button {
+          openSettings(from: "button")
+        } label: {
+          Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).foregroundStyle(Color(white: 0.45))
+        }
+        .accessibilityLabel("Timer settings")
+        .accessibilityIdentifier("timer-settings")
         Button(copied ? "Copied" : "Log") {
           UIPasteboard.general.string = model.timerLogText()
           copied = true
@@ -73,6 +87,7 @@ struct GymTimerView: View {
         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(white: 0.33))
         .accessibilityLabel("Copy timer log")
       }
+      .overlay { Text("Gym Timer").font(.system(size: 18, weight: .bold)).foregroundStyle(LED.white) }
       .padding(.horizontal, 16).padding(.vertical, 12)
       .overlay(alignment: .bottom) { chip.frame(height: 1) }
 
@@ -182,6 +197,10 @@ struct GymTimerLaunch: Equatable {
   var custom: CustomPreset?
   var autostart = false
   var turn: DeviceTurn?
+  /// A launch hook's count voice: this visit only (story 182).
+  var voice: CountVoice?
+  /// A launch hook: open with Timer settings up, for a screenshot.
+  var settings = false
 }
 
 @MainActor private func roundsFace(_ model: GymTimerModel) -> FaceContent {
@@ -404,6 +423,49 @@ private struct StepSlider: View {
       Text(title).font(.system(size: 18, weight: .bold)).foregroundStyle(LED.white)
         .frame(width: 32, height: 32).background(chip, in: Circle())
     }
+  }
+}
+
+// MARK: - Timer settings
+
+/// The gear's sheet (story 182): who says the count. A tap chooses, remembers and plays that voice's "go".
+private struct TimerSettingsSheet: View {
+  @ObservedObject var model: GymTimerModel
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    NavigationStack {
+      Form {
+        Section {
+          ForEach(CountVoice.allCases, id: \.self) { voice in
+            Button {
+              model.chooseCountVoice(voice)
+            } label: {
+              HStack {
+                Text(voice.label).foregroundStyle(.primary)
+                Spacer()
+                if model.countVoice == voice {
+                  Image(systemName: "checkmark").font(.system(size: 15, weight: .semibold)).foregroundStyle(accent)
+                }
+              }
+            }
+            .tint(.primary)
+            .accessibilityIdentifier("count-voice-\(voice.rawValue)")
+            .accessibilityAddTraits(model.countVoice == voice ? .isSelected : [])
+          }
+        } header: {
+          Text("Count voice")
+        } footer: {
+          Text("Tap a voice to hear its “go”. The next cue uses it.")
+        }
+      }
+      .navigationTitle("Timer settings")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.bold() }
+      }
+    }
+    .presentationDetents([.medium])
   }
 }
 

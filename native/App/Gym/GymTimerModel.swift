@@ -25,6 +25,7 @@ final class GymTimerModel: ObservableObject {
   @Published private(set) var stopwatch = Stopwatch()
   @Published private(set) var sets = 0
   @Published private(set) var turn = DeviceTurn.upright
+  @Published private(set) var countVoice = CountVoice.default
 
   private var engine: TimerEngine
   private var clock: Timer?
@@ -55,8 +56,10 @@ final class GymTimerModel: ObservableObject {
     custom = CustomPreset.decode(database.setting(Self.presetKey))
     sets = SetCounter.clamp(Int(database.setting(Self.setsKey) ?? "") ?? 0)
     if let chosen = database.setting(Self.chosenKey), Self.isPreset(chosen) { presetId = chosen }
+    countVoice = CountVoice.decode(database.setting(CountVoice.settingKey))
     engine.setProfile(profile)
     timer = engine.state
+    audio.setVoice(countVoice)
     audio.loadCues()
   }
 
@@ -179,6 +182,28 @@ final class GymTimerModel: ObservableObject {
       }
     }
     if timer != engine.state { timer = engine.state }
+  }
+
+  // MARK: - the count voice (story 182)
+
+  /// Chosen in Timer settings: remembered, used from the next cue, and its "go" played as a sample.
+  func chooseCountVoice(_ voice: CountVoice) {
+    countVoice = voice
+    database.setSetting(CountVoice.settingKey, voice.rawValue)
+    log.event("ui", ["action": "count_voice", "voice": voice.rawValue, "from": "settings"])
+    audio.setVoice(voice)
+    audio.sample(voice)
+  }
+
+  func openedSettings(from source: String) {
+    log.event("ui", ["action": "timer_settings", "from": source, "voice": countVoice.rawValue])
+  }
+
+  /// For a launch hook: this visit only, not remembered and no sample.
+  func useCountVoiceOnce(_ voice: CountVoice) {
+    countVoice = voice
+    log.event("ui", ["action": "count_voice", "voice": voice.rawValue, "from": "hook"])
+    audio.setVoice(voice)
   }
 
   // MARK: - stopwatch and sets

@@ -5,7 +5,8 @@
 //  session, then lets go with a deactivate-and-reactivate: a paused podcast resumes only on deactivation, and
 //  only when told (`notifyOthersOnDeactivation`). The keepalive is a looping second of -66 dB noise — real
 //  samples, which iOS counts as live output — so the app keeps running, and speaking, with the screen locked.
-//  The cues are sound files in Igor's voice (scripts/make-timer-words.sh), never synthesis.
+//  The cues are sound files, never synthesis, in the chosen count voice (story 182): Adam, Igor's own clone
+//  (scripts/make-timer-words.sh) or an Australian woman (scripts/make-timer-voice.sh).
 //
 //  Everything runs in order on one queue: a session call can block for a moment and must not stall the face.
 
@@ -22,6 +23,8 @@ final class GymAudio: DuckSession, @unchecked Sendable {
   private var active = false
   private var loop: AVAudioPlayer?
   private var cues: [TimerCue: AVAudioPlayer] = [:]
+  private var voice = CountVoice.default
+  private var sampler: AVAudioPlayer?
   private var interruptionObserver: NSObjectProtocol?
 
   /// Music and podcasts play on, untouched, while the timer runs.
@@ -60,7 +63,52 @@ final class GymAudio: DuckSession, @unchecked Sendable {
   /// Make every cue's player ahead of time, so the first count is not the first load.
   func loadCues() {
     queue.async { [self] in
-      for cue in TimerCue.allCases where cues[cue] == nil { cues[cue] = player(cue.rawValue) }
+      for cue in TimerCue.allCases where cues[cue] == nil { cues[cue] = player(voice.fileName(for: cue)) }
+    }
+  }
+
+  /// The next cue is in this voice. A word still sounding in the old one stops, so the two never overlap.
+  func setVoice(_ next: CountVoice) {
+    queue.async { [self] in
+      guard next != voice else { return }
+      for player in cues.values where player.isPlaying { player.stop() }
+      voice = next
+      cues = [:]
+      for cue in TimerCue.allCases { cues[cue] = player(voice.fileName(for: cue)) }
+    }
+  }
+
+  /// The voice's "go", once, as a sample for the settings sheet. Mixed with the music like a cue; when the timer
+  /// is not holding the session it is taken for the sample and let go after it.
+  func sample(_ sampleVoice: CountVoice) {
+    queue.async { [self] in
+      guard let player = player(sampleVoice.fileName(for: .go)) else {
+        log.event("timer_voice_sample", ["voice": sampleVoice.rawValue, "ok": false, "message": "no player"])
+        return
+      }
+      sampler?.stop()
+      sampler = player
+      let borrowed = !active
+      if borrowed {
+        applyOptions(ducking: false)
+        do {
+          try session.setActive(true)
+        } catch {
+          log.event("timer_session", ["action": "active", "for": "sample", "ok": false, "message": "\(error)"])
+        }
+      }
+      let ok = player.play()
+      log.event("timer_voice_sample", ["voice": sampleVoice.rawValue, "ok": ok])
+      guard borrowed else { return }
+      queue.asyncAfter(deadline: .now() + player.duration + 0.3) { [self] in
+        // The timer may have started meanwhile, or another sample be playing: then the session stays.
+        guard !active, !(sampler?.isPlaying ?? false) else { return }
+        do {
+          try session.setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+          log.event("timer_session", ["action": "inactive", "for": "sample", "ok": false, "message": "\(error)"])
+        }
+      }
     }
   }
 
@@ -90,14 +138,14 @@ final class GymAudio: DuckSession, @unchecked Sendable {
 
   func play(_ cue: TimerCue) {
     queue.async { [self] in
-      guard let player = cues[cue] ?? player(cue.rawValue) else {
-        log.event("timer_cue", ["cue": cue.rawValue, "ok": false, "message": "no player"])
+      guard let player = cues[cue] ?? player(voice.fileName(for: cue)) else {
+        log.event("timer_cue", ["cue": cue.rawValue, "voice": voice.rawValue, "ok": false, "message": "no player"])
         return
       }
       cues[cue] = player
       player.currentTime = 0
       let ok = player.play()
-      log.event("timer_cue", ["cue": cue.rawValue, "ok": ok])
+      log.event("timer_cue", ["cue": cue.rawValue, "voice": voice.rawValue, "ok": ok])
     }
   }
 
@@ -165,6 +213,7 @@ final class GymAudio: DuckSession, @unchecked Sendable {
     loop?.pause()
     // A cue still sounding would make the deactivation fail as busy; the window's holds are longer than any cue.
     for player in cues.values where player.isPlaying { player.stop() }
+    sampler?.stop()
     log.event("timer_keepalive", ["action": "stop", "ok": true])
     do {
       try session.setActive(false, options: .notifyOthersOnDeactivation)
