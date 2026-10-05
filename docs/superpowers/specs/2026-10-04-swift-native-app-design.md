@@ -214,6 +214,15 @@ with these differences while the two apps live side by side:
 - **The exports are the current app's, byte for byte**, for the same Health data and the same accessory log:
   the summary is the same single line of JSON, the raw share the same indented JSON. The share sheet receives the
   text, as in the current app.
+- **What the native export carries that the current app's does not: the activities I finished** (Igor, 2026-10-05,
+  #139: *"Make sure to log every time we complete an activity so we can give it to Larry"*). Every Gym Timer workout
+  that runs to *done* and every breathing session that reaches *Done* is recorded with when it finished, what it
+  was (the preset and its rounds, or the breath length and cycles) and how long it took. The summary gains an
+  `activities` section after `accessory`: the last seven days, newest first, each with a kind (`gym_timer` or
+  `breathing`), a readable name, minutes, an ISO-8601 UTC timestamp and the local date; a week with nothing finished
+  carries an empty list. A workout reset or abandoned part way, and a breathing session left before *Done*, are not
+  activities. This is the one deliberate difference from the current app's export, so the byte-for-byte check runs
+  on everything else.
 - **What the native export does not carry yet**: `roles` is null until roles move (step 6) — the current app sends
   them; `places` is null until the native Places has its weekly and recent summaries (after step 5); in the raw
   share `location` and `locationClusters` are null until step 5. Every key is still present with the same shape.

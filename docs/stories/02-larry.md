@@ -313,3 +313,24 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** I have not shared today
 - **When:** the call connects
 - **Then:** Larry has this week's summary before the first exchange
+
+---
+
+### User Story 037:
+
+- **Summary:** What I finished — workouts and breathing sessions — rides along to Larry
+- **Status:** not implemented
+- **Issues:** [#139](https://github.com/idvorkin/context-grabber/issues/139)
+- **Spec:** [Swift-native app — step 4](../superpowers/specs/2026-10-04-swift-native-app-design.md#the-mirror-and-grab-context-in-the-native-app-step-4)
+
+#### Use Case:
+- **As** Larry's client who trains with the Gym Timer and breathes with the circle
+- **I want to** have every workout and breathing session I finish recorded and sent in the summary
+- **so that** Larry knows what I actually did, not just what Health guessed
+
+#### Acceptance Criteria:
+- **Scenario:** A workout and a breathing session
+- **Given:** this morning I ran the 30 SEC preset to *done* and a 5-minute box-breathing session to *Done*, and yesterday I reset a workout half way
+- **When:** I share the summary from Today in Grabber Native
+- **Then:** `activities` lists two entries, newest first, each with kind (`gym_timer` / `breathing`), a name such as *30 SEC · 6 rounds* or *Box breathing · 8 s · 9 cycles*, minutes, an ISO-8601 UTC timestamp and the local `date`; the reset workout is not there; and the session log has an `activity_logged` line for each
+

@@ -219,6 +219,7 @@ final class BreatheModel: ObservableObject {
       case .finished(let lateMs):
         log.event(
           "breath_finished", ["cycles": run.plan.cycles, "total": run.plan.totalSeconds, "late_ms": lateMs])
+        database.logActivity(.breathing, name: ActivityLog.breathName(run.plan), seconds: run.plan.totalSeconds)
         endSession()
         stage = .done
         switch cue {
