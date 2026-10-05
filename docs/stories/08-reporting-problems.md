@@ -11,7 +11,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 140:
 
 - **Summary:** The native app lives beside the current one
-- **Status:** implemented on branch `native/01-scaffold` (not yet committed); verified on the simulator (`just native-test-sim`: installs, launches, logs `session_start`); the phone install is still Igor's to see
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`just native-test-sim`: installs, launches, logs `session_start`) and on the phone (2026-10-04, installed beside Context Grabber and opened)
 
 #### Use Case:
 - **As someone** who depends on the current app every day
@@ -29,7 +29,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 141:
 
 - **Summary:** Every launch keeps a log (technical)
-- **Status:** implemented on branch `native/01-scaffold` (not yet committed); verified by host tests (`SessionLogLineTests`) and on the simulator (`just native-test-sim` reads `session_start`)
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified by host tests (`SessionLogLineTests`) and on the simulator (`just native-test-sim` reads `session_start`)
 
 #### Use Case:
 - **As a** developer asked "why did it do that"
@@ -47,7 +47,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 142:
 
 - **Summary:** Report a problem in five seconds with the evidence attached
-- **Status:** implemented on branch `native/01-scaffold` (not yet committed); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written); the shake itself is phone-only and still Igor's to feel
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written) and on the phone (2026-10-04: a shake, a note, the report and its screenshot pulled back)
 
 #### Use Case:
 - **As someone** who just saw the app do something wrong
@@ -65,7 +65,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 143:
 
 - **Summary:** A report becomes a GitHub issue once (technical)
-- **Status:** implemented on branch `native/01-scaffold` (not yet committed); `scripts/native/bugs-check.sh` and `file-bugs.sh` are not yet run against the phone
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet
 
 #### Use Case:
 - **As a** developer with the phone near the Mac
@@ -83,7 +83,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 144:
 
 - **Summary:** A crash comes back with the logs (technical)
-- **Status:** implemented on branch `native/01-scaffold` (not yet committed); verified by build only — the first real crash will verify it
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified by build only — the first real crash will verify it
 
 #### Use Case:
 - **As a** developer reading a session log that stops mid-work
@@ -101,7 +101,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 145:
 
 - **Summary:** Old logs do not pile up, reported ones stay (technical)
-- **Status:** implemented on branch `native/01-scaffold` (not yet committed); verified by host tests (`LogRetentionTests`)
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified by host tests (`LogRetentionTests`)
 
 #### Use Case:
 - **As someone** whose phone storage is not for log files
