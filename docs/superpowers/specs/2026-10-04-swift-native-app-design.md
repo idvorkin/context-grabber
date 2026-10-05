@@ -126,6 +126,12 @@ Acceptance for step 2: each of stories 100–105, 107–113, 115 and 116 holds i
 whole workout with music playing, the phone locked for a round, leaves a session log with every phase and cue
 at its true second and no `error`.
 
+## Places in the native app (step 5)
+
+What the native Places screen shows and does, how the trail is recorded, the import of Context Grabber's
+exported database while the two apps keep separate trails, and the other differences:
+[Native Places](2026-10-04-native-places-design.md).
+
 ## Verifying
 
 The ladder keeps its shape and gets cheaper at the bottom: the platform-free logic is tested on the Mac in

@@ -280,3 +280,21 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the widget is on the home screen and today has three stays
 - **When:** I look at it
 - **Then:** it shows today's path with the visited places pinned, refreshed within a few minutes of a new stay
+
+---
+
+### User Story 055:
+
+- **Summary:** Bring my trail and places into the native app
+- **Status:** not implemented
+
+#### Use Case:
+- **As** someone moving from Context Grabber to Grabber Native, which keeps its own trail until the cutover
+- **I want to** open Context Grabber's exported database in the native app and have its points and known places copied in
+- **so that** the native Places screen shows my history and my named places from the first day, not an empty map
+
+#### Acceptance Criteria:
+- **Scenario:** Importing the export twice
+- **Given:** the native app has no points and Context Grabber's Export Database file holds 36 601 points and 4 known places
+- **When:** I share that file to Grabber Native (or pick it with Import from Context Grabber), and later import the same file again
+- **Then:** the first import says it brought in 36 601 points and 4 places and the breakdown and map show them; the second says 0 new points and 0 new places and nothing is duplicated; a known place whose name already exists in the native app is kept as it is; a file that is not a Context Grabber database is refused with a reason and changes nothing
