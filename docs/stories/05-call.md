@@ -354,7 +354,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 098:
 
 - **Summary:** A call from a link, a Shortcut, the widget, or the Cockpit page's own ☎ lands on the native Call tab
-- **Status:** implemented in [cef19fc](https://github.com/idvorkin/context-grabber/commit/cef19fc), [8d35bb6](https://github.com/idvorkin/context-grabber/commit/8d35bb6), [a902080](https://github.com/idvorkin/context-grabber/commit/a902080), [b10e8d5](https://github.com/idvorkin/context-grabber/commit/b10e8d5); verified by `deepLink.test.ts`, `audioBridge.test.ts` and on the phone; native app: the Call Larry Shortcut only (story 161); links and the widget wait for step 7
+- **Status:** implemented in [cef19fc](https://github.com/idvorkin/context-grabber/commit/cef19fc), [8d35bb6](https://github.com/idvorkin/context-grabber/commit/8d35bb6), [a902080](https://github.com/idvorkin/context-grabber/commit/a902080), [b10e8d5](https://github.com/idvorkin/context-grabber/commit/b10e8d5); verified by `deepLink.test.ts`, `audioBridge.test.ts` and on the phone; native app: the Call Larry Shortcut only (story 202); links and the widget wait for step 7
 
 #### Use Case:
 - **As a** Larry's client on the home screen
@@ -391,7 +391,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
-### User Story 160:
+### User Story 201:
 
 - **Summary:** Leave the call screen and come back to the same call
 - **Status:** native app only: implemented in [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by build and the simulator smoke (the call is owned by the app model, the screen only shows it), leaving and returning not exercised by a script; the phone still to be checked by Igor
@@ -409,7 +409,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
-### User Story 161:
+### User Story 202:
 
 - **Summary:** Call Larry from a Shortcut in the native app
 - **Status:** native app only: implemented in [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by build only (Shortcuts cannot run on the simulator from a script); the phone still to be checked by Igor

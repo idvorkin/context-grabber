@@ -21,7 +21,7 @@ its `Issues:` line.
 | [Feeding Larry](02-larry.md) | Grab Context: the summary and raw exports, the 7-day window, what the coach sees. | 020–039 |
 | [Places](03-places.md) | Background location, stays and known places, the per-day breakdown, the map, the database export. | 040–059 |
 | [Roles and the journal](04-roles-and-journal.md) | Who I have been: the identity threads, time-since, the journal and its tags, gratitude, affirmations, mood. | 060–079 |
-| [Calling Larry](05-call.md) | The native Call tab that survives the lock, the Cockpit page, voices, diagnostics that reach Larry. | 080–099, 160–179 |
+| [Calling Larry](05-call.md) | The native Call tab that survives the lock, the Cockpit page, voices, diagnostics that reach Larry. | 080–099, 200–219 |
 | [The Gym Timer](06-gym-timer.md) | Presets, cues in Igor's voice, the LED face and the turn, music that keeps playing, the accessory-work log. | 100–119, 180–199 |
 | [From the home screen](07-widgets-and-links.md) | Widgets, the memdeck card, deep links and Shortcuts. | 120–139 |
 | [Reporting problems](08-reporting-problems.md) | The native app beside this one: the session log, the shake, crashes, reports that become issues. | 140–159 |
