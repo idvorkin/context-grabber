@@ -123,9 +123,12 @@ final class GymTimerModel: ObservableObject {
     clock?.invalidate()
     // Ten looks a second: a boundary is called within a tenth of its true time, and the engine only answers
     // when the second changes.
-    clock = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+    // In the common modes: a finger dragging the lap list or the accessory sheet must not stop the clock.
+    let ticking = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
       Task { @MainActor in self?.tick() }
     }
+    RunLoop.main.add(ticking, forMode: .common)
+    clock = ticking
   }
 
   func resetTimer() {

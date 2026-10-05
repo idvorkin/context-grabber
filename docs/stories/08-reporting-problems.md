@@ -65,7 +65,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 143:
 
 - **Summary:** A report becomes a GitHub issue once (technical)
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet; the issue names the screenshot's path on the Mac and uploads no picture, verified by running the script's body against a sample report
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); `just bugs-check` verified against the phone (2026-10-04, it found the one unfiled report); `just file-bugs` has not filed a real report yet; the issue names the screenshot's path on the Mac and uploads no picture: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by running the script's body against a sample report; a failed look at the existing issues stops the filing instead of filing everything again
 
 #### Use Case:
 - **As a** developer with the phone near the Mac
@@ -83,7 +83,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 144:
 
 - **Summary:** A crash comes back with the logs (technical)
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified by build only — the first real crash will verify it
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified by build only — the first real crash will verify it; one file per crash (the abort after an exception writes no second file) and a crash the app could not record still reaches the system's own report: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by build only
 
 #### Use Case:
 - **As a** developer reading a session log that stops mid-work

@@ -45,7 +45,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 102:
 
 - **Summary:** Stop, resume, and reset a run without losing my place
-- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4); verified by `timer.test.ts`, `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
+- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4); verified by `timer.test.ts`, `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor; RESUME after a STOP that landed on a boundary no tick had called now calls it: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`)
 
 #### Use Case:
 - **As a** lifter interrupted mid-round by someone asking about the rack
@@ -81,7 +81,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 104:
 
 - **Summary:** Hear the cues in my own voice: three, two, one, go — rest — done
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `timer.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `timer.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor; each boundary is called in the second it falls by whichever look sees it first, and one found later is not replayed: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`)
 
 #### Use Case:
 - **As a** lifter mid-set with my eyes on the bell, not the phone
@@ -99,7 +99,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 105:
 
 - **Summary:** Music keeps playing through a workout and dips for the cues; a podcast pauses and resumes
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `duck.test.ts` and on the phone — the locked-phone boundary and podcast resume still to be re-checked by Igor; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `duck.test.ts` and on the phone — the locked-phone boundary and podcast resume still to be re-checked by Igor; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor; RESET or *Done* with the window open lets go of the session once, not twice: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by build only, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter training to music
@@ -137,7 +137,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 107:
 
 - **Summary:** The timer keeps time and keeps speaking with the screen off
-- **Status:** implemented in [08c9bda](https://github.com/idvorkin/context-grabber/commit/08c9bda), [243ffa0](https://github.com/idvorkin/context-grabber/commit/243ffa0); verified by `timer.test.ts` (wall-clock derivation) and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor
+- **Status:** implemented in [08c9bda](https://github.com/idvorkin/context-grabber/commit/08c9bda), [243ffa0](https://github.com/idvorkin/context-grabber/commit/243ffa0); verified by `timer.test.ts` (wall-clock derivation) and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor; a cue due in the second the app comes back is still said, what fell while it was away is not replayed: [509da33](https://github.com/idvorkin/context-grabber/commit/509da33), verified by `just native-test` (`TimerEngineTests`)
 
 #### Use Case:
 - **As a** lifter who puts the phone face down for a whole workout
@@ -347,3 +347,21 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the 5-1 preset is running and a phone call comes in
 - **When:** I take the call, hang up, and lock the phone
 - **Then:** the clock kept time through the call, the next three, two, one and cue are spoken at their true times with the phone still locked, and the session log has `timer_interruption` began and ended with the session going active again after it
+
+---
+
+### User Story 119:
+
+- **Summary:** With no rest, every round is still called
+- **Status:** native app only: implemented in [509da33](https://github.com/idvorkin/context-grabber/commit/509da33); verified by `just native-test` (`TimerEngineTests`), the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** lifter running rounds back to back with the Custom preset's Rest at 0:00
+- **I want to** hear *go* at the start of every round
+- **so that** I know a new round began without looking at the phone
+
+#### Acceptance Criteria:
+- **Scenario:** Three rounds with no rest
+- **Given:** CUSTOM is chosen with Work 0:10, Rest 0:00 and 3 rounds
+- **When:** I tap START and let it run to the end
+- **Then:** I hear the ready count and *go*, then *three, two, one, go* into round 2 and again into round 3, then *three, two, one, done*, the face reads *Round n of 3* for each, and the session log has a `timer_phase` line for each new round

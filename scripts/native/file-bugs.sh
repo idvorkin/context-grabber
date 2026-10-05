@@ -9,7 +9,8 @@ REPO="${REPO:-idvorkin/context-grabber}"
 BUGS="${1:-$HOME/tmp/agent/grabber-logs/bugs.jsonl}"
 [ -f "$BUGS" ] || { echo "no bug file at $BUGS" >&2; exit 1; }
 
-existing=$(gh issue list -R "$REPO" --state all --limit 500 --json body --jq '.[].body' | grep -o 'bug:[0-9TZ:-]*' || true)
+bodies=$(gh issue list -R "$REPO" --state all --limit 500 --json body --jq '.[].body')
+existing=$(grep -o 'bug:[0-9TZ:-]*' <<<"$bodies" || true)
 
 while IFS= read -r line; do
   [ -n "$line" ] || continue

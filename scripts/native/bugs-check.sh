@@ -10,7 +10,8 @@ if ! xcrun devicectl device copy from --device "$DEVICE" --domain-type appDataCo
   --source Documents/bugs.jsonl --destination "$OUT" >/dev/null 2>&1; then
   echo "phone not reachable"; exit 0
 fi
-filed=$(gh issue list -R "$REPO" --state all --limit 500 --json body --jq '.[].body' | grep -o 'bug:[0-9TZ:-]*' || true)
+bodies=$(gh issue list -R "$REPO" --state all --limit 500 --json body --jq '.[].body')
+filed=$(grep -o 'bug:[0-9TZ:-]*' <<<"$bodies" || true)
 new=0
 while IFS= read -r line; do
   [ -n "$line" ] || continue
