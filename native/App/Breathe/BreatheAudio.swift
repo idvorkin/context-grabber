@@ -46,15 +46,36 @@ final class BreatheAudio: @unchecked Sendable {
   private let session = AVAudioSession.sharedInstance()
 
   // Touched only on `queue`.
+  /// A session is running and wants the keepalive.
+  private var wanted = false
   private var active = false
   private var phrases: [BreathPhrase: AVAudioPlayer] = [:]
   private var missing: Set<BreathPhrase> = []
   private var tones: [BreathTone: AVAudioPlayer] = [:]
   private var loop: AVAudioPlayer?
   private let speech = AVSpeechSynthesizer()
+  private var interruptionObserver: NSObjectProtocol?
 
   init(log: SessionLog) {
     self.log = log
+    // A phone call or Siri takes the session; when it gives it back the keepalive has to be started again or the
+    // app is suspended with the phone locked.
+    interruptionObserver = NotificationCenter.default.addObserver(
+      forName: AVAudioSession.interruptionNotification, object: session, queue: nil
+    ) { [weak self] note in
+      let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt ?? 0
+      let ended = AVAudioSession.InterruptionType(rawValue: raw) == .ended
+      self?.queue.async {
+        guard let self else { return }
+        self.log.event("breath_interruption", ["kind": ended ? "ended" : "began", "wanted": self.wanted])
+        self.active = false
+        if ended, self.wanted { self.startLoop() }
+      }
+    }
+  }
+
+  deinit {
+    if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
   }
 
   /// Make the players ahead of time, so the first cue is not the first load.
@@ -99,22 +120,9 @@ final class BreatheAudio: @unchecked Sendable {
   /// finished or left. Idempotent.
   func keepAlive(_ on: Bool) {
     queue.async { [self] in
+      wanted = on
       if on {
-        activate()
-        if loop == nil {
-          do {
-            guard let url = Bundle.main.url(forResource: "keepalive", withExtension: "wav") else {
-              throw CocoaError(.fileNoSuchFile)
-            }
-            loop = try AVAudioPlayer(contentsOf: url)
-            loop?.numberOfLoops = -1
-          } catch {
-            log.event("breath_keepalive", ["action": "start", "ok": false, "message": "keepalive.wav: \(error)"])
-            return
-          }
-        }
-        guard let loop, !loop.isPlaying else { return }
-        log.event("breath_keepalive", ["action": "start", "ok": loop.play()])
+        startLoop()
       } else if let loop, loop.isPlaying {
         loop.pause()
         log.event("breath_keepalive", ["action": "stop", "ok": true])
@@ -130,6 +138,7 @@ final class BreatheAudio: @unchecked Sendable {
   /// Leaving the screen: stop whatever is sounding and let go of the session.
   func stop() {
     queue.async { [self] in
+      wanted = false
       silence()
       if let loop, loop.isPlaying {
         loop.pause()
@@ -147,6 +156,24 @@ final class BreatheAudio: @unchecked Sendable {
   }
 
   // MARK: - on the queue
+
+  private func startLoop() {
+    activate()
+    if loop == nil {
+      do {
+        guard let url = Bundle.main.url(forResource: "keepalive", withExtension: "wav") else {
+          throw CocoaError(.fileNoSuchFile)
+        }
+        loop = try AVAudioPlayer(contentsOf: url)
+        loop?.numberOfLoops = -1
+      } catch {
+        log.event("breath_keepalive", ["action": "start", "ok": false, "message": "keepalive.wav: \(error)"])
+        return
+      }
+    }
+    guard let loop, !loop.isPlaying else { return }
+    log.event("breath_keepalive", ["action": "start", "ok": loop.play()])
+  }
 
   private func silence() {
     for player in phrases.values where player.isPlaying { player.stop() }

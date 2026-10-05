@@ -113,11 +113,11 @@ else bad "breathe: said '$said', keep_awake '$awake'"; fi
 alive=$(jq -sr '[.[] | select(.type=="breath_keepalive") | "\(.action)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
 if [ "$alive" = "start stop" ]; then ok "breathe: keepalive for the session, stopped at the end"
 else bad "breathe: keepalive '$alive'"; fi
-# Story 166: the Live Activity appears with the first inhale, is pushed once per step, and ends on Done.
+# Story 166: the Live Activity appears at Begin saying Ready, is pushed once per step, and ends on Done.
 la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "breathe")
   | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
-if [ "$la" = "start:Inhale update:Hold update:Exhale update:Hold update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
-  ok "breathe: live activity started, pushed at 7 steps, ended on Done"
+if [ "$la" = "start:Ready update:Inhale update:Hold update:Exhale update:Hold update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
+  ok "breathe: live activity started at Begin, pushed at 8 steps, ended on Done"
 elif [ "$la" = "unavailable:" ]; then ok "breathe: Live Activities are off on this simulator (logged once)"
 else bad "breathe: live activity '$la'"; fi
 

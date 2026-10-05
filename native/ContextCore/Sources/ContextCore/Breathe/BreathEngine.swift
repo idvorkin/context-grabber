@@ -17,15 +17,6 @@ public enum BreathPhase: Int, CaseIterable, Equatable, Sendable {
     }
   }
 
-  /// What the voice says.
-  public var spoken: String {
-    switch self {
-    case .inhale: return "Breathe in"
-    case .exhale: return "Breathe out"
-    case .holdFull, .holdEmpty: return "Hold"
-    }
-  }
-
   public var isHold: Bool { self == .holdFull || self == .holdEmpty }
 }
 

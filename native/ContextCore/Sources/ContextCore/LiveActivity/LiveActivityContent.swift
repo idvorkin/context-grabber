@@ -63,9 +63,9 @@ public struct LiveActivityContent: Equatable, Sendable {
 
   // MARK: - Box breathing
 
-  /// The session `elapsed` seconds into the breathing (negative in the quiet before the first inhale, which has no
-  /// card). `finished` once the run has ended.
-  public init?(breath plan: BreathPlan, elapsed: Double, paused: Bool, finished: Bool) {
+  /// The session `elapsed` seconds into the breathing (negative in the `leadIn` seconds of quiet before the first
+  /// inhale, which the card shows as Ready). `finished` once the run has ended.
+  public init?(breath plan: BreathPlan, elapsed: Double, leadIn: Double = 0, paused: Bool, finished: Bool) {
     kind = .breathe
     accent = .white
     self.paused = paused && !finished
@@ -75,7 +75,18 @@ public struct LiveActivityContent: Equatable, Sendable {
       key = "done"
       return
     }
-    guard elapsed >= 0 else { return nil }
+    if elapsed < 0 {
+      let cycle = "Cycle 1 of \(plan.cycles)"
+      secondsLeft = Int((-elapsed).rounded(.up))
+      stepSeconds = max(secondsLeft, Int(leadIn.rounded(.up)))
+      if self.paused {
+        (title, subtitle, compactLabel) = ("PAUSED", "Ready · \(cycle)", "PAUSED 1/\(plan.cycles)")
+      } else {
+        (title, subtitle, compactLabel) = ("Ready", cycle, "READY 1/\(plan.cycles)")
+      }
+      key = "ready|\(self.paused ? "paused" : "running")"
+      return
+    }
     let m = plan.moment(at: elapsed)
     guard !m.done else { return nil }  // the run says when it is finished
     let short: String
@@ -102,7 +113,8 @@ extension BreathRun {
   public func stepEndsAt(now: Double) -> Double? {
     guard isRunning, !isFinished else { return nil }
     let t = elapsed(now: now)
-    let index = max(0, Int((max(0, t) / Double(plan.breathSeconds)).rounded(.down)))
+    guard t >= 0 else { return now - t }
+    let index = Int((t / Double(plan.breathSeconds)).rounded(.down))
     return now + Double((index + 1) * plan.breathSeconds) - t
   }
 }

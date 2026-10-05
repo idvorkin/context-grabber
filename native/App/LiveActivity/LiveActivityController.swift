@@ -20,7 +20,9 @@ final class LiveActivityController {
   private var lastKey: String?
   /// ActivityKit's update and end are async: each waits for the one before, so the card never moves backwards.
   private var chain: Task<Void, Never>?
-  private var saidUnavailable = false
+  /// Kinds whose card could not start (Live Activities off, or the request refused): said once, and not asked
+  /// again until that screen's next session, which begins in front of Igor rather than from the background.
+  private var declined: Set<LiveActivityKind> = []
   /// How long a finished card stays on the lock screen.
   private static let finishedFor: TimeInterval = 4 * 60
 
@@ -50,6 +52,10 @@ final class LiveActivityController {
     let key = "\(kind.rawValue)|\(content.key)"
     guard key != lastKey else { return }
     lastKey = key
+    guard !declined.contains(kind) else {
+      if content.finished { declined.remove(kind) }
+      return
+    }
     let endsAt =
       stepEndsAt.map { Date(timeIntervalSince1970: $0) } ?? Date().addingTimeInterval(TimeInterval(content.secondsLeft))
     let state = GrabberActivityAttributes.ContentState(
@@ -98,9 +104,9 @@ final class LiveActivityController {
   /// RESET, Back, or leaving the screen: `kind`'s card goes now, finished or not.
   func end(_ kind: LiveActivityKind, reason: String) {
     if finishedCard?.kind == kind { dismissFinished(reason: reason) }
+    declined.remove(kind)
     guard self.kind == kind else { return }
     lastKey = nil
-    saidUnavailable = false
     self.kind = nil
     guard let activity else { return }
     self.activity = nil
@@ -113,12 +119,10 @@ final class LiveActivityController {
   ) {
     self.kind = kind
     guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-      if !saidUnavailable {
-        saidUnavailable = true
-        log.event(
-          "live_activity",
-          ["action": "unavailable", "kind": kind.rawValue, "message": "Live Activities are off for this app"])
-      }
+      declined.insert(kind)
+      log.event(
+        "live_activity",
+        ["action": "unavailable", "kind": kind.rawValue, "message": "Live Activities are off for this app"])
       return
     }
     // Never two cards: anything still up is from an earlier launch.
@@ -129,8 +133,9 @@ final class LiveActivityController {
         content: ActivityContent(state: state, staleDate: staleAt), pushType: nil)
       log.event("live_activity", fields.merging(["action": "start", "ok": true, "id": activity?.id ?? ""]) { $1 })
     } catch {
-      lastKey = nil  // try again at the next step
-      log.event("live_activity", fields.merging(["action": "start", "ok": false, "message": "\(error)"]) { $1 })
+      declined.insert(kind)
+      log.event(
+        "error", fields.merging(["where": "live_activity", "action": "start", "message": "\(error)"]) { $1 })
     }
   }
 

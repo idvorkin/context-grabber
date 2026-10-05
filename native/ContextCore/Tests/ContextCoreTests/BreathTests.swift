@@ -89,9 +89,8 @@ final class BreathPlanTests: XCTestCase {
     XCTAssertEqual(plan.moment(at: 500).secondsLeft, 0)
   }
 
-  func testTheWordsOnScreenAndInTheVoice() {
+  func testTheWordsOnScreenAndTheCueLabels() {
     XCTAssertEqual(BreathPhase.allCases.map(\.word), ["Inhale", "Hold", "Exhale", "Hold"])
-    XCTAssertEqual(BreathPhase.allCases.map(\.spoken), ["Breathe in", "Hold", "Breathe out", "Hold"])
     XCTAssertEqual(BreathCue.allCases.map(\.label), ["Voice", "Tone", "Off"])
   }
 }

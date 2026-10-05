@@ -106,6 +106,7 @@ final class BreatheModel: ObservableObject {
     audio.keepAlive(true)
     startClock()
     tick()
+    syncLiveActivity()
   }
 
   func togglePause() {
@@ -178,7 +179,8 @@ final class BreatheModel: ObservableObject {
     guard let run else { return }
     let t = now
     liveActivity.sync(
-      LiveActivityContent(breath: run.plan, elapsed: run.elapsed(now: t), paused: paused, finished: run.isFinished),
+      LiveActivityContent(
+        breath: run.plan, elapsed: run.elapsed(now: t), leadIn: run.leadIn, paused: paused, finished: run.isFinished),
       kind: .breathe, stepEndsAt: run.stepEndsAt(now: t))
   }
 

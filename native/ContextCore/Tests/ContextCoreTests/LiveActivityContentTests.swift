@@ -85,9 +85,16 @@ final class BreatheActivityContentTests: XCTestCase {
     LiveActivityContent(breath: plan, elapsed: t, paused: paused, finished: false)
   }
 
-  func testNoCardInTheQuietBeforeTheFirstInhale() {
-    XCTAssertNil(at(-1.5))
-    XCTAssertNotNil(at(0))
+  func testTheQuietBeforeTheFirstInhaleSaysReadyAndTheTimeToIt() {
+    let ready = LiveActivityContent(breath: plan, elapsed: -1.5, leadIn: 2, paused: false, finished: false)!
+    XCTAssertEqual([ready.title, ready.subtitle, ready.compactLabel], ["Ready", "Cycle 1 of 9", "READY 1/9"])
+    XCTAssertEqual([ready.secondsLeft, ready.stepSeconds], [2, 2])
+    XCTAssertEqual(ready.key, "ready|running")
+    let paused = LiveActivityContent(breath: plan, elapsed: -0.4, leadIn: 2, paused: true, finished: false)!
+    XCTAssertEqual([paused.title, paused.subtitle, paused.compactLabel], ["PAUSED", "Ready · Cycle 1 of 9", "PAUSED 1/9"])
+    XCTAssertEqual([paused.secondsLeft, paused.stepSeconds], [1, 2])
+    XCTAssertEqual(paused.key, "ready|paused")
+    XCTAssertEqual(at(0)!.key, "0|running")
   }
 
   func testEachStepSaysItsWordCycleAndTimeLeft() {
@@ -127,7 +134,8 @@ final class BreatheActivityContentTests: XCTestCase {
   func testTheStepEndIsExactThroughTheLeadInAndAPause() {
     var run = BreathRun(plan: plan, leadIn: 2)
     run.start(now: 100)
-    XCTAssertEqual(run.stepEndsAt(now: 101)!, 110, accuracy: 1e-9, "lead-in, then the first inhale's 8 s")
+    XCTAssertEqual(run.stepEndsAt(now: 101)!, 102, accuracy: 1e-9, "the lead-in ends at the first inhale")
+    XCTAssertEqual(run.stepEndsAt(now: 102.5)!, 110, accuracy: 1e-9)
     XCTAssertEqual(run.stepEndsAt(now: 111.3)!, 118, accuracy: 1e-9)
     run.pause(now: 112)
     XCTAssertNil(run.stepEndsAt(now: 112))
