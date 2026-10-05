@@ -431,7 +431,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 183:
 
 - **Summary:** Tap the time to pause, upright as on its side
-- **Status:** not implemented
+- **Status:** native app only: implemented in [aaa1227](https://github.com/idvorkin/context-grabber/commit/aaa1227); verified by `GymTimerUITests` on the simulator (tap the time: RESUME appears, tap again: STOP); the phone still to be checked by Igor
 - **Issues:** [#148](https://github.com/idvorkin/context-grabber/issues/148)
 - **Spec:** [LED display — upright, the face is a button too](../superpowers/specs/2026-09-07-gym-timer-led-display-design.md)
 
