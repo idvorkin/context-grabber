@@ -20,7 +20,7 @@ struct GymTimerView: View {
   private let onExit: () -> Void
 
   init(app: AppModel, launch: GymTimerLaunch, onExit: @escaping () -> Void) {
-    _model = StateObject(wrappedValue: GymTimerModel(log: app.log, database: app.database))
+    _model = StateObject(wrappedValue: GymTimerModel(log: app.log, database: app.database, liveActivity: app.liveActivity))
     self.launch = launch
     self.onExit = onExit
   }

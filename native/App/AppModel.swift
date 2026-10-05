@@ -7,6 +7,8 @@ import SwiftUI
 final class AppModel: ObservableObject {
   let log = SessionLog()
   let database: AppDatabase
+  /// The lock-screen card and the Dynamic Island, shared by the Gym Timer and Box breathing.
+  let liveActivity: LiveActivityController
   private let bugReporter: BugReporter
 
   /// The screen in front, as a report and the log name it. Each ported journey sets it when it appears.
@@ -15,13 +17,17 @@ final class AppModel: ObservableObject {
   @Published var status = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
+  /// Non-nil while the breathing screen covers the app.
+  @Published var breathe: BreatheLaunch?
 
   init() {
     database = AppDatabase(log: log)
+    liveActivity = LiveActivityController(log: log)
     bugReporter = BugReporter(log: log)
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
+    liveActivity.endLeftovers()
     runLaunchHooks()
   }
 
@@ -53,10 +59,42 @@ final class AppModel: ObservableObject {
     gymTimer = nil
   }
 
+  func openBreathe(_ launch: BreatheLaunch = BreatheLaunch(), from source: String) {
+    log.event("ui", ["action": "open_breathe", "from": source, "autostart": launch.plan != nil])
+    screen = "breathe"
+    breathe = launch
+  }
+
+  func closeBreathe() {
+    log.event("ui", ["action": "close_breathe"])
+    screen = "home"
+    breathe = nil
+  }
+
+  /// A journey still in Context Grabber, opened there by its own link.
+  func openInContextGrabber(_ link: String, what: String) {
+    guard let url = URL(string: link) else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_context_grabber", "what": what, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Context Grabber is not installed, so the \(what) cannot open." } }
+    }
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
     let env = ProcessInfo.processInfo.environment
+    if let spec = env["GRABBER_BREATHE"], !spec.isEmpty {
+      // "breath,cycles[,cue[,pause_at_seconds]]" begins that exact session; anything else just opens the sliders.
+      let parts = spec.split(separator: ",").map(String.init)
+      var launch = BreatheLaunch()
+      if parts.count >= 2, let breath = Int(parts[0]), let cycles = Int(parts[1]) {
+        launch.plan = BreathPlan(breathSeconds: breath, cycles: cycles)
+        launch.cue = parts.count > 2 ? BreathCue(rawValue: parts[2]) : nil
+        launch.pauseAt = parts.count > 3 ? Double(parts[3]) : nil
+      }
+      openBreathe(launch, from: "hook")
+    }
     if let spec = env["GRABBER_TIMER"], !spec.isEmpty {
       // A chip's id starts it as a tap on a widget tile would; "work,rest,rounds" runs that shape as Custom.
       var launch = GymTimerLaunch(autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)))

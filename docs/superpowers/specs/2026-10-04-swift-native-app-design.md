@@ -90,6 +90,12 @@ the Mac (the call).
 **Which build.** The Diagnostics screen shows the commit and branch the build was made from. The log's first
 line carries the same.
 
+## Links back to the current app
+
+A journey not yet ported can still be one tap away. The native app's home screen lists **Think of a card**,
+which opens Context Grabber on its Card tab (the same link its lock-screen widgets use). If Context Grabber is
+not installed the row says so instead of doing nothing. The row goes when the Card tab is ported.
+
 ## The Gym Timer in the native app (step 2)
 
 The timer does what stories 100–116 say, with these differences while the two apps live side by side:
@@ -114,9 +120,9 @@ The timer does what stories 100–116 say, with these differences while the two 
   workout. The current app has no RESET in its turned view.
 - **Coming back to the app never costs a cue.** What fell while the app was away is not replayed, and what
   falls in the second Igor comes back is still said.
-- **The lock-screen countdown (106) and one-tap starts from widgets and links (114) wait for step 7**, when the
-  widgets move. Until then the native timer keeps time and speaks with the screen locked, but shows nothing on
-  the lock screen.
+- **The lock-screen countdown and the Dynamic Island (106) came forward** and are their own spec:
+  [Native Live Activity](2026-10-04-native-live-activity-design.md). One-tap starts from widgets
+  and links (114) still wait for step 7, when the widgets move.
 - **Sets, the Custom preset and the accessory log are the native app's own** until the cutover: what is logged
   in one app is not in the other, and the native app's accessory work is not in Grab Context until step 4.
 

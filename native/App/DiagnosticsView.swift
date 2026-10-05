@@ -15,6 +15,24 @@ struct DiagnosticsView: View {
           } label: {
             Label("Gym Timer", systemImage: "timer").font(.title3.weight(.semibold)).padding(.vertical, 6)
           }
+          Button {
+            model.openBreathe(from: "home")
+          } label: {
+            Label("Box breathing", systemImage: "wind").font(.title3.weight(.semibold)).padding(.vertical, 6)
+          }
+          .fullScreenCover(
+            isPresented: Binding(get: { model.breathe != nil }, set: { if !$0 { model.closeBreathe() } })
+          ) {
+            BreatheView(app: model, launch: model.breathe ?? BreatheLaunch(), onExit: model.closeBreathe)
+              .background(ShakeDetector { model.startBugReport(from: "shake") })
+              .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
+          }
+          // Not ported yet: Context Grabber's Card tab, by the link its lock-screen widgets use (story 129).
+          Button {
+            model.openInContextGrabber("grabber://card", what: "card")
+          } label: {
+            Label("Think of a card", systemImage: "suit.spade").font(.title3.weight(.semibold)).padding(.vertical, 6)
+          }
         } header: {
           Text("Ported so far")
         } footer: {

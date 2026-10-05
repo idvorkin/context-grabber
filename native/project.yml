@@ -23,13 +23,19 @@ targets:
     platform: iOS
     sources:
       - App
+      # The Live Activity's attributes, compiled into the widget extension too.
+      - Shared
       # The Gym Timer's cues and keepalive loop, shared with the React Native app until the cutover.
       - path: ../assets/audio/timer
         excludes:
           - "words/**"
         buildPhase: resources
+      # The breathing screen's six spoken phrases (scripts/make-breath-words.sh).
+      - path: ../assets/audio/breathe
+        buildPhase: resources
     dependencies:
       - package: ContextCore
+      - target: GrabberWidgets
     settings:
       base:
         # Its own id until the cutover, so it installs beside Context Grabber (story 140).
@@ -42,6 +48,22 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
+  # The widget extension: for now only the Gym Timer's Live Activity (story 106).
+  GrabberWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widgets
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative.widgets
+        INFOPLIST_FILE: Widgets/Info.plist
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Grabber Native
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
 schemes:
   GrabberNative:
     build:

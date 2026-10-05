@@ -80,5 +80,68 @@ else bad "timer: $opens opens, $closes releases, last session event '$last_sessi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("timer_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed"; fi
 
+# Story 106: the Live Activity is requested with the ready count, pushed once at each phase (not every second),
+# and ended on DONE!, each accepted. A card an earlier launch left behind is ended at launch (reason leftover) and
+# is not part of this workout. With Live Activities off, one `unavailable` line per session is what the app must say instead.
+la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "gymTimer")
+  | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
+if [ "$la" = "start:GET READY update:WORK update:REST update:WORK end:DONE!" ]; then
+  ok "live activity: started, pushed at 3 phases, ended on DONE!"
+elif [ "$la" = "unavailable:" ]; then ok "live activity: Live Activities are off on this simulator (logged once per session)"
+else bad "live activity: '$la'"; fi
+
+# Stories 160, 163, 165: two cycles of 2 s breaths with the voice. Every step is noticed on its second, each
+# phrase is a bundled file that played (none fell back to the phone's voice), and the screen lock is given back.
+SIMCTL_CHILD_GRABBER_BREATHE="2,2,voice" relaunch
+wait_for breath_finished 40 || echo "      (timed out waiting for breath_finished)"
+sleep 3  # "Well done", and the Live Activity's end, which ActivityKit takes most of a second to accept
+f=$(newest_log)
+steps=$(jq -sr '
+  ([.[] | select(.type=="breath_start")][0]) as $s |
+  [.[] | select(.type=="breath_phase" or .type=="breath_finished")
+       | "\(((.t - $s.t - $s.lead_in_ms) / 1000 + 0.3) | floor):\(.phase // "done")"] | join(" ")' "$f")
+want="0:inhale 2:holdFull 4:exhale 6:holdEmpty 8:inhale 10:holdFull 12:exhale 14:holdEmpty 16:done"
+late=$(jq -s '[.[] | select(.type=="breath_phase" or .type=="breath_finished") | .late_ms] | max' "$f")
+if [ "$steps" = "$want" ] && [ "${late:-999}" -le 150 ] 2>/dev/null; then ok "breathe: 8 steps and the finish, each on its second (worst ${late} ms late)"
+else bad "breathe: steps '$steps' (worst ${late} ms late)"; fi
+said=$(jq -sr '[.[] | select(.type=="breath_cue") | "\(.name)\(if .ok and (.fallback|not) then "" else "!" end)"] | join(" ")' "$f")
+want_said="breath-begin breath-in breath-hold breath-out breath-hold-low breath-in breath-hold breath-out breath-hold-low breath-done"
+awake=$(jq -sr '[.[] | select(.type=="keep_awake") | "\(.on)"] | join(" ")' "$f")
+if [ "$said" = "$want_said" ] && [ "$awake" = "true false" ]; then ok "breathe: 10 phrases from their files, screen lock given back"
+else bad "breathe: said '$said', keep_awake '$awake'"; fi
+# Story 169: the keepalive runs for the session, so a locked phone keeps it going, and stops at the end.
+alive=$(jq -sr '[.[] | select(.type=="breath_keepalive") | "\(.action)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
+if [ "$alive" = "start stop" ]; then ok "breathe: keepalive for the session, stopped at the end"
+else bad "breathe: keepalive '$alive'"; fi
+# Story 166: the Live Activity appears at Begin saying Ready, is pushed once per step, and ends on Done.
+la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "breathe")
+  | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
+if [ "$la" = "start:Ready update:Inhale update:Hold update:Exhale update:Hold update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
+  ok "breathe: live activity started at Begin, pushed at 8 steps, ended on Done"
+elif [ "$la" = "unavailable:" ]; then ok "breathe: Live Activities are off on this simulator (logged once per session)"
+else bad "breathe: live activity '$la'"; fi
+
+# Story 164: the same with tones, one cycle of 1 s breaths.
+SIMCTL_CHILD_GRABBER_BREATHE="1,1,tone" relaunch
+wait_for breath_finished 20 || echo "      (timed out waiting for breath_finished)"
+sleep 1
+f=$(newest_log)
+tones=$(jq -sr '[.[] | select(.type=="breath_cue") | "\(.name)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
+if [ "$tones" = "rising tick falling tick closing" ]; then ok "breathe: a tone per step and the closing tone"
+else bad "breathe: tones '$tones'"; fi
+failed=$(jq -c 'select(.type=="error" or ((.type|startswith("breath_")) and .ok == false))' "$f")
+if [ -z "$failed" ]; then ok "breathe: nothing failed"; else bad "breathe: $failed"; fi
+
+# Story 162: paused 3 s into a 6 s inhale (as a tap on the circle would), the session stays put: no further step,
+# no finish, while well past when the hold was due.
+SIMCTL_CHILD_GRABBER_BREATHE="6,1,off,3" relaunch
+wait_for breath_pause 20 || echo "      (timed out waiting for breath_pause)"
+sleep 5
+f=$(newest_log)
+paused=$(jq -sr '[.[] | select(.type=="breath_pause") | "\(.reason):\(.phase)"] | join(" ")' "$f")
+after=$(jq -sr '[.[] | select(.type=="breath_phase" or .type=="breath_finished") | .phase // "done"] | join(" ")' "$f")
+if [ "$paused" = "hook:inhale" ] && [ "$after" = "inhale" ]; then ok "breathe: paused mid-inhale, nothing moved on"
+else bad "breathe: pauses '$paused', steps '$after'"; fi
+
 xcrun simctl terminate "$SIM" "$BUNDLE" 2>/dev/null || true
 exit $fail
