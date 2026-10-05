@@ -27,7 +27,7 @@ final class AppModel: ObservableObject {
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
-    LiveActivityController.endLeftovers(log: log)
+    liveActivity.endLeftovers()
     runLaunchHooks()
   }
 
