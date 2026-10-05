@@ -190,7 +190,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 133:
 
 - **Summary:** Think of a card in Grabber Native opens Igor's trainer
-- **Status:** implemented in COMMIT; verified by the simulator build; the tap on the phone not yet
+- **Status:** implemented in [0152b68](https://github.com/idvorkin/context-grabber/commit/0152b68); verified by the simulator build; the tap on the phone not yet
 
 #### Use Case:
 - **As a** man about to do the trick, with Grabber Native open
