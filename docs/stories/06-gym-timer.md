@@ -9,7 +9,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 100:
 
 - **Summary:** Run a preset of timed rounds with a ready count, work, rest, and a finish
-- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [83e2bdc](https://github.com/idvorkin/context-grabber/commit/83e2bdc); verified by `timer.test.ts`, `GymTimerScreen.test.tsx` and on the phone (daily use)
+- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [83e2bdc](https://github.com/idvorkin/context-grabber/commit/83e2bdc); verified by `timer.test.ts`, `GymTimerScreen.test.tsx` and on the phone (daily use); native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter between sets with the phone propped on a water bottle
@@ -27,7 +27,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 101:
 
 - **Summary:** Shape a Custom preset with sliders, and have it remembered
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `customPreset.test.ts`, `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `customPreset.test.ts`, `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter whose programme wants 1:30 on, 0:20 off, eight rounds
@@ -45,7 +45,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 102:
 
 - **Summary:** Stop, resume, and reset a run without losing my place
-- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4); verified by `timer.test.ts`, `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4); verified by `timer.test.ts`, `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter interrupted mid-round by someone asking about the rack
@@ -63,7 +63,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 103:
 
 - **Summary:** A stopped timer says PAUSEd, big enough to read across the room
-- **Status:** implemented in [340e572](https://github.com/idvorkin/context-grabber/commit/340e572); verified by `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [340e572](https://github.com/idvorkin/context-grabber/commit/340e572); verified by `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter glancing back at the phone after stepping away
@@ -81,7 +81,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 104:
 
 - **Summary:** Hear the cues in my own voice: three, two, one, go — rest — done
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `timer.test.ts` and on the phone
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `timer.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter mid-set with my eyes on the bell, not the phone
@@ -99,7 +99,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 105:
 
 - **Summary:** Music keeps playing through a workout and dips for the cues; a podcast pauses and resumes
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `duck.test.ts` and on the phone — the locked-phone boundary and podcast resume still to be re-checked by Igor
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `duck.test.ts` and on the phone — the locked-phone boundary and podcast resume still to be re-checked by Igor; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter training to music
@@ -117,7 +117,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 106:
 
 - **Summary:** The countdown lives in the Dynamic Island and on the lock screen
-- **Status:** implemented in [4d1f7aa](https://github.com/idvorkin/context-grabber/commit/4d1f7aa), [7d921fb](https://github.com/idvorkin/context-grabber/commit/7d921fb), [83e2bdc](https://github.com/idvorkin/context-grabber/commit/83e2bdc), [2ef4a17](https://github.com/idvorkin/context-grabber/commit/2ef4a17); verified on the phone
+- **Status:** implemented in [4d1f7aa](https://github.com/idvorkin/context-grabber/commit/4d1f7aa), [7d921fb](https://github.com/idvorkin/context-grabber/commit/7d921fb), [83e2bdc](https://github.com/idvorkin/context-grabber/commit/83e2bdc), [2ef4a17](https://github.com/idvorkin/context-grabber/commit/2ef4a17); verified on the phone; native app: not yet, it waits for the widgets step (bead context-grabber-3ss.7)
 
 #### Use Case:
 - **As a** lifter with the phone locked on the bench
@@ -137,7 +137,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 107:
 
 - **Summary:** The timer keeps time and keeps speaking with the screen off
-- **Status:** implemented in [08c9bda](https://github.com/idvorkin/context-grabber/commit/08c9bda), [243ffa0](https://github.com/idvorkin/context-grabber/commit/243ffa0); verified by `timer.test.ts` (wall-clock derivation) and on the phone
+- **Status:** implemented in [08c9bda](https://github.com/idvorkin/context-grabber/commit/08c9bda), [243ffa0](https://github.com/idvorkin/context-grabber/commit/243ffa0); verified by `timer.test.ts` (wall-clock derivation) and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter who puts the phone face down for a whole workout
@@ -155,7 +155,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 108:
 
 - **Summary:** The time is a seven-segment LED display on black, in the colours of a gym clock
-- **Status:** implemented in [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `ledTimer.test.ts`, `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `ledTimer.test.ts`, `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter three metres from the phone
@@ -173,7 +173,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 109:
 
 - **Summary:** Turn the phone on its side and the display fills the long edge; a tap anywhere starts or stops
-- **Status:** implemented in [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `GymTimerScreen.test.tsx` (the accelerometer mock), `ledTimer.test.ts` (the turn math) and on the phone
+- **Status:** implemented in [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `GymTimerScreen.test.tsx` (the accelerometer mock), `ledTimer.test.ts` (the turn math) and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter who has propped the phone sideways against a water bottle
@@ -191,7 +191,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 110:
 
 - **Summary:** A stopwatch with laps, in LED digits with hundredths
-- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter timing a carry or a hold
@@ -209,7 +209,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 111:
 
 - **Summary:** Count sets by tapping, with tally marks
-- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [55032c4](https://github.com/idvorkin/context-grabber/commit/55032c4), [be5828e](https://github.com/idvorkin/context-grabber/commit/be5828e); verified by `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter doing ladders who loses count by the fourth rung
@@ -227,7 +227,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 112:
 
 - **Summary:** Log the accessory work after a workout with four taps
-- **Status:** implemented in [dc6546e](https://github.com/idvorkin/context-grabber/commit/dc6546e); verified by `accessoryLog.test.ts`, `share.test.ts` and on the phone
+- **Status:** implemented in [dc6546e](https://github.com/idvorkin/context-grabber/commit/dc6546e); verified by `accessoryLog.test.ts`, `share.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter finishing with half lotus and dead hangs
@@ -245,7 +245,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 113:
 
 - **Summary:** See the last seven days of accessory work in the same sheet
-- **Status:** implemented in [340e572](https://github.com/idvorkin/context-grabber/commit/340e572); verified by `accessoryLog.test.ts`, `GymTimerScreen.test.tsx` and on the phone
+- **Status:** implemented in [340e572](https://github.com/idvorkin/context-grabber/commit/340e572); verified by `accessoryLog.test.ts`, `GymTimerScreen.test.tsx` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim`, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter unsure whether yesterday's pigeon stretch got logged
@@ -263,7 +263,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 114:
 
 - **Summary:** Start a timer from the home screen, a link, or the Live Activity in one tap
-- **Status:** implemented in [a5ff68d](https://github.com/idvorkin/context-grabber/commit/a5ff68d), [b789147](https://github.com/idvorkin/context-grabber/commit/b789147), [2ef4a17](https://github.com/idvorkin/context-grabber/commit/2ef4a17); verified by `deepLink.test.ts` and on the phone
+- **Status:** implemented in [a5ff68d](https://github.com/idvorkin/context-grabber/commit/a5ff68d), [b789147](https://github.com/idvorkin/context-grabber/commit/b789147), [2ef4a17](https://github.com/idvorkin/context-grabber/commit/2ef4a17); verified by `deepLink.test.ts` and on the phone; native app: not yet, it waits for the widgets step (bead context-grabber-3ss.7)
 
 #### Use Case:
 - **As a** lifter on the home screen with chalk on my hands
@@ -281,7 +281,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 115:
 
 - **Summary:** The screen stays awake while the timer is open
-- **Status:** implemented in [58001e1](https://github.com/idvorkin/context-grabber/commit/58001e1); verified on the phone
+- **Status:** implemented in [58001e1](https://github.com/idvorkin/context-grabber/commit/58001e1); verified on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), verified by `just native-test` and `just native-test-sim` as far as they can see, the phone (music, the lock, the turn, the lit screen) still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter who set the phone down for a five-minute round
@@ -299,7 +299,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 116:
 
 - **Summary:** Copy the timer's log when the music did something odd
-- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `duck.test.ts` and on the phone
+- **Status:** implemented in [4609169](https://github.com/idvorkin/context-grabber/commit/4609169); verified by `duck.test.ts` and on the phone; native app: [5a284c5](https://github.com/idvorkin/context-grabber/commit/5a284c5), where the timer writes to the session log and *Log* copies this launch's `timer_*` events behind a build line (nothing with `ok: false` instead of nothing marked FAILED), verified on the simulator, the phone still to be checked by Igor
 
 #### Use Case:
 - **As a** lifter whose podcast never came back after a cue
