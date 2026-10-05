@@ -368,7 +368,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
-### User Story 120:
+### User Story 180:
 
 - **Summary:** Choosing a preset after the finish goes back to ready
 - **Status:** native app only: implemented in [7ba6357](https://github.com/idvorkin/context-grabber/commit/7ba6357); verified by `just native-test` (`TimerEngineTests`), the phone still to be checked by Igor

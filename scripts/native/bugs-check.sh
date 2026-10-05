@@ -16,7 +16,7 @@ new=0
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   at=$(jq -r '.reported_at' <<<"$line")
-  grep -q "bug:$at" <<<"$filed" || { new=$((new + 1)); echo "new: $at  $(jq -r '.note' <<<"$line" | head -1 | cut -c1-90)"; }
+  grep -q "bug:$at" <<<"$filed" || { new=$((new + 1)); echo "new: $at  $(jq -r '.note' <<<"$line" | awk 'NF && !found { print; found = 1 }' | cut -c1-90)"; }
 done <"$OUT"
 if [ "$new" -gt 0 ]; then echo "$new new bug report(s): run just pull-logs && just file-bugs"; exit 1; fi
 echo "no new bug reports"

@@ -17,7 +17,8 @@ while IFS= read -r line; do
   at=$(jq -r '.reported_at' <<<"$line")
   if grep -q "bug:$at" <<<"$existing"; then echo "skip  $at (already filed)"; continue; fi
   note=$(jq -r '.note' <<<"$line")
-  title=$(printf '%s' "$note" | sed -e 's/^[-* ]*//' | head -1 | cut -c1-80)
+  title=$(printf '%s\n' "$note" | sed -e 's/^[-* ]*//' | awk 'NF && !found { print; found = 1 }' | cut -c1-80)
+  title=${title:-Report from the phone, $at}
   body=$(jq -r '
     "**Report from the phone** (native app, shake to report), " + .reported_at + "\n\n" +
     "> " + (.note | gsub("\n"; "\n> ")) + "\n\n" +
