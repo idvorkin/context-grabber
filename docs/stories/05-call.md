@@ -452,7 +452,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 203:
 
 - **Summary:** What is left of Claude's week and of the voice budget, as a strip on the native home screen
-- **Status:** not implemented
+- **Status:** implemented in [3da9e54](https://github.com/idvorkin/context-grabber/commit/3da9e54) (native); verified by `CockpitUsageTests` (host) and the simulator against the live Cockpit (strip drawn: Week 31%, Fable 13% orange, Voice 3.8h; unreachable Cockpit: no strip, `usage` load ok:false in the log); the refresh ask's Origin checked with curl (403 without, 202 with); on the phone: not yet
 - **Spec:** [native Cockpit — the usage strip](../superpowers/specs/2026-10-05-native-cockpit-design.md#the-usage-strip-on-the-home-screen)
 
 #### Use Case:
