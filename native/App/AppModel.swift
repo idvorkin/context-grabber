@@ -15,13 +15,18 @@ final class AppModel: ObservableObject {
   @Published var status = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
+  /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
+  @Published var callOpen = false
+  let call: CallModel
 
   init() {
     database = AppDatabase(log: log)
     bugReporter = BugReporter(log: log)
+    call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
+    CallLauncher.handler = { [weak self] backend in self?.callFromShortcut(backend) }
     runLaunchHooks()
   }
 
@@ -53,6 +58,27 @@ final class AppModel: ObservableObject {
     gymTimer = nil
   }
 
+  func openCall(from source: String) {
+    log.event("ui", ["action": "open_call", "from": source, "state": call.snapshot.state.rawValue])
+    if gymTimer != nil { closeGymTimer() }
+    screen = "call"
+    callOpen = true
+  }
+
+  func closeCall() {
+    log.event("ui", ["action": "close_call", "state": call.snapshot.state.rawValue])
+    screen = "home"
+    callOpen = false
+  }
+
+  /// The "Call Larry" Shortcut: the call screen, and a call unless one is already up (it is brought forward).
+  private func callFromShortcut(_ backend: CallBackend?) {
+    openCall(from: "shortcut")
+    guard !call.snapshot.isActive else { return }
+    if let backend { call.backend = backend }
+    call.start(from: "shortcut")
+  }
+
   /// The simulator cannot be shaken or tapped from a script, so the app reads launch hooks from the environment
   /// (`SIMCTL_CHILD_<name>` through simctl); docs/TESTING.md lists them.
   private func runLaunchHooks() {
@@ -67,6 +93,17 @@ final class AppModel: ObservableObject {
         launch.preset = spec
       }
       openGymTimer(launch, from: "hook")
+    }
+    if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
+      // A call to that bridge (the smoke run's fake one), hung up after GRABBER_CALL_SECONDS (default 8).
+      openCall(from: "hook")
+      let seconds = Double(env["GRABBER_CALL_SECONDS"] ?? "") ?? 8
+      Task {
+        try? await Task.sleep(for: .seconds(1))
+        call.start(from: "hook")
+        try? await Task.sleep(for: .seconds(seconds))
+        if call.snapshot.isActive { call.hangUp(from: "hook") }
+      }
     }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {
