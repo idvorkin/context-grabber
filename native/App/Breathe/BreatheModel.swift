@@ -11,6 +11,8 @@ struct BreatheLaunch: Equatable {
   var cue: BreathCue?
   /// Pause by itself this many seconds into the breathing, so a script can see the paused circle.
   var pauseAt: Double?
+  /// `GRABBER_BREATHE_STYLE`: this visit's ring style, not remembered (the simulator's screenshots).
+  var style: BreathStyle?
 }
 
 @MainActor
@@ -21,6 +23,8 @@ final class BreatheModel: ObservableObject {
   @Published private(set) var breathSeconds: Int
   @Published private(set) var sessionMinutes: Int
   @Published private(set) var cue: BreathCue
+  /// How the circle draws the breath (story 240).
+  @Published private(set) var style: BreathStyle
   @Published private(set) var paused = false
   /// The session on screen or just finished; Done shows its length.
   @Published private(set) var sessionPlan: BreathPlan?
@@ -47,6 +51,7 @@ final class BreatheModel: ObservableObject {
     breathSeconds = database.setting(Self.breathKey).flatMap(Int.init) ?? BreathPlan.defaultBreath
     sessionMinutes = database.setting(Self.sessionKey).flatMap(Int.init) ?? BreathPlan.defaultSession
     cue = database.setting(Self.cueKey).flatMap(BreathCue.init(rawValue:)) ?? .voice
+    style = BreathStyle.decode(database.setting(BreathStyle.settingKey))
     audio.load()
   }
 
@@ -68,6 +73,13 @@ final class BreatheModel: ObservableObject {
   }
 
   /// Choosing a cue plays a sample of it.
+  func chooseStyle(_ next: BreathStyle) {
+    guard next != style else { return }
+    style = next
+    database.setSetting(BreathStyle.settingKey, next.rawValue)
+    log.event("breathe_style", ["style": next.rawValue])
+  }
+
   func chooseCue(_ next: BreathCue) {
     guard next != cue else { return }
     cue = next
@@ -85,6 +97,7 @@ final class BreatheModel: ObservableObject {
   /// Begin, or a launch hook's exact session (whose cue is used but not remembered).
   func begin(_ launch: BreatheLaunch = BreatheLaunch()) {
     if let hooked = launch.cue { cue = hooked }
+    if let hooked = launch.style { style = hooked }
     let plan = launch.plan ?? plan
     pauseAt = launch.pauseAt
     let leadIn = cue == .voice ? Self.voiceLeadIn : 0
