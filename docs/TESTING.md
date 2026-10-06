@@ -52,8 +52,17 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 | `GRABBER_COUNT_VOICE=adam\|igor\|aussie` | with `GRABBER_TIMER` or `GRABBER_TIMER_SETTINGS`: count in that voice for this launch, not remembered and with no sample (story 182); `just native-test-sim` runs `aussie` and reads the first `timer_cue`'s `voice` |
 | `GRABBER_TIMER_SETTINGS=1` | open the Gym Timer, not started, with *Timer settings* up (logs `ui` action: timer_settings), for a screenshot of the sheet |
+| `GRABBER_HOME=settings` | open the home screen's cog sheet (logs `ui` action: home_settings), for a screenshot of the launchers and the diagnostics (story 147) |
 | `GRABBER_COCKPIT=open` | open the Cockpit screen, as its row on the home screen would |
 | `GRABBER_COCKPIT_URL=<url or page>` | load the Cockpit from elsewhere: a URL (`https://127.0.0.1:65530/` is the unreachable case `just native-test-sim` checks for the error panel), or the name of a page in the app bundle — `cockpit-bridge-test` speaks the audio bridge the way the Cockpit does and reports the round trip as `getRoute("roundtrip:<microphones>:tagged")` |
+
+What the native rungs can and cannot see of the home screen (story 147, [spec](superpowers/specs/2026-10-06-native-home-screen-design.md)):
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| The remembered order and hidden rows read against this build's rows: a new row at the end, a gone one dropped, moves, store and read back | Host | `HomeLayoutTests` |
+| Hiding and moving a row through the cog, both holding after a relaunch; Reset | Simulator | `HomeSettingsUITests` (`xcodebuild … -only-testing:GrabberNativeUITests/HomeSettingsUITests test`), then the `ui` home_rows lines in the log |
+| The home screen and the sheet, drawn | Simulator screenshot | launch plain, and with `SIMCTL_CHILD_GRABBER_HOME=settings`, then `simctl io screenshot` |
 
 What the native rungs can and cannot see of the Gym Timer:
 
