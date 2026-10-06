@@ -155,6 +155,15 @@ final class AppModel: ObservableObject {
     }
   }
 
+  /// Exercise Analyzer, Igor's own app (its story 069): the link only brings it forward.
+  func openExerciseAnalyzer(from source: String) {
+    guard let url = URL(string: "exerciseanalyzer://") else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_exercise_analyzer", "from": source, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Exercise Analyzer is not installed, so it cannot open." } }
+    }
+  }
+
   func openCockpit(from source: String) {
     log.event("ui", ["action": "open_cockpit", "from": source, "first": !cockpitOpened])
     cockpitOpened = true

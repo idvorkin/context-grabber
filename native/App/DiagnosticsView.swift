@@ -57,6 +57,13 @@ struct DiagnosticsView: View {
               .padding(.vertical, 6)
           }
           Button {
+            model.openExerciseAnalyzer(from: "home")
+          } label: {
+            Label("Exercise Analyzer", systemImage: "figure.strengthtraining.traditional").font(.title3.weight(.semibold))
+              .padding(.vertical, 6)
+          }
+          .accessibilityIdentifier("home-exercise-analyzer")
+          Button {
             model.openCockpit(from: "home")
           } label: {
             Label("Cockpit", systemImage: "gauge.with.dots.needle.67percent").font(.title3.weight(.semibold))
