@@ -304,7 +304,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 056:
 
 - **Summary:** See the places I have not named on the full-screen map, and name them there
-- **Status:** implemented (native app)
+- **Status:** native app: implemented in [df4165a](https://github.com/idvorkin/context-grabber/commit/df4165a); verified by `UnnamedPlacesTests` (on the real fixture: all 7 unnamed places, radius 100 or 110 m holding all but 2 of their 2 340 points) and on the simulator (`PlacesUnnamedUITests`: a grey dot's card names the place and it becomes a named pin; screenshots of the dot, the card and the name card); the phone still to be checked by Igor
 - **Issues:** [#162](https://github.com/idvorkin/context-grabber/issues/162)
 
 #### Use Case:
