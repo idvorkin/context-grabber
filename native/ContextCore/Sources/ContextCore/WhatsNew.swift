@@ -1,0 +1,238 @@
+//  What's new, by day (story 148): the native app's story commits over the last month, made at build time from
+//  `git log` and the stories' own summaries. Foundation only: scripts/native/whats-new.sh compiles this file with
+//  plain swiftc for the build phase, and the app decodes what it wrote.
+
+import Foundation
+
+public struct WhatsNewItem: Codable, Equatable, Sendable {
+  public var story: Int
+  public var text: String
+  public var issue: Int?
+  public var sha: String
+
+  public init(story: Int, text: String, issue: Int? = nil, sha: String) {
+    self.story = story
+    self.text = text
+    self.issue = issue
+    self.sha = sha
+  }
+
+  /// "Story 133 · #142", the small line under a change.
+  public var caption: String {
+    let story = String(format: "Story %03d", self.story)
+    return issue.map { "\(story) · #\($0)" } ?? story
+  }
+}
+
+public struct WhatsNewDay: Codable, Equatable, Sendable {
+  /// The local day, yyyy-MM-dd.
+  public var day: String
+  public var items: [WhatsNewItem]
+
+  public init(day: String, items: [WhatsNewItem]) {
+    self.day = day
+    self.items = items
+  }
+}
+
+public struct WhatsNewFeed: Codable, Equatable, Sendable {
+  public var generated: String
+  public var days: [WhatsNewDay]
+
+  public init(generated: String, days: [WhatsNewDay]) {
+    self.generated = generated
+    self.days = days
+  }
+
+  /// Nil for a missing or unreadable resource: the row then says nothing new.
+  public static func decode(_ data: Data?) -> WhatsNewFeed? {
+    data.flatMap { try? JSONDecoder().decode(WhatsNewFeed.self, from: $0) }
+  }
+}
+
+public enum WhatsNew {
+  public struct Commit: Equatable, Sendable {
+    public var sha: String
+    public var date: Date
+    public var subject: String
+
+    public init(sha: String, date: Date, subject: String) {
+      self.sha = sha
+      self.date = date
+      self.subject = subject
+    }
+  }
+
+  /// A story's own words, from its markdown.
+  public struct Story: Equatable, Sendable {
+    public var summary: String
+    public var issue: Int?
+
+    public init(summary: String, issue: Int? = nil) {
+      self.summary = summary
+      self.issue = issue
+    }
+  }
+
+  /// What a subject says: which story, the words to show unless the story has its own, the issue it names.
+  public struct Parsed: Equatable, Sendable {
+    public var story: Int
+    public var text: String
+    public var issue: Int?
+    /// True for "Story NNN…" subjects, whose story summary is preferred over `text`.
+    public var leading: Bool
+  }
+
+  // MARK: Subjects
+
+  private static let bookkeeping = try! NSRegularExpression(
+    pattern: #"^(Merge\b|WIP\b|wip\b|fixup!|squash!|amend!|Revert\b|no-mistakes\(|Story\s+\d+\s*:?\s*Status\b)"#)
+  private static let leadingStory = try! NSRegularExpression(
+    pattern: #"^Story\s+(\d+)\s*(?:\(#(\d+)\))?\s*[:—–-]?\s*(.*)$"#, options: [.caseInsensitive])
+  private static let bracketStories = try! NSRegularExpression(
+    pattern: #"\s*\((?:story|stories)\s+(\d+)([^)]*)\)"#, options: [.caseInsensitive])
+  private static let bracketIssue = try! NSRegularExpression(pattern: #"\s*\(#(\d+)\)"#)
+  private static let hashNumber = try! NSRegularExpression(pattern: #"#(\d+)"#)
+
+  /// Nil for a subject that is no story's change: bookkeeping, or no story named.
+  public static func parse(subject raw: String) -> Parsed? {
+    let subject = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    if subject.isEmpty || matches(bookkeeping, subject) != nil { return nil }
+    if let m = matches(leadingStory, subject), let story = Int(group(m, 1, subject) ?? "") {
+      var text = group(m, 3, subject) ?? ""
+      var issue = group(m, 2, subject).flatMap(Int.init)
+      if let i = matches(bracketIssue, text) {
+        issue = issue ?? group(i, 1, text).flatMap(Int.init)
+        text = remove(i, from: text)
+      }
+      return Parsed(story: story, text: sentence(text), issue: issue, leading: true)
+    }
+    if let m = matches(bracketStories, subject), let story = Int(group(m, 1, subject) ?? "") {
+      var text = remove(m, from: subject)
+      var issue = group(m, 2, subject).flatMap { rest in matches(hashNumber, rest).flatMap { group($0, 1, rest) } }
+        .flatMap(Int.init)
+      if let i = matches(bracketIssue, text) {
+        issue = issue ?? group(i, 1, text).flatMap(Int.init)
+        text = remove(i, from: text)
+      }
+      return Parsed(story: story, text: sentence(text), issue: issue, leading: false)
+    }
+    return nil
+  }
+
+  // MARK: Stories
+
+  /// Every "### User Story NNN:" in the markdown with its "**Summary:**" and the first issue its "**Issues:**" names.
+  public static func stories(fromMarkdown markdown: String) -> [Int: Story] {
+    var out: [Int: Story] = [:]
+    var current: Int?
+    for line in markdown.split(separator: "\n", omittingEmptySubsequences: false) {
+      let text = line.trimmingCharacters(in: .whitespaces)
+      if text.hasPrefix("### User Story ") {
+        let digits = text.dropFirst("### User Story ".count).prefix { $0.isNumber }
+        current = Int(digits)
+        continue
+      }
+      guard let id = current else { continue }
+      if let summary = field("Summary", in: text) {
+        var words = summary
+        if words.hasSuffix("(technical)") { words = String(words.dropLast("(technical)".count)) }
+        out[id] = Story(summary: sentence(words), issue: out[id]?.issue)
+      } else if let issues = field("Issues", in: text) {
+        let issue = matches(hashNumber, issues).flatMap { group($0, 1, issues) }.flatMap(Int.init)
+        out[id] = Story(summary: out[id]?.summary ?? "", issue: issue)
+      }
+    }
+    return out.filter { !$0.value.summary.isEmpty }
+  }
+
+  // MARK: The feed
+
+  /// Commits newest first (as `git log` gives them) → days newest first, one line per story per day, within
+  /// `days` days of `now`.
+  public static func build(
+    commits: [Commit], stories: [Int: Story], now: Date, days: Int = 30, timeZone: TimeZone = .current
+  ) -> [WhatsNewDay] {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+    let since = calendar.date(byAdding: .day, value: -days, to: calendar.startOfDay(for: now)) ?? now
+    let dayFormat = DateFormatter()
+    dayFormat.calendar = calendar
+    dayFormat.timeZone = timeZone
+    dayFormat.locale = Locale(identifier: "en_US_POSIX")
+    dayFormat.dateFormat = "yyyy-MM-dd"
+
+    var order: [String] = []
+    var byDay: [String: [WhatsNewItem]] = [:]
+    var seen = Set<String>()
+    for commit in commits.sorted(by: { $0.date > $1.date }) where commit.date >= since && commit.date <= now {
+      guard let parsed = parse(subject: commit.subject) else { continue }
+      let day = dayFormat.string(from: commit.date)
+      guard seen.insert("\(day)/\(parsed.story)").inserted else { continue }
+      let story = stories[parsed.story]
+      let text = parsed.leading ? (story?.summary ?? parsed.text) : parsed.text
+      guard !text.isEmpty else { continue }
+      if byDay[day] == nil { order.append(day) }
+      byDay[day, default: []].append(
+        WhatsNewItem(story: parsed.story, text: text, issue: parsed.issue ?? story?.issue, sha: commit.sha))
+    }
+    return order.map { WhatsNewDay(day: $0, items: byDay[$0] ?? []) }
+  }
+
+  // MARK: What the screens say
+
+  /// The home row's words after "What's new · ".
+  public static func homeLine(_ feed: WhatsNewFeed?) -> String {
+    guard let day = feed?.days.first, let item = day.items.first else { return "nothing new" }
+    return "\(label(day: day.day, style: .short)) — \(item.text)"
+  }
+
+  public enum LabelStyle { case short, long }
+
+  /// "Oct 5" or "Monday, Oct 5" for a yyyy-MM-dd day.
+  public static func label(day: String, style: LabelStyle) -> String {
+    let parts = day.split(separator: "-").compactMap { Int($0) }
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "UTC")!
+    guard parts.count == 3, let date = calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+    else { return day }
+    let format = DateFormatter()
+    format.calendar = calendar
+    format.timeZone = calendar.timeZone
+    format.locale = Locale(identifier: "en_US_POSIX")
+    format.dateFormat = style == .short ? "MMM d" : "EEEE, MMM d"
+    return format.string(from: date)
+  }
+
+  // MARK: Helpers
+
+  private static func field(_ name: String, in line: String) -> String? {
+    let prefix = "- **\(name):**"
+    guard line.hasPrefix(prefix) else { return nil }
+    return line.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
+  }
+
+  /// Trimmed, first letter capitalised, no trailing full stop.
+  private static func sentence(_ text: String) -> String {
+    var s = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    while s.hasSuffix(".") { s.removeLast() }
+    guard let first = s.first else { return s }
+    return first.uppercased() + s.dropFirst()
+  }
+
+  private static func matches(_ regex: NSRegularExpression, _ s: String) -> NSTextCheckingResult? {
+    regex.firstMatch(in: s, range: NSRange(s.startIndex..., in: s))
+  }
+
+  private static func group(_ m: NSTextCheckingResult, _ i: Int, _ s: String) -> String? {
+    guard i < m.numberOfRanges, let r = Range(m.range(at: i), in: s) else { return nil }
+    return String(s[r])
+  }
+
+  private static func remove(_ m: NSTextCheckingResult, from s: String) -> String {
+    guard let r = Range(m.range, in: s) else { return s }
+    var out = s
+    out.removeSubrange(r)
+    return out.trimmingCharacters(in: .whitespaces)
+  }
+}

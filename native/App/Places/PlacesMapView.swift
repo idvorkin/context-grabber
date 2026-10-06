@@ -1,5 +1,6 @@
 //  The map (stories 048–051): Apple Maps with a pin per known place in its colour, You, and today's path, framed
-//  to hold all of them; locate, copy and expand in the corners. The same view embedded and full screen.
+//  to hold all of them; locate, copy and expand in the corners. The same view embedded and full screen; full
+//  screen it also shows the places with no name yet as grey dots, a tap opening their visits (story 056).
 
 import ContextCore
 import MapKit
@@ -24,9 +25,16 @@ struct PlacesMapView: View {
     tracker.you.map { Coordinate(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude) }
   }
 
+  /// The grey dots: full screen only, so the embedded map stays uncluttered.
+  private var unnamed: [UnnamedPlace] { fullscreen ? places.unnamed : [] }
+
+  private var selected: UnnamedPlace? {
+    places.selectedUnnamed.flatMap { id in unnamed.first { $0.placeId == id } }
+  }
+
   private var region: MKCoordinateRegion? {
     PlaceStyle.region(
-      places: places.knownPlaces.map(\.coordinate), you: you,
+      places: places.knownPlaces.map(\.coordinate) + unnamed.map(\.centroid), you: you,
       path: places.route.map { Coordinate(latitude: $0.latitude, longitude: $0.longitude) }
     ).map {
       MKCoordinateRegion(center: $0.center.cl, span: MKCoordinateSpan(latitudeDelta: $0.latitudeDelta, longitudeDelta: $0.longitudeDelta))
@@ -39,9 +47,17 @@ struct PlacesMapView: View {
         MapPolyline(coordinates: places.route.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) })
           .stroke(Color(hex: PlaceStyle.you).opacity(0.85), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
       }
+      // Drawn first, so a named pin sits on top where they meet.
+      ForEach(unnamed) { place in
+        Annotation("", coordinate: place.centroid.cl, anchor: .center) {
+          UnnamedPin(place: place, selected: place.placeId == places.selectedUnnamed) {
+            places.selectUnnamed(place.placeId == places.selectedUnnamed ? nil : place.placeId, from: "tap")
+          }
+        }
+      }
       ForEach(places.knownPlaces) { place in
         Annotation("", coordinate: place.coordinate.cl, anchor: .center) {
-          PlacePin(name: place.name, color: Color(hex: places.color(place.name)))
+          PlacePin(name: place.name, symbol: places.icon(place).symbol, color: Color(hex: places.color(place.name)))
         }
       }
       if let you {
@@ -61,8 +77,18 @@ struct PlacesMapView: View {
       }
       .padding(8)
     }
+    .overlay(alignment: .bottom) {
+      if let selected {
+        UnnamedPlaceCard(place: selected, days: PlacesModel.breakdownDays) {
+          places.startNaming(selected)
+        } onClose: {
+          places.selectUnnamed(nil, from: "close")
+        }
+        .padding(.horizontal, 12).padding(.bottom, fullscreen ? 28 : 8)
+      }
+    }
     .overlay(alignment: .bottomLeading) {
-      if let you {
+      if let you, selected == nil {
         Button {
           UIPasteboard.general.string = PlaceStyle.coordinateText(you)
           log.event("ui", ["action": "copy_coordinates", "accuracy": Int(tracker.you?.horizontalAccuracy.rounded() ?? -1)])
@@ -83,6 +109,7 @@ struct PlacesMapView: View {
     .onAppear(perform: frame)
     .onChange(of: places.knownPlaces) { _, _ in frame() }
     .onChange(of: places.route.count) { _, _ in frame() }
+    .onChange(of: places.unnamed.count) { _, _ in frame() }
   }
 
   /// Frames every pin, You and the path, until Igor moves the map himself.
@@ -112,24 +139,91 @@ struct PlacesMapView: View {
   }
 }
 
-/// A known place: its icon in a ring of its colour, or a dot with a name chip.
+/// A known place: its icon in a ring of its colour (story 057), and its name in a small chip under it.
 struct PlacePin: View {
   let name: String
+  let symbol: String
   let color: Color
 
   var body: some View {
-    if let icon = PlaceStyle.icon(for: name) {
-      Text(icon).font(.system(size: 16)).frame(width: 30, height: 30)
+    VStack(spacing: 2) {
+      Image(systemName: symbol).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+        .frame(width: 30, height: 30)
         .background(Circle().fill(Color(white: 0.1).opacity(0.85)))
         .overlay(Circle().stroke(color, lineWidth: 3))
-        .accessibilityLabel(name)
-    } else {
-      VStack(spacing: 2) {
-        Circle().fill(color).frame(width: 14, height: 14).overlay(Circle().stroke(.white, lineWidth: 2))
-        Text(name).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
-          .padding(.horizontal, 5).padding(.vertical, 2).background(Color.black.opacity(0.65), in: Capsule())
-      }
+      Text(name).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
+        .padding(.horizontal, 5).padding(.vertical, 2).background(Color.black.opacity(0.65), in: Capsule())
     }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(name)
+    .accessibilityIdentifier("place-\(name)")
+    .accessibilityValue(symbol)
+  }
+}
+
+/// A place with no name yet: a grey dot sized by the hours there and a small chip saying them. Quieter than a
+/// named pin on purpose; white-ringed while its card is open.
+struct UnnamedPin: View {
+  let place: UnnamedPlace
+  let selected: Bool
+  let onTap: () -> Void
+
+  var body: some View {
+    let size = UnnamedPlaces.dotDiameter(minutes: place.totalMinutes)
+    Button(action: onTap) {
+      VStack(spacing: 2) {
+        Circle().fill(Color(white: 0.55).opacity(0.8)).frame(width: size, height: size)
+          .overlay(Circle().stroke(selected ? .white : Color(white: 0.85).opacity(0.7), lineWidth: selected ? 3 : 1.5))
+        Text(PlacesDaily.formatHours(place.totalMinutes)).font(.system(size: 9, weight: .medium)).foregroundStyle(.white.opacity(0.9))
+          .padding(.horizontal, 4).padding(.vertical, 1).background(Color.black.opacity(0.45), in: Capsule())
+      }
+      // A finger-sized target around even the smallest dot.
+      .frame(minWidth: 44, minHeight: 44)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("\(place.placeId), \(PlacesDaily.formatHours(place.totalMinutes))")
+    .accessibilityIdentifier("unnamed-\(place.placeId)")
+  }
+}
+
+/// The card a grey dot opens: when and how long, and *Name this place*.
+struct UnnamedPlaceCard: View {
+  static let maxVisits = 5
+  let place: UnnamedPlace
+  let days: Int
+  let onName: () -> Void
+  let onClose: () -> Void
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text(place.placeId).font(.headline)
+          Text(UnnamedPlaces.summaryLine(place, days: days)).font(.subheadline).foregroundStyle(.secondary)
+        }
+        Spacer()
+        Button(action: onClose) {
+          Image(systemName: "xmark.circle.fill").font(.title3).foregroundStyle(.secondary)
+        }
+        .accessibilityLabel("Close")
+      }
+      VStack(alignment: .leading, spacing: 3) {
+        ForEach(Array(place.visits.prefix(Self.maxVisits).enumerated()), id: \.offset) { _, visit in
+          Text(UnnamedPlaces.visitLine(visit)).font(.caption.monospacedDigit())
+        }
+        if place.visits.count > Self.maxVisits {
+          Text("+\(place.visits.count - Self.maxVisits) earlier").font(.caption).foregroundStyle(.secondary)
+        }
+      }
+      Button(action: onName) {
+        Label("Name this place", systemImage: "plus.circle.fill").frame(maxWidth: .infinity)
+      }
+      .buttonStyle(.borderedProminent)
+      .accessibilityIdentifier("name-this-place")
+    }
+    .padding(14)
+    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
   }
 }
 

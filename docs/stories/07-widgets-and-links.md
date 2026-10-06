@@ -258,6 +258,27 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I look at the home screen
 - **Then:** a map widget shows today's route over the map with the current position marked, refreshed with the last grab
 
+
+---
+
+### User Story 134:
+
+- **Summary:** Open Exercise Analyzer from the native home screen
+- **Status:** native app only: implemented in [225d739](https://github.com/idvorkin/context-grabber/commit/225d739); verified by `ExerciseAnalyzerLinkUITests` on the simulator with Exercise Analyzer's url-scheme build installed (tap the row, Exercise Analyzer runs in front); the phone still to be checked by Igor
+- **Issues:** [#142](https://github.com/idvorkin/context-grabber/issues/142)
+- **Spec:** [Swift-native app — Exercise Analyzer, one tap away](../superpowers/specs/2026-10-04-swift-native-app-design.md#exercise-analyzer-one-tap-away)
+
+#### Use Case:
+- **As a** lifter whose home screen is Grabber Native
+- **I want to** open Exercise Analyzer from it
+- **so that** recording a set is one tap from where I already am
+
+#### Acceptance Criteria:
+- **Scenario:** The row
+- **Given:** Exercise Analyzer is installed
+- **When:** I tap *Exercise Analyzer* on Grabber Native's home screen
+- **Then:** Exercise Analyzer comes to the front, the session log has `open_exercise_analyzer` with ok true, and without it installed the home screen says it is not installed
+
 ---
 
 ### User Story 135:

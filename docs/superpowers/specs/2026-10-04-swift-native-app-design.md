@@ -73,7 +73,7 @@ did that matters, what failed, with the numbers that decide a question as number
 from. It is visible in the Files app and comes to the Mac with one command. Logs older than thirty days are
 deleted at launch, except a log a problem report names.
 
-**Reporting a problem.** A shake anywhere, or *Report a problem* on the Diagnostics screen, opens a sheet with
+**Reporting a problem.** A shake anywhere, or *Report a problem* behind the home screen's cog, opens a sheet with
 one text field and a list of what will be attached. *Log it* stores the note, a picture of the screen as it was
 at the shake, the screen Igor was on, the build, and the name and moment of the session log. On the Mac the
 report becomes one GitHub issue with the note and the context; filing twice never makes two issues. The
@@ -95,7 +95,7 @@ file comes to the Mac with the logs.
 it, and the shake attaches that log. The copy-to-clipboard button stays where Igor is likely to be away from
 the Mac (the call).
 
-**Which build.** The Diagnostics screen shows the commit and branch the build was made from. The log's first
+**Which build.** The home screen's cog shows the commit and branch the build was made from. The log's first
 line carries the same.
 
 ## Think of a card: Igor's trainer, not a port
@@ -104,6 +104,12 @@ Igor, 2026-10-05: *"I have ~/gits/think-a-card-trainer, I want that instead."* T
 card**, which opens his Think a Card Trainer app straight into "think of a card" (that app's story 063). The old
 app's Card tab and memdeck widgets are not ported. If the trainer is not installed the row says so instead of
 doing nothing.
+
+## Exercise Analyzer, one tap away
+
+Igor, 2026-10-05 (#142): *"You should also be able to launch Exercise Analyzer."* The home screen lists **Exercise
+Analyzer** under *Think of a card*; it opens Igor's Exercise Analyzer app where it was (that app's story 069). Like
+the trainer, it is not installed → the row says so instead of doing nothing.
 
 ## The Gym Timer in the native app (step 2)
 
@@ -189,7 +195,7 @@ differences while the two apps live side by side:
   then the call carries no location.
 - **Prime audio is not ported.** It was an experiment for the silent first call in the React Native audio
   engine (#88); the native call builds its audio the same way every time.
-- **The gist token** is entered on the native home screen under *Diagnostics uploads* and kept in the native
+- **The gist token** is entered behind the native home screen's cog under *Diagnostics uploads* and kept in the native
   app's own Keychain; the old app's token is not shared until the cutover. Automatic upload after a troubled
   call, the delete-me note, the ten-gist cap and *Delete uploaded diagnostics* behave as stories 094 and 095
   say.
@@ -211,8 +217,7 @@ The mirror does what stories 002–009, 013 and 019 say, and Grab Context what s
 with these differences while the two apps live side by side:
 
 - **Today opens from the native app's home screen**, as the Gym Timer does, and the home screen stays the
-  Diagnostics list. Whether Today becomes the home screen (with Diagnostics behind a button) is Igor's call and
-  waits for it.
+  list of launchers, with the diagnostics behind its cog ([home screen spec](2026-10-06-native-home-screen-design.md)).
 - **Today is one screen**: a header with when the last grab finished and a phase while one runs, a summary line,
   the body cards (Movement, Exercise, Heart Rate, HRV, Sleep, Meditation, Weight) with the same values, sublabels
   and box plots as the current Body tab, and *Share summary* / *Share raw*. The current app's tabs (Today, Body,
@@ -229,6 +234,15 @@ with these differences while the two apps live side by side:
 - **The exports are the current app's, byte for byte**, for the same Health data and the same accessory log:
   the summary is the same single line of JSON, the raw share the same indented JSON. The share sheet receives the
   text, as in the current app.
+- **What the native export carries that the current app's does not: the activities I finished** (Igor, 2026-10-05,
+  #139: *"Make sure to log every time we complete an activity so we can give it to Larry"*). Every Gym Timer workout
+  that runs to *done* and every breathing session that reaches *Done* is recorded with when it finished, what it
+  was (the preset and its rounds, or the breath length and cycles) and how long it took. The summary gains an
+  `activities` section after `accessory`: the last seven days, newest first, each with a kind (`gym_timer` or
+  `breathing`), a readable name, minutes, an ISO-8601 UTC timestamp and the local date; a week with nothing finished
+  carries an empty list. A workout reset or abandoned part way, and a breathing session left before *Done*, are not
+  activities. This is the one deliberate difference from the current app's export, so the byte-for-byte check runs
+  on everything else.
 - **What the native export does not carry yet**: `roles` is null until roles move (step 6) — the current app sends
   them; `places` is null until the native Places has its weekly and recent summaries (after step 5); in the raw
   share `location` and `locationClusters` are null until step 5. Every key is still present with the same shape.

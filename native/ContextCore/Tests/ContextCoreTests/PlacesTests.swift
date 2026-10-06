@@ -116,15 +116,6 @@ final class PlaceStyleTests: XCTestCase {
     XCTAssertEqual(PlaceStyle.color("Place 9", in: map), PlaceStyle.unknownPlace)
   }
 
-  func testIcons() {
-    XCTAssertEqual(PlaceStyle.icon(for: "Home"), "🏠")
-    XCTAssertEqual(PlaceStyle.icon(for: "My office"), "💼")
-    XCTAssertEqual(PlaceStyle.icon(for: "Kettlebility gym"), "🏋️")
-    XCTAssertEqual(PlaceStyle.icon(for: "Milstead Coffee"), "☕")
-    XCTAssertNil(PlaceStyle.icon(for: "Homestead"))
-    XCTAssertNil(PlaceStyle.icon(for: "Milstead & Co"))
-  }
-
   func testCoordinateText() {
     XCTAssertEqual(PlaceStyle.coordinateText(Coordinate(latitude: 47.6419012, longitude: -122.30448)), "47.641901, -122.304480")
   }

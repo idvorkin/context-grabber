@@ -49,6 +49,23 @@ final class MirrorFixtureTests: XCTestCase {
     XCTAssertEqual(MirrorGrab.rawJSON(warm), raw)
   }
 
+  /// Story 037: the native summary is the current app's plus one trailing `activities` section.
+  func testActivitiesFollowTheCurrentAppsSummary() async throws {
+    let fx = try XCTUnwrap(HealthFixture(json: Self.text("mirror-fixture.json")))
+    let clock = LocalClock(timeZone: TimeZone(identifier: fx.timeZone)!)
+    let snap = await grab(fx, cache: try HealthCache(db: SQLiteDatabase()))
+    let entries = try accessory(fx)
+    let base = try Self.text("mirror-summary-expected.json")
+    let log = try ActivityLog(db: SQLiteDatabase(), calendar: clock.calendar)
+    let done = try log.log(
+      .gymTimer, name: "30 SEC · 6 rounds", seconds: 210, at: Date(timeIntervalSince1970: fx.now / 1000 - 3600))
+
+    let none = MirrorGrab.summaryJSON(snap, accessory: entries, activities: [], clock: clock)
+    XCTAssertEqual(none, String(base.dropLast()) + #","activities":[]}"#, "an empty week is an empty list, not missing")
+    let one = MirrorGrab.summaryJSON(snap, accessory: entries, activities: [done], clock: clock)
+    XCTAssertEqual(one, String(base.dropLast()) + #","activities":["# + done.exportJSON.stringify() + "]}")
+  }
+
   func testFixtureCoversWhatTheStoriesAsk() async throws {
     let fx = try XCTUnwrap(HealthFixture(json: Self.text("mirror-fixture.json")))
     let snap = await grab(fx, cache: nil)
