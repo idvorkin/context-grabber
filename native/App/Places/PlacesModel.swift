@@ -1,4 +1,4 @@
-//  The Places screen's state (stories 041, 043–047, 049, 052, 053, 055): the trail read back as stays and day
+//  The Places screen's state (stories 041, 043–047, 049, 052, 053, 055, 056): the trail read back as stays and day
 //  cards, the known places and what can be done to them, retention, the export and the import. ContextCore does
 //  the deciding; this owns the database, the log and the work off the main thread.
 
@@ -6,14 +6,14 @@ import ContextCore
 import CoreLocation
 import SwiftUI
 
-/// What the naming card is showing (story 047).
+/// What the naming card is showing (story 047); `radius` is what the name card fills in.
 enum NamingCard: Identifiable, Equatable {
-  case name(source: String, centroid: Coordinate)
-  case merge(source: String, centroid: Coordinate, suggestion: KnownPlaces.MergeSuggestion)
+  case name(source: String, centroid: Coordinate, radius: Double)
+  case merge(source: String, centroid: Coordinate, radius: Double, suggestion: KnownPlaces.MergeSuggestion)
   var id: String {
     switch self {
-    case .name(let s, _): return "name-\(s)"
-    case .merge(let s, _, _): return "merge-\(s)"
+    case .name(let s, _, _): return "name-\(s)"
+    case .merge(let s, _, _, _): return "merge-\(s)"
     }
   }
 }
@@ -25,6 +25,10 @@ final class PlacesModel: ObservableObject {
   @Published private(set) var days: [PlaceDaySummary] = []
   @Published private(set) var stays: [Stay] = []
   @Published private(set) var knownPlaces: [KnownPlace] = []
+  /// The places with no name yet in the last seven days, longest first: the full-screen map's grey dots (story 056).
+  @Published private(set) var unnamed: [UnnamedPlace] = []
+  /// The grey dot whose card is open on the full-screen map.
+  @Published var selectedUnnamed: String?
   @Published private(set) var route: [LocationPoint] = []
   @Published private(set) var colors: [String: String] = [:]
   @Published private(set) var pointCount = 0
@@ -85,18 +89,24 @@ final class PlacesModel: ObservableObject {
       let clusters = StayClustering.cluster(points, knownPlaces: known)
       let days = PlacesDaily.build(stays: clusters.stays, points: points, days: dayCount, now: now)
       let route = PlaceStyle.todaysRoute(points, now: now)
+      let calendar = Calendar.current
+      let since = calendar.date(byAdding: .day, value: 1 - dayCount, to: calendar.startOfDay(for: Geo.date(now))).map(Geo.ms) ?? now
+      let unnamed = UnnamedPlaces.summarize(clusters.stays, since: since, until: now)
       await MainActor.run {
         guard mine == self.generation else { return }
         self.stays = clusters.stays
         self.days = days
         self.route = route
+        self.unnamed = unnamed
+        // A named place leaves the list, and the numbers after it may move: close a card that no longer fits.
+        if let open = self.selectedUnnamed, !unnamed.contains(where: { $0.placeId == open }) { self.selectedUnnamed = nil }
         self.colors = PlaceStyle.colors(for: days)
         self.loading = false
         self.log.event(
           "places_open",
           [
             "reason": reason, "points": points.count, "known": known.count, "stays": clusters.stays.count,
-            "days": days.count, "today_points": route.count, "read_ms": readMs,
+            "days": days.count, "today_points": route.count, "unnamed": unnamed.count, "read_ms": readMs,
             "ms": Int(Date().timeIntervalSince(started) * 1000),
           ])
       }
@@ -146,16 +156,39 @@ final class PlacesModel: ObservableObject {
     guard let visit = visits.max(by: { $0.durationMinutes < $1.durationMinutes }),
       let stay = stays.first(where: { $0.placeId == placeId && $0.startTime <= visit.startTime && $0.endTime >= visit.endTime })
     else { return }
-    if let suggestion = KnownPlaces.suggestion(for: stay.centroid, among: knownPlaces) {
-      naming = .merge(source: placeId, centroid: stay.centroid, suggestion: suggestion)
+    offerNaming(placeId, at: stay.centroid, radius: 100, from: "day")
+  }
+
+  /// *Name this place* on a grey dot's card (story 056): the same offer, at the place's centre, with the radius
+  /// that holds its visits.
+  func startNaming(_ place: UnnamedPlace) {
+    offerNaming(place.placeId, at: place.centroid, radius: place.suggestedRadius, from: "map")
+  }
+
+  private func offerNaming(_ placeId: String, at centroid: Coordinate, radius: Double, from source: String) {
+    if let suggestion = KnownPlaces.suggestion(for: centroid, among: knownPlaces) {
+      naming = .merge(source: placeId, centroid: centroid, radius: radius, suggestion: suggestion)
     } else {
-      naming = .name(source: placeId, centroid: stay.centroid)
+      naming = .name(source: placeId, centroid: centroid, radius: radius)
     }
-    log.event("ui", ["action": "name_place", "place": placeId, "offer": naming.map { if case .merge = $0 { "expand" } else { "name" } } ?? ""])
+    log.event(
+      "ui",
+      [
+        "action": "name_place", "place": placeId, "from": source, "radius": Int(radius),
+        "offer": naming.map { if case .merge = $0 { "expand" } else { "name" } } ?? "",
+      ])
+  }
+
+  /// A tap on a grey dot on the full-screen map (story 056); nil closes the card.
+  func selectUnnamed(_ placeId: String?, from source: String) {
+    selectedUnnamed = placeId
+    guard let placeId, let place = unnamed.first(where: { $0.placeId == placeId }) else { return }
+    log.event(
+      "ui", ["action": "unnamed_place", "place": placeId, "minutes": place.totalMinutes, "visits": place.visits.count, "from": source])
   }
 
   func createNew(from card: NamingCard) {
-    if case .merge(let source, let centroid, _) = card { naming = .name(source: source, centroid: centroid) }
+    if case .merge(let source, let centroid, let radius, _) = card { naming = .name(source: source, centroid: centroid, radius: radius) }
   }
 
   func expand(_ suggestion: KnownPlaces.MergeSuggestion, source: String) {

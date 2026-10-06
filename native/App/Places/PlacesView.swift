@@ -81,7 +81,10 @@ struct PlacesView: View {
       case .failure(let error): places.status = "Could not open the file: \(error.localizedDescription)"
       }
     }
-    .sheet(item: $places.naming) { card in NamingSheet(card: card, places: places).presentationDetents([.medium]) }
+    // While the full-screen map is up it presents the naming card itself (a sheet cannot open under another).
+    .sheet(item: Binding(get: { app.showPlacesMap ? nil : places.naming }, set: { places.naming = $0 })) { card in
+      NamingSheet(card: card, places: places).presentationDetents([.medium])
+    }
     .sheet(isPresented: Binding(get: { places.exportFile != nil }, set: { if !$0 { places.exportFile = nil } })) {
       if let file = places.exportFile { ShareSheet(items: [file]) }
     }
@@ -89,6 +92,7 @@ struct PlacesView: View {
       PlacesMapView(places: places, tracker: tracker, log: app.log, fullscreen: true) { app.showPlacesMap = false }
         .ignoresSafeArea(edges: .bottom)
         .presentationDragIndicator(.visible)
+        .sheet(item: $places.naming) { card in NamingSheet(card: card, places: places).presentationDetents([.medium]) }
     }
   }
 
@@ -277,13 +281,21 @@ struct NamingSheet: View {
   @ObservedObject var places: PlacesModel
   @Environment(\.dismiss) private var dismiss
   @State private var name = ""
-  @State private var radius = "100"
+  @State private var radius: String
+
+  init(card: NamingCard, places: PlacesModel) {
+    self.card = card
+    self.places = places
+    switch card {
+    case .name(_, _, let r), .merge(_, _, let r, _): _radius = State(initialValue: String(Int(r.rounded())))
+    }
+  }
 
   var body: some View {
     NavigationStack {
       Form {
         switch card {
-        case .name(let source, let centroid):
+        case .name(let source, let centroid, _):
           Section {
             TextField("Place name", text: $name)
             TextField("Radius (m)", text: $radius).keyboardType(.numberPad)
@@ -298,7 +310,7 @@ struct NamingSheet: View {
             }
             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
           }
-        case .merge(let source, _, let s):
+        case .merge(let source, _, _, let s):
           Section {
             Text("**\(source)** is \(Int(s.distance.rounded())) m from **\(s.nearest.name)**.")
             Text(
