@@ -3,10 +3,40 @@
 //  log file, so `just file-bugs` can file it and a developer can jump from the report to the log.
 
 import ContextCore
+import CoreMotion
 import SwiftUI
 import UIKit
 
 /// Calls `onShake` when the device is shaken. Sits invisibly in the view tree and holds first responder.
+/// Story 146 (#164): a gentle shake, read from the motion itself (iOS's shake gesture wants a hard one). Runs only
+/// while the app is in front. The gesture's state is touched only on the motion queue (one operation at a time).
+final class ShakeMotion: @unchecked Sendable {
+  private let motion = CMMotionManager()
+  private let queue = OperationQueue()
+  private var gesture = ShakeGesture()
+  private let onShake: @MainActor (Double) -> Void
+
+  init(onShake: @escaping @MainActor (Double) -> Void) {
+    self.onShake = onShake
+    queue.maxConcurrentOperationCount = 1
+  }
+
+  func start() {
+    guard motion.isDeviceMotionAvailable, !motion.isDeviceMotionActive else { return }
+    motion.deviceMotionUpdateInterval = 1.0 / 50
+    motion.startDeviceMotionUpdates(to: queue) { [weak self] data, _ in
+      guard let self, let data else { return }
+      let a = data.userAcceleration
+      if let peak = self.gesture.feed(x: a.x, y: a.y, z: a.z, t: data.timestamp) {
+        let onShake = self.onShake
+        Task { @MainActor in onShake(peak) }
+      }
+    }
+  }
+
+  func stop() { motion.stopDeviceMotionUpdates() }
+}
+
 struct ShakeDetector: UIViewControllerRepresentable {
   let onShake: () -> Void
 

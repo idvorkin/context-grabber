@@ -9,6 +9,7 @@ struct DiagnosticsView: View {
   var body: some View {
     NavigationStack {
       Form {
+        UsageSection(usage: model.usage)
         Section {
           Button {
             model.openCall(from: "home")

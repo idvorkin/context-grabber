@@ -113,3 +113,24 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the Documents folder holds a 40-day-old log no report names and a 40-day-old log a report names
 - **When:** I open the app
 - **Then:** the first is deleted, the second is kept, and the new log has one `logs_pruned` line with the count, the bytes freed and how many were kept for reports
+
+---
+
+### User Story 146:
+
+- **Summary:** A gentle shake opens the report, not only a hard one
+- **Status:** native app only: implemented in [29347c8](https://github.com/idvorkin/context-grabber/commit/29347c8); verified by `ShakeGestureTests` (host: a light 1.8 g shake counts; one push, a 0.5 Hz sway and a 1 g jiggle do not; one sheet per shake); the threshold on the phone still to be checked by Igor (the simulator has no accelerometer)
+- **Issues:** [#164](https://github.com/idvorkin/context-grabber/issues/164)
+- **Spec:** [Swift-native app — a gentle shake is enough](../superpowers/specs/2026-10-04-swift-native-app-design.md)
+
+#### Use Case:
+- **As** the person reporting problems from the phone many times a day
+- **I want to** open the report with a quick, gentle shake
+- **so that** reporting stays a reflex and not a workout
+
+#### Acceptance Criteria:
+- **Scenario:** A quick back-and-forth
+- **Given:** Grabber Native is open on any screen
+- **When:** I give the phone a quick, light shake — three flicks — that iOS's own shake would ignore
+- **Then:** the report sheet opens once, and the session log has `shake` with source motion and the peak force; walking with the phone in my hand or setting it on the bench opens nothing
+
