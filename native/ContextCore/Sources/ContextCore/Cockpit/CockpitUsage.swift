@@ -7,7 +7,7 @@
 import Foundation
 
 /// `GET /usage` as the Cockpit serves it. Every field is optional: a missing one is "not known".
-public struct CockpitUsage: Decodable, Equatable, Sendable {
+public struct CockpitUsage: Codable, Equatable, Sendable {
   public var present: Bool?
   /// Percent USED, 0–100.
   public var weeklyPct: Double?

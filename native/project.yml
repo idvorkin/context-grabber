@@ -45,6 +45,9 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        # The live tile reads the usage reading the app writes here (story 136).
+        com.apple.security.application-groups:
+          - group.com.idvorkin.grabbernative
     dependencies:
       - package: ContextCore
       - target: GrabberWidgets
@@ -68,13 +71,20 @@ targets:
         CODE_SIGN_STYLE: Automatic
         # The What's new phase reads the repository's git history and stories, outside what a sandbox allows.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-  # The widget extension: for now only the Gym Timer's Live Activity (story 106).
+  # The widget extension: the Live Activity (stories 106, 166) and the live tile (story 136).
   GrabberWidgets:
     type: app-extension
     platform: iOS
     sources:
       - Widgets
       - Shared
+    entitlements:
+      path: Widgets/GrabberWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.idvorkin.grabbernative
+    dependencies:
+      - package: ContextCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative.widgets

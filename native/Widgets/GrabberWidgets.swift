@@ -1,9 +1,10 @@
-//  Grabber Native's widget extension. For now only the Live Activity — the lock-screen card and the Dynamic
-//  Island — shared by the Gym Timer and Box breathing (stories 106, 166; spec
+//  Grabber Native's widget extension: the live tile on the home screen (story 136), and the Live Activity — the
+//  lock-screen card and the Dynamic Island — shared by the Gym Timer and Box breathing (stories 106, 166; spec
 //  2026-10-04-native-live-activity-design.md). The views are generic: a screen decides the words, the times and the
 //  colour. No widgetURL: a tap opens the app, and a card only lives while its screen covers the app (story 125).
 
 import ActivityKit
+import ContextCore
 import SwiftUI
 import WidgetKit
 
@@ -11,6 +12,48 @@ import WidgetKit
 struct GrabberWidgets: WidgetBundle {
   var body: some Widget {
     GrabberLiveActivity()
+    UsageTileWidget()
+  }
+}
+
+/// The live tile (story 136): the usage the app last loaded, redrawn every quarter hour so its age, the countdown to
+/// the reset and the *to spend* nudge move between loads. Views in Shared/UsageTile.swift.
+struct UsageTileWidget: Widget {
+  struct Entry: TimelineEntry {
+    let date: Date
+    let snapshot: UsageSnapshot?
+  }
+
+  struct Provider: TimelineProvider {
+    func placeholder(in context: Context) -> Entry { Entry(date: Date(), snapshot: nil) }
+
+    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
+      completion(Entry(date: Date(), snapshot: UsageTileStore.read()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
+      let snapshot = UsageTileStore.read()
+      let now = Date()
+      let entries = (0...16).map { Entry(date: now.addingTimeInterval(Double($0) * 15 * 60), snapshot: snapshot) }
+      completion(Timeline(entries: entries, policy: .atEnd))
+    }
+  }
+
+  struct EntryView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: Entry
+
+    var body: some View {
+      UsageTileView(snapshot: entry.snapshot, now: entry.date, family: family)
+        .containerBackground(.background, for: .widget)
+    }
+  }
+
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: UsageTileStore.kind, provider: Provider()) { EntryView(entry: $0) }
+      .configurationDisplayName("Usage left")
+      .description("Claude's week, the model and the voice budget left, from the Cockpit. Medium adds Gym Timer, Breathe and Call Larry.")
+      .supportedFamilies([.systemSmall, .systemMedium])
   }
 }
 

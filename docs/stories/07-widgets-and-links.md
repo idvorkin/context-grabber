@@ -302,3 +302,27 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the Shortcuts app lists *Open Today*, *Start Gym Timer*, *Start Box Breathing*, *Open Places*, *Open Cockpit* and *Call Larry* under Grabber Native
 - **When:** I run *Start Gym Timer* with 1 MIN while the app is closed, and later tap Copy beside a link on *Links for Shortcuts* at the bottom of the home screen
 - **Then:** the app opens on the timer with 1 MIN counting down, and the clipboard holds exactly that link; Context Grabber's own `grabber://` links still open Context Grabber
+
+---
+
+### User Story 136:
+
+- **Summary:** The usage left on a home-screen tile, with one-tap starts beside it
+- **Status:** implemented in [7b70242](https://github.com/idvorkin/context-grabber/commit/7b70242); verified by `UsageSnapshotTests` (host: the round trip, the countdown and *to spend* at drawing time, the age, the placeholder) and `UsageTileUITests` on the simulator (the medium tile added through SpringBoard's gallery draws the real Cockpit reading, *just now*; its Gym Timer starts the last preset); the orange age over hours, low and critical bars, the placeholder on screen, Breathe and Call Larry from the tile, and the App Group on a device-signed build not yet on the phone
+- **Issues:** [#168](https://github.com/idvorkin/context-grabber/issues/168)
+
+#### Use Case:
+- **As a** man deciding whether to start another long session with Claude, or whether this week's allowance is about to go unspent
+- **I want to** see Week, the model and Voice left on a Grabber Native tile on the home screen, and start the Gym Timer, Box breathing or a call to Larry from the same tile
+- **so that** the budget is a glance and the things I do daily are one tap, without opening the app first
+
+#### Acceptance Criteria:
+- **Scenario:** The tile after a reading
+- **Given:** the small or medium live tile is on the home screen and Grabber Native has loaded a reading on the tailnet
+- **When:** I look at the home screen, and again two hours later without opening the app
+- **Then:** the tile shows the strip's bars and numbers with the strip's orange and red, then *12m ago* in grey, later *2h ago* in orange, and *31% to spend* in green once the week resets within a day with more than 20% left
+
+- **Scenario:** One tap, and before any reading
+- **Given:** the medium tile, on a phone where Grabber Native has never loaded a reading
+- **When:** I look at it, then tap Gym Timer
+- **Then:** it reads *Open Grabber Native* with no numbers, and the tap opens the app with the last preset counting down; Breathe begins a session and Call Larry starts the call the same way

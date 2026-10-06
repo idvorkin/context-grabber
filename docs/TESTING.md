@@ -103,6 +103,14 @@ What the native rungs can and cannot see of links and Shortcuts ([spec](superpow
 | A link through iOS opening the app cold and warm, starting the timer or the breathing, an unknown link landing on home, Copy on the Links screen | Simulator | `xcodebuild … -only-testing:GrabberNativeUITests/LinksUITests test` (the warm case taps SpringBoard's *Open*), then the log's `open_url` |
 | The Shortcuts actions and Siri phrases, the Action Button, a link from another app or a widget | Phone only | build a shortcut of *Start Gym Timer* (1 MIN), run it with the app closed, `just pull-logs`, read `open_url` from: shortcut |
 
+What the native rungs can and cannot see of the live tile ([spec](superpowers/specs/2026-10-06-native-live-tile-design.md)):
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| The reading written and read back, the countdown and *to spend* worked out at drawing time, the age and when it turns orange, nothing written being the placeholder | Host | `UsageSnapshotTests` |
+| The tile drawing the app's last reading (small and medium), being added to the home screen, its Gym Timer button starting the timer | Simulator | `xcodebuild … -only-testing:GrabberNativeUITests/UsageTileUITests test` (needs the Cockpit reachable from the Mac; it adds the tile through SpringBoard's gallery and keeps screenshots of the gallery and the home screen), then the log's `usage` load with tile: true |
+| The tile on the phone over hours: redrawing every quarter hour, the orange age, Breathe and Call Larry from it, the App Group on a device-signed build | Phone only | add the medium tile, leave the app closed for two hours, look; tap each button; `just pull-logs`, read `usage` tile and `open_url` |
+
 What the native rungs can and cannot see of Box breathing:
 
 | Change | Where it must be verified | How |
