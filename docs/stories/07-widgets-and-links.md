@@ -278,4 +278,27 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** Exercise Analyzer is installed
 - **When:** I tap *Exercise Analyzer* on Grabber Native's home screen
 - **Then:** Exercise Analyzer comes to the front, the session log has `open_exercise_analyzer` with ok true, and without it installed the home screen says it is not installed
-\n
+
+---
+
+### User Story 135:
+
+- **Summary:** A link and a Shortcuts action for every screen of Grabber Native
+- **Status:** implemented in [5c1f4ad](https://github.com/idvorkin/context-grabber/commit/5c1f4ad); verified by `AppLinkTests` (host) and `LinksUITests` on the simulator (real links through iOS, cold and warm: `timer?preset=10,10,2` counting down, `breathe?breath=5&minutes=2` begun over the running timer, `nowhere` on home, `timer?preset=9min` ready; Copy on the Links screen), with `just native-test-sim` passing; the Shortcuts actions, Siri and the Action Button on the phone not yet
+- **Issues:** [#167](https://github.com/idvorkin/context-grabber/issues/167)
+
+#### Use Case:
+- **As a** man wiring the Action Button and a few Shortcuts to the native app
+- **I want to** pick *Start Gym Timer* (1 MIN) or *Start Box Breathing* (5 minutes) from Grabber Native's actions, or paste `grabbernative://timer?preset=1min` copied from the app's Links screen
+- **so that** the workout or the breathing is running before I have opened, navigated or pressed anything, and every screen is one tap from wherever I put it
+
+#### Acceptance Criteria:
+- **Scenario:** Links, cold and warm
+- **Given:** Grabber Native is closed (and again with it open on another screen)
+- **When:** I open `grabbernative://timer?preset=10,10,2`, `grabbernative://breathe?breath=5&minutes=2`, `grabbernative://today`, `grabbernative://places`, `grabbernative://cockpit`, `grabbernative://call` or `grabbernative://card`
+- **Then:** each lands on its screen, the timer counting down and the breathing begun within about a second; `grabbernative://nowhere` opens the home screen, a preset it does not know opens the timer ready, and none of them shows an error
+
+- **Scenario:** Shortcuts and the Links screen
+- **Given:** the Shortcuts app lists *Open Today*, *Start Gym Timer*, *Start Box Breathing*, *Open Places*, *Open Cockpit* and *Call Larry* under Grabber Native
+- **When:** I run *Start Gym Timer* with 1 MIN while the app is closed, and later tap Copy beside a link on *Links for Shortcuts* at the bottom of the home screen
+- **Then:** the app opens on the timer with 1 MIN counting down, and the clipboard holds exactly that link; Context Grabber's own `grabber://` links still open Context Grabber

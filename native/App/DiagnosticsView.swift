@@ -137,6 +137,7 @@ private struct HomeSettingsView: View {
   @ObservedObject var model: AppModel
   @Environment(\.dismiss) private var dismiss
   @State private var showUploads = false
+  @State private var showLinks = false
 
   var body: some View {
     NavigationStack {
@@ -171,6 +172,17 @@ private struct HomeSettingsView: View {
           }
           .tint(.primary)
           .accessibilityIdentifier("home-diagnostics-uploads")
+          Button {
+            showLinks = true
+          } label: {
+            HStack {
+              Text("Links for Shortcuts").foregroundStyle(.primary)
+              Spacer()
+              Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            }
+          }
+          .tint(.primary)
+          .accessibilityIdentifier("home-links")
         } header: {
           Text("About and diagnostics")
         } footer: {
@@ -199,6 +211,7 @@ private struct HomeSettingsView: View {
       // The reorder handles always showing: dragging is what this sheet is for.
       .environment(\.editMode, .constant(.active))
       .navigationDestination(isPresented: $showUploads) { GistSettingsView(call: model.call) }
+      .navigationDestination(isPresented: $showLinks) { LinksView(log: model.log) }
       .navigationTitle("Home screen")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
