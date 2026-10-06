@@ -99,6 +99,12 @@ final class GymTimerModel: ObservableObject {
     applyProfile()
   }
 
+  /// A Custom dial let go (story 184): one line per gesture, not per step.
+  func dialed(_ dial: String, style: String, from source: String) {
+    let value = dial == "work" ? custom.work : dial == "rest" ? custom.rest : custom.rounds
+    log.event("ui", ["action": "custom_dial", "dial": dial, "value": value, "style": style, "from": source])
+  }
+
   /// For a link or a launch hook: a profile that is not on a chip, chosen as Custom without being remembered.
   func useCustomOnce(_ preset: CustomPreset) {
     guard !locked else { return }
@@ -187,6 +193,11 @@ final class GymTimerModel: ObservableObject {
         clock?.invalidate()
         clock = nil
         log.event("timer_finished", ["rounds": engine.profile.rounds])
+        let custom = presetId == CustomPreset.id
+        let label = TimerProfile.presets.first { $0.id == presetId }?.label ?? "CUSTOM"
+        database.logActivity(
+          .gymTimer, name: ActivityLog.gymName(label: label, profile: engine.profile, custom: custom),
+          seconds: ActivityLog.gymSeconds(engine.profile))
         // "done" is still sounding: the window's release lets go of the session. With no window open (a
         // finish found on coming back) there is nothing to wait for.
         if duck.isOpen { audio.stopWhenReleased() } else { audio.stop() }

@@ -51,6 +51,12 @@ targets:
     dependencies:
       - package: ContextCore
       - target: GrabberWidgets
+    # What's new (story 148): the last month's story commits, made from git log at every build.
+    postBuildScripts:
+      - name: What's new
+        script: '"$SRCROOT/../scripts/native/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json"'
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
     settings:
       base:
         # Its own id until the cutover, so it installs beside Context Grabber (story 140).
@@ -63,6 +69,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
+        # The What's new phase reads the repository's git history and stories, outside what a sandbox allows.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
   # The widget extension: the Live Activity (stories 106, 166) and the live tile (story 136).
   GrabberWidgets:
     type: app-extension

@@ -97,7 +97,7 @@ struct GymTimerView: View {
         VStack {
           Spacer(minLength: 0)
           switch model.mode {
-          case .rounds: RoundsMode(model: model, width: geo.size.width - 48)
+          case .rounds: RoundsMode(model: model, dial: launch.dial ?? .shipped, width: geo.size.width - 48)
           case .stopwatch: StopwatchMode(model: model, width: geo.size.width - 48)
           case .sets: SetsMode(model: model, width: geo.size.width - 48)
           }
@@ -201,6 +201,8 @@ struct GymTimerLaunch: Equatable {
   var voice: CountVoice?
   /// A launch hook: open with Timer settings up, for a screenshot.
   var settings = false
+  /// A launch hook (`GRABBER_TIMER_DIAL`): which Custom control to draw upright (story 184); the drums otherwise.
+  var dial: DialStyle?
 }
 
 @MainActor private func roundsFace(_ model: GymTimerModel) -> FaceContent {
@@ -248,11 +250,16 @@ private struct SideButton: View {
 
 private struct RoundsMode: View {
   @ObservedObject var model: GymTimerModel
+  let dial: DialStyle
   let width: CGFloat
 
   var body: some View {
     VStack(spacing: 0) {
-      if model.presetId == CustomPreset.id {
+      if model.presetId == CustomPreset.id, dial != .sliders {
+        CustomDials(model: model, style: dial, width: width)
+          .disabled(model.locked).opacity(model.locked ? 0.35 : 1)
+          .padding(.bottom, 16)
+      } else if model.presetId == CustomPreset.id {
         VStack(spacing: 4) {
           StepSlider(
             label: "Work", value: model.custom.work, range: CustomPreset.workRange, step: CustomPreset.stepSeconds,
@@ -269,7 +276,8 @@ private struct RoundsMode: View {
         .disabled(model.locked).opacity(model.locked ? 0.35 : 1)
         .padding(.bottom, 12)
       }
-      TimerFace(content: roundsFace(model), width: width, maxHeight: 150)
+      // With the arc above it, the face gives up a little height so START stays on screen.
+      TimerFace(content: roundsFace(model), width: width, maxHeight: model.presetId == CustomPreset.id && dial == .arc ? 100 : 150)
         // Story 183: upright the time is a button too, as it is with the phone on its side.
         .contentShape(Rectangle()).onTapGesture(perform: model.toggleTimer)
         .accessibilityIdentifier("timer-face")

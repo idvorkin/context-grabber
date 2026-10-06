@@ -45,6 +45,13 @@ final class AppModel: ObservableObject {
   @Published var showToday = false
   /// The metric whose week is open over Today.
   @Published var openMetricKey: MetricSheetItem?
+  /// What's new, as the build wrote it (story 148); nil when the resource is missing or unreadable.
+  let whatsNew = WhatsNewFeed.decode(
+    Bundle.main.url(forResource: "whats-new", withExtension: "json").flatMap { try? Data(contentsOf: $0) })
+  @Published var showWhatsNew = false
+  /// Which launchers the home screen shows, in Igor's order (story 147).
+  @Published private(set) var homeLayout: HomeLayout
+  @Published var showHomeSettings = false
   /// The mirror: the last grab and the exports. Set at the end of init (it reads the database and the log).
   private(set) var mirror: MirrorModel!
 
@@ -55,6 +62,9 @@ final class AppModel: ObservableObject {
     places = PlacesModel(log: log, database: database)
     bugReporter = BugReporter(log: log)
     call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
+    homeLayout = HomeLayout(
+      known: HomeRow.ids, storedOrder: database.setting(HomeLayout.orderKey),
+      storedHidden: database.setting(HomeLayout.hiddenKey))
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
@@ -169,6 +179,41 @@ final class AppModel: ObservableObject {
     }
   }
 
+  func openHomeSettings() {
+    log.event("ui", ["action": "home_settings"])
+    screen = "home_settings"
+    showHomeSettings = true
+  }
+
+  func closeHomeSettings() {
+    screen = "home"
+    showHomeSettings = false
+  }
+
+  func setHomeRow(_ id: String, shown: Bool) {
+    homeLayout.setShown(id, shown)
+    saveHomeLayout(change: shown ? "show" : "hide")
+  }
+
+  func moveHomeRows(fromOffsets offsets: IndexSet, toOffset destination: Int) {
+    homeLayout.move(fromOffsets: offsets, toOffset: destination)
+    saveHomeLayout(change: "move")
+  }
+
+  func resetHomeRows() {
+    homeLayout = HomeLayout(known: HomeRow.ids, storedOrder: nil, storedHidden: nil)
+    saveHomeLayout(change: "reset")
+  }
+
+  /// The whole layout after every change, so a log says what the home screen looked like.
+  private func saveHomeLayout(change: String) {
+    database.setSetting(HomeLayout.orderKey, homeLayout.encodedOrder)
+    database.setSetting(HomeLayout.hiddenKey, homeLayout.encodedHidden)
+    log.event(
+      "ui",
+      ["action": "home_rows", "change": change, "order": homeLayout.encodedOrder, "hidden": homeLayout.encodedHidden])
+  }
+
   /// A shake or the button: the picture is taken before the sheet covers the screen.
   func startBugReport(from source: String) {
     guard !showBugReport else { return }
@@ -186,7 +231,8 @@ final class AppModel: ObservableObject {
   }
 
   func openGymTimer(_ launch: GymTimerLaunch = GymTimerLaunch(), from source: String) {
-    log.event("ui", ["action": "open_timer", "from": source, "autostart": launch.autostart])
+    log.event(
+      "ui", ["action": "open_timer", "from": source, "autostart": launch.autostart, "dial": (launch.dial ?? .shipped).rawValue])
     screen = "gym_timer"
     gymTimer = launch
   }
@@ -229,6 +275,15 @@ final class AppModel: ObservableObject {
     }
   }
 
+  /// Exercise Analyzer, Igor's own app (its story 069): the link only brings it forward.
+  func openExerciseAnalyzer(from source: String) {
+    guard let url = URL(string: "exerciseanalyzer://") else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_exercise_analyzer", "from": source, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Exercise Analyzer is not installed, so it cannot open." } }
+    }
+  }
+
   func openCockpit(from source: String) {
     log.event("ui", ["action": "open_cockpit", "from": source, "first": !cockpitOpened])
     cockpitOpened = true
@@ -268,6 +323,18 @@ final class AppModel: ObservableObject {
     call.start(from: source)
   }
 
+  func openWhatsNew(from source: String) {
+    let days = whatsNew?.days ?? []
+    log.event(
+      "ui",
+      [
+        "action": "open_whats_new", "from": source, "days": days.count,
+        "changes": days.reduce(0) { $0 + $1.items.count }, "newest": days.first?.day ?? "",
+      ])
+    screen = "whats_new"
+    showWhatsNew = true
+  }
+
   func openToday(from source: String) {
     log.event("ui", ["action": "open_today", "from": source])
     showToday = true
@@ -295,10 +362,12 @@ final class AppModel: ObservableObject {
       openBreathe(launch, from: "hook")
     }
     let voice = env["GRABBER_COUNT_VOICE"].flatMap(CountVoice.init(rawValue:))
+    // Story 184: which Custom control the timer draws upright; alone, it opens the timer on CUSTOM, not started.
+    let dial = env["GRABBER_TIMER_DIAL"].flatMap(DialStyle.init(rawValue:))
     if let spec = env["GRABBER_TIMER"], !spec.isEmpty {
       // A chip's id starts it as a tap on a widget tile would; "work,rest,rounds" runs that shape as Custom.
       var launch = GymTimerLaunch(
-        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice)
+        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice, dial: dial)
       let numbers = spec.split(separator: ",").compactMap { Int($0) }
       if numbers.count == 3 {
         launch.custom = CustomPreset(work: numbers[0], rest: numbers[1], rounds: numbers[2])
@@ -307,7 +376,9 @@ final class AppModel: ObservableObject {
       }
       openGymTimer(launch, from: "hook")
     } else if env["GRABBER_TIMER_SETTINGS"] == "1" {
-      openGymTimer(GymTimerLaunch(voice: voice, settings: true), from: "hook")
+      openGymTimer(GymTimerLaunch(voice: voice, settings: true, dial: dial), from: "hook")
+    } else if let dial {
+      openGymTimer(GymTimerLaunch(preset: CustomPreset.id, voice: voice, dial: dial), from: "hook")
     }
     // Places (docs/TESTING.md): import first, so the other hooks see the imported trail.
     if let spec = env["GRABBER_IMPORT_DB"], !spec.isEmpty {
@@ -324,9 +395,26 @@ final class AppModel: ObservableObject {
       tracker.setTracking(spec == "on", from: "hook")
     }
     if let spec = env["GRABBER_PLACES"], !spec.isEmpty {
-      // "open" opens the screen; "map" also opens the map full screen.
+      // "open" opens the screen; "map" also opens the map full screen; "map,unnamed" then opens the card of the
+      // longest unnamed place once the trail is read, and "map,unnamed,name" its naming card (story 056).
+      let parts = spec.split(separator: ",").map(String.init)
       openPlaces(from: "hook")
-      if spec == "map" { showPlacesMap = true }
+      if parts.first == "map" { showPlacesMap = true }
+      // "open,edit:<name>" opens that known place's screen, for a screenshot of its icon picker (story 057).
+      if let edit = parts.first(where: { $0.hasPrefix("edit:") }) {
+        let name = String(edit.dropFirst(5))
+        if let place = places.knownPlaces.first(where: { $0.name == name }) { places.edit(place, from: "hook") }
+      }
+      if parts.dropFirst().contains("unnamed") {
+        Task {
+          for _ in 0..<100 where places.loading || places.unnamed.isEmpty {
+            try? await Task.sleep(for: .milliseconds(200))
+          }
+          guard let place = places.unnamed.first else { return }
+          places.selectUnnamed(place.placeId, from: "hook")
+          if parts.contains("name") { places.startNaming(place) }
+        }
+      }
     }
     if env["GRABBER_EXPORT"] == "1" {
       // Prepares the file as Export database does, without the share sheet a script cannot dismiss.
@@ -334,6 +422,8 @@ final class AppModel: ObservableObject {
       places.exportFile = nil
     }
     if env["GRABBER_COCKPIT"] == "open" { openCockpit(from: "hook") }
+    if env["GRABBER_WHATS_NEW"] == "open" { openWhatsNew(from: "hook") }
+    if env["GRABBER_HOME"] == "settings" { openHomeSettings() }
     if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
       // A call to that bridge (the smoke run's fake one), hung up after GRABBER_CALL_SECONDS (default 8).
       openCall(from: "hook")
