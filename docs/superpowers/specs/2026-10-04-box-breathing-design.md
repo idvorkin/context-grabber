@@ -94,9 +94,29 @@ Calm and quiet, monochrome on near-black; nothing bright, nothing that counts a 
 - **Done**: the closed ring, small and still, over "Done", the session's length and cycles, and a quiet
   outlined "Back to start".
 
+## Ring styles
+
+Igor, 2026-10-05 (#147): *"make the thing a little bit thicker? Think about how to keep it calm but a little more
+interesting. Give me a setting cog that lets me pick between a bunch."*
+
+A small cog at the top right of the setup screen opens **Ring style**: four choices, each with a still preview,
+the chosen one lit. The choice is remembered across launches. Every style keeps the rules above — it fills as you
+breathe in, stays full through the hold, empties as you breathe out, stays empty through the second hold, moves at
+a constant rate, dims and freezes when paused, and is monochrome on near-black.
+
+- **Line** (the default) — the ring as above, twice as thick as before.
+- **Glow** — a thick, soft ring whose leading tips carry a small bright light, the arc fading toward where it began.
+- **Beads** — twenty-four beads around the circle, lighting one pair at a time from the bottom up both sides; the
+  unlit ones stay faintly visible, so the whole path is always there.
+- **Tide** — no ring: the circle itself fills with soft light from the bottom like water rising as you breathe in,
+  stays full through the hold, and drains as you breathe out. Its surface is level and still.
+
+The Done screen draws its closed ring in the chosen style.
+
 ## Accessibility
 
-- **Reduce Motion**: the ring and bar still move; the circle stays one size.
+- **Reduce Motion**: the ring and bar still move; the circle stays one size. Every ring style is still a fill that
+  reads as time, so Reduce Motion changes none of them.
 - **VoiceOver**: each step is announced as it starts, whatever the cue choice.
 
 ## The voice

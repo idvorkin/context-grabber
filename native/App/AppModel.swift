@@ -13,6 +13,11 @@ final class AppModel: ObservableObject {
   let tracker: LocationTracker
   let places: PlacesModel
   private let bugReporter: BugReporter
+  /// A gentle shake opens the report too (story 146).
+  private(set) lazy var shakeMotion = ShakeMotion { [weak self] peak in
+    self?.log.event("shake", ["source": "motion", "peak_g": (peak * 100).rounded() / 100])
+    self?.startBugReport(from: "shake")
+  }
 
   /// The screen in front, as a report and the log name it. Each ported journey sets it when it appears.
   @Published var screen = "home"
@@ -31,6 +36,8 @@ final class AppModel: ObservableObject {
   /// `GRABBER_COCKPIT_URL` points it elsewhere (a URL, or a page in the app bundle) for the simulator's checks.
   private(set) lazy var cockpit = CockpitModel(
     log: log, override: ProcessInfo.processInfo.environment["GRABBER_COCKPIT_URL"])
+  /// The usage strip on the home screen (story 203). `GRABBER_USAGE_URL` points it at another Cockpit.
+  lazy var usage = UsageModel(log: log, override: ProcessInfo.processInfo.environment["GRABBER_USAGE_URL"])
   /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
   @Published var callOpen = false
   let call: CallModel
@@ -64,6 +71,7 @@ final class AppModel: ObservableObject {
 
   /// The app came to the front (not the launch itself): prune, settle a pending permission, ask for a fix.
   func foreground() {
+    usage.resume(reason: "foreground")
     places.prune(reason: "foreground")
     tracker.foreground()
     if showPlaces { places.reload(reason: "foreground") }
@@ -217,6 +225,7 @@ final class AppModel: ObservableObject {
       // "breath,cycles[,cue[,pause_at_seconds]]" begins that exact session; anything else just opens the sliders.
       let parts = spec.split(separator: ",").map(String.init)
       var launch = BreatheLaunch()
+      launch.style = env["GRABBER_BREATHE_STYLE"].flatMap(BreathStyle.init(rawValue:))
       if parts.count >= 2, let breath = Int(parts[0]), let cycles = Int(parts[1]) {
         launch.plan = BreathPlan(breathSeconds: breath, cycles: cycles)
         launch.cue = parts.count > 2 ? BreathCue(rawValue: parts[2]) : nil
