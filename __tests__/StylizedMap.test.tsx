@@ -82,17 +82,35 @@ describe("StylizedMap", () => {
     expect(result.getByTestId("map-fullscreen")).toBeTruthy();
   });
 
-  it("hides the find-me control when there is no current location", () => {
-    // Places give a region so the map still renders, but with no "You"
-    // pin there is nothing to recenter on.
+  it("keeps find-me and copy visible without a current location (no You pin)", () => {
+    // Places give a region so the map still renders. The controls stay put
+    // so they don't vanish; tapping them shows a "waiting for a lock" hint.
     const result = render(
       <StylizedMap currentLocation={null} knownPlaces={baseProps.knownPlaces} />,
     );
     expect(result.getByTestId("stylized-map")).toBeTruthy();
     expect(result.queryByTestId("map-pin-current")).toBeNull();
-    expect(result.queryByTestId("map-find-me")).toBeNull();
-    // Fullscreen is still available even without a current location.
+    expect(result.getByTestId("map-find-me")).toBeTruthy();
+    expect(result.getByTestId("map-copy-coords")).toBeTruthy();
     expect(result.getByTestId("map-fullscreen")).toBeTruthy();
+  });
+
+  it("shows the waiting-for-lock hint when find-me is tapped with no location", () => {
+    const result = render(
+      <StylizedMap currentLocation={null} knownPlaces={baseProps.knownPlaces} />,
+    );
+    expect(result.queryByTestId("map-hint")).toBeNull();
+    fireEvent.press(result.getByTestId("map-find-me"));
+    expect(result.getByTestId("map-hint")).toBeTruthy();
+    expect(result.getByText(/Waiting for a live GPS lock/)).toBeTruthy();
+  });
+
+  it("shows the hint when copy is tapped with no location", () => {
+    const result = render(
+      <StylizedMap currentLocation={null} knownPlaces={baseProps.knownPlaces} />,
+    );
+    fireEvent.press(result.getByTestId("map-copy-coords"));
+    expect(result.getByTestId("map-hint")).toBeTruthy();
   });
 
   it("opens a fullscreen surface when the fullscreen control is tapped", () => {
