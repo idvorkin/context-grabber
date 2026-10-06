@@ -187,6 +187,11 @@ final class GymTimerModel: ObservableObject {
         clock?.invalidate()
         clock = nil
         log.event("timer_finished", ["rounds": engine.profile.rounds])
+        let custom = presetId == CustomPreset.id
+        let label = TimerProfile.presets.first { $0.id == presetId }?.label ?? "CUSTOM"
+        database.logActivity(
+          .gymTimer, name: ActivityLog.gymName(label: label, profile: engine.profile, custom: custom),
+          seconds: ActivityLog.gymSeconds(engine.profile))
         // "done" is still sounding: the window's release lets go of the session. With no window open (a
         // finish found on coming back) there is nothing to wait for.
         if duck.isOpen { audio.stopWhenReleased() } else { audio.stop() }

@@ -8,6 +8,8 @@ import Foundation
 final class AppDatabase {
   let settings: SettingsStore?
   let accessoryLog: AccessoryLog?
+  /// What Igor finished, for Larry (story 037).
+  let activityLog: ActivityLog?
   /// The trail, the known places, the tracking switch and the retention (Places).
   let locations: LocationStore?
   /// The file itself, for the database export.
@@ -20,6 +22,7 @@ final class AppDatabase {
     self.log = log
     var settings: SettingsStore?
     var accessoryLog: AccessoryLog?
+    var activityLog: ActivityLog?
     var locations: LocationStore?
     let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("SQLite", isDirectory: true)
@@ -30,6 +33,7 @@ final class AppDatabase {
       let db = try SQLiteDatabase(path: url.path)
       settings = try SettingsStore(db: db)
       accessoryLog = try AccessoryLog(db: db)
+      activityLog = try ActivityLog(db: db)
       locations = try LocationStore(db: db)
       healthCache = try HealthCache(db: SQLiteDatabase(path: dir.appendingPathComponent("context-grabber.db").path))
     } catch {
@@ -38,8 +42,20 @@ final class AppDatabase {
     }
     self.settings = settings
     self.accessoryLog = accessoryLog
+    self.activityLog = activityLog
     self.locations = locations
     self.healthCache = healthCache
+  }
+
+  /// Story 037: a finished workout or breathing session, recorded for the summary.
+  func logActivity(_ kind: ActivityEntry.Kind, name: String, seconds: Int) {
+    guard let activityLog else { return }
+    do {
+      let e = try activityLog.log(kind, name: name, seconds: seconds)
+      log.event("activity_logged", ["kind": kind.rawValue, "name": name, "seconds": seconds, "date": e.dateKey])
+    } catch {
+      log.event("error", ["where": "activity_log", "message": "\(error)"])
+    }
   }
 
   func setting(_ key: String) -> String? {
