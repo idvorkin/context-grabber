@@ -114,7 +114,8 @@ final class AppModel: ObservableObject {
   }
 
   func openGymTimer(_ launch: GymTimerLaunch = GymTimerLaunch(), from source: String) {
-    log.event("ui", ["action": "open_timer", "from": source, "autostart": launch.autostart])
+    log.event(
+      "ui", ["action": "open_timer", "from": source, "autostart": launch.autostart, "dial": (launch.dial ?? .shipped).rawValue])
     screen = "gym_timer"
     gymTimer = launch
   }
@@ -218,10 +219,12 @@ final class AppModel: ObservableObject {
       openBreathe(launch, from: "hook")
     }
     let voice = env["GRABBER_COUNT_VOICE"].flatMap(CountVoice.init(rawValue:))
+    // Story 184: which Custom control the timer draws upright; alone, it opens the timer on CUSTOM, not started.
+    let dial = env["GRABBER_TIMER_DIAL"].flatMap(DialStyle.init(rawValue:))
     if let spec = env["GRABBER_TIMER"], !spec.isEmpty {
       // A chip's id starts it as a tap on a widget tile would; "work,rest,rounds" runs that shape as Custom.
       var launch = GymTimerLaunch(
-        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice)
+        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice, dial: dial)
       let numbers = spec.split(separator: ",").compactMap { Int($0) }
       if numbers.count == 3 {
         launch.custom = CustomPreset(work: numbers[0], rest: numbers[1], rounds: numbers[2])
@@ -230,7 +233,9 @@ final class AppModel: ObservableObject {
       }
       openGymTimer(launch, from: "hook")
     } else if env["GRABBER_TIMER_SETTINGS"] == "1" {
-      openGymTimer(GymTimerLaunch(voice: voice, settings: true), from: "hook")
+      openGymTimer(GymTimerLaunch(voice: voice, settings: true, dial: dial), from: "hook")
+    } else if let dial {
+      openGymTimer(GymTimerLaunch(preset: CustomPreset.id, voice: voice, dial: dial), from: "hook")
     }
     // Places (docs/TESTING.md): import first, so the other hooks see the imported trail.
     if let spec = env["GRABBER_IMPORT_DB"], !spec.isEmpty {

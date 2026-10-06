@@ -99,6 +99,12 @@ final class GymTimerModel: ObservableObject {
     applyProfile()
   }
 
+  /// A Custom dial let go (story 184): one line per gesture, not per step.
+  func dialed(_ dial: String, style: String, from source: String) {
+    let value = dial == "work" ? custom.work : dial == "rest" ? custom.rest : custom.rounds
+    log.event("ui", ["action": "custom_dial", "dial": dial, "value": value, "style": style, "from": source])
+  }
+
   /// For a link or a launch hook: a profile that is not on a chip, chosen as Custom without being remembered.
   func useCustomOnce(_ preset: CustomPreset) {
     guard !locked else { return }
