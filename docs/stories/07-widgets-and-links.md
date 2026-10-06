@@ -287,7 +287,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 136:
 
 - **Summary:** The usage left on a home-screen tile, with one-tap starts beside it
-- **Status:** in progress
+- **Status:** implemented in [7b70242](https://github.com/idvorkin/context-grabber/commit/7b70242); verified by `UsageSnapshotTests` (host: the round trip, the countdown and *to spend* at drawing time, the age, the placeholder) and `UsageTileUITests` on the simulator (the medium tile added through SpringBoard's gallery draws the real Cockpit reading, *just now*; its Gym Timer starts the last preset); the orange age over hours, low and critical bars, the placeholder on screen, Breathe and Call Larry from the tile, and the App Group on a device-signed build not yet on the phone
 - **Issues:** [#168](https://github.com/idvorkin/context-grabber/issues/168)
 
 #### Use Case:
