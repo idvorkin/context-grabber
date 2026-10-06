@@ -42,7 +42,7 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_BREATHE=breath,cycles[,cue[,pause_at_seconds]]` | open Box breathing and begin exactly that session (seconds a side, whole cycles, `voice` / `tone` / `off`; the cue is used but not remembered): `2,2,voice` is a whole session in 18 s, which `just native-test-sim` runs and reads `breath_phase`, `breath_cue` and `breath_finished` from. A fourth field pauses the session by itself that many seconds into the breathing, as a tap on the circle would (`breath_pause` with reason `hook`): `6,1,off,3` shows the paused circle mid-inhale, for a screenshot. Any other value (`open`) just opens the sliders, for a screenshot |
 | `GRABBER_BREATHE_STYLE=line\|glow\|beads\|tide` | with `GRABBER_BREATHE`, draw that session's breath in that ring style (story 240); used but not remembered |
 | `GRABBER_IMPORT_DB=<file>[,recent]` | import that database as *Import from Context Grabber* would (a path, absolute or under the app's Documents). `recent` shifts its timestamps by whole weeks so the newest point falls in the last seven days: `just native-test-sim` copies the real fixture `__tests__/fixtures/context-grabber.db` to `Documents/import-fixture.db` and imports it this way, twice, reading `import` and `places_open` |
-| `GRABBER_PLACES=open\|map` | open Places (`map`: with the map full screen), for a screenshot and the `places_open` event |
+| `GRABBER_PLACES=open\|map[,unnamed[,name]][,edit:<name>]` | open Places (`map`: with the map full screen), for a screenshot and the `places_open` event; `map,unnamed` then opens the card of the longest unnamed place once the trail is read (`ui` unnamed_place, from: hook), and `map,unnamed,name` its naming card (story 056); `open,edit:Home` opens that known place's screen with its icon picker (story 057) |
 | `GRABBER_TRACKING=on\|off` | flip the Background Tracking switch as a tap would; with `xcrun simctl privacy <udid> grant location-always com.idvorkin.grabbernative` first, `on` starts recording, and `xcrun simctl location <udid> start …` moves the simulator so points arrive (`location_point`) |
 | `GRABBER_RETENTION=<days>` | set retention as the stepper would; lowering it prunes at once (`prune` with reason `lowered`) |
 | `GRABBER_EXPORT=1` | make the export file as *Export database* does, without the share sheet; `export` names its path, which the smoke opens with `sqlite3` |
@@ -52,8 +52,10 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_METRIC=<key>` | with `GRABBER_MIRROR`: open that metric's sheet after the grab (`sleep`, `movement`, `heartRate`, …), for a screenshot |
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 | `GRABBER_COUNT_VOICE=adam\|igor\|aussie` | with `GRABBER_TIMER` or `GRABBER_TIMER_SETTINGS`: count in that voice for this launch, not remembered and with no sample (story 182); `just native-test-sim` runs `aussie` and reads the first `timer_cue`'s `voice` |
+| `GRABBER_TIMER_DIAL=drums\|knobs\|arc\|sliders` | which control sets Custom's Work, Rest and Rounds upright (story 184): the drums are what ships; the knobs, the arc and the old sliders are only for trying and screenshots. Alone it opens the timer on CUSTOM, not started (`ui` open_timer with dial); with `GRABBER_TIMER` it draws that control for the run. Not remembered |
 | `GRABBER_TIMER_SETTINGS=1` | open the Gym Timer, not started, with *Timer settings* up (logs `ui` action: timer_settings), for a screenshot of the sheet |
 | `GRABBER_WHATS_NEW=open` | open What's new (logs `ui` action: open_whats_new with days, changes, newest), for a screenshot of the build's own history (story 148) |
+| `GRABBER_HOME=settings` | open the home screen's cog sheet (logs `ui` action: home_settings), for a screenshot of the launchers and the diagnostics (story 147) |
 | `GRABBER_COCKPIT=open` | open the Cockpit screen, as its row on the home screen would |
 | `GRABBER_COCKPIT_URL=<url or page>` | load the Cockpit from elsewhere: a URL (`https://127.0.0.1:65530/` is the unreachable case `just native-test-sim` checks for the error panel), or the name of a page in the app bundle — `cockpit-bridge-test` speaks the audio bridge the way the Cockpit does and reports the round trip as `getRoute("roundtrip:<microphones>:tagged")` |
 
@@ -65,12 +67,22 @@ What the native rungs can and cannot see of What's new (story 148, [spec](superp
 | What a build of this checkout would list | Host | `scripts/native/whats-new.sh <out.json>` prints the counts and writes the same JSON the build phase bundles |
 | The row and the screen, with the build's real days | Simulator screenshot | launch plain, and with `SIMCTL_CHILD_GRABBER_WHATS_NEW=open`, then `simctl io screenshot`; the log's `ui` open_whats_new names the days and changes |
 
+What the native rungs can and cannot see of the home screen (story 147, [spec](superpowers/specs/2026-10-06-native-home-screen-design.md)):
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| The remembered order and hidden rows read against this build's rows: a new row at the end, a gone one dropped, moves, store and read back | Host | `HomeLayoutTests` |
+| Hiding and moving a row through the cog, both holding after a relaunch; Reset | Simulator | `HomeSettingsUITests` (`xcodebuild … -only-testing:GrabberNativeUITests/HomeSettingsUITests test`), then the `ui` home_rows lines in the log |
+| The home screen and the sheet, drawn | Simulator screenshot | launch plain, and with `SIMCTL_CHILD_GRABBER_HOME=settings`, then `simctl io screenshot` |
+
 What the native rungs can and cannot see of the Gym Timer:
 
 | Change | Where it must be verified | How |
 |---|---|---|
 | Phases, rounds, when each cue and duck hold falls, pause and resume, the catch-up after being away | Host | `TimerEngineTests`, `DeriveTimerStateTests` (the engine takes the clock as an argument) |
 | The duck window's opening, holding and letting go | Host | `DuckWindowTests` with a hand-advanced clock |
+| The Custom dials' arithmetic: drag and turn into whole steps, the flick multiplier, the ranges held, the arc's angles | Host | `TimerDialsTests` |
+| The drums (and the knobs and arc to try): their look, a swipe and a tap moving Work | Simulator | `GRABBER_TIMER_DIAL=<style>` screenshots; `GymTimerDialsUITests` (taps and a swipe on the Work drum). The haptic ticks are the phone's |
 | Custom preset snapping, the LED glyphs and geometry, the turn's margins, the stopwatch, the accessory log's SQL and grouping | Host | `CustomPresetTests`, `SevenSegmentTests`, `DeviceTurnTests`, `StopwatchTests`, `AccessoryLogTests` (real SQLite, in memory, in a pinned time zone) |
 | The timer in the app: cues on their seconds, one window per boundary, the session let go at the end | Simulator | the `timer:` checks in `sim-smoke.sh` |
 | Which voice counts: the default, the remembered choice, every voice having all six files | Host, then simulator | `CountVoiceTests` (the files on disk); the `voice:` checks in `sim-smoke.sh` (`voice: adam` by default, the hook's `aussie`) |
@@ -112,6 +124,10 @@ What the native rungs can and cannot see of Places ([spec](superpowers/specs/202
 | The store: insert, range, prune, settings keys, known places, import twice, a file that is not a database, the export snapshot | Host | `LocationStoreTests`, `PlacesFixtureTests.testImportTheRealExportTwice` (real SQLite, in memory or a temp file) |
 | Import of the real export (and again, adding nothing), the export file's contents, tracking on with Always and points stored as the simulator moves, recording resumed at launch, retention lowered pruning at once, no `error` | Simulator | the `places:` and `tracking:` checks in `sim-smoke.sh` |
 | The screen: map with pins, You and today's path, the day cards, full-screen map | Simulator screenshot | the hooks above, then `simctl io screenshot` (`~/tmp/agent/image/places/`) |
+| The unnamed places: which, where, hours, visits, the suggested radius (against the real fixture), the dot's size and the card's lines | Host | `UnnamedPlacesTests` |
+| Place icons: the name's guess, the Apple Maps rules (by name, then the nearest), what is remembered, chosen over everything, the twenty symbols existing | Host | `PlaceIconsTests` (the real fixture's Apple Maps answers, as the simulator got them, in the cases) |
+| Apple Maps' answers for real places, the icons on the pins, the picker changing a pin at once | Simulator, online | `place_icon` lookup lines in the session log; `GRABBER_PLACES=map` and `open,edit:Home` screenshots; `PlaceIconUITests` |
+| A grey dot's card, *Name this place*, the dot becoming a named pin | Simulator | `GRABBER_PLACES=map,unnamed` (and `,name`) screenshots; `PlacesUnnamedUITests` names the place and deletes it again (the fixture copied to `Documents/import-fixture.db` first, as `sim-smoke.sh` does) |
 | The permission prompts (While Using, then Always; *Keep Only While Using* turning the switch back off), points with the app in the background and after it was closed (the significant-change relaunch), the blue indicator, an overnight at home read as one stay, the precise fix moving You, Use current at a real place, sharing the export to the Mac and sharing Context Grabber's export into the app, battery with both apps tracking | Phone only | turn tracking on, leave the app closed for a day, `just pull-logs`, read `location_permission`, `tracking`, `location_point` (background: true), `location_fix`, `prune`, `import`, `export` |
 
 What the native rungs can and cannot see of the call:

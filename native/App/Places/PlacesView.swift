@@ -81,7 +81,11 @@ struct PlacesView: View {
       case .failure(let error): places.status = "Could not open the file: \(error.localizedDescription)"
       }
     }
-    .sheet(item: $places.naming) { card in NamingSheet(card: card, places: places).presentationDetents([.medium]) }
+    // While the full-screen map is up it presents the naming card itself (a sheet cannot open under another).
+    .sheet(item: Binding(get: { app.showPlacesMap ? nil : places.naming }, set: { places.naming = $0 })) { card in
+      NamingSheet(card: card, places: places).presentationDetents([.medium])
+    }
+    .sheet(item: $places.editing) { place in PlaceEditSheet(place: place, places: places) }
     .sheet(isPresented: Binding(get: { places.exportFile != nil }, set: { if !$0 { places.exportFile = nil } })) {
       if let file = places.exportFile { ShareSheet(items: [file]) }
     }
@@ -89,6 +93,7 @@ struct PlacesView: View {
       PlacesMapView(places: places, tracker: tracker, log: app.log, fullscreen: true) { app.showPlacesMap = false }
         .ignoresSafeArea(edges: .bottom)
         .presentationDragIndicator(.visible)
+        .sheet(item: $places.naming) { card in NamingSheet(card: card, places: places).presentationDetents([.medium]) }
     }
   }
 
@@ -97,14 +102,22 @@ struct PlacesView: View {
   private var knownPlacesSection: some View {
     Section {
       ForEach(places.knownPlaces) { place in
-        HStack(spacing: 12) {
-          Circle().fill(Color(hex: places.color(place.name))).frame(width: 10, height: 10)
-          VStack(alignment: .leading, spacing: 2) {
-            Text("\(PlaceStyle.icon(for: place.name).map { "\($0) " } ?? "")\(place.name)").font(.body.weight(.semibold))
-            Text(String(format: "%.4f, %.4f · r %d m", place.latitude, place.longitude, Int(place.radiusMeters.rounded())))
-              .font(.caption).foregroundStyle(.secondary)
+        Button {
+          places.edit(place, from: "list")
+        } label: {
+          HStack(spacing: 12) {
+            Image(systemName: places.icon(place).symbol).font(.body.weight(.semibold))
+              .foregroundStyle(Color(hex: places.color(place.name))).frame(width: 26)
+            VStack(alignment: .leading, spacing: 2) {
+              Text(place.name).font(.body.weight(.semibold)).foregroundStyle(.primary)
+              Text(String(format: "%.4f, %.4f · r %d m", place.latitude, place.longitude, Int(place.radiusMeters.rounded())))
+                .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
           }
         }
+        .accessibilityIdentifier("known-\(place.name)")
       }
       .onDelete { offsets in offsets.map { places.knownPlaces[$0] }.forEach(places.deletePlace) }
 
@@ -277,13 +290,21 @@ struct NamingSheet: View {
   @ObservedObject var places: PlacesModel
   @Environment(\.dismiss) private var dismiss
   @State private var name = ""
-  @State private var radius = "100"
+  @State private var radius: String
+
+  init(card: NamingCard, places: PlacesModel) {
+    self.card = card
+    self.places = places
+    switch card {
+    case .name(_, _, let r), .merge(_, _, let r, _): _radius = State(initialValue: String(Int(r.rounded())))
+    }
+  }
 
   var body: some View {
     NavigationStack {
       Form {
         switch card {
-        case .name(let source, let centroid):
+        case .name(let source, let centroid, _):
           Section {
             TextField("Place name", text: $name)
             TextField("Radius (m)", text: $radius).keyboardType(.numberPad)
@@ -298,7 +319,7 @@ struct NamingSheet: View {
             }
             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
           }
-        case .merge(let source, _, let s):
+        case .merge(let source, _, _, let s):
           Section {
             Text("**\(source)** is \(Int(s.distance.rounded())) m from **\(s.nearest.name)**.")
             Text(
@@ -315,6 +336,67 @@ struct NamingSheet: View {
         }
       }
       .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+    }
+  }
+}
+
+// MARK: - a known place and its icon (story 057)
+
+struct PlaceEditSheet: View {
+  let place: KnownPlace
+  @ObservedObject var places: PlacesModel
+  @Environment(\.dismiss) private var dismiss
+
+  private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 5)
+
+  var body: some View {
+    let icon = places.icon(place)
+    let color = Color(hex: places.color(place.name))
+    NavigationStack {
+      Form {
+        Section {
+          HStack(spacing: 14) {
+            Image(systemName: icon.symbol).font(.title2.weight(.semibold)).foregroundStyle(.white)
+              .frame(width: 48, height: 48)
+              .background(Circle().fill(Color(white: 0.1).opacity(0.85)))
+              .overlay(Circle().stroke(color, lineWidth: 3))
+            VStack(alignment: .leading, spacing: 2) {
+              Text(PlaceIcons.sourceText(icon)).font(.subheadline)
+              Text(String(format: "%.5f, %.5f · r %d m", place.latitude, place.longitude, Int(place.radiusMeters.rounded())))
+                .font(.caption.monospaced()).foregroundStyle(.secondary)
+            }
+          }
+        }
+        Section {
+          LazyVGrid(columns: columns, spacing: 10) {
+            ForEach(PlaceIcons.choices, id: \.self) { symbol in
+              let on = symbol == icon.symbol
+              Button {
+                places.chooseIcon(symbol, for: place)
+              } label: {
+                Image(systemName: symbol).font(.title3).frame(maxWidth: .infinity, minHeight: 48)
+                  .foregroundStyle(on ? .white : .primary)
+                  .background(RoundedRectangle(cornerRadius: 10).fill(on ? color : Color(white: 0.5).opacity(0.15)))
+              }
+              .buttonStyle(.plain)
+              .accessibilityLabel(symbol)
+              .accessibilityIdentifier("icon-\(symbol)")
+              .accessibilityAddTraits(on ? .isSelected : [])
+            }
+          }
+          .padding(.vertical, 4)
+          if icon.source == .chosen {
+            Button("Use the guess") { places.chooseIcon(nil, for: place) }
+          }
+        } header: {
+          Text("Icon")
+        } footer: {
+          Text("A chosen icon stays, whatever the place is called or however it grows.")
+        }
+      }
+      .navigationTitle(place.name)
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.accessibilityIdentifier("place-done") } }
     }
   }
 }

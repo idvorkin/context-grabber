@@ -75,7 +75,7 @@ native-sim-health: native-project
     out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
       -derivedDataPath native/Build -destination "platform=iOS Simulator,id=$(scripts/native/sim-udid.sh "{{native_sim}}")" \
       CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" \
-      -only-testing:GrabberNativeUITests test 2>&1)
+      -only-testing:GrabberNativeUITests/HealthAccessUITests test 2>&1)
     echo "$out" | grep -E "error:|Test Case|TEST (SUCCEEDED|FAILED)"
     echo "$out" | grep -q "TEST SUCCEEDED"
 

@@ -157,7 +157,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 048:
 
 - **Summary:** A real map with my places on it, each in its own colour
-- **Status:** implemented in [4cb8641](https://github.com/idvorkin/context-grabber/commit/4cb8641), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [dc781bb](https://github.com/idvorkin/context-grabber/commit/dc781bb), [48c9372](https://github.com/idvorkin/context-grabber/commit/48c9372); verified by `StylizedMap.test.tsx` and on the phone (daily use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), MapKit; seen in simulator screenshots (pins in their bar colours, icons, You); the phone still to be checked by Igor (bead context-grabber-3ss.12)
+- **Status:** implemented in [4cb8641](https://github.com/idvorkin/context-grabber/commit/4cb8641), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [dc781bb](https://github.com/idvorkin/context-grabber/commit/dc781bb), [48c9372](https://github.com/idvorkin/context-grabber/commit/48c9372); verified by `StylizedMap.test.tsx` and on the phone (daily use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), MapKit; seen in simulator screenshots (pins in their bar colours, icons, You); its icons are now symbols guessed for every place, with a name chip on each pin (story 057); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone who recognises streets faster than coordinates
@@ -298,3 +298,41 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the native app has no points and Context Grabber's Export Database file holds 36 601 points and 4 known places
 - **When:** I share that file to Grabber Native (or pick it with Import from Context Grabber), and later import the same file again
 - **Then:** the first import says it brought in 36 601 points and 4 places and the breakdown and map show them; the second says 0 new points and 0 new places and nothing is duplicated; a known place whose name already exists in the native app is kept as it is; a file that is not a Context Grabber database is refused with a reason and changes nothing
+
+---
+
+### User Story 056:
+
+- **Summary:** See the places I have not named on the full-screen map, and name them there
+- **Status:** native app: implemented in [df4165a](https://github.com/idvorkin/context-grabber/commit/df4165a); verified by `UnnamedPlacesTests` (on the real fixture: all 7 unnamed places, radius 100 or 110 m holding all but 2 of their 2 340 points) and on the simulator (`PlacesUnnamedUITests`: a grey dot's card names the place and it becomes a named pin; screenshots of the dot, the card and the name card); the phone still to be checked by Igor
+- **Issues:** [#162](https://github.com/idvorkin/context-grabber/issues/162)
+
+#### Use Case:
+- **As** someone whose week has stops the breakdown only calls "Place 4"
+- **I want to** see those places on the full-screen map as quiet grey dots sized by the time I spent there, tap one to see when and how long I was there, and name it from the same card
+- **so that** I recognise an unnamed place by where it is on the street map, not by its number, and name it in one step
+
+#### Acceptance Criteria:
+- **Scenario:** Naming a stop from the map
+- **Given:** the last seven days hold stays at places with no name, and Home, Work and Kettlebility are known
+- **When:** I expand the Places map and tap the largest grey dot
+- **Then:** each unnamed place of the last seven days is a grey dot quieter than the named pins, larger the longer I was there, with a chip of its hours ("2.5h"), the map framed to include them, and the embedded map without them; the tap opens a card with its name, its hours and visits in the last seven days and each visit newest first with day, times and length (five, then "+N earlier"); *Name this place* offers to grow a known place within 500 m first and otherwise opens the name card at the place's centre with a radius of 100 m plus its visits' spread (at most 250 m); after I save a name the dot is a named pin in its colour and the day cards say the name
+
+---
+
+### User Story 057:
+
+- **Summary:** Every place has an icon, guessed for me, and mine to change
+- **Status:** native app: implemented in [b5fa17c](https://github.com/idvorkin/context-grabber/commit/b5fa17c); verified by `PlaceIconsTests` (the name rules, Apple Maps by name and nearest, the order, the remembered table) and on the simulator, online: Home a house and Work a briefcase from their names, Kettlebility a dumbbell (Apple Maps: Fitness center, by name, 60 m) and Milstead & Co a cup (Cafe, by name, 251 m), seen in a screenshot of the map; `PlaceIconUITests` (choosing the heart changes Home's pin, Use the guess brings the house back); offline and the phone still to be checked by Igor
+- **Issues:** [#161](https://github.com/idvorkin/context-grabber/issues/161)
+
+#### Use Case:
+- **As** someone whose places are called "Kettlebility" and "Milstead & Co", names that say nothing to a map
+- **I want to** see an icon on every place's pin and in the list, guessed from the name or else from what Apple Maps knows is there, and to pick another from a small grid when the guess is wrong
+- **so that** the map reads at a glance — gym, café, home, work — without me setting anything up, and my correction sticks
+
+#### Acceptance Criteria:
+- **Scenario:** Icons for the fixture's four places, then a correction
+- **Given:** Home, Work, Kettlebility and Milstead & Co are known, and the phone is online
+- **When:** I open Places, then tap Home in Known places and choose the heart
+- **Then:** Home shows a house and Work a briefcase (from their names), Kettlebility a dumbbell and Milstead & Co a cup (Apple Maps finds the businesses of those names, a fitness centre and a café), each on its pin ringed in its colour with its name in a chip, and beside it in the list; a place neither its name nor Apple Maps settles is a plain pin, and offline that pin stands until Apple Maps can be asked, with nothing complaining; Home's screen says where the icon came from ("Guessed from the name") and offers twenty icons; after the heart it says "Chosen", the pin and the row show the heart at once, and the heart stays across launches, renaming or growing the place, until *Use the guess* gives the house back

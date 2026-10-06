@@ -1,7 +1,9 @@
 //  The trail and the known places in the shared SQLite file (stories 040, 041, 045, 052, 055). The tables are the
 //  React Native app's, unchanged, so the cutover opens its file in place: `locations` (timestamp: UTC ms, stored
 //  as REAL by the old app because iOS reports fractions of a millisecond) and `known_places`. The tracking switch
-//  and the retention are `settings` rows `tracking_enabled` ("true" / "false") and `retention_days` ("30").
+//  and the retention are `settings` rows `tracking_enabled` ("true" / "false") and `retention_days` ("30"). Place
+//  icons (story 057) live in a table of their own, `known_place_icons`, keyed by the place's row id, so the shared
+//  `known_places` table is not touched.
 
 import Foundation
 
@@ -48,6 +50,12 @@ public struct LocationStore {
         latitude REAL NOT NULL,
         longitude REAL NOT NULL,
         radius_meters REAL NOT NULL DEFAULT 100
+      );
+      CREATE TABLE IF NOT EXISTS known_place_icons (
+        place_id INTEGER PRIMARY KEY,
+        symbol TEXT NOT NULL,
+        source TEXT NOT NULL,
+        category TEXT
       );
       CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       INSERT OR IGNORE INTO settings (key, value) VALUES ('tracking_enabled', 'false');
@@ -139,14 +147,42 @@ public struct LocationStore {
     return try db.run("SELECT last_insert_rowid() AS id").first?["id"]?.intValue ?? 0
   }
 
+  /// Moves or grows a place. Apple Maps' remembered answer is for the old disc, so it goes; a chosen icon stays.
   public func updateKnownPlace(id: Int64, circle: PlaceCircle) throws {
     try db.run(
       "UPDATE known_places SET latitude = ?, longitude = ?, radius_meters = ? WHERE id = ?",
       [.double(circle.latitude), .double(circle.longitude), .double(circle.radiusMeters), .int(id)])
+    try db.run("DELETE FROM known_place_icons WHERE place_id = ? AND source != ?", [.int(id), .text(PlaceIconSource.chosen.rawValue)])
   }
 
   public func deleteKnownPlace(id: Int64) throws {
     try db.run("DELETE FROM known_places WHERE id = ?", [.int(id)])
+    try db.run("DELETE FROM known_place_icons WHERE place_id = ?", [.int(id)])
+  }
+
+  // MARK: - place icons (story 057)
+
+  /// The remembered icons by place id; a row whose source this build does not know is skipped.
+  public func placeIcons() throws -> [Int64: StoredPlaceIcon] {
+    var out: [Int64: StoredPlaceIcon] = [:]
+    for row in try db.run("SELECT place_id, symbol, source, category FROM known_place_icons") {
+      guard let id = row["place_id"]?.intValue, let symbol = row["symbol"]?.textValue,
+        let source = row["source"]?.textValue.flatMap(PlaceIconSource.init(rawValue:))
+      else { continue }
+      out[id] = StoredPlaceIcon(symbol: symbol, source: source, category: row["category"]?.textValue)
+    }
+    return out
+  }
+
+  public func setPlaceIcon(_ icon: StoredPlaceIcon, for placeId: Int64) throws {
+    try db.run(
+      "INSERT OR REPLACE INTO known_place_icons (place_id, symbol, source, category) VALUES (?, ?, ?, ?)",
+      [.int(placeId), .text(icon.symbol), .text(icon.source.rawValue), icon.category.map { .text($0) } ?? .null])
+  }
+
+  /// Forgets the place's icon, chosen or remembered: it is guessed again.
+  public func clearPlaceIcon(for placeId: Int64) throws {
+    try db.run("DELETE FROM known_place_icons WHERE place_id = ?", [.int(placeId)])
   }
 
   // MARK: - import and export

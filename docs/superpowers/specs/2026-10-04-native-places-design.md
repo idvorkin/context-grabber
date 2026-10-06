@@ -2,7 +2,7 @@
 
 **Status:** Drafted 2026-10-04 (Igor: "how about location?" — Places is the next journey to move)
 **Owner:** Igor
-**Tracking:** bead `context-grabber-3ss` (the native port, step 5); stories [040–055](../../stories/03-places.md)
+**Tracking:** bead `context-grabber-3ss` (the native port, step 5); stories [040–057](../../stories/03-places.md)
 **Part of:** [Swift-native app](2026-10-04-swift-native-app-design.md). The rules the stays follow are unchanged
 from [location clustering v2](2026-03-26-location-clustering-v2.md), the day accounting and naming from
 [places breakdown](2026-04-11-places-breakdown-gaps-and-naming-design.md), the map from
@@ -43,20 +43,20 @@ The home screen lists **Places** under "Ported so far". It opens full screen; *D
 
 ### The Places screen, top to bottom
 
-1. **The map** (stories 048–051): Apple Maps streets, a pin per known place ringed in the place's colour, a house,
-   briefcase, barbell, cup or mortarboard where the name gives it away and a coloured dot with a name chip
-   otherwise; **You** as a cyan diamond with a halo; today's recorded path as a line. It is framed to include
+1. **The map** (stories 048–051, 057): Apple Maps streets, a pin per known place: its icon (below) ringed in the
+   place's colour, with a small name chip under it; **You** as a cyan diamond with a halo; today's recorded path as a line. It is framed to include
    every pin and the path, and free to pan and zoom. Three small controls sit in its corners: **locate** (centre
    on You at neighbourhood zoom; hidden with no fix), **copy** (puts "lat, lng" to six decimals on the clipboard
    and shows "✓ Copied" briefly), **expand** (the same map full screen, with the same controls; collapse or a
-   swipe down returns).
+   swipe down returns). The full-screen map also shows the places that have no name yet (below).
 2. **The last seven days**, newest first (stories 043, 044, 046, 047). Each day is a card: the date and the
    elapsed hours (24h for a past day, hours so far for today); a strip of the day in time order — stays in their
    place's colour, transit faded, no data grey, the rest of today dimmest; then a bar per place (longest first,
    at most ten), a *—transit—* row and a *—no data—* row, which together add up to the header within a minute.
    A tap on the card shows each visit with its times. A day with neither a stay nor a point is left out.
    An unnamed place reads "Place N" in amber with a **＋** that names it (below).
-3. **Known places** (story 045): each with its colour, coordinates and radius; swipe to delete. **Add place**
+3. **Known places** (story 045): each with its icon in its colour, coordinates and radius; swipe to delete; a
+   tap opens the place, where its icon can be changed (story 057). **Add place**
    takes a name, a radius (100 m by default) and the position: *Use current* asks for a precise fix and refuses
    one older than thirty seconds with a line saying how old it was. **Import places** accepts the same JSON as
    today (an array, or an object with `knownPlaces` / `places`; `lat`/`latitude`, `lon`/`lng`/`longitude`,
@@ -73,6 +73,89 @@ for a name and a radius (100 m) and shows the coordinates. With one or more, a c
 and what growing it would do — "Place 3 is 168 m from Milstead & Co. Expanding would grow radius 50 m → 159 m and
 shift the centre 57 m." — with **Expand**, **Create new** and **Cancel**, and "(+N more within 500 m)" when there
 are others. Either way every stay at that place, on every day, is relabelled at once.
+
+### Unnamed places on the full-screen map (story 056)
+
+The full-screen map shows, besides the named places, every place the stays found that has no name yet — each
+"Place N" visited in the last seven days, the same period as the day cards. They are quiet: a grey dot, paler and
+smaller than a named place's pin and never in a place colour, with a small chip saying how long Igor was there in
+those seven days ("2.5h"). The dot grows with the time, from a small dot for a few minutes to about the size of a
+named pin for a day or more, so the places that matter stand out. The full-screen framing includes them. The map
+embedded on the screen stays as it was — named places, You and today's path — so the small map is not cluttered.
+
+The dot sits at the place's centre: the average of its stays' centres, weighted by their points, as the clustering
+weighs them.
+
+Tapping a dot opens a card at the bottom of the map: the place's name ("Place 3"), the total time and the number
+of visits in the last seven days, and each visit, newest first, with its day, its times and its length ("Mon Mar
+23 · 9:10am–11:40am · 2.5h"; the five most recent, then "+N earlier"). The card's close button, or tapping
+another dot, changes it; the copy control steps aside while it is open.
+
+**Name this place** on the card is the same naming as the ＋ on a day card: with a known place within 500 m, the
+card offering to grow it comes first; otherwise the name card, with the place's position filled in and a radius
+that holds every visit — 100 m, the clustering's own radius, plus however far apart its visits' centres are,
+rounded up to ten metres and never more than 250 m. In the real fixture the visits' centres are at most 9 m apart
+and all but 2 of the unnamed stays' 2 340 points lie within 100 m of their place's centre (the farthest 111 m), so
+this is 100 or 110 m and holds the place. Saving relabels every stay there at once: the grey dot becomes a named pin in its colour, and the day cards
+follow.
+
+### Place icons (story 057)
+
+Every known place has an icon, a simple glyph in the system's symbol style, shown on its map pin and beside it in
+the Known places list. Igor does not have to choose one: the app guesses it, in this order.
+
+1. **From the name.** A whole word of the name gives the place away ("Mom's House", not "Householder"); the first
+   rule that matches wins:
+
+   | Words in the name | Icon |
+   |---|---|
+   | home, house, apartment, apt, condo | a house |
+   | work, office, hq | a briefcase |
+   | gym, fitness, crossfit, yoga, pilates, dojo | a dumbbell |
+   | coffee, cafe, café, espresso, starbucks | a cup and saucer |
+   | restaurant, diner, bistro, pizza, sushi, grill, kitchen, eatery | a fork and knife |
+   | store, market, grocery, shop, supermarket, mall, costco, safeway, qfc | a shopping cart |
+   | park, trail, garden, forest | a tree |
+   | school, university, college, campus | a graduation cap |
+   | hospital, clinic, doctor, dentist, medical | a medical case |
+   | airport | an airplane |
+   | beach | a beach umbrella |
+   | church, temple, synagogue, mosque, chapel, cathedral, museum | a building with columns (there is no church glyph) |
+   | library | a book |
+   | bar, pub, brewery, tavern, winery | a wine glass |
+   | hotel, motel, inn, airbnb | a bed |
+   | pool, swim, aquatic | a swimmer |
+   | parking, garage | a car |
+
+2. **From Apple Maps**, when the name says nothing ("Kettlebility", "Milstead & Co"). Two questions, in order:
+   - **The business the place is named after.** Apple Maps is searched for the place's name around it; a point of
+     interest with the same name (punctuation and case aside: "Milstead & Co." is "Milstead & Co"), or one whose
+     name holds it, within 500 m of the place's centre, gives its category's icon. A name is strong evidence and a
+     known place's centre can be off: Apple Maps puts Milstead & Co. 251 m from the fixture's place.
+   - **What is there.** Otherwise the points of interest within the place's radius (at least 50 m) of its centre:
+     the nearest one decides, and only if its category has an icon. When the nearest has none — often the place
+     itself, uncategorised — nothing is guessed, because the shop next door is not the place. (Checked on the
+     simulator against the fixture's places: taking the nearest *iconed* one called Kettlebility a food market,
+     23 m away, and Milstead & Co a restaurant, 8 m away; by name they are a fitness centre and a café.)
+
+   The categories with icons: a fitness centre or climbing gym a dumbbell, a café or bakery a cup, a restaurant a
+   fork and knife, a food market or store a cart, a park, campground or hike a tree, a school or university a
+   graduation cap, a hospital or pharmacy a medical case, an airport an airplane, a beach an umbrella, a library a
+   book, a museum the columns, a brewery, winery, distillery or nightlife a wine glass, a hotel a bed, a swimming
+   spot a swimmer, parking or a petrol or charging station a car. The answer is remembered, so Apple Maps is asked
+   once per place, and again only after the place is grown. Without a network, or when Apple Maps fails, the place
+   shows a plain pin for now and is asked again next time; nothing on screen complains.
+3. **A plain pin** otherwise — also remembered, so a place Apple Maps knows nothing about is not asked again.
+
+**Choosing one.** A tap on a known place opens it: its name, position and radius, its icon with where it came from
+("Guessed from the name", "From Apple Maps: Fitness center", "No guess: a plain pin", "Chosen"), and a grid of
+twenty icons — house, briefcase, dumbbell, cup, fork and knife, cart, tree, graduation cap, medical case,
+airplane, beach umbrella, columns, book, wine glass, bed, swimmer, two people, car, heart, pin. A tap on one makes
+it the place's icon at once, on the map and in the list; it is remembered and never guessed over, even if the
+place is renamed or grown. *Use the guess* gives the choice back to the guess.
+
+The icons are kept beside the known places, which stay exactly as Context Grabber shares them; Context Grabber
+ignores them, and a place imported from it is guessed like any other.
 
 ### Background tracking (story 040)
 
@@ -168,5 +251,13 @@ same place across such a gap (story 044). More frequent collection would not hel
   known places and settings.
 - The map shows the known places in the same colours as their bars, You, and today's path; locate, copy and
   expand work as described.
+- Every known place shows an icon on the map and in the list: from its name when a word gives it away, else from
+  the Apple Maps business of that name within 500 m, else from the nearest Apple Maps point of interest within its
+  radius when that one has an icon, else a plain pin; without a network nothing fails
+  and the guess is tried again later. A chosen icon replaces the guess at once and stays.
+- The full-screen map shows a grey dot for every unnamed place of the last seven days, sized and labelled by its
+  hours; a tap shows its visits and *Name this place*, which offers to grow a known place within 500 m or names it
+  at its centre with the suggested radius; after naming, it is a named pin.
 - Each of these leaves its event in the session log: permission, tracking on and off, points arriving (sampled),
-  pruning, import, export, opening the screen.
+  pruning, import, export, opening the screen, tapping an unnamed place and naming it from the map, each place's icon with where it came
+  from (name, Apple Maps, default, chosen) and each Apple Maps lookup.
