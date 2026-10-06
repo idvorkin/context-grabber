@@ -157,7 +157,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 048:
 
 - **Summary:** A real map with my places on it, each in its own colour
-- **Status:** implemented in [4cb8641](https://github.com/idvorkin/context-grabber/commit/4cb8641), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [dc781bb](https://github.com/idvorkin/context-grabber/commit/dc781bb), [48c9372](https://github.com/idvorkin/context-grabber/commit/48c9372); verified by `StylizedMap.test.tsx` and on the phone (daily use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), MapKit; seen in simulator screenshots (pins in their bar colours, icons, You); the phone still to be checked by Igor (bead context-grabber-3ss.12)
+- **Status:** implemented in [4cb8641](https://github.com/idvorkin/context-grabber/commit/4cb8641), [ac11088](https://github.com/idvorkin/context-grabber/commit/ac11088), [dc781bb](https://github.com/idvorkin/context-grabber/commit/dc781bb), [48c9372](https://github.com/idvorkin/context-grabber/commit/48c9372); verified by `StylizedMap.test.tsx` and on the phone (daily use); native app: [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), MapKit; seen in simulator screenshots (pins in their bar colours, icons, You); its icons are now symbols guessed for every place, with a name chip on each pin (story 057); the phone still to be checked by Igor (bead context-grabber-3ss.12)
 
 #### Use Case:
 - **As** someone who recognises streets faster than coordinates
@@ -317,3 +317,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the last seven days hold stays at places with no name, and Home, Work and Kettlebility are known
 - **When:** I expand the Places map and tap the largest grey dot
 - **Then:** each unnamed place of the last seven days is a grey dot quieter than the named pins, larger the longer I was there, with a chip of its hours ("2.5h"), the map framed to include them, and the embedded map without them; the tap opens a card with its name, its hours and visits in the last seven days and each visit newest first with day, times and length (five, then "+N earlier"); *Name this place* offers to grow a known place within 500 m first and otherwise opens the name card at the place's centre with a radius of 100 m plus its visits' spread (at most 250 m); after I save a name the dot is a named pin in its colour and the day cards say the name
+
+---
+
+### User Story 057:
+
+- **Summary:** Every place has an icon, guessed for me, and mine to change
+- **Status:** implemented (native app)
+- **Issues:** [#161](https://github.com/idvorkin/context-grabber/issues/161)
+
+#### Use Case:
+- **As** someone whose places are called "Kettlebility" and "Milstead & Co", names that say nothing to a map
+- **I want to** see an icon on every place's pin and in the list, guessed from the name or else from what Apple Maps knows is there, and to pick another from a small grid when the guess is wrong
+- **so that** the map reads at a glance — gym, café, home, work — without me setting anything up, and my correction sticks
+
+#### Acceptance Criteria:
+- **Scenario:** Icons for the fixture's four places, then a correction
+- **Given:** Home, Work, Kettlebility and Milstead & Co are known, and the phone is online
+- **When:** I open Places, then tap Home in Known places and choose the heart
+- **Then:** Home shows a house and Work a briefcase (from their names), Kettlebility a dumbbell and Milstead & Co a cup (Apple Maps finds the businesses of those names, a fitness centre and a café), each on its pin ringed in its colour with its name in a chip, and beside it in the list; a place neither its name nor Apple Maps settles is a plain pin, and offline that pin stands until Apple Maps can be asked, with nothing complaining; Home's screen says where the icon came from ("Guessed from the name") and offers twenty icons; after the heart it says "Chosen", the pin and the row show the heart at once, and the heart stays across launches, renaming or growing the place, until *Use the guess* gives the house back

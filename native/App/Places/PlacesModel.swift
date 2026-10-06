@@ -1,4 +1,4 @@
-//  The Places screen's state (stories 041, 043–047, 049, 052, 053, 055, 056): the trail read back as stays and day
+//  The Places screen's state (stories 041, 043–047, 049, 052, 053, 055–057): the trail read back as stays and day
 //  cards, the known places and what can be done to them, retention, the export and the import. ContextCore does
 //  the deciding; this owns the database, the log and the work off the main thread.
 
@@ -27,6 +27,8 @@ final class PlacesModel: ObservableObject {
   @Published private(set) var knownPlaces: [KnownPlace] = []
   /// The places with no name yet in the last seven days, longest first: the full-screen map's grey dots (story 056).
   @Published private(set) var unnamed: [UnnamedPlace] = []
+  /// Each known place's icon by its id (story 057).
+  @Published private(set) var icons: [Int64: PlaceIcon] = [:]
   /// The grey dot whose card is open on the full-screen map.
   @Published var selectedUnnamed: String?
   @Published private(set) var route: [LocationPoint] = []
@@ -44,6 +46,10 @@ final class PlacesModel: ObservableObject {
   private let database: AppDatabase
   private var store: LocationStore? { database.locations }
   private var generation = 0
+  /// Places Apple Maps is being asked about, and the icons already logged this launch (one line per change).
+  private var lookingUp: Set<Int64> = []
+  private var loggedIcons: [Int64: PlaceIcon] = [:]
+  private var failedLookups: Set<Int64> = []
 
   init(log: SessionLog, database: AppDatabase) {
     self.log = log
@@ -72,6 +78,7 @@ final class PlacesModel: ObservableObject {
       knownPlaces = try store.knownPlaces()
       retentionDays = try store.retentionDays()
       points = try store.points()
+      refreshIcons()
     } catch {
       log.event("error", ["where": "places_read", "message": "\(error)"])
       status = "Could not read the trail: \(error)"
@@ -110,6 +117,108 @@ final class PlacesModel: ObservableObject {
             "ms": Int(Date().timeIntervalSince(started) * 1000),
           ])
       }
+    }
+  }
+
+  // MARK: - icons (story 057)
+
+  /// A place's icon; a plain pin until it is known.
+  func icon(_ place: KnownPlace) -> PlaceIcon {
+    icons[place.id] ?? PlaceIcons.resolve(name: place.name, stored: nil)
+  }
+
+  /// Resolves every place's icon from the remembered ones, logs what changed, and asks Apple Maps about the places
+  /// neither a choice, the name nor an earlier answer settles.
+  private func refreshIcons() {
+    let stored: [Int64: StoredPlaceIcon]
+    do {
+      stored = try store?.placeIcons() ?? [:]
+    } catch {
+      log.event("error", ["where": "place_icons", "message": "\(error)"])
+      stored = [:]
+    }
+    var next: [Int64: PlaceIcon] = [:]
+    for place in knownPlaces {
+      let icon = PlaceIcons.resolve(name: place.name, stored: stored[place.id])
+      next[place.id] = icon
+      if !icon.needsLookup, loggedIcons[place.id] != icon {
+        loggedIcons[place.id] = icon
+        var fields: [String: Any] = ["action": "guess", "name": place.name, "symbol": icon.symbol, "source": icon.source.rawValue]
+        if let category = icon.category { fields["category"] = category }
+        log.event("place_icon", fields)
+      }
+      if icon.needsLookup { lookUp(place) }
+    }
+    icons = next
+  }
+
+  private func lookUp(_ place: KnownPlace) {
+    guard !lookingUp.contains(place.id) else { return }
+    lookingUp.insert(place.id)
+    Task {
+      let started = Date()
+      defer { lookingUp.remove(place.id) }
+      do {
+        let answer = try await PlaceIconLookup.ask(about: place)
+        let stored = PlaceIcons.stored(named: answer.named, nearby: answer.nearby, for: place)
+        let radius = PlaceIcons.searchRadius(for: place)
+        var fields: [String: Any] = [
+          "action": "lookup", "name": place.name, "ok": true, "named": answer.named.count, "found": answer.nearby.count,
+          "symbol": stored.symbol, "source": stored.source.rawValue, "radius": Int(radius),
+          "ms": Int(Date().timeIntervalSince(started) * 1000),
+        ]
+        // The five nearest, whatever their category, so a wrong guess can be read from the log.
+        fields["nearby"] = answer.nearby.map { ($0, Geo.distance(place.coordinate, $0.coordinate)) }.sorted { $0.1 < $1.1 }.prefix(5)
+          .map { "\(PlaceIcons.categoryName($0.0.category ?? "none")) \(Int($0.1.rounded()))m" }.joined(separator: ", ")
+        fields["named_top"] = answer.named.prefix(3)
+          .map { "\($0.name ?? "?") (\(PlaceIcons.categoryName($0.category ?? "none")) \(Int(Geo.distance(place.coordinate, $0.coordinate).rounded()))m)" }
+          .joined(separator: ", ")
+        if let hit = PlaceIcons.byName(answer.named, for: place) {
+          fields["by"] = "name"
+          fields["category"] = hit.category
+          fields["distance_m"] = Int(hit.distance.rounded())
+        } else if let hit = PlaceIcons.nearest(answer.nearby, to: place.coordinate, within: radius) {
+          fields["by"] = "nearest"
+          fields["category"] = hit.category
+          fields["distance_m"] = Int(hit.distance.rounded())
+        }
+        log.event("place_icon", fields)
+        // The place may have been deleted, grown or given an icon meanwhile: only fill a gap that is still there.
+        guard let current = knownPlaces.first(where: { $0.id == place.id }), current.coordinate == place.coordinate,
+          current.radiusMeters == place.radiusMeters, icons[place.id]?.needsLookup ?? false
+        else { return }
+        try store?.setPlaceIcon(stored, for: place.id)
+        refreshIcons()
+      } catch {
+        // Left unremembered: the plain pin stands and the next reload asks again. Said once per place per launch.
+        guard failedLookups.insert(place.id).inserted else { return }
+        log.event(
+          "place_icon",
+          ["action": "lookup", "name": place.name, "ok": false, "message": "\(error)", "ms": Int(Date().timeIntervalSince(started) * 1000)])
+      }
+    }
+  }
+
+  /// The known place whose screen is open.
+  @Published var editing: KnownPlace?
+
+  func edit(_ place: KnownPlace, from source: String) {
+    editing = place
+    log.event("ui", ["action": "edit_place", "name": place.name, "from": source, "symbol": icon(place).symbol, "source": icon(place).source.rawValue])
+  }
+
+  /// The picker on a place's screen: a symbol is chosen and remembered; nil gives the place back to the guess.
+  func chooseIcon(_ symbol: String?, for place: KnownPlace) {
+    do {
+      if let symbol {
+        try store?.setPlaceIcon(StoredPlaceIcon(symbol: symbol, source: .chosen), for: place.id)
+      } else {
+        try store?.clearPlaceIcon(for: place.id)
+      }
+      log.event("place_icon", ["action": symbol == nil ? "clear" : "choose", "name": place.name, "symbol": symbol ?? ""])
+      refreshIcons()
+    } catch {
+      fail("place_icon", error)
     }
   }
 
