@@ -323,7 +323,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 057:
 
 - **Summary:** Every place has an icon, guessed for me, and mine to change
-- **Status:** implemented (native app)
+- **Status:** native app: implemented in [b5fa17c](https://github.com/idvorkin/context-grabber/commit/b5fa17c); verified by `PlaceIconsTests` (the name rules, Apple Maps by name and nearest, the order, the remembered table) and on the simulator, online: Home a house and Work a briefcase from their names, Kettlebility a dumbbell (Apple Maps: Fitness center, by name, 60 m) and Milstead & Co a cup (Cafe, by name, 251 m), seen in a screenshot of the map; `PlaceIconUITests` (choosing the heart changes Home's pin, Use the guess brings the house back); offline and the phone still to be checked by Igor
 - **Issues:** [#161](https://github.com/idvorkin/context-grabber/issues/161)
 
 #### Use Case:
