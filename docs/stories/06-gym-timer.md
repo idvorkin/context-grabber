@@ -451,7 +451,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 184:
 
 - **Summary:** Turn Work, Rest and Rounds on big drums, upright
-- **Status:** native app only: implemented
+- **Status:** native app only: implemented in [95188a6](https://github.com/idvorkin/context-grabber/commit/95188a6); verified by `just native-test` (`TimerDialsTests`: steps carried, the flick, the ranges held, the arc's angles) and on the simulator (`GymTimerDialsUITests`: taps on the Work drum's ends step 0:10 ↔ 0:20 and a swipe up turns it to 2:10, logged as `custom_dial`; screenshots of the drums, the knobs and the arc, and of the face following the drum); the haptics and sweaty fingers are the phone still to be checked by Igor
 - **Issues:** [#163](https://github.com/idvorkin/context-grabber/issues/163)
 - **Spec:** [Custom preset — upright in Grabber Native: drums, not sliders](../superpowers/specs/2026-09-07-gym-timer-custom-preset-design.md)
 
