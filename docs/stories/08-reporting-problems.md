@@ -120,7 +120,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** What's new, by day, written by the build itself
 - **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165)
-- **Status:** not yet implemented ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md))
+- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor
 
 #### Use Case:
 - **As someone** who installs a new build of the native app most days
