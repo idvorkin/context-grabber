@@ -11,7 +11,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 140:
 
 - **Summary:** The native app lives beside the current one
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`just native-test-sim`: installs, launches, logs `session_start`) and on the phone (2026-10-04, installed beside Context Grabber and opened)
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`just native-test-sim`: installs, launches, logs `session_start`) and on the phone (2026-10-04, installed beside Context Grabber and opened); the commit and branch moved behind the home screen's cog: [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186), verified on the simulator (screenshot of the sheet)
 
 #### Use Case:
 - **As someone** who depends on the current app every day
@@ -120,7 +120,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** The home screen holds only what I open, and a cog holds the rest
 - **Issues:** [#166](https://github.com/idvorkin/context-grabber/issues/166)
-- **Status:** not yet implemented ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md))
+- **Status:** native app: implemented in [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186) ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md)); verified by host tests (`HomeLayoutTests`) and on the simulator (`HomeSettingsUITests`: Cockpit hidden and Gym Timer moved to the top through the cog, both still so after a relaunch, Reset puts them back; the log's `ui` home_settings / home_rows lines; screenshots of the home screen and the sheet); the phone still to be checked by Igor
 
 #### Use Case:
 - **As someone** who opens the native app to start a workout, a call or a breath, not to read its build number
