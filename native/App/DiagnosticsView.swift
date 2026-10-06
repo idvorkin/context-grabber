@@ -11,6 +11,15 @@ struct DiagnosticsView: View {
       Form {
         UsageSection(usage: model.usage)
         Section {
+          Button {
+            model.openWhatsNew(from: "home")
+          } label: {
+            WhatsNewRow(feed: model.whatsNew)
+          }
+          .tint(.primary)  // a quiet line above the launchers, not another launcher
+          .accessibilityIdentifier("home-whats-new")
+        }
+        Section {
           ForEach(model.homeLayout.visible, id: \.self) { id in
             if let row = HomeRow.row(id) {
               Button {
@@ -82,6 +91,14 @@ struct DiagnosticsView: View {
           .background(ShakeDetector { model.startBugReport(from: "shake") })
           .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
       }
+      .navigationDestination(
+        isPresented: Binding(
+          get: { model.showWhatsNew },
+          set: {
+            model.showWhatsNew = $0
+            if !$0 { model.screen = "home" }
+          })
+      ) { WhatsNewView(feed: model.whatsNew) }
       .navigationDestination(isPresented: $model.showToday) {
         TodayView(app: model, mirror: model.mirror)
       }

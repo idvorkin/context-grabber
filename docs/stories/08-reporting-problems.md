@@ -166,3 +166,32 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** I need the build, this launch's log, the gist token or *Report a problem*
 - **When:** I tap the cog
 - **Then:** they are under *About and diagnostics* in the sheet, as they were on the home screen, and a shake with the sheet up still opens a report naming the screen *home_settings*
+
+---
+
+### User Story 148:
+
+- **Summary:** What's new, by day, written by the build itself
+- **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165)
+- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor
+
+#### Use Case:
+- **As someone** who installs a new build of the native app most days
+- **I want to** see what each recent day's builds changed, in plain words, newest first
+- **so that** I remember what to try, and nobody has to keep a list up to date
+
+#### Acceptance Criteria:
+- **Scenario:** The latest change on the home screen
+- **Given:** the build was made from history whose newest story change, on Oct 5, is *Think of a card opens Igor's Think a Card Trainer*
+- **When:** I open the app
+- **Then:** the home screen shows *What's new · Oct 5 — Think of a card opens Igor's Think a Card Trainer* above the launchers
+
+- **Scenario:** The list by day
+- **Given:** the last thirty days hold story changes on several days, some with status follow-ups and merges
+- **When:** I tap *What's new*
+- **Then:** I see one section per day, newest first, each change once per story per day with its story and issue under it, no status or merge lines, and the log has `ui` open_whats_new
+
+- **Scenario:** Nothing to show
+- **Given:** a build made without the project's history, or with no story change in thirty days
+- **When:** I open the app and tap the row
+- **Then:** the row reads *What's new · nothing new* and the screen says there is nothing new, with no error

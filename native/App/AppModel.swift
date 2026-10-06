@@ -45,6 +45,10 @@ final class AppModel: ObservableObject {
   @Published var showToday = false
   /// The metric whose week is open over Today.
   @Published var openMetricKey: MetricSheetItem?
+  /// What's new, as the build wrote it (story 148); nil when the resource is missing or unreadable.
+  let whatsNew = WhatsNewFeed.decode(
+    Bundle.main.url(forResource: "whats-new", withExtension: "json").flatMap { try? Data(contentsOf: $0) })
+  @Published var showWhatsNew = false
   /// Which launchers the home screen shows, in Igor's order (story 147).
   @Published private(set) var homeLayout: HomeLayout
   @Published var showHomeSettings = false
@@ -242,6 +246,18 @@ final class AppModel: ObservableObject {
     call.start(from: "shortcut")
   }
 
+  func openWhatsNew(from source: String) {
+    let days = whatsNew?.days ?? []
+    log.event(
+      "ui",
+      [
+        "action": "open_whats_new", "from": source, "days": days.count,
+        "changes": days.reduce(0) { $0 + $1.items.count }, "newest": days.first?.day ?? "",
+      ])
+    screen = "whats_new"
+    showWhatsNew = true
+  }
+
   func openToday(from source: String) {
     log.event("ui", ["action": "open_today", "from": source])
     showToday = true
@@ -329,6 +345,7 @@ final class AppModel: ObservableObject {
       places.exportFile = nil
     }
     if env["GRABBER_COCKPIT"] == "open" { openCockpit(from: "hook") }
+    if env["GRABBER_WHATS_NEW"] == "open" { openWhatsNew(from: "hook") }
     if env["GRABBER_HOME"] == "settings" { openHomeSettings() }
     if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
       // A call to that bridge (the smoke run's fake one), hung up after GRABBER_CALL_SECONDS (default 8).
