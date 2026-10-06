@@ -9,9 +9,9 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 080:
 
 - **Summary:** A Larry call keeps going when the phone locks or goes in a pocket
-- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0); verified by `callSession.test.ts` and on the phone (daily calls); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (`CallSession*Tests`) and `just native-test-sim` (a call to the fake bridge, [9939b6a](https://github.com/idvorkin/context-grabber/commit/9939b6a)); the lock is the phone still to be checked by Igor
+- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0); verified by `callSession.test.ts` and on the phone (daily calls); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (`CallSession*Tests`) and `just native-test-sim` (a call to the fake bridge, [9939b6a](https://github.com/idvorkin/context-grabber/commit/9939b6a)); the lock is the phone still to be checked by Igor; native no-sound fix [d9c1fd1](https://github.com/idvorkin/context-grabber/commit/d9c1fd1) (#146: the player reconnected when the mic finds the engine stopped) verified on the phone by Igor, 2026-10-05
 
-- **Issues:** [#136](https://github.com/idvorkin/context-grabber/issues/136) (native: the bridge refused the native socket, which sent no Origin)
+- **Issues:** [#136](https://github.com/idvorkin/context-grabber/issues/136) (native: the bridge refused the native socket, which sent no Origin), #146
 
 #### Use Case:
 - **As a** Larry's client walking to school with the phone in a pocket
@@ -446,3 +446,32 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** Grabber Native is closed and ElevenLabs is the remembered backend
 - **When:** I run Grabber Native's *Call Larry* action from the Shortcuts app
 - **Then:** the app opens on the call screen and the call goes *live* on ElevenLabs without a tap, the session log shows `open_call` from shortcut and `call_start`, and running it again mid-call brings the call forward without a second `call_start`
+
+---
+
+### User Story 203:
+
+- **Summary:** What is left of Claude's week and of the voice budget, as a strip on the native home screen
+- **Status:** implemented in [3da9e54](https://github.com/idvorkin/context-grabber/commit/3da9e54) (native); verified by `CockpitUsageTests` (host) and the simulator against the live Cockpit (strip drawn: Week 31%, Fable 13% orange, Voice 3.8h; unreachable Cockpit: no strip, `usage` load ok:false in the log); the refresh ask's Origin checked with curl (403 without, 202 with); on the phone: not yet; the *to spend* nudge [aa054d2](https://github.com/idvorkin/context-grabber/commit/aa054d2) verified by `CockpitUsageTests` and a simulator screenshot against the live Cockpit (*28% to spend · resets in 6H*)
+- **Spec:** [native Cockpit — the usage strip](../superpowers/specs/2026-10-05-native-cockpit-design.md#the-usage-strip-on-the-home-screen)
+
+#### Use Case:
+- **As a** Larry's client who spends Claude and ElevenLabs all week
+- **I want to** see how much of the weekly allowance, the current model's allowance and the voice budget is left the moment I open the native app
+- **so that** I pace the week without opening the Cockpit, and a call to Larry never dies on an empty voice budget
+
+#### Acceptance Criteria:
+- **Scenario:** A glance at what is left
+- **Given:** the phone is on the tailnet and the Cockpit has a usage reading
+- **When:** I open Grabber Native
+- **Then:** above the rows a strip shows Week, the model and Voice left as bars with their numbers, when the week resets and the pacing verdict; a bar under 20% is orange, under 10% red; a stale reading says its age
+
+- **Scenario:** Quota about to go to waste
+- **Given:** the week resets in 13 hours and 31% of it is left
+- **When:** I open Grabber Native
+- **Then:** the line under the bars starts with *31% to spend* in green; a day earlier, or with under 20% left, it does not
+
+- **Scenario:** Refresh and off the tailnet
+- **Given:** the strip is showing
+- **When:** I tap it
+- **Then:** it says *refreshing…* until Larry has taken a new reading (about a minute) and then shows it; and with Tailscale off the home screen shows no strip and no error

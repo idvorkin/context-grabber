@@ -80,6 +80,14 @@ report becomes one GitHub issue with the note and the context; filing twice neve
 picture stays on the Mac and the issue says where: the issues are public, and a screen can show health, places
 or the journal.
 
+**A gentle shake is enough** (Igor, 2026-10-06, #164: *"let it work with less aggressive shakes"*). iOS's own shake
+gesture wants a hard shake. The app also listens to the motion itself: a quick back-and-forth — three changes of
+direction within a second, each flick at least about 1.5 g (Apple does not publish its own threshold; this one
+is tuned from the log) — opens the report. Walking, a
+jog, setting the phone down or a bump on the gym bench is not a shake. A hard shake still works as before, and
+one shake opens one sheet. Each shake the app catches is in the session log with how hard it was, so the
+threshold can be tuned from real shakes.
+
 **Crashes.** When the app crashed or hung, the next launch's log says so and names a file with the stack; the
 file comes to the Mac with the logs.
 

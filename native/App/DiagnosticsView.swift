@@ -9,6 +9,7 @@ struct DiagnosticsView: View {
   var body: some View {
     NavigationStack {
       Form {
+        UsageSection(usage: model.usage)
         Section {
           ForEach(model.homeLayout.visible, id: \.self) { id in
             if let row = HomeRow.row(id) {

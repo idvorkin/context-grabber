@@ -426,3 +426,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap the gear, then *Australian woman* under *Count voice*
 - **Then:** the checkmark moves to her row, she says *go* once as a sample, the session log has a `ui` line with `action: count_voice` and `voice: aussie`, the next cue is in her voice, and after quitting and reopening the app she is still the one counting
 
+---
+
+### User Story 183:
+
+- **Summary:** Tap the time to pause, upright as on its side
+- **Status:** native app only: implemented in [aaa1227](https://github.com/idvorkin/context-grabber/commit/aaa1227); verified by `GymTimerUITests` on the simulator (tap the time: RESUME appears, tap again: STOP); the phone still to be checked by Igor
+- **Issues:** [#148](https://github.com/idvorkin/context-grabber/issues/148)
+- **Spec:** [LED display — upright, the face is a button too](../superpowers/specs/2026-09-07-gym-timer-led-display-design.md)
+
+#### Use Case:
+- **As a** lifter who pauses by tapping the timer when the phone is on its side
+- **I want to** pause the same way when I am holding the phone upright
+- **so that** I do not hunt for the STOP button between sets
+
+#### Acceptance Criteria:
+- **Scenario:** Upright, mid-round
+- **Given:** the phone is upright and a Rounds workout is running
+- **When:** I tap the time
+- **Then:** the workout pauses as STOP would (the face says *PAUSEd*, the log has `timer_pause`), and another tap on the time resumes it; the Stopwatch stops and resumes the same way
