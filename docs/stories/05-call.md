@@ -9,9 +9,9 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 080:
 
 - **Summary:** A Larry call keeps going when the phone locks or goes in a pocket
-- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0); verified by `callSession.test.ts` and on the phone (daily calls); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (`CallSession*Tests`) and `just native-test-sim` (a call to the fake bridge, [9939b6a](https://github.com/idvorkin/context-grabber/commit/9939b6a)); the lock is the phone still to be checked by Igor
+- **Status:** implemented in [b8d45ca](https://github.com/idvorkin/context-grabber/commit/b8d45ca), [c1600f0](https://github.com/idvorkin/context-grabber/commit/c1600f0); verified by `callSession.test.ts` and on the phone (daily calls); native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599); verified by `just native-test` (`CallSession*Tests`) and `just native-test-sim` (a call to the fake bridge, [9939b6a](https://github.com/idvorkin/context-grabber/commit/9939b6a)); the lock is the phone still to be checked by Igor; native no-sound fix [d9c1fd1](https://github.com/idvorkin/context-grabber/commit/d9c1fd1) (#146: the player reconnected when the mic finds the engine stopped) verified on the phone by Igor, 2026-10-05
 
-- **Issues:** [#136](https://github.com/idvorkin/context-grabber/issues/136) (native: the bridge refused the native socket, which sent no Origin)
+- **Issues:** [#136](https://github.com/idvorkin/context-grabber/issues/136) (native: the bridge refused the native socket, which sent no Origin), #146
 
 #### Use Case:
 - **As a** Larry's client walking to school with the phone in a pocket
