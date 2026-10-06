@@ -388,3 +388,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Then:** Larry's record shows the arrival within a few minutes, and a note Larry sends back appears on the phone
 
 - **Issues:** [#84](https://github.com/idvorkin/context-grabber/issues/84) — shape to be discussed first
+
+---
+
+### User Story 200:
+
+- **Summary:** The call log never holds my precise position
+- **Status:** implemented in [9d21174](https://github.com/idvorkin/context-grabber/commit/9d21174); verified by `callLocation.test.ts` (host). Not yet on the phone.
+
+#### Use Case:
+- **As** someone whose call log uploads itself as a gist when a call goes wrong
+- **I want to** have Diagnostics name the known place, or show only a rounded position when there is none
+- **so that** a shared log does not say exactly where I was standing
+
+#### Acceptance Criteria:
+- **Scenario:** A call placed away from every known place
+- **Given:** I am somewhere that is not a known place
+- **When:** I tap Call Larry
+- **Then:** Diagnostics shows the position rounded to two decimals (about a kilometre), and the bridge still gets the precise position
+

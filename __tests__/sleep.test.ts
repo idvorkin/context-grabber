@@ -9,6 +9,9 @@ import {
   computeTrackingGap,
   computeOnsetMinutes,
   pickMainSleepSession,
+  sleepNightKey,
+  sleepHoursByNight,
+  toSleepSample,
   type SleepDaily,
 } from "../lib/sleep";
 import type { SleepSample } from "../lib/health";
@@ -723,5 +726,78 @@ describe("pickMainSleepSession", () => {
     ];
     const main = pickMainSleepSession(samples);
     expect(main!.startMs).toBe(t + 3 * hours);
+  });
+});
+
+// ─── Weekly export path: one night per bed day, real source names ────────────
+
+describe("sleepNightKey", () => {
+  it("puts an evening start on that day's night", () => {
+    expect(sleepNightKey("2026-03-16T23:00:00")).toBe("2026-03-16");
+    expect(sleepNightKey("2026-03-16T12:00:00")).toBe("2026-03-16");
+  });
+
+  it("puts a pre-noon start on the previous day's night", () => {
+    expect(sleepNightKey("2026-03-17T01:30:00")).toBe("2026-03-16");
+    expect(sleepNightKey("2026-03-17T11:59:00")).toBe("2026-03-16");
+  });
+});
+
+describe("sleepHoursByNight", () => {
+  // Watch stages split across midnight, plus the phone's own overlapping
+  // "Asleep" for the same night. Old path: 1h on Mon + 7h on Tue, sources summed.
+  const night: SleepSample[] = [
+    { startDate: "2026-03-16T23:00:00", endDate: "2026-03-17T00:00:00", value: 3, source: "Apple Watch" },
+    { startDate: "2026-03-17T00:00:00", endDate: "2026-03-17T03:00:00", value: 4, source: "Apple Watch" },
+    { startDate: "2026-03-17T03:00:00", endDate: "2026-03-17T07:00:00", value: 5, source: "Apple Watch" },
+    { startDate: "2026-03-16T23:30:00", endDate: "2026-03-17T06:30:00", value: 1, source: "iPhone" },
+  ];
+
+  it("reports a 23:00–07:00 night once, on the day you went to bed, sources merged", () => {
+    const result = sleepHoursByNight(night, new Date("2026-03-17T09:00:00"), 2);
+    expect(result).toEqual([
+      { date: "2026-03-16", value: 8 },
+      { date: "2026-03-17", value: null },
+    ]);
+  });
+
+  it("returns a DailyValue per day in the window, oldest first, null when empty", () => {
+    const result = sleepHoursByNight([], new Date("2026-03-17T09:00:00"));
+    expect(result).toHaveLength(7);
+    expect(result[0].date).toBe("2026-03-11");
+    expect(result[6]).toEqual({ date: "2026-03-17", value: null });
+  });
+
+  it("agrees with the Sleep sheet's merged night", () => {
+    const end = new Date("2026-03-17T09:00:00");
+    const sheet = aggregateSleepDetailed(night, end, 2).map((n) => n.totalHours);
+    expect(sleepHoursByNight(night, end, 2).map((d) => d.value)).toEqual(sheet);
+  });
+});
+
+describe("toSleepSample", () => {
+  const base = {
+    startDate: new Date("2026-03-16T23:00:00.000Z"),
+    endDate: new Date("2026-03-17T07:00:00.000Z"),
+    value: 3,
+  };
+
+  it("reads the device name from sourceRevision.source (healthkit v13 nitro object)", () => {
+    const hk = { ...base, sourceRevision: { source: { toJSON: () => ({ name: "Igor's Apple Watch" }) } } };
+    expect(toSleepSample(hk)).toEqual({
+      startDate: "2026-03-16T23:00:00.000Z",
+      endDate: "2026-03-17T07:00:00.000Z",
+      value: 3,
+      source: "Igor's Apple Watch",
+    });
+  });
+
+  it("falls back to a plain sourceRevision.source.name", () => {
+    const hk = { ...base, sourceRevision: { source: { name: "AutoSleep" } } };
+    expect(toSleepSample(hk).source).toBe("AutoSleep");
+  });
+
+  it("never reads the old top-level sourceName, and says Unknown when there is no source", () => {
+    expect(toSleepSample({ ...base, sourceName: "stale" }).source).toBe("Unknown");
   });
 });

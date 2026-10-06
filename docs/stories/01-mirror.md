@@ -100,7 +100,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 006:
 
 - **Summary:** Sleep is counted noon to noon and per source, so a Watch and a phone don't double the night
-- **Status:** implemented in [14e81d0](https://github.com/idvorkin/context-grabber/commit/14e81d0), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9), [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e); verified by `sleep.test.ts`, `health.test.ts`, `weekly.test.ts` and on the phone (issue reports from real nights)
+- **Status:** implemented in [14e81d0](https://github.com/idvorkin/context-grabber/commit/14e81d0), [7d2c9c9](https://github.com/idvorkin/context-grabber/commit/7d2c9c9), [2f8aaa2](https://github.com/idvorkin/context-grabber/commit/2f8aaa2), [7363b9e](https://github.com/idvorkin/context-grabber/commit/7363b9e), [25a30a5](https://github.com/idvorkin/context-grabber/commit/25a30a5); verified by `sleep.test.ts`, `health.test.ts`, `weekly.test.ts` and on the phone (issue reports from real nights; the per-device tab names from 25a30a5 are host-tested only)
 - **Issues:** [#11](https://github.com/idvorkin/context-grabber/issues/11), [#6](https://github.com/idvorkin/context-grabber/issues/6)
 
 #### Use Case:
@@ -112,7 +112,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Two sources logged the same night
 - **Given:** Apple Watch and a second source both reported 11pm–6am
 - **When:** I open the Sleep sheet
-- **Then:** the source with the richest stage data is selected by default, "All" shows the merged night once (about 7 h), switching tabs re-renders the chart, average, stages and daily rows, and a sample before noon counts toward the previous night
+- **Then:** there is one tab per device by its own name (never a lone "Unknown"), the source with the richest stage data is selected by default, "All" shows the merged night once (about 7 h), switching tabs re-renders the chart, average, stages and daily rows, a sample before noon counts toward the previous night, and the Sleep card's week agrees with "All"
 
 ---
 

@@ -4,7 +4,7 @@
 
 import type { SleepSample } from "./health";
 import { filterActualSleep } from "./health";
-import { formatDateKey } from "./weekly";
+import { formatDateKey, type DailyValue } from "./weekly";
 
 export type SleepDetails = {
   bedtime: string | null;
@@ -74,6 +74,35 @@ export function extractSleepDetails(
   return { bedtime, wakeTime };
 }
 
+/**
+ * The night a sleep sample belongs to: the local date of the noon-to-noon
+ * window containing its start. 23:00 Mon and 01:30 Tue are both Monday's night.
+ */
+export function sleepNightKey(startDate: string | Date): string {
+  const start = new Date(startDate);
+  const night = new Date(start);
+  night.setHours(0, 0, 0, 0);
+  if (start.getHours() < 12) night.setDate(night.getDate() - 1);
+  return formatDateKey(night);
+}
+
+/**
+ * Map a raw HealthKit sleep sample to a `SleepSample`, naming its source from
+ * `sourceRevision.source` (healthkit v13 has no top-level `sourceName`; its
+ * source is a nitro object whose fields come out through `toJSON()`).
+ */
+export function toSleepSample(s: any): SleepSample {
+  return {
+    startDate: new Date(s.startDate).toISOString(),
+    endDate: new Date(s.endDate).toISOString(),
+    value: s.value,
+    source:
+      s.sourceRevision?.source?.toJSON?.()?.name
+      ?? s.sourceRevision?.source?.name
+      ?? "Unknown",
+  };
+}
+
 // ─── aggregateSleepDetailed ───────────────────────────────────────────────────
 
 /**
@@ -128,15 +157,7 @@ export function aggregateSleepDetailed(
   for (const b of buckets) bucketByDate.set(b.date, b);
 
   for (const s of samples) {
-    const start = new Date(s.startDate);
-    const nightDate = new Date(start);
-    nightDate.setHours(0, 0, 0, 0);
-    if (start.getHours() < 12) {
-      // Pre-noon → belongs to PREVIOUS day's night
-      nightDate.setDate(nightDate.getDate() - 1);
-    }
-    const key = formatDateKey(nightDate);
-    const bucket = bucketByDate.get(key);
+    const bucket = bucketByDate.get(sleepNightKey(s.startDate));
     if (!bucket) continue;
     bucket.samples.push(s);
   }
@@ -188,6 +209,23 @@ export function aggregateSleepDetailed(
   }
 
   return buckets;
+}
+
+/**
+ * Per-night sleep hours as `DailyValue`s, for the week's card and the export:
+ * the same noon-to-noon, sources-merged, main-session number the Sleep sheet's
+ * "All" tab shows, so a night that crosses midnight is one value on the day
+ * you went to bed.
+ */
+export function sleepHoursByNight(
+  samples: SleepSample[] | undefined,
+  endDate: Date,
+  days = 7,
+): DailyValue[] {
+  return aggregateSleepDetailed(samples, endDate, days).map((n) => ({
+    date: n.date,
+    value: n.totalHours,
+  }));
 }
 
 /**

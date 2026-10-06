@@ -241,6 +241,9 @@ function quantile(sorted: number[], p: number): number {
  * Sleep is assigned to the LOCAL date of its `startDate`. All samples sharing
  * the same start-date bucket are merged with `calculateSleepHours` to handle
  * overlapping sources (Watch + iPhone).
+ *
+ * Splits a night that crosses midnight across two days. The app uses
+ * `sleepHoursByNight` (`lib/sleep.ts`) instead; this has no caller there.
  */
 export function aggregateSleep(
   samples: SleepSample[],
