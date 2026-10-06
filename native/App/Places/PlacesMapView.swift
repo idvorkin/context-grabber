@@ -57,7 +57,7 @@ struct PlacesMapView: View {
       }
       ForEach(places.knownPlaces) { place in
         Annotation("", coordinate: place.coordinate.cl, anchor: .center) {
-          PlacePin(name: place.name, color: Color(hex: places.color(place.name)))
+          PlacePin(name: place.name, symbol: places.icon(place).symbol, color: Color(hex: places.color(place.name)))
         }
       }
       if let you {
@@ -139,24 +139,25 @@ struct PlacesMapView: View {
   }
 }
 
-/// A known place: its icon in a ring of its colour, or a dot with a name chip.
+/// A known place: its icon in a ring of its colour (story 057), and its name in a small chip under it.
 struct PlacePin: View {
   let name: String
+  let symbol: String
   let color: Color
 
   var body: some View {
-    if let icon = PlaceStyle.icon(for: name) {
-      Text(icon).font(.system(size: 16)).frame(width: 30, height: 30)
+    VStack(spacing: 2) {
+      Image(systemName: symbol).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+        .frame(width: 30, height: 30)
         .background(Circle().fill(Color(white: 0.1).opacity(0.85)))
         .overlay(Circle().stroke(color, lineWidth: 3))
-        .accessibilityLabel(name)
-    } else {
-      VStack(spacing: 2) {
-        Circle().fill(color).frame(width: 14, height: 14).overlay(Circle().stroke(.white, lineWidth: 2))
-        Text(name).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
-          .padding(.horizontal, 5).padding(.vertical, 2).background(Color.black.opacity(0.65), in: Capsule())
-      }
+      Text(name).font(.system(size: 10, weight: .semibold)).foregroundStyle(.white).lineLimit(1)
+        .padding(.horizontal, 5).padding(.vertical, 2).background(Color.black.opacity(0.65), in: Capsule())
     }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(name)
+    .accessibilityIdentifier("place-\(name)")
+    .accessibilityValue(symbol)
   }
 }
 

@@ -1,5 +1,5 @@
 //  The colour language the map and the breakdown share (story 048), today's path (049) and the map's framing.
-//  Ported from lib/places_colors.ts, lib/place_icons.ts, lib/location.ts and StylizedMap's computeRegion.
+//  Ported from lib/places_colors.ts, lib/location.ts and StylizedMap's computeRegion; the icons are PlaceIcons.
 
 import Foundation
 
@@ -42,21 +42,6 @@ public enum PlaceStyle {
   public static func color(_ placeId: String, in map: [String: String], fallbackIndex: Int = 0) -> String {
     if isUnnamed(placeId) { return unknownPlace }
     return map[placeId] ?? palette[fallbackIndex % palette.count]
-  }
-
-  private static let iconRules: [(words: [String], icon: String)] = [
-    (["home"], "🏠"),
-    (["work", "office"], "💼"),
-    (["gym"], "🏋️"),
-    (["cafe", "coffee", "café"], "☕"),
-    (["school", "university", "college"], "🎓"),
-  ]
-
-  /// An icon when a whole word of the name gives the place away ("My Home", not "Homestead"); first rule wins.
-  public static func icon(for name: String) -> String? {
-    let words = Set(
-      name.lowercased().split(whereSeparator: { !($0.isLetter || $0.isNumber || $0 == "_") }).map(String.init))
-    return iconRules.first { rule in rule.words.contains(where: words.contains) }?.icon
   }
 
   // MARK: - today's path

@@ -261,6 +261,11 @@ final class AppModel: ObservableObject {
       let parts = spec.split(separator: ",").map(String.init)
       openPlaces(from: "hook")
       if parts.first == "map" { showPlacesMap = true }
+      // "open,edit:<name>" opens that known place's screen, for a screenshot of its icon picker (story 057).
+      if let edit = parts.first(where: { $0.hasPrefix("edit:") }) {
+        let name = String(edit.dropFirst(5))
+        if let place = places.knownPlaces.first(where: { $0.name == name }) { places.edit(place, from: "hook") }
+      }
       if parts.dropFirst().contains("unnamed") {
         Task {
           for _ in 0..<100 where places.loading || places.unnamed.isEmpty {
