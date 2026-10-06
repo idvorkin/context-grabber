@@ -401,6 +401,12 @@ The chart in the sheet bar-stacks the `aggregateSleepDetailed` output (noon-to-n
 
 This decouples the Sleep Avg entirely from the legacy `aggregateSleep` path. Other metrics (non-sleep) keep using their existing Avg calculation.
 
+### 4.2a The export and the week's cards count sleep the same way (2026-10-05)
+
+A read-only review found the weekly path still on the old rule: the Sleep card's range, the shared summary's per-day `sleepHours` and its weekly sleep stats split an 11pm–7am night across two calendar days (the hours before midnight on one, the hours after on the next) and summed every source into one pile. The Sleep sheet's source tabs also showed a single "Unknown" tab, because the weekly query never read the device name.
+
+**Fix:** everything that reports sleep per day uses the Sleep sheet's rule — noon to noon, merged across sources, the night's main session only — so a night is one number on the day you went to bed, and the summary, the card and the sheet's "All" tab agree. Each sample carries the name of the device that recorded it, so the sheet shows one tab per real source.
+
 ### 4.3 Dropped-tracking indicator + sleep-onset surface (revised 2026-04-24)
 
 Two observations from early use of the initial 4.3 implementation:

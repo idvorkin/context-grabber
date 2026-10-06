@@ -163,7 +163,7 @@ Main UI in `App.tsx` (~1800 lines) with pure functions extracted into `lib/` mod
 - Pruning happens on app foreground and when retention days are reduced
 - All timestamps: UTC unix milliseconds in storage, ISO 8601 UTC in export
 - Day bucketing uses **local time** (not UTC) — "your Tuesday" means local Tuesday
-- Sleep bucketing is **noon-to-noon** — new code should use `aggregateSleepDetailed` (`lib/sleep.ts`), which attributes pre-noon samples to the PREVIOUS night. The older `aggregateSleep` uses `bucketByDay` with midnight cutoffs and is kept only for the scalar `weeklyCache.sleep` path.
+- Sleep bucketing is **noon-to-noon** — new code should use `aggregateSleepDetailed` (`lib/sleep.ts`), which attributes pre-noon samples to the PREVIOUS night. The week's card and the export use `sleepHoursByNight` (its `DailyValue` view) and map HealthKit samples with `toSleepSample`, which reads the source from `sourceRevision.source`. The older `aggregateSleep` (midnight cutoffs, splits a night across two days) has no caller in the app any more.
 - Sleep merges overlapping intervals before summing (Watch + iPhone both report same period)
 - Today's health data is always live; past days are cached in SQLite
 - Clustering is computed on-demand (when user opens Location sheet or shares), not on grab

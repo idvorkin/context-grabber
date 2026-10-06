@@ -37,6 +37,9 @@ import {
 } from "./lib/db";
 import {
   buildSleepDetailedBundle,
+  sleepHoursByNight,
+  sleepNightKey,
+  toSleepSample,
   type SleepDetailedBundle,
 } from "./lib/sleep";
 import { buildActivityTimeline, type ActivityTimeline } from "./lib/activity";
@@ -50,7 +53,6 @@ import {
   buildMovementOverlay,
   type MovementOverlayData,
   aggregateHeartRate,
-  aggregateSleep,
   aggregateMeditation,
   pickLatestPerDay,
   formatDateKey,
@@ -1166,12 +1168,7 @@ export default function App() {
     if (sleepResult.status === "fulfilled" && sleepResult.value) {
       mappedSleep = {
         status: "fulfilled" as const,
-        value: (sleepResult.value as any[]).map((s: any) => ({
-          startDate: s.startDate,
-          endDate: s.endDate,
-          value: s.value,
-          source: s.sourceRevision?.source?.toJSON?.()?.name ?? s.sourceRevision?.source?.name ?? "Unknown",
-        })),
+        value: (sleepResult.value as any[]).map(toSleepSample),
       };
     } else {
       mappedSleep = sleepResult.status === "fulfilled"
@@ -1304,18 +1301,15 @@ export default function App() {
         return { computed: buckets[0], raw: mapped };
       }
       case "sleep": {
-        // Sleep needs wider window for overnight sessions
-        const prevDay = new Date(dayStart.getTime() - 12 * 60 * 60 * 1000);
+        // The night of `dateKey` is noon that day to noon the next (bed-day attribution).
+        const noon = new Date(dayStart.getTime() + 12 * 60 * 60 * 1000);
+        const nextNoon = new Date(noon.getTime() + 24 * 60 * 60 * 1000);
         const samples = await HealthKit.queryCategorySamples(CTI.sleep, {
           limit: 0,
-          filter: { date: { startDate: prevDay, endDate: dayEnd } },
+          filter: { date: { startDate: noon, endDate: nextNoon } },
         });
-        const mapped = [...samples].map((s: any) => ({
-          startDate: new Date(s.startDate).toISOString(),
-          endDate: new Date(s.endDate).toISOString(),
-          value: s.value,
-        }));
-        const buckets = aggregateSleep(mapped as any, dayEnd, 1);
+        const mapped = [...samples].map(toSleepSample);
+        const buckets = sleepHoursByNight(mapped, dayStart, 1);
         return { computed: buckets[0], raw: mapped };
       }
       case "weight": {
@@ -1389,16 +1383,12 @@ export default function App() {
         limit: 0,
         filter: dateFilter,
       });
-      rawSamples = [...samples].map((s: any) => ({
-        startDate: new Date(s.startDate).toISOString(),
-        endDate: new Date(s.endDate).toISOString(),
-        value: s.value,
-        source: s.sourceName,
-      }));
-      results = aggregateSleep(rawSamples as any, now);
+      rawSamples = [...samples].map(toSleepSample);
+      // Same noon-to-noon, sources-merged numbers as the Sleep sheet's "All" tab.
+      results = sleepHoursByNight(rawSamples, now);
       // Also build the per-source detailed bundle (stages, bedtime, wake, samples)
       // for the sleep detail sheet. Tabs in the sheet select a source or "All".
-      const bundle = buildSleepDetailedBundle(rawSamples as any, now);
+      const bundle = buildSleepDetailedBundle(rawSamples, now);
       setSleepDetailedCache(bundle);
     }
 
@@ -1409,7 +1399,9 @@ export default function App() {
           await putComputedCached(db, metric, bucket.date, bucket);
           // Store raw samples that fall on this day
           const dayRaw = rawSamples.filter((s: any) => {
-            const sDate = formatDateKey(new Date(s.startDate));
+            const sDate = metric === "sleep"
+              ? sleepNightKey(s.startDate)
+              : formatDateKey(new Date(s.startDate));
             return sDate === bucket.date;
           });
           if (dayRaw.length > 0) {

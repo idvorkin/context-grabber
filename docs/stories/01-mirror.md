@@ -112,7 +112,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Two sources logged the same night
 - **Given:** Apple Watch and a second source both reported 11pm–6am
 - **When:** I open the Sleep sheet
-- **Then:** the source with the richest stage data is selected by default, "All" shows the merged night once (about 7 h), switching tabs re-renders the chart, average, stages and daily rows, and a sample before noon counts toward the previous night
+- **Then:** there is one tab per device by its own name (never a lone "Unknown"), the source with the richest stage data is selected by default, "All" shows the merged night once (about 7 h), switching tabs re-renders the chart, average, stages and daily rows, a sample before noon counts toward the previous night, and the Sleep card's week agrees with "All"
 
 ---
 

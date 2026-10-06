@@ -313,3 +313,22 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** I have not shared today
 - **When:** the call connects
 - **Then:** Larry has this week's summary before the first exchange
+
+---
+
+### User Story 037:
+
+- **Summary:** A night that crosses midnight is one night in the export
+- **Status:** implemented on branch `fix/sleep-export-night-bucketing`; verified by `sleep.test.ts` (host). Not yet on the phone.
+
+#### Use Case:
+- **As** someone who goes to bed before midnight and wakes after it
+- **I want to** see each night as one number on the day I went to bed, in the summary's days and its weekly sleep stats
+- **so that** Larry does not read one 8-hour night as a 1-hour night and a 7-hour night
+
+#### Acceptance Criteria:
+- **Scenario:** Sharing after an 11pm–7am night
+- **Given:** I slept from 11pm Monday to 7am Tuesday, seen by both the Watch and the phone
+- **When:** I share the summary
+- **Then:** Monday's entry in `days` carries the whole 8 h once, Tuesday's carries none of it, and the weekly sleep stats count that night once
+
