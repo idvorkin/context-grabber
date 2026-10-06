@@ -298,3 +298,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the native app has no points and Context Grabber's Export Database file holds 36 601 points and 4 known places
 - **When:** I share that file to Grabber Native (or pick it with Import from Context Grabber), and later import the same file again
 - **Then:** the first import says it brought in 36 601 points and 4 places and the breakdown and map show them; the second says 0 new points and 0 new places and nothing is duplicated; a known place whose name already exists in the native app is kept as it is; a file that is not a Context Grabber database is refused with a reason and changes nothing
+
+---
+
+### User Story 056:
+
+- **Summary:** See the places I have not named on the full-screen map, and name them there
+- **Status:** implemented (native app)
+- **Issues:** [#162](https://github.com/idvorkin/context-grabber/issues/162)
+
+#### Use Case:
+- **As** someone whose week has stops the breakdown only calls "Place 4"
+- **I want to** see those places on the full-screen map as quiet grey dots sized by the time I spent there, tap one to see when and how long I was there, and name it from the same card
+- **so that** I recognise an unnamed place by where it is on the street map, not by its number, and name it in one step
+
+#### Acceptance Criteria:
+- **Scenario:** Naming a stop from the map
+- **Given:** the last seven days hold stays at places with no name, and Home, Work and Kettlebility are known
+- **When:** I expand the Places map and tap the largest grey dot
+- **Then:** each unnamed place of the last seven days is a grey dot quieter than the named pins, larger the longer I was there, with a chip of its hours ("2.5h"), the map framed to include them, and the embedded map without them; the tap opens a card with its name, its hours and visits in the last seven days and each visit newest first with day, times and length (five, then "+N earlier"); *Name this place* offers to grow a known place within 500 m first and otherwise opens the name card at the place's centre with a radius of 100 m plus its visits' spread (at most 250 m); after I save a name the dot is a named pin in its colour and the day cards say the name

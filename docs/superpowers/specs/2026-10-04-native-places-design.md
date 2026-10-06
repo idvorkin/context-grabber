@@ -2,7 +2,7 @@
 
 **Status:** Drafted 2026-10-04 (Igor: "how about location?" — Places is the next journey to move)
 **Owner:** Igor
-**Tracking:** bead `context-grabber-3ss` (the native port, step 5); stories [040–055](../../stories/03-places.md)
+**Tracking:** bead `context-grabber-3ss` (the native port, step 5); stories [040–056](../../stories/03-places.md)
 **Part of:** [Swift-native app](2026-10-04-swift-native-app-design.md). The rules the stays follow are unchanged
 from [location clustering v2](2026-03-26-location-clustering-v2.md), the day accounting and naming from
 [places breakdown](2026-04-11-places-breakdown-gaps-and-naming-design.md), the map from
@@ -49,7 +49,7 @@ The home screen lists **Places** under "Ported so far". It opens full screen; *D
    every pin and the path, and free to pan and zoom. Three small controls sit in its corners: **locate** (centre
    on You at neighbourhood zoom; hidden with no fix), **copy** (puts "lat, lng" to six decimals on the clipboard
    and shows "✓ Copied" briefly), **expand** (the same map full screen, with the same controls; collapse or a
-   swipe down returns).
+   swipe down returns). The full-screen map also shows the places that have no name yet (below).
 2. **The last seven days**, newest first (stories 043, 044, 046, 047). Each day is a card: the date and the
    elapsed hours (24h for a past day, hours so far for today); a strip of the day in time order — stays in their
    place's colour, transit faded, no data grey, the rest of today dimmest; then a bar per place (longest first,
@@ -73,6 +73,31 @@ for a name and a radius (100 m) and shows the coordinates. With one or more, a c
 and what growing it would do — "Place 3 is 168 m from Milstead & Co. Expanding would grow radius 50 m → 159 m and
 shift the centre 57 m." — with **Expand**, **Create new** and **Cancel**, and "(+N more within 500 m)" when there
 are others. Either way every stay at that place, on every day, is relabelled at once.
+
+### Unnamed places on the full-screen map (story 056)
+
+The full-screen map shows, besides the named places, every place the stays found that has no name yet — each
+"Place N" visited in the last seven days, the same period as the day cards. They are quiet: a grey dot, paler and
+smaller than a named place's pin and never in a place colour, with a small chip saying how long Igor was there in
+those seven days ("2.5h"). The dot grows with the time, from a small dot for a few minutes to about the size of a
+named pin for a day or more, so the places that matter stand out. The full-screen framing includes them. The map
+embedded on the screen stays as it was — named places, You and today's path — so the small map is not cluttered.
+
+The dot sits at the place's centre: the average of its stays' centres, weighted by their points, as the clustering
+weighs them.
+
+Tapping a dot opens a card at the bottom of the map: the place's name ("Place 3"), the total time and the number
+of visits in the last seven days, and each visit, newest first, with its day, its times and its length ("Mon Mar
+23 · 9:10am–11:40am · 2.5h"; the five most recent, then "+N earlier"). The card's close button, or tapping
+another dot, changes it; the copy control steps aside while it is open.
+
+**Name this place** on the card is the same naming as the ＋ on a day card: with a known place within 500 m, the
+card offering to grow it comes first; otherwise the name card, with the place's position filled in and a radius
+that holds every visit — 100 m, the clustering's own radius, plus however far apart its visits' centres are,
+rounded up to ten metres and never more than 250 m. In the real fixture the visits' centres are at most 9 m apart
+and all but 2 of the unnamed stays' 2 340 points lie within 100 m of their place's centre (the farthest 111 m), so
+this is 100 or 110 m and holds the place. Saving relabels every stay there at once: the grey dot becomes a named pin in its colour, and the day cards
+follow.
 
 ### Background tracking (story 040)
 
@@ -168,5 +193,8 @@ same place across such a gap (story 044). More frequent collection would not hel
   known places and settings.
 - The map shows the known places in the same colours as their bars, You, and today's path; locate, copy and
   expand work as described.
+- The full-screen map shows a grey dot for every unnamed place of the last seven days, sized and labelled by its
+  hours; a tap shows its visits and *Name this place*, which offers to grow a known place within 500 m or names it
+  at its centre with the suggested radius; after naming, it is a named pin.
 - Each of these leaves its event in the session log: permission, tracking on and off, points arriving (sampled),
-  pruning, import, export, opening the screen.
+  pruning, import, export, opening the screen, tapping an unnamed place and naming it from the map.

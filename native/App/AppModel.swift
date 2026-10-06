@@ -238,9 +238,21 @@ final class AppModel: ObservableObject {
       tracker.setTracking(spec == "on", from: "hook")
     }
     if let spec = env["GRABBER_PLACES"], !spec.isEmpty {
-      // "open" opens the screen; "map" also opens the map full screen.
+      // "open" opens the screen; "map" also opens the map full screen; "map,unnamed" then opens the card of the
+      // longest unnamed place once the trail is read, and "map,unnamed,name" its naming card (story 056).
+      let parts = spec.split(separator: ",").map(String.init)
       openPlaces(from: "hook")
-      if spec == "map" { showPlacesMap = true }
+      if parts.first == "map" { showPlacesMap = true }
+      if parts.dropFirst().contains("unnamed") {
+        Task {
+          for _ in 0..<100 where places.loading || places.unnamed.isEmpty {
+            try? await Task.sleep(for: .milliseconds(200))
+          }
+          guard let place = places.unnamed.first else { return }
+          places.selectUnnamed(place.placeId, from: "hook")
+          if parts.contains("name") { places.startNaming(place) }
+        }
+      }
     }
     if env["GRABBER_EXPORT"] == "1" {
       // Prepares the file as Export database does, without the share sheet a script cannot dismiss.
