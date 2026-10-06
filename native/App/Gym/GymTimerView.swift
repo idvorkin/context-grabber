@@ -270,6 +270,9 @@ private struct RoundsMode: View {
         .padding(.bottom, 12)
       }
       TimerFace(content: roundsFace(model), width: width, maxHeight: 150)
+        // Story 183: upright the time is a button too, as it is with the phone on its side.
+        .contentShape(Rectangle()).onTapGesture(perform: model.toggleTimer)
+        .accessibilityIdentifier("timer-face")
       HStack(spacing: 16) {
         SideButton(title: "RESET", action: model.resetTimer)
         RoundButton(
@@ -291,6 +294,7 @@ private struct StopwatchMode: View {
       TimelineView(.animation(paused: !model.stopwatch.isRunning)) { timeline in
         TimerFace(content: stopwatchFace(model, at: timeline.date), width: width, maxHeight: 130)
       }
+      .contentShape(Rectangle()).onTapGesture(perform: model.toggleStopwatch)
       HStack(spacing: 16) {
         SideButton(title: "LAP", enabled: model.stopwatch.isRunning, action: model.lap)
         RoundButton(
