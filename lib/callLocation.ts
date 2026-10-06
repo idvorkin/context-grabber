@@ -51,10 +51,15 @@ export function significantMove(prev: CallLocation | null, next: CallLocation): 
   return haversineDistance(prev.lat, prev.lon, next.lat, next.lon) >= SIGNIFICANT_MOVE_M;
 }
 
-/** One log line: `Home (±12 m)` or `47.6062, -122.3321 (±65 m)`. */
+/**
+ * One log line: `Home (±12 m)` or `47.61, -122.33 (±65 m)`. Off a known place
+ * the coordinates are rounded to two decimals (~1 km): the call log can leave
+ * the phone as a gist, and the precise fix goes only to the bridge.
+ */
 export function describeLocation(l: CallLocation): string {
   const acc = l.accuracyM === null ? "" : ` (±${l.accuracyM} m)`;
-  return `${l.place ?? `${l.lat}, ${l.lon}`}${acc}`;
+  const round = (n: number) => Number(n.toFixed(2));
+  return `${l.place ?? `${round(l.lat)}, ${round(l.lon)}`}${acc}`;
 }
 
 /** What rides the wire — the bridge's snake_case for the accuracy. */

@@ -466,7 +466,10 @@ answers it rides the start; if it lands later it follows as its own small
 message. During the call, a **significant move** — a different known
 place, or 200 m from the last fix — sends one more; a walk to school is a
 handful of messages, not a stream. Diagnostics logs each one (*location:
-Home (±12 m)*). No fix is ever a reason for a call not to start: without
+Home (±12 m)*); away from a known place the log shows the position
+rounded to two decimals (about a kilometre), never the precise fix,
+because the call log can leave the phone as a gist. The bridge still gets
+the precise position. No fix is ever a reason for a call not to start: without
 location permission, or with no fix in time, the call simply carries no
 location. What Larry does with it is the bridge's.
 

@@ -38,4 +38,10 @@ describe("describeLocation", () => {
     expect(describeLocation({ lat: 47.6, lon: -122.3, accuracyM: 12, at: "", place: "Home" })).toBe("Home (±12 m)");
     expect(describeLocation({ lat: 47.6, lon: -122.3, accuracyM: null, at: "", place: null })).toBe("47.6, -122.3");
   });
+
+  it("rounds coordinates to two decimals off a known place — the log can be uploaded as a gist", () => {
+    const l = { lat: 47.612345, lon: -122.334567, accuracyM: 65, at: "", place: null };
+    expect(describeLocation(l)).toBe("47.61, -122.33 (±65 m)");
+    expect(describeLocation(l)).not.toContain("47.6123");
+  });
 });
