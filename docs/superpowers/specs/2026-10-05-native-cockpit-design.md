@@ -93,7 +93,7 @@ what is **left**, at a glance, without opening the dashboard.
   marked with its age.
 - **In the session log:** each load, what it showed or why it failed, and each tap to refresh.
 
-Non-goals for the strip: a widget or lock-screen version (later, with the widgets step), history or charts, any
+Non-goals for the strip: a lock-screen version (the home-screen widget is [the live tile](2026-10-06-native-live-tile-design.md)), history or charts, any
 change to the Cockpit's server.
 
 Acceptance (strip):

@@ -58,6 +58,7 @@ yarn-error.*
 /native/GrabberNative.xcodeproj/
 /native/Build/
 /native/GrabberNative.entitlements
+/native/Widgets/GrabberWidgets.entitlements
 /native/ContextCore/.build/
 
 # worktrees
