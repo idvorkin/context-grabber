@@ -60,7 +60,7 @@ final class AppModel: ObservableObject {
     bugReporter.pruneOldLogs()
     places.prune(reason: "launch")
     liveActivity.endLeftovers()
-    CallLauncher.handler = { [weak self] backend in self?.callFromShortcut(backend) }
+    LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
     mirror = MirrorModel(app: self)
     runLaunchHooks()
   }
@@ -83,18 +83,90 @@ final class AppModel: ObservableObject {
   }
 
   func closePlaces() {
+    guard showPlaces else { return }
     log.event("ui", ["action": "close_places"])
     screen = "home"
     showPlaces = false
     showPlacesMap = false
   }
 
-  /// A file shared to the app or opened in it from Files: Context Grabber's database export (story 055).
+  /// A `grabbernative://` link (story 135), or a file shared to the app or opened in it from Files: Context
+  /// Grabber's database export (story 055).
   func open(url: URL) {
-    log.event("ui", ["action": "open_url", "scheme": url.scheme ?? "", "file": url.isFileURL ? url.lastPathComponent : ""])
-    guard url.isFileURL else { return }
-    if !showPlaces { openPlaces(from: "file") }
-    places.importDatabase(url, from: "file")
+    if url.isFileURL {
+      log.event("open_url", ["url": "file:" + url.lastPathComponent, "route": "import", "ok": true, "from": "file"])
+      if !showPlaces { openPlaces(from: "file") }
+      places.importDatabase(url, from: "file")
+      return
+    }
+    let parsed = AppLink.parse(url)
+    log.event(
+      "open_url", ["url": url.absoluteString, "route": parsed.route.name, "ok": parsed.understood, "from": "link"])
+    go(to: parsed.route, from: "link")
+  }
+
+  /// A Shortcuts action, logged as the link it equals.
+  func open(route: AppRoute, from source: String) {
+    log.event("open_url", ["url": AppLink.link(for: route), "route": route.name, "ok": true, "from": source])
+    go(to: route, from: source)
+  }
+
+  /// The screen in front, by the route that names it.
+  private var front: String {
+    if gymTimer != nil { return "timer" }
+    if breathe != nil { return "breathe" }
+    if showPlaces { return "places" }
+    if showCockpit { return "cockpit" }
+    if callOpen { return "call" }
+    if showToday { return "today" }
+    return "home"
+  }
+
+  /// Whatever is in front goes, then the route's screen comes up. The screen already in front stays when the link
+  /// starts nothing; the call screen stays either way (a live call is brought forward, not restarted).
+  private func go(to route: AppRoute, from source: String) {
+    if front == route.name {
+      if case .call = route { return present(route, from: source) }
+      if !route.starts { return }
+    }
+    if case .card = route { return present(route, from: source) }  // another app: nothing here needs to move
+    guard closeAll() else { return present(route, from: source) }
+    Task {
+      // SwiftUI drops a cover asked for while another is still going down.
+      try? await Task.sleep(for: .milliseconds(700))
+      present(route, from: source)
+    }
+  }
+
+  /// Takes down every screen over home; true when one was up.
+  private func closeAll() -> Bool {
+    var covered = false
+    if gymTimer != nil { closeGymTimer(); covered = true }
+    if breathe != nil { closeBreathe(); covered = true }
+    if showPlaces { closePlaces(); covered = true }
+    if showCockpit { closeCockpit(); covered = true }
+    if callOpen { closeCall(); covered = true }
+    if showToday {
+      openMetricKey = nil
+      showToday = false
+      covered = true
+    }
+    return covered
+  }
+
+  private func present(_ route: AppRoute, from source: String) {
+    switch route {
+    case .home: break
+    case .today: openToday(from: source)
+    case .timer(let t):
+      openGymTimer(GymTimerLaunch(preset: t.preset, custom: t.custom, autostart: t.start), from: source)
+    case .breathe(let b):
+      openBreathe(BreatheLaunch(breath: b.breath, minutes: b.minutes, start: b.start), from: source)
+    case .places: openPlaces(from: source)
+    case .cockpit: openCockpit(from: source)
+    case .call(let via): callFromLink(via, from: source)
+    case .card: openThinkACard(from: source)
+    }
   }
 
   /// A shake or the button: the picture is taken before the sheet covers the screen.
@@ -120,18 +192,20 @@ final class AppModel: ObservableObject {
   }
 
   func closeGymTimer() {
+    guard gymTimer != nil else { return }  // a link closed it already; this is the cover's binding catching up
     log.event("ui", ["action": "close_timer"])
     screen = "home"
     gymTimer = nil
   }
 
   func openBreathe(_ launch: BreatheLaunch = BreatheLaunch(), from source: String) {
-    log.event("ui", ["action": "open_breathe", "from": source, "autostart": launch.plan != nil])
+    log.event("ui", ["action": "open_breathe", "from": source, "autostart": launch.begins])
     screen = "breathe"
     breathe = launch
   }
 
   func closeBreathe() {
+    guard breathe != nil else { return }
     log.event("ui", ["action": "close_breathe"])
     screen = "home"
     breathe = nil
@@ -163,6 +237,7 @@ final class AppModel: ObservableObject {
   }
 
   func closeCockpit() {
+    guard showCockpit else { return }
     log.event("ui", ["action": "close_cockpit"])
     screen = "home"
     showCockpit = false
@@ -178,17 +253,19 @@ final class AppModel: ObservableObject {
   }
 
   func closeCall() {
+    guard callOpen else { return }
     log.event("ui", ["action": "close_call", "state": call.snapshot.state.rawValue])
     screen = "home"
     callOpen = false
   }
 
-  /// The "Call Larry" Shortcut: the call screen, and a call unless one is already up (it is brought forward).
-  private func callFromShortcut(_ backend: CallBackend?) {
-    openCall(from: "shortcut")
+  /// A call link or the "Call Larry" Shortcut: the call screen, and a call unless one is already up (it is brought
+  /// forward).
+  private func callFromLink(_ backend: CallBackend?, from source: String) {
+    if !callOpen { openCall(from: source) }
     guard !call.snapshot.isActive else { return }
     if let backend { call.backend = backend }
-    call.start(from: "shortcut")
+    call.start(from: source)
   }
 
   func openToday(from source: String) {
@@ -278,6 +355,10 @@ final class AppModel: ObservableObject {
         await mirror.runFixtureHook(mode)
         if let metric { openMetric(metric, from: "hook") }
       }
+    }
+    if let link = env["GRABBER_LINK"], let url = URL(string: link) {
+      // As if iOS had opened the link: simctl openurl stops at a confirmation a script cannot tap.
+      open(url: url)
     }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {

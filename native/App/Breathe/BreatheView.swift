@@ -56,7 +56,7 @@ struct BreatheView: View {
       }
     }
     .preferredColorScheme(.dark)
-    .onAppear { if launch.plan != nil { model.begin(launch) } }
+    .onAppear { if launch.begins { model.begin(launch) } }
     .onDisappear { model.disappear() }
   }
 }

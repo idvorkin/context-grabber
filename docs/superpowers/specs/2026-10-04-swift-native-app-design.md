@@ -156,6 +156,13 @@ The Cockpit is ported ahead of the rest of step 7, as Igor called it critical: t
 outputs, the same bridge and client tag so the page needs no change, opened from the home screen and kept for the
 launch when closed. What it does and how it differs: [the native Cockpit spec](2026-10-05-native-cockpit-design.md).
 
+## Links and Shortcuts in the native app (step 7)
+
+Every screen has a link, the timer and breathing links can start a run, the same things are Shortcuts actions and
+Siri phrases, and a Links screen copies each link. Until the cutover the native app answers to its own scheme,
+`grabbernative://`, because Context Grabber owns `grabber://` on the phone: [Native links and
+Shortcuts](2026-10-06-native-links-design.md).
+
 ## Calling Larry in the native app (step 3)
 
 The call does what stories 080–095 say, against the same bridge and the same wire format, with these

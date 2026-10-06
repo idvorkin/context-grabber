@@ -53,6 +53,7 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_TURN=left\|right` | with `GRABBER_TIMER`: draw the timer as if the phone were on that side (the simulator has no accelerometer), for a screenshot of the turned face |
 | `GRABBER_COUNT_VOICE=adam\|igor\|aussie` | with `GRABBER_TIMER` or `GRABBER_TIMER_SETTINGS`: count in that voice for this launch, not remembered and with no sample (story 182); `just native-test-sim` runs `aussie` and reads the first `timer_cue`'s `voice` |
 | `GRABBER_TIMER_SETTINGS=1` | open the Gym Timer, not started, with *Timer settings* up (logs `ui` action: timer_settings), for a screenshot of the sheet |
+| `GRABBER_LINK=<url>` | route that link as if iOS had opened it (`simctl openurl` stops at an "Open in Grabber Native?" confirmation a script cannot tap): `grabbernative://timer?preset=10,10,2`, `grabbernative://breathe?breath=5&minutes=2`; the log's `open_url` says how it was read. `LinksUITests` opens real links through iOS instead, cold and warm |
 | `GRABBER_COCKPIT=open` | open the Cockpit screen, as its row on the home screen would |
 | `GRABBER_COCKPIT_URL=<url or page>` | load the Cockpit from elsewhere: a URL (`https://127.0.0.1:65530/` is the unreachable case `just native-test-sim` checks for the error panel), or the name of a page in the app bundle — `cockpit-bridge-test` speaks the audio bridge the way the Cockpit does and reports the round trip as `getRoute("roundtrip:<microphones>:tagged")` |
 
@@ -72,6 +73,14 @@ What the native rungs can and cannot see of the Gym Timer:
 | The Cockpit's bridge wire format (parsing, payloads, the injected scripts run in JavaScriptCore), the output roster and re-assert rules, the client tag, which links stay | Host | `BridgeParseTests`, `BridgePayloadTests`, `BridgeScriptTests`, `AudioRoutingTests`, `CockpitPageTests` |
 | The Cockpit in the app: page loaded with the tag, `audio.ready`, a device list delivered and acknowledged by the page, one answer per request, the call's screen hold, the unreachable panel | Simulator | the `cockpit:` checks in `sim-smoke.sh` (the bridge test page); `GRABBER_COCKPIT=open` alone loads the real tailnet page when the Mac is on the tailnet |
 | Real microphones and headsets in the pickers, a route put back after the page's capture starts, AirPods arriving mid-call, the microphone prompt, the screen held through a call, Done and back keeping the page | Phone only | open the Cockpit with AirPods paired, pick them, start a page call, `just pull-logs`, read `audio_route` / `cockpit_bridge` / `keep_awake` |
+
+What the native rungs can and cannot see of links and Shortcuts ([spec](superpowers/specs/2026-10-06-native-links-design.md)):
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| What every link asks for, its parameters, ranges, bad input, the link each route is written as, the Links screen's list | Host | `AppLinkTests` |
+| A link through iOS opening the app cold and warm, starting the timer or the breathing, an unknown link landing on home, Copy on the Links screen | Simulator | `xcodebuild … -only-testing:GrabberNativeUITests/LinksUITests test` (the warm case taps SpringBoard's *Open*), then the log's `open_url` |
+| The Shortcuts actions and Siri phrases, the Action Button, a link from another app or a widget | Phone only | build a shortcut of *Start Gym Timer* (1 MIN), run it with the app closed, `just pull-logs`, read `open_url` from: shortcut |
 
 What the native rungs can and cannot see of Box breathing:
 

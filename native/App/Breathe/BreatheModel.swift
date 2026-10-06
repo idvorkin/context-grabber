@@ -13,6 +13,14 @@ struct BreatheLaunch: Equatable {
   var pauseAt: Double?
   /// `GRABBER_BREATHE_STYLE`: this visit's ring style, not remembered (the simulator's screenshots).
   var style: BreathStyle?
+  /// A link's breath and length (story 135), each nil for the remembered slider; this session only.
+  var breath: Int?
+  var minutes: Int?
+  /// Begin on arrival, from the sliders unless the fields above say otherwise.
+  var start = false
+
+  /// Whether the screen begins a session as it appears rather than showing the sliders.
+  var begins: Bool { plan != nil || start }
 }
 
 @MainActor
@@ -98,7 +106,9 @@ final class BreatheModel: ObservableObject {
   func begin(_ launch: BreatheLaunch = BreatheLaunch()) {
     if let hooked = launch.cue { cue = hooked }
     if let hooked = launch.style { style = hooked }
-    let plan = launch.plan ?? plan
+    let plan =
+      launch.plan
+      ?? BreathPlan(breathSeconds: launch.breath ?? breathSeconds, sessionMinutes: launch.minutes ?? sessionMinutes)
     pauseAt = launch.pauseAt
     let leadIn = cue == .voice ? Self.voiceLeadIn : 0
     var run = BreathRun(plan: plan, leadIn: leadIn)

@@ -73,6 +73,12 @@ struct DiagnosticsView: View {
         } footer: {
           Text(model.call.hasToken ? "A troubled call's log goes up as a private gist." : "No GitHub token saved.")
         }
+        Section {
+          NavigationLink("Links for Shortcuts") { LinksView(log: model.log) }
+            .accessibilityIdentifier("home-links")
+        } footer: {
+          Text("A link for every screen, to paste into Shortcuts or the Action Button.")
+        }
         Section("Build") {
           LabeledContent("Commit", value: BuildInfo.sha)
           LabeledContent("Branch", value: BuildInfo.branch)

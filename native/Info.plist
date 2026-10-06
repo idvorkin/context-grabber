@@ -64,6 +64,18 @@
 			</dict>
 		</dict>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.idvorkin.grabbernative</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Not grabber: Context Grabber owns it until the cutover (story 135). -->
+				<string>grabbernative</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIFileSharingEnabled</key>
