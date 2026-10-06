@@ -28,6 +28,7 @@ final class GymTimerModel: ObservableObject {
   @Published private(set) var stopwatch = Stopwatch()
   @Published private(set) var sets = 0
   @Published private(set) var turn = DeviceTurn.upright
+  @Published private(set) var countVoice = CountVoice.default
 
   private var engine: TimerEngine
   private var clock: Timer?
@@ -60,8 +61,10 @@ final class GymTimerModel: ObservableObject {
     custom = CustomPreset.decode(database.setting(Self.presetKey))
     sets = SetCounter.clamp(Int(database.setting(Self.setsKey) ?? "") ?? 0)
     if let chosen = database.setting(Self.chosenKey), Self.isPreset(chosen) { presetId = chosen }
+    countVoice = CountVoice.decode(database.setting(CountVoice.settingKey))
     engine.setProfile(profile)
     timer = engine.state
+    audio.setVoice(countVoice)
     audio.loadCues()
   }
 
@@ -94,6 +97,12 @@ final class GymTimerModel: ObservableObject {
     custom = next.normalized
     database.setSetting(Self.presetKey, custom.encoded)
     applyProfile()
+  }
+
+  /// A Custom dial let go (story 184): one line per gesture, not per step.
+  func dialed(_ dial: String, style: String, from source: String) {
+    let value = dial == "work" ? custom.work : dial == "rest" ? custom.rest : custom.rounds
+    log.event("ui", ["action": "custom_dial", "dial": dial, "value": value, "style": style, "from": source])
   }
 
   /// For a link or a launch hook: a profile that is not on a chip, chosen as Custom without being remembered.
@@ -184,12 +193,39 @@ final class GymTimerModel: ObservableObject {
         clock?.invalidate()
         clock = nil
         log.event("timer_finished", ["rounds": engine.profile.rounds])
+        let custom = presetId == CustomPreset.id
+        let label = TimerProfile.presets.first { $0.id == presetId }?.label ?? "CUSTOM"
+        database.logActivity(
+          .gymTimer, name: ActivityLog.gymName(label: label, profile: engine.profile, custom: custom),
+          seconds: ActivityLog.gymSeconds(engine.profile))
         // "done" is still sounding: the window's release lets go of the session. With no window open (a
         // finish found on coming back) there is nothing to wait for.
         if duck.isOpen { audio.stopWhenReleased() } else { audio.stop() }
       }
     }
     if timer != engine.state { timer = engine.state }
+  }
+
+  // MARK: - the count voice (story 182)
+
+  /// Chosen in Timer settings: remembered, used from the next cue, and its "go" played as a sample.
+  func chooseCountVoice(_ voice: CountVoice) {
+    countVoice = voice
+    database.setSetting(CountVoice.settingKey, voice.rawValue)
+    log.event("ui", ["action": "count_voice", "voice": voice.rawValue, "from": "settings"])
+    audio.setVoice(voice)
+    audio.sample(voice)
+  }
+
+  func openedSettings(from source: String) {
+    log.event("ui", ["action": "timer_settings", "from": source, "voice": countVoice.rawValue])
+  }
+
+  /// For a launch hook: this visit only, not remembered and no sample.
+  func useCountVoiceOnce(_ voice: CountVoice) {
+    countVoice = voice
+    log.event("ui", ["action": "count_voice", "voice": voice.rawValue, "from": "hook"])
+    audio.setVoice(voice)
   }
 
   // MARK: - stopwatch and sets

@@ -56,7 +56,7 @@ struct BreatheView: View {
       }
     }
     .preferredColorScheme(.dark)
-    .onAppear { if launch.plan != nil { model.begin(launch) } }
+    .onAppear { if launch.begins { model.begin(launch) } }
     .onDisappear { model.disappear() }
   }
 }
@@ -66,15 +66,26 @@ struct BreatheView: View {
 private struct BreatheSetup: View {
   @ObservedObject var model: BreatheModel
   let onExit: () -> Void
+  @State private var showStyles = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      Button(action: onExit) {
-        Image(systemName: "xmark").font(.system(size: 17, weight: .regular)).foregroundStyle(Ink.dim)
-          .frame(width: 44, height: 44, alignment: .leading)
+      HStack {
+        Button(action: onExit) {
+          Image(systemName: "xmark").font(.system(size: 17, weight: .regular)).foregroundStyle(Ink.dim)
+            .frame(width: 44, height: 44, alignment: .leading)
+        }
+        .accessibilityLabel("Close")
+        .accessibilityIdentifier("breathe-close")
+        Spacer()
+        Button { showStyles = true } label: {
+          Image(systemName: "gearshape").font(.system(size: 17, weight: .regular)).foregroundStyle(Ink.dim)
+            .frame(width: 44, height: 44, alignment: .trailing)
+        }
+        .accessibilityLabel("Ring style")
+        .accessibilityIdentifier("breathe-style")
       }
-      .accessibilityLabel("Close")
-      .accessibilityIdentifier("breathe-close")
+      .sheet(isPresented: $showStyles) { StylePicker(model: model) }
 
       VStack(alignment: .leading, spacing: 8) {
         Text("Box breathing").font(Face.serif(36)).foregroundStyle(Ink.text)
@@ -287,7 +298,8 @@ private struct BreatheSession: View {
             Spacer()
             // The circle is the pause button: tap to pause, tap again to resume.
             Button(action: model.togglePause) {
-              BreathCircle(moment: moment, word: word, paused: model.paused, reduceMotion: reduceMotion)
+              BreathCircle(
+                moment: moment, word: word, paused: model.paused, reduceMotion: reduceMotion, style: model.style)
             }
             .buttonStyle(CircleTap())
             .accessibilityLabel(model.paused ? "Resume" : "Pause")
@@ -319,6 +331,7 @@ private struct BreathCircle: View {
   let word: String
   let paused: Bool
   let reduceMotion: Bool
+  var style: BreathStyle = .default
 
   var body: some View {
     ZStack {
@@ -330,9 +343,7 @@ private struct BreathCircle: View {
         EllipticalGradient(
           colors: [Ink.circleCentre, Ink.circleEdge], center: .center, startRadiusFraction: 0,
           endRadiusFraction: 0.5))
-      BreathRing(progress: moment.ring)
-        .stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-        .shadow(color: .white.opacity(0.45 * moment.ring), radius: 6)
+      StyledRing(style: style, progress: moment.ring)
         .opacity(paused ? 0.4 : 1)
       // While running, a faint mark says the circle can be tapped.
       VStack {
@@ -374,6 +385,124 @@ private struct BreathCircle: View {
   }
 }
 
+/// The breath drawn in the chosen style (story 240). Every style is a fill of `progress` (0…1) and nothing else.
+struct StyledRing: View {
+  let style: BreathStyle
+  let progress: Double
+  /// The ring's thickness at the circle's full size; the Done screen's small ring passes less.
+  var lineWidth: CGFloat = 6
+
+  var body: some View {
+    switch style {
+    case .line:
+      BreathRing(progress: progress)
+        .stroke(.white, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+        .shadow(color: .white.opacity(0.45 * progress), radius: 6)
+    case .glow:
+      ZStack {
+        Circle().stroke(Color.white.opacity(0.06), lineWidth: lineWidth * 1.6)
+        BreathRing(progress: progress)
+          .stroke(Color.white.opacity(0.35), style: StrokeStyle(lineWidth: lineWidth * 1.6, lineCap: .round))
+          .blur(radius: lineWidth * 0.6)
+        BreathRing(progress: progress)
+          .stroke(Color.white.opacity(0.85), style: StrokeStyle(lineWidth: lineWidth * 0.7, lineCap: .round))
+        GeometryReader { geo in
+          let r = min(geo.size.width, geo.size.height) / 2
+          let c = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
+          // The two leading tips, where the ring is being drawn.
+          let sweep = Double.pi * min(1, progress)
+          ForEach([1.0, -1.0], id: \.self) { side in
+            let a = Double.pi / 2 + side * sweep
+            Circle().fill(.white).frame(width: lineWidth * 1.4, height: lineWidth * 1.4)
+              .shadow(color: .white, radius: lineWidth * 1.2)
+              .position(x: c.x + r * cos(a), y: c.y + r * sin(a))
+              .opacity(progress > 0 ? 1 : 0)
+          }
+        }
+      }
+    case .beads:
+      GeometryReader { geo in
+        let r = min(geo.size.width, geo.size.height) / 2
+        let c = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
+        let lit = BreathStyle.litBeads(progress: progress)
+        ForEach(0..<BreathStyle.beadCount, id: \.self) { i in
+          // Bead 0 at the bottom, counting clockwise on screen.
+          let a = Double.pi / 2 + Double(i) * 2 * Double.pi / Double(BreathStyle.beadCount)
+          let on = lit.contains(i)
+          Circle().fill(Color.white.opacity(on ? 1 : 0.14))
+            .frame(width: lineWidth * 1.5, height: lineWidth * 1.5)
+            .shadow(color: .white.opacity(on ? 0.6 : 0), radius: lineWidth)
+            .position(x: c.x + r * cos(a), y: c.y + r * sin(a))
+            .animation(.easeOut(duration: 0.35), value: on)
+        }
+      }
+    case .tide:
+      GeometryReader { geo in
+        let h = geo.size.height
+        ZStack(alignment: .bottom) {
+          Color.clear
+          LinearGradient(
+            colors: [Color.white.opacity(0.32), Color.white.opacity(0.12)], startPoint: .top, endPoint: .bottom
+          )
+          .frame(height: h * min(1, progress))
+          .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.55)).frame(height: 1.5) }
+        }
+        .clipShape(Circle())
+        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+      }
+    }
+  }
+}
+
+/// Ring style: four choices with a still preview each (story 240).
+private struct StylePicker: View {
+  @ObservedObject var model: BreatheModel
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      HStack {
+        Text("Ring style").font(Face.serif(28)).foregroundStyle(Ink.text)
+        Spacer()
+        Button("Done") { dismiss() }.foregroundStyle(Ink.text).accessibilityIdentifier("breathe-style-done")
+      }
+      .padding(.bottom, 20)
+      LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
+        ForEach(BreathStyle.allCases, id: \.self) { style in
+          let on = style == model.style
+          Button { model.chooseStyle(style) } label: {
+            VStack(spacing: 12) {
+              ZStack {
+                Circle().fill(
+                  EllipticalGradient(
+                    colors: [Ink.circleCentre, Ink.circleEdge], center: .center, startRadiusFraction: 0,
+                    endRadiusFraction: 0.5))
+                StyledRing(style: style, progress: 0.62, lineWidth: 4)
+              }
+              .frame(width: 92, height: 92)
+              Text(style.label).font(Face.serif(20)).foregroundStyle(Ink.text)
+              Text(style.blurb).font(.system(size: 12)).foregroundStyle(Ink.dim).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 18).fill(Color.white.opacity(on ? 0.08 : 0.02)))
+            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Color.white.opacity(on ? 0.5 : 0.1), lineWidth: 1))
+          }
+          .buttonStyle(.plain)
+          .accessibilityIdentifier("breathe-style-\(style.rawValue)")
+          .accessibilityAddTraits(on ? .isSelected : [])
+        }
+      }
+      Spacer()
+    }
+    .padding(24)
+    .background(Ink.background.ignoresSafeArea())
+    .preferredColorScheme(.dark)
+    .presentationDetents([.large])
+  }
+}
+
 /// The ring: from the bottom, up both sides at once, closing at the top.
 private struct BreathRing: Shape {
   var progress: Double
@@ -411,7 +540,7 @@ private struct BreatheDone: View {
           EllipticalGradient(
             colors: [Ink.circleCentre, Ink.circleEdge], center: .center, startRadiusFraction: 0,
             endRadiusFraction: 0.5))
-        Circle().stroke(.white, lineWidth: 2).shadow(color: .white.opacity(0.4), radius: 5)
+        StyledRing(style: model.style, progress: 1, lineWidth: 2.5)
       }
       .frame(width: 84, height: 84)
       .accessibilityHidden(true)

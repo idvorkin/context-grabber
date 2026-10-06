@@ -65,7 +65,12 @@ line in ordinary type at the edge says *tap to start* / *tap to stop* /
 returns, with its buttons, exactly where it was — the timer never noticed.
 Laying the phone flat leaves the display as it was last turned.
 
-**Paused.** Stop a running timer — STOP in portrait, a tap while turned —
+**Upright, the face is a button too** (native app; Igor, 2026-10-05, #148: *"Pause should work on the vertical
+screen as well"*). In Rounds and Stopwatch a tap on the time does what the big round button does — start, stop
+(pause), resume — so the habit learned with the phone on its side works the same held upright. The sliders, presets,
+mode bar and the side buttons keep their own jobs.
+
+**Paused.** Stop a running timer — STOP or a tap on the time in portrait, a tap while turned —
 and the display says so, big: the green phase word above the time gives
 way to *PAUSEd* in amber LED letters, half again as tall as the phase
 words, with the time frozen in its phase colour under it and the round

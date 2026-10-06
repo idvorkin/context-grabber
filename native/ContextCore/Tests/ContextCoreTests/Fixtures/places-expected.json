@@ -1,0 +1,2177 @@
+{
+ "timeZone": "America/Los_Angeles",
+ "now": 1774623060000,
+ "knownPlaces": [
+  {
+   "id": 13,
+   "name": "Kettlebility",
+   "latitude": 47.6762,
+   "longitude": -122.3187,
+   "radiusMeters": 100
+  },
+  {
+   "id": 15,
+   "name": "Milstead & Co",
+   "latitude": 47.6508,
+   "longitude": -122.3503,
+   "radiusMeters": 50
+  },
+  {
+   "id": 17,
+   "name": "Home",
+   "latitude": 47.641901,
+   "longitude": -122.304481,
+   "radiusMeters": 100
+  },
+  {
+   "id": 18,
+   "name": "Work",
+   "latitude": 47.628937,
+   "longitude": -122.343437,
+   "radiusMeters": 200
+  }
+ ],
+ "stays": [
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641902770723576,
+    "longitude": -122.30451424657001
+   },
+   "startTime": 1773544877674.89,
+   "endTime": 1773582474000.17,
+   "durationMinutes": 627,
+   "pointCount": 3369
+  },
+  {
+   "placeId": "Place 1",
+   "centroid": {
+    "latitude": 47.679736681408656,
+    "longitude": -122.32559967868679
+   },
+   "startTime": 1773588577043.39,
+   "endTime": 1773594245100.03,
+   "durationMinutes": 94,
+   "pointCount": 568
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64189319345932,
+    "longitude": -122.30450542778627
+   },
+   "startTime": 1773594714547.51,
+   "endTime": 1773611343000.08,
+   "durationMinutes": 277,
+   "pointCount": 2242
+  },
+  {
+   "placeId": "Place 2",
+   "centroid": {
+    "latitude": 47.649684301069534,
+    "longitude": -122.34878211063572
+   },
+   "startTime": 1773612179638.2,
+   "endTime": 1773617276815.94,
+   "durationMinutes": 85,
+   "pointCount": 263
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641748323658305,
+    "longitude": -122.30451109730726
+   },
+   "startTime": 1773619522321.76,
+   "endTime": 1773620423889.31,
+   "durationMinutes": 15,
+   "pointCount": 101
+  },
+  {
+   "placeId": "Place 3",
+   "centroid": {
+    "latitude": 47.6433759965824,
+    "longitude": -122.308963256477
+   },
+   "startTime": 1773628348077.14,
+   "endTime": 1773663172382.08,
+   "durationMinutes": 580,
+   "pointCount": 2
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64190408102952,
+    "longitude": -122.3045125827388
+   },
+   "startTime": 1773663574326.04,
+   "endTime": 1773664813464.03,
+   "durationMinutes": 21,
+   "pointCount": 222
+  },
+  {
+   "placeId": "Kettlebility",
+   "centroid": {
+    "latitude": 47.67588701733938,
+    "longitude": -122.3183973896007
+   },
+   "startTime": 1773665336069.9,
+   "endTime": 1773666308600.65,
+   "durationMinutes": 16,
+   "pointCount": 105
+  },
+  {
+   "placeId": "Work",
+   "centroid": {
+    "latitude": 47.62894251918439,
+    "longitude": -122.34321813129093
+   },
+   "startTime": 1773672044521.34,
+   "endTime": 1773693765520.27,
+   "durationMinutes": 362,
+   "pointCount": 169
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64183808605315,
+    "longitude": -122.30449864130901
+   },
+   "startTime": 1773706334659.53,
+   "endTime": 1773706699025.63,
+   "durationMinutes": 6,
+   "pointCount": 2
+  },
+  {
+   "placeId": "Place 4",
+   "centroid": {
+    "latitude": 47.62693598590144,
+    "longitude": -122.34104660810875
+   },
+   "startTime": 1773761845085.67,
+   "endTime": 1773762249001.25,
+   "durationMinutes": 7,
+   "pointCount": 356
+  },
+  {
+   "placeId": "Work",
+   "centroid": {
+    "latitude": 47.628748060004945,
+    "longitude": -122.34273355068355
+   },
+   "startTime": 1773762388840.78,
+   "endTime": 1773787507221.54,
+   "durationMinutes": 419,
+   "pointCount": 323
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64190137939024,
+    "longitude": -122.30451536999227
+   },
+   "startTime": 1773799086345.95,
+   "endTime": 1773844382281.01,
+   "durationMinutes": 755,
+   "pointCount": 3602
+  },
+  {
+   "placeId": "Work",
+   "centroid": {
+    "latitude": 47.62883783670551,
+    "longitude": -122.34300428142329
+   },
+   "startTime": 1773854384391.36,
+   "endTime": 1773855256604.75,
+   "durationMinutes": 15,
+   "pointCount": 140
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64176308132742,
+    "longitude": -122.3041609854149
+   },
+   "startTime": 1773882408001.96,
+   "endTime": 1773883340010.98,
+   "durationMinutes": 16,
+   "pointCount": 303
+  },
+  {
+   "placeId": "Place 3",
+   "centroid": {
+    "latitude": 47.64343643,
+    "longitude": -122.3091278
+   },
+   "startTime": 1773885325269.11,
+   "endTime": 1773930921396.63,
+   "durationMinutes": 760,
+   "pointCount": 2
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641890153751504,
+    "longitude": -122.3045180205138
+   },
+   "startTime": 1773932200503.69,
+   "endTime": 1774019116203.05,
+   "durationMinutes": 1449,
+   "pointCount": 353
+  },
+  {
+   "placeId": "Place 2",
+   "centroid": {
+    "latitude": 47.649689991441655,
+    "longitude": -122.348861900328
+   },
+   "startTime": 1774030056999.45,
+   "endTime": 1774030963704.34,
+   "durationMinutes": 15,
+   "pointCount": 244
+  },
+  {
+   "placeId": "Place 5",
+   "centroid": {
+    "latitude": 47.60610198204055,
+    "longitude": -122.301884060348
+   },
+   "startTime": 1774048160035.52,
+   "endTime": 1774049555630.48,
+   "durationMinutes": 23,
+   "pointCount": 2
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64188533482064,
+    "longitude": -122.3045030474198
+   },
+   "startTime": 1774063183487.66,
+   "endTime": 1774202711468.58,
+   "durationMinutes": 2325,
+   "pointCount": 1206
+  },
+  {
+   "placeId": "Place 2",
+   "centroid": {
+    "latitude": 47.649689045464555,
+    "longitude": -122.34897307748868
+   },
+   "startTime": 1774203433359.02,
+   "endTime": 1774207978046.67,
+   "durationMinutes": 76,
+   "pointCount": 598
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641741924627645,
+    "longitude": -122.30454532797512
+   },
+   "startTime": 1774210499365.47,
+   "endTime": 1774210841998.59,
+   "durationMinutes": 6,
+   "pointCount": 248
+  },
+  {
+   "placeId": "Place 6",
+   "centroid": {
+    "latitude": 47.81041906599855,
+    "longitude": -122.36510222436081
+   },
+   "startTime": 1774212616319.2,
+   "endTime": 1774213391848.03,
+   "durationMinutes": 13,
+   "pointCount": 187
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64188879682778,
+    "longitude": -122.30448652718017
+   },
+   "startTime": 1774229415000.36,
+   "endTime": 1774269600952.32,
+   "durationMinutes": 670,
+   "pointCount": 6026
+  },
+  {
+   "placeId": "Kettlebility",
+   "centroid": {
+    "latitude": 47.67586612342228,
+    "longitude": -122.31847142431178
+   },
+   "startTime": 1774270211271.77,
+   "endTime": 1774271039916.01,
+   "durationMinutes": 14,
+   "pointCount": 83
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641854195203805,
+    "longitude": -122.30450939100766
+   },
+   "startTime": 1774275650230.95,
+   "endTime": 1774276613805.66,
+   "durationMinutes": 16,
+   "pointCount": 240
+  },
+  {
+   "placeId": "Work",
+   "centroid": {
+    "latitude": 47.62885992675627,
+    "longitude": -122.34341426496268
+   },
+   "startTime": 1774279222469.18,
+   "endTime": 1774281659746.58,
+   "durationMinutes": 41,
+   "pointCount": 393
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641860867572575,
+    "longitude": -122.30450163325615
+   },
+   "startTime": 1774316703998.86,
+   "endTime": 1774325493170.11,
+   "durationMinutes": 146,
+   "pointCount": 1278
+  },
+  {
+   "placeId": "Work",
+   "centroid": {
+    "latitude": 47.62884638810155,
+    "longitude": -122.34244032930911
+   },
+   "startTime": 1774389092579.55,
+   "endTime": 1774392828336.93,
+   "durationMinutes": 62,
+   "pointCount": 298
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64183685562333,
+    "longitude": -122.30448610576316
+   },
+   "startTime": 1774403558031.35,
+   "endTime": 1774451265005.65,
+   "durationMinutes": 795,
+   "pointCount": 471
+  },
+  {
+   "placeId": "Place 7",
+   "centroid": {
+    "latitude": 47.68310126941627,
+    "longitude": -122.35541991197731
+   },
+   "startTime": 1774491185382.33,
+   "endTime": 1774491867879.04,
+   "durationMinutes": 11,
+   "pointCount": 118
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.64186653992937,
+    "longitude": -122.30452601895617
+   },
+   "startTime": 1774497871056.27,
+   "endTime": 1774534109174.23,
+   "durationMinutes": 604,
+   "pointCount": 270
+  },
+  {
+   "placeId": "Work",
+   "centroid": {
+    "latitude": 47.62870575769326,
+    "longitude": -122.34309681129355
+   },
+   "startTime": 1774563122329.43,
+   "endTime": 1774572556889.7,
+   "durationMinutes": 157,
+   "pointCount": 246
+  },
+  {
+   "placeId": "Home",
+   "centroid": {
+    "latitude": 47.641891066043215,
+    "longitude": -122.30452025313991
+   },
+   "startTime": 1774577672915.63,
+   "endTime": 1774621231778.6,
+   "durationMinutes": 726,
+   "pointCount": 544
+  }
+ ],
+ "transit": [
+  {
+   "startTime": 1773582474000.17,
+   "endTime": 1773588577043.39,
+   "durationMinutes": 102,
+   "distanceKm": 4.5,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 1"
+  },
+  {
+   "startTime": 1773594245100.03,
+   "endTime": 1773594714547.51,
+   "durationMinutes": 8,
+   "distanceKm": 4.5,
+   "fromPlaceId": "Place 1",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1773611343000.08,
+   "endTime": 1773612179638.2,
+   "durationMinutes": 14,
+   "distanceKm": 3.4,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 2"
+  },
+  {
+   "startTime": 1773617276815.94,
+   "endTime": 1773619522321.76,
+   "durationMinutes": 37,
+   "distanceKm": 3.4,
+   "fromPlaceId": "Place 2",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1773620423889.31,
+   "endTime": 1773628348077.14,
+   "durationMinutes": 132,
+   "distanceKm": 0.4,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 3"
+  },
+  {
+   "startTime": 1773663172382.08,
+   "endTime": 1773663574326.04,
+   "durationMinutes": 7,
+   "distanceKm": 0.4,
+   "fromPlaceId": "Place 3",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1773664813464.03,
+   "endTime": 1773665336069.9,
+   "durationMinutes": 9,
+   "distanceKm": 3.9,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Kettlebility"
+  },
+  {
+   "startTime": 1773666308600.65,
+   "endTime": 1773672044521.34,
+   "durationMinutes": 96,
+   "distanceKm": 5.5,
+   "fromPlaceId": "Kettlebility",
+   "toPlaceId": "Work"
+  },
+  {
+   "startTime": 1773693765520.27,
+   "endTime": 1773706334659.53,
+   "durationMinutes": 209,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Work",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1773706699025.63,
+   "endTime": 1773761845085.67,
+   "durationMinutes": 919,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 4"
+  },
+  {
+   "startTime": 1773762249001.25,
+   "endTime": 1773762388840.78,
+   "durationMinutes": 2,
+   "distanceKm": 0.2,
+   "fromPlaceId": "Place 4",
+   "toPlaceId": "Work"
+  },
+  {
+   "startTime": 1773787507221.54,
+   "endTime": 1773799086345.95,
+   "durationMinutes": 193,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Work",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1773844382281.01,
+   "endTime": 1773854384391.36,
+   "durationMinutes": 167,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Work"
+  },
+  {
+   "startTime": 1773855256604.75,
+   "endTime": 1773882408001.96,
+   "durationMinutes": 453,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Work",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1773883340010.98,
+   "endTime": 1773885325269.11,
+   "durationMinutes": 33,
+   "distanceKm": 0.4,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 3"
+  },
+  {
+   "startTime": 1773930921396.63,
+   "endTime": 1773932200503.69,
+   "durationMinutes": 21,
+   "distanceKm": 0.4,
+   "fromPlaceId": "Place 3",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774019116203.05,
+   "endTime": 1774030056999.45,
+   "durationMinutes": 182,
+   "distanceKm": 3.4,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 2"
+  },
+  {
+   "startTime": 1774030963704.34,
+   "endTime": 1774048160035.52,
+   "durationMinutes": 287,
+   "distanceKm": 6,
+   "fromPlaceId": "Place 2",
+   "toPlaceId": "Place 5"
+  },
+  {
+   "startTime": 1774049555630.48,
+   "endTime": 1774063183487.66,
+   "durationMinutes": 227,
+   "distanceKm": 4,
+   "fromPlaceId": "Place 5",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774202711468.58,
+   "endTime": 1774203433359.02,
+   "durationMinutes": 12,
+   "distanceKm": 3.4,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 2"
+  },
+  {
+   "startTime": 1774207978046.67,
+   "endTime": 1774210499365.47,
+   "durationMinutes": 42,
+   "distanceKm": 3.4,
+   "fromPlaceId": "Place 2",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774210841998.59,
+   "endTime": 1774212616319.2,
+   "durationMinutes": 30,
+   "distanceKm": 19.3,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 6"
+  },
+  {
+   "startTime": 1774213391848.03,
+   "endTime": 1774229415000.36,
+   "durationMinutes": 267,
+   "distanceKm": 19.3,
+   "fromPlaceId": "Place 6",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774269600952.32,
+   "endTime": 1774270211271.77,
+   "durationMinutes": 10,
+   "distanceKm": 3.9,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Kettlebility"
+  },
+  {
+   "startTime": 1774271039916.01,
+   "endTime": 1774275650230.95,
+   "durationMinutes": 77,
+   "distanceKm": 3.9,
+   "fromPlaceId": "Kettlebility",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774276613805.66,
+   "endTime": 1774279222469.18,
+   "durationMinutes": 43,
+   "distanceKm": 3.3,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Work"
+  },
+  {
+   "startTime": 1774281659746.58,
+   "endTime": 1774316703998.86,
+   "durationMinutes": 584,
+   "distanceKm": 3.3,
+   "fromPlaceId": "Work",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774325493170.11,
+   "endTime": 1774389092579.55,
+   "durationMinutes": 1060,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Work"
+  },
+  {
+   "startTime": 1774392828336.93,
+   "endTime": 1774403558031.35,
+   "durationMinutes": 179,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Work",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774451265005.65,
+   "endTime": 1774491185382.33,
+   "durationMinutes": 665,
+   "distanceKm": 6,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Place 7"
+  },
+  {
+   "startTime": 1774491867879.04,
+   "endTime": 1774497871056.27,
+   "durationMinutes": 100,
+   "distanceKm": 6,
+   "fromPlaceId": "Place 7",
+   "toPlaceId": "Home"
+  },
+  {
+   "startTime": 1774534109174.23,
+   "endTime": 1774563122329.43,
+   "durationMinutes": 484,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Home",
+   "toPlaceId": "Work"
+  },
+  {
+   "startTime": 1774572556889.7,
+   "endTime": 1774577672915.63,
+   "durationMinutes": 85,
+   "distanceKm": 3.2,
+   "fromPlaceId": "Work",
+   "toPlaceId": "Home"
+  }
+ ],
+ "days": [
+  {
+   "dateKey": "2026-03-27",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 441
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1774594800000,
+     "endTime": 1774621231778.6,
+     "durationMinutes": 441
+    }
+   ],
+   "elapsedMinutes": 471,
+   "totalStayMinutes": 441,
+   "transitMinutes": 5,
+   "noDataMinutes": 25,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 26431778.600097656,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 26431778.600097656,
+     "endOffsetMs": 26731778.600097656,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 26731778.600097656,
+     "endOffsetMs": 28260000,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 28260000,
+     "endOffsetMs": 86400000,
+     "kind": "future"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-26",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 714
+    },
+    {
+     "placeId": "Work",
+     "totalMinutes": 157
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1774508400000,
+     "endTime": 1774534109174.23,
+     "durationMinutes": 428
+    },
+    {
+     "placeId": "Work",
+     "startTime": 1774563122329.43,
+     "endTime": 1774572556889.7,
+     "durationMinutes": 157
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774577672915.63,
+     "endTime": 1774594800000,
+     "durationMinutes": 285
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 871,
+   "transitMinutes": 123,
+   "noDataMinutes": 446,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 25709174.22998047,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 25709174.22998047,
+     "endOffsetMs": 27297460.879882812,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 27297460.879882812,
+     "endOffsetMs": 27740677.739990234,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 27740677.739990234,
+     "endOffsetMs": 28340677.739990234,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 28340677.739990234,
+     "endOffsetMs": 28357804,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 28357804,
+     "endOffsetMs": 28957804,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 28957804,
+     "endOffsetMs": 29461187.639892578,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 29461187.639892578,
+     "endOffsetMs": 30682254.689941406,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 30682254.689941406,
+     "endOffsetMs": 54422329.42993164,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 54422329.42993164,
+     "endOffsetMs": 54722329.42993164,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 54722329.42993164,
+     "endOffsetMs": 64156889.69995117,
+     "kind": "stay",
+     "placeId": "Work"
+    },
+    {
+     "startOffsetMs": 64156889.69995117,
+     "endOffsetMs": 64456889.69995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 64456889.69995117,
+     "endOffsetMs": 65804075.669921875,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 65804075.669921875,
+     "endOffsetMs": 67366720.37988281,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 67366720.37988281,
+     "endOffsetMs": 68071724.37011719,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 68071724.37011719,
+     "endOffsetMs": 69272915.62988281,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 69272915.62988281,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-25",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 663
+    },
+    {
+     "placeId": "Place 7",
+     "totalMinutes": 11
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1774422000000,
+     "endTime": 1774451265005.65,
+     "durationMinutes": 488
+    },
+    {
+     "placeId": "Place 7",
+     "startTime": 1774491185382.33,
+     "endTime": 1774491867879.04,
+     "durationMinutes": 11
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774497871056.27,
+     "endTime": 1774508400000,
+     "durationMinutes": 175
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 674,
+   "transitMinutes": 143,
+   "noDataMinutes": 622,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 29265005.649902344,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 29265005.649902344,
+     "endOffsetMs": 29605389.469970703,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 29605389.469970703,
+     "endOffsetMs": 30471253.530029297,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 30471253.530029297,
+     "endOffsetMs": 31801626.889892578,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 31801626.889892578,
+     "endOffsetMs": 36282245.13989258,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 36282245.13989258,
+     "endOffsetMs": 37835865.34008789,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 37835865.34008789,
+     "endOffsetMs": 61114956.87011719,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 61114956.87011719,
+     "endOffsetMs": 62018344.850097656,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 62018344.850097656,
+     "endOffsetMs": 66216804.060058594,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 66216804.060058594,
+     "endOffsetMs": 69185382.33007812,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 69185382.33007812,
+     "endOffsetMs": 69867879.04003906,
+     "kind": "stay",
+     "placeId": "Place 7"
+    },
+    {
+     "startOffsetMs": 69867879.04003906,
+     "endOffsetMs": 70167879.04003906,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 70167879.04003906,
+     "endOffsetMs": 74668891.62011719,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 74668891.62011719,
+     "endOffsetMs": 75871056.27001953,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 75871056.27001953,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-24",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 307
+    },
+    {
+     "placeId": "Work",
+     "totalMinutes": 62
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Work",
+     "startTime": 1774389092579.55,
+     "endTime": 1774392828336.93,
+     "durationMinutes": 62
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774403558031.35,
+     "endTime": 1774422000000,
+     "durationMinutes": 307
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 369,
+   "transitMinutes": 62,
+   "noDataMinutes": 1008,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 52167957.67993164,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 52167957.67993164,
+     "endOffsetMs": 53492579.55004883,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 53492579.55004883,
+     "endOffsetMs": 57228336.92993164,
+     "kind": "stay",
+     "placeId": "Work"
+    },
+    {
+     "startOffsetMs": 57228336.92993164,
+     "endOffsetMs": 57528336.92993164,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 57528336.92993164,
+     "endOffsetMs": 65226679.86010742,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 65226679.86010742,
+     "endOffsetMs": 65826679.86010742,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 65826679.86010742,
+     "endOffsetMs": 66433643.94995117,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 66433643.94995117,
+     "endOffsetMs": 67958031.35009766,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 67958031.35009766,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-23",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 503
+    },
+    {
+     "placeId": "Work",
+     "totalMinutes": 41
+    },
+    {
+     "placeId": "Kettlebility",
+     "totalMinutes": 14
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1774249200000,
+     "endTime": 1774269600952.32,
+     "durationMinutes": 340
+    },
+    {
+     "placeId": "Kettlebility",
+     "startTime": 1774270211271.77,
+     "endTime": 1774271039916.01,
+     "durationMinutes": 14
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774275650230.95,
+     "endTime": 1774276613805.66,
+     "durationMinutes": 16
+    },
+    {
+     "placeId": "Work",
+     "startTime": 1774279222469.18,
+     "endTime": 1774281659746.58,
+     "durationMinutes": 41
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774316703998.86,
+     "endTime": 1774325493170.11,
+     "durationMinutes": 146
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 558,
+   "transitMinutes": 92,
+   "noDataMinutes": 791,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 20400952.32006836,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 20400952.32006836,
+     "endOffsetMs": 21011271.77001953,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 21011271.77001953,
+     "endOffsetMs": 21839916.010009766,
+     "kind": "stay",
+     "placeId": "Kettlebility"
+    },
+    {
+     "startOffsetMs": 21839916.010009766,
+     "endOffsetMs": 22139916.010009766,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 22139916.010009766,
+     "endOffsetMs": 25582890.669921875,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 25582890.669921875,
+     "endOffsetMs": 26450230.949951172,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 26450230.949951172,
+     "endOffsetMs": 27413805.65991211,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 27413805.65991211,
+     "endOffsetMs": 28817399.72998047,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 28817399.72998047,
+     "endOffsetMs": 29722469.17993164,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 29722469.17993164,
+     "endOffsetMs": 30022469.17993164,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 30022469.17993164,
+     "endOffsetMs": 32459746.580078125,
+     "kind": "stay",
+     "placeId": "Work"
+    },
+    {
+     "startOffsetMs": 32459746.580078125,
+     "endOffsetMs": 32759746.580078125,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 32759746.580078125,
+     "endOffsetMs": 66055136.12011719,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 66055136.12011719,
+     "endOffsetMs": 67503998.86010742,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 67503998.86010742,
+     "endOffsetMs": 76293170.11010742,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 76293170.11010742,
+     "endOffsetMs": 76593170.11010742,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 76593170.11010742,
+     "endOffsetMs": 86400000,
+     "kind": "noData"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-22",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 1001
+    },
+    {
+     "placeId": "Place 2",
+     "totalMinutes": 76
+    },
+    {
+     "placeId": "Place 6",
+     "totalMinutes": 13
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1774162800000,
+     "endTime": 1774202711468.58,
+     "durationMinutes": 665
+    },
+    {
+     "placeId": "Place 2",
+     "startTime": 1774203433359.02,
+     "endTime": 1774207978046.67,
+     "durationMinutes": 76
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774210499365.47,
+     "endTime": 1774210841998.59,
+     "durationMinutes": 6
+    },
+    {
+     "placeId": "Place 6",
+     "startTime": 1774212616319.2,
+     "endTime": 1774213391848.03,
+     "durationMinutes": 13
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774229415000.36,
+     "endTime": 1774249200000,
+     "durationMinutes": 330
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 1090,
+   "transitMinutes": 145,
+   "noDataMinutes": 206,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 39911468.580078125,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 39911468.580078125,
+     "endOffsetMs": 40633359.02001953,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 40633359.02001953,
+     "endOffsetMs": 45178046.669921875,
+     "kind": "stay",
+     "placeId": "Place 2"
+    },
+    {
+     "startOffsetMs": 45178046.669921875,
+     "endOffsetMs": 45478046.669921875,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 45478046.669921875,
+     "endOffsetMs": 45540739.419921875,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 45540739.419921875,
+     "endOffsetMs": 46140739.419921875,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 46140739.419921875,
+     "endOffsetMs": 46849042.419921875,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 46849042.419921875,
+     "endOffsetMs": 47699365.4699707,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 47699365.4699707,
+     "endOffsetMs": 48041998.59008789,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 48041998.59008789,
+     "endOffsetMs": 49816319.19995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 49816319.19995117,
+     "endOffsetMs": 50591848.0300293,
+     "kind": "stay",
+     "placeId": "Place 6"
+    },
+    {
+     "startOffsetMs": 50591848.0300293,
+     "endOffsetMs": 50891848.0300293,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 50891848.0300293,
+     "endOffsetMs": 59272152.34008789,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 59272152.34008789,
+     "endOffsetMs": 62522899.100097656,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 62522899.100097656,
+     "endOffsetMs": 63492079.0300293,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 63492079.0300293,
+     "endOffsetMs": 64092079.0300293,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 64092079.0300293,
+     "endOffsetMs": 66315000.36010742,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 66315000.36010742,
+     "endOffsetMs": 66615000.36010742,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 66615000.36010742,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-21",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 1440
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1774076400000,
+     "endTime": 1774162800000,
+     "durationMinutes": 1440
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 1440,
+   "transitMinutes": 0,
+   "noDataMinutes": 0,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-20",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 706
+    },
+    {
+     "placeId": "Place 5",
+     "totalMinutes": 23
+    },
+    {
+     "placeId": "Place 2",
+     "totalMinutes": 15
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1773990000000,
+     "endTime": 1774019116203.05,
+     "durationMinutes": 485
+    },
+    {
+     "placeId": "Place 2",
+     "startTime": 1774030056999.45,
+     "endTime": 1774030963704.34,
+     "durationMinutes": 15
+    },
+    {
+     "placeId": "Place 5",
+     "startTime": 1774048160035.52,
+     "endTime": 1774049555630.48,
+     "durationMinutes": 23
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1774063183487.66,
+     "endTime": 1774076400000,
+     "durationMinutes": 220
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 744,
+   "transitMinutes": 152,
+   "noDataMinutes": 544,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 29116203.050048828,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 29116203.050048828,
+     "endOffsetMs": 29416203.050048828,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 29416203.050048828,
+     "endOffsetMs": 39195874,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 39195874,
+     "endOffsetMs": 40056999.44995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 40056999.44995117,
+     "endOffsetMs": 40963704.34008789,
+     "kind": "stay",
+     "placeId": "Place 2"
+    },
+    {
+     "startOffsetMs": 40963704.34008789,
+     "endOffsetMs": 41263704.34008789,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 41263704.34008789,
+     "endOffsetMs": 44931573.239990234,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 44931573.239990234,
+     "endOffsetMs": 45831847.12988281,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 45831847.12988281,
+     "endOffsetMs": 46469597.12988281,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 46469597.12988281,
+     "endOffsetMs": 47069597.12988281,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 47069597.12988281,
+     "endOffsetMs": 56578084.739990234,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 56578084.739990234,
+     "endOffsetMs": 58160035.52001953,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 58160035.52001953,
+     "endOffsetMs": 59555630.47998047,
+     "kind": "stay",
+     "placeId": "Place 5"
+    },
+    {
+     "startOffsetMs": 59555630.47998047,
+     "endOffsetMs": 59855630.47998047,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 59855630.47998047,
+     "endOffsetMs": 62362686.84008789,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 62362686.84008789,
+     "endOffsetMs": 64663350.94995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 64663350.94995117,
+     "endOffsetMs": 67089197.34008789,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 67089197.34008789,
+     "endOffsetMs": 68360039.69995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 68360039.69995117,
+     "endOffsetMs": 72497916.40991211,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 72497916.40991211,
+     "endOffsetMs": 73183487.65991211,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 73183487.65991211,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-19",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 963
+    },
+    {
+     "placeId": "Place 3",
+     "totalMinutes": 455
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Place 3",
+     "startTime": 1773903600000,
+     "endTime": 1773930921396.63,
+     "durationMinutes": 455
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773932200503.69,
+     "endTime": 1773990000000,
+     "durationMinutes": 963
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 1418,
+   "transitMinutes": 21,
+   "noDataMinutes": 0,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 27321396.629882812,
+     "kind": "stay",
+     "placeId": "Place 3"
+    },
+    {
+     "startOffsetMs": 27321396.629882812,
+     "endOffsetMs": 28600503.689941406,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 28600503.689941406,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-18",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 469
+    },
+    {
+     "placeId": "Place 3",
+     "totalMinutes": 305
+    },
+    {
+     "placeId": "Work",
+     "totalMinutes": 15
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1773817200000,
+     "endTime": 1773844382281.01,
+     "durationMinutes": 453
+    },
+    {
+     "placeId": "Work",
+     "startTime": 1773854384391.36,
+     "endTime": 1773855256604.75,
+     "durationMinutes": 15
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773882408001.96,
+     "endTime": 1773883340010.98,
+     "durationMinutes": 16
+    },
+    {
+     "placeId": "Place 3",
+     "startTime": 1773885325269.11,
+     "endTime": 1773903600000,
+     "durationMinutes": 305
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 789,
+   "transitMinutes": 138,
+   "noDataMinutes": 514,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 27182281.010009766,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 27182281.010009766,
+     "endOffsetMs": 28677786.199951172,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 28677786.199951172,
+     "endOffsetMs": 31023077.209960938,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 31023077.209960938,
+     "endOffsetMs": 32235391.449951172,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 32235391.449951172,
+     "endOffsetMs": 36010439.61010742,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 36010439.61010742,
+     "endOffsetMs": 37184391.36010742,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 37184391.36010742,
+     "endOffsetMs": 38056604.75,
+     "kind": "stay",
+     "placeId": "Work"
+    },
+    {
+     "startOffsetMs": 38056604.75,
+     "endOffsetMs": 38356604.75,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 38356604.75,
+     "endOffsetMs": 40755959.95996094,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 40755959.95996094,
+     "endOffsetMs": 41740811.34008789,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 41740811.34008789,
+     "endOffsetMs": 63739925.239990234,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 63739925.239990234,
+     "endOffsetMs": 65208001.95996094,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 65208001.95996094,
+     "endOffsetMs": 66140010.97998047,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 66140010.97998047,
+     "endOffsetMs": 66899789.080078125,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 66899789.080078125,
+     "endOffsetMs": 67244844.79003906,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 67244844.79003906,
+     "endOffsetMs": 68125269.11010742,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 68125269.11010742,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Place 3"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-17",
+   "places": [
+    {
+     "placeId": "Work",
+     "totalMinutes": 419
+    },
+    {
+     "placeId": "Home",
+     "totalMinutes": 302
+    },
+    {
+     "placeId": "Place 4",
+     "totalMinutes": 7
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Place 4",
+     "startTime": 1773761845085.67,
+     "endTime": 1773762249001.25,
+     "durationMinutes": 7
+    },
+    {
+     "placeId": "Work",
+     "startTime": 1773762388840.78,
+     "endTime": 1773787507221.54,
+     "durationMinutes": 419
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773799086345.95,
+     "endTime": 1773817200000,
+     "durationMinutes": 302
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 728,
+   "transitMinutes": 57,
+   "noDataMinutes": 656,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 29944999.97998047,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 29944999.97998047,
+     "endOffsetMs": 31045085.669921875,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 31045085.669921875,
+     "endOffsetMs": 31449001.25,
+     "kind": "stay",
+     "placeId": "Place 4"
+    },
+    {
+     "startOffsetMs": 31449001.25,
+     "endOffsetMs": 31588840.780029297,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 31588840.780029297,
+     "endOffsetMs": 56707221.54003906,
+     "kind": "stay",
+     "placeId": "Work"
+    },
+    {
+     "startOffsetMs": 56707221.54003906,
+     "endOffsetMs": 57007221.54003906,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 57007221.54003906,
+     "endOffsetMs": 66403124.9699707,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 66403124.9699707,
+     "endOffsetMs": 68286345.94995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 68286345.94995117,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-16",
+   "places": [
+    {
+     "placeId": "Work",
+     "totalMinutes": 362
+    },
+    {
+     "placeId": "Place 3",
+     "totalMinutes": 313
+    },
+    {
+     "placeId": "Home",
+     "totalMinutes": 27
+    },
+    {
+     "placeId": "Kettlebility",
+     "totalMinutes": 16
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Place 3",
+     "startTime": 1773644400000,
+     "endTime": 1773663172382.08,
+     "durationMinutes": 313
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773663574326.04,
+     "endTime": 1773664813464.03,
+     "durationMinutes": 21
+    },
+    {
+     "placeId": "Kettlebility",
+     "startTime": 1773665336069.9,
+     "endTime": 1773666308600.65,
+     "durationMinutes": 16
+    },
+    {
+     "placeId": "Work",
+     "startTime": 1773672044521.34,
+     "endTime": 1773693765520.27,
+     "durationMinutes": 362
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773706334659.53,
+     "endTime": 1773706699025.63,
+     "durationMinutes": 6
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 718,
+   "transitMinutes": 81,
+   "noDataMinutes": 641,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 18772382.080078125,
+     "kind": "stay",
+     "placeId": "Place 3"
+    },
+    {
+     "startOffsetMs": 18772382.080078125,
+     "endOffsetMs": 19174326.040039062,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 19174326.040039062,
+     "endOffsetMs": 20413464.030029297,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 20413464.030029297,
+     "endOffsetMs": 20936069.899902344,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 20936069.899902344,
+     "endOffsetMs": 21908600.649902344,
+     "kind": "stay",
+     "placeId": "Kettlebility"
+    },
+    {
+     "startOffsetMs": 21908600.649902344,
+     "endOffsetMs": 22208600.649902344,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 22208600.649902344,
+     "endOffsetMs": 25512078.67993164,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 25512078.67993164,
+     "endOffsetMs": 27013081.350097656,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 27013081.350097656,
+     "endOffsetMs": 27344521.34008789,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 27344521.34008789,
+     "endOffsetMs": 27644521.34008789,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 27644521.34008789,
+     "endOffsetMs": 49365520.27001953,
+     "kind": "stay",
+     "placeId": "Work"
+    },
+    {
+     "startOffsetMs": 49365520.27001953,
+     "endOffsetMs": 49665520.27001953,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 49665520.27001953,
+     "endOffsetMs": 60719202.62011719,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 60719202.62011719,
+     "endOffsetMs": 61934659.5300293,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 61934659.5300293,
+     "endOffsetMs": 62299025.62988281,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 62299025.62988281,
+     "endOffsetMs": 62599025.62988281,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 62599025.62988281,
+     "endOffsetMs": 86400000,
+     "kind": "noData"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-15",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 700
+    },
+    {
+     "placeId": "Place 3",
+     "totalMinutes": 268
+    },
+    {
+     "placeId": "Place 1",
+     "totalMinutes": 94
+    },
+    {
+     "placeId": "Place 2",
+     "totalMinutes": 85
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1773558000000,
+     "endTime": 1773582474000.17,
+     "durationMinutes": 408
+    },
+    {
+     "placeId": "Place 1",
+     "startTime": 1773588577043.39,
+     "endTime": 1773594245100.03,
+     "durationMinutes": 94
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773594714547.51,
+     "endTime": 1773611343000.08,
+     "durationMinutes": 277
+    },
+    {
+     "placeId": "Place 2",
+     "startTime": 1773612179638.2,
+     "endTime": 1773617276815.94,
+     "durationMinutes": 85
+    },
+    {
+     "placeId": "Home",
+     "startTime": 1773619522321.76,
+     "endTime": 1773620423889.31,
+     "durationMinutes": 15
+    },
+    {
+     "placeId": "Place 3",
+     "startTime": 1773628348077.14,
+     "endTime": 1773644400000,
+     "durationMinutes": 268
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 1147,
+   "transitMinutes": 124,
+   "noDataMinutes": 169,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 24474000.169921875,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 24474000.169921875,
+     "endOffsetMs": 24788000.209960938,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 24788000.209960938,
+     "endOffsetMs": 30277043.389892578,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 30277043.389892578,
+     "endOffsetMs": 30577043.389892578,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 30577043.389892578,
+     "endOffsetMs": 36245100.0300293,
+     "kind": "stay",
+     "placeId": "Place 1"
+    },
+    {
+     "startOffsetMs": 36245100.0300293,
+     "endOffsetMs": 36714547.510009766,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 36714547.510009766,
+     "endOffsetMs": 53343000.080078125,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 53343000.080078125,
+     "endOffsetMs": 54179638.19995117,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 54179638.19995117,
+     "endOffsetMs": 59276815.939941406,
+     "kind": "stay",
+     "placeId": "Place 2"
+    },
+    {
+     "startOffsetMs": 59276815.939941406,
+     "endOffsetMs": 59576815.939941406,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 59576815.939941406,
+     "endOffsetMs": 60584085.22998047,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 60584085.22998047,
+     "endOffsetMs": 61522321.760009766,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 61522321.760009766,
+     "endOffsetMs": 62423889.310058594,
+     "kind": "stay",
+     "placeId": "Home"
+    },
+    {
+     "startOffsetMs": 62423889.310058594,
+     "endOffsetMs": 62723889.310058594,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 62723889.310058594,
+     "endOffsetMs": 65587202.95996094,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 65587202.95996094,
+     "endOffsetMs": 67402080.13989258,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 67402080.13989258,
+     "endOffsetMs": 67414451.7199707,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 67414451.7199707,
+     "endOffsetMs": 68014451.7199707,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 68014451.7199707,
+     "endOffsetMs": 68807918.12011719,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 68807918.12011719,
+     "endOffsetMs": 70348077.13989258,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 70348077.13989258,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Place 3"
+    }
+   ]
+  },
+  {
+   "dateKey": "2026-03-14",
+   "places": [
+    {
+     "placeId": "Home",
+     "totalMinutes": 219
+    }
+   ],
+   "visits": [
+    {
+     "placeId": "Home",
+     "startTime": 1773544877674.89,
+     "endTime": 1773558000000,
+     "durationMinutes": 219
+    }
+   ],
+   "elapsedMinutes": 1440,
+   "totalStayMinutes": 219,
+   "transitMinutes": 5,
+   "noDataMinutes": 1216,
+   "stripSegments": [
+    {
+     "startOffsetMs": 0,
+     "endOffsetMs": 72977674.88989258,
+     "kind": "noData"
+    },
+    {
+     "startOffsetMs": 72977674.88989258,
+     "endOffsetMs": 73277674.88989258,
+     "kind": "transit"
+    },
+    {
+     "startOffsetMs": 73277674.88989258,
+     "endOffsetMs": 86400000,
+     "kind": "stay",
+     "placeId": "Home"
+    }
+   ]
+  }
+ ],
+ "text": "Fri Mar 27: Home 7.4h\nThu Mar 26: Home 11.9h, Work 2.6h\nWed Mar 25: Home 11.1h, Place 7 11m\nTue Mar 24: Home 5.1h, Work 1h\nMon Mar 23: Home 8.4h, Work 41m, Kettlebility 14m\nSun Mar 22: Home 16.7h, Place 2 1.3h, Place 6 13m\nSat Mar 21: Home 24h\nFri Mar 20: Home 11.8h, Place 5 23m, Place 2 15m\nThu Mar 19: Home 16.1h, Place 3 7.6h\nWed Mar 18: Home 7.8h, Place 3 5.1h, Work 15m\nTue Mar 17: Work 7h, Home 5h, Place 4 7m\nMon Mar 16: Work 6h, Place 3 5.2h, Home 27m, Kettlebility 16m\nSun Mar 15: Home 11.7h, Place 3 4.5h, Place 1 1.6h, Place 2 1.4h\nSat Mar 14: Home 3.7h"
+}

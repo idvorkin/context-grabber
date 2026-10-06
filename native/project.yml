@@ -33,9 +33,30 @@ targets:
       # The breathing screen's six spoken phrases (scripts/make-breath-words.sh).
       - path: ../assets/audio/breathe
         buildPhase: resources
+      # The other count voices (story 182): <voice>-<cue>.wav, rendered by scripts/make-timer-voice.sh.
+      - path: ../assets/audio/timer-voices
+        buildPhase: resources
+      # The mirror's fixture week, for the simulator hook (GRABBER_MIRROR); the host tests read the same file.
+      - path: ContextCore/Tests/ContextCoreTests/Fixtures/mirror-fixture.json
+        buildPhase: resources
+    # Health: the mirror reads it (step 4). XcodeGen writes the file from these properties.
+    entitlements:
+      path: GrabberNative.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        # The live tile reads the usage reading the app writes here (story 136).
+        com.apple.security.application-groups:
+          - group.com.idvorkin.grabbernative
     dependencies:
       - package: ContextCore
       - target: GrabberWidgets
+    # What's new (story 148): the last month's story commits, made from git log at every build.
+    postBuildScripts:
+      - name: What's new
+        script: '"$SRCROOT/../scripts/native/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json"'
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
     settings:
       base:
         # Its own id until the cutover, so it installs beside Context Grabber (story 140).
@@ -48,13 +69,22 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
-  # The widget extension: for now only the Gym Timer's Live Activity (story 106).
+        # The What's new phase reads the repository's git history and stories, outside what a sandbox allows.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+  # The widget extension: the Live Activity (stories 106, 166) and the live tile (story 136).
   GrabberWidgets:
     type: app-extension
     platform: iOS
     sources:
       - Widgets
       - Shared
+    entitlements:
+      path: Widgets/GrabberWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.idvorkin.grabbernative
+    dependencies:
+      - package: ContextCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative.widgets
@@ -64,10 +94,28 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
+  # Simulator only: grants Health access through Health's own sheet, the one tap a script cannot make
+  # (`just native-sim-health`; docs/TESTING.md).
+  GrabberNativeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: GrabberNative
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: GrabberNative
+        CODE_SIGN_STYLE: Automatic
 schemes:
   GrabberNative:
     build:
       targets:
         GrabberNative: all
+    test:
+      targets:
+        - GrabberNativeUITests
     run:
       config: Debug

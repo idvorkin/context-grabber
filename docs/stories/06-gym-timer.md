@@ -402,3 +402,66 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** 30 SEC ran to the end and the face reads *donE*, 0:00 and *Round 6 of 6*
 - **When:** I tap the 1 MIN chip
 - **Then:** the face clears *donE* and shows 1:00 and *Round 1 of 5*, exactly as RESET followed by the tap would, the session log has a `timer_reset` line, and choosing CUSTOM and moving its Work slider after another finish does the same with the slider's time
+
+---
+
+### User Story 182:
+
+- **Summary:** Choose the voice that counts the workout
+- **Status:** native app only: implemented in [d6ce5b6](https://github.com/idvorkin/context-grabber/commit/d6ce5b6); verified by `just native-test` (`CountVoiceTests`), a simulator screenshot of the sheet, and `just native-test-sim`'s `voice: adam` check on its one run with working simulator audio (the `aussie` hook check is written but the Mac's audio was down for every later run, main's build included); hearing each voice and the sample on the phone still to be checked by Igor
+
+#### Use Case:
+- **As a** lifter who hears the count from across the gym
+- **I want to** pick who calls *three, two, one, go* — Adam, my own voice, or an excited Australian woman
+- **so that** the count sounds the way I want to hear it today, without anything else about the timer changing
+
+#### Acceptance Criteria:
+- **Scenario:** Adam by default
+- **Given:** I have never chosen a count voice
+- **When:** I start a workout
+- **Then:** Adam says *three, two, one, go*, *rest* and *done*, and each `timer_cue` line in the session log has `voice: adam`
+
+- **Scenario:** Choosing another voice
+- **Given:** the Gym Timer is upright
+- **When:** I tap the gear, then *Australian woman* under *Count voice*
+- **Then:** the checkmark moves to her row, she says *go* once as a sample, the session log has a `ui` line with `action: count_voice` and `voice: aussie`, the next cue is in her voice, and after quitting and reopening the app she is still the one counting
+
+---
+
+### User Story 183:
+
+- **Summary:** Tap the time to pause, upright as on its side
+- **Status:** native app only: implemented in [aaa1227](https://github.com/idvorkin/context-grabber/commit/aaa1227); verified by `GymTimerUITests` on the simulator (tap the time: RESUME appears, tap again: STOP); the phone still to be checked by Igor
+- **Issues:** [#148](https://github.com/idvorkin/context-grabber/issues/148)
+- **Spec:** [LED display — upright, the face is a button too](../superpowers/specs/2026-09-07-gym-timer-led-display-design.md)
+
+#### Use Case:
+- **As a** lifter who pauses by tapping the timer when the phone is on its side
+- **I want to** pause the same way when I am holding the phone upright
+- **so that** I do not hunt for the STOP button between sets
+
+#### Acceptance Criteria:
+- **Scenario:** Upright, mid-round
+- **Given:** the phone is upright and a Rounds workout is running
+- **When:** I tap the time
+- **Then:** the workout pauses as STOP would (the face says *PAUSEd*, the log has `timer_pause`), and another tap on the time resumes it; the Stopwatch stops and resumes the same way
+
+---
+
+### User Story 184:
+
+- **Summary:** Turn Work, Rest and Rounds on big drums, upright
+- **Status:** native app only: implemented in [95188a6](https://github.com/idvorkin/context-grabber/commit/95188a6); verified by `just native-test` (`TimerDialsTests`: steps carried, the flick, the ranges held, the arc's angles) and on the simulator (`GymTimerDialsUITests`: taps on the Work drum's ends step 0:10 ↔ 0:20 and a swipe up turns it to 2:10, logged as `custom_dial`; screenshots of the drums, the knobs and the arc, and of the face following the drum); the haptics and sweaty fingers are the phone still to be checked by Igor
+- **Issues:** [#163](https://github.com/idvorkin/context-grabber/issues/163)
+- **Spec:** [Custom preset — upright in Grabber Native: drums, not sliders](../superpowers/specs/2026-09-07-gym-timer-custom-preset-design.md)
+
+#### Use Case:
+- **As a** lifter setting a Custom workout between sets, with chalky or sweaty fingers and the phone at arm's length
+- **I want to** turn Work, Rest and Rounds on three big drums with a swipe or a tap, reading the values in the same LED digits as the face
+- **so that** I can set 1:30 on, 0:20 off, eight rounds in a few strokes without hunting for a slider's thumb
+
+#### Acceptance Criteria:
+- **Scenario:** Setting a Custom workout on the drums
+- **Given:** the Gym Timer is upright with CUSTOM chosen, fresh at 1:00 / 0:10 / 5
+- **When:** I drag the Work drum up a finger's width, tap the bottom of Rest, and flick Work up fast
+- **Then:** Work reads 1:10 with a haptic tick, then several steps more after the flick, always on the ten-second grid and never past 10:00 (a bump there, and it stays); Rest reads 0:20; each drum shows the value one step less faint above and one more faint below; the face shows the new work time before START; the values are remembered as the sliders' were; while running the drums are dim and do nothing; and the session log has one `ui` custom_dial line per gesture

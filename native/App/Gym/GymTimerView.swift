@@ -14,6 +14,7 @@ struct GymTimerView: View {
   @StateObject private var model: GymTimerModel
   @Environment(\.scenePhase) private var scenePhase
   @State private var showAccessory = false
+  @State private var showSettings = false
   @State private var logged = false
   @State private var copied = false
   private let launch: GymTimerLaunch
@@ -41,8 +42,11 @@ struct GymTimerView: View {
         }
       }
     }
+    .sheet(isPresented: $showSettings) { TimerSettingsSheet(model: model) }
     .onAppear {
       model.appear(forcedTurn: launch.turn)
+      if let voice = launch.voice { model.useCountVoiceOnce(voice) }
+      if launch.settings { openSettings(from: "hook") }
       if let preset = launch.preset { model.choosePreset(preset) }
       if let custom = launch.custom { model.useCustomOnce(custom) }
       if launch.autostart { model.toggleTimer() }
@@ -53,15 +57,25 @@ struct GymTimerView: View {
     }
   }
 
+  private func openSettings(from source: String) {
+    model.openedSettings(from: source)
+    showSettings = true
+  }
+
   // MARK: - upright: the whole screen
 
   private var upright: some View {
     VStack(spacing: 0) {
-      HStack {
+      HStack(spacing: 16) {
         Button("Done", action: onExit).font(.system(size: 16, weight: .semibold)).foregroundStyle(accent)
         Spacer()
-        Text("Gym Timer").font(.system(size: 18, weight: .bold)).foregroundStyle(LED.white)
-        Spacer()
+        Button {
+          openSettings(from: "button")
+        } label: {
+          Image(systemName: "gearshape").font(.system(size: 17, weight: .semibold)).foregroundStyle(Color(white: 0.45))
+        }
+        .accessibilityLabel("Timer settings")
+        .accessibilityIdentifier("timer-settings")
         Button(copied ? "Copied" : "Log") {
           UIPasteboard.general.string = model.timerLogText()
           copied = true
@@ -73,6 +87,7 @@ struct GymTimerView: View {
         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Color(white: 0.33))
         .accessibilityLabel("Copy timer log")
       }
+      .overlay { Text("Gym Timer").font(.system(size: 18, weight: .bold)).foregroundStyle(LED.white) }
       .padding(.horizontal, 16).padding(.vertical, 12)
       .overlay(alignment: .bottom) { chip.frame(height: 1) }
 
@@ -82,7 +97,7 @@ struct GymTimerView: View {
         VStack {
           Spacer(minLength: 0)
           switch model.mode {
-          case .rounds: RoundsMode(model: model, width: geo.size.width - 48)
+          case .rounds: RoundsMode(model: model, dial: launch.dial ?? .shipped, width: geo.size.width - 48)
           case .stopwatch: StopwatchMode(model: model, width: geo.size.width - 48)
           case .sets: SetsMode(model: model, width: geo.size.width - 48)
           }
@@ -182,6 +197,12 @@ struct GymTimerLaunch: Equatable {
   var custom: CustomPreset?
   var autostart = false
   var turn: DeviceTurn?
+  /// A launch hook's count voice: this visit only (story 182).
+  var voice: CountVoice?
+  /// A launch hook: open with Timer settings up, for a screenshot.
+  var settings = false
+  /// A launch hook (`GRABBER_TIMER_DIAL`): which Custom control to draw upright (story 184); the drums otherwise.
+  var dial: DialStyle?
 }
 
 @MainActor private func roundsFace(_ model: GymTimerModel) -> FaceContent {
@@ -229,11 +250,16 @@ private struct SideButton: View {
 
 private struct RoundsMode: View {
   @ObservedObject var model: GymTimerModel
+  let dial: DialStyle
   let width: CGFloat
 
   var body: some View {
     VStack(spacing: 0) {
-      if model.presetId == CustomPreset.id {
+      if model.presetId == CustomPreset.id, dial != .sliders {
+        CustomDials(model: model, style: dial, width: width)
+          .disabled(model.locked).opacity(model.locked ? 0.35 : 1)
+          .padding(.bottom, 16)
+      } else if model.presetId == CustomPreset.id {
         VStack(spacing: 4) {
           StepSlider(
             label: "Work", value: model.custom.work, range: CustomPreset.workRange, step: CustomPreset.stepSeconds,
@@ -250,7 +276,11 @@ private struct RoundsMode: View {
         .disabled(model.locked).opacity(model.locked ? 0.35 : 1)
         .padding(.bottom, 12)
       }
-      TimerFace(content: roundsFace(model), width: width, maxHeight: 150)
+      // With the arc above it, the face gives up a little height so START stays on screen.
+      TimerFace(content: roundsFace(model), width: width, maxHeight: model.presetId == CustomPreset.id && dial == .arc ? 100 : 150)
+        // Story 183: upright the time is a button too, as it is with the phone on its side.
+        .contentShape(Rectangle()).onTapGesture(perform: model.toggleTimer)
+        .accessibilityIdentifier("timer-face")
       HStack(spacing: 16) {
         SideButton(title: "RESET", action: model.resetTimer)
         RoundButton(
@@ -272,6 +302,7 @@ private struct StopwatchMode: View {
       TimelineView(.animation(paused: !model.stopwatch.isRunning)) { timeline in
         TimerFace(content: stopwatchFace(model, at: timeline.date), width: width, maxHeight: 130)
       }
+      .contentShape(Rectangle()).onTapGesture(perform: model.toggleStopwatch)
       HStack(spacing: 16) {
         SideButton(title: "LAP", enabled: model.stopwatch.isRunning, action: model.lap)
         RoundButton(
@@ -404,6 +435,49 @@ private struct StepSlider: View {
       Text(title).font(.system(size: 18, weight: .bold)).foregroundStyle(LED.white)
         .frame(width: 32, height: 32).background(chip, in: Circle())
     }
+  }
+}
+
+// MARK: - Timer settings
+
+/// The gear's sheet (story 182): who says the count. A tap chooses, remembers and plays that voice's "go".
+private struct TimerSettingsSheet: View {
+  @ObservedObject var model: GymTimerModel
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    NavigationStack {
+      Form {
+        Section {
+          ForEach(CountVoice.allCases, id: \.self) { voice in
+            Button {
+              model.chooseCountVoice(voice)
+            } label: {
+              HStack {
+                Text(voice.label).foregroundStyle(.primary)
+                Spacer()
+                if model.countVoice == voice {
+                  Image(systemName: "checkmark").font(.system(size: 15, weight: .semibold)).foregroundStyle(accent)
+                }
+              }
+            }
+            .tint(.primary)
+            .accessibilityIdentifier("count-voice-\(voice.rawValue)")
+            .accessibilityAddTraits(model.countVoice == voice ? .isSelected : [])
+          }
+        } header: {
+          Text("Count voice")
+        } footer: {
+          Text("Tap a voice to hear its “go”. The next cue uses it.")
+        }
+      }
+      .navigationTitle("Timer settings")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() }.bold() }
+      }
+    }
+    .presentationDetents([.medium])
   }
 }
 

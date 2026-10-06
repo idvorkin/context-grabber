@@ -62,9 +62,22 @@ native-build-sim: native-project
     set -uo pipefail
     out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
       -derivedDataPath native/Build -destination "platform=iOS Simulator,id=$(scripts/native/sim-udid.sh "{{native_sim}}")" \
-      CODE_SIGNING_ALLOWED=NO GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" build 2>&1)
+      CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" build 2>&1)
     echo "$out" | grep -E "error:|BUILD"
     echo "$out" | grep -q "BUILD SUCCEEDED"
+    # Signed to run locally, not unsigned: HealthKit refuses an app without its entitlement, even on the simulator.
+
+# Once per simulator: grant Health access through Health's own sheet (a UI test taps it; nothing else can) and
+# grab the fixture week from the simulator's Health store. sim-smoke.sh then checks the exports.
+native-sim-health: native-project
+    #!/usr/bin/env bash
+    set -uo pipefail
+    out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
+      -derivedDataPath native/Build -destination "platform=iOS Simulator,id=$(scripts/native/sim-udid.sh "{{native_sim}}")" \
+      CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" \
+      -only-testing:GrabberNativeUITests/HealthAccessUITests test 2>&1)
+    echo "$out" | grep -E "error:|Test Case|TEST (SUCCEEDED|FAILED)"
+    echo "$out" | grep -q "TEST SUCCEEDED"
 
 # Native rung 2: the simulator build driven by launch hooks, judged from its session log
 native-test-sim: native-build-sim

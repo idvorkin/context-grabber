@@ -172,7 +172,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 129:
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported — its home screen links to Context Grabber's Card tab ([0c97606](https://github.com/idvorkin/context-grabber/commit/0c97606), build only; the tap on the phone) until the widgets step
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported, by Igor's choice (2026-10-05) — see story 133
 
 #### Use Case:
 - **As a** man about to do the trick for someone
@@ -184,6 +184,24 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the Card tab is open on a fresh card (every open deals one; a tap deals another)
 - **When:** I press *Think of a card*
 - **Then:** the card goes face down counting five, four, three…, a new card is face up at zero, pressing *Never mind* mid-count stops it with the previous card face up, and on leaving the tab or locking the phone the widgets show the last card the tab dealt
+
+---
+
+### User Story 133:
+
+- **Summary:** Think of a card in Grabber Native opens Igor's trainer
+- **Status:** implemented in [0152b68](https://github.com/idvorkin/context-grabber/commit/0152b68); verified by the simulator build; the tap on the phone not yet
+
+#### Use Case:
+- **As a** man about to do the trick, with Grabber Native open
+- **I want to** tap *Think of a card* and be in Think a Card Trainer with the beat already started
+- **so that** I practise with the trainer I built for it, not a second card app
+
+#### Acceptance Criteria:
+- **Scenario:** The row
+- **Given:** Think a Card Trainer is installed on the phone
+- **When:** I tap *Think of a card* on Grabber Native's home screen
+- **Then:** the trainer comes to the front and starts "think of a card" as its watch complication's tap does, and if the trainer is not installed the home screen says so instead
 
 ---
 
@@ -239,3 +257,72 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** background tracking has recorded today's trail
 - **When:** I look at the home screen
 - **Then:** a map widget shows today's route over the map with the current position marked, refreshed with the last grab
+
+
+---
+
+### User Story 134:
+
+- **Summary:** Open Exercise Analyzer from the native home screen
+- **Status:** native app only: implemented in [225d739](https://github.com/idvorkin/context-grabber/commit/225d739); verified by `ExerciseAnalyzerLinkUITests` on the simulator with Exercise Analyzer's url-scheme build installed (tap the row, Exercise Analyzer runs in front); the phone still to be checked by Igor
+- **Issues:** [#142](https://github.com/idvorkin/context-grabber/issues/142)
+- **Spec:** [Swift-native app — Exercise Analyzer, one tap away](../superpowers/specs/2026-10-04-swift-native-app-design.md#exercise-analyzer-one-tap-away)
+
+#### Use Case:
+- **As a** lifter whose home screen is Grabber Native
+- **I want to** open Exercise Analyzer from it
+- **so that** recording a set is one tap from where I already am
+
+#### Acceptance Criteria:
+- **Scenario:** The row
+- **Given:** Exercise Analyzer is installed
+- **When:** I tap *Exercise Analyzer* on Grabber Native's home screen
+- **Then:** Exercise Analyzer comes to the front, the session log has `open_exercise_analyzer` with ok true, and without it installed the home screen says it is not installed
+
+---
+
+### User Story 135:
+
+- **Summary:** A link and a Shortcuts action for every screen of Grabber Native
+- **Status:** implemented in [5c1f4ad](https://github.com/idvorkin/context-grabber/commit/5c1f4ad); verified by `AppLinkTests` (host) and `LinksUITests` on the simulator (real links through iOS, cold and warm: `timer?preset=10,10,2` counting down, `breathe?breath=5&minutes=2` begun over the running timer, `nowhere` on home, `timer?preset=9min` ready; Copy on the Links screen), with `just native-test-sim` passing; the Shortcuts actions, Siri and the Action Button on the phone not yet
+- **Issues:** [#167](https://github.com/idvorkin/context-grabber/issues/167)
+
+#### Use Case:
+- **As a** man wiring the Action Button and a few Shortcuts to the native app
+- **I want to** pick *Start Gym Timer* (1 MIN) or *Start Box Breathing* (5 minutes) from Grabber Native's actions, or paste `grabbernative://timer?preset=1min` copied from the app's Links screen
+- **so that** the workout or the breathing is running before I have opened, navigated or pressed anything, and every screen is one tap from wherever I put it
+
+#### Acceptance Criteria:
+- **Scenario:** Links, cold and warm
+- **Given:** Grabber Native is closed (and again with it open on another screen)
+- **When:** I open `grabbernative://timer?preset=10,10,2`, `grabbernative://breathe?breath=5&minutes=2`, `grabbernative://today`, `grabbernative://places`, `grabbernative://cockpit`, `grabbernative://call` or `grabbernative://card`
+- **Then:** each lands on its screen, the timer counting down and the breathing begun within about a second; `grabbernative://nowhere` opens the home screen, a preset it does not know opens the timer ready, and none of them shows an error
+
+- **Scenario:** Shortcuts and the Links screen
+- **Given:** the Shortcuts app lists *Open Today*, *Start Gym Timer*, *Start Box Breathing*, *Open Places*, *Open Cockpit* and *Call Larry* under Grabber Native
+- **When:** I run *Start Gym Timer* with 1 MIN while the app is closed, and later tap Copy beside a link on *Links for Shortcuts* at the bottom of the home screen
+- **Then:** the app opens on the timer with 1 MIN counting down, and the clipboard holds exactly that link; Context Grabber's own `grabber://` links still open Context Grabber
+
+---
+
+### User Story 136:
+
+- **Summary:** The usage left on a home-screen tile, with one-tap starts beside it
+- **Status:** implemented in [7b70242](https://github.com/idvorkin/context-grabber/commit/7b70242); verified by `UsageSnapshotTests` (host: the round trip, the countdown and *to spend* at drawing time, the age, the placeholder) and `UsageTileUITests` on the simulator (the medium tile added through SpringBoard's gallery draws the real Cockpit reading, *just now*; its Gym Timer starts the last preset); the orange age over hours, low and critical bars, the placeholder on screen, Breathe and Call Larry from the tile, and the App Group on a device-signed build not yet on the phone
+- **Issues:** [#168](https://github.com/idvorkin/context-grabber/issues/168)
+
+#### Use Case:
+- **As a** man deciding whether to start another long session with Claude, or whether this week's allowance is about to go unspent
+- **I want to** see Week, the model and Voice left on a Grabber Native tile on the home screen, and start the Gym Timer, Box breathing or a call to Larry from the same tile
+- **so that** the budget is a glance and the things I do daily are one tap, without opening the app first
+
+#### Acceptance Criteria:
+- **Scenario:** The tile after a reading
+- **Given:** the small or medium live tile is on the home screen and Grabber Native has loaded a reading on the tailnet
+- **When:** I look at the home screen, and again two hours later without opening the app
+- **Then:** the tile shows the strip's bars and numbers with the strip's orange and red, then *12m ago* in grey, later *2h ago* in orange, and *31% to spend* in green once the week resets within a day with more than 20% left
+
+- **Scenario:** One tap, and before any reading
+- **Given:** the medium tile, on a phone where Grabber Native has never loaded a reading
+- **When:** I look at it, then tap Gym Timer
+- **Then:** it reads *Open Grabber Native* with no numbers, and the tap opens the app with the last preset counting down; Breathe begins a session and Call Larry starts the call the same way
