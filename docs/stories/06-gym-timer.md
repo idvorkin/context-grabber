@@ -445,3 +445,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the phone is upright and a Rounds workout is running
 - **When:** I tap the time
 - **Then:** the workout pauses as STOP would (the face says *PAUSEd*, the log has `timer_pause`), and another tap on the time resumes it; the Stopwatch stops and resumes the same way
+
+---
+
+### User Story 184:
+
+- **Summary:** Turn Work, Rest and Rounds on big drums, upright
+- **Status:** native app only: implemented in [95188a6](https://github.com/idvorkin/context-grabber/commit/95188a6); verified by `just native-test` (`TimerDialsTests`: steps carried, the flick, the ranges held, the arc's angles) and on the simulator (`GymTimerDialsUITests`: taps on the Work drum's ends step 0:10 ↔ 0:20 and a swipe up turns it to 2:10, logged as `custom_dial`; screenshots of the drums, the knobs and the arc, and of the face following the drum); the haptics and sweaty fingers are the phone still to be checked by Igor
+- **Issues:** [#163](https://github.com/idvorkin/context-grabber/issues/163)
+- **Spec:** [Custom preset — upright in Grabber Native: drums, not sliders](../superpowers/specs/2026-09-07-gym-timer-custom-preset-design.md)
+
+#### Use Case:
+- **As a** lifter setting a Custom workout between sets, with chalky or sweaty fingers and the phone at arm's length
+- **I want to** turn Work, Rest and Rounds on three big drums with a swipe or a tap, reading the values in the same LED digits as the face
+- **so that** I can set 1:30 on, 0:20 off, eight rounds in a few strokes without hunting for a slider's thumb
+
+#### Acceptance Criteria:
+- **Scenario:** Setting a Custom workout on the drums
+- **Given:** the Gym Timer is upright with CUSTOM chosen, fresh at 1:00 / 0:10 / 5
+- **When:** I drag the Work drum up a finger's width, tap the bottom of Rest, and flick Work up fast
+- **Then:** Work reads 1:10 with a haptic tick, then several steps more after the flick, always on the ten-second grid and never past 10:00 (a bump there, and it stays); Rest reads 0:20; each drum shows the value one step less faint above and one more faint below; the face shows the new work time before START; the values are remembered as the sliders' were; while running the drums are dim and do nothing; and the session log has one `ui` custom_dial line per gesture
