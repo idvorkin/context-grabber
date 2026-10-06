@@ -155,7 +155,8 @@ final class AppModel: ObservableObject {
   }
 
   func openGymTimer(_ launch: GymTimerLaunch = GymTimerLaunch(), from source: String) {
-    log.event("ui", ["action": "open_timer", "from": source, "autostart": launch.autostart])
+    log.event(
+      "ui", ["action": "open_timer", "from": source, "autostart": launch.autostart, "dial": (launch.dial ?? .shipped).rawValue])
     screen = "gym_timer"
     gymTimer = launch
   }
@@ -193,6 +194,15 @@ final class AppModel: ObservableObject {
     UIApplication.shared.open(url) { [log] ok in
       log.event("ui", ["action": "open_think_a_card", "from": source, "ok": ok])
       if !ok { Task { @MainActor in self.status = "Think a Card is not installed, so the card cannot open." } }
+    }
+  }
+
+  /// Exercise Analyzer, Igor's own app (its story 069): the link only brings it forward.
+  func openExerciseAnalyzer(from source: String) {
+    guard let url = URL(string: "exerciseanalyzer://") else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_exercise_analyzer", "from": source, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Exercise Analyzer is not installed, so it cannot open." } }
     }
   }
 
@@ -259,10 +269,12 @@ final class AppModel: ObservableObject {
       openBreathe(launch, from: "hook")
     }
     let voice = env["GRABBER_COUNT_VOICE"].flatMap(CountVoice.init(rawValue:))
+    // Story 184: which Custom control the timer draws upright; alone, it opens the timer on CUSTOM, not started.
+    let dial = env["GRABBER_TIMER_DIAL"].flatMap(DialStyle.init(rawValue:))
     if let spec = env["GRABBER_TIMER"], !spec.isEmpty {
       // A chip's id starts it as a tap on a widget tile would; "work,rest,rounds" runs that shape as Custom.
       var launch = GymTimerLaunch(
-        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice)
+        autostart: true, turn: env["GRABBER_TURN"].flatMap(DeviceTurn.init(rawValue:)), voice: voice, dial: dial)
       let numbers = spec.split(separator: ",").compactMap { Int($0) }
       if numbers.count == 3 {
         launch.custom = CustomPreset(work: numbers[0], rest: numbers[1], rounds: numbers[2])
@@ -271,7 +283,9 @@ final class AppModel: ObservableObject {
       }
       openGymTimer(launch, from: "hook")
     } else if env["GRABBER_TIMER_SETTINGS"] == "1" {
-      openGymTimer(GymTimerLaunch(voice: voice, settings: true), from: "hook")
+      openGymTimer(GymTimerLaunch(voice: voice, settings: true, dial: dial), from: "hook")
+    } else if let dial {
+      openGymTimer(GymTimerLaunch(preset: CustomPreset.id, voice: voice, dial: dial), from: "hook")
     }
     // Places (docs/TESTING.md): import first, so the other hooks see the imported trail.
     if let spec = env["GRABBER_IMPORT_DB"], !spec.isEmpty {
@@ -288,9 +302,26 @@ final class AppModel: ObservableObject {
       tracker.setTracking(spec == "on", from: "hook")
     }
     if let spec = env["GRABBER_PLACES"], !spec.isEmpty {
-      // "open" opens the screen; "map" also opens the map full screen.
+      // "open" opens the screen; "map" also opens the map full screen; "map,unnamed" then opens the card of the
+      // longest unnamed place once the trail is read, and "map,unnamed,name" its naming card (story 056).
+      let parts = spec.split(separator: ",").map(String.init)
       openPlaces(from: "hook")
-      if spec == "map" { showPlacesMap = true }
+      if parts.first == "map" { showPlacesMap = true }
+      // "open,edit:<name>" opens that known place's screen, for a screenshot of its icon picker (story 057).
+      if let edit = parts.first(where: { $0.hasPrefix("edit:") }) {
+        let name = String(edit.dropFirst(5))
+        if let place = places.knownPlaces.first(where: { $0.name == name }) { places.edit(place, from: "hook") }
+      }
+      if parts.dropFirst().contains("unnamed") {
+        Task {
+          for _ in 0..<100 where places.loading || places.unnamed.isEmpty {
+            try? await Task.sleep(for: .milliseconds(200))
+          }
+          guard let place = places.unnamed.first else { return }
+          places.selectUnnamed(place.placeId, from: "hook")
+          if parts.contains("name") { places.startNaming(place) }
+        }
+      }
     }
     if env["GRABBER_EXPORT"] == "1" {
       // Prepares the file as Export database does, without the share sheet a script cannot dismiss.

@@ -152,13 +152,27 @@ final class MirrorModel: ObservableObject {
     }
   }
 
+  /// Story 037: the last week's finished activities. Nil under the fixture hook, so its export stays the current
+  /// app's byte for byte.
+  func activityEntries() -> [ActivityEntry]? {
+    if fixedNow != nil { return nil }
+    guard let log = app.database.activityLog else { return nil }
+    do {
+      return try log.entries(since: jsDate(now() - Double(ActivityLog.windowDays) * 24 * 3600 * 1000))
+    } catch {
+      app.log.event("error", ["where": "activity_history", "message": "\(error)"])
+      return nil
+    }
+  }
+
   /// The summary (single line) or the raw share (indented), written to Documents/exports/ as well so a report or
   /// the simulator check can read exactly what went out.
   func export(_ kind: ExportKind) -> String? {
     guard let snap = snapshot else { return nil }
     let text: String =
       kind == .summary
-      ? MirrorGrab.summaryJSON(snap, accessory: accessoryEntries(), clock: clock) : MirrorGrab.rawJSON(snap)
+      ? MirrorGrab.summaryJSON(snap, accessory: accessoryEntries(), activities: activityEntries(), clock: clock)
+      : MirrorGrab.rawJSON(snap)
     let file = Self.exportsDir.appendingPathComponent("\(kind.rawValue).json")
     do {
       try FileManager.default.createDirectory(at: Self.exportsDir, withIntermediateDirectories: true)
