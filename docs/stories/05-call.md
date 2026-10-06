@@ -394,7 +394,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 200:
 
 - **Summary:** The call log never holds my precise position
-- **Status:** implemented on branch `fix/sleep-export-night-bucketing`; verified by `callLocation.test.ts` (host). Not yet on the phone.
+- **Status:** implemented in [9d21174](https://github.com/idvorkin/context-grabber/commit/9d21174); verified by `callLocation.test.ts` (host). Not yet on the phone.
 
 #### Use Case:
 - **As** someone whose call log uploads itself as a gist when a call goes wrong
