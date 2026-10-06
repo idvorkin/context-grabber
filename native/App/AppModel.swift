@@ -45,6 +45,9 @@ final class AppModel: ObservableObject {
   @Published var showToday = false
   /// The metric whose week is open over Today.
   @Published var openMetricKey: MetricSheetItem?
+  /// Which launchers the home screen shows, in Igor's order (story 147).
+  @Published private(set) var homeLayout: HomeLayout
+  @Published var showHomeSettings = false
   /// The mirror: the last grab and the exports. Set at the end of init (it reads the database and the log).
   private(set) var mirror: MirrorModel!
 
@@ -55,6 +58,9 @@ final class AppModel: ObservableObject {
     places = PlacesModel(log: log, database: database)
     bugReporter = BugReporter(log: log)
     call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
+    homeLayout = HomeLayout(
+      known: HomeRow.ids, storedOrder: database.setting(HomeLayout.orderKey),
+      storedHidden: database.setting(HomeLayout.hiddenKey))
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
     bugReporter.pruneOldLogs()
@@ -95,6 +101,41 @@ final class AppModel: ObservableObject {
     guard url.isFileURL else { return }
     if !showPlaces { openPlaces(from: "file") }
     places.importDatabase(url, from: "file")
+  }
+
+  func openHomeSettings() {
+    log.event("ui", ["action": "home_settings"])
+    screen = "home_settings"
+    showHomeSettings = true
+  }
+
+  func closeHomeSettings() {
+    screen = "home"
+    showHomeSettings = false
+  }
+
+  func setHomeRow(_ id: String, shown: Bool) {
+    homeLayout.setShown(id, shown)
+    saveHomeLayout(change: shown ? "show" : "hide")
+  }
+
+  func moveHomeRows(fromOffsets offsets: IndexSet, toOffset destination: Int) {
+    homeLayout.move(fromOffsets: offsets, toOffset: destination)
+    saveHomeLayout(change: "move")
+  }
+
+  func resetHomeRows() {
+    homeLayout = HomeLayout(known: HomeRow.ids, storedOrder: nil, storedHidden: nil)
+    saveHomeLayout(change: "reset")
+  }
+
+  /// The whole layout after every change, so a log says what the home screen looked like.
+  private func saveHomeLayout(change: String) {
+    database.setSetting(HomeLayout.orderKey, homeLayout.encodedOrder)
+    database.setSetting(HomeLayout.hiddenKey, homeLayout.encodedHidden)
+    log.event(
+      "ui",
+      ["action": "home_rows", "change": change, "order": homeLayout.encodedOrder, "hidden": homeLayout.encodedHidden])
   }
 
   /// A shake or the button: the picture is taken before the sheet covers the screen.
@@ -288,6 +329,7 @@ final class AppModel: ObservableObject {
       places.exportFile = nil
     }
     if env["GRABBER_COCKPIT"] == "open" { openCockpit(from: "hook") }
+    if env["GRABBER_HOME"] == "settings" { openHomeSettings() }
     if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
       // A call to that bridge (the smoke run's fake one), hung up after GRABBER_CALL_SECONDS (default 8).
       openCall(from: "hook")

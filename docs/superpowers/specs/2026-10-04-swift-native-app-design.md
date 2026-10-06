@@ -73,7 +73,7 @@ did that matters, what failed, with the numbers that decide a question as number
 from. It is visible in the Files app and comes to the Mac with one command. Logs older than thirty days are
 deleted at launch, except a log a problem report names.
 
-**Reporting a problem.** A shake anywhere, or *Report a problem* on the Diagnostics screen, opens a sheet with
+**Reporting a problem.** A shake anywhere, or *Report a problem* behind the home screen's cog, opens a sheet with
 one text field and a list of what will be attached. *Log it* stores the note, a picture of the screen as it was
 at the shake, the screen Igor was on, the build, and the name and moment of the session log. On the Mac the
 report becomes one GitHub issue with the note and the context; filing twice never makes two issues. The
@@ -95,7 +95,7 @@ file comes to the Mac with the logs.
 it, and the shake attaches that log. The copy-to-clipboard button stays where Igor is likely to be away from
 the Mac (the call).
 
-**Which build.** The Diagnostics screen shows the commit and branch the build was made from. The log's first
+**Which build.** The home screen's cog shows the commit and branch the build was made from. The log's first
 line carries the same.
 
 ## Think of a card: Igor's trainer, not a port
@@ -188,7 +188,7 @@ differences while the two apps live side by side:
   then the call carries no location.
 - **Prime audio is not ported.** It was an experiment for the silent first call in the React Native audio
   engine (#88); the native call builds its audio the same way every time.
-- **The gist token** is entered on the native home screen under *Diagnostics uploads* and kept in the native
+- **The gist token** is entered behind the native home screen's cog under *Diagnostics uploads* and kept in the native
   app's own Keychain; the old app's token is not shared until the cutover. Automatic upload after a troubled
   call, the delete-me note, the ten-gist cap and *Delete uploaded diagnostics* behave as stories 094 and 095
   say.
@@ -210,8 +210,7 @@ The mirror does what stories 002–009, 013 and 019 say, and Grab Context what s
 with these differences while the two apps live side by side:
 
 - **Today opens from the native app's home screen**, as the Gym Timer does, and the home screen stays the
-  Diagnostics list. Whether Today becomes the home screen (with Diagnostics behind a button) is Igor's call and
-  waits for it.
+  list of launchers, with the diagnostics behind its cog ([home screen spec](2026-10-06-native-home-screen-design.md)).
 - **Today is one screen**: a header with when the last grab finished and a phase while one runs, a summary line,
   the body cards (Movement, Exercise, Heart Rate, HRV, Sleep, Meditation, Weight) with the same values, sublabels
   and box plots as the current Body tab, and *Share summary* / *Share raw*. The current app's tabs (Today, Body,

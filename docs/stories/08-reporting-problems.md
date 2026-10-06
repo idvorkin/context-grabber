@@ -11,7 +11,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 140:
 
 - **Summary:** The native app lives beside the current one
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`just native-test-sim`: installs, launches, logs `session_start`) and on the phone (2026-10-04, installed beside Context Grabber and opened)
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`just native-test-sim`: installs, launches, logs `session_start`) and on the phone (2026-10-04, installed beside Context Grabber and opened); the commit and branch moved behind the home screen's cog: [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186), verified on the simulator (screenshot of the sheet)
 
 #### Use Case:
 - **As someone** who depends on the current app every day
@@ -22,7 +22,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Installing the native build
 - **Given:** Context Grabber is on the phone with its data
 - **When:** the native build is installed and opened
-- **Then:** a second app named "Grabber Native" opens on its Diagnostics screen showing the commit and branch it was built from, and Context Grabber still opens with its data untouched
+- **Then:** a second app named "Grabber Native" opens on its home screen, whose cog shows the commit and branch it was built from, and Context Grabber still opens with its data untouched
 
 ---
 
@@ -113,7 +113,6 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the Documents folder holds a 40-day-old log no report names and a 40-day-old log a report names
 - **When:** I open the app
 - **Then:** the first is deleted, the second is kept, and the new log has one `logs_pruned` line with the count, the bytes freed and how many were kept for reports
-
 ---
 
 ### User Story 146:
@@ -134,3 +133,36 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I give the phone a quick, light shake — three flicks — that iOS's own shake would ignore
 - **Then:** the report sheet opens once, and the session log has `shake` with source motion and the peak force; walking with the phone in my hand or setting it on the bench opens nothing
 
+---
+
+### User Story 147:
+
+- **Summary:** The home screen holds only what I open, and a cog holds the rest
+- **Issues:** [#166](https://github.com/idvorkin/context-grabber/issues/166)
+- **Status:** native app: implemented in [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186) ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md)); verified by host tests (`HomeLayoutTests`) and on the simulator (`HomeSettingsUITests`: Cockpit hidden and Gym Timer moved to the top through the cog, both still so after a relaunch, Reset puts them back; the log's `ui` home_settings / home_rows lines; screenshots of the home screen and the sheet); the phone still to be checked by Igor
+
+#### Use Case:
+- **As someone** who opens the native app to start a workout, a call or a breath, not to read its build number
+- **I want to** see only the launchers I use, in my order, with the diagnostics one tap away behind a cog
+- **so that** the thing I came for is the first thing under my thumb
+
+#### Acceptance Criteria:
+- **Scenario:** Hiding a launcher
+- **Given:** the home screen shows Call Larry, Today, Gym Timer, Box breathing, Places, Think of a card and Cockpit, with a cog at the top right and nothing below them
+- **When:** I tap the cog, turn off Cockpit's switch, tap Done and later relaunch the app
+- **Then:** Cockpit is gone from the home screen and stays gone after the relaunch, and the log has `ui` home_settings and a `ui` home_rows line naming the order and `cockpit` as hidden
+
+- **Scenario:** Moving a launcher
+- **Given:** the Home screen sheet is open
+- **When:** I drag Gym Timer to the top and relaunch the app
+- **Then:** Gym Timer is the first row on the home screen, before and after the relaunch
+
+- **Scenario:** A launcher added by a later build
+- **Given:** I have reordered and hidden rows in an earlier build
+- **When:** a build with a new launcher is installed
+- **Then:** my order and hidden rows are kept and the new launcher shows at the end
+
+- **Scenario:** The diagnostics, out of the way
+- **Given:** I need the build, this launch's log, the gist token or *Report a problem*
+- **When:** I tap the cog
+- **Then:** they are under *About and diagnostics* in the sheet, as they were on the home screen, and a shake with the sheet up still opens a report naming the screen *home_settings*
