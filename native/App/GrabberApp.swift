@@ -22,6 +22,7 @@ struct GrabberApp: App {
         .onOpenURL { model.open(url: $0) }
         .onChange(of: scenePhase) { _, phase in
           // The first activation is the launch, which pruned already; every later one is a foreground.
+          if phase == .active { model.shakeMotion.start() } else { model.shakeMotion.stop() }
           if phase == .active {
             if wasActive { model.foreground() } else { model.tracker.foreground() }
             wasActive = true

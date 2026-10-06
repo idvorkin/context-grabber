@@ -13,6 +13,11 @@ final class AppModel: ObservableObject {
   let tracker: LocationTracker
   let places: PlacesModel
   private let bugReporter: BugReporter
+  /// A gentle shake opens the report too (story 146).
+  private(set) lazy var shakeMotion = ShakeMotion { [weak self] peak in
+    self?.log.event("shake", ["source": "motion", "peak_g": (peak * 100).rounded() / 100])
+    self?.startBugReport(from: "shake")
+  }
 
   /// The screen in front, as a report and the log name it. Each ported journey sets it when it appears.
   @Published var screen = "home"
