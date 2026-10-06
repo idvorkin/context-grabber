@@ -119,7 +119,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 146:
 
 - **Summary:** A gentle shake opens the report, not only a hard one
-- **Status:** not implemented
+- **Status:** native app only: implemented in [29347c8](https://github.com/idvorkin/context-grabber/commit/29347c8); verified by `ShakeGestureTests` (host: a light 1.8 g shake counts; one push, a 0.5 Hz sway and a 1 g jiggle do not; one sheet per shake); the threshold on the phone still to be checked by Igor (the simulator has no accelerometer)
 - **Issues:** [#164](https://github.com/idvorkin/context-grabber/issues/164)
 - **Spec:** [Swift-native app — a gentle shake is enough](../superpowers/specs/2026-10-04-swift-native-app-design.md)
 
