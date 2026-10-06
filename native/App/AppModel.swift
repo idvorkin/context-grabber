@@ -204,6 +204,7 @@ final class AppModel: ObservableObject {
       // "breath,cycles[,cue[,pause_at_seconds]]" begins that exact session; anything else just opens the sliders.
       let parts = spec.split(separator: ",").map(String.init)
       var launch = BreatheLaunch()
+      launch.style = env["GRABBER_BREATHE_STYLE"].flatMap(BreathStyle.init(rawValue:))
       if parts.count >= 2, let breath = Int(parts[0]), let cycles = Int(parts[1]) {
         launch.plan = BreathPlan(breathSeconds: breath, cycles: cycles)
         launch.cue = parts.count > 2 ? BreathCue(rawValue: parts[2]) : nil
