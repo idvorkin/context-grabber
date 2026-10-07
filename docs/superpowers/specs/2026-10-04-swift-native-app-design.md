@@ -79,7 +79,10 @@ included (Igor, 2026-10-06, #182: *"I can't rage shake when a dialog is up"*); t
 the report is logged or cancelled, and the picture shows it. Only iOS's own alerts (a permission prompt) are out
 of reach. The sheet has a list of what will be attached. *Log it* stores the note, a picture of the screen as it was
 at the shake, the screen Igor was on, the build, and the name and moment of the session log. On the Mac the
-report becomes one GitHub issue with the note and the context; filing twice never makes two issues. The
+report becomes one GitHub issue with the note and the context; filing twice never makes two issues.
+*Log it and another*, right under the note where the keyboard cannot hide it, stores the report exactly the same way and opens a fresh, empty
+report straight away, with a new picture of the screen underneath, so several problems can be filed in a row
+without shaking again (Igor, 2026-10-07). The
 picture stays on the Mac and the issue says where: the issues are public, and a screen can show health, places
 or the journal.
 

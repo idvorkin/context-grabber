@@ -231,7 +231,9 @@ final class AppModel: ObservableObject {
   func startBugReport(from source: String) {
     guard !showBugReport else { return }
     bugReporter.capture()
-    let over = BugReportPresenter.present(BugReportSheet(model: self)) { [weak self] in self?.showBugReport = false }
+    let over = BugReportPresenter.present(
+      BugReportSheet(model: self), onGone: { [weak self] in self?.showBugReport = false },
+      another: { [weak self] in self?.startBugReport(from: "another") })
     log.event("ui", ["action": "report_problem", "from": source, "screen": screen, "over": over ?? "nothing"])
     showBugReport = over != nil
   }
