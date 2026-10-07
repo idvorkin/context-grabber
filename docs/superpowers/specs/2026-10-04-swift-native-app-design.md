@@ -110,6 +110,21 @@ the Mac (the call).
 **Which build.** The home screen's cog shows the commit and branch the build was made from. The log's first
 line carries the same.
 
+## On the iPad
+
+Igor, 2026-10-07: *"Will this work on iPad as well? Enable iPad version."* Grabber Native installs on the iPad
+as an iPad app, not a magnified phone app: the screens fill the iPad's width and turn with it, every way; the
+phone stays upright. Every journey opens and works. Some are the phone's by nature and say less on the iPad:
+
+- **Today** reads the iPad's own Health, which holds little unless the iPad shares in iCloud Health.
+- **Places** records where the iPad goes, which is usually nowhere; the phone's history is not on the iPad.
+- **The live tile and Shortcuts** work as on the phone. The Gym Timer's Live Activity has no Lock Screen on the
+  iPad to show on, so the timer simply runs in the app.
+- **Calls, the Cockpit, breathing, the timer, the blog's launchers and the report shake** work as on the phone
+  (a shake of an iPad is unlikely; *Report a problem* behind the cog is the way).
+
+The iPad keeps its own settings, log and reports; they are not shared with the phone.
+
 ## Think of a card: Igor's trainer, not a port
 
 Igor, 2026-10-05: *"I have ~/gits/think-a-card-trainer, I want that instead."* The home screen lists **Think of a
