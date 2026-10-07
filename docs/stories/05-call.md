@@ -457,7 +457,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 203:
 
 - **Summary:** What is left of Claude's week and of the voice budget, as a strip on the native home screen
-- **Status:** implemented in [3da9e54](https://github.com/idvorkin/context-grabber/commit/3da9e54) (native); verified by `CockpitUsageTests` (host) and the simulator against the live Cockpit (strip drawn: Week 31%, Fable 13% orange, Voice 3.8h; unreachable Cockpit: no strip, `usage` load ok:false in the log); the refresh ask's Origin checked with curl (403 without, 202 with); on the phone: not yet; the *to spend* nudge [aa054d2](https://github.com/idvorkin/context-grabber/commit/aa054d2) verified by `CockpitUsageTests` and a simulator screenshot against the live Cockpit (*28% to spend · resets in 6H*)
+- **Status:** implemented in [3da9e54](https://github.com/idvorkin/context-grabber/commit/3da9e54) (native); verified by `CockpitUsageTests` (host) and the simulator against the live Cockpit (strip drawn: Week 31%, Fable 13% orange, Voice 3.8h; unreachable Cockpit: no strip, `usage` load ok:false in the log); the refresh ask's Origin checked with curl (403 without, 202 with); on the phone: not yet; the *to spend* nudge [aa054d2](https://github.com/idvorkin/context-grabber/commit/aa054d2) verified by `CockpitUsageTests` and a simulator screenshot against the live Cockpit (*28% to spend · resets in 6H*); the thinner card, verified by a simulator screenshot against the live Cockpit: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a)
 - **Spec:** [native Cockpit — the usage strip](../superpowers/specs/2026-10-05-native-cockpit-design.md#the-usage-strip-on-the-home-screen)
 
 #### Use Case:
@@ -469,7 +469,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** A glance at what is left
 - **Given:** the phone is on the tailnet and the Cockpit has a usage reading
 - **When:** I open Grabber Native
-- **Then:** above the rows a strip shows Week, the model and Voice left as bars with their numbers, when the week resets and the pacing verdict; a bar under 20% is orange, under 10% red; a stale reading says its age
+- **Then:** above the rows a thin card, about two lines tall with hairline bars, shows Week, the model and Voice left as bars with their numbers, when the week resets and the pacing verdict; a bar under 20% is orange, under 10% red; a stale reading says its age
 
 - **Scenario:** Quota about to go to waste
 - **Given:** the week resets in 13 hours and 31% of it is left

@@ -29,7 +29,8 @@ be hidden or moved, and where the diagnostics now live.
 
 ## What Igor sees
 
-**The home screen.** The title *Grabber Native*, a cog button at the top right, and the launchers as large rows
+**The home screen.** No title (Igor, 2026-10-06: *"Get rid of grabber native title"* — the phone already says
+which app this is, and the space goes to the rows), a cog button at the top right, and the launchers as large rows
 in Igor's order: Call Larry, Today, Gym Timer, Box breathing, Places, Think of a card, Cockpit until he changes
 it. No header or footer around them: the old *Ported so far* / *Everything else is still in Context Grabber*
 lines are gone, since every row is ported by definition. Anything that sits above the launchers in a later build

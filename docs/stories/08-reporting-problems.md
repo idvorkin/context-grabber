@@ -139,7 +139,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** The home screen holds only what I open, and a cog holds the rest
 - **Issues:** [#166](https://github.com/idvorkin/context-grabber/issues/166)
-- **Status:** native app: implemented in [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186) ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md)); verified by host tests (`HomeLayoutTests`) and on the simulator (`HomeSettingsUITests`: Cockpit hidden and Gym Timer moved to the top through the cog, both still so after a relaunch, Reset puts them back; the log's `ui` home_settings / home_rows lines; screenshots of the home screen and the sheet); the phone still to be checked by Igor
+- **Status:** native app: implemented in [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186) ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md)); verified by host tests (`HomeLayoutTests`) and on the simulator (`HomeSettingsUITests`: Cockpit hidden and Gym Timer moved to the top through the cog, both still so after a relaunch, Reset puts them back; the log's `ui` home_settings / home_rows lines; screenshots of the home screen and the sheet); the phone still to be checked by Igor; no title, verified by a simulator screenshot: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a)
 
 #### Use Case:
 - **As someone** who opens the native app to start a workout, a call or a breath, not to read its build number
@@ -167,13 +167,19 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap the cog
 - **Then:** they are under *About and diagnostics* in the sheet, as they were on the home screen, and a shake with the sheet up still opens a report naming the screen *home_settings*
 
+
+- **Scenario:** No title
+- **Given:** the app is open on its home screen
+- **When:** I look at the top
+- **Then:** there is no *Grabber Native* title, only the cog, and the rows start right under the usage card
+
 ---
 
 ### User Story 148:
 
 - **Summary:** What's new, by day, written by the build itself
 - **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165)
-- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor
+- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor; the ✕ and the cog's row verified by `WhatsNewSeenUITests` and `WhatsNewTests` on the simulator: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a)
 
 #### Use Case:
 - **As someone** who installs a new build of the native app most days
@@ -193,8 +199,13 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Scenario:** Nothing to show
 - **Given:** a build made without the project's history, or with no story change in thirty days
-- **When:** I open the app and tap the row
-- **Then:** the row reads *What's new · nothing new* and the screen says there is nothing new, with no error
+- **When:** I open the app and the cog's *What's new*
+- **Then:** the home screen has no What's new row, and *What's new* in the cog's sheet says there is nothing new, with no error
+
+- **Scenario:** Dismissed with its ✕, kept in the cog
+- **Given:** the home screen shows *What's new* after a new build
+- **When:** I open it and come back, then tap its ✕, then relaunch the app
+- **Then:** opening leaves the row on the home screen; the ✕ removes it and the relaunch does not bring it back until a build with a newer change; *What's new* in the cog's sheet still opens the list, and the log has `ui` dismiss_whats_new
 
 ---
 

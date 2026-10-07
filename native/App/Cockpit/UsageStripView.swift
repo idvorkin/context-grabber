@@ -10,7 +10,10 @@ struct UsageSection: View {
 
   var body: some View {
     if let strip = usage.strip {
-      Section { UsageStripView(strip: strip, usage: usage) }
+      Section {
+        UsageStripView(strip: strip, usage: usage)
+          .listRowInsets(EdgeInsets(top: 6, leading: 14, bottom: 6, trailing: 14))
+      }
     }
   }
 }
@@ -21,7 +24,7 @@ struct UsageStripView: View {
 
   var body: some View {
     Button { usage.refresh() } label: {
-      VStack(alignment: .leading, spacing: 8) {
+      VStack(alignment: .leading, spacing: 3) {
         HStack(spacing: 12) {
           ForEach(strip.bars, id: \.label) { bar in BarCell(bar: bar) }
         }
@@ -46,12 +49,11 @@ struct UsageStripView: View {
             }
           }
         }
-        .font(.caption)
+        .font(.caption2)
         .foregroundStyle(.secondary)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       }
-      .padding(.vertical, 4)
     }
     .buttonStyle(.plain)
     .accessibilityIdentifier("usage-strip")
@@ -69,11 +71,11 @@ struct UsageStripView: View {
     }
 
     var body: some View {
-      VStack(alignment: .leading, spacing: 4) {
+      VStack(alignment: .leading, spacing: 2) {
         HStack(alignment: .firstTextBaseline) {
-          Text(bar.label).font(.caption.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
+          Text(bar.label).font(.caption2.weight(.medium)).foregroundStyle(.secondary).lineLimit(1)
           Spacer(minLength: 2)
-          Text(bar.text).font(.subheadline.weight(.semibold).monospacedDigit())
+          Text(bar.text).font(.caption.weight(.semibold).monospacedDigit())
             .foregroundStyle(bar.level == .ok ? Color.primary : color)
         }
         GeometryReader { geo in
@@ -82,7 +84,7 @@ struct UsageStripView: View {
             Capsule().fill(color).frame(width: max(4, geo.size.width * bar.left))
           }
         }
-        .frame(height: 6)
+        .frame(height: 3)
       }
       .frame(maxWidth: .infinity)
       .accessibilityElement(children: .combine)

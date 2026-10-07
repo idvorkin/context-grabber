@@ -21,7 +21,7 @@ build makes it from the project's own history, so it is never stale and never fo
 
 ## Non-goals
 
-- Release notes for anyone but Igor; marketing copy; a "seen" badge or a pop-up after an update.
+- Release notes for anyone but Igor; marketing copy; a badge or a pop-up after an update.
 - Anything older than about a month.
 - Changes to the React Native app.
 
@@ -41,8 +41,14 @@ build makes it from the project's own history, so it is never stale and never fo
 ## What Igor sees
 
 **On the home screen**, above the launchers, one compact row: *What's new · Oct 5 — Think of a card opens Igor's
-Think a Card Trainer*. With nothing to show (no recent changes, or a build made without the project's history),
-it reads *What's new · nothing new* and still opens.
+Think a Card Trainer*, with an **✕** at its end — **until it is dismissed** (Igor, 2026-10-06: *"release notes
+should disappear once clicked, and then be in the settings"*, then *"give what's new an x button so I explicitly
+dismiss it after builds"*). Tapping the row opens the list and leaves the row where it is; tapping ✕ dismisses it,
+and it comes back only when a later build brings a change newer than the one dismissed. With nothing to show (no recent
+changes, or a build made without the project's history) there is no row on the home screen.
+
+**In the cog's sheet**, under *About and diagnostics*, *What's new* is always there, seen or not, and opens the
+same screen.
 
 **The What's new screen** has one section per day, newest first, headed by the weekday and date (*Monday, Oct
 5*). Each change is a line of text with, under it in small type, the story and the issue it belongs to
@@ -60,5 +66,6 @@ newest day.
   own title without them; status and merge commits never show.
 - The same story twice on one day is one line; on two days it is a line on each.
 - The issue number shows when the commit or its story names one.
-- The home row names the newest day and its first change, or *nothing new*; neither a missing nor an empty
-  history breaks the row or the screen.
+- The home row names the newest day and its first change, with an ✕; opening it keeps it, ✕ removes it until a
+  newer change arrives, and a relaunch does not bring it back. With no history there is no home row.
+- The cog's sheet always offers *What's new*; neither a missing nor an empty history breaks it or the screen.
