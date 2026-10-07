@@ -51,4 +51,21 @@ public struct HomeLayout: Equatable, Sendable {
   private static func decode(_ value: String?) -> [String] {
     (value ?? "").split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
   }
+
+  /// Story 151: what the home screen draws from the visible launchers. Today becomes the card (when it is shown),
+  /// the next four are tiles, the rest rows, all in Igor's order.
+  public struct Arrangement: Equatable, Sendable {
+    public var todayCard: Bool
+    public var tiles: [String]
+    public var rows: [String]
+  }
+
+  public static let tileCount = 4
+
+  public var arrangement: Arrangement {
+    let rest = visible.filter { $0 != "today" }
+    return Arrangement(
+      todayCard: visible.contains("today"), tiles: Array(rest.prefix(Self.tileCount)),
+      rows: Array(rest.dropFirst(Self.tileCount)))
+  }
 }

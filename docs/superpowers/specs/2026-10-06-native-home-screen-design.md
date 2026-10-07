@@ -38,6 +38,21 @@ lines are gone, since every row is ported by definition. Anything that sits abov
 (a strip, a summary) stays above them. When every launcher is hidden, the home screen says so in one quiet line
 and points at the cog.
 
+**Not just a list** (Igor, 2026-10-07, #189: *"rework the home screen so it's not just a list"*; he chose the
+*Today first* layout). Under the usage strip and What's new:
+
+- **The Today card.** The mirror on the home screen: last night's sleep, today's steps, HRV and exercise
+  minutes, each a big number with its name, and when they were read (*as of 7:10*). It shows the last grab the app
+  made, so opening the app never asks Health for anything; tapping the card opens Today, which grabs fresh. Before
+  any grab the card says *Today — tap to look* and opens Today the same way. A number Health did not give is a dash,
+  never 0.
+- **The first four launchers as tiles**, two by two, big enough to hit without looking: the first four of Igor's
+  order (Today itself is skipped, since the card is Today). Each tile is the launcher's icon and name; Call Larry's
+  tile still shows a live call's state.
+- **The rest as rows** under the tiles, smaller than before, in the same order.
+
+Order, hiding and Reset in the cog work as before: moving a launcher into the first four makes it a tile.
+
 **The cog** opens the **Home screen** sheet, with *Done* at the top right. It has two parts:
 
 1. **Launchers** — every launcher, shown or hidden, in the current order, each with its icon, its name and a

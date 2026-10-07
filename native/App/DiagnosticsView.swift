@@ -1,6 +1,7 @@
 //  The home screen (stories 140, 147): the launchers in Igor's order, and a cog for the rest — which launchers
 //  show, the build, this launch's log and the way to report a problem.
 
+import ContextCore
 import SwiftUI
 
 struct DiagnosticsView: View {
@@ -33,8 +34,26 @@ struct DiagnosticsView: View {
             .buttonStyle(.borderless)
           }
         }
+        // Story 151 (#189): the mirror first, then the daily four as tiles, then the rest as rows.
+        let arrangement = model.homeLayout.arrangement
+        if arrangement.todayCard {
+          Section {
+            TodayCard(mirror: model.mirror) { model.openToday(from: "home_card") }
+          }
+        }
+        if !arrangement.tiles.isEmpty {
+          Section {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+              ForEach(arrangement.tiles, id: \.self) { id in
+                if let row = HomeRow.row(id) { HomeTile(row: row, model: model) }
+              }
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+          }
+        }
         Section {
-          ForEach(model.homeLayout.visible, id: \.self) { id in
+          ForEach(arrangement.rows, id: \.self) { id in
             if let row = HomeRow.row(id) {
               Button {
                 row.open(model)
@@ -42,7 +61,7 @@ struct DiagnosticsView: View {
                 if id == "call" {
                   CallRow(call: model.call)
                 } else {
-                  Label(row.title, systemImage: row.icon).font(.title3.weight(.semibold)).padding(.vertical, 6)
+                  Label(row.title, systemImage: row.icon).font(.body.weight(.semibold)).padding(.vertical, 2)
                 }
               }
               .accessibilityIdentifier("home-\(id)")
@@ -130,6 +149,87 @@ struct DiagnosticsView: View {
 }
 
 /// The home screen's Call row: *Call Larry* idle, the live line while a call is up.
+/// Story 151: the last grab on the home screen. Never grabs itself (so opening the app asks Health nothing); a tap
+/// opens Today, which does.
+private struct TodayCard: View {
+  @ObservedObject var mirror: MirrorModel
+  let open: () -> Void
+
+  private static let shown: [MetricKey] = [.sleep, .movement, .hrv, .exerciseMinutes]
+
+  var body: some View {
+    Button(action: open) {
+      VStack(alignment: .leading, spacing: 10) {
+        HStack {
+          Label("Today", systemImage: "heart.text.square").font(.headline)
+          Spacer()
+          if let stamp = mirror.snapshot?.timestamp {
+            Text("as of \(SummaryText.formatLocalTime(stamp, clock: mirror.clock))")
+              .font(.caption).foregroundStyle(.secondary)
+          }
+          Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+        }
+        if mirror.snapshot == nil {
+          Text("Today — tap to look").foregroundStyle(.secondary)
+        } else {
+          let cards = mirror.cards.filter { Self.shown.contains($0.key) }
+          HStack(alignment: .top, spacing: 8) {
+            ForEach(Self.shown, id: \.self) { key in
+              let card = cards.first { $0.key == key }
+              VStack(alignment: .leading, spacing: 2) {
+                // Short forms for a glance: "6.8h", not "6.8h asleep"; steps under their own name.
+                Text((card?.value ?? MirrorText.none).replacingOccurrences(of: " asleep", with: ""))
+                  .font(.title3.weight(.semibold).monospacedDigit())
+                  .lineLimit(1).minimumScaleFactor(0.6)
+                Text(key == .movement ? "Steps" : card?.label ?? key.rawValue).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+            }
+          }
+        }
+      }
+      .padding(.vertical, 4)
+    }
+    .tint(.primary)
+    .accessibilityIdentifier("home-today-card")
+  }
+}
+
+/// Story 151: one of the daily four, big enough to hit without looking.
+private struct HomeTile: View {
+  let row: HomeRow
+  @ObservedObject var model: AppModel
+
+  var body: some View {
+    Button { row.open(model) } label: {
+      VStack(alignment: .leading, spacing: 8) {
+        Image(systemName: row.icon).font(.title2)
+        Spacer(minLength: 0)
+        Text(row.title).font(.headline).lineLimit(2).multilineTextAlignment(.leading)
+        if row.id == "call" { CallTileStatus(call: model.call) }
+      }
+      .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
+      .padding(14)
+      .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+    .buttonStyle(.plain)
+    .foregroundStyle(.tint)
+    .accessibilityIdentifier("home-\(row.id)")
+  }
+}
+
+private struct CallTileStatus: View {
+  @ObservedObject var call: CallModel
+
+  var body: some View {
+    if call.snapshot.isActive {
+      TimelineView(.periodic(from: .now, by: 1)) { context in
+        Text(call.status(now: context.date)).font(.caption.monospacedDigit()).foregroundStyle(.green)
+      }
+    }
+  }
+}
+
 private struct CallRow: View {
   @ObservedObject var call: CallModel
 

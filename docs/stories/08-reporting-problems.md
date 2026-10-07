@@ -256,3 +256,28 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I open it, turn the iPad to landscape and back, and open each launcher
 - **Then:** the home screen fills the iPad's screen in both orientations (not a phone-sized window), and every launcher opens its screen without an error
 
+---
+
+### User Story 151:
+
+- **Summary:** The home screen opens on today, not on a list
+- **Issues:** [#189](https://github.com/idvorkin/context-grabber/issues/189)
+- **Status:** implemented in [5046a38](https://github.com/idvorkin/context-grabber/commit/5046a38); verified by `HomeLayoutTests` (host) and `HomeTodayCardUITests`, `HomeSettingsUITests`, `WhatsNewSeenUITests` on the simulator (the card from the fixture week: 6.8h, 2,631 steps, 22.4 ms, 55 min, as of its time; Call, Gym Timer, Box breathing and Places two by two; moving Gym Timer first puts its tile first); on the phone not yet
+- **Spec:** [native home screen, "Not just a list"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
+
+#### Use Case:
+- **As someone** who opens the app many times a day
+- **I want to** see how I am doing at a glance, with the things I do daily as big targets
+- **so that** the home screen is the mirror, not a menu
+
+#### Acceptance Criteria:
+- **Scenario:** The Today card and the tiles
+- **Given:** the app has grabbed at least once
+- **When:** I open the app
+- **Then:** a Today card shows sleep, steps, HRV and exercise from the last grab with when it was read, the first four launchers (Today aside) are tiles two by two, the rest are rows below, and no Health prompt appears
+
+- **Scenario:** Before any grab
+- **Given:** a fresh install
+- **When:** I open the app and tap the card
+- **Then:** the card says *Today — tap to look*, and Today opens and grabs
+
