@@ -61,6 +61,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I shake the phone, type "timer skipped the rest" and tap Log it
 - **Then:** the report is stored with my note, a picture of the screen as it was at the shake, the screen's name, the build, and the name of this launch's log with the moment in it, and the screen says "Problem logged"
 
+- **Scenario:** Several in a row
+- **Given:** a report is open with a note typed
+- **When:** I tap *Log it and another*, type a second note and tap *Log it*
+- **Then:** two reports are stored, each with its own note and picture, and the second report opened empty without another shake
+
 - **Scenario:** A shake over a dialog
 - **Given:** a sheet is up — the home screen's cog, Today's settings, the timer's settings, a Places naming sheet
 - **When:** I shake the phone, then cancel; and shake again

@@ -80,7 +80,10 @@ enum BugReportPresenter {
   private static var watcher: Watcher?
 
   /// The class name of what it was presented over, or nil when there was no window to present from.
-  static func present(_ sheet: BugReportSheet, onGone: @escaping () -> Void) -> String? {
+  /// `another`: after *Log it and another*, once this sheet is gone, open the next one.
+  static func present(
+    _ sheet: BugReportSheet, onGone: @escaping () -> Void, another: @escaping () -> Void = {}
+  ) -> String? {
     let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
     guard var top = (windows.first(where: \.isKeyWindow) ?? windows.first)?.rootViewController else { return nil }
     while let next = top.presentedViewController, !next.isBeingDismissed { top = next }
@@ -91,6 +94,14 @@ enum BugReportPresenter {
     view.close = {
       host.controller?.dismiss(animated: true)
       onGone()
+    }
+    // The next report captures the screen underneath, so it waits for this one to be off screen.
+    view.closeForAnother = {
+      guard let controller = host.controller else { return }
+      controller.dismiss(animated: true) {
+        onGone()
+        another()
+      }
     }
     let controller = UIHostingController(rootView: view)
     host.controller = controller
@@ -106,6 +117,8 @@ struct BugReportSheet: View {
   @ObservedObject var model: AppModel
   /// Set by the presenter: closes the controller it is hosted in.
   var close: () -> Void = {}
+  /// Set by the presenter: closes it and opens a fresh report.
+  var closeForAnother: () -> Void = {}
   @State private var note = ""
   @FocusState private var noteFocused: Bool
 
@@ -116,6 +129,14 @@ struct BugReportSheet: View {
           TextField("e.g. the timer skipped the rest", text: $note, axis: .vertical)
             .lineLimit(3...8)
             .focused($noteFocused)
+          // Right under the note, above the keyboard (a bottom bar sits behind it): the same report as Log it,
+          // then an empty one for the next problem, no shake needed.
+          Button("Log it and another") {
+            model.reportBug(note: note)
+            closeForAnother()
+          }
+          .disabled(note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+          .accessibilityIdentifier("report-log-it-and-another")
         }
         Section("Attached automatically") {
           ForEach(model.bugContext().sorted(by: { $0.key < $1.key }), id: \.key) { item in
@@ -134,6 +155,7 @@ struct BugReportSheet: View {
             close()
           }
           .disabled(note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+          .accessibilityIdentifier("report-log-it")
         }
       }
       .onAppear { noteFocused = true }
