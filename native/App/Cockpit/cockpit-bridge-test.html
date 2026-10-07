@@ -25,12 +25,18 @@
 <h3>Outputs</h3><ul id="outputs"><li class="muted">waiting…</li></ul>
 <p>Live: <span id="live">–</span></p>
 <p class="muted" id="steps"></p>
+<!-- The real page's ☎: the hand-off message, then its fallback link (story 200). -->
+<p><button id="call" onclick="callLarry()" style="font-size:20px;padding:8px 16px">☎ Call</button></p>
 <script>
   var b = window.CockpitAudioBridge;
   var tagged = /[?&]client=context-grabber(&|$)/.test(location.search) && /[?&]v=/.test(location.search);
   document.getElementById("addr").textContent = location.search;
   document.getElementById("tag").textContent = tagged ? "client=context-grabber" : "missing";
   document.getElementById("tag").className = tagged ? "ok" : "bad";
+  function callLarry() {
+    if (b) b.post({ type: "call.start", via: "drill" });
+    location.href = "grabber://call?via=drill";
+  }
   function step(s) { document.getElementById("steps").textContent += s + " · "; }
   function list(id, items) {
     var ul = document.getElementById(id); ul.innerHTML = "";

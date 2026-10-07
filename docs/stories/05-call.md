@@ -397,7 +397,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 200:
 
 - **Summary:** In Grabber Native the Cockpit is a full-screen page from the home screen, and Done keeps it
-- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet
+- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet
 - **Spec:** [native Cockpit](../superpowers/specs/2026-10-05-native-cockpit-design.md)
 
 #### Use Case:
@@ -409,7 +409,12 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Done and back
 - **Given:** I opened *Cockpit* on Grabber Native's home screen, scrolled down and expanded a row
 - **When:** I tap *Done* in the footer and then *Cockpit* again
-- **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs, and the page's ☎ hands the call to Context Grabber's Call tab until the native call exists
+- **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs
+
+- **Scenario:** The page's ☎ stays in the app
+- **Given:** Grabber Native's Cockpit is open and no call is up
+- **When:** I tap the page's ☎
+- **Then:** the Cockpit steps back and Grabber Native's Call screen comes up with one call starting, on the backend the page asked for; Context Grabber does not open. Tapping ☎ again from the Cockpit during that call brings the same call forward
 
 ---
 

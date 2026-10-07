@@ -36,8 +36,12 @@ final class AppModel: ObservableObject {
 
   /// Made on the first open and kept for the launch, so closing the Cockpit hides the page rather than closing it.
   /// `GRABBER_COCKPIT_URL` points it elsewhere (a URL, or a page in the app bundle) for the simulator's checks.
-  private(set) lazy var cockpit = CockpitModel(
-    log: log, override: ProcessInfo.processInfo.environment["GRABBER_COCKPIT_URL"])
+  /// The page's ☎ and its Grabber links come back here (story 200).
+  private(set) lazy var cockpit: CockpitModel = {
+    let cockpit = CockpitModel(log: log, override: ProcessInfo.processInfo.environment["GRABBER_COCKPIT_URL"])
+    cockpit.onAppRoute = { [weak self] route, source in self?.open(route: route, from: source) }
+    return cockpit
+  }()
   /// The usage strip on the home screen (story 203). `GRABBER_USAGE_URL` points it at another Cockpit.
   lazy var usage = UsageModel(log: log, override: ProcessInfo.processInfo.environment["GRABBER_USAGE_URL"])
   /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
