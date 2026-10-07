@@ -51,9 +51,12 @@ Everything the four specs above promise, with the tab replaced by a screen:
 - **Leaving keeps the page.** *Done* hides the Cockpit; it does not close it. Opening it again in the same launch
   shows the dashboard exactly as it was — scroll, expanded rows, a recording in progress — with no reload, as
   switching tabs did. A new launch loads it fresh.
-- **The page's call button, until the call moves.** Inside the app the page's ☎ hands the call to the app. Until
-  the native Call screen exists, Grabber Native passes that hand-off to iOS, which opens Context Grabber's Call
-  tab — the call that survives the lock. When the native call lands, the hand-off stays in Grabber Native.
+- **The page's call button stays in the app.** Inside the app the page's ☎ hands the call to the app: the Cockpit
+  steps back and Grabber Native's own Call screen comes up with a call starting, on the backend the page asked for
+  (the remembered one when it asked for none). Context Grabber does not open. A ☎ while a call is already up
+  brings that call forward rather than starting another, and the page's hand-off arriving twice (its message and
+  its fallback link) starts one call, not two. Any other Grabber link the page opens is followed inside the app
+  the same way.
 - **The audio session.** Opening the Cockpit readies the phone's audio for recording, as the tab's first visit did.
   If the Gym Timer has since set the audio its own way, the next opening readies it again; otherwise opening the
   Cockpit leaves the audio alone.

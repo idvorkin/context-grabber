@@ -409,7 +409,12 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Done and back
 - **Given:** I opened *Cockpit* on Grabber Native's home screen, scrolled down and expanded a row
 - **When:** I tap *Done* in the footer and then *Cockpit* again
-- **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs, and the page's ☎ hands the call to Context Grabber's Call tab until the native call exists
+- **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs
+
+- **Scenario:** The page's ☎ stays in the app
+- **Given:** Grabber Native's Cockpit is open and no call is up
+- **When:** I tap the page's ☎
+- **Then:** the Cockpit steps back and Grabber Native's Call screen comes up with one call starting, on the backend the page asked for; Context Grabber does not open. Tapping ☎ again from the Cockpit during that call brings the same call forward
 
 ---
 

@@ -25,6 +25,11 @@ final class CockpitModel: NSObject, ObservableObject {
   let address: String
   private let loadURL: URL?
   private let home: String?
+  /// Where the page's call hand-off and its Grabber links go: the app's own screens (story 200), not Context Grabber.
+  var onAppRoute: ((AppRoute, String) -> Void)?
+  /// The page sends its ☎ twice — the message, then its fallback link — so a second call hand-off this soon is the
+  /// same tap.
+  private var lastCallHandoff: Date?
   private var loadStarted = Date()
   private var pendingHTTPError: String?
   /// Only the page knows when its call is live; the screen is held for exactly that long (keep-awake spec).
@@ -180,12 +185,25 @@ final class CockpitModel: NSObject, ObservableObject {
       log.event("cockpit_bridge", fields)
       setCallLive(live, why: "page")
     case .call(let control):
-      if case .start(let via) = control { fields["via"] = via?.rawValue ?? "none" }
-      // No native call yet: the page's own fallback opens grabber://call, which the navigation hands to iOS and
-      // Context Grabber's Call tab (spec, "The page's call button, until the call moves").
-      fields["handled"] = false
+      if case .start(let via) = control {
+        fields["via"] = via?.rawValue ?? "none"
+        fields["handled"] = handOff(.call(via: via), from: "cockpit")
+      } else {
+        fields["handled"] = false
+      }
       log.event("cockpit_bridge", fields)
     }
+  }
+
+  /// Hands a route to the app; false when it is a repeat of the call hand-off just handled, or nobody is listening.
+  private func handOff(_ route: AppRoute, from source: String) -> Bool {
+    guard let onAppRoute else { return false }
+    if case .call = route {
+      if let last = lastCallHandoff, Date().timeIntervalSince(last) < 5 { return false }
+      lastCallHandoff = Date()
+    }
+    onAppRoute(route, source)
+    return true
   }
 
   /// Every request gets exactly one answer: a roster (also the receipt for a set) or an error naming the op.
@@ -227,7 +245,12 @@ extension CockpitModel: WKNavigationDelegate {
     if let frame = action.targetFrame, !frame.isMainFrame { return decisionHandler(.allow) }
     let where_ = CockpitPage.navigation(to: url, home: home)
     if where_ == .stay { return decisionHandler(.allow) }
-    // An app link goes to iOS too until the native call exists: grabber://call opens Context Grabber's Call tab.
+    // A Grabber link stays in this app (grabber://call is the page's ☎ fallback); anything else goes to iOS.
+    if where_ == .appLink, AppLink.schemes.contains(url.scheme?.lowercased() ?? "") {
+      let handled = handOff(AppLink.parse(url).route, from: "cockpit_link")
+      log.event("cockpit_link", ["url": url.absoluteString, "kind": "app", "in_app": true, "handled": handled])
+      return decisionHandler(.cancel)
+    }
     log.event("cockpit_link", ["url": url.absoluteString, "kind": where_ == .appLink ? "app" : "external"])
     UIApplication.shared.open(url)
     decisionHandler(.cancel)
