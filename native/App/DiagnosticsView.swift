@@ -183,6 +183,16 @@ private struct HomeSettingsView: View {
           }
           .tint(.primary)
           .accessibilityIdentifier("home-links")
+          // Story 149: when the phone's sound is stuck after a call, a workout or breathing.
+          Button("Reset audio") { model.resetAudio() }
+            .disabled(model.call.snapshot.isActive)
+            .accessibilityIdentifier("home-reset-audio")
+          if model.call.snapshot.isActive {
+            Text("A call is live: ending it resets the audio.").font(.footnote).foregroundStyle(.secondary)
+          } else if !model.audioResetLine.isEmpty {
+            Text(model.audioResetLine).font(.footnote).foregroundStyle(.secondary)
+              .accessibilityIdentifier("home-reset-audio-result")
+          }
         } header: {
           Text("About and diagnostics")
         } footer: {

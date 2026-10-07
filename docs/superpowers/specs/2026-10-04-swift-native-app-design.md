@@ -88,6 +88,15 @@ jog, setting the phone down or a bump on the gym bench is not a shake. A hard sh
 one shake opens one sheet. Each shake the app catches is in the session log with how hard it was, so the
 threshold can be tuned from real shakes.
 
+**Reset audio** (Igor, 2026-10-06: *"give me a reset audio under settings as it gets into a bad state phone
+wide"*). The home screen's cog has a **Reset audio** button. It lets go of everything Grabber Native holds on the
+phone's audio — its session, any ducking of other apps, a forced speaker, a chosen microphone — and tells other
+apps they may resume, so music left ducked or paused after a call, a workout or a breathing session comes back.
+Under the button it shows what the phone's audio was and is now (the route, whether other audio is playing). It
+is not offered while a call is live: ending the call is the reset then. It cannot reset another app's audio or the
+phone's audio service itself; if the phone is still wrong after it, restarting the phone is the remaining fix, and
+the line under the button says so.
+
 **Crashes.** When the app crashed or hung, the next launch's log says so and names a file with the stack; the
 file comes to the Mac with the logs.
 

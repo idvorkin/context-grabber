@@ -23,6 +23,8 @@ final class AppModel: ObservableObject {
   @Published var screen = "home"
   @Published var showBugReport = false
   @Published var status = ""
+  /// Under Reset audio: what the phone's audio was and is now (story 149).
+  @Published private(set) var audioResetLine = ""
   /// Non-nil while the Gym Timer covers the app; says how it was asked for.
   @Published var gymTimer: GymTimerLaunch?
   /// Non-nil while the breathing screen covers the app.
@@ -281,6 +283,29 @@ final class AppModel: ObservableObject {
     UIApplication.shared.open(url) { [log] ok in
       log.event("ui", ["action": "open_exercise_analyzer", "from": source, "ok": ok])
       if !ok { Task { @MainActor in self.status = "Exercise Analyzer is not installed, so it cannot open." } }
+    }
+  }
+
+  /// Story 149: lets go of the audio this app holds. Not while a call is live; ending the call is the reset then.
+  func resetAudio() {
+    guard !call.snapshot.isActive else { return }
+    audioResetLine = "Resetting…"
+    DispatchQueue.global(qos: .userInitiated).async { [log] in
+      let before = AudioReset.state()
+      let failed = AudioReset.reset()
+      let after = AudioReset.state()
+      log.event(
+        "audio_reset",
+        [
+          "before": before.line, "before_category": before.category, "after": after.line,
+          "after_category": after.category, "ok": failed.isEmpty, "failed": failed,
+        ])
+      Task { @MainActor in
+        self.audioResetLine =
+          failed.isEmpty
+          ? "Was \(before.line). Now \(after.line). Still wrong? Restart the phone."
+          : "iOS refused \(failed.keys.sorted().joined(separator: ", ")). Now \(after.line). Restarting the phone resets it fully."
+      }
     }
   }
 
