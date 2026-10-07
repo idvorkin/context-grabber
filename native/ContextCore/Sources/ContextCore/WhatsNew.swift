@@ -44,6 +44,15 @@ public struct WhatsNewFeed: Codable, Equatable, Sendable {
     self.days = days
   }
 
+  /// The newest change: what opening What's new marks as seen.
+  public var newest: String? { days.first?.items.first?.sha }
+
+  /// The home screen's row shows until its newest change has been seen; with nothing to show there is no row.
+  public static func showsOnHome(_ feed: WhatsNewFeed?, seen: String?) -> Bool {
+    guard let newest = feed?.newest else { return false }
+    return newest != seen
+  }
+
   /// Nil for a missing or unreadable resource: the row then says nothing new.
   public static func decode(_ data: Data?) -> WhatsNewFeed? {
     data.flatMap { try? JSONDecoder().decode(WhatsNewFeed.self, from: $0) }

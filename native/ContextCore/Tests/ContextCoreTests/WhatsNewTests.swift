@@ -128,4 +128,16 @@ final class WhatsNewTests: XCTestCase {
     XCTAssertEqual(all[140]?.summary, "The native app lives beside the current one")
     XCTAssertEqual(all[148]?.issue, 165)
   }
+
+  func testHomeRowGoesOnceSeenAndComesBackForSomethingNewer() {
+    let feed = WhatsNewFeed(
+      generated: "2026-10-06",
+      days: [WhatsNewDay(day: "2026-10-06", items: [WhatsNewItem(story: 148, text: "New", sha: "bbb")])])
+    XCTAssertTrue(WhatsNewFeed.showsOnHome(feed, seen: nil))
+    XCTAssertFalse(WhatsNewFeed.showsOnHome(feed, seen: "bbb"))
+    XCTAssertTrue(WhatsNewFeed.showsOnHome(feed, seen: "aaa"))
+    // Nothing to show: no row at all.
+    XCTAssertFalse(WhatsNewFeed.showsOnHome(nil, seen: nil))
+    XCTAssertFalse(WhatsNewFeed.showsOnHome(WhatsNewFeed(generated: "", days: []), seen: nil))
+  }
 }

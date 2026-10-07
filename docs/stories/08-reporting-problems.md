@@ -167,6 +167,12 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap the cog
 - **Then:** they are under *About and diagnostics* in the sheet, as they were on the home screen, and a shake with the sheet up still opens a report naming the screen *home_settings*
 
+
+- **Scenario:** No title
+- **Given:** the app is open on its home screen
+- **When:** I look at the top
+- **Then:** there is no *Grabber Native* title, only the cog, and the rows start right under the usage card
+
 ---
 
 ### User Story 148:
@@ -193,8 +199,13 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Scenario:** Nothing to show
 - **Given:** a build made without the project's history, or with no story change in thirty days
-- **When:** I open the app and tap the row
-- **Then:** the row reads *What's new · nothing new* and the screen says there is nothing new, with no error
+- **When:** I open the app and the cog's *What's new*
+- **Then:** the home screen has no What's new row, and *What's new* in the cog's sheet says there is nothing new, with no error
+
+- **Scenario:** Dismissed with its ✕, kept in the cog
+- **Given:** the home screen shows *What's new* after a new build
+- **When:** I open it and come back, then tap its ✕, then relaunch the app
+- **Then:** opening leaves the row on the home screen; the ✕ removes it and the relaunch does not bring it back until a build with a newer change; *What's new* in the cog's sheet still opens the list, and the log has `ui` dismiss_whats_new
 
 ---
 

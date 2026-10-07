@@ -10,14 +10,28 @@ struct DiagnosticsView: View {
     NavigationStack {
       Form {
         UsageSection(usage: model.usage)
-        Section {
-          Button {
-            model.openWhatsNew(from: "home")
-          } label: {
-            WhatsNewRow(feed: model.whatsNew)
+        // Until its ✕; after that it lives in the cog's sheet (story 148).
+        if model.whatsNewOnHome {
+          Section {
+            HStack(spacing: 8) {
+              Button {
+                model.openWhatsNew(from: "home")
+              } label: {
+                WhatsNewRow(feed: model.whatsNew).frame(maxWidth: .infinity, alignment: .leading)
+              }
+              .tint(.primary)  // a quiet line above the launchers, not another launcher
+              .accessibilityIdentifier("home-whats-new")
+              Button {
+                withAnimation { model.dismissWhatsNew() }
+              } label: {
+                Image(systemName: "xmark.circle.fill").font(.title3).foregroundStyle(.secondary)
+              }
+              .accessibilityLabel("Dismiss What's new")
+              .accessibilityIdentifier("home-whats-new-dismiss")
+            }
+            // Two buttons in one row: without this a tap anywhere fires both.
+            .buttonStyle(.borderless)
           }
-          .tint(.primary)  // a quiet line above the launchers, not another launcher
-          .accessibilityIdentifier("home-whats-new")
         }
         Section {
           ForEach(model.homeLayout.visible, id: \.self) { id in
@@ -79,7 +93,8 @@ struct DiagnosticsView: View {
             .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
         }
       }
-      .navigationTitle("Grabber Native")
+      // No title (story 147): the space goes to the rows. Inline keeps the bar to the cog's height.
+      .navigationBarTitleDisplayMode(.inline)
       // Its own presenter: one view cannot hold two full-screen covers.
       .fullScreenCover(isPresented: Binding(get: { model.showCockpit }, set: { if !$0 { model.closeCockpit() } })) {
         CockpitView(model: model.cockpit, onDone: model.closeCockpit)
@@ -138,6 +153,7 @@ private struct HomeSettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var showUploads = false
   @State private var showLinks = false
+  @State private var showWhatsNew = false
 
   var body: some View {
     NavigationStack {
@@ -172,6 +188,18 @@ private struct HomeSettingsView: View {
           }
           .tint(.primary)
           .accessibilityIdentifier("home-diagnostics-uploads")
+          Button {
+            model.logWhatsNewOpened(from: "home_settings")
+            showWhatsNew = true
+          } label: {
+            HStack {
+              Text("What's new").foregroundStyle(.primary)
+              Spacer()
+              Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            }
+          }
+          .tint(.primary)
+          .accessibilityIdentifier("home-settings-whats-new")
           Button {
             showLinks = true
           } label: {
@@ -222,6 +250,7 @@ private struct HomeSettingsView: View {
       .environment(\.editMode, .constant(.active))
       .navigationDestination(isPresented: $showUploads) { GistSettingsView(call: model.call) }
       .navigationDestination(isPresented: $showLinks) { LinksView(log: model.log) }
+      .navigationDestination(isPresented: $showWhatsNew) { WhatsNewView(feed: model.whatsNew) }
       .navigationTitle("Home screen")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {

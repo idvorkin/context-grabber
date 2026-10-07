@@ -51,6 +51,10 @@ final class AppModel: ObservableObject {
   let whatsNew = WhatsNewFeed.decode(
     Bundle.main.url(forResource: "whats-new", withExtension: "json").flatMap { try? Data(contentsOf: $0) })
   @Published var showWhatsNew = false
+  /// The newest change Igor dismissed What's new at (its ✕); the home row stays away until a newer one arrives.
+  @Published private(set) var whatsNewSeen: String?
+  static let whatsNewSeenKey = "whats_new_seen"
+  var whatsNewOnHome: Bool { WhatsNewFeed.showsOnHome(whatsNew, seen: whatsNewSeen) }
   /// Which launchers the home screen shows, in Igor's order (story 147).
   @Published private(set) var homeLayout: HomeLayout
   @Published var showHomeSettings = false
@@ -64,6 +68,7 @@ final class AppModel: ObservableObject {
     places = PlacesModel(log: log, database: database)
     bugReporter = BugReporter(log: log)
     call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
+    whatsNewSeen = database.setting(Self.whatsNewSeenKey)
     homeLayout = HomeLayout(
       known: HomeRow.ids, storedOrder: database.setting(HomeLayout.orderKey),
       storedHidden: database.setting(HomeLayout.hiddenKey))
@@ -349,6 +354,12 @@ final class AppModel: ObservableObject {
   }
 
   func openWhatsNew(from source: String) {
+    logWhatsNewOpened(from: source)
+    screen = "whats_new"
+    showWhatsNew = true
+  }
+
+  func logWhatsNewOpened(from source: String) {
     let days = whatsNew?.days ?? []
     log.event(
       "ui",
@@ -356,8 +367,14 @@ final class AppModel: ObservableObject {
         "action": "open_whats_new", "from": source, "days": days.count,
         "changes": days.reduce(0) { $0 + $1.items.count }, "newest": days.first?.day ?? "",
       ])
-    screen = "whats_new"
-    showWhatsNew = true
+  }
+
+  /// The home row's ✕: the newest change is dismissed and the row goes until a newer build brings another.
+  func dismissWhatsNew() {
+    guard let newest = whatsNew?.newest else { return }
+    log.event("ui", ["action": "dismiss_whats_new", "newest": newest])
+    whatsNewSeen = newest
+    database.setSetting(Self.whatsNewSeenKey, newest)
   }
 
   func openToday(from source: String) {

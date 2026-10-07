@@ -67,7 +67,9 @@ inline cockpit features by exposing cockpit APIs? I'd love to see the remaining 
 already tracks how much of Claude's weekly allowance and of the ElevenLabs voice budget is used; the strip shows
 what is **left**, at a glance, without opening the dashboard.
 
-- **Where:** the top of Grabber Native's home screen, above the rows.
+- **Where:** the top of Grabber Native's home screen, above the rows, as a thin card (Igor, 2026-10-06: *"make
+  tokens a card thinner"*): hairline bars and small type, about two lines tall, so the launchers stay the
+  biggest thing on the screen.
 - **What it says:** three bars, each a fill of what remains with its number beside it —
   - **Week** — the weekly Claude allowance left, in percent;
   - **the current model** (Fable today; named as the Cockpit names it) — that model's allowance left, in percent;
