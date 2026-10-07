@@ -284,7 +284,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 135:
 
 - **Summary:** A link and a Shortcuts action for every screen of Grabber Native
-- **Status:** implemented in [5c1f4ad](https://github.com/idvorkin/context-grabber/commit/5c1f4ad); verified by `AppLinkTests` (host) and `LinksUITests` on the simulator (real links through iOS, cold and warm: `timer?preset=10,10,2` counting down, `breathe?breath=5&minutes=2` begun over the running timer, `nowhere` on home, `timer?preset=9min` ready; Copy on the Links screen), with `just native-test-sim` passing; the Shortcuts actions, Siri and the Action Button on the phone not yet
+- **Status:** implemented in [5c1f4ad](https://github.com/idvorkin/context-grabber/commit/5c1f4ad), *Open Grabber Native* in [68229b3](https://github.com/idvorkin/context-grabber/commit/68229b3) (simulator build; Shortcuts on the phone not yet); verified by `AppLinkTests` (host) and `LinksUITests` on the simulator (real links through iOS, cold and warm: `timer?preset=10,10,2` counting down, `breathe?breath=5&minutes=2` begun over the running timer, `nowhere` on home, `timer?preset=9min` ready; Copy on the Links screen), with `just native-test-sim` passing; the Shortcuts actions, Siri and the Action Button on the phone not yet
 - **Issues:** [#167](https://github.com/idvorkin/context-grabber/issues/167)
 
 #### Use Case:
