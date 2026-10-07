@@ -139,7 +139,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** The home screen holds only what I open, and a cog holds the rest
 - **Issues:** [#166](https://github.com/idvorkin/context-grabber/issues/166)
-- **Status:** native app: implemented in [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186) ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md)); verified by host tests (`HomeLayoutTests`) and on the simulator (`HomeSettingsUITests`: Cockpit hidden and Gym Timer moved to the top through the cog, both still so after a relaunch, Reset puts them back; the log's `ui` home_settings / home_rows lines; screenshots of the home screen and the sheet); the phone still to be checked by Igor
+- **Status:** native app: implemented in [80b7186](https://github.com/idvorkin/context-grabber/commit/80b7186) ([spec](../superpowers/specs/2026-10-06-native-home-screen-design.md)); verified by host tests (`HomeLayoutTests`) and on the simulator (`HomeSettingsUITests`: Cockpit hidden and Gym Timer moved to the top through the cog, both still so after a relaunch, Reset puts them back; the log's `ui` home_settings / home_rows lines; screenshots of the home screen and the sheet); the phone still to be checked by Igor; no title, verified by a simulator screenshot: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a)
 
 #### Use Case:
 - **As someone** who opens the native app to start a workout, a call or a breath, not to read its build number
@@ -179,7 +179,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** What's new, by day, written by the build itself
 - **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165)
-- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor
+- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor; the ✕ and the cog's row verified by `WhatsNewSeenUITests` and `WhatsNewTests` on the simulator: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a)
 
 #### Use Case:
 - **As someone** who installs a new build of the native app most days
