@@ -211,4 +211,29 @@ final class BreathToneTests: XCTestCase {
     XCTAssertEqual(wav[22], 1)  // one channel
     XCTAssertEqual(wav[34], 16)  // bits per sample
   }
+
+  /// Story 241: Custom's in and its hold last In, out and its hold last Out.
+  func testCustomBoxHasItsOwnInAndOut() {
+    let plan = BreathPlan(inSeconds: 4, outSeconds: 8, sessionMinutes: 2)
+    XCTAssertEqual(plan.cycleSeconds, 24)
+    XCTAssertEqual(plan.cycles, 5)
+    XCTAssertEqual(plan.moment(at: 0).phase, .inhale)
+    XCTAssertEqual(plan.moment(at: 4.5).phase, .holdFull)
+    XCTAssertEqual(plan.moment(at: 8.5).phase, .exhale)
+    XCTAssertEqual(plan.moment(at: 16.5).phase, .holdEmpty)
+    XCTAssertEqual(plan.moment(at: 24.5).phase, .inhale)
+    XCTAssertEqual(plan.moment(at: 24.5).cycle, 2)
+    XCTAssertEqual(plan.moment(at: 12).phaseProgress, 0.5, accuracy: 1e-9)
+    XCTAssertEqual(plan.stepEnd(2), 16)
+    XCTAssertEqual(plan.side(3), 8)
+    XCTAssertFalse(plan.isEven)
+    XCTAssertEqual(ActivityLog.breathName(plan), "Box breathing · 4/8 s · 5 cycles")
+  }
+
+  func testCustomIsClampedAndPresetsAreEven() {
+    let plan = BreathPlan(inSeconds: 1, outSeconds: 99, sessionMinutes: 5)
+    XCTAssertEqual([plan.inSeconds, plan.outSeconds], [3, 15])
+    XCTAssertEqual(BreathPlan.presets, [8, 10, 12, 15])
+    XCTAssertTrue(BreathPlan(breathSeconds: 12, sessionMinutes: 5).isEven)
+  }
 }

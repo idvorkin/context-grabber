@@ -87,16 +87,30 @@ private struct BreatheSetup: View {
       }
       .sheet(isPresented: $showStyles) { StylePicker(model: model) }
 
+      // Between the fixed header and Begin, it scrolls: Custom's two sliders make it taller than a phone (story 241).
+      ScrollView {
+      VStack(alignment: .leading, spacing: 0) {
       VStack(alignment: .leading, spacing: 8) {
         Text("Box breathing").font(Face.serif(36)).foregroundStyle(Ink.text)
-        Text("In, hold, out, hold — four even sides.").font(.subheadline).foregroundStyle(Ink.dim)
+        Text(model.preset == nil ? "In and its hold, out and its hold." : "In, hold, out, hold — four even sides.")
+          .font(.subheadline).foregroundStyle(Ink.dim)
       }
       .padding(.top, 12)
 
       VStack(alignment: .leading, spacing: 34) {
-        BreathSlider(
-          title: "Breath length", unit: "s", id: "breathe-breath", value: model.breathSeconds,
-          range: BreathPlan.breathRange, set: model.setBreath)
+        // Story 241: one tap for a pace, or Custom's own in and out.
+        VStack(alignment: .leading, spacing: 12) {
+          Eyebrow("Breath length")
+          PresetPicker(selection: model.preset, choose: model.choosePreset)
+        }
+        if model.preset == nil {
+          BreathSlider(
+            title: "In", unit: "s", id: "breathe-in", value: model.customIn, range: BreathPlan.customRange,
+            set: model.setCustomIn)
+          BreathSlider(
+            title: "Out", unit: "s", id: "breathe-out", value: model.customOut, range: BreathPlan.customRange,
+            set: model.setCustomOut)
+        }
         BreathSlider(
           title: "Session length", unit: "min", id: "breathe-session", value: model.sessionMinutes,
           range: BreathPlan.sessionRange, set: model.setSession)
@@ -121,8 +135,11 @@ private struct BreatheSetup: View {
         CuePicker(selection: model.cue, choose: model.chooseCue)
       }
       .padding(.top, 28)
+      .padding(.bottom, 24)
+      }
+      }
+      .scrollBounceBehavior(.basedOnSize)
 
-      Spacer(minLength: 24)
       Button(action: { model.begin() }) {
         Text("Begin").font(.system(size: 17, weight: .semibold)).foregroundStyle(.black)
           .frame(maxWidth: .infinity, minHeight: 56)
@@ -215,6 +232,32 @@ private struct BreathSlider: View {
 }
 
 /// Voice, Tone or Off: three quiet tiles, the chosen one lit.
+/// Story 241: 8, 10, 12, 15 seconds a side, or Custom (nil).
+private struct PresetPicker: View {
+  let selection: Int?
+  let choose: (Int?) -> Void
+
+  var body: some View {
+    HStack(spacing: 8) {
+      ForEach(BreathPlan.presets.map(Optional.some) + [nil], id: \.self) { preset in
+        let on = preset == selection
+        Button(action: { choose(preset) }) {
+          Text(preset.map { "\($0) s" } ?? "Custom")
+            .font(.system(size: 15, weight: on ? .semibold : .regular)).monospacedDigit()
+            .foregroundStyle(on ? Ink.text : Ink.dim)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(Capsule().fill(Color.white.opacity(on ? 0.09 : 0.0)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(on ? 0.4 : 0.1), lineWidth: 1))
+            .animation(.easeOut(duration: 0.2), value: on)
+        }
+        .buttonStyle(Pressable())
+        .accessibilityAddTraits(on ? .isSelected : [])
+        .accessibilityIdentifier("breathe-preset-\(preset.map(String.init) ?? "custom")")
+      }
+    }
+  }
+}
+
 private struct CuePicker: View {
   let selection: BreathCue
   let choose: (BreathCue) -> Void

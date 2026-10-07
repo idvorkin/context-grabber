@@ -95,9 +95,9 @@ public struct LiveActivityContent: Equatable, Sendable {
     case .exhale: short = "OUT"
     case .holdFull, .holdEmpty: short = "HOLD"
     }
-    let stepEnd = Double((m.phaseIndex + 1) * plan.breathSeconds)
+    let stepEnd = Double(plan.stepEnd(m.phaseIndex))
     secondsLeft = Int((stepEnd - elapsed).rounded(.up))
-    stepSeconds = plan.breathSeconds
+    stepSeconds = plan.side(m.phaseIndex)
     let cycle = "Cycle \(m.cycle) of \(plan.cycles)"
     if self.paused {
       (title, subtitle, compactLabel) = ("PAUSED", "\(m.phase.word) · \(cycle)", "PAUSED \(m.cycle)/\(plan.cycles)")
@@ -114,7 +114,6 @@ extension BreathRun {
     guard isRunning, !isFinished else { return nil }
     let t = elapsed(now: now)
     guard t >= 0 else { return now - t }
-    let index = Int((t / Double(plan.breathSeconds)).rounded(.down))
-    return now + Double((index + 1) * plan.breathSeconds) - t
+    return now + Double(plan.stepEnd(plan.moment(at: t).phaseIndex)) - t
   }
 }

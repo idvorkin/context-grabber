@@ -92,6 +92,7 @@ public struct ActivityLog {
   }
 
   public static func breathName(_ plan: BreathPlan) -> String {
-    "Box breathing · \(plan.breathSeconds) s · \(plan.cycles) cycle\(plan.cycles == 1 ? "" : "s")"
+    let pace = plan.isEven ? "\(plan.inSeconds) s" : "\(plan.inSeconds)/\(plan.outSeconds) s"
+    return "Box breathing · \(pace) · \(plan.cycles) cycle\(plan.cycles == 1 ? "" : "s")"
   }
 }

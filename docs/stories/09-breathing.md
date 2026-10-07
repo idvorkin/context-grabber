@@ -373,3 +373,29 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the breathing setup screen
 - **When:** I tap the cog, choose *Tide* and begin
 - **Then:** the circle fills from the bottom as I breathe in, stays full on the hold, drains as I breathe out; the session log has `breathe_style` with *tide*; the next launch still uses *Tide*; and with nothing chosen the ring is *Line*, twice as thick as before
+
+---
+
+### User Story 241:
+
+- **Summary:** Breath presets, and a custom box with its own in and out
+- **Issues:** [#155](https://github.com/idvorkin/context-grabber/issues/155)
+- **Status:** not yet implemented
+- **Spec:** [box breathing, "Breath length"](../superpowers/specs/2026-10-04-box-breathing-design.md)
+
+#### Use Case:
+- **As someone** who breathes at a few set paces and sometimes wants a longer out-breath
+- **I want to** pick 8, 10, 12 or 15 seconds with one tap, or set in and out separately
+- **so that** the pace I want is one tap, not a slider hunt
+
+#### Acceptance Criteria:
+- **Scenario:** A preset
+- **Given:** the breathing screen
+- **When:** I tap *12 s* and Begin
+- **Then:** each of the four steps lasts 12 seconds, and *12 s* is still chosen the next time I open the screen
+
+- **Scenario:** Custom
+- **Given:** the breathing screen
+- **When:** I tap *Custom*, set In to 4 and Out to 8, and Begin
+- **Then:** in and its hold last 4 seconds, out and its hold 8, the summary counts cycles of 24 seconds, and both lengths are remembered
+

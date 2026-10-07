@@ -28,7 +28,13 @@ empties with you and, if you want, tells you each step by voice or by tone so yo
 
 ### Setup
 
-- **Breath length**: a slider from 5 to 15 seconds, in whole seconds, starting at 8.
+- **Breath length**: presets, one tap each — **8 s, 10 s, 12 s, 15 s** — and **Custom** (Igor, 2026-10-05,
+  #155: *"presets on 8 10 12 and 15 … and also add custom and set the in and out independently"*). A preset is
+  four even sides of that length. Custom shows two sliders, **In** and **Out**, 3 to 15 seconds each: the inhale
+  and its hold last *In*, the exhale and its hold last *Out*, so it is still a box, with a long side and a short
+  side. The choice and Custom's two lengths are remembered. A phone that had a breath length from the old slider
+  keeps it: one of the presets lights if it matches, and anything else opens as Custom with In and Out both at
+  that length.
 - **Session length**: a slider from 2 to 15 minutes, in whole minutes, starting at 5.
 - A summary line under them that changes as either slider moves: **"9 cycles · ends at 4 min 48 s"**. A session
   is always a whole number of cycles — the number closest to the session length chosen, never fewer than one —
