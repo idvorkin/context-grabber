@@ -79,6 +79,7 @@ Grabber Native's actions in the Shortcuts app, each opening the app:
 
 | Action | Parameter | Does what the link does |
 |---|---|---|
+| *Open Grabber Native* | — | `home`: the home screen, nothing started |
 | *Open Today* | — | `today` |
 | *Start Gym Timer* | Preset: 30 SEC, 1 MIN, 2 MIN, 5-1, Custom; blank for the remembered one | `timer?preset=…`, started |
 | *Start Box Breathing* | Minutes, 2 – 15; blank for the remembered length | `breathe?minutes=…`, begun |
@@ -86,7 +87,8 @@ Grabber Native's actions in the Shortcuts app, each opening the app:
 | *Open Cockpit* | — | `cockpit` |
 | *Call Larry* (already there) | Backend; blank for the remembered one | `call?via=…` |
 
-Each is also a Siri phrase and a ready-made shortcut under the app in the Shortcuts app: "Start Gym Timer in
+Each is also a Siri phrase and a ready-made shortcut under the app in the Shortcuts app: "Open Grabber Native",
+"Start Gym Timer in
 Grabber Native", "Start 1 MIN in Grabber Native", "Start Box Breathing in Grabber Native", "Open Today in Grabber
 Native", "Open Places in Grabber Native", "Open Cockpit in Grabber Native", "Call Larry in Grabber Native".
 
