@@ -28,7 +28,10 @@ final class BreatheModel: ObservableObject {
   enum Stage { case setup, session, done }
 
   @Published private(set) var stage = Stage.setup
-  @Published private(set) var breathSeconds: Int
+  /// The preset chosen (story 241), or nil for Custom.
+  @Published private(set) var preset: Int?
+  @Published private(set) var customIn: Int
+  @Published private(set) var customOut: Int
   @Published private(set) var sessionMinutes: Int
   @Published private(set) var cue: BreathCue
   /// How the circle draws the breath (story 240).
@@ -46,6 +49,9 @@ final class BreatheModel: ObservableObject {
   private var pauseAt: Double?
 
   private static let breathKey = "breathe_breath_seconds"
+  private static let customKey = "breathe_custom"
+  private static let customInKey = "breathe_custom_in"
+  private static let customOutKey = "breathe_custom_out"
   private static let sessionKey = "breathe_session_minutes"
   private static let cueKey = "breathe_cue"
   /// Room for "Let's begin" before the first inhale.
@@ -56,22 +62,45 @@ final class BreatheModel: ObservableObject {
     self.database = database
     self.liveActivity = liveActivity
     audio = BreatheAudio(log: log)
-    breathSeconds = database.setting(Self.breathKey).flatMap(Int.init) ?? BreathPlan.defaultBreath
+    // A breath from the old slider: its preset if one matches, else Custom at that length both ways.
+    let stored = database.setting(Self.breathKey).flatMap(Int.init) ?? BreathPlan.defaultBreath
+    let custom = database.setting(Self.customKey) == "1" || !BreathPlan.presets.contains(stored)
+    preset = custom ? nil : stored
+    customIn = database.setting(Self.customInKey).flatMap(Int.init) ?? stored
+    customOut = database.setting(Self.customOutKey).flatMap(Int.init) ?? stored
     sessionMinutes = database.setting(Self.sessionKey).flatMap(Int.init) ?? BreathPlan.defaultSession
     cue = database.setting(Self.cueKey).flatMap(BreathCue.init(rawValue:)) ?? .voice
     style = BreathStyle.decode(database.setting(BreathStyle.settingKey))
     audio.load()
   }
 
-  var plan: BreathPlan { BreathPlan(breathSeconds: breathSeconds, sessionMinutes: sessionMinutes) }
+  var plan: BreathPlan {
+    if let preset { return BreathPlan(breathSeconds: preset, sessionMinutes: sessionMinutes) }
+    return BreathPlan(inSeconds: customIn, outSeconds: customOut, sessionMinutes: sessionMinutes)
+  }
   private var now: Double { Date().timeIntervalSince1970 }
 
   // MARK: - setup
 
-  func setBreath(_ seconds: Int) {
-    guard seconds != breathSeconds else { return }
-    breathSeconds = seconds
-    database.setSetting(Self.breathKey, String(seconds))
+  /// A preset's seconds, or nil for Custom.
+  func choosePreset(_ seconds: Int?) {
+    guard seconds != preset else { return }
+    preset = seconds
+    if let seconds { database.setSetting(Self.breathKey, String(seconds)) }
+    database.setSetting(Self.customKey, seconds == nil ? "1" : "0")
+    log.event("ui", ["action": "breath_preset", "preset": seconds.map(String.init) ?? "custom"])
+  }
+
+  func setCustomIn(_ seconds: Int) {
+    guard seconds != customIn else { return }
+    customIn = seconds
+    database.setSetting(Self.customInKey, String(seconds))
+  }
+
+  func setCustomOut(_ seconds: Int) {
+    guard seconds != customOut else { return }
+    customOut = seconds
+    database.setSetting(Self.customOutKey, String(seconds))
   }
 
   func setSession(_ minutes: Int) {
@@ -108,7 +137,11 @@ final class BreatheModel: ObservableObject {
     if let hooked = launch.style { style = hooked }
     let plan =
       launch.plan
-      ?? BreathPlan(breathSeconds: launch.breath ?? breathSeconds, sessionMinutes: launch.minutes ?? sessionMinutes)
+      ?? launch.breath.map { BreathPlan(breathSeconds: $0, sessionMinutes: launch.minutes ?? sessionMinutes) }
+      ?? (launch.minutes.map { minutes in
+        preset.map { BreathPlan(breathSeconds: $0, sessionMinutes: minutes) }
+          ?? BreathPlan(inSeconds: customIn, outSeconds: customOut, sessionMinutes: minutes)
+      } ?? self.plan)
     pauseAt = launch.pauseAt
     let leadIn = cue == .voice ? Self.voiceLeadIn : 0
     var run = BreathRun(plan: plan, leadIn: leadIn)
@@ -120,7 +153,7 @@ final class BreatheModel: ObservableObject {
     log.event(
       "breath_start",
       [
-        "breath": plan.breathSeconds, "cycles": plan.cycles, "total": plan.totalSeconds, "cue": cue.rawValue,
+        "breath": plan.inSeconds, "out": plan.outSeconds, "cycles": plan.cycles, "total": plan.totalSeconds, "cue": cue.rawValue,
         "lead_in_ms": Int(leadIn * 1000),
       ])
     keepAwake(true)

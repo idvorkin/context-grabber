@@ -31,26 +31,56 @@ public struct BreathPlan: Equatable, Sendable {
   public static let sessionRange = 2...15
   public static let defaultBreath = 8
   public static let defaultSession = 5
+  /// One tap each (story 241): four even sides of that many seconds.
+  public static let presets = [8, 10, 12, 15]
+  /// Custom's In and Out sliders.
+  public static let customRange = 3...15
 
-  /// Seconds on each side of the box.
-  public let breathSeconds: Int
+  /// The inhale and the hold after it.
+  public let inSeconds: Int
+  /// The exhale and the hold after it.
+  public let outSeconds: Int
   public let cycles: Int
 
   /// The whole cycles closest to the session length chosen, never fewer than one (story 161).
   public init(breathSeconds: Int, sessionMinutes: Int) {
     let breath = min(Self.breathRange.upperBound, max(Self.breathRange.lowerBound, breathSeconds))
+    self.init(evenOrUneven: breath, breath, sessionMinutes: sessionMinutes)
+  }
+
+  /// Custom (story 241): in and its hold, then out and its hold, each from `customRange`.
+  public init(inSeconds: Int, outSeconds: Int, sessionMinutes: Int) {
+    func clamp(_ s: Int) -> Int { min(Self.customRange.upperBound, max(Self.customRange.lowerBound, s)) }
+    self.init(evenOrUneven: clamp(inSeconds), clamp(outSeconds), sessionMinutes: sessionMinutes)
+  }
+
+  private init(evenOrUneven inSide: Int, _ outSide: Int, sessionMinutes: Int) {
     let session = min(Self.sessionRange.upperBound, max(Self.sessionRange.lowerBound, sessionMinutes))
-    self.breathSeconds = breath
-    cycles = max(1, Int((Double(session * 60) / Double(4 * breath)).rounded()))
+    inSeconds = inSide
+    outSeconds = outSide
+    cycles = max(1, Int((Double(session * 60) / Double(2 * (inSide + outSide))).rounded()))
   }
 
   /// An exact number of cycles, for a launch hook that wants a session shorter than the sliders allow.
   public init(breathSeconds: Int, cycles: Int) {
-    self.breathSeconds = max(1, breathSeconds)
+    inSeconds = max(1, breathSeconds)
+    outSeconds = inSeconds
     self.cycles = max(1, cycles)
   }
 
-  public var cycleSeconds: Int { 4 * breathSeconds }
+  /// Four even sides, as every plan was before Custom.
+  public var isEven: Bool { inSeconds == outSeconds }
+  /// The side of an even box; for an uneven one, its in side.
+  public var breathSeconds: Int { inSeconds }
+  /// How long step `phaseIndex` (counted from the session's start) lasts.
+  public func side(_ phaseIndex: Int) -> Int { phaseIndex % 4 < 2 ? inSeconds : outSeconds }
+  /// Seconds from the session's start to the end of step `phaseIndex`.
+  public func stepEnd(_ phaseIndex: Int) -> Int {
+    let cycle = phaseIndex / 4, within = phaseIndex % 4
+    return cycle * cycleSeconds + (0...within).reduce(0) { $0 + side($1) }
+  }
+
+  public var cycleSeconds: Int { 2 * (inSeconds + outSeconds) }
   public var totalSeconds: Int { cycles * cycleSeconds }
 
   /// "4 min 48 s"
@@ -70,10 +100,16 @@ public struct BreathPlan: Equatable, Sendable {
         secondsLeft: 0, done: true)
     }
     let t = max(0, elapsed)
-    let side = Double(breathSeconds)
-    let index = Int(t / side)
-    let phase = BreathPhase(rawValue: index % 4) ?? .inhale
-    let progress = (t - Double(index) * side) / side
+    let cycleIndex = Int(t / Double(cycleSeconds))
+    var within = t - Double(cycleIndex * cycleSeconds)
+    var step = 0
+    while step < 3, within >= Double(side(step)) {
+      within -= Double(side(step))
+      step += 1
+    }
+    let index = cycleIndex * 4 + step
+    let phase = BreathPhase(rawValue: step) ?? .inhale
+    let progress = min(1, within / Double(side(step)))
     let ring: Double
     switch phase {
     case .inhale: ring = progress
