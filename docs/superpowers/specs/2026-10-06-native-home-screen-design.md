@@ -9,7 +9,7 @@ the front page. There's just a lot of stuff here that I don't use."* Story
 
 The native app's home screen was a diagnostics list with the journeys on top: below the launchers sat the gist
 token, the build, this launch's log and *Report a problem* — things Igor reads once a week, if that. The home
-screen now holds only the launchers. A cog in the top right opens a **Home screen** sheet where each launcher can
+screen now holds only the launchers. A cog in the bottom right corner opens a **Home screen** sheet where each launcher can
 be hidden or moved, and where the diagnostics now live.
 
 ## Goals
@@ -30,7 +30,8 @@ be hidden or moved, and where the diagnostics now live.
 ## What Igor sees
 
 **The home screen.** No title (Igor, 2026-10-06: *"Get rid of grabber native title"* — the phone already says
-which app this is, and the space goes to the rows), a cog button at the top right, and the launchers as large rows
+which app this is, and the space goes to the rows), no bar across the top at all (*"Why dead space at the top of my screen"*), a
+cog button in the bottom right corner (*"cog in bottom corner if anywhere"*), and the launchers as large rows
 in Igor's order: Call Larry, Today, Gym Timer, Box breathing, Places, Think of a card, Cockpit until he changes
 it. No header or footer around them: the old *Ported so far* / *Everything else is still in Context Grabber*
 lines are gone, since every row is ported by definition. Anything that sits above the launchers in a later build
@@ -68,7 +69,7 @@ and points at the cog.
 
 ## Acceptance criteria
 
-- The home screen shows only the launchers (and anything placed above them), with a cog at the top right.
+- The home screen shows only the launchers (and anything placed above them), with a cog in the bottom right corner and nothing above the first card but the status bar.
 - Hiding a row through the cog removes it from the home screen; after a relaunch it is still hidden.
 - Moving a row through the cog moves it on the home screen; after a relaunch the order holds.
 - Reset brings back every row in the default order.

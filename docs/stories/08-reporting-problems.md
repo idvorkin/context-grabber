@@ -154,7 +154,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 #### Acceptance Criteria:
 - **Scenario:** Hiding a launcher
-- **Given:** the home screen shows Call Larry, Today, Gym Timer, Box breathing, Places, Think of a card and Cockpit, with a cog at the top right and nothing below them
+- **Given:** the home screen shows Call Larry, Today, Gym Timer, Box breathing, Places, Think of a card and Cockpit, with a cog in the bottom right corner and nothing below them
 - **When:** I tap the cog, turn off Cockpit's switch, tap Done and later relaunch the app
 - **Then:** Cockpit is gone from the home screen and stays gone after the relaunch, and the log has `ui` home_settings and a `ui` home_rows line naming the order and `cockpit` as hidden
 
@@ -177,7 +177,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** No title
 - **Given:** the app is open on its home screen
 - **When:** I look at the top
-- **Then:** there is no *Grabber Native* title, only the cog, and the rows start right under the usage card
+- **Then:** there is no *Grabber Native* title and no empty bar: the usage card starts just under the status bar, and the cog is in the bottom right corner
 
 ---
 

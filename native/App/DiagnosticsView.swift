@@ -56,16 +56,24 @@ struct DiagnosticsView: View {
           if !model.status.isEmpty { Text(model.status) }
         }
       }
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            model.openHomeSettings()
-          } label: {
-            Image(systemName: "gearshape")
-          }
-          .accessibilityLabel("Home screen settings")
-          .accessibilityIdentifier("home-settings")
+      // No bar at all (story 147): the usage card starts under the status bar, and the cog sits in the bottom
+      // corner, over the list's end, where it costs no row.
+      .toolbar(.hidden, for: .navigationBar)
+      .contentMargins(.top, 8, for: .scrollContent)
+      .contentMargins(.bottom, 64, for: .scrollContent)  // the last row scrolls clear of the cog
+      .listSectionSpacing(.compact)
+      .overlay(alignment: .bottomTrailing) {
+        Button {
+          model.openHomeSettings()
+        } label: {
+          Image(systemName: "gearshape").font(.title3).padding(12)
+            .background(.regularMaterial, in: Circle())
+            .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
         }
+        .padding(.trailing, 20)
+        .padding(.bottom, 8)
+        .accessibilityLabel("Home screen settings")
+        .accessibilityIdentifier("home-settings")
       }
       .sheet(isPresented: Binding(get: { model.showHomeSettings }, set: { if !$0 { model.closeHomeSettings() } })) {
         HomeSettingsView(model: model)
@@ -90,8 +98,6 @@ struct DiagnosticsView: View {
             .background(ShakeDetector { model.startBugReport(from: "shake") })
         }
       }
-      // No title (story 147): the space goes to the rows. Inline keeps the bar to the cog's height.
-      .navigationBarTitleDisplayMode(.inline)
       // Its own presenter: one view cannot hold two full-screen covers.
       .fullScreenCover(isPresented: Binding(get: { model.showCockpit }, set: { if !$0 { model.closeCockpit() } })) {
         CockpitView(model: model.cockpit, onDone: model.closeCockpit)
