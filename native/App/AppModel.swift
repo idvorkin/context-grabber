@@ -298,6 +298,45 @@ final class AppModel: ObservableObject {
     }
   }
 
+  /// Story 137: a page of Igor's blog, in the browser.
+  func openBlog(_ url: URL, action: String, from source: String) {
+    UIApplication.shared.open(url) { [log] ok in log.event("ui", ["action": action, "from": source, "ok": ok]) }
+  }
+
+  static let eulogySongKey = "eulogy_song_url"
+
+  /// Story 137: the song the eulogy post embeds today, on Suno; the last one found when the blog cannot be reached,
+  /// and the post itself when no song was ever found.
+  func openEulogySong(from source: String) {
+    Task {
+      var song: URL?
+      var found = "post"
+      var failure = ""
+      do {
+        var request = URLRequest(url: BlogLinks.eulogy, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 6)
+        request.setValue("text/html", forHTTPHeaderField: "Accept")
+        let (data, _) = try await URLSession.shared.data(for: request)
+        song = BlogLinks.song(inPost: String(decoding: data, as: UTF8.self))
+        if song == nil { failure = "no Suno song in the post" }
+      } catch {
+        failure = String(describing: error)
+      }
+      if let song {
+        database.setSetting(Self.eulogySongKey, song.absoluteString)
+      } else if let last = database.setting(Self.eulogySongKey).flatMap(URL.init(string:)) {
+        song = last
+        found = "last_time"
+      } else {
+        found = "none"
+      }
+      let target = song ?? BlogLinks.eulogy
+      log.event(
+        "ui", ["action": "open_eulogy_song", "from": source, "song": target.absoluteString, "found": found, "error": failure])
+      if song == nil { status = "Couldn't find the eulogy song, so here is the post." }
+      await UIApplication.shared.open(target)
+    }
+  }
+
   /// Story 149: lets go of the audio this app holds. Not while a call is live; ending the call is the reset then.
   func resetAudio() {
     guard !call.snapshot.isActive else { return }
