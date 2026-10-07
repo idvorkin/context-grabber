@@ -47,6 +47,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 142:
 
 - **Summary:** Report a problem in five seconds with the evidence attached
+- **Issues:** [#182](https://github.com/idvorkin/context-grabber/issues/182) (a shake did nothing while a sheet was up)
 - **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written) and on the phone (2026-10-04: a shake, a note, the report and its screenshot pulled back)
 
 #### Use Case:
@@ -59,6 +60,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the native app is open on any screen
 - **When:** I shake the phone, type "timer skipped the rest" and tap Log it
 - **Then:** the report is stored with my note, a picture of the screen as it was at the shake, the screen's name, the build, and the name of this launch's log with the moment in it, and the screen says "Problem logged"
+
+- **Scenario:** A shake over a dialog
+- **Given:** a sheet is up — the home screen's cog, Today's settings, the timer's settings, a Places naming sheet
+- **When:** I shake the phone, then cancel; and shake again
+- **Then:** the report opens over the sheet each time, its picture shows the sheet, and after Cancel or Log it the sheet is still there; the log's `ui` report_problem says what it opened over
 
 ---
 
