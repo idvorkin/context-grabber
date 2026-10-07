@@ -262,7 +262,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** The home screen opens on today, not on a list
 - **Issues:** [#189](https://github.com/idvorkin/context-grabber/issues/189)
-- **Status:** not yet implemented
+- **Status:** implemented in [5046a38](https://github.com/idvorkin/context-grabber/commit/5046a38); verified by `HomeLayoutTests` (host) and `HomeTodayCardUITests`, `HomeSettingsUITests`, `WhatsNewSeenUITests` on the simulator (the card from the fixture week: 6.8h, 2,631 steps, 22.4 ms, 55 min, as of its time; Call, Gym Timer, Box breathing and Places two by two; moving Gym Timer first puts its tile first); on the phone not yet
 - **Spec:** [native home screen, "Not just a list"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
