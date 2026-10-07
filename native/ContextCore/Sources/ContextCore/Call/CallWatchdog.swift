@@ -22,11 +22,26 @@ public enum CallWatchdog {
   /// A stalled output is reopened at most this often.
   public static let reopenMinGapMs = 5000.0
 
+  /// #186: Larry's audio must have been in hand this long before a silent mixer counts. A reply that lands in the
+  /// last moment of a five-second window has not had time to play, and rebuilding for it killed a working call.
+  public static let silentMixerDueMs = 1500.0
+  /// A heal's rebuild that fails (the microphone can read 0 Hz just after the session restarts) is tried again
+  /// after each of these waits before the call says its audio is gone.
+  public static let rebuildRetryMs: [Double] = [500, 1000, 2000]
+
   public static let micStopped = "the microphone stopped delivering"
+  public static let audioGone = "the phone's audio stopped: hang up and call again"
   public static let audioNotArriving = "Tony's audio is not arriving from the bridge"
   public static let audioNotPlaying = "Tony's audio is arriving but not playing"
 
   public enum Verdict: Equatable, Sendable { case ok, stalled, idle }
+
+  /// #146's net, without #186's false alarm: audio arrived (loud enough to hear) at least `silentMixerDueMs` before
+  /// the window closed, the mixer rendered buffers, and every one of them was silent.
+  public static func silentMixer(now: Double, firstLoudRxAt: Double?, mixBuffers: Int, mixPeak: Float) -> Bool {
+    guard let firstLoudRxAt, mixBuffers > 0, mixPeak == 0 else { return false }
+    return now - firstLoudRxAt >= silentMixerDueMs
+  }
 
   /// "stalled" when an armed, unpaused recorder has gone quiet for `micStallMs`. `lastBufferAt` 0 = none since
   /// arming; a fresh tap gets the full grace from `armedAt`.

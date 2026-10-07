@@ -248,6 +248,18 @@ can**:
   the output clock has not moved for a second — is reopened, and the
   screen says *Tony's audio is arriving but not playing* until it moves
   again. What was queued is lost (a short gap); the next frames play.
+- **A speaker that plays silence** — Larry's audio has been in hand for at
+  least a second and a half and everything the speaker rendered was silent
+  — is reopened the same way. Audio that only just landed does not count:
+  it has not had time to play ([#186](https://github.com/idvorkin/context-grabber/issues/186):
+  a reply arriving in the last moment of a check set off a reopen the call
+  did not need).
+- **A reopen that fails is tried again**, after half a second, one second
+  and two, and never leaves the call deaf and mute without saying so
+  (#186: the microphone read as unavailable just after the restart, the
+  reopen gave up, and the call went silent both ways until it was hung up).
+  If the last try fails, the screen says *the phone's audio stopped: hang up
+  and call again*.
 - **The greeting waits for the speaker.** Larry's first frames are held
   until the output clock is actually running — the first frame kicks it,
   and the wait is logged (*output clock running after 120 ms*). If the
