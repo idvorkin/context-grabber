@@ -1,6 +1,7 @@
 //  The home screen's launchers (story 147): one entry per row, in the default order. A new row is one more
 //  entry; HomeLayout shows it at the end for anyone who already arranged theirs.
 
+import ContextCore
 import SwiftUI
 
 struct HomeRow: Identifiable {
@@ -22,6 +23,12 @@ struct HomeRow: Identifiable {
     },
     HomeRow(id: "cockpit", title: "Cockpit", icon: "gauge.with.dots.needle.67percent") {
       $0.openCockpit(from: "home")
+    },
+    // Story 137: the blog's daily three.
+    HomeRow(id: "eulogy_song", title: "Eulogy song", icon: "music.note") { $0.openEulogySong(from: "home") },
+    HomeRow(id: "eulogy", title: "Eulogy", icon: "book") { $0.openBlog(BlogLinks.eulogy, action: "open_eulogy", from: "home") },
+    HomeRow(id: "recent", title: "Recent", icon: "clock.arrow.circlepath") {
+      $0.openBlog(BlogLinks.recent, action: "open_recent", from: "home")
     },
   ]
 

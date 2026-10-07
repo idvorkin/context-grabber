@@ -331,3 +331,33 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the medium tile, on a phone where Grabber Native has never loaded a reading
 - **When:** I look at it, then tap Gym Timer
 - **Then:** it reads *Open Grabber Native* with no numbers, and the tap opens the app with the last preset counting down; Breathe begins a session and Call Larry starts the call the same way
+
+---
+
+### User Story 137:
+
+- **Summary:** My eulogy, its song and the blog's recent changes, one tap each
+- **Issues:** [#177](https://github.com/idvorkin/context-grabber/issues/177)
+- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (each launcher brings Safari forward; the log's open_eulogy_song names the song found in the post); offline and the phone not yet; playing the song inside the app waits on the MP3 (Suno serves no audio without Igor's login)
+- **Spec:** [native Eulogy](../superpowers/specs/2026-10-07-native-eulogy-design.md)
+
+#### Use Case:
+- **As someone** who rereads his eulogy, plays its song and checks what changed on his blog most days
+- **I want to** reach each from the home screen in one tap
+- **so that** the daily practice costs no typing and no hunting
+
+#### Acceptance Criteria:
+- **Scenario:** The song from the post
+- **Given:** the eulogy post embeds a Suno song
+- **When:** I tap *Eulogy song*
+- **Then:** that song opens on Suno (the app if installed, else the browser), and the log names the song and that it came from the post
+
+- **Scenario:** Offline
+- **Given:** the phone cannot reach the blog
+- **When:** I tap *Eulogy song*
+- **Then:** the song found last time opens; if none was ever found, the eulogy post opens and the screen says the song could not be found
+
+- **Scenario:** The post and recent changes
+- **Given:** the home screen
+- **When:** I tap *Eulogy*, and later *Recent*
+- **Then:** idvork.in/eulogy and idvork.in/recent open in the browser
