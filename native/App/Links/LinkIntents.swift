@@ -78,6 +78,19 @@ struct StartBoxBreathingIntent: AppIntent {
   }
 }
 
+/// Igor, 2026-10-06: "need a short cut to main app" — the home screen, nothing started.
+struct OpenGrabberNativeIntent: AppIntent {
+  static let title: LocalizedStringResource = "Open Grabber Native"
+  static let description = IntentDescription("Open Grabber Native on its home screen.")
+  static let openAppWhenRun = true
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    LinkLauncher.request(.home)
+    return .result()
+  }
+}
+
 struct OpenTodayIntent: AppIntent {
   static let title: LocalizedStringResource = "Open Today"
   static let description = IntentDescription("Open Grabber Native on Today, which grabs as it opens.")
@@ -116,6 +129,11 @@ struct OpenCockpitIntent: AppIntent {
 
 struct GrabberNativeShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
+    AppShortcut(
+      intent: OpenGrabberNativeIntent(),
+      phrases: ["Open \(.applicationName)"],
+      shortTitle: "Open Grabber Native",
+      systemImageName: "house")
     AppShortcut(
       intent: StartGymTimerIntent(),
       phrases: [
