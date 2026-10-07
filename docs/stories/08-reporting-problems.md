@@ -201,7 +201,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 149:
 
 - **Summary:** Reset audio from the cog when the phone's sound gets stuck
-- **Status:** not implemented
+- **Status:** native app only: implemented in [d2f5fe6](https://github.com/idvorkin/context-grabber/commit/d2f5fe6); verified by `ResetAudioUITests` on the simulator (the cog's Reset audio shows the route before and after; the log's `audio_reset` went SoloAmbient → Ambient with nothing refused); stuck music on the phone still to be checked by Igor
 - **Spec:** [Swift-native app — reset audio](../superpowers/specs/2026-10-04-swift-native-app-design.md)
 
 #### Use Case:
