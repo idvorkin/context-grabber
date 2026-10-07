@@ -48,6 +48,8 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   /// #146 (a call that "played" Tony with nothing heard): per five seconds, the loudest sample the bridge sent and
   /// the loudest the mixer rendered, so the log says whether silence came in or sound got lost on the way out.
   private var rxPeak: Float = 0
+  /// When this window's first audible frame from Larry arrived (#186).
+  private var firstLoudRxAt: Double?
   private var mixPeak: Float = 0
   private var mixBuffers = 0
   private var mixTapInstalled = false
@@ -146,6 +148,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       guard let player, let format = playerFormat, let engine, engine.isRunning else { return }
       let samples = PCM.pcm16ToFloat(pcm)
       for x in samples { rxPeak = max(rxPeak, abs(x)) }
+      if rxPeak > 0.01, firstLoudRxAt == nil { firstLoudRxAt = nowMs }
       guard !samples.isEmpty,
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count))
       else { return }
@@ -334,9 +337,10 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   }
 
   /// Everything down and up again on the same session and the same engine settings.
-  private func rebuild(why: String) throws {
-    let wasListening = micListener != nil
-    let wasPlaying = playerFormat != nil
+  /// `playing` / `listening`: what to bring back, for a retry after a failed rebuild already lost the player.
+  private func rebuild(why: String, playing: Bool? = nil, listening: Bool? = nil) throws {
+    let wasListening = listening ?? (micListener != nil)
+    let wasPlaying = playing ?? (playerFormat != nil)
     teardownEngineOnly()
     try configureSession()
     try buildEngine()
@@ -353,6 +357,28 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       clockAdvancedAt = nowMs
     }
     if wasListening { try armTap() }
+  }
+
+  /// A heal's rebuild, tried again when it fails (#186: a failure used to leave the engine stopped, so the rest of
+  /// the call was dead air in both directions). After the last try the call says its audio is gone.
+  private func healingRebuild(why: String, attempt: Int = 0, playing: Bool? = nil, listening: Bool? = nil) {
+    let playing = playing ?? (playerFormat != nil)
+    let listening = listening ?? (micListener != nil)
+    do {
+      try rebuild(why: why, playing: playing, listening: listening)
+      if attempt > 0 { log("call_heal", ["action": "rebuild", "why": why, "ok": true, "attempt": attempt + 1]) }
+    } catch {
+      let retries = CallWatchdog.rebuildRetryMs
+      log("call_heal", [
+        "action": "rebuild", "why": why, "ok": false, "attempt": attempt + 1, "message": describe(error),
+        "retry_in_ms": attempt < retries.count ? retries[attempt] : -1,
+      ])
+      guard attempt < retries.count else { return setHealth(CallWatchdog.audioGone) }
+      queue.asyncAfter(deadline: .now() + retries[attempt] / 1000) { [weak self] in
+        guard let self, !self.observers.isEmpty else { return }  // the call ended meanwhile
+        self.healingRebuild(why: why, attempt: attempt + 1, playing: playing, listening: listening)
+      }
+    }
   }
 
   private func currentPlayerTime() -> Double {
@@ -389,7 +415,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       } else if now - openedAt >= CallWatchdog.clockStartMs, !clockReopened {
         clockReopened = true
         log("call_heal", ["action": "reopen_playback", "why": "output clock has not started after 2 s"])
-        try? rebuild(why: "clock")
+        healingRebuild(why: "clock")
         openedAt = nowMs
       }
     }
@@ -434,7 +460,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       lastReopenAt = now
       log("call_heal", ["action": "reopen_playback", "why": "output clock stalled", "at_s": t, "due_s": head - t])
       setHealth(CallWatchdog.audioNotPlaying)
-      try? rebuild(why: "output stall")
+      healingRebuild(why: "output stall")
     }
   }
 
@@ -442,7 +468,8 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   private func logOutputLevel() {
     guard let engine else { return }
     // #146's net: Larry's audio arrived and was scheduled, yet the mixer rendered nothing for five seconds.
-    let silentMixer = rxPeak > 0.01 && mixBuffers > 0 && mixPeak == 0
+    let silentMixer = CallWatchdog.silentMixer(
+      now: nowMs, firstLoudRxAt: firstLoudRxAt, mixBuffers: mixBuffers, mixPeak: mixPeak)
     let out = engine.outputNode
     let outFormat = out.outputFormat(forBus: 0)
     let outputs = session.currentRoute.outputs.map { "\($0.portName) [\($0.portType.rawValue)]" }
@@ -457,15 +484,14 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
         "category": session.category.rawValue, "mode": session.mode.rawValue, "outputs": outputs,
       ])
     rxPeak = 0
+    firstLoudRxAt = nil
     mixPeak = 0
     mixBuffers = 0
     if silentMixer, nowMs - lastReopenAt >= CallWatchdog.reopenMinGapMs {
       lastReopenAt = nowMs
       log("call_heal", ["action": "reopen_playback", "why": "mixer silent while Larry's audio arrives"])
       setHealth(CallWatchdog.audioNotPlaying)
-      do { try rebuild(why: "silent mixer") } catch {
-        log("call_heal", ["action": "reopen_playback", "ok": false, "message": describe(error)])
-      }
+      healingRebuild(why: "silent mixer")
     }
   }
 
