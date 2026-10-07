@@ -195,3 +195,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a build made without the project's history, or with no story change in thirty days
 - **When:** I open the app and tap the row
 - **Then:** the row reads *What's new · nothing new* and the screen says there is nothing new, with no error
+
+---
+
+### User Story 149:
+
+- **Summary:** Reset audio from the cog when the phone's sound gets stuck
+- **Status:** native app only: implemented in [d2f5fe6](https://github.com/idvorkin/context-grabber/commit/d2f5fe6); verified by `ResetAudioUITests` on the simulator (the cog's Reset audio shows the route before and after; the log's `audio_reset` went SoloAmbient → Ambient with nothing refused); stuck music on the phone still to be checked by Igor
+- **Spec:** [Swift-native app — reset audio](../superpowers/specs/2026-10-04-swift-native-app-design.md)
+
+#### Use Case:
+- **As** someone whose music stays ducked or whose sound goes to the wrong place after a call or a workout
+- **I want to** tap Reset audio in the home screen's cog
+- **so that** the phone's sound is back without hunting through apps or restarting the phone
+
+#### Acceptance Criteria:
+- **Scenario:** Music left ducked
+- **Given:** no call is live and another app's music is playing quieter than it should after a workout
+- **When:** I tap *Reset audio*
+- **Then:** Grabber Native lets go of the audio and tells other apps to resume, the line under the button shows the route before and after, the session log has `audio_reset` with both, and while a call is live the button is not offered
+
