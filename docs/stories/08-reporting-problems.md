@@ -232,3 +232,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap *Reset audio*
 - **Then:** Grabber Native lets go of the audio and tells other apps to resume, the line under the button shows the route before and after, the session log has `audio_reset` with both, and while a call is live the button is not offered
 
+---
+
+### User Story 150:
+
+- **Summary:** Grabber Native on the iPad
+- **Status:** implemented in [2c2a6ee](https://github.com/idvorkin/context-grabber/commit/2c2a6ee); verified by `IPadUITests` on an iPad Air 11-inch simulator (home spans the width in landscape; Call, Today, Gym Timer, Box breathing, Places and Cockpit open in landscape, screenshots checked) and a portrait screenshot; on Igor's iPad not yet (its id is not in the provisioning profile until Xcode is signed in)
+- **Spec:** [Swift-native app, "On the iPad"](../superpowers/specs/2026-10-04-swift-native-app-design.md)
+
+#### Use Case:
+- **As someone** with an iPad on the desk beside the phone
+- **I want to** run Grabber Native there as a real iPad app
+- **so that** calls, the timer, breathing and the Cockpit are on the bigger screen when it is the one in reach
+
+#### Acceptance Criteria:
+- **Scenario:** An iPad app, any way up
+- **Given:** Grabber Native installed on the iPad
+- **When:** I open it, turn the iPad to landscape and back, and open each launcher
+- **Then:** the home screen fills the iPad's screen in both orientations (not a phone-sized window), and every launcher opens its screen without an error
+

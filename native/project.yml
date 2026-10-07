@@ -66,8 +66,10 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Grabber Native
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        # The iPad turns every way (story 150); the phone stays upright.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
         # The What's new phase reads the repository's git history and stories, outside what a sandbox allows.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
@@ -91,7 +93,7 @@ targets:
         INFOPLIST_FILE: Widgets/Info.plist
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Grabber Native
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
   # Simulator only: grants Health access through Health's own sheet, the one tap a script cannot make
