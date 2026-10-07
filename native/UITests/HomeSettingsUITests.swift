@@ -25,7 +25,8 @@ final class HomeSettingsUITests: XCTestCase {
     XCTAssertTrue(handle.waitForExistence(timeout: 5), app.debugDescription)
     let callHandle = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Reorder' AND label CONTAINS 'Call Larry'"))
       .firstMatch
-    handle.press(forDuration: 0.5, thenDragTo: callHandle)
+    // Slow, with a hold before letting go: a quick drag does not register on a loaded simulator.
+    handle.press(forDuration: 1.0, thenDragTo: callHandle, withVelocity: .slow, thenHoldForDuration: 0.5)
 
     app.buttons["home-settings-done"].tap()
     assertHome(app)
@@ -39,7 +40,7 @@ final class HomeSettingsUITests: XCTestCase {
     app.buttons["home-rows-reset"].tap()
     app.buttons["home-settings-done"].tap()
     XCTAssertTrue(app.buttons["home-cockpit"].waitForExistence(timeout: 5))
-    XCTAssertLessThan(app.buttons["home-call"].frame.minY, app.buttons["home-gym_timer"].frame.minY)
+    XCTAssertTrue(before(app.buttons["home-call"], app.buttons["home-gym_timer"]), app.debugDescription)
   }
 
   private func openSheet(_ app: XCUIApplication) {
@@ -54,6 +55,14 @@ final class HomeSettingsUITests: XCTestCase {
     let gym = app.buttons["home-gym_timer"]
     XCTAssertTrue(gym.waitForExistence(timeout: 10), app.debugDescription)
     XCTAssertFalse(app.buttons["home-cockpit"].exists)
-    XCTAssertLessThan(gym.frame.minY, app.buttons["home-call"].frame.minY, app.debugDescription)
+    let call = app.buttons["home-call"]
+    XCTAssertTrue(before(gym, call), "gym \(gym.frame) call \(call.frame)")
+  }
+
+  /// Reading order on the home screen (story 151): higher up, or the same row of tiles and further left.
+  private func before(_ a: XCUIElement, _ b: XCUIElement) -> Bool {
+    let (fa, fb) = (a.frame, b.frame)
+    if abs(fa.minY - fb.minY) < 2 { return fa.minX < fb.minX }
+    return fa.minY < fb.minY
   }
 }

@@ -65,4 +65,21 @@ final class HomeLayoutTests: XCTestCase {
     let again = HomeLayout(known: known, storedOrder: layout.encodedOrder, storedHidden: layout.encodedHidden)
     XCTAssertEqual(again, layout)
   }
+
+  /// Story 151: Today is the card, the next four the tiles, the rest rows.
+  func testTodayIsTheCardTheNextFourTilesTheRestRows() {
+    let a = HomeLayout(known: known, storedOrder: nil, storedHidden: nil).arrangement
+    XCTAssertTrue(a.todayCard)
+    XCTAssertEqual(a.tiles, ["call", "gym_timer", "breathe", "places"])
+    XCTAssertEqual(a.rows, ["think_a_card", "cockpit"])
+  }
+
+  func testHidingTodayDropsTheCardAndMovingARowUpMakesItATile() {
+    let layout = HomeLayout(
+      known: known, storedOrder: (["cockpit"] + known.filter { $0 != "cockpit" }).joined(separator: ","),
+      storedHidden: "today")
+    XCTAssertFalse(layout.arrangement.todayCard)
+    XCTAssertEqual(layout.arrangement.tiles.first, "cockpit")
+    XCTAssertEqual(layout.arrangement.rows, ["places", "think_a_card"])
+  }
 }
