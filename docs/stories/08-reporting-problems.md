@@ -48,7 +48,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Report a problem in five seconds with the evidence attached
 - **Issues:** [#182](https://github.com/idvorkin/context-grabber/issues/182) (a shake did nothing while a sheet was up)
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written) and on the phone (2026-10-04: a shake, a note, the report and its screenshot pulled back)
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written) and on the phone (2026-10-04: a shake, a note, the report and its screenshot pulled back); over a sheet (#182): [19f4b7c](https://github.com/idvorkin/context-grabber/commit/19f4b7c), verified by `ShakeOverSheetUITests` on the simulator (the report twice over the cog's sheet, the sheet still there after Cancel; the log's `over`); a real shake over a dialog on the phone not yet
 
 #### Use Case:
 - **As someone** who just saw the app do something wrong
