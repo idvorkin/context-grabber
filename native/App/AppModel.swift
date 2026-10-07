@@ -226,11 +226,14 @@ final class AppModel: ObservableObject {
   }
 
   /// A shake or the button: the picture is taken before the sheet covers the screen.
+  /// Opens the report over whatever is in front (#182): a sheet attached to the screen underneath could not open
+  /// while that screen already had one up, and stayed "up" so every later shake was swallowed too.
   func startBugReport(from source: String) {
     guard !showBugReport else { return }
-    log.event("ui", ["action": "report_problem", "from": source, "screen": screen])
     bugReporter.capture()
-    showBugReport = true
+    let over = BugReportPresenter.present(BugReportSheet(model: self)) { [weak self] in self?.showBugReport = false }
+    log.event("ui", ["action": "report_problem", "from": source, "screen": screen, "over": over ?? "nothing"])
+    showBugReport = over != nil
   }
 
   func bugContext() -> [String: String] {
@@ -495,6 +498,13 @@ final class AppModel: ObservableObject {
     if let link = env["GRABBER_LINK"], let url = URL(string: link) {
       // As if iOS had opened the link: simctl openurl stops at a confirmation a script cannot tap.
       open(url: url)
+    }
+    // A shake after this many seconds, over whatever is up by then (#182: the cog's sheet, with GRABBER_HOME).
+    if let seconds = Double(env["GRABBER_SHAKE_AFTER"] ?? "") {
+      Task {
+        try? await Task.sleep(for: .seconds(seconds))
+        startBugReport(from: "hook")
+      }
     }
     if let note = env["GRABBER_BUG"], !note.isEmpty {
       Task {

@@ -68,9 +68,44 @@ struct ShakeDetector: UIViewControllerRepresentable {
   }
 }
 
+/// Presents the report from the topmost controller, so it opens over any sheet, cover or dialog of the app's.
+@MainActor
+enum BugReportPresenter {
+  private final class Watcher: NSObject, UIAdaptivePresentationControllerDelegate {
+    let onGone: () -> Void
+    init(onGone: @escaping () -> Void) { self.onGone = onGone }
+    func presentationControllerDidDismiss(_ controller: UIPresentationController) { onGone() }
+  }
+
+  private static var watcher: Watcher?
+
+  /// The class name of what it was presented over, or nil when there was no window to present from.
+  static func present(_ sheet: BugReportSheet, onGone: @escaping () -> Void) -> String? {
+    let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+    guard var top = (windows.first(where: \.isKeyWindow) ?? windows.first)?.rootViewController else { return nil }
+    while let next = top.presentedViewController, !next.isBeingDismissed { top = next }
+    // The sheet's buttons close the controller that hosts it, which exists only once the sheet does.
+    final class Host { weak var controller: UIViewController? }
+    let host = Host()
+    var view = sheet
+    view.close = {
+      host.controller?.dismiss(animated: true)
+      onGone()
+    }
+    let controller = UIHostingController(rootView: view)
+    host.controller = controller
+    let watcher = Watcher(onGone: onGone)  // a swipe down closes it without Cancel
+    Self.watcher = watcher
+    controller.presentationController?.delegate = watcher
+    top.present(controller, animated: true)
+    return String(describing: type(of: top))
+  }
+}
+
 struct BugReportSheet: View {
   @ObservedObject var model: AppModel
-  @Environment(\.dismiss) private var dismiss
+  /// Set by the presenter: closes the controller it is hosted in.
+  var close: () -> Void = {}
   @State private var note = ""
   @FocusState private var noteFocused: Bool
 
@@ -92,11 +127,11 @@ struct BugReportSheet: View {
       .navigationTitle("Report a problem")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { close() } }
         ToolbarItem(placement: .confirmationAction) {
           Button("Log it") {
             model.reportBug(note: note)
-            dismiss()
+            close()
           }
           .disabled(note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }

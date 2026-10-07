@@ -74,7 +74,10 @@ from. It is visible in the Files app and comes to the Mac with one command. Logs
 deleted at launch, except a log a problem report names.
 
 **Reporting a problem.** A shake anywhere, or *Report a problem* behind the home screen's cog, opens a sheet with
-one text field and a list of what will be attached. *Log it* stores the note, a picture of the screen as it was
+one text field — **over whatever is in front**, a settings sheet, a picker or any other of the app's own dialogs
+included (Igor, 2026-10-06, #182: *"I can't rage shake when a dialog is up"*); the dialog is still there after
+the report is logged or cancelled, and the picture shows it. Only iOS's own alerts (a permission prompt) are out
+of reach. The sheet has a list of what will be attached. *Log it* stores the note, a picture of the screen as it was
 at the shake, the screen Igor was on, the build, and the name and moment of the session log. On the Mac the
 report becomes one GitHub issue with the note and the context; filing twice never makes two issues. The
 picture stays on the Mac and the issue says where: the issues are public, and a screen can show health, places

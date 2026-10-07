@@ -71,7 +71,6 @@ struct DiagnosticsView: View {
         HomeSettingsView(model: model)
           // A sheet is its own presentation, as the covers are: the report sheet has to come from inside it.
           .background(ShakeDetector { model.startBugReport(from: "shake") })
-          .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
       }
       // Each cover on a view of its own (one view cannot hold two), and none on a row: a hidden row's journey
       // still opens from a link, a Shortcut or a hook.
@@ -81,7 +80,6 @@ struct DiagnosticsView: View {
         ) {
           BreatheView(app: model, launch: model.breathe ?? BreatheLaunch(), onExit: model.closeBreathe)
             .background(ShakeDetector { model.startBugReport(from: "shake") })
-            .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
         }
       }
       .background {
@@ -90,7 +88,6 @@ struct DiagnosticsView: View {
         ) {
           PlacesView(app: model, places: model.places, tracker: model.tracker, onExit: model.closePlaces)
             .background(ShakeDetector { model.startBugReport(from: "shake") })
-            .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
         }
       }
       // No title (story 147): the space goes to the rows. Inline keeps the bar to the cog's height.
@@ -99,12 +96,10 @@ struct DiagnosticsView: View {
       .fullScreenCover(isPresented: Binding(get: { model.showCockpit }, set: { if !$0 { model.closeCockpit() } })) {
         CockpitView(model: model.cockpit, onDone: model.closeCockpit)
           .background(ShakeDetector { model.startBugReport(from: "shake") })
-          .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
       }
       .fullScreenCover(isPresented: Binding(get: { model.callOpen }, set: { if !$0 { model.closeCall() } })) {
         CallView(call: model.call, onDone: model.closeCall)
           .background(ShakeDetector { model.startBugReport(from: "shake") })
-          .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
       }
       .navigationDestination(
         isPresented: Binding(
@@ -124,7 +119,6 @@ struct DiagnosticsView: View {
       GymTimerView(app: model, launch: model.gymTimer ?? GymTimerLaunch(), onExit: model.closeGymTimer)
         // A cover is its own presentation: the app's shake detector and report sheet do not reach into it.
         .background(ShakeDetector { model.startBugReport(from: "shake") })
-        .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
     }
   }
 }

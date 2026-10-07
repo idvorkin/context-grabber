@@ -18,7 +18,6 @@ struct GrabberApp: App {
     WindowGroup {
       DiagnosticsView(model: model)
         .background(ShakeDetector { model.startBugReport(from: "shake") })
-        .sheet(isPresented: $model.showBugReport) { BugReportSheet(model: model) }
         .onOpenURL { model.open(url: $0) }
         .onChange(of: scenePhase) { _, phase in
           // The first activation is the launch, which pruned already; every later one is a foreground.
