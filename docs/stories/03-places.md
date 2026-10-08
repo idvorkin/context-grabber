@@ -139,7 +139,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 047:
 
 - **Summary:** Name an unknown place from the breakdown, or grow the known place it belongs to
-- **Status:** implemented in [5d920bc](https://github.com/idvorkin/context-grabber/commit/5d920bc), [75ec6f5](https://github.com/idvorkin/context-grabber/commit/75ec6f5), [34f7e70](https://github.com/idvorkin/context-grabber/commit/34f7e70); verified by `places.test.ts` (the merge circle) and `places_summary.test.ts`, checked against the real fixture (the 500 m gate catches "Place 2", 160 m from Milstead), and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `KnownPlacesTests` (the 500 m offer, the grown radius and shift); the card itself only built, the phone still to be checked by Igor (bead context-grabber-3ss.12)
+- **Issues:** [#160](https://github.com/idvorkin/context-grabber/issues/160)
+- **Status:** implemented in [5d920bc](https://github.com/idvorkin/context-grabber/commit/5d920bc), [75ec6f5](https://github.com/idvorkin/context-grabber/commit/75ec6f5), [34f7e70](https://github.com/idvorkin/context-grabber/commit/34f7e70); verified by `places.test.ts` (the merge circle) and `places_summary.test.ts`, checked against the real fixture (the 500 m gate catches "Place 2", 160 m from Milstead), and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `KnownPlacesTests` (the 500 m offer, the grown radius and shift); the card itself only built, the phone still to be checked by Igor (bead context-grabber-3ss.12); #160's map: [e69bb8a](https://github.com/idvorkin/context-grabber/commit/e69bb8a), verified by `PlacesUnnamedUITests` on the simulator with screenshots kept on the Mac (the merge card's map shows the stay and Milstead & Co with its circle 159 m away; the name card's map shows the stay and its 100 m circle). The fixture had to be moved 5 days forward because of [#217](https://github.com/idvorkin/context-grabber/issues/217). Not checked: the circle following a typed radius, and the phone
 
 #### Use Case:
 - **As** someone looking at "Place 3" in amber for the third day running
@@ -151,6 +152,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** "Milstead & Co" is known with a 50 m radius
 - **When:** I tap Name on that day's Place 3 row
 - **Then:** a card says the stay is 168 m from Milstead & Co and that expanding would grow its radius 50 m → 159 m and shift its centre 57 m, with Expand / Create new place / Cancel; Expand relabels every Place 3 stay on every day, Create new asks for a name and radius (default 100 m), and a stay farther than 500 m from everything goes straight to the name card
+
+- **Scenario:** See where it is
+- **Given:** I tap **＋** on "Place 3"
+- **When:** the card opens
+- **Then:** a small map at its top shows where Place 3 is, with the circle the new place will cover, which grows and shrinks as I type the radius; on the merge card the nearest known place and its circle are on the map too
 
 ---
 

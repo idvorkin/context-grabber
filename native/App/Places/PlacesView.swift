@@ -83,7 +83,7 @@ struct PlacesView: View {
     }
     // While the full-screen map is up it presents the naming card itself (a sheet cannot open under another).
     .sheet(item: Binding(get: { app.showPlacesMap ? nil : places.naming }, set: { places.naming = $0 })) { card in
-      NamingSheet(card: card, places: places).presentationDetents([.medium])
+      NamingSheet(card: card, places: places).presentationDetents([.large])
     }
     .sheet(item: $places.editing) { place in PlaceEditSheet(place: place, places: places) }
     .sheet(isPresented: Binding(get: { places.exportFile != nil }, set: { if !$0 { places.exportFile = nil } })) {
@@ -93,7 +93,7 @@ struct PlacesView: View {
       PlacesMapView(places: places, tracker: tracker, log: app.log, fullscreen: true) { app.showPlacesMap = false }
         .ignoresSafeArea(edges: .bottom)
         .presentationDragIndicator(.visible)
-        .sheet(item: $places.naming) { card in NamingSheet(card: card, places: places).presentationDetents([.medium]) }
+        .sheet(item: $places.naming) { card in NamingSheet(card: card, places: places).presentationDetents([.large]) }
     }
   }
 
@@ -305,6 +305,7 @@ struct NamingSheet: View {
       Form {
         switch card {
         case .name(let source, let centroid, _):
+          Section { NamingMap(centre: centroid, radius: Double(radius)).listRowInsets(EdgeInsets()) }
           Section {
             TextField("Place name", text: $name)
             TextField("Radius (m)", text: $radius).keyboardType(.numberPad)
@@ -319,7 +320,8 @@ struct NamingSheet: View {
             }
             .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
           }
-        case .merge(let source, _, _, let s):
+        case .merge(let source, let centroid, _, let s):
+          Section { NamingMap(centre: centroid, radius: nil, nearest: s.nearest).listRowInsets(EdgeInsets()) }
           Section {
             Text("**\(source)** is \(Int(s.distance.rounded())) m from **\(s.nearest.name)**.")
             Text(
