@@ -48,10 +48,6 @@ final class BreatheModel: ObservableObject {
   private var clock: Timer?
   private var pauseAt: Double?
 
-  private static let breathKey = "breathe_breath_seconds"
-  private static let customKey = "breathe_custom"
-  private static let customInKey = "breathe_custom_in"
-  private static let customOutKey = "breathe_custom_out"
   private static let sessionKey = "breathe_session_minutes"
   private static let cueKey = "breathe_cue"
   /// Room for "Let's begin" before the first inhale.
@@ -62,12 +58,11 @@ final class BreatheModel: ObservableObject {
     self.database = database
     self.liveActivity = liveActivity
     audio = BreatheAudio(log: log)
-    // A breath from the old slider: its preset if one matches, else Custom at that length both ways.
-    let stored = database.setting(Self.breathKey).flatMap(Int.init) ?? BreathPlan.defaultBreath
-    let custom = database.setting(Self.customKey) == "1" || !BreathPlan.presets.contains(stored)
-    preset = custom ? nil : stored
-    customIn = database.setting(Self.customInKey).flatMap(Int.init) ?? stored
-    customOut = database.setting(Self.customOutKey).flatMap(Int.init) ?? stored
+    let (setup, seeds) = BreathSetup.restore(database.setting)
+    for seed in seeds { database.setSetting(seed.key, seed.value) }
+    preset = setup.preset
+    customIn = setup.customIn
+    customOut = setup.customOut
     sessionMinutes = database.setting(Self.sessionKey).flatMap(Int.init) ?? BreathPlan.defaultSession
     cue = database.setting(Self.cueKey).flatMap(BreathCue.init(rawValue:)) ?? .voice
     style = BreathStyle.decode(database.setting(BreathStyle.settingKey))
@@ -86,21 +81,21 @@ final class BreatheModel: ObservableObject {
   func choosePreset(_ seconds: Int?) {
     guard seconds != preset else { return }
     preset = seconds
-    if let seconds { database.setSetting(Self.breathKey, String(seconds)) }
-    database.setSetting(Self.customKey, seconds == nil ? "1" : "0")
+    if let seconds { database.setSetting(BreathSetup.breathKey, String(seconds)) }
+    database.setSetting(BreathSetup.customKey, seconds == nil ? "1" : "0")
     log.event("ui", ["action": "breath_preset", "preset": seconds.map(String.init) ?? "custom"])
   }
 
   func setCustomIn(_ seconds: Int) {
     guard seconds != customIn else { return }
     customIn = seconds
-    database.setSetting(Self.customInKey, String(seconds))
+    database.setSetting(BreathSetup.customInKey, String(seconds))
   }
 
   func setCustomOut(_ seconds: Int) {
     guard seconds != customOut else { return }
     customOut = seconds
-    database.setSetting(Self.customOutKey, String(seconds))
+    database.setSetting(BreathSetup.customOutKey, String(seconds))
   }
 
   func setSession(_ minutes: Int) {
