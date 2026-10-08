@@ -106,3 +106,22 @@ public struct PlaybackStats: Equatable, Sendable {
     return "\(base) (clock not running)"
   }
 }
+
+/// #198: which heal a queued retry belongs to. Each heal takes a ticket; stopping or preparing a call, and any newer
+/// heal, makes older tickets stale, so a retry from a call that ended (or a heal since repaired) does nothing.
+public struct HealGate: Sendable {
+  private var current = 0
+
+  public init() {}
+
+  /// A new heal: its ticket, and every older one stale.
+  public mutating func begin() -> Int {
+    current += 1
+    return current
+  }
+
+  /// The call stopped or a new one is preparing: every outstanding retry is stale.
+  public mutating func invalidate() { current += 1 }
+
+  public func isCurrent(_ ticket: Int) -> Bool { ticket == current }
+}
