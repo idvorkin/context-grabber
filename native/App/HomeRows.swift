@@ -17,7 +17,7 @@ struct HomeRow: Identifiable {
     HomeRow(id: "gym_timer", title: "Gym Timer", icon: "timer") { $0.openGymTimer(from: "home") },
     HomeRow(id: "breathe", title: "Box breathing", icon: "wind") { $0.openBreathe(from: "home") },
     HomeRow(id: "places", title: "Places", icon: "map") { $0.openPlaces(from: "home") },
-    HomeRow(id: "think_a_card", title: "Think of a card", icon: "suit.spade.fill") { $0.openThinkACard(from: "home") },
+    HomeRow(id: "think_a_card", title: "Think of a card", icon: "suit.spade.fill") { $0.openCard(think: true, from: "home") },
     HomeRow(id: "exercise_analyzer", title: "Exercise Analyzer", icon: "figure.strengthtraining.traditional") {
       $0.openExerciseAnalyzer(from: "home")
     },

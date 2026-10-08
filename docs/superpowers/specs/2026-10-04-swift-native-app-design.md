@@ -128,12 +128,19 @@ phone stays upright. Every journey opens and works. Some are the phone's by natu
 
 The iPad keeps its own settings, log and reports; they are not shared with the phone.
 
-## Think of a card: Igor's trainer, not a port
+## Think of a card: in the app
 
-Igor, 2026-10-05: *"I have ~/gits/think-a-card-trainer, I want that instead."* The home screen lists **Think of a
-card**, which opens his Think a Card Trainer app straight into "think of a card" (that app's story 063). The old
-app's Card tab and memdeck widgets are not ported. If the trainer is not installed the row says so instead of
-doing nothing.
+Igor, 2026-10-08 (#219): *"Think of a card. Let's do it inline. I don't think it's worthy of its own app."* This
+reverses 2026-10-05's choice to open his Think a Card Trainer instead. The home screen's **Think of a card** opens
+the card screen with the beat already started. The card is face down, a count runs from five, and at zero a new
+card is face up: the one they thought of. **Never mind** mid-count stops it with the previous card face up. Tapping
+the face-up card deals another, and pressing **Think of a card** under it starts the count again. **Done** goes back
+home.
+
+The card is the old app's (*A random playing card on the big widget*): a full-size playing card with red suits in
+red, one card per five minutes, and a tap always deals a different card from the one showing. What the screen last
+dealt is kept where a widget can read it, so a widget that shows the card shows that one. The trainer app is no
+longer opened from Grabber Native.
 
 ## Exercise Analyzer, one tap away
 

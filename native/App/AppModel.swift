@@ -29,6 +29,8 @@ final class AppModel: ObservableObject {
   @Published var gymTimer: GymTimerLaunch?
   /// Non-nil while the breathing screen covers the app.
   @Published var breathe: BreatheLaunch?
+  /// Non-nil while the card screen covers the app (story 129): true when it opened counting.
+  @Published var card: Bool?
   @Published var showPlaces = false
   @Published var showPlacesMap = false
   /// True while the Cockpit covers the app. The page itself outlives this: see `cockpit`.
@@ -146,6 +148,7 @@ final class AppModel: ObservableObject {
   private var front: String {
     if gymTimer != nil { return "timer" }
     if breathe != nil { return "breathe" }
+    if card != nil { return "card" }
     if showPlaces { return "places" }
     if showCockpit { return "cockpit" }
     if callOpen { return "call" }
@@ -160,7 +163,6 @@ final class AppModel: ObservableObject {
       if case .call = route { return present(route, from: source) }
       if !route.starts { return }
     }
-    if case .card = route { return present(route, from: source) }  // another app: nothing here needs to move
     guard closeAll() else { return present(route, from: source) }
     Task {
       // SwiftUI drops a cover asked for while another is still going down.
@@ -174,6 +176,7 @@ final class AppModel: ObservableObject {
     var covered = false
     if gymTimer != nil { closeGymTimer(); covered = true }
     if breathe != nil { closeBreathe(); covered = true }
+    if card != nil { closeCard(); covered = true }
     if showPlaces { closePlaces(); covered = true }
     if showCockpit { closeCockpit(); covered = true }
     if callOpen { closeCall(); covered = true }
@@ -196,7 +199,7 @@ final class AppModel: ObservableObject {
     case .places: openPlaces(from: source)
     case .cockpit: openCockpit(from: source)
     case .call(let via): callFromLink(via, from: source)
-    case .card: openThinkACard(from: source)
+    case .card(let think): openCard(think: think, from: source)
     }
   }
 
@@ -292,13 +295,18 @@ final class AppModel: ObservableObject {
     }
   }
 
-  /// Think a Card Trainer, Igor's own app, opened straight into "think of a card" (its story 063).
-  func openThinkACard(from source: String) {
-    guard let url = URL(string: "thinkacard://think") else { return }
-    UIApplication.shared.open(url) { [log] ok in
-      log.event("ui", ["action": "open_think_a_card", "from": source, "ok": ok])
-      if !ok { Task { @MainActor in self.status = "Think a Card is not installed, so the card cannot open." } }
-    }
+  /// The card screen (story 129), face up or with "think of a card" already counting.
+  func openCard(think: Bool, from source: String) {
+    log.event("ui", ["action": "open_card", "from": source, "think": think])
+    screen = "card"
+    card = think
+  }
+
+  func closeCard() {
+    guard card != nil else { return }
+    log.event("ui", ["action": "close_card"])
+    screen = "home"
+    card = nil
   }
 
   /// Exercise Analyzer, Igor's own app (its story 069): the link only brings it forward.

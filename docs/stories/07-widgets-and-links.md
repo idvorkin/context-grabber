@@ -172,7 +172,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 129:
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app: not ported, by Igor's choice (2026-10-05) — see story 133
+- **Issues:** [#219](https://github.com/idvorkin/context-grabber/issues/219)
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app (#219, Igor 2026-10-08: *"let's do it inline"*): implemented in COMMIT; verified by `CardDealTests` (host: the deal's promises, and the same card as the old app for the same moment) and `CardUITests` on the simulator (the home row opens face down counting, a card face up at zero, a tap deals another, *Never mind* keeps the card); the phone not yet. In the native app the home screen's *Think of a card* opens it already counting, and `grabbernative://card` opens it face up; there are no widgets yet
 
 #### Use Case:
 - **As a** man about to do the trick for someone
@@ -190,7 +191,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 133:
 
 - **Summary:** Think of a card in Grabber Native opens Igor's trainer
-- **Status:** implemented in [0152b68](https://github.com/idvorkin/context-grabber/commit/0152b68); verified by the simulator build; the tap on the phone not yet
+- **Status:** replaced by story 129 in the app (#219, Igor 2026-10-08: *"I don't think it's worthy of its own app"*); was [0152b68](https://github.com/idvorkin/context-grabber/commit/0152b68)
 
 #### Use Case:
 - **As a** man about to do the trick, with Grabber Native open
