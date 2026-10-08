@@ -92,7 +92,8 @@ final class MirrorModel: ObservableObject {
         return
       }
       do {
-        try await hk.requestAuthorization()
+        // Story 242: writing Mindful Minutes is asked here too, where Health's sheet can show (not over a cover).
+        try await hk.requestAuthorization(share: [HealthKitSource.mindfulType])
         log.event("health_auth", ["ok": true])
       } catch {
         // Not fatal: every query then fails on its own and reads "—".

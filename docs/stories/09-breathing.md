@@ -399,3 +399,33 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap *Custom*, set In to 4 and Out to 8, and Begin
 - **Then:** in and its hold last 4 seconds, out and its hold 8, the summary counts cycles of 24 seconds, and both lengths are remembered
 
+---
+
+### User Story 242:
+
+- **Summary:** A breathing session counts as meditation in Health
+- **Issues:** [#156](https://github.com/idvorkin/context-grabber/issues/156)
+- **Status:** implemented in [3825c38](https://github.com/idvorkin/context-grabber/commit/3825c38); verified by `BreathTests.testWhatHealthGetsForASession` (host: a finished session whole, Back with a minute or more as the breathing done, under a minute nothing, lead-in and pauses left out) and on the simulator: a hooked 1-minute session reached Done and the app tried to save it, logging `mindful_saved` with *not asked yet* before Today had asked, and Today's Health sheet came up 37 s after asking. **Not verified:** a sample actually landing in Health. `BreatheMindfulUITests` can't answer Health's sheet on iOS 27 yet and is skipped as a known flake ([#215](https://github.com/idvorkin/context-grabber/issues/215)). The phone isn't checked yet. No sound check: this Mac's audio is broken, and the hooked session runs with the cue off
+- **Spec:** [box breathing, "In Health"](../superpowers/specs/2026-10-04-box-breathing-design.md)
+
+#### Use Case:
+- **As someone** whose meditation lives in Health
+- **I want** each box-breathing session saved there as mindful minutes
+- **so that** the breathing I do in the app counts toward my meditation without logging it twice
+
+#### Acceptance Criteria:
+- **Scenario:** A finished session
+- **Given:** Today asked to write Mindful Minutes and I allowed it
+- **When:** a 2-minute session reaches Done
+- **Then:** Health has a 2-minute Mindful Session ending when Done appeared, and the mirror's Meditation card counts it
+
+- **Scenario:** Leaving early
+- **Given:** a session in progress
+- **When:** I tap Back after 90 seconds of breathing, or after 40
+- **Then:** Health gets 1 min 30 s for the first; nothing for the second, under a minute
+
+- **Scenario:** Not allowed
+- **Given:** I said no to writing Mindful Minutes, or have not opened Today since this build
+- **When:** a session ends
+- **Then:** nothing is saved, breathing works the same, and the session log says Health declined
+

@@ -85,7 +85,24 @@ A near-black screen with one dark circle in the middle and a white ring that dra
 **"Done"**, the session as it was — **"4 min 48 s · 9 cycles"** — and **Back to start**, which returns to Setup.
 The closing tone (or "Well done") plays as this appears.
 
-## The look
+### In Health
+
+Igor, 2026-10-05 ([#156](https://github.com/idvorkin/context-grabber/issues/156)): *"we should log these as
+meditations on the phone."*
+
+- A session that reaches Done is saved to Health as a **Mindful Session** of its whole length, ending when Done
+  appears. Health's Mindfulness, and the mirror's Meditation card, count it like any other meditation.
+- A session left early with **Back** is saved as the part actually breathed, if that was **at least a minute**;
+  under a minute is not saved. Paused time is not breathing: the entry ends when the session ended and is as long
+  as the breathing was.
+- iOS asks once whether Grabber Native may write Mindful Minutes, the next time **Today** opens, in the same sheet
+  that asks to read Health. (Asking as a session ends was tried first: on the simulator Health's sheet can take
+  most of a minute to appear, and over the breathing screen the request had not come back when the test gave up,
+  so Today, where Igor already answers Health's questions, asks instead.) Until that is answered, or if Igor says no or later turns it off in
+  Health, sessions are simply not saved; breathing works the same and the session log says why.
+- The lead-in before the first inhale does not count.
+
+
 
 Calm and quiet, monochrome on near-black; nothing bright, nothing that counts a score.
 
@@ -154,5 +171,7 @@ begin", fits inside the two-second lead-in.
   unchanged. There is no pause button anywhere else on the screen.
 - With Voice, each phrase is heard at the start of its step, in aeroplane mode, and over playing music.
 - The cue choice and both sliders are as left after quitting and reopening the app.
+- Finish a 2-minute session: Health shows a 2-minute Mindful Session ending when Done appeared. Leave a session
+  with Back after 90 seconds of breathing: Health shows 1 min 30 s; leave after 40 seconds: nothing is saved.
 - Every start, step, cue, pause, resume, finish and exit is in the session log, with how late each step was
   noticed.

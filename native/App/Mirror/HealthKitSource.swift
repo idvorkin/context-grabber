@@ -42,6 +42,18 @@ final class HealthKitSource: HealthSource, @unchecked Sendable {
     try await store.requestAuthorization(toShare: share, read: Self.readTypes)
   }
 
+  /// Story 242: a breathing session as a Mindful Session. Never asks: Health's sheet does not show over the
+  /// breathing screen's cover (the request waited forever, 2026-10-08), so Today asks. Throws when writing is not
+  /// allowed, or not asked yet.
+  func saveMindful(_ span: TimeSpan) async throws {
+    let status = store.authorizationStatus(for: Self.mindfulType)
+    guard status == .sharingAuthorized else { throw HealthWriteRefused(asked: status != .notDetermined) }
+    let sample = HKCategorySample(
+      type: Self.mindfulType, value: HKCategoryValue.notApplicable.rawValue, start: jsDate(span.start),
+      end: jsDate(span.end))
+    try await store.save(sample)
+  }
+
   /// The unit a query reports in: weight in kilograms (as the current app asks), the rest as the phone prefers.
   func unit(_ kind: QuantityKind) async throws -> HKUnit {
     if kind == .bodyMass { return .gramUnit(with: .kilo) }
@@ -143,5 +155,14 @@ final class HealthKitSource: HealthSource, @unchecked Sendable {
     let legacy = legacyTotals(w)
     if id == .activeEnergyBurned { return legacy.energy?.doubleValue(for: unit) }
     return legacy.distance?.doubleValue(for: unit)
+  }
+}
+
+struct HealthWriteRefused: LocalizedError {
+  var asked: Bool
+  var errorDescription: String? {
+    asked
+      ? "Health does not allow Grabber Native to write Mindful Minutes"
+      : "not asked yet: Today asks to write Mindful Minutes the next time it opens"
   }
 }
