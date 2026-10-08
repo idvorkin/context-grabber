@@ -20,4 +20,21 @@ final class CallSilentMixerTests: XCTestCase {
     XCTAssertFalse(CallWatchdog.silentMixer(now: 10_000, firstLoudRxAt: 5_000, mixBuffers: 50, mixPeak: 0.4))
     XCTAssertFalse(CallWatchdog.silentMixer(now: 10_000, firstLoudRxAt: 5_000, mixBuffers: 0, mixPeak: 0))
   }
+
+  /// #199: a short reply arrives 0.1 s before the window closes and the mixer, clock still running, renders only
+  /// silence. The first window puts the verdict off; the second, with no new audio from Larry, still heals.
+  func testAShortReplyAtTheBoundaryIsJudgedInTheNextWindow() {
+    var loud: Double? = 4_900
+    XCTAssertFalse(CallWatchdog.silentMixer(now: 5_000, firstLoudRxAt: loud, mixBuffers: 50, mixPeak: 0))
+    loud = CallWatchdog.carriedLoudRx(firstLoudRxAt: loud, mixPeak: 0, healed: false)
+    XCTAssertEqual(loud, 4_900)
+    XCTAssertTrue(CallWatchdog.silentMixer(now: 10_000, firstLoudRxAt: loud, mixBuffers: 50, mixPeak: 0))
+  }
+
+  /// The same reply on a working mixer: it renders in the next window, which confirms delivery and drops it.
+  func testAReplyThatPlaysIsDroppedAndAHealStartsOver() {
+    XCTAssertNil(CallWatchdog.carriedLoudRx(firstLoudRxAt: 4_900, mixPeak: 0.3, healed: false))
+    XCTAssertNil(CallWatchdog.carriedLoudRx(firstLoudRxAt: 4_900, mixPeak: 0, healed: true))
+    XCTAssertNil(CallWatchdog.carriedLoudRx(firstLoudRxAt: nil, mixPeak: 0, healed: false))
+  }
 }

@@ -43,6 +43,14 @@ public enum CallWatchdog {
     return now - firstLoudRxAt >= silentMixerDueMs
   }
 
+  /// #199: what a closing window hands the next about Larry's audible audio. A verdict put off by the grace keeps
+  /// its evidence until the mixer renders sound (delivery confirmed) or a heal fires (the rebuild starts over);
+  /// clearing it at every window let a short reply at the boundary escape the net for good.
+  public static func carriedLoudRx(firstLoudRxAt: Double?, mixPeak: Float, healed: Bool) -> Double? {
+    guard !healed, mixPeak == 0 else { return nil }
+    return firstLoudRxAt
+  }
+
   /// "stalled" when an armed, unpaused recorder has gone quiet for `micStallMs`. `lastBufferAt` 0 = none since
   /// arming; a fresh tap gets the full grace from `armedAt`.
   public static func mic(now: Double, armed: Bool, paused: Bool, armedAt: Double, lastBufferAt: Double) -> Verdict {
