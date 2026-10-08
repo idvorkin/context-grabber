@@ -305,7 +305,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 244:
 
 - **Summary:** Today's hand: a card, the role of the day, and three quick starts on the big widget
-- **Status:** native app only: implemented in [2a1e6e8](https://github.com/idvorkin/context-grabber/commit/2a1e6e8); verified by `CardDealTests`, `EulogyRolesTests` and `AppLinkTests` (host) and `TodaysHandUITests` on the simulator (added through SpringBoard's gallery: the card and *Today, be Father to Zach* drew, a tap turned 10♥ into Q♥ with the app in the background, *Think of a card* opened the card screen counting); the phone not yet. From the stack, in the trainer's face (#219): COMMIT; verified by `CardDealSubsetTests` (host: the deal's promises over a smaller deck) and `TodaysHandUITests` on the simulator against the pinned trainer commit (the trainer's 2♠ dealt in place); against the tag its tap check failed once (#230, open)
+- **Status:** native app only: implemented in [2a1e6e8](https://github.com/idvorkin/context-grabber/commit/2a1e6e8); verified by `CardDealTests`, `EulogyRolesTests` and `AppLinkTests` (host) and `TodaysHandUITests` on the simulator (added through SpringBoard's gallery: the card and *Today, be Father to Zach* drew, a tap turned 10♥ into Q♥ with the app in the background, *Think of a card* opened the card screen counting); the phone not yet. From the stack, in the trainer's face (#219): [cecb31f](https://github.com/idvorkin/context-grabber/commit/cecb31f); verified by `CardDealSubsetTests` (host: the deal's promises over a smaller deck) and `TodaysHandUITests` on the simulator against the pinned trainer commit (the trainer's 2♠ dealt in place); against the tag its tap check failed once (#230, open)
 - **Issues:** [#221](https://github.com/idvorkin/context-grabber/issues/221), [#230](https://github.com/idvorkin/context-grabber/issues/230)
 - **Spec:** [Today's hand](../superpowers/specs/2026-10-08-native-large-widget-design.md)
 
@@ -325,7 +325,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 245:
 
 - **Summary:** Think of a card in Grabber Native is the trainer's own screen
-- **Status:** native app only: implemented in COMMIT, with think-a-card-trainer v0.1.0 (its PR #6, D15); verified by a simulator build and the screen read by eye (black, the card large, *Skip easy cards*); `CardUITests` is skipped until it can find the card by name (#229); the ask, the voice and silence during a call not yet checked on the phone
+- **Status:** native app only: implemented in [cecb31f](https://github.com/idvorkin/context-grabber/commit/cecb31f), with think-a-card-trainer v0.1.0 (its PR #6, D15); verified by a simulator build and the screen read by eye (black, the card large, *Skip easy cards*); `CardUITests` is skipped until it can find the card by name (#229); the ask, the voice and silence during a call not yet checked on the phone
 - **Issues:** [#219](https://github.com/idvorkin/context-grabber/issues/219), [#229](https://github.com/idvorkin/context-grabber/issues/229)
 - **Spec:** [Swift-native app — Think of a card: the trainer's screen, in the app](../superpowers/specs/2026-10-04-swift-native-app-design.md#think-of-a-card-the-trainers-screen-in-the-app)
 
