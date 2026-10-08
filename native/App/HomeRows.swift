@@ -21,6 +21,10 @@ struct HomeRow: Identifiable {
     HomeRow(id: "exercise_analyzer", title: "Exercise Analyzer", icon: "figure.strengthtraining.traditional") {
       $0.openExerciseAnalyzer(from: "home")
     },
+    // #220: runs Igor's own shortcut, so YouTube Music plays the mix.
+    HomeRow(id: "workout_supermix", title: "Workout Supermix", icon: "music.note.list") {
+      $0.openWorkoutSupermix(from: "home")
+    },
     HomeRow(id: "cockpit", title: "Cockpit", icon: "gauge.with.dots.needle.67percent") {
       $0.openCockpit(from: "home")
     },

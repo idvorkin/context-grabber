@@ -309,6 +309,19 @@ final class AppModel: ObservableObject {
     card = nil
   }
 
+  /// Igor's *Play Workout Supermix* shortcut (#220): Shortcuts runs it and YouTube Music plays the mix.
+  static let workoutSupermixShortcut = "Play Workout Supermix"
+
+  func openWorkoutSupermix(from source: String) {
+    var link = URLComponents(string: "shortcuts://run-shortcut")
+    link?.queryItems = [URLQueryItem(name: "name", value: Self.workoutSupermixShortcut)]
+    guard let url = link?.url else { return }
+    UIApplication.shared.open(url) { [log] ok in
+      log.event("ui", ["action": "open_workout_supermix", "from": source, "ok": ok])
+      if !ok { Task { @MainActor in self.status = "Shortcuts is not installed, so the Workout Supermix cannot play." } }
+    }
+  }
+
   /// Exercise Analyzer, Igor's own app (its story 069): the link only brings it forward.
   func openExerciseAnalyzer(from source: String) {
     guard let url = URL(string: "exerciseanalyzer://") else { return }
