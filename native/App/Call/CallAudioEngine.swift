@@ -341,6 +341,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   private func rebuild(why: String, playing: Bool? = nil, listening: Bool? = nil) throws {
     let wasListening = listening ?? (micListener != nil)
     let wasPlaying = playing ?? (playerFormat != nil)
+    firstLoudRxAt = nil  // what was scheduled goes with the engine; the next window judges fresh audio (#199)
     teardownEngineOnly()
     try configureSession()
     try buildEngine()
@@ -483,11 +484,12 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
         "out_vp": out.isVoiceProcessingEnabled, "in_vp": engine.inputNode.isVoiceProcessingEnabled,
         "category": session.category.rawValue, "mode": session.mode.rawValue, "outputs": outputs,
       ])
+    let heals = silentMixer && nowMs - lastReopenAt >= CallWatchdog.reopenMinGapMs
+    firstLoudRxAt = CallWatchdog.carriedLoudRx(firstLoudRxAt: firstLoudRxAt, mixPeak: mixPeak, healed: heals)
     rxPeak = 0
-    firstLoudRxAt = nil
     mixPeak = 0
     mixBuffers = 0
-    if silentMixer, nowMs - lastReopenAt >= CallWatchdog.reopenMinGapMs {
+    if heals {
       lastReopenAt = nowMs
       log("call_heal", ["action": "reopen_playback", "why": "mixer silent while Larry's audio arrives"])
       setHealth(CallWatchdog.audioNotPlaying)
