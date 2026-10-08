@@ -37,4 +37,19 @@ final class CallSilentMixerTests: XCTestCase {
     XCTAssertNil(CallWatchdog.carriedLoudRx(firstLoudRxAt: 4_900, mixPeak: 0, healed: true))
     XCTAssertNil(CallWatchdog.carriedLoudRx(firstLoudRxAt: nil, mixPeak: 0, healed: false))
   }
+
+  /// #198: a heal's rebuild fails and queues a retry; Igor restarts the call before it runs. The old retry finds its
+  /// ticket stale and leaves the new call alone. A newer heal supersedes an older one's retries the same way.
+  func testARetryFromBeforeARestartOrANewerHealIsStale() {
+    var gate = HealGate()
+    let failed = gate.begin()
+    XCTAssertTrue(gate.isCurrent(failed), "the retry runs while nothing has changed")
+    gate.invalidate()  // stop
+    gate.invalidate()  // the new call prepares
+    XCTAssertFalse(gate.isCurrent(failed))
+    let first = gate.begin()
+    let second = gate.begin()
+    XCTAssertFalse(gate.isCurrent(first))
+    XCTAssertTrue(gate.isCurrent(second))
+  }
 }

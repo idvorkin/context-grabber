@@ -36,6 +36,8 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   private var micStalls = 0
   private var watchdog: DispatchSourceTimer?
   private var observers: [NSObjectProtocol] = []
+  /// Which heal a queued retry belongs to (#198).
+  private var healGate = HealGate()
   private var health: String?
   private var openedAt = 0.0
   private var clockLive = false
@@ -72,6 +74,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   func prepare(_ done: @escaping (Error?) -> Void) {
     AVAudioApplication.requestRecordPermission { [self] granted in
       queue.async { [self] in
+        healGate.invalidate()
         guard granted else {
           log("call_audio", ["action": "permission", "ok": false])
           return main { done(CallAudioError("microphone permission denied — Settings → Grabber Native")) }
@@ -187,6 +190,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
 
   func stop() {
     queue.async { [self] in
+      healGate.invalidate()
       micListener = nil
       teardown()
       do {
@@ -362,7 +366,10 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
 
   /// A heal's rebuild, tried again when it fails (#186: a failure used to leave the engine stopped, so the rest of
   /// the call was dead air in both directions). After the last try the call says its audio is gone.
-  private func healingRebuild(why: String, attempt: Int = 0, playing: Bool? = nil, listening: Bool? = nil) {
+  private func healingRebuild(
+    why: String, attempt: Int = 0, ticket: Int? = nil, playing: Bool? = nil, listening: Bool? = nil
+  ) {
+    let ticket = ticket ?? healGate.begin()
     let playing = playing ?? (playerFormat != nil)
     let listening = listening ?? (micListener != nil)
     do {
@@ -376,8 +383,12 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       ])
       guard attempt < retries.count else { return setHealth(CallWatchdog.audioGone) }
       queue.asyncAfter(deadline: .now() + retries[attempt] / 1000) { [weak self] in
-        guard let self, !self.observers.isEmpty else { return }  // the call ended meanwhile
-        self.healingRebuild(why: why, attempt: attempt + 1, playing: playing, listening: listening)
+        guard let self else { return }
+        // The call ended or restarted, or a newer heal took over: this retry is not this call's any more.
+        guard self.healGate.isCurrent(ticket), !self.observers.isEmpty else {
+          return self.log("call_heal", ["action": "retry_dropped", "why": why, "attempt": attempt + 2])
+        }
+        self.healingRebuild(why: why, attempt: attempt + 1, ticket: ticket, playing: playing, listening: listening)
       }
     }
   }
