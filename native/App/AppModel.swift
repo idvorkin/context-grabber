@@ -163,6 +163,7 @@ final class AppModel: ObservableObject {
       if case .call = route { return present(route, from: source) }
       if !route.starts { return }
     }
+    if case .supermix = route { return present(route, from: source) }  // another app: nothing here needs to move
     guard closeAll() else { return present(route, from: source) }
     Task {
       // SwiftUI drops a cover asked for while another is still going down.
@@ -200,6 +201,7 @@ final class AppModel: ObservableObject {
     case .cockpit: openCockpit(from: source)
     case .call(let via): callFromLink(via, from: source)
     case .card(let think): openCard(think: think, from: source)
+    case .supermix: openWorkoutSupermix(from: source)
     }
   }
 
@@ -305,6 +307,7 @@ final class AppModel: ObservableObject {
   func closeCard() {
     guard card != nil else { return }
     log.event("ui", ["action": "close_card"])
+    CardStore.reloadWidget()  // once on leaving, not per deal: iOS rations widget reloads
     screen = "home"
     card = nil
   }

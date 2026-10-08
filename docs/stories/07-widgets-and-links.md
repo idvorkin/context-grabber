@@ -302,6 +302,26 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 244:
+
+- **Summary:** Today's hand: a card, the role of the day, and three quick starts on the big widget
+- **Status:** native app only: implemented in [2a1e6e8](https://github.com/idvorkin/context-grabber/commit/2a1e6e8); verified by `CardDealTests`, `EulogyRolesTests` and `AppLinkTests` (host) and `TodaysHandUITests` on the simulator (added through SpringBoard's gallery: the card and *Today, be Father to Zach* drew, a tap turned 10♥ into Q♥ with the app in the background, *Think of a card* opened the card screen counting); the phone not yet
+- **Issues:** [#221](https://github.com/idvorkin/context-grabber/issues/221)
+- **Spec:** [Today's hand](../superpowers/specs/2026-10-08-native-large-widget-design.md)
+
+#### Use Case:
+- **As a** memdeck student who wants the eulogy in sight
+- **I want to** see a card I can deal again, one of my eulogy's roles for the day, and the card trick, my workout music and Larry one tap away on the big widget
+- **so that** every glance at the home screen is a prompt, a reminder of who I mean to be, and a start
+
+#### Acceptance Criteria:
+- **Scenario:** The widget
+- **Given:** *Today's hand* is on the home screen
+- **When:** I tap the card, and later *Think of a card*, *Supermix* and *Call Larry*
+- **Then:** the card changes within a second without the app opening, it changes by itself every five minutes, *Today, be* names a role from the eulogy that changes after midnight (each once in eleven days), *Think of a card* opens the card screen counting, *Supermix* runs the Play Workout Supermix shortcut, *Call Larry* opens the call screen calling, and after dealing on the card screen and leaving it the widget shows that last card
+
+---
+
 ### User Story 135:
 
 - **Summary:** A link and a Shortcuts action for every screen of Grabber Native

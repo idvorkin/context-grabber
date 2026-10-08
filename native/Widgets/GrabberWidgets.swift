@@ -1,4 +1,4 @@
-//  Grabber Native's widget extension: the live tile on the home screen (story 136), and the Live Activity — the
+//  Grabber Native's widget extension: the live tile on the home screen (story 136), Today's hand (#221), and the Live Activity — the
 //  lock-screen card and the Dynamic Island — shared by the Gym Timer and Box breathing (stories 106, 166; spec
 //  2026-10-04-native-live-activity-design.md). The views are generic: a screen decides the words, the times and the
 //  colour. No widgetURL: a tap opens the app, and a card only lives while its screen covers the app (story 125).
@@ -13,6 +13,7 @@ struct GrabberWidgets: WidgetBundle {
   var body: some Widget {
     GrabberLiveActivity()
     UsageTileWidget()
+    TodaysHandWidget()
   }
 }
 
