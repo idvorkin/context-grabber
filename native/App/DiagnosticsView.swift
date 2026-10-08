@@ -134,6 +134,17 @@ struct DiagnosticsView: View {
             if !$0 { model.screen = "home" }
           })
       ) { WhatsNewView(feed: model.whatsNew) }
+      .sheet(
+        isPresented: Binding(
+          get: { model.showEulogySong },
+          set: {
+            model.showEulogySong = $0
+            if !$0 { model.screen = "home" }
+          })
+      ) {
+        EulogySongView(song: model.eulogySong) { model.openEulogySong(from: "eulogy_song_sheet") }
+          .background(ShakeDetector { model.startBugReport(from: "shake") })
+      }
       .navigationDestination(isPresented: $model.showToday) {
         TodayView(app: model, mirror: model.mirror)
       }

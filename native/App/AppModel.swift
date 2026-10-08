@@ -42,6 +42,8 @@ final class AppModel: ObservableObject {
     cockpit.onAppRoute = { [weak self] route, source in self?.open(route: route, from: source) }
     return cockpit
   }()
+  /// The eulogy song, played in the app (story 137); it outlives its sheet.
+  lazy var eulogySong = EulogySongPlayer(log: log)
   /// The usage strip on the home screen (story 203). `GRABBER_USAGE_URL` points it at another Cockpit.
   lazy var usage = UsageModel(log: log, override: ProcessInfo.processInfo.environment["GRABBER_USAGE_URL"])
   /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
@@ -49,6 +51,8 @@ final class AppModel: ObservableObject {
   let call: CallModel
   /// Today (the mirror) is on screen.
   @Published var showToday = false
+  /// The eulogy song's sheet is up.
+  @Published var showEulogySong = false
   /// The metric whose week is open over Today.
   @Published var openMetricKey: MetricSheetItem?
   /// What's new, as the build wrote it (story 148); nil when the resource is missing or unreadable.
@@ -303,6 +307,14 @@ final class AppModel: ObservableObject {
   /// Story 137: a page of Igor's blog, in the browser.
   func openBlog(_ url: URL, action: String, from source: String) {
     UIApplication.shared.open(url) { [log] ok in log.event("ui", ["action": action, "from": source, "ok": ok]) }
+  }
+
+  /// Story 137: the eulogy song, played in the app; the sheet shows where it is. Resumes rather than restarts.
+  func playEulogySong(from source: String) {
+    log.event("ui", ["action": "open_eulogy_song_player", "from": source])
+    screen = "eulogy_song"
+    showEulogySong = true
+    eulogySong.play(from: source)
   }
 
   static let eulogySongKey = "eulogy_song_url"

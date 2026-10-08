@@ -25,7 +25,7 @@ struct HomeRow: Identifiable {
       $0.openCockpit(from: "home")
     },
     // Story 137: the blog's daily three.
-    HomeRow(id: "eulogy_song", title: "Eulogy song", icon: "music.note") { $0.openEulogySong(from: "home") },
+    HomeRow(id: "eulogy_song", title: "Eulogy song", icon: "music.note") { $0.playEulogySong(from: "home") },
     HomeRow(id: "eulogy", title: "Eulogy", icon: "book") { $0.openBlog(BlogLinks.eulogy, action: "open_eulogy", from: "home") },
     HomeRow(id: "recent", title: "Recent", icon: "clock.arrow.circlepath") {
       $0.openBlog(BlogLinks.recent, action: "open_recent", from: "home")

@@ -347,14 +347,29 @@ Part of the [user stories](README.md); persona and format are described there.
 - **so that** the daily practice costs no typing and no hunting
 
 #### Acceptance Criteria:
-- **Scenario:** The song from the post
-- **Given:** the eulogy post embeds a Suno song
+- **Scenario:** The song in the app
+- **Given:** I am on the home screen, online or not
 - **When:** I tap *Eulogy song*
+- **Then:** a sheet titled *How Igor wants to live* opens and the song starts playing inside the app, with a pause button and how far through it is; it pauses whatever else was playing
+
+- **Scenario:** Keep listening
+- **Given:** the song is playing
+- **When:** I close the sheet, lock the phone, or go to another app
+- **Then:** the song keeps playing, and the lock screen shows it with play and pause
+
+- **Scenario:** Pick up where I left off
+- **Given:** I paused the song partway and closed the sheet
+- **When:** I tap *Eulogy song* again
+- **Then:** the sheet shows the same place and the song resumes from it, not from the start
+
+- **Scenario:** The song on Suno
+- **Given:** the eulogy post embeds a Suno song
+- **When:** I tap *Open on Suno* in the song's sheet
 - **Then:** that song opens on Suno (the app if installed, else the browser), and the log names the song and that it came from the post
 
 - **Scenario:** Offline
 - **Given:** the phone cannot reach the blog
-- **When:** I tap *Eulogy song*
+- **When:** I tap *Open on Suno*
 - **Then:** the song found last time opens; if none was ever found, the eulogy post opens and the screen says the song could not be found
 
 - **Scenario:** The post and recent changes
