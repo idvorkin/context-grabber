@@ -56,7 +56,8 @@ the cutover registers `grabber` and every saved link keeps working.
 | `grabbernative://cockpit` | the Cockpit |
 | `grabbernative://call` | the call screen, calling Larry on the remembered backend; a live call is brought forward, not restarted |
 | `grabbernative://call?via=eleven` | …on that backend (`eleven`, `gemini`, `openai`, `drill`) |
-| `grabbernative://card` | Think a Card Trainer on "think of a card", as the home screen's row does |
+| `grabbernative://card` | the card screen on a fresh card, face up |
+| `grabbernative://card?think=1` | the card screen with "think of a card" already counting, as the home screen's row does |
 
 - **The timer's grammar is the simulator hook's**: a preset is a chip's name or *work,rest,rounds*. Context
   Grabber's `timer?preset=1min&autostart=1` works too. `autostart=0` with a preset only selects it.

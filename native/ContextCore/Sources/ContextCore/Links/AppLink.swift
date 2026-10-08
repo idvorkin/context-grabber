@@ -17,8 +17,8 @@ public enum AppRoute: Equatable, Sendable {
   case cockpit
   /// The call screen, calling on that backend (nil: the remembered one), or the live call brought forward.
   case call(via: CallBackend?)
-  /// Think a Card Trainer on "think of a card".
-  case card
+  /// The card screen (story 129): face up, or with "think of a card" already counting.
+  case card(think: Bool)
 
   /// The screen's name, as the log writes it.
   public var name: String {
@@ -40,6 +40,7 @@ public enum AppRoute: Equatable, Sendable {
     case .timer(let t): return t.start
     case .breathe(let b): return b.start
     case .call: return true
+    case .card(let think): return think
     default: return false
     }
   }
@@ -112,8 +113,8 @@ public enum AppLink {
       unread.remove(key)
       return query[key]
     }
-    func autostart() -> Bool? {
-      guard let value = take("autostart") else { return nil }
+    func autostart(key: String = "autostart") -> Bool? {
+      guard let value = take(key) else { return nil }
       if value == "1" || value == "true" { return true }
       if value == "0" || value == "false" { return false }
       understood = false
@@ -169,8 +170,10 @@ public enum AppLink {
         if via == nil { understood = false }
       }
       route = .call(via: via)
-    case "card", "think":
-      route = .card
+    case "card":
+      route = .card(think: autostart(key: "think") ?? false)
+    case "think":
+      route = .card(think: true)
     default:
       return Parsed(route: .home, understood: false)
     }
@@ -197,6 +200,8 @@ public enum AppLink {
       if b.start != named { items.append(("autostart", b.start ? "1" : "0")) }
     case .call(let via):
       if let via { items.append(("via", via.rawValue)) }
+    case .card(let think):
+      if think { items.append(("think", "1")) }
     default:
       break
     }
@@ -235,7 +240,8 @@ public enum AppLink {
         (.cockpit, "The Cockpit"),
         (.call(via: nil), "Call Larry on the remembered backend"),
         (.call(via: .eleven), "Call Larry on ElevenLabs (also gemini, openai, drill)"),
-        (.card, "Think a Card Trainer: think of a card"),
+        (.card(think: false), "A playing card, face up; tap for another"),
+        (.card(think: true), "Think of a card: face down, five seconds, then the reveal"),
       ]
     return rows.map { Entry(link: link(for: $0.0), summary: $0.1) }
   }()

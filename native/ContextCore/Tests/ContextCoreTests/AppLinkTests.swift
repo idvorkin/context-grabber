@@ -17,7 +17,9 @@ final class AppLinkTests: XCTestCase {
     XCTAssertEqual(route("grabbernative://places"), .places)
     XCTAssertEqual(route("grabbernative://cockpit"), .cockpit)
     XCTAssertEqual(route("grabbernative://call"), .call(via: nil))
-    XCTAssertEqual(route("grabbernative://card"), .card)
+    XCTAssertEqual(route("grabbernative://card"), .card(think: false))
+    XCTAssertEqual(route("grabbernative://card?think=1"), .card(think: true))
+    XCTAssertEqual(route("grabbernative://think"), .card(think: true))
     for link in ["grabbernative://", "grabbernative://today", "grabbernative://timer", "grabbernative://card"] {
       XCTAssertTrue(understood(link), link)
     }
@@ -103,7 +105,7 @@ final class AppLinkTests: XCTestCase {
 
   func testEachRouteIsWrittenAsOneLinkThatReadsBackToIt() {
     let routes: [AppRoute] = [
-      .home, .today, .places, .cockpit, .card, .call(via: nil), .call(via: .drill),
+      .home, .today, .places, .cockpit, .card(think: false), .card(think: true), .call(via: nil), .call(via: .drill),
       .timer(TimerLink()), .timer(TimerLink(start: true)), .timer(TimerLink(preset: "1min", start: true)),
       .timer(TimerLink(preset: "2min")), .timer(TimerLink(custom: CustomPreset(work: 30, rest: 0, rounds: 4), start: true)),
       .breathe(BreatheLink()), .breathe(BreatheLink(start: true)), .breathe(BreatheLink(minutes: 3, start: true)),

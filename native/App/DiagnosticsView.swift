@@ -118,6 +118,14 @@ struct DiagnosticsView: View {
       }
       .background {
         Color.clear.fullScreenCover(
+          isPresented: Binding(get: { model.card != nil }, set: { if !$0 { model.closeCard() } })
+        ) {
+          CardView(log: model.log, think: model.card ?? false, onDone: model.closeCard)
+            .background(ShakeDetector { model.startBugReport(from: "shake") })
+        }
+      }
+      .background {
+        Color.clear.fullScreenCover(
           isPresented: Binding(get: { model.showPlaces }, set: { if !$0 { model.closePlaces() } })
         ) {
           PlacesView(app: model, places: model.places, tracker: model.tracker, onExit: model.closePlaces)
