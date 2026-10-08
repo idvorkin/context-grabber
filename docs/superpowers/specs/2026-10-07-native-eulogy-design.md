@@ -43,6 +43,9 @@ ships inside the app, so it plays offline, the moment it is tapped, and keeps go
   song ends.
 - The song plays like music: it pauses whatever else was playing, keeps going when the phone locks or Igor goes
   to another app, and the lock screen shows it with play and pause. A phone call or Siri pauses it; Igor resumes it.
+- **A Larry call comes first** ([#197](https://github.com/idvorkin/context-grabber/issues/197)). Starting a call
+  pauses the song where it is. While a call is live the song does not start, from the sheet, the small player or
+  the lock screen; the sheet says it waits for the call to end, and once the call is over play works again.
 - **Open on Suno**, under the player, does what the launcher used to: the app reads the eulogy post
   (idvork.in/eulogy), finds the Suno song it embeds and opens it. Off the network it opens the song it found last
   time; if it has never found one, it opens the post itself and says the song could not be found.
@@ -65,6 +68,7 @@ last time, or fell back to the post.
 - Eulogy song plays the song inside the app, offline included; it keeps playing with the sheet closed and the
   phone locked, and the lock screen can pause it.
 - Pause, close, reopen: the sheet shows the same place and resumes from it.
+- With a call live, the song will not play and says why; starting a call pauses a playing song.
 - Dragging the scrubber moves the song there; restart plays it from the start.
 - With the sheet closed, the small player shows while the song plays or is paused partway; its play/pause works
   in place, a tap opens the sheet, its ✕ stops the song and hides it.

@@ -43,7 +43,12 @@ final class AppModel: ObservableObject {
     return cockpit
   }()
   /// The eulogy song, played in the app (story 137); it outlives its sheet.
-  lazy var eulogySong = EulogySongPlayer(log: log)
+  lazy var eulogySong: EulogySongPlayer = {
+    let song = EulogySongPlayer(log: log)
+    // A live call holds the audio: the song waits for it (#197).
+    song.heldBy = { [weak self] in self?.call.snapshot.isActive == true ? "call" : nil }
+    return song
+  }()
   /// The usage strip on the home screen (story 203). `GRABBER_USAGE_URL` points it at another Cockpit.
   lazy var usage = UsageModel(log: log, override: ProcessInfo.processInfo.environment["GRABBER_USAGE_URL"])
   /// The call screen covers the app. The call itself is `call`'s and outlives the screen.
@@ -87,6 +92,7 @@ final class AppModel: ObservableObject {
     liveActivity.endLeftovers()
     LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
     mirror = MirrorModel(app: self)
+    call.willStart = { [weak self] in self?.eulogySong.yield(to: "call") }
     runLaunchHooks()
   }
 
