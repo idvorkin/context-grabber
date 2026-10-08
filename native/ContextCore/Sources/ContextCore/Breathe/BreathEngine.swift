@@ -206,7 +206,8 @@ public struct BreathRun: Equatable, Sendable {
     }
     guard m.phaseIndex != lastPhaseIndex else { return [] }
     lastPhaseIndex = m.phaseIndex
-    let due = Double(m.phaseIndex * plan.breathSeconds)
+    // The step's true start: its end less its own side, so an uneven box's steps are timed as they are (#204).
+    let due = Double(plan.stepEnd(m.phaseIndex) - plan.side(m.phaseIndex))
     return [.phase(m.phase, cycle: m.cycle, lateMs: Int((t - due) * 1000))]
   }
 }

@@ -379,7 +379,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 241:
 
 - **Summary:** Breath presets, and a custom box with its own in and out
-- **Issues:** [#155](https://github.com/idvorkin/context-grabber/issues/155)
+- **Issues:** [#155](https://github.com/idvorkin/context-grabber/issues/155), [#204](https://github.com/idvorkin/context-grabber/issues/204)
 - **Status:** implemented in [cb75f1b](https://github.com/idvorkin/context-grabber/commit/cb75f1b); verified by `BreathTests` (host: an uneven 4/8 box's steps, cycles and timing; clamping; even presets) and `BreathePresetsUITests`, `BreatheStyleUITests` on the simulator (12 s gives 6 cycles; Custom's In and Out remembered across a relaunch; the setup scrolls so the cog stays reachable) plus a screenshot; on the phone not yet
 - **Spec:** [box breathing, "Breath length"](../superpowers/specs/2026-10-04-box-breathing-design.md)
 

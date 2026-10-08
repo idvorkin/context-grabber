@@ -127,6 +127,23 @@ final class BreathRunTests: XCTestCase {
     XCTAssertTrue(run.moment(now: 999).done)
   }
 
+  /// #204: an uneven box's cues are on time, so their lateness is what the look was late by, never the side's length.
+  func testAnUnevenBoxReportsTheTrueLateness() {
+    for (inS, outS) in [(4, 8), (8, 4)] {
+      var run = BreathRun(plan: BreathPlan(inSeconds: inS, outSeconds: outS, sessionMinutes: 1))
+      run.start(now: 0)
+      var t = 0
+      for index in 0..<8 {
+        // Exactly on the step's start, and once a quarter of a second late.
+        let late = index % 2 == 0 ? 0.0 : 0.25
+        let effects = run.tick(now: Double(t) + late)
+        guard case .phase(_, _, let lateMs)? = effects.first else { return XCTFail("\(inS)/\(outS) step \(index): \(effects)") }
+        XCTAssertEqual(lateMs, Int(late * 1000), "\(inS)/\(outS) step \(index)")
+        t += index % 4 < 2 ? inS : outS
+      }
+    }
+  }
+
   func testAThirtyCycleSessionDoesNotDrift() {
     // The brief's bar: 10 minutes at 5 s, under 0.5 s of total drift. Looks land every 50 ms, so no cue is
     // more than 50 ms late and lateness never accumulates.
