@@ -55,3 +55,33 @@ final class CardDealTests: XCTestCase {
 
   static let oldAppCard = "10♥"  // the old app's PlayingCard.swift under swiftc
 }
+
+/// #219: the widget deals the trainer's stack, and with Skip easy cards on only part of it.
+final class CardDealSubsetTests: XCTestCase {
+  func testASmallerDeckKeepsThePromises() {
+    for size in [3, 7, 37] {  // three at least: with two, the run-boundary swap moves a run's last card too
+      var prev = CardDeal.index(forSlot: -500, nonce: 3, size: size)
+      for s in (-499)...500 {
+        let cur = CardDeal.index(forSlot: s, nonce: 3, size: size)
+        XCTAssertNotEqual(cur, prev, "repeat at \(s), size \(size)")
+        XCTAssertTrue((0..<size).contains(cur))
+        prev = cur
+      }
+      for run in -5...5 {
+        XCTAssertEqual(Set((0..<size).map { CardDeal.index(forSlot: run * size + $0, nonce: 3, size: size) }).count, size)
+      }
+      let moment = Date(timeIntervalSince1970: 1_788_000_000)
+      let after = CardDeal.nonceAfterTap(at: moment, nonce: 0, size: size)
+      XCTAssertNotEqual(
+        CardDeal.index(forSlot: CardDeal.slot(containing: moment), nonce: after, size: size),
+        CardDeal.index(forSlot: CardDeal.slot(containing: moment), nonce: 0, size: size))
+    }
+  }
+
+  func testTheTimelineMatchesTheDeal() {
+    let now = Date(timeIntervalSince1970: 1_788_000_123)
+    for entry in CardDeal.timeline(from: now, nonce: 5, size: 37).prefix(60) {
+      XCTAssertEqual(entry.index, CardDeal.index(forSlot: CardDeal.slot(containing: entry.date), nonce: 5, size: 37))
+    }
+  }
+}

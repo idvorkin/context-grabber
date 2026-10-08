@@ -128,19 +128,29 @@ phone stays upright. Every journey opens and works. Some are the phone's by natu
 
 The iPad keeps its own settings, log and reports; they are not shared with the phone.
 
-## Think of a card: in the app
+## Think of a card: the trainer's screen, in the app
 
-Igor, 2026-10-08 (#219): *"Think of a card. Let's do it inline. I don't think it's worthy of its own app."* This
-reverses 2026-10-05's choice to open his Think a Card Trainer instead. The home screen's **Think of a card** opens
-the card screen with the beat already started. The card is face down, a count runs from five, and at zero a new
-card is face up: the one they thought of. **Never mind** mid-count stops it with the previous card face up. Tapping
-the face-up card deals another, and pressing **Think of a card** under it starts the count again. **Done** goes back
-home.
+Igor, 2026-10-08 (#219): *"Think of a card. Let's do it inline. I don't think it's worthy of its own app."* Then,
+the same day: *"I want ThinkCard from the ThinkCard native app. I think that was better, maybe with a shared
+library."* So the card screen in Grabber Native is Think a Card Trainer's own phone screen, shared between the two
+apps rather than copied, and it behaves as the trainer's phone stories say (its journeys 01 to 04):
 
-The card is the old app's (*A random playing card on the big widget*): a full-size playing card with red suits in
-red, one card per five minutes, and a tap always deals a different card from the one showing. What the screen last
-dealt is kept where a widget can read it, so a widget that shows the card shows that one. The trainer app is no
-longer opened from Grabber Native.
+- **Black, one card large**, red suits red, dealt from Igor's memorized stack: every card once per pass, never the
+  same card twice running.
+- **A tap on the middle of the screen** switches the card at once, silently.
+- **A tap on the right third is the ask**: the card stays up with a small count at the side, three, two, one, then
+  a new card face up, a light tap of the phone, and the card said aloud (in Igor's voice clips when the build has
+  them, otherwise the phone's voice). A tap during the count cancels it and the card stays.
+- **A tap on the left third** is the same ask, drawn only from the hard cards (clear of the breathers).
+- **Skip easy cards**, a switch under the card, leaves the breathers and two either side of each out of every deal.
+  Grabber Native keeps its own setting; the trainer app keeps its.
+
+What Grabber Native adds around it: **Done** at the top goes home, a shake reports a problem as on every other
+screen, and the home screen's **Think of a card** (and `grabbernative://card?think=1`) opens it with the ask
+already started. **During a live call** the card is never spoken: it is dealt and shown, silently, so the call keeps
+the audio. If the build has no stack, the screen says so with a copyable error instead of a card.
+
+The stack order is never in this repository: the build copies it in from the same private file the trainer uses.
 
 ## Exercise Analyzer, one tap away
 

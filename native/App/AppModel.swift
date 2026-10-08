@@ -304,6 +304,14 @@ final class AppModel: ObservableObject {
     card = think
   }
 
+  /// Asked by the card screen at an ask and again at its reveal (#219): a live call keeps the audio, so the card is
+  /// shown silently; the eulogy song pauses for it.
+  func mayTheCardSpeak() -> Bool {
+    if call.snapshot.isActive { return false }
+    eulogySong.yield(to: "card")
+    return true
+  }
+
   func closeCard() {
     guard card != nil else { return }
     log.event("ui", ["action": "close_card"])

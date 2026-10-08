@@ -8,6 +8,11 @@ options:
 packages:
   ContextCore:
     path: ContextCore
+  # Think a Card Trainer's card screen (#219, the trainer's D15): one screen, two apps. The trainer's private repo,
+  # at a tag: a change there reaches this app when the tag here moves.
+  ThinkACard:
+    url: https://github.com/idvorkin/think-a-card-trainer
+    exactVersion: 0.1.0
 settings:
   base:
     DEVELOPMENT_TEAM: 45P6D3439T
@@ -53,11 +58,20 @@ targets:
           - group.com.idvorkin.grabbernative
     dependencies:
       - package: ContextCore
+      - package: ThinkACard
+        product: ThinkACardCore
+      - package: ThinkACard
+        product: ThinkACardUI
       - target: GrabberWidgets
     # What's new (story 148): the last month's story commits, made from git log at every build.
     postBuildScripts:
       - name: What's new
         script: '"$SRCROOT/../scripts/native/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json"'
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
+      # The card screen's stack and voice clips, from Igor's Mac, never from this repo (scripts/native/bundle-trainer.sh).
+      - name: Bundle the stack and voice
+        script: '"$SRCROOT/../scripts/native/bundle-trainer.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH" --voice'
         basedOnDependencyAnalysis: false
         showEnvVars: false
     settings:
@@ -90,9 +104,20 @@ targets:
           - group.com.idvorkin.grabbernative
     dependencies:
       - package: ContextCore
+      - package: ThinkACard
+        product: ThinkACardCore
+      - package: ThinkACard
+        product: ThinkACardUI
+    # Today's hand deals from the same stack (#219).
+    postBuildScripts:
+      - name: Bundle the stack
+        script: '"$SRCROOT/../scripts/native/bundle-trainer.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"'
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.idvorkin.grabbernative.widgets
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
         INFOPLIST_FILE: Widgets/Info.plist
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Grabber Native

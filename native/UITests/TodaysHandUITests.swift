@@ -29,7 +29,7 @@ final class TodaysHandUITests: XCTestCase {
     shot("todays-hand-dealt")
 
     springboard.buttons["Think of a card"].tap()
-    XCTAssertTrue(app.otherElements["card-back"].waitForExistence(timeout: 15), app.debugDescription)
+    XCTAssertTrue(app.buttons["card-done"].waitForExistence(timeout: 15), app.debugDescription)
   }
 
   /// Long press, Edit, Add Widget, search, swipe to the large size, Add Widget.
