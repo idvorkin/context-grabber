@@ -50,6 +50,34 @@ final class EulogyUITests: XCTestCase {
     safari.terminate()
   }
 
+  /// #195: the scrubber moves the song, restart goes back to the start, and with the sheet closed the small
+  /// player carries it: pause in place, ✕ stops it and it goes away.
+  func testScrubRestartAndTheSmallPlayer() throws {
+    let app = XCUIApplication()
+    app.launch()
+    row("eulogy_song", in: app).tap()
+    let elapsed = app.staticTexts["eulogy-song-elapsed"]
+    XCTAssertTrue(app.buttons["eulogy-song-toggle"].waitForExistence(timeout: 10), app.debugDescription)
+    app.sliders["eulogy-song-scrubber"].adjust(toNormalizedSliderPosition: 0.9)
+    XCTAssertTrue(waitFor(elapsed, "label BEGINSWITH '1:' OR label BEGINSWITH '2:'", 10), "scrubbed to \(elapsed.label)")
+    XCTAssertGreaterThanOrEqual(seconds(elapsed.label), 100, elapsed.label)
+    app.buttons["eulogy-song-restart"].tap()
+    XCTAssertTrue(waitFor(elapsed, "label BEGINSWITH '0:0'", 10), "restarted at \(elapsed.label)")
+    XCTAssertEqual(app.buttons["eulogy-song-toggle"].label, "Pause")
+    app.swipeDown(velocity: .fast)
+    let mini = app.buttons["eulogy-mini-toggle"]
+    XCTAssertTrue(mini.waitForExistence(timeout: 10), "the small player shows: \(app.debugDescription)")
+    mini.tap()
+    XCTAssertTrue(waitFor(mini, "label == 'Resume'", 5), mini.label)
+    // A tap on it opens the sheet as the song is, still paused.
+    app.buttons["eulogy-mini-open"].tap()
+    XCTAssertTrue(waitFor(app.buttons["eulogy-song-toggle"], "label == 'Resume'", 10))
+    app.swipeDown(velocity: .fast)
+    XCTAssertTrue(mini.waitForExistence(timeout: 10))
+    app.buttons["eulogy-mini-stop"].tap()
+    XCTAssertTrue(waitFor(mini, "exists == false", 5), "the ✕ took the small player away")
+  }
+
   private func waitFor(_ element: XCUIElement, _ format: String, _ timeout: TimeInterval) -> Bool {
     XCTWaiter().wait(for: [expectation(for: NSPredicate(format: format), evaluatedWith: element)], timeout: timeout)
       == .completed

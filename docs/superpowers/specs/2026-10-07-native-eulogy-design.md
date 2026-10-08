@@ -23,7 +23,7 @@ ships inside the app, so it plays offline, the moment it is tapped, and keeps go
 
 - Following a new song in the post without a new build. Suno does not hand its audio to other apps, so the song
   in the app is a copy Igor downloaded; a new song is a new copy and a new build.
-- A playlist, a scrubber, or speed controls. Play, pause and where it is are enough.
+- A playlist or speed controls.
 - Reading the blog inside the app; a feed of recent posts.
 
 ## What Igor sees
@@ -32,6 +32,15 @@ ships inside the app, so it plays offline, the moment it is tapped, and keeps go
   sheet shows a play/pause button and how far through it is (elapsed and total). Closing the sheet leaves the song
   playing; tapping *Eulogy song* again brings the sheet back where the song is, without starting over. When it
   ends, the button offers to play it again from the start.
+- **Scrub and restart** ([#195](https://github.com/idvorkin/context-grabber/issues/195), Igor: *"Player needs a
+  scrubber and restart"*). The sheet's progress bar is a scrubber: drag it to any point and the song carries on
+  from there (playing if it was playing, paused if it was paused), the time following the finger. A restart button
+  beside play/pause goes back to the start and plays. The lock screen's scrubber moves the song too.
+- **The small player** (Igor: *"when it's playing, it's in a little bottom corner window"*). While the song is
+  playing, or paused partway, and its sheet is closed, the home screen shows a small player in the bottom-left
+  corner (the cog has the bottom-right): a music note, how far through it is, and play/pause. Tapping it opens the
+  sheet; its ✕ stops the song, back to the start, and the small player goes away. It goes away by itself when the
+  song ends.
 - The song plays like music: it pauses whatever else was playing, keeps going when the phone locks or Igor goes
   to another app, and the lock screen shows it with play and pause. A phone call or Siri pauses it; Igor resumes it.
 - **Open on Suno**, under the player, does what the launcher used to: the app reads the eulogy post
@@ -44,7 +53,7 @@ ships inside the app, so it plays offline, the moment it is tapped, and keeps go
 
 ## Explaining itself
 
-Each tap is in the session log: playing, pausing, finishing and interruptions with where the song was, and if the
+Each tap is in the session log: playing, pausing, scrubbing (from where to where), restarting, stopping, finishing and interruptions with where the song was, and if the
 song cannot play, why. For *Open on Suno*: which song it opened and whether it came from the post just now, from
 last time, or fell back to the post.
 
@@ -54,4 +63,7 @@ last time, or fell back to the post.
 - Eulogy song plays the song inside the app, offline included; it keeps playing with the sheet closed and the
   phone locked, and the lock screen can pause it.
 - Pause, close, reopen: the sheet shows the same place and resumes from it.
+- Dragging the scrubber moves the song there; restart plays it from the start.
+- With the sheet closed, the small player shows while the song plays or is paused partway; its play/pause works
+  in place, a tap opens the sheet, its ✕ stops the song and hides it.
 - Open on Suno opens the song the post embeds today; offline, the last one found; never found, the post, and says so.

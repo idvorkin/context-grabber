@@ -73,6 +73,35 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
     if isPlaying { pause(from: source) } else { play(from: source) }
   }
 
+  /// Started and not back at the start: what the home screen's small player shows for (#195).
+  var isStarted: Bool { isPlaying || elapsed > 0 }
+
+  /// The scrubber let go: the song carries on from there, playing or paused as it was.
+  func seek(to time: TimeInterval, from source: String) {
+    guard let player = loaded() else { return }
+    let was = player.currentTime
+    player.currentTime = min(max(time, 0), player.duration)
+    log.event("eulogy_song", ["action": "seek", "from": source, "was": rounded(was), "at": rounded(player.currentTime)])
+    sync()
+  }
+
+  func restart(from source: String) {
+    guard let player = loaded() else { return }
+    log.event("eulogy_song", ["action": "restart", "from": source, "was": rounded(player.currentTime)])
+    player.currentTime = 0
+    play(from: source)
+  }
+
+  /// The small player's ✕: stopped and back at the start, so it goes away.
+  func stop(from source: String) {
+    guard let player else { return }
+    log.event("eulogy_song", ["action": "stop", "from": source, "at": rounded(player.currentTime)])
+    player.stop()
+    player.currentTime = 0
+    sync()
+    try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+  }
+
   nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
     Task { @MainActor in
       player.currentTime = 0
@@ -127,6 +156,12 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
       Task { @MainActor in self?.pause(from: "lock_screen") }
       return .success
     }
+    center.changePlaybackPositionCommand.addTarget { [weak self] event in
+      guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+      let at = event.positionTime
+      Task { @MainActor in self?.seek(to: at, from: "lock_screen") }
+      return .success
+    }
     center.togglePlayPauseCommand.addTarget { [weak self] _ in
       Task { @MainActor in self?.toggle(from: "lock_screen") }
       return .success
@@ -170,23 +205,46 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
 struct EulogySongView: View {
   @ObservedObject var song: EulogySongPlayer
   let openOnSuno: () -> Void
+  /// Where the finger is while dragging; the song moves when it lets go.
+  @State private var scrubbing: TimeInterval?
 
   var body: some View {
     VStack(spacing: 20) {
       Text(EulogySongPlayer.title).font(.title2.bold()).multilineTextAlignment(.center)
-      Button {
-        song.toggle(from: "sheet")
-      } label: {
-        Image(systemName: song.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-          .font(.system(size: 72))
-          .foregroundStyle(.yellow)
+      HStack(spacing: 28) {
+        Button {
+          song.restart(from: "sheet")
+        } label: {
+          Image(systemName: "backward.end.fill").font(.title)
+        }
+        .accessibilityIdentifier("eulogy-song-restart")
+        .accessibilityLabel("Restart")
+        Button {
+          song.toggle(from: "sheet")
+        } label: {
+          Image(systemName: song.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+            .font(.system(size: 72))
+            .foregroundStyle(.yellow)
+        }
+        .accessibilityIdentifier("eulogy-song-toggle")
+        .accessibilityLabel(song.isPlaying ? "Pause" : (song.elapsed > 0 ? "Resume" : "Play"))
+        // Balances the restart button so play stays centred.
+        Image(systemName: "backward.end.fill").font(.title).hidden()
       }
-      .accessibilityIdentifier("eulogy-song-toggle")
-      .accessibilityLabel(song.isPlaying ? "Pause" : (song.elapsed > 0 ? "Resume" : "Play"))
       VStack(spacing: 4) {
-        ProgressView(value: song.duration > 0 ? min(song.elapsed / song.duration, 1) : 0)
+        Slider(
+          value: Binding(get: { scrubbing ?? song.elapsed }, set: { scrubbing = $0 }),
+          in: 0...max(song.duration, 1)
+        ) { editing in
+          if !editing, let to = scrubbing {
+            song.seek(to: to, from: "sheet")
+            scrubbing = nil
+          }
+        }
+        .tint(.yellow)
+        .accessibilityIdentifier("eulogy-song-scrubber")
         HStack {
-          Text(Self.clock(song.elapsed)).accessibilityIdentifier("eulogy-song-elapsed")
+          Text(Self.clock(scrubbing ?? song.elapsed)).accessibilityIdentifier("eulogy-song-elapsed")
           Spacer()
           Text(Self.clock(song.duration))
         }
@@ -201,11 +259,51 @@ struct EulogySongView: View {
         .accessibilityIdentifier("eulogy-song-suno")
     }
     .padding(24)
-    .presentationDetents([.height(320)])
+    .presentationDetents([.height(340)])
   }
 
   static func clock(_ t: TimeInterval) -> String {
     let s = Int(t.rounded(.down))
     return String(format: "%d:%02d", s / 60, s % 60)
+  }
+}
+
+/// #195: the song, small, in the home screen's bottom-left corner while it plays or is paused partway.
+struct EulogyMiniPlayer: View {
+  @ObservedObject var song: EulogySongPlayer
+  let open: () -> Void
+
+  var body: some View {
+    if song.isStarted {
+      HStack(spacing: 10) {
+        Button(action: open) {
+          HStack(spacing: 6) {
+            Image(systemName: "music.note").foregroundStyle(.yellow)
+            Text(EulogySongView.clock(song.elapsed)).font(.caption.monospacedDigit())
+          }
+        }
+        .accessibilityIdentifier("eulogy-mini-open")
+        .accessibilityLabel("Eulogy song, \(EulogySongView.clock(song.elapsed))")
+        Button {
+          song.toggle(from: "mini")
+        } label: {
+          Image(systemName: song.isPlaying ? "pause.fill" : "play.fill")
+        }
+        .accessibilityIdentifier("eulogy-mini-toggle")
+        .accessibilityLabel(song.isPlaying ? "Pause" : "Resume")
+        Button {
+          song.stop(from: "mini")
+        } label: {
+          Image(systemName: "xmark").font(.caption.bold()).foregroundStyle(.secondary)
+        }
+        .accessibilityIdentifier("eulogy-mini-stop")
+        .accessibilityLabel("Stop")
+      }
+      .font(.title3)
+      .padding(.horizontal, 14)
+      .padding(.vertical, 10)
+      .background(.regularMaterial, in: Capsule())
+      .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+    }
   }
 }
