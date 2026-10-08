@@ -54,7 +54,9 @@ ships inside the app, so it plays offline, the moment it is tapped, and keeps go
 ## Explaining itself
 
 Each tap is in the session log: playing, pausing, scrubbing (from where to where), restarting, stopping, finishing and interruptions with where the song was, and if the
-song cannot play, why. For *Open on Suno*: which song it opened and whether it came from the post just now, from
+song cannot play, why. A song that cannot load or start says so in its sheet with *Copy error*, which copies the
+message, the build, where the song was, the audio session's state and the underlying error
+([#201](https://github.com/idvorkin/context-grabber/issues/201)). For *Open on Suno*: which song it opened and whether it came from the post just now, from
 last time, or fell back to the post.
 
 ## Acceptance criteria

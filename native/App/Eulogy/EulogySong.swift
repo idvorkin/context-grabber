@@ -13,7 +13,8 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
   @Published private(set) var isPlaying = false
   @Published private(set) var elapsed: TimeInterval = 0
   @Published private(set) var duration: TimeInterval = 0
-  @Published private(set) var failure: String?
+  /// What went wrong, copyable with its operation and the player's and session's state (#201).
+  @Published private(set) var failure: MirrorProblem?
 
   private let log: SessionLog
   private var player: AVAudioPlayer?
@@ -29,11 +30,13 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
 
   func play(from source: String) {
     guard let player = loaded() else { return }
+    var sessionError = ""
     do {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
-      log.event("eulogy_song", ["action": "session", "ok": false, "message": "\(error)"])
+      sessionError = "\(error)"
+      log.event("eulogy_song", ["action": "session", "ok": false, "message": sessionError])
     }
     var ok = player.play()
     var how = "play"
@@ -58,7 +61,12 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }
     let current = self.player ?? player
     log.event("eulogy_song", ["action": "play", "from": source, "at": rounded(current.currentTime), "ok": ok, "how": how])
-    failure = ok ? nil : "The song would not start; the log says why."
+    failure =
+      ok
+      ? nil
+      : problem(
+        "The song would not start.", "EulogySong.play",
+        ["from": source, "tries": how, "session_error": sessionError.isEmpty ? "none" : sessionError])
     sync()
   }
 
@@ -122,8 +130,10 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
 
   private func loaded() -> AVAudioPlayer? {
     if let player { return player }
-    guard let url = Bundle.main.url(forResource: "eulogy-song", withExtension: "mp3") else {
-      failure = "The song is missing from this build."
+    // GRABBER_SONG=missing: the simulator's way to see the failure on screen (#201).
+    let name = ProcessInfo.processInfo.environment["GRABBER_SONG"] == "missing" ? "no-such-song" : "eulogy-song"
+    guard let url = Bundle.main.url(forResource: name, withExtension: "mp3") else {
+      failure = problem("The song is missing from this build.", "EulogySong.load", ["file": "eulogy-song.mp3"])
       log.event("eulogy_song", ["action": "load", "ok": false, "message": "eulogy-song.mp3 not in the bundle"])
       return nil
     }
@@ -137,10 +147,23 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
       wireRemote()
       return player
     } catch {
-      failure = "The song would not load; the log says why."
+      failure = problem("The song would not load.", "EulogySong.load", ["error": "\(error)"])
       log.event("eulogy_song", ["action": "load", "ok": false, "message": "\(error)"])
       return nil
     }
+  }
+
+  /// The failure on screen with the state around it: where the song was and what the audio session held.
+  private func problem(_ message: String, _ context: String, _ extra: [String: String]) -> MirrorProblem {
+    let session = AVAudioSession.sharedInstance()
+    var state = extra
+    state["at_s"] = String(rounded(player?.currentTime ?? 0))
+    state["duration_s"] = String(rounded(player?.duration ?? 0))
+    state["category"] = session.category.rawValue
+    state["mode"] = session.mode.rawValue
+    state["other_audio"] = String(session.isOtherAudioPlaying)
+    state["outputs"] = session.currentRoute.outputs.map { "\($0.portName) [\($0.portType.rawValue)]" }.joined(separator: ", ")
+    return MirrorProblem(message: message, context: context, extra: state)
   }
 
   /// The lock screen and Control Center: the title, where it is, and play/pause.
@@ -252,7 +275,7 @@ struct EulogySongView: View {
         .foregroundStyle(.secondary)
       }
       if let failure = song.failure {
-        Text(failure).font(.footnote).foregroundStyle(.red).accessibilityIdentifier("eulogy-song-failure")
+        ProblemView(problem: failure).accessibilityIdentifier("eulogy-song-failure")
       }
       Button("Open on Suno", action: openOnSuno)
         .font(.footnote)
