@@ -15,6 +15,10 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
   @Published private(set) var duration: TimeInterval = 0
   /// What went wrong, copyable with its operation and the player's and session's state (#201).
   @Published private(set) var failure: MirrorProblem?
+  /// Why the song is not playing although asked to: a live call (#197).
+  @Published private(set) var waiting: String?
+  /// Who holds the audio, if anyone: while it answers, the song neither plays nor touches the session.
+  var heldBy: () -> String? = { nil }
 
   private let log: SessionLog
   private var player: AVAudioPlayer?
@@ -29,6 +33,12 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
   }
 
   func play(from source: String) {
+    if let holder = heldBy() {
+      waiting = "The song waits until the call ends."
+      log.event("eulogy_song", ["action": "play_held", "from": source, "by": holder])
+      return
+    }
+    waiting = nil
     guard let player = loaded() else { return }
     var sessionError = ""
     do {
@@ -77,6 +87,20 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
     sync()
   }
 
+  /// A call is starting: pause where the song is, before the call takes the session.
+  func yield(to holder: String) {
+    guard let player, player.isPlaying else { return }
+    player.pause()
+    log.event("eulogy_song", ["action": "pause", "from": holder, "at": rounded(player.currentTime)])
+    sync()
+  }
+
+  /// Lets the session go only when nothing else holds it: a call's session is the call's.
+  private func release() {
+    guard heldBy() == nil else { return }
+    try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+  }
+
   func toggle(from source: String) {
     if isPlaying { pause(from: source) } else { play(from: source) }
   }
@@ -107,7 +131,7 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
     player.stop()
     player.currentTime = 0
     sync()
-    try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    release()
   }
 
   nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
@@ -115,7 +139,7 @@ final class EulogySongPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
       player.currentTime = 0
       self.log.event("eulogy_song", ["action": "finished", "ok": flag])
       self.sync()
-      try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+      self.release()
     }
   }
 
@@ -273,6 +297,9 @@ struct EulogySongView: View {
         }
         .font(.caption.monospacedDigit())
         .foregroundStyle(.secondary)
+      }
+      if let waiting = song.waiting {
+        Text(waiting).font(.footnote).foregroundStyle(.secondary).accessibilityIdentifier("eulogy-song-waiting")
       }
       if let failure = song.failure {
         ProblemView(problem: failure).accessibilityIdentifier("eulogy-song-failure")

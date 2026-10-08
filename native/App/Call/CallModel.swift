@@ -88,7 +88,11 @@ final class CallModel: ObservableObject {
 
   // MARK: - the call
 
+  /// Runs just before a call takes the audio session: the eulogy song pauses (#197).
+  var willStart: (() -> Void)?
+
   func start(from source: String) {
+    willStart?()
     log.event("ui", ["action": "call", "from": source, "backend": backend.rawValue, "voice": voice.rawValue])
     session.start(backend, voice: voice)
   }

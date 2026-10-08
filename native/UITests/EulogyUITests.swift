@@ -103,6 +103,27 @@ final class EulogyUITests: XCTestCase {
     safari.terminate()
   }
 
+  /// #197: starting a call pauses the song where it is; the small player then offers Resume.
+  func testStartingACallPausesTheSong() throws {
+    let app = XCUIApplication()
+    app.launchEnvironment["GRABBER_CALL_AUDIO"] = "synthetic"  // no microphone prompt on the simulator
+    app.launch()
+    row("eulogy_song", in: app).tap()
+    let toggle = app.buttons["eulogy-song-toggle"]
+    XCTAssertTrue(waitFor(toggle, "label == 'Pause'", 10), app.debugDescription)
+    app.swipeDown(velocity: .fast)
+    XCTAssertTrue(waitFor(toggle, "exists == false", 5))
+    for _ in 0..<4 where !app.buttons["home-call"].isHittable { app.swipeDown() }
+    app.buttons["home-call"].tap()
+    let call = app.buttons["call-larry"]
+    XCTAssertTrue(call.waitForExistence(timeout: 10), app.debugDescription)
+    call.tap()
+    app.buttons["Done"].firstMatch.tap()
+    let mini = app.buttons["eulogy-mini-toggle"]
+    XCTAssertTrue(mini.waitForExistence(timeout: 10), app.debugDescription)
+    XCTAssertTrue(waitFor(mini, "label == 'Resume'", 5), "the call paused the song: \(mini.label)")
+  }
+
   private func waitFor(_ element: XCUIElement, _ format: String, _ timeout: TimeInterval) -> Bool {
     XCTWaiter().wait(for: [expectation(for: NSPredicate(format: format), evaluatedWith: element)], timeout: timeout)
       == .completed
