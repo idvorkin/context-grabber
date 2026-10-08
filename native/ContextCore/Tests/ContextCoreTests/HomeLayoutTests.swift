@@ -82,4 +82,16 @@ final class HomeLayoutTests: XCTestCase {
     XCTAssertEqual(layout.arrangement.tiles.first, "cockpit")
     XCTAssertEqual(layout.arrangement.rows, ["places", "think_a_card"])
   }
+
+  /// #225: the two pairs share a line where the first of them comes, in the pair's own order.
+  func testPairsShareALine() {
+    let rows = ["think_a_card", "eulogy_song", "exercise_analyzer", "cockpit", "eulogy", "recent", "workout_supermix"]
+    XCTAssertEqual(
+      HomeLayout.lines(rows),
+      [["think_a_card"], ["eulogy", "eulogy_song"], ["exercise_analyzer", "workout_supermix"], ["cockpit"], ["recent"]])
+  }
+
+  func testAPairWithOneHiddenOrATileIsOneRow() {
+    XCTAssertEqual(HomeLayout.lines(["exercise_analyzer", "eulogy"]), [["exercise_analyzer"], ["eulogy"]])
+  }
 }

@@ -47,9 +47,13 @@ and points at the cog.
   any grab the card says *Today — tap to look* and opens Today the same way. A number Health did not give is a dash,
   never 0.
 - **The first four launchers as tiles**, two by two, big enough to hit without looking: the first four of Igor's
-  order (Today itself is skipped, since the card is Today). Each tile is the launcher's icon and name; Call Larry's
-  tile still shows a live call's state.
-- **The rest as rows** under the tiles, smaller than before, in the same order.
+  order (Today itself is skipped, since the card is Today). Each tile is the launcher's icon beside its name, one
+  line tall, so the tiles take little height (Igor, 2026-10-08, #225: *"a little bit thinner so I have more
+  available vertical space"*); Call Larry's tile still shows a live call's state under its name.
+- **The rest as rows** under the tiles, smaller than before, in the same order. Two pairs share one line, half
+  each, when both are shown: **Exercise Analyzer** with **Workout Supermix**, and **Eulogy** with **Eulogy song**
+  (#225). The pair sits where the first of the two comes in Igor's order, in that order; hiding one gives the other
+  the whole line back. A pair member that is one of the four tiles stays a tile.
 
 Order, hiding and Reset in the cog work as before: moving a launcher into the first four makes it a tile.
 
