@@ -19,6 +19,8 @@ public enum AppRoute: Equatable, Sendable {
   case call(via: CallBackend?)
   /// The card screen (story 129): face up, or with "think of a card" already counting.
   case card(think: Bool)
+  /// Igor's Play Workout Supermix shortcut, run through Shortcuts (#220); the large widget's button (#221).
+  case supermix
 
   /// The screen's name, as the log writes it.
   public var name: String {
@@ -31,6 +33,7 @@ public enum AppRoute: Equatable, Sendable {
     case .cockpit: return "cockpit"
     case .call: return "call"
     case .card: return "card"
+    case .supermix: return "supermix"
     }
   }
 
@@ -174,6 +177,8 @@ public enum AppLink {
       route = .card(think: autostart(key: "think") ?? false)
     case "think":
       route = .card(think: true)
+    case "supermix":
+      route = .supermix
     default:
       return Parsed(route: .home, understood: false)
     }
@@ -242,6 +247,7 @@ public enum AppLink {
         (.call(via: .eleven), "Call Larry on ElevenLabs (also gemini, openai, drill)"),
         (.card(think: false), "A playing card, face up; tap for another"),
         (.card(think: true), "Think of a card: face down, five seconds, then the reveal"),
+        (.supermix, "Workout Supermix: runs your Play Workout Supermix shortcut"),
       ]
     return rows.map { Entry(link: link(for: $0.0), summary: $0.1) }
   }()
