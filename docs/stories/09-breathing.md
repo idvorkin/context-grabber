@@ -405,7 +405,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** A breathing session counts as meditation in Health
 - **Issues:** [#156](https://github.com/idvorkin/context-grabber/issues/156)
-- **Status:** not yet implemented
+- **Status:** implemented in [3825c38](https://github.com/idvorkin/context-grabber/commit/3825c38); verified by `BreathTests.testWhatHealthGetsForASession` (host: a finished session whole, Back with a minute or more as the breathing done, under a minute nothing, lead-in and pauses left out) and on the simulator: a hooked 1-minute session reached Done and the app tried to save it, logging `mindful_saved` with *not asked yet* before Today had asked, and Today's Health sheet came up 37 s after asking. **Not verified:** a sample actually landing in Health. `BreatheMindfulUITests` can't answer Health's sheet on iOS 27 yet and is skipped as a known flake ([#215](https://github.com/idvorkin/context-grabber/issues/215)). The phone isn't checked yet. No sound check: this Mac's audio is broken, and the hooked session runs with the cue off
 - **Spec:** [box breathing, "In Health"](../superpowers/specs/2026-10-04-box-breathing-design.md)
 
 #### Use Case:
