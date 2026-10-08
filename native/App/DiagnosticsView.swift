@@ -53,18 +53,18 @@ struct DiagnosticsView: View {
           }
         }
         Section {
-          ForEach(arrangement.rows, id: \.self) { id in
-            if let row = HomeRow.row(id) {
-              Button {
-                row.open(model)
-              } label: {
-                if id == "call" {
-                  CallRow(call: model.call)
-                } else {
-                  Label(row.title, systemImage: row.icon).font(.body.weight(.semibold)).padding(.vertical, 2)
-                }
+          // #225: two pairs share a line, half each.
+          ForEach(HomeLayout.lines(arrangement.rows), id: \.self) { line in
+            if line.count == 2, let left = HomeRow.row(line[0]), let right = HomeRow.row(line[1]) {
+              HStack(spacing: 12) {
+                HomeRowButton(row: left, model: model).frame(maxWidth: .infinity, alignment: .leading)
+                Divider()
+                HomeRowButton(row: right, model: model).frame(maxWidth: .infinity, alignment: .leading)
               }
-              .accessibilityIdentifier("home-\(id)")
+              // Two buttons in one row: without this a tap anywhere fires both.
+              .buttonStyle(.borderless)
+            } else if let id = line.first, let row = HomeRow.row(id) {
+              HomeRowButton(row: row, model: model)
             }
           }
           if model.homeLayout.visible.isEmpty {
@@ -221,21 +221,41 @@ private struct TodayCard: View {
   }
 }
 
-/// Story 151: one of the daily four, big enough to hit without looking.
+/// One launcher in the rows, alone on its line or half of a pair (#225).
+private struct HomeRowButton: View {
+  let row: HomeRow
+  @ObservedObject var model: AppModel
+
+  var body: some View {
+    Button { row.open(model) } label: {
+      if row.id == "call" {
+        CallRow(call: model.call)
+      } else {
+        Label(row.title, systemImage: row.icon).font(.body.weight(.semibold)).lineLimit(1)
+          .minimumScaleFactor(0.65).padding(.vertical, 2)
+      }
+    }
+    .accessibilityIdentifier("home-\(row.id)")
+  }
+}
+
+/// Story 151: one of the daily four, big enough to hit without looking; one line tall (#225).
 private struct HomeTile: View {
   let row: HomeRow
   @ObservedObject var model: AppModel
 
   var body: some View {
     Button { row.open(model) } label: {
-      VStack(alignment: .leading, spacing: 8) {
-        Image(systemName: row.icon).font(.title2)
-        Spacer(minLength: 0)
-        Text(row.title).font(.headline).lineLimit(2).multilineTextAlignment(.leading)
-        if row.id == "call" { CallTileStatus(call: model.call) }
+      HStack(spacing: 10) {
+        Image(systemName: row.icon).font(.title3).frame(width: 26)
+        VStack(alignment: .leading, spacing: 2) {
+          Text(row.title).font(.headline).lineLimit(1).minimumScaleFactor(0.8)
+          if row.id == "call" { CallTileStatus(call: model.call) }
+        }
       }
-      .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
-      .padding(14)
+      .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+      .padding(.horizontal, 14)
+      .padding(.vertical, 8)
       .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
     .buttonStyle(.plain)

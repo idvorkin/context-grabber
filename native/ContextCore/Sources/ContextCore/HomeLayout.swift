@@ -68,4 +68,29 @@ public struct HomeLayout: Equatable, Sendable {
       todayCard: visible.contains("today"), tiles: Array(rest.prefix(Self.tileCount)),
       rows: Array(rest.dropFirst(Self.tileCount)))
   }
+
+  /// #225: launchers that share one line of rows, half each, when both are rows.
+  public static let pairs: [(String, String)] = [("exercise_analyzer", "workout_supermix"), ("eulogy", "eulogy_song")]
+
+  /// The rows as lines: a pair is one line where its first member comes in the order, the rest one each.
+  public static func lines(_ rows: [String]) -> [[String]] {
+    var partner: [String: String] = [:]
+    for (a, b) in pairs where rows.contains(a) && rows.contains(b) {
+      partner[a] = b
+      partner[b] = a
+    }
+    var placed = Set<String>()
+    var lines: [[String]] = []
+    for id in rows where !placed.contains(id) {
+      placed.insert(id)
+      if let other = partner[id] {
+        placed.insert(other)
+        // The pair's own order, wherever in Igor's order it lands.
+        lines.append(pairs.contains { $0.0 == id } ? [id, other] : [other, id])
+      } else {
+        lines.append([id])
+      }
+    }
+    return lines
+  }
 }
