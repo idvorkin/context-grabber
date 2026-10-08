@@ -238,3 +238,44 @@ struct YouPin: View {
     .accessibilityLabel("You")
   }
 }
+
+/// #160: where the stay being named is, at the top of the naming card. A picture for looking, not for picking: it
+/// does not pan or zoom. The name card's circle follows the radius as it is typed; the merge card adds the nearest
+/// known place and its circle as it is now.
+struct NamingMap: View {
+  let centre: Coordinate
+  /// The circle the new place would cover, metres; nil on the merge card.
+  let radius: Double?
+  var nearest: KnownPlace?
+
+  var body: some View {
+    Map(initialPosition: .region(region), interactionModes: []) {
+      if let radius, radius > 0 {
+        MapCircle(center: centre.cl, radius: radius).foregroundStyle(.orange.opacity(0.2)).stroke(.orange, lineWidth: 2)
+      }
+      if let nearest {
+        let at = CLLocationCoordinate2D(latitude: nearest.latitude, longitude: nearest.longitude)
+        MapCircle(center: at, radius: nearest.radiusMeters).foregroundStyle(.blue.opacity(0.15)).stroke(.blue, lineWidth: 2)
+        Marker(nearest.name, coordinate: at).tint(.blue)
+      }
+      Marker("Here", systemImage: "mappin", coordinate: centre.cl).tint(.orange)
+    }
+    .frame(height: 180)
+    .clipShape(RoundedRectangle(cornerRadius: 12))
+    .accessibilityIdentifier("naming-map")
+  }
+
+  /// Room for the circle (or both places) with a margin.
+  private var region: MKCoordinateRegion {
+    guard let nearest else {
+      let span = max(4 * (radius ?? 100), 400)
+      return MKCoordinateRegion(center: centre.cl, latitudinalMeters: span, longitudinalMeters: span)
+    }
+    let mid = CLLocationCoordinate2D(
+      latitude: (centre.latitude + nearest.latitude) / 2, longitude: (centre.longitude + nearest.longitude) / 2)
+    let apart = CLLocation(latitude: centre.latitude, longitude: centre.longitude)
+      .distance(from: CLLocation(latitude: nearest.latitude, longitude: nearest.longitude))
+    let span = max(2.5 * (apart + nearest.radiusMeters), 400)
+    return MKCoordinateRegion(center: mid, latitudinalMeters: span, longitudinalMeters: span)
+  }
+}

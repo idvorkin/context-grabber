@@ -74,6 +74,13 @@ and what growing it would do — "Place 3 is 168 m from Milstead & Co. Expanding
 shift the centre 57 m." — with **Expand**, **Create new** and **Cancel**, and "(+N more within 500 m)" when there
 are others. Either way every stay at that place, on every day, is relabelled at once.
 
+**Where it is** ([#160](https://github.com/idvorkin/context-grabber/issues/160), Igor: *"When trying to add a
+place need to see where it is"*). Both cards open with a small map at their top, centred on the stay: the stay's
+centre as a pin, and on the name card the circle the new place will cover, which follows the radius as it is
+typed. The merge card shows the nearest known place too, with its circle as it is now, so "168 m from Milstead &
+Co." can be seen. The map is a picture of where, for looking, not for picking: dragging it does not move the
+place.
+
 ### Unnamed places on the full-screen map (story 056)
 
 The full-screen map shows, besides the named places, every place the stays found that has no name yet — each
