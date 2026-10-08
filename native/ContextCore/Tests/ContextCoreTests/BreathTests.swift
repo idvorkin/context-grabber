@@ -144,6 +144,20 @@ final class BreathRunTests: XCTestCase {
     }
   }
 
+  /// Story 242: a finished session is saved whole; one left early, the breathing done if a minute or more; the
+  /// lead-in and pauses never count.
+  func testWhatHealthGetsForASession() {
+    var run = BreathRun(plan: BreathPlan(breathSeconds: 10, sessionMinutes: 2), leadIn: 2)
+    run.start(now: 1000)
+    XCTAssertNil(run.mindfulSpan(now: 1000 + 2 + 40), "40 s breathed is under a minute")
+    run.pause(now: 1000 + 2 + 60)
+    XCTAssertEqual(run.mindfulSpan(now: 1200), TimeSpan(start: 1_140_000, end: 1_200_000), "a paused minute is a minute")
+    run.start(now: 1300)
+    XCTAssertEqual(run.mindfulSpan(now: 1330), TimeSpan(start: 1_240_000, end: 1_330_000), "90 s breathed, the pause left out")
+    let total = Double(run.plan.totalSeconds)
+    XCTAssertEqual(run.mindfulSpan(now: 5000), TimeSpan(start: (5000 - total) * 1000, end: 5_000_000), "never more than the session")
+  }
+
   func testAThirtyCycleSessionDoesNotDrift() {
     // The brief's bar: 10 minutes at 5 s, under 0.5 s of total drift. Looks land every 50 ms, so no cue is
     // more than 50 ms late and lateness never accumulates.

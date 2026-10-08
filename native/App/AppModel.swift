@@ -315,6 +315,25 @@ final class AppModel: ObservableObject {
     UIApplication.shared.open(url) { [log] ok in log.event("ui", ["action": action, "from": source, "ok": ok]) }
   }
 
+  /// Story 242: a breathing session saved to Health as a Mindful Session. A refusal is logged, never shown: breathing
+  /// works the same without it.
+  func saveMindful(_ span: TimeSpan, why: String) {
+    guard HealthKitSource.isAvailable else {
+      return log.event("mindful_saved", ["ok": false, "why": why, "message": "Health is not available on this device"])
+    }
+    Task {
+      let fields: [String: Any] = ["why": why, "seconds": Int((span.end - span.start) / 1000)]
+      do {
+        try await healthWriter.saveMindful(span)
+        log.event("mindful_saved", fields.merging(["ok": true]) { $1 })
+      } catch {
+        log.event("mindful_saved", fields.merging(["ok": false, "message": error.localizedDescription]) { $1 })
+      }
+    }
+  }
+
+  private lazy var healthWriter = HealthKitSource()
+
   /// Story 137: the eulogy song, played in the app; the sheet shows where it is. Resumes rather than restarts.
   func playEulogySong(from source: String) {
     log.event("ui", ["action": "open_eulogy_song_player", "from": source])

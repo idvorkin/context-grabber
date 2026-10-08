@@ -181,6 +181,17 @@ public struct BreathRun: Equatable, Sendable {
 
   public func moment(now: Double) -> BreathMoment { plan.moment(at: elapsed(now: now)) }
 
+  /// Story 242: shorter than this, a session left early is not saved to Health.
+  public static let mindfulMinimumSeconds = 60.0
+
+  /// Story 242: what Health gets for a session ending `now` (seconds since 1970), as JavaScript milliseconds like
+  /// every TimeSpan: the breathing done, lead-in and pauses left out, ending now; nil when that is under a minute.
+  public func mindfulSpan(now: Double) -> TimeSpan? {
+    let breathed = min(max(0, elapsed(now: now)), Double(plan.totalSeconds))
+    guard breathed >= Self.mindfulMinimumSeconds else { return nil }
+    return TimeSpan(start: (now - breathed) * 1000, end: now * 1000)
+  }
+
   public mutating func start(now: Double) {
     guard anchor == nil, !isFinished else { return }
     anchor = now

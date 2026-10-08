@@ -53,7 +53,14 @@ final class BreatheModel: ObservableObject {
   /// Room for "Let's begin" before the first inhale.
   private static let voiceLeadIn = 2.0
 
-  init(log: SessionLog, database: AppDatabase, liveActivity: LiveActivityController) {
+  /// Story 242: where a session goes in Health; the app saves it as a Mindful Session.
+  private let saveMindful: (TimeSpan, String) -> Void
+
+  init(
+    log: SessionLog, database: AppDatabase, liveActivity: LiveActivityController,
+    saveMindful: @escaping (TimeSpan, String) -> Void = { _, _ in }
+  ) {
+    self.saveMindful = saveMindful
     self.log = log
     self.database = database
     self.liveActivity = liveActivity
@@ -179,6 +186,11 @@ final class BreatheModel: ObservableObject {
   func back() {
     guard stage == .session, let run else { return }
     log.event("breath_exit", ["elapsed_ms": Int(max(0, run.elapsed(now: now)) * 1000), "paused": paused])
+    if let span = run.mindfulSpan(now: now) {
+      saveMindful(span, "back")
+    } else {
+      log.event("mindful_skipped", ["why": "under a minute", "breathed_ms": Int(max(0, run.elapsed(now: now)) * 1000)])
+    }
     endSession()
     stage = .setup
     liveActivity.end(.breathe, reason: "back")
@@ -271,6 +283,7 @@ final class BreatheModel: ObservableObject {
         log.event(
           "breath_finished", ["cycles": run.plan.cycles, "total": run.plan.totalSeconds, "late_ms": lateMs])
         database.logActivity(.breathing, name: ActivityLog.breathName(run.plan), seconds: run.plan.totalSeconds)
+        if let span = run.mindfulSpan(now: now) { saveMindful(span, "finished") }
         endSession()
         stage = .done
         switch cue {

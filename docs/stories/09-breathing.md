@@ -399,3 +399,33 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap *Custom*, set In to 4 and Out to 8, and Begin
 - **Then:** in and its hold last 4 seconds, out and its hold 8, the summary counts cycles of 24 seconds, and both lengths are remembered
 
+---
+
+### User Story 242:
+
+- **Summary:** A breathing session counts as meditation in Health
+- **Issues:** [#156](https://github.com/idvorkin/context-grabber/issues/156)
+- **Status:** not yet implemented
+- **Spec:** [box breathing, "In Health"](../superpowers/specs/2026-10-04-box-breathing-design.md)
+
+#### Use Case:
+- **As someone** whose meditation lives in Health
+- **I want** each box-breathing session saved there as mindful minutes
+- **so that** the breathing I do in the app counts toward my meditation without logging it twice
+
+#### Acceptance Criteria:
+- **Scenario:** A finished session
+- **Given:** Today asked to write Mindful Minutes and I allowed it
+- **When:** a 2-minute session reaches Done
+- **Then:** Health has a 2-minute Mindful Session ending when Done appeared, and the mirror's Meditation card counts it
+
+- **Scenario:** Leaving early
+- **Given:** a session in progress
+- **When:** I tap Back after 90 seconds of breathing, or after 40
+- **Then:** Health gets 1 min 30 s for the first; nothing for the second, under a minute
+
+- **Scenario:** Not allowed
+- **Given:** I said no to writing Mindful Minutes, or have not opened Today since this build
+- **When:** a session ends
+- **Then:** nothing is saved, breathing works the same, and the session log says Health declined
+

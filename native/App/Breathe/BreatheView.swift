@@ -43,7 +43,9 @@ struct BreatheView: View {
     self.app = app
     self.launch = launch
     self.onExit = onExit
-    _model = StateObject(wrappedValue: BreatheModel(log: app.log, database: app.database, liveActivity: app.liveActivity))
+    _model = StateObject(wrappedValue: BreatheModel(
+        log: app.log, database: app.database, liveActivity: app.liveActivity,
+        saveMindful: { [weak app] span, why in app?.saveMindful(span, why: why) }))
   }
 
   var body: some View {
