@@ -173,7 +173,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** The Card tab: tap for another, or "think of a card" and wait five seconds
 - **Issues:** [#219](https://github.com/idvorkin/context-grabber/issues/219)
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app (#219, Igor 2026-10-08: *"let's do it inline"*): implemented in [fdec37f](https://github.com/idvorkin/context-grabber/commit/fdec37f); verified by `CardDealTests` (host: the deal's promises, and the same card as the old app for the same moment) and `CardUITests` on the simulator (the home row opens face down counting, a card face up at zero, a tap deals another, *Never mind* keeps the card); the phone not yet. In the native app the home screen's *Think of a card* opens it already counting, and `grabbernative://card` opens it face up; there are no widgets yet
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `CardScreen.test.tsx` and on the phone; native app (#219, Igor 2026-10-08: *"let's do it inline"*): implemented in [fdec37f](https://github.com/idvorkin/context-grabber/commit/fdec37f); verified by `CardDealTests` (host: the deal's promises, and the same card as the old app for the same moment) and `CardUITests` on the simulator (the home row opens face down counting, a card face up at zero, a tap deals another, *Never mind* keeps the card); replaced the same day by the trainer's own screen, story 245
 
 #### Use Case:
 - **As a** man about to do the trick for someone
@@ -305,8 +305,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 244:
 
 - **Summary:** Today's hand: a card, the role of the day, and three quick starts on the big widget
-- **Status:** native app only: implemented in [2a1e6e8](https://github.com/idvorkin/context-grabber/commit/2a1e6e8); verified by `CardDealTests`, `EulogyRolesTests` and `AppLinkTests` (host) and `TodaysHandUITests` on the simulator (added through SpringBoard's gallery: the card and *Today, be Father to Zach* drew, a tap turned 10♥ into Q♥ with the app in the background, *Think of a card* opened the card screen counting); the phone not yet
-- **Issues:** [#221](https://github.com/idvorkin/context-grabber/issues/221)
+- **Status:** native app only: implemented in [2a1e6e8](https://github.com/idvorkin/context-grabber/commit/2a1e6e8); verified by `CardDealTests`, `EulogyRolesTests` and `AppLinkTests` (host) and `TodaysHandUITests` on the simulator (added through SpringBoard's gallery: the card and *Today, be Father to Zach* drew, a tap turned 10♥ into Q♥ with the app in the background, *Think of a card* opened the card screen counting); the phone not yet. From the stack, in the trainer's face (#219): COMMIT; verified by `CardDealSubsetTests` (host: the deal's promises over a smaller deck) and `TodaysHandUITests` on the simulator against the pinned trainer commit (the trainer's 2♠ dealt in place); against the tag its tap check failed once (#230, open)
+- **Issues:** [#221](https://github.com/idvorkin/context-grabber/issues/221), [#230](https://github.com/idvorkin/context-grabber/issues/230)
 - **Spec:** [Today's hand](../superpowers/specs/2026-10-08-native-large-widget-design.md)
 
 #### Use Case:
@@ -318,7 +318,32 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** The widget
 - **Given:** *Today's hand* is on the home screen
 - **When:** I tap the card, and later *Think of a card*, *Supermix* and *Call Larry*
-- **Then:** the card changes within a second without the app opening, it changes by itself every five minutes, *Today, be* names a role from the eulogy that changes after midnight (each once in eleven days), *Think of a card* opens the card screen counting, *Supermix* runs the Play Workout Supermix shortcut, *Call Larry* opens the call screen calling, and after dealing on the card screen and leaving it the widget shows that last card
+- **Then:** the card, from my stack and drawn as the trainer draws it, changes within a second without the app opening, it changes by itself every five minutes, with *Skip easy cards* on no breather or card within two of one shows, *Today, be* names a role from the eulogy that changes after midnight (each once in eleven days), *Think of a card* opens the card screen asking, *Supermix* runs the Play Workout Supermix shortcut, and *Call Larry* opens the call screen calling
+
+---
+
+### User Story 245:
+
+- **Summary:** Think of a card in Grabber Native is the trainer's own screen
+- **Status:** native app only: implemented in COMMIT, with think-a-card-trainer v0.1.0 (its PR #6, D15); verified by a simulator build and the screen read by eye (black, the card large, *Skip easy cards*); `CardUITests` is skipped until it can find the card by name (#229); the ask, the voice and silence during a call not yet checked on the phone
+- **Issues:** [#219](https://github.com/idvorkin/context-grabber/issues/219), [#229](https://github.com/idvorkin/context-grabber/issues/229)
+- **Spec:** [Swift-native app — Think of a card: the trainer's screen, in the app](../superpowers/specs/2026-10-04-swift-native-app-design.md#think-of-a-card-the-trainers-screen-in-the-app)
+
+#### Use Case:
+- **As a** man practising his stack, with Grabber Native as his home screen
+- **I want to** tap *Think of a card* and get Think a Card Trainer's screen, the same one, not a copy
+- **so that** the prompt I practise with is the one I built, and it improves in both apps at once
+
+#### Acceptance Criteria:
+- **Scenario:** The ask from the home screen
+- **Given:** the build has my stack
+- **When:** I tap *Think of a card* on the home screen
+- **Then:** the trainer's screen opens with the ask started (a card up, a small three-two-one at the side, then a new card, a tap of the phone, the card said aloud), a tap on the middle switches the card, the right third asks again, the left third asks from the hard cards, and *Done* goes home
+
+- **Scenario:** During a call
+- **Given:** a call with Larry is live
+- **When:** I ask for a card
+- **Then:** the new card shows and nothing is said, and the call's audio is untouched
 
 ---
 

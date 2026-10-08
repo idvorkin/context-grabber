@@ -26,10 +26,10 @@ the *Workout Supermix*, and *Call Larry*.
 
 ## What Igor sees
 
-**The card** fills the left of the widget: a playing card, red suits in red. It is the same deal as Grabber
-Native's card screen: one card per five minutes, changing on its own, and a tap on it deals a different card at
-once, without opening the app. When the card screen deals, the widget shows that screen's last card once the screen
-is left.
+**The card** fills the left of the widget, drawn as the card screen draws it: dealt from Igor's memorized stack,
+one card per five minutes, changing on its own, and a tap on it deals a different card at once, without opening
+the app. With *Skip easy cards* on in Grabber Native, the widget leaves the same cards out. The widget and the card
+screen deal separately (Igor, 2026-10-08: the widget deals from the stack, as the trainer screen does).
 
 **The role of the day** is on the right: *Today, be* and one of the eulogy's eleven roles, in the eulogy's order, a
 new one each local day, every role once in eleven days. Tapping it opens the app.
@@ -48,6 +48,6 @@ The widget is listed as *Today's hand*, large size only.
 - With *Today's hand* on the home screen, a card and a role show; the card changes on its own within ten minutes
   and the role changes after midnight.
 - Tapping the card shows a different card within a second and the app does not open.
-- After dealing on the card screen and leaving it, the widget shows the card the screen last dealt.
+- With *Skip easy cards* on, no breather and no card within two of one shows on the widget.
 - Each button lands where it says: the card counting, Shortcuts playing the mix, the call screen calling.
 - Over any eleven days in a row, each role is shown once.

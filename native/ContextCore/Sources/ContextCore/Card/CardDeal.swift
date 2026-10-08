@@ -55,16 +55,23 @@ public enum CardDeal {
   public static let timelineSlots = 144
 
   public static func timeline(from now: Date, nonce: Int) -> [(date: Date, card: PlayingCard)] {
+    timeline(from: now, nonce: nonce, size: cardsPerRun).map { ($0.date, PlayingCard.deck[$0.index]) }
+  }
+
+  /// The same over `size` cards (#219: the widget deals the trainer's stack, maybe without its easy cards): each
+  /// moment's index into the caller's own list of them, with the same promises as the 52 for three cards or more
+  /// (with two, the run-boundary swap below also moves a run's last card, so a repeat can slip through).
+  public static func timeline(from now: Date, nonce: Int, size: Int) -> [(date: Date, index: Int)] {
     var deals: [Int: [Int]] = [:]
     return moments(from: now, count: timelineSlots).map { moment in
       let s = slot(containing: moment)
-      let run = floorDiv(s, cardsPerRun)
+      let run = floorDiv(s, size)
       let deal = deals[run] ?? {
-        let d = fixedDeal(run: run, nonce: nonce)
+        let d = fixedDeal(run: run, nonce: nonce, size: size)
         deals[run] = d
         return d
       }()
-      return (moment, PlayingCard.deck[deal[s - run * cardsPerRun]])
+      return (moment, deal[s - run * size])
     }
   }
 
@@ -83,11 +90,12 @@ public enum CardDeal {
 
   /// A tap: the first count above `nonce` whose card for `date` is not the
   /// one showing. Every surface that reads the new count deals the same card.
-  public static func nonceAfterTap(at date: Date, nonce: Int) -> Int {
+  public static func nonceAfterTap(at date: Date, nonce: Int, size: Int = cardsPerRun) -> Int {
     let s = slot(containing: date)
-    let showing = index(forSlot: s, nonce: nonce)
+    let showing = index(forSlot: s, nonce: nonce, size: size)
     var next = nonce &+ 1
-    while index(forSlot: s, nonce: next) == showing {
+    guard size > 1 else { return next }  // one card cannot change
+    while index(forSlot: s, nonce: next, size: size) == showing {
       next &+= 1
     }
     return next
@@ -101,18 +109,18 @@ public enum CardDeal {
 
   /// Index into `PlayingCard.deck` for a slot and a tap count. Pure: the same
   /// inputs are the same card in every process that asks.
-  public static func index(forSlot slot: Int, nonce: Int) -> Int {
-    let run = floorDiv(slot, cardsPerRun)
-    let position = slot - run * cardsPerRun
-    return fixedDeal(run: run, nonce: nonce)[position]
+  public static func index(forSlot slot: Int, nonce: Int, size: Int = cardsPerRun) -> Int {
+    let run = floorDiv(slot, size)
+    let position = slot - run * size
+    return fixedDeal(run: run, nonce: nonce, size: size)[position]
   }
 
   /// The run's shuffle, with its first two cards swapped when the first would
   /// repeat the previous run's last. Index 51 is never touched by the swap, so
   /// the previous run's last card is what its own `fixedDeal` shows too.
-  public static func fixedDeal(run: Int, nonce: Int) -> [Int] {
-    var deal = rawDeal(run: run, nonce: nonce)
-    if deal[0] == rawDeal(run: run - 1, nonce: nonce)[cardsPerRun - 1] {
+  public static func fixedDeal(run: Int, nonce: Int, size: Int = cardsPerRun) -> [Int] {
+    var deal = rawDeal(run: run, nonce: nonce, size: size)
+    if size > 1, deal[0] == rawDeal(run: run - 1, nonce: nonce, size: size)[size - 1] {
       deal.swapAt(0, 1)
     }
     return deal
@@ -120,13 +128,13 @@ public enum CardDeal {
 
   /// Fisher–Yates over the 52 indices, seeded by the run number and the tap
   /// count.
-  public static func rawDeal(run: Int, nonce: Int) -> [Int] {
+  public static func rawDeal(run: Int, nonce: Int, size: Int = cardsPerRun) -> [Int] {
     let seed = (UInt64(bitPattern: Int64(run)) &* 0x9E37_79B9_7F4A_7C15)
       ^ (UInt64(bitPattern: Int64(nonce)) &* 0xBF58_476D_1CE4_E5B9)
       &+ 0x6D65_6D64_6563_6B21  // "memdeck!"
     var rng = SplitMix64(seed: seed)
-    var deal = Array(0..<cardsPerRun)
-    var i = cardsPerRun - 1
+    var deal = Array(0..<size)
+    var i = size - 1
     while i > 0 {
       let j = Int(rng.next() % UInt64(i + 1))
       deal.swapAt(i, j)

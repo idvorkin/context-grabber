@@ -119,7 +119,7 @@ struct DiagnosticsView: View {
         Color.clear.fullScreenCover(
           isPresented: Binding(get: { model.card != nil }, set: { if !$0 { model.closeCard() } })
         ) {
-          CardView(log: model.log, think: model.card ?? false, onDone: model.closeCard)
+          CardView(app: model, think: model.card ?? false, onDone: model.closeCard)
             .background(ShakeDetector { model.startBugReport(from: "shake") })
         }
       }
