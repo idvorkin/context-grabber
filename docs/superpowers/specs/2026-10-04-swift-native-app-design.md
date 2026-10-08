@@ -145,8 +145,16 @@ longer opened from Grabber Native.
 ## Exercise Analyzer, one tap away
 
 Igor, 2026-10-05 (#142): *"You should also be able to launch Exercise Analyzer."* The home screen lists **Exercise
-Analyzer** under *Think of a card*; it opens Igor's Exercise Analyzer app where it was (that app's story 069). Like
-the trainer, it is not installed → the row says so instead of doing nothing.
+Analyzer** under *Think of a card*; it opens Igor's Exercise Analyzer app where it was (that app's story 069). If it
+is not installed, the row says so instead of doing nothing.
+
+## Workout Supermix, one tap away
+
+Igor, 2026-10-08 (#220): *"I want to open my YouTube Music Workout Super Mix as well."* The home screen lists
+**Workout Supermix**, after *Exercise Analyzer*. It runs Igor's own *Play Workout Supermix* shortcut from the
+Shortcuts app, so YouTube Music plays the mix; the shortcut is his, and changing what it plays is done in
+Shortcuts, not in Grabber Native. If Shortcuts is not on the phone the row says so. If the shortcut has been
+renamed or deleted, Shortcuts itself says it cannot find it.
 
 ## The Gym Timer in the native app (step 2)
 
