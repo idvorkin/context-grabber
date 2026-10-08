@@ -338,7 +338,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** My eulogy, its song and the blog's recent changes, one tap each
 - **Issues:** [#177](https://github.com/idvorkin/context-grabber/issues/177)
-- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (each launcher brings Safari forward; the log's open_eulogy_song names the song found in the post); offline and the phone not yet; playing the song inside the app waits on the MP3 (Suno serves no audio without Igor's login)
+- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541), [2b75d3a](https://github.com/idvorkin/context-grabber/commit/2b75d3a); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (Eulogy and Recent bring Safari forward; the song plays in the app, pauses, resumes from where it was after the sheet closes, and Open on Suno opens the song the post embeds); the lock screen, playing on with the phone locked, and the phone not yet
 - **Spec:** [native Eulogy](../superpowers/specs/2026-10-07-native-eulogy-design.md)
 
 #### Use Case:
