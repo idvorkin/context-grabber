@@ -78,6 +78,19 @@ final class EulogyUITests: XCTestCase {
     XCTAssertTrue(waitFor(mini, "exists == false", 5), "the ✕ took the small player away")
   }
 
+  /// #201: a song that cannot play says so with a Copy error, not a bare red line.
+  func testASongThatCannotPlayOffersCopyError() throws {
+    let app = XCUIApplication()
+    app.launchEnvironment["GRABBER_SONG"] = "missing"
+    app.launch()
+    row("eulogy_song", in: app).tap()
+    XCTAssertTrue(app.staticTexts["The song is missing from this build."].waitForExistence(timeout: 10), app.debugDescription)
+    let copy = app.buttons["Copy error"]
+    XCTAssertTrue(copy.exists, app.debugDescription)
+    copy.tap()
+    XCTAssertTrue(app.buttons["Copied"].waitForExistence(timeout: 5))
+  }
+
   private func waitFor(_ element: XCUIElement, _ format: String, _ timeout: TimeInterval) -> Bool {
     XCTWaiter().wait(for: [expectation(for: NSPredicate(format: format), evaluatedWith: element)], timeout: timeout)
       == .completed
