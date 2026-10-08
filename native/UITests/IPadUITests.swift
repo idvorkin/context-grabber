@@ -25,7 +25,16 @@ final class IPadUITests: XCTestCase {
         let launcher = app.buttons[id == "today" ? "home-today-card" : "home-\(id)"]
         for _ in 0..<4 where !launcher.isHittable { app.swipeUp() }
         launcher.tap()
-        sleep(3)
+        // The journey's own screen, not just an app still in front: a launcher that did nothing would pass that.
+        let screen = destination(id, in: app)
+        XCTAssertTrue(screen.waitForExistence(timeout: 15), "\(id) opened its screen: \(app.debugDescription)")
+        // On top, once its push or cover has finished arriving. Today's first visit on a fresh simulator puts the
+        // system's Health Access sheet over it; that sheet is the screen working, and only a person can answer it.
+        let onTop = expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: screen)
+        let arrived = XCTWaiter().wait(for: [onTop], timeout: 5) == .completed
+        XCTAssertTrue(
+          arrived || (id == "today" && app.navigationBars["Health Access"].exists),
+          "\(id)'s screen is on top in landscape")
         XCTAssertEqual(app.state, .runningForeground, "\(id) opened without leaving or crashing the app")
       }
       if let shots {
@@ -33,6 +42,19 @@ final class IPadUITests: XCTestCase {
       }
       XCUIDevice.shared.orientation = .portrait
       app.terminate()
+    }
+  }
+
+  /// What each journey shows once it has opened (#203).
+  private func destination(_ id: String, in app: XCUIApplication) -> XCUIElement {
+    switch id {
+    case "call": return app.buttons["call-larry"]
+    case "today": return app.buttons["card-sleep"]  // a card is there with or without Health data
+    case "gym_timer": return app.buttons["timer-settings"]
+    case "breathe": return app.buttons["breathe-begin"]
+    case "places": return app.navigationBars["Places"]
+    case "cockpit": return app.buttons["cockpit-done"]
+    default: return app.descendants(matching: .any)["no-destination-for-\(id)"]
     }
   }
 }
