@@ -44,10 +44,6 @@ final class EulogyUITests: XCTestCase {
     XCTAssertTrue(toggle.waitForExistence(timeout: 10))
     XCTAssertTrue(waitFor(toggle, "label == 'Pause'", 5), toggle.label)
     XCTAssertGreaterThanOrEqual(seconds(elapsed.label), seconds(pausedAt), "resumed at \(elapsed.label), paused at \(pausedAt)")
-    // The song on Suno is still one tap away.
-    app.buttons["eulogy-song-suno"].tap()
-    XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "Open on Suno opened the browser")
-    safari.terminate()
   }
 
   /// #195: the scrubber moves the song, restart goes back to the start, and with the sheet closed the small
@@ -89,6 +85,22 @@ final class EulogyUITests: XCTestCase {
     XCTAssertTrue(copy.exists, app.debugDescription)
     copy.tap()
     XCTAssertTrue(app.buttons["Copied"].waitForExistence(timeout: 5))
+  }
+
+  /// #205: Open on Suno opens the song the post embeds, on suno.com, not the post it falls back to.
+  func testOpenOnSunoOpensTheSongNotThePost() throws {
+    let app = XCUIApplication()
+    app.launch()
+    row("eulogy_song", in: app).tap()
+    let suno = app.buttons["eulogy-song-suno"]
+    XCTAssertTrue(suno.waitForExistence(timeout: 10), app.debugDescription)
+    suno.tap()
+    XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "Open on Suno opened the browser")
+    // Safari's address bar, not the page: the post itself embeds a Suno player, so only the address can tell.
+    let address = safari.textFields["TabBarItemTitle"]
+    XCTAssertTrue(address.waitForExistence(timeout: 20), safari.debugDescription)
+    XCTAssertTrue(waitFor(address, "value CONTAINS[c] 'suno.com'", 20), "Safari is on \(address.value ?? "?")")
+    safari.terminate()
   }
 
   private func waitFor(_ element: XCUIElement, _ format: String, _ timeout: TimeInterval) -> Bool {
