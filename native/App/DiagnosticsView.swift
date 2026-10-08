@@ -56,10 +56,9 @@ struct DiagnosticsView: View {
           // #225: two pairs share a line, half each.
           ForEach(HomeLayout.lines(arrangement.rows), id: \.self) { line in
             if line.count == 2, let left = HomeRow.row(line[0]), let right = HomeRow.row(line[1]) {
-              HStack(spacing: 12) {
-                HomeRowButton(row: left, model: model).frame(maxWidth: .infinity, alignment: .leading)
-                Divider()
-                HomeRowButton(row: right, model: model).frame(maxWidth: .infinity, alignment: .leading)
+              HStack(spacing: 16) {
+                HomeRowButton(row: left, model: model, half: true).frame(maxWidth: .infinity, alignment: .leading)
+                HomeRowButton(row: right, model: model, half: true).frame(maxWidth: .infinity, alignment: .leading)
               }
               // Two buttons in one row: without this a tap anywhere fires both.
               .buttonStyle(.borderless)
@@ -187,7 +186,10 @@ private struct TodayCard: View {
     Button(action: open) {
       VStack(alignment: .leading, spacing: 10) {
         HStack {
-          Label("Today", systemImage: "heart.text.square").font(.headline)
+          HStack(spacing: 10) {
+            if let row = HomeRow.row("today") { LauncherIcon(row: row) }
+            Text("Today").font(.headline)
+          }
           Spacer()
           if let stamp = mirror.snapshot?.timestamp {
             Text("as of \(SummaryText.formatLocalTime(stamp, clock: mirror.clock))")
@@ -225,16 +227,19 @@ private struct TodayCard: View {
 private struct HomeRowButton: View {
   let row: HomeRow
   @ObservedObject var model: AppModel
+  /// Half of a shared line: the short name.
+  var half = false
 
   var body: some View {
     Button { row.open(model) } label: {
       if row.id == "call" {
         CallRow(call: model.call)
       } else {
-        Label(row.title, systemImage: row.icon).font(.body.weight(.semibold)).lineLimit(1)
-          .minimumScaleFactor(0.65).padding(.vertical, 2)
+        LauncherLabel(row: row, title: half ? row.short : row.title)
       }
     }
+    .foregroundStyle(.primary)
+    .accessibilityLabel(row.title)
     .accessibilityIdentifier("home-\(row.id)")
   }
 }
@@ -247,19 +252,20 @@ private struct HomeTile: View {
   var body: some View {
     Button { row.open(model) } label: {
       HStack(spacing: 10) {
-        Image(systemName: row.icon).font(.title3).frame(width: 26)
-        VStack(alignment: .leading, spacing: 2) {
-          Text(row.title).font(.headline).lineLimit(1).minimumScaleFactor(0.8)
+        LauncherIcon(row: row, size: 32)
+        VStack(alignment: .leading, spacing: 1) {
+          Text(row.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.85)
           if row.id == "call" { CallTileStatus(call: model.call) }
         }
+        Spacer(minLength: 0)
       }
-      .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-      .padding(.horizontal, 14)
-      .padding(.vertical, 8)
+      .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
+      .padding(.horizontal, 12)
+      .padding(.vertical, 10)
       .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
     }
     .buttonStyle(.plain)
-    .foregroundStyle(.tint)
+    .foregroundStyle(.primary)
     .accessibilityIdentifier("home-\(row.id)")
   }
 }
@@ -281,7 +287,7 @@ private struct CallRow: View {
 
   var body: some View {
     HStack {
-      Label("Call Larry", systemImage: "phone.fill").font(.title3.weight(.semibold))
+      if let row = HomeRow.row("call") { LauncherLabel(row: row) }
       Spacer()
       if call.snapshot.isActive {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -289,7 +295,21 @@ private struct CallRow: View {
         }
       }
     }
-    .padding(.vertical, 6)
+  }
+}
+
+/// A launcher in the rows: its icon square and its name, one size for every row so the pairs need not shrink.
+private struct LauncherLabel: View {
+  let row: HomeRow
+  var title: String? = nil
+
+  var body: some View {
+    HStack(spacing: 12) {
+      LauncherIcon(row: row)
+      Text(title ?? row.title).font(.subheadline.weight(.medium)).lineLimit(1)
+        .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }  // the separator starts under the name
+    }
+    .padding(.vertical, 2)
   }
 }
 
@@ -308,7 +328,10 @@ private struct HomeSettingsView: View {
           ForEach(model.homeLayout.order, id: \.self) { id in
             if let row = HomeRow.row(id) {
               Toggle(isOn: Binding(get: { model.homeLayout.isShown(id) }, set: { model.setHomeRow(id, shown: $0) })) {
-                Label(row.title, systemImage: row.icon)
+                HStack(spacing: 12) {
+                  LauncherIcon(row: row)
+                  Text(row.title)
+                }
               }
               .accessibilityIdentifier("home-row-\(id)")
             }

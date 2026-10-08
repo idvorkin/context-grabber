@@ -53,7 +53,12 @@ and points at the cog.
 - **The rest as rows** under the tiles, smaller than before, in the same order. Two pairs share one line, half
   each, when both are shown: **Exercise Analyzer** with **Workout Supermix**, and **Eulogy** with **Eulogy song**
   (#225). The pair sits where the first of the two comes in Igor's order, in that order; hiding one gives the other
-  the whole line back. A pair member that is one of the four tiles stays a tile.
+  the whole line back. A pair member that is one of the four tiles stays a tile. In half a line the two long
+  names are short: *Analyzer* and *Supermix*.
+- **How a launcher looks** (Igor, 2026-10-08: *"Doesn't it look bad? … think about making it good via
+  design"*): each launcher has its own colour, and only its icon carries it, as a white glyph on a small rounded
+  square, the way Settings draws its rows. The names are in the ordinary text colour, one size for every row so
+  nothing shrinks to fit. The same icons are on the Today card and in the cog's list of launchers.
 
 Order, hiding and Reset in the cog work as before: moving a launcher into the first four makes it a tile.
 
