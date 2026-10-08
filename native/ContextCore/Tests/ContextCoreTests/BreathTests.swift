@@ -247,6 +247,28 @@ final class BreathToneTests: XCTestCase {
     XCTAssertEqual(ActivityLog.breathName(plan), "Box breathing · 4/8 s · 5 cycles")
   }
 
+  /// #200: a fresh install chooses 12 s, then Custom, and moves only In to 4. Reopened, Custom is still 4/8: the
+  /// side never touched keeps its length instead of following the preset.
+  func testCustomKeepsItsUntouchedSideAcrossAReopen() {
+    var settings: [String: String] = [:]
+    func reopen() -> BreathSetup {
+      let (setup, seeds) = BreathSetup.restore { settings[$0] }
+      for seed in seeds { settings[seed.key] = seed.value }
+      return setup
+    }
+    XCTAssertEqual(reopen(), BreathSetup(preset: 8, customIn: 8, customOut: 8))
+    settings[BreathSetup.breathKey] = "12"  // the 12 s preset
+    settings[BreathSetup.customKey] = "1"  // then Custom
+    settings[BreathSetup.customInKey] = "4"  // In moved; Out untouched
+    XCTAssertEqual(reopen(), BreathSetup(preset: nil, customIn: 4, customOut: 8))
+  }
+
+  /// The old slider's length: its preset when it is one, else Custom at that length both ways.
+  func testTheOldSliderLengthCarriesOver() {
+    XCTAssertEqual(BreathSetup.restore { $0 == BreathSetup.breathKey ? "10" : nil }.setup, BreathSetup(preset: 10, customIn: 10, customOut: 10))
+    XCTAssertEqual(BreathSetup.restore { $0 == BreathSetup.breathKey ? "6" : nil }.setup, BreathSetup(preset: nil, customIn: 6, customOut: 6))
+  }
+
   func testCustomIsClampedAndPresetsAreEven() {
     let plan = BreathPlan(inSeconds: 1, outSeconds: 99, sessionMinutes: 5)
     XCTAssertEqual([plan.inSeconds, plan.outSeconds], [3, 15])
