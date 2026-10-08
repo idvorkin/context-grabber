@@ -94,6 +94,13 @@ struct DiagnosticsView: View {
         .accessibilityLabel("Home screen settings")
         .accessibilityIdentifier("home-settings")
       }
+      .overlay(alignment: .bottomLeading) {
+        if !model.showEulogySong {
+          EulogyMiniPlayer(song: model.eulogySong) { model.showEulogySongSheet(from: "mini") }
+            .padding(.leading, 20)
+            .padding(.bottom, 8)
+        }
+      }
       .sheet(isPresented: Binding(get: { model.showHomeSettings }, set: { if !$0 { model.closeHomeSettings() } })) {
         HomeSettingsView(model: model)
           // A sheet is its own presentation, as the covers are: the report sheet has to come from inside it.

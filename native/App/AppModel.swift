@@ -317,6 +317,13 @@ final class AppModel: ObservableObject {
     eulogySong.play(from: source)
   }
 
+  /// #195: the small player's tap brings the sheet back as the song is, playing or paused.
+  func showEulogySongSheet(from source: String) {
+    log.event("ui", ["action": "open_eulogy_song_sheet", "from": source])
+    screen = "eulogy_song"
+    showEulogySong = true
+  }
+
   static let eulogySongKey = "eulogy_song_url"
 
   /// Story 137: the song the eulogy post embeds today, on Suno; the last one found when the blog cannot be reached,

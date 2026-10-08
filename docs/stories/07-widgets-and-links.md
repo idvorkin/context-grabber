@@ -337,8 +337,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 137:
 
 - **Summary:** My eulogy, its song and the blog's recent changes, one tap each
-- **Issues:** [#177](https://github.com/idvorkin/context-grabber/issues/177)
-- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541), [2b75d3a](https://github.com/idvorkin/context-grabber/commit/2b75d3a); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (Eulogy and Recent bring Safari forward; the song plays in the app, pauses, resumes from where it was after the sheet closes, and Open on Suno opens the song the post embeds); the lock screen, playing on with the phone locked, and the phone not yet
+- **Issues:** [#177](https://github.com/idvorkin/context-grabber/issues/177), [#195](https://github.com/idvorkin/context-grabber/issues/195)
+- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541), [2b75d3a](https://github.com/idvorkin/context-grabber/commit/2b75d3a), [6dc7848](https://github.com/idvorkin/context-grabber/commit/6dc7848); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (Eulogy and Recent bring Safari forward; the song plays in the app, pauses, resumes from where it was after the sheet closes, and Open on Suno opens the song the post embeds; the scrubber moves it, restart plays from the start, and with the sheet closed the small player pauses in place, opens the sheet as it is, and its ✕ takes it away); the lock screen, playing on with the phone locked, and the phone not yet
 - **Spec:** [native Eulogy](../superpowers/specs/2026-10-07-native-eulogy-design.md)
 
 #### Use Case:
@@ -361,6 +361,16 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** I paused the song partway and closed the sheet
 - **When:** I tap *Eulogy song* again
 - **Then:** the sheet shows the same place and the song resumes from it, not from the start
+
+- **Scenario:** Scrub and restart
+- **Given:** the song's sheet is open
+- **When:** I drag the scrubber to the last chorus, or tap restart
+- **Then:** the song carries on from where I let go (still playing, or still paused), or plays from the start
+
+- **Scenario:** The small player
+- **Given:** the song is playing or paused partway and I closed its sheet
+- **When:** I look at the home screen
+- **Then:** a small player sits in the bottom-left corner with the song's place and play/pause; tapping it opens the sheet, its ✕ stops the song and it goes away, and it goes away by itself when the song ends
 
 - **Scenario:** The song on Suno
 - **Given:** the eulogy post embeds a Suno song
