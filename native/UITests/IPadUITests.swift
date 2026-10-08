@@ -11,13 +11,18 @@ final class IPadUITests: XCTestCase {
       let app = XCUIApplication()
       app.launch()
       XCUIDevice.shared.orientation = .landscapeLeft
-      let row = app.buttons["home-call"]
-      XCTAssertTrue(row.waitForExistence(timeout: 15), app.debugDescription)
+      // Today is the card across the top (story 151); the launchers below it are half-width tiles and rows.
+      let today = app.buttons["home-today-card"]
+      XCTAssertTrue(today.waitForExistence(timeout: 15), app.debugDescription)
       if id == "home" {
-        // An iPad app, not a phone-sized window: the row spans most of the screen's width.
-        XCTAssertGreaterThan(row.frame.width, app.windows.firstMatch.frame.width * 0.8, app.debugDescription)
+        // An iPad app, not a phone-sized window: the Today card spans most of the screen's width (the screen, not the
+        // app's window, which shrinks with a phone-only app), once the turn to landscape has settled.
+        let screen = XCUIApplication(bundleIdentifier: "com.apple.springboard").windows.firstMatch.frame
+        let wide = max(screen.width, screen.height) * 0.8
+        for _ in 0..<10 where today.frame.width <= wide { usleep(300_000) }
+        XCTAssertGreaterThan(today.frame.width, wide, "Today \(today.frame) on a \(screen) screen")
       } else {
-        let launcher = app.buttons["home-\(id)"]
+        let launcher = app.buttons[id == "today" ? "home-today-card" : "home-\(id)"]
         for _ in 0..<4 where !launcher.isHittable { app.swipeUp() }
         launcher.tap()
         sleep(3)
