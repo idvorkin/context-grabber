@@ -36,6 +36,9 @@ targets:
       # The other count voices (story 182): <voice>-<cue>.wav, rendered by scripts/make-timer-voice.sh.
       - path: ../assets/audio/timer-voices
         buildPhase: resources
+      # Story 137: the eulogy song, Igor's download of it from Suno (the post's song as of 2026-10-07).
+      - path: ../assets/audio/eulogy
+        buildPhase: resources
       # The mirror's fixture week, for the simulator hook (GRABBER_MIRROR); the host tests read the same file.
       - path: ContextCore/Tests/ContextCoreTests/Fixtures/mirror-fixture.json
         buildPhase: resources
