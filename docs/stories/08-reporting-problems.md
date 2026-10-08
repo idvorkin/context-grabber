@@ -242,6 +242,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 150:
 
 - **Summary:** Grabber Native on the iPad
+- **Issues:** [#202](https://github.com/idvorkin/context-grabber/issues/202)
 - **Status:** implemented in [2c2a6ee](https://github.com/idvorkin/context-grabber/commit/2c2a6ee); verified by `IPadUITests` on an iPad Air 11-inch simulator (home spans the width in landscape; Call, Today, Gym Timer, Box breathing, Places and Cockpit open in landscape, screenshots checked) and a portrait screenshot; on Igor's iPad not yet (its id is not in the provisioning profile until Xcode is signed in)
 - **Spec:** [Swift-native app, "On the iPad"](../superpowers/specs/2026-10-04-swift-native-app-design.md)
 
