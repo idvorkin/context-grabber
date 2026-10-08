@@ -285,7 +285,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 243:
 
 - **Summary:** Workout Supermix from the native home screen
-- **Status:** native app only: implemented in COMMIT; verified by `WorkoutSupermixUITests` on the simulator (tap the row, Shortcuts runs in front; the simulator has no such shortcut); YouTube Music playing the mix on the phone not yet
+- **Status:** native app only: implemented in [fae3e8c](https://github.com/idvorkin/context-grabber/commit/fae3e8c); verified by `WorkoutSupermixUITests` on the simulator (tap the row, Shortcuts runs in front; the simulator has no such shortcut); YouTube Music playing the mix on the phone not yet
 - **Issues:** [#220](https://github.com/idvorkin/context-grabber/issues/220)
 - **Spec:** [Swift-native app — Workout Supermix, one tap away](../superpowers/specs/2026-10-04-swift-native-app-design.md#workout-supermix-one-tap-away)
 
