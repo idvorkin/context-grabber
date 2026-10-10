@@ -34,40 +34,37 @@ struct DiagnosticsView: View {
             .buttonStyle(.borderless)
           }
         }
-        // Story 151 (#189): the mirror first, then the daily four as tiles, then the rest as rows.
+        // Story 151 (#189): the mirror first, then the launchers as tiles.
         let arrangement = model.homeLayout.arrangement
         if arrangement.todayCard {
           Section {
             TodayCard(mirror: model.mirror) { model.openToday(from: "home_card") }
           }
         }
-        if !arrangement.tiles.isEmpty {
-          Section {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-              ForEach(arrangement.tiles, id: \.self) { id in
-                if let row = HomeRow.row(id) { HomeTile(row: row, model: model) }
-              }
-            }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-          }
-        }
+        // #235: one look for every launcher. The four two by two, then the rest in order: a pair is two tiles
+        // like the four's, a launcher alone one tile the width of two.
         Section {
-          // #225: two pairs share a line, half each.
-          ForEach(HomeLayout.lines(arrangement.rows), id: \.self) { line in
-            if line.count == 2, let left = HomeRow.row(line[0]), let right = HomeRow.row(line[1]) {
-              HStack(spacing: 16) {
-                HomeRowButton(row: left, model: model, half: true).frame(maxWidth: .infinity, alignment: .leading)
-                HomeRowButton(row: right, model: model, half: true).frame(maxWidth: .infinity, alignment: .leading)
+          let lines = stride(from: 0, to: arrangement.tiles.count, by: 2).map {
+            Array(arrangement.tiles[$0..<min($0 + 2, arrangement.tiles.count)])
+          } + HomeLayout.lines(arrangement.rows)
+          VStack(spacing: 12) {
+            ForEach(lines, id: \.self) { line in
+              HStack(spacing: 12) {
+                ForEach(line, id: \.self) { id in
+                  if let row = HomeRow.row(id) {
+                    HomeTile(row: row, model: model, half: line.count == 2 && !arrangement.tiles.contains(id))
+                  }
+                }
+                // One of the four left alone (the rest hidden) keeps its half, so it still lines up.
+                if line.count == 1, arrangement.tiles.contains(line[0]) { Color.clear.frame(maxWidth: .infinity) }
               }
-              // Two buttons in one row: without this a tap anywhere fires both.
-              .buttonStyle(.borderless)
-            } else if let id = line.first, let row = HomeRow.row(id) {
-              HomeRowButton(row: row, model: model)
             }
           }
+          .listRowInsets(EdgeInsets())
+          .listRowBackground(Color.clear)
           if model.homeLayout.visible.isEmpty {
             Text("Every launcher is hidden. The cog brings them back.").foregroundStyle(.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading)
           }
         } footer: {
           // What a tap could not do (an app not installed) or what a report did.
@@ -173,7 +170,6 @@ struct DiagnosticsView: View {
   }
 }
 
-/// The home screen's Call row: *Call Larry* idle, the live line while a call is up.
 /// Story 151: the last grab on the home screen. Never grabs itself (so opening the app asks Health nothing); a tap
 /// opens Today, which does.
 private struct TodayCard: View {
@@ -223,38 +219,20 @@ private struct TodayCard: View {
   }
 }
 
-/// One launcher in the rows, alone on its line or half of a pair (#225).
-private struct HomeRowButton: View {
-  let row: HomeRow
-  @ObservedObject var model: AppModel
-  /// Half of a shared line: the short name.
-  var half = false
-
-  var body: some View {
-    Button { row.open(model) } label: {
-      if row.id == "call" {
-        CallRow(call: model.call)
-      } else {
-        LauncherLabel(row: row, title: half ? row.short : row.title)
-      }
-    }
-    .foregroundStyle(.primary)
-    .accessibilityLabel(row.title)
-    .accessibilityIdentifier("home-\(row.id)")
-  }
-}
-
-/// Story 151: one of the daily four, big enough to hit without looking; one line tall (#225).
+/// Story 151: a launcher on the home screen, big enough to hit without looking; one line tall (#225), and the
+/// same for the four and the rest (#235).
 private struct HomeTile: View {
   let row: HomeRow
   @ObservedObject var model: AppModel
+  /// Half of a shared line (#225): the short name.
+  var half = false
 
   var body: some View {
     Button { row.open(model) } label: {
       HStack(spacing: 10) {
         LauncherIcon(row: row, size: 32)
         VStack(alignment: .leading, spacing: 1) {
-          Text(row.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.85)
+          Text(half ? row.short : row.title).font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.85)
           if row.id == "call" { CallTileStatus(call: model.call) }
         }
         Spacer(minLength: 0)
@@ -266,6 +244,7 @@ private struct HomeTile: View {
     }
     .buttonStyle(.plain)
     .foregroundStyle(.primary)
+    .accessibilityLabel(row.title)
     .accessibilityIdentifier("home-\(row.id)")
   }
 }
@@ -279,37 +258,6 @@ private struct CallTileStatus: View {
         Text(call.status(now: context.date)).font(.caption.monospacedDigit()).foregroundStyle(.green)
       }
     }
-  }
-}
-
-private struct CallRow: View {
-  @ObservedObject var call: CallModel
-
-  var body: some View {
-    HStack {
-      if let row = HomeRow.row("call") { LauncherLabel(row: row) }
-      Spacer()
-      if call.snapshot.isActive {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-          Text(call.status(now: context.date)).font(.footnote.monospacedDigit()).foregroundStyle(.green)
-        }
-      }
-    }
-  }
-}
-
-/// A launcher in the rows: its icon square and its name, one size for every row so the pairs need not shrink.
-private struct LauncherLabel: View {
-  let row: HomeRow
-  var title: String? = nil
-
-  var body: some View {
-    HStack(spacing: 12) {
-      LauncherIcon(row: row)
-      Text(title ?? row.title).font(.subheadline.weight(.medium)).lineLimit(1)
-        .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }  // the separator starts under the name
-    }
-    .padding(.vertical, 2)
   }
 }
 

@@ -50,7 +50,10 @@ and points at the cog.
   order (Today itself is skipped, since the card is Today). Each tile is the launcher's icon beside its name, one
   line tall, so the tiles take little height (Igor, 2026-10-08, #225: *"a little bit thinner so I have more
   available vertical space"*); Call Larry's tile still shows a live call's state under its name.
-- **The rest as rows** under the tiles, smaller than before, in the same order. Two pairs share one line, half
+- **The rest as tiles too**, under the four, in the same order (Igor, iPad, 2026-10-10, #235: *"if I have two
+  things on a row, they should look like the two things at the top of the boxes so they're consistent"*). One
+  look for every launcher: a launcher alone on its line is one tile the width of two; a pair is two tiles side by
+  side, exactly like the four. No grouped list under the tiles. Two pairs share one line, half
   each, when both are shown: **Exercise Analyzer** with **Workout Supermix**, and **Eulogy** with **Eulogy song**
   (#225). The pair sits where the first of the two comes in Igor's order, in that order; hiding one gives the other
   the whole line back. A pair member that is one of the four tiles stays a tile. In half a line the two long
@@ -101,3 +104,5 @@ Order, hiding and Reset in the cog work as before: moving a launcher into the fi
 - The build, the log, the gist token and *Report a problem* are reachable from the sheet, and a shake with the
   sheet up files a report.
 - A hidden journey still opens from its link, Shortcut or launch hook.
+- Every launcher under the Today card is a tile of the same look: the four two by two, a lone launcher one wide
+  tile, a pair two tiles side by side the width of the four's (#235).
