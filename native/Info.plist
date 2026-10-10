@@ -7,7 +7,9 @@
 	<key>GitBranch</key>
 	<string>$(GIT_BRANCH)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Grabber Native uses the microphone for calls with Larry.</string>
+	<string>Grabber Native uses the microphone for calls with Larry and to speak a problem report.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Speaking a problem report turns your words into the report's note, on the phone when it can.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Grabber Native reads your steps, heart rate, sleep, workouts, mindful minutes and weight to show your week and share it with your coach.</string>
 	<key>NSHealthUpdateUsageDescription</key>

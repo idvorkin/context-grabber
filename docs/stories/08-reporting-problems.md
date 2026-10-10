@@ -47,8 +47,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 142:
 
 - **Summary:** Report a problem in five seconds with the evidence attached
-- **Issues:** [#182](https://github.com/idvorkin/context-grabber/issues/182) (a shake did nothing while a sheet was up)
-- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written) and on the phone (2026-10-04: a shake, a note, the report and its screenshot pulled back); over a sheet (#182): [19f4b7c](https://github.com/idvorkin/context-grabber/commit/19f4b7c), verified by `ShakeOverSheetUITests` on the simulator (the report twice over the cog's sheet, the sheet still there after Cancel; the log's `over`); a real shake over a dialog on the phone not yet; *Log it and another* [a85e228](https://github.com/idvorkin/context-grabber/commit/a85e228), verified by `LogItAndAnotherUITests` on the simulator (two reports stored, each with its own note and picture, the second opened empty with no shake)
+- **Issues:** [#182](https://github.com/idvorkin/context-grabber/issues/182) (a shake did nothing while a sheet was up), [#239](https://github.com/idvorkin/context-grabber/issues/239) (speak the note)
+- **Status:** implemented in [89da016](https://github.com/idvorkin/context-grabber/commit/89da016); verified on the simulator (`GRABBER_BUG` hook: the report, its screenshot and the log's name are written) and on the phone (2026-10-04: a shake, a note, the report and its screenshot pulled back); over a sheet (#182): [19f4b7c](https://github.com/idvorkin/context-grabber/commit/19f4b7c), verified by `ShakeOverSheetUITests` on the simulator (the report twice over the cog's sheet, the sheet still there after Cancel; the log's `over`); a real shake over a dialog on the phone not yet; *Log it and another* [a85e228](https://github.com/idvorkin/context-grabber/commit/a85e228), verified by `LogItAndAnotherUITests` on the simulator (two reports stored, each with its own note and picture, the second opened empty with no shake). Speak the note (#239): COMMIT; verified by `ReportDictationUITests` on the simulator (the mic button sits beside the note, on with no call) and its screenshot read by eye; the permission prompts, the spoken words, the music carrying on and the button off during a call are the phone's to check, not yet
 
 #### Use Case:
 - **As someone** who just saw the app do something wrong
@@ -65,6 +65,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a report is open with a note typed
 - **When:** I tap *Log it and another*, type a second note and tap *Log it*
 - **Then:** two reports are stored, each with its own note and picture, and the second report opened empty without another shake
+
+- **Scenario:** Speaking the note
+- **Given:** the report is open, with or without words typed, and no call is up
+- **When:** I tap the microphone and say "the timer skipped the rest", then tap it again
+- **Then:** the words appear in the note as I say them, after anything I had typed; music that was playing keeps playing; the log has `dictation_start` and `dictation_stop`; and during a call the microphone button is off
 
 - **Scenario:** A shake over a dialog
 - **Given:** a sheet is up — the home screen's cog, Today's settings, the timer's settings, a Places naming sheet
