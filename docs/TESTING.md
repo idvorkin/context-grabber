@@ -29,7 +29,11 @@ tables below move here.
 
 The phone recipes (`native-run-device`, `pull-logs`, `bugs-check`) need the iPhone's hardware UDID: `DEVICE=<udid>`
 in the environment, or one line in `scripts/native/phone-udid.local`, which is gitignored because the repo is
-public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so.
+public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so. `pull-logs`,
+`bugs-check` and `file-bugs` cover the iPad too: its id is `IPAD=<udid>` or one line in the gitignored
+`scripts/native/ipad-udid.local`. Each device's logs, reports and screenshots land in
+`~/tmp/agent/grabber-logs/<phone|ipad>/`, and an issue filed from the iPad says *Report from the iPad*. A device
+that is not plugged in or reachable is named and skipped.
 
 The simulator cannot be shaken or tapped from a script, so the app reads **launch hooks** from the environment
 (pass them through `simctl` as `SIMCTL_CHILD_<name>`); checks wait for an event in a *new* launch's log instead of
