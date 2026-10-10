@@ -299,7 +299,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** A daily strip: gym, journal, balloons and magic, at a glance
 - **Issues:** [#236](https://github.com/idvorkin/context-grabber/issues/236), [#238](https://github.com/idvorkin/context-grabber/issues/238)
-- **Status:** implemented in COMMIT; verified by `DailyStripTests` and `HomeLayoutTests` (host: values by day, never below 0, gym days from a tap, the timer or a strength workout, days since gym across the clock change) and `DailyStripUITests` on the simulator (above the tiles, one line, a tap adds a balloon, a long press takes one off, the journal check flips and back); a Gym Timer workout or a Health strength workout checking gym on the phone not yet
+- **Status:** implemented in [364d3fa](https://github.com/idvorkin/context-grabber/commit/364d3fa); verified by `DailyStripTests` and `HomeLayoutTests` (host: values by day, never below 0, gym days from a tap, the timer or a strength workout, days since gym across the clock change) and `DailyStripUITests` on the simulator (above the tiles, one line, a tap adds a balloon, a long press takes one off, the journal check flips and back); a Gym Timer workout or a Health strength workout checking gym on the phone not yet
 - **Spec:** [native home screen, "The daily strip"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
