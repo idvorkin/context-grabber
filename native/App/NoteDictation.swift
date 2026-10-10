@@ -3,6 +3,7 @@
 //  was afterwards, so music keeps playing and the Gym Timer's session carries on.
 
 import AVFoundation
+import ContextCore
 import Speech
 
 @MainActor
@@ -16,8 +17,8 @@ final class NoteDictation: ObservableObject {
   private var request: SFSpeechAudioBufferRecognitionRequest?
   private var task: SFSpeechRecognitionTask?
   private var saved: (category: AVAudioSession.Category, mode: AVAudioSession.Mode, options: AVAudioSession.CategoryOptions)?
-  /// The note as it was when listening began; the words go after it.
-  private var before = ""
+  /// The note as it was when listening began, then each finished stretch of speech (#249).
+  private var join = DictationJoin(typed: "")
   private var onText: ((String) -> Void)?
 
   init(log: SessionLog) { self.log = log }
@@ -75,15 +76,28 @@ final class NoteDictation: ObservableObject {
     }
     self.request = request
     self.onText = onText
-    before = note.trimmingCharacters(in: .whitespacesAndNewlines)
+    join = DictationJoin(typed: note)
     listening = true
     log.event("dictation_start", ["on_device": request.requiresOnDeviceRecognition, "route": AudioReset.state().line])
     task = recognizer.recognitionTask(with: request) { result, error in
       let text = result?.bestTranscription.formattedString
+      let segments = result?.bestTranscription.segments ?? []
+      let firstStart = segments.first?.timestamp ?? 0
+      let lastEnd = segments.last.map { $0.timestamp + $0.duration } ?? 0
       let final = result?.isFinal ?? false
       Task { @MainActor in
         guard self.listening else { return }
-        if let text { self.onText?(self.before.isEmpty ? text : "\(self.before) \(text)") }
+        if let text {
+          let was = self.join.current
+          let wasEnd = self.join.currentEnd
+          // #249: after a pause the recogniser may start over; the stretch before is kept, never replaced.
+          if self.join.update(text: text, firstStart: firstStart, lastEnd: lastEnd) {
+            self.log.event(
+              "dictation_pause",
+              ["kept_chars": was.count, "new_chars": text.count, "prev_end_s": wasEnd, "new_start_s": firstStart])
+          }
+          self.onText?(self.join.note)
+        }
         if let error, !final {
           self.log.event("dictation_error", ["error": "\(error)"])
           self.stop(why: "error")
