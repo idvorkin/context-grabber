@@ -107,6 +107,34 @@ final class WhatsNewTests: XCTestCase {
     XCTAssertEqual(days[0].items[0].caption, "Story 147 · #166")
   }
 
+  // #246: a subject naming no story reaches one through its message, or through its issue's story.
+  func testASubjectWithoutAStoryFindsItInTheMessageOrThroughItsIssue() {
+    let markdown = """
+      ### User Story 198:
+      - **Summary:** A call heals
+      - **Issues:** [#197](x), [#198](y)
+      """
+    let issueStories = WhatsNew.issueStories(fromMarkdown: markdown)
+    XCTAssertEqual(issueStories, [197: 198, 198: 198])
+    let commits = [
+      WhatsNew.Commit(
+        sha: "c", date: at("2026-10-06T17:00:00Z"), subject: "Native Cockpit: Back in the footer",
+        body: "Opening Lavish left no way back. Story 200.\n\nCloses #234"),
+      WhatsNew.Commit(sha: "b", date: at("2026-10-06T16:00:00Z"), subject: "Native: a stale retry no longer ends a call (#198)"),
+      WhatsNew.Commit(sha: "a", date: at("2026-10-06T15:00:00Z"), subject: "Native: tidy the timer", body: "No story here."),
+      WhatsNew.Commit(sha: "m", date: at("2026-10-06T14:00:00Z"), subject: "Merge pull request #9", body: "Story 200"),
+    ]
+    let items = WhatsNew.build(
+      commits: commits, stories: [:], issueStories: issueStories, now: at("2026-10-06T20:00:00Z"), timeZone: la
+    ).first?.items ?? []
+    XCTAssertEqual(items.map(\.sha), ["c", "b"], "no story by any route, or a merge, does not show")
+    XCTAssertEqual(items[0].story, 200)
+    XCTAssertEqual(items[0].text, "Native Cockpit: Back in the footer")
+    XCTAssertEqual(items[1].story, 198)
+    XCTAssertEqual(items[1].issue, 198)
+    XCTAssertEqual(items[1].text, "Native: a stale retry no longer ends a call")
+  }
+
   func testAStoryWithoutAMarkdownSummaryShowsTheSubjectsWords() {
     let days = WhatsNew.build(
       commits: [.init(sha: "a", date: at("2026-10-06T15:00:00Z"), subject: "Story 240 (#147): a thicker ring")],

@@ -68,6 +68,8 @@ newest day. A tap on a change is logged (`ui`, action open_story) with the story
 - A build lists the last thirty days of story changes, by day, newest first, with no one editing a list.
 - A commit starting *Story NNN* shows that story's summary; a commit naming its stories in brackets shows its
   own title without them; status and merge commits never show.
+- A commit whose title names no story still shows, under its own title, when its message names the story or its
+  title names an issue that a story lists (#246); a commit that reaches no story by any of these does not show.
 - The same story twice on one day is one line; on two days it is a line on each.
 - The issue number shows when the commit or its story names one.
 - The home row names the newest day and its first change, with an ✕; opening it keeps it, ✕ removes it until a

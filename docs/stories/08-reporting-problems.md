@@ -194,8 +194,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 148:
 
 - **Summary:** What's new, by day, written by the build itself
-- **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165), [#232](https://github.com/idvorkin/context-grabber/issues/232)
-- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor; the ✕ and the cog's row verified by `WhatsNewSeenUITests` and `WhatsNewTests` on the simulator: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a). Each change opens its story (#232): [5227ba9](https://github.com/idvorkin/context-grabber/commit/5227ba9); verified by `WhatsNewTests` (host: the link to the story's own heading, every real story file, an older feed without links) and `WhatsNewStoryLinkUITests` on the simulator (a tap opens Safari)
+- **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165), [#232](https://github.com/idvorkin/context-grabber/issues/232), [#246](https://github.com/idvorkin/context-grabber/issues/246)
+- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor; the ✕ and the cog's row verified by `WhatsNewSeenUITests` and `WhatsNewTests` on the simulator: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a). Each change opens its story (#232): [5227ba9](https://github.com/idvorkin/context-grabber/commit/5227ba9); verified by `WhatsNewTests` (host: the link to the story's own heading, every real story file, an older feed without links) and `WhatsNewStoryLinkUITests` on the simulator (a tap opens Safari). A commit naming its story only in its message or through its issue still shows (#246): [6b1d0aa](https://github.com/idvorkin/context-grabber/commit/6b1d0aa); verified by `WhatsNewTests` (host) and the build script run on this repository's history (newest day Oct 10 rather than Oct 7: 6 days, 41 changes)
 
 #### Use Case:
 - **As someone** who installs a new build of the native app most days
@@ -211,7 +211,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** The list by day
 - **Given:** the last thirty days hold story changes on several days, some with status follow-ups and merges
 - **When:** I tap *What's new*
-- **Then:** I see one section per day, newest first, each change once per story per day with its story and issue under it, no status or merge lines, and the log has `ui` open_whats_new
+- **Then:** I see one section per day, newest first, each change once per story per day with its story and issue under it, no status or merge lines, and the log has `ui` open_whats_new; a change whose title names no story is still there when its message names the story or its issue belongs to one
 
 - **Scenario:** A change opens its story
 - **Given:** What's new is open

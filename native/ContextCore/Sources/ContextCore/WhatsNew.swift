@@ -68,11 +68,14 @@ public enum WhatsNew {
     public var sha: String
     public var date: Date
     public var subject: String
+    /// The message under the subject, where a commit may name its story instead (#246).
+    public var body: String
 
-    public init(sha: String, date: Date, subject: String) {
+    public init(sha: String, date: Date, subject: String, body: String = "") {
       self.sha = sha
       self.date = date
       self.subject = subject
+      self.body = body
     }
   }
 
@@ -112,6 +115,42 @@ public enum WhatsNew {
     pattern: #"\s*\((?:story|stories)\s+(\d+)([^)]*)\)"#, options: [.caseInsensitive])
   private static let bracketIssue = try! NSRegularExpression(pattern: #"\s*\(#(\d+)\)"#)
   private static let hashNumber = try! NSRegularExpression(pattern: #"#(\d+)"#)
+  private static let storyInBody = try! NSRegularExpression(
+    pattern: #"\bstor(?:y|ies)\s+(\d{3})\b"#, options: [.caseInsensitive])
+
+  /// #246: a subject naming no story still reaches one through the message ("Story 200.") or through the issue
+  /// it names, which a story's Issues line lists. Shown under its own words, since it is the change itself.
+  public static func parse(subject raw: String, body: String, issueStories: [Int: Int]) -> Parsed? {
+    if let parsed = parse(subject: raw) { return parsed }
+    let subject = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    if subject.isEmpty || matches(bookkeeping, subject) != nil { return nil }
+    var text = subject
+    var issue: Int?
+    if let i = matches(bracketIssue, text) {
+      issue = group(i, 1, text).flatMap(Int.init)
+      text = remove(i, from: text)
+    }
+    let named = matches(storyInBody, body).flatMap { group($0, 1, body) }.flatMap(Int.init)
+    guard let story = named ?? issue.flatMap({ issueStories[$0] }) else { return nil }
+    return Parsed(story: story, text: sentence(text), issue: issue, leading: false)
+  }
+
+  /// Each issue a story's Issues line lists → that story; an issue two stories list goes to the first.
+  public static func issueStories(fromMarkdown markdown: String) -> [Int: Int] {
+    var out: [Int: Int] = [:]
+    var current: Int?
+    for line in markdown.split(separator: "\n", omittingEmptySubsequences: false) {
+      let text = line.trimmingCharacters(in: .whitespaces)
+      if text.hasPrefix("### User Story ") {
+        current = Int(text.dropFirst("### User Story ".count).prefix { $0.isNumber })
+      } else if let id = current, let issues = field("Issues", in: text) {
+        for m in hashNumber.matches(in: issues, range: NSRange(issues.startIndex..., in: issues)) {
+          if let n = group(m, 1, issues).flatMap(Int.init), out[n] == nil { out[n] = id }
+        }
+      }
+    }
+    return out
+  }
 
   /// Nil for a subject that is no story's change: bookkeeping, or no story named.
   public static func parse(subject raw: String) -> Parsed? {
@@ -173,7 +212,8 @@ public enum WhatsNew {
   /// Commits newest first (as `git log` gives them) → days newest first, one line per story per day, within
   /// `days` days of `now`.
   public static func build(
-    commits: [Commit], stories: [Int: Story], now: Date, days: Int = 30, timeZone: TimeZone = .current
+    commits: [Commit], stories: [Int: Story], issueStories: [Int: Int] = [:], now: Date, days: Int = 30,
+    timeZone: TimeZone = .current
   ) -> [WhatsNewDay] {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = timeZone
@@ -188,7 +228,7 @@ public enum WhatsNew {
     var byDay: [String: [WhatsNewItem]] = [:]
     var seen = Set<String>()
     for commit in commits.sorted(by: { $0.date > $1.date }) where commit.date >= since && commit.date <= now {
-      guard let parsed = parse(subject: commit.subject) else { continue }
+      guard let parsed = parse(subject: commit.subject, body: commit.body, issueStories: issueStories) else { continue }
       let day = dayFormat.string(from: commit.date)
       guard seen.insert("\(day)/\(parsed.story)").inserted else { continue }
       let story = stories[parsed.story]
