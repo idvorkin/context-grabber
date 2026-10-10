@@ -48,6 +48,13 @@ Everything the four specs above promise, with the tab replaced by a screen:
 - **A screen, not a tab.** The native app has a home screen while journeys move over; *Cockpit* is a row on it.
   It opens full screen. There is still no header: a slim footer carries **Done**, which returns home — the native
   app's equivalent of "just the footer is fine".
+- **Back inside the Cockpit** (Igor, iPad, 2026-10-10, #234: *"When I am in the cockpit and I open the Lavish, or
+  I open a blog, or I open something else, I can't go back … At the weakest I need a back button."*). A page the
+  dashboard opens on its own machine (Lavish, a blog proposal, another tool) opens in place, so the footer has a
+  **Back** button, shown whenever there is a page to go back to; it goes back one page, as Safari's does. Beside
+  it, **Cockpit** takes the dashboard back to its start page in one tap. *Done* no longer wears a back arrow, since
+  it is not back: it leaves the Cockpit. Each page the Cockpit lands on, and each Back or Cockpit tap, goes into the
+  session log with its address. Tabs are not part of this: Back covers the case.
 - **Leaving keeps the page.** *Done* hides the Cockpit; it does not close it. Opening it again in the same launch
   shows the dashboard exactly as it was — scroll, expanded rows, a recording in progress — with no reload, as
   switching tabs did. A new launch loads it fresh.
@@ -129,6 +136,9 @@ Acceptance (strip):
    Tailscale back, Try again loads the page without restarting the app.
 6. A live call in the page keeps the screen lit past the auto-lock interval; with no call the screen locks.
 7. An off-Cockpit link opens Safari and leaves the dashboard in place.
+8. Open a page the dashboard links to on its own machine: the footer shows **Back**; Back returns to the dashboard
+   and the button goes; **Cockpit** returns to the start page from any depth; the log has `cockpit_page` for each
+   page and `cockpit_back` / `cockpit_home` for each tap.
 8. The session log of a launch that opened the Cockpit shows the load (ok and milliseconds, or the error), the
    bridge's `audio.ready`, each request and its answer, and the device roster.
 9. On the simulator, a test page speaking the bridge receives a device list with at least one microphone, and its

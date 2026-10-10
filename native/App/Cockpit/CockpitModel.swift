@@ -18,6 +18,11 @@ final class CockpitModel: NSObject, ObservableObject {
 
   @Published private(set) var loading = true
   @Published private(set) var error: LoadError?
+  /// #234: a page the dashboard opened in place can be backed out of.
+  @Published private(set) var canGoBack = false
+  /// The page in front is not the dashboard's start page.
+  @Published private(set) var awayFromHome = false
+  private var backObservation: NSKeyValueObservation?
 
   private let log: SessionLog
   private let route: AudioRouteController
@@ -73,6 +78,10 @@ final class CockpitModel: NSObject, ObservableObject {
 
     let web = WKWebView(frame: .zero, configuration: config)
     web.navigationDelegate = self
+    // Back-forward list changes (including the page's own pushState) move canGoBack without a didFinish.
+    backObservation = web.observe(\.canGoBack, options: [.new]) { [weak self] web, _ in
+      Task { @MainActor in self?.canGoBack = web.canGoBack }
+    }
     web.uiDelegate = self
     web.allowsBackForwardNavigationGestures = true
     web.isOpaque = false
@@ -235,6 +244,31 @@ extension CockpitModel: WKScriptMessageHandler {
   }
 }
 
+extension CockpitModel {
+  /// #234: one page back, as Safari's Back.
+  func goBack() {
+    log.event("cockpit_back", ["from": webView.url?.absoluteString ?? "", "to": webView.backForwardList.backItem?.url.absoluteString ?? ""])
+    webView.goBack()
+  }
+
+  /// #234: straight to the dashboard's start page, from any depth.
+  func goHome() {
+    guard let loadURL else { return }
+    log.event("cockpit_home", ["from": webView.url?.absoluteString ?? ""])
+    if let first = webView.backForwardList.backList.first, isStartPage(first.url) {
+      webView.go(to: first)
+    } else {
+      webView.load(URLRequest(url: loadURL))
+    }
+  }
+
+  /// The dashboard's own page: the start address's host and path (the query carries the client tag).
+  func isStartPage(_ url: URL) -> Bool {
+    guard let loadURL else { return false }
+    return url.host == loadURL.host && url.path == loadURL.path
+  }
+}
+
 extension CockpitModel: WKNavigationDelegate {
   func webView(
     _ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
@@ -275,6 +309,9 @@ extension CockpitModel: WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    canGoBack = webView.canGoBack
+    awayFromHome = webView.url.map { !isStartPage($0) } ?? false
+    log.event("cockpit_page", ["url": webView.url?.absoluteString ?? "", "can_go_back": webView.canGoBack])
     if let http = pendingHTTPError {
       fail(http)
       return

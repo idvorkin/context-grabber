@@ -397,7 +397,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 200:
 
 - **Summary:** In Grabber Native the Cockpit is a full-screen page from the home screen, and Done keeps it
-- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet
+- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet. Back and Cockpit in the footer (#234): [c1c6e53](https://github.com/idvorkin/context-grabber/commit/c1c6e53); verified by `CockpitBackUITests` on the simulator (a page the stand-in Cockpit opened in place shows Back, Back returns and the button goes, Cockpit returns from two pages deep, Done leaves) and `CockpitCallUITests` still passing
+- **Issues:** [#234](https://github.com/idvorkin/context-grabber/issues/234)
 - **Spec:** [native Cockpit](../superpowers/specs/2026-10-05-native-cockpit-design.md)
 
 #### Use Case:
@@ -410,6 +411,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** I opened *Cockpit* on Grabber Native's home screen, scrolled down and expanded a row
 - **When:** I tap *Done* in the footer and then *Cockpit* again
 - **Then:** the dashboard is at the same place with the row expanded and no loading flash; the page's address carries `client=context-grabber` with the native build, its pickers list the phone's microphones and outputs
+
+- **Scenario:** Back from a page the Cockpit opened
+- **Given:** I opened Lavish (or a blog proposal) from the dashboard, and it opened in place
+- **When:** I tap *Back* in the footer, or *Cockpit* from a page or two deeper
+- **Then:** Back goes one page back and disappears on the dashboard, Cockpit goes straight to the dashboard, *Done* still leaves the Cockpit, and the session log has `cockpit_page`, `cockpit_back` and `cockpit_home` with the addresses
 
 - **Scenario:** The page's ☎ stays in the app
 - **Given:** Grabber Native's Cockpit is open and no call is up
