@@ -82,7 +82,14 @@ at the shake, the screen Igor was on, the build, and the name and moment of the 
 report becomes one GitHub issue with the note and the context; filing twice never makes two issues.
 *Log it and another*, right under the note where the keyboard cannot hide it, stores the report exactly the same way and opens a fresh, empty
 report straight away, with a new picture of the screen underneath, so several problems can be filed in a row
-without shaking again (Igor, 2026-10-07). The
+without shaking again (Igor, 2026-10-07). **Speak the note** (Igor, 2026-10-08, #239: *"Add mic input to logging
+dialog"*): a microphone button beside the note. One tap and what Igor says appears in the note as he says it, the
+way dictation does, recognised on the phone; a second tap, *Log it*, or closing the sheet stops it. It adds to what
+is already typed rather than replacing it. The first use asks iOS for speech recognition (and the microphone, if not
+yet granted); a refusal, or a phone that cannot recognise speech, leaves the button showing why when tapped, and
+typing still works. During a Larry call the button is off, since the call holds the microphone. Dictating never
+stops music or a podcast that was playing, and the Gym Timer's sound carries on afterwards as it was. Each start
+and stop, and any failure, goes into the session log. The
 picture stays on the Mac and the issue says where: the issues are public, and a screen can show health, places
 or the journal.
 

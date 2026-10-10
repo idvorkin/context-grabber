@@ -121,17 +121,44 @@ struct BugReportSheet: View {
   var closeForAnother: () -> Void = {}
   @State private var note = ""
   @FocusState private var noteFocused: Bool
+  @StateObject private var dictation: NoteDictation
+
+  init(model: AppModel) {
+    self.model = model
+    _dictation = StateObject(wrappedValue: NoteDictation(log: model.log))
+  }
 
   var body: some View {
     NavigationStack {
       Form {
         Section("What went wrong?") {
-          TextField("e.g. the timer skipped the rest", text: $note, axis: .vertical)
-            .lineLimit(3...8)
-            .focused($noteFocused)
+          HStack(alignment: .top, spacing: 10) {
+            TextField("e.g. the timer skipped the rest", text: $note, axis: .vertical)
+              .lineLimit(3...8)
+              .focused($noteFocused)
+            // #239: speak the note. Off during a call, which holds the microphone.
+            let inCall = model.call.snapshot.isActive
+            Button {
+              dictation.toggle(note: note) { note = $0 }
+            } label: {
+              Image(systemName: dictation.listening ? "stop.circle.fill" : "mic.circle.fill")
+                .font(.title)
+                .symbolEffect(.pulse, isActive: dictation.listening)
+                .foregroundStyle(dictation.listening ? Color.red : Color.accentColor)
+            }
+            .buttonStyle(.borderless)
+            .disabled(inCall)
+            .accessibilityLabel(dictation.listening ? "Stop dictating" : inCall ? "Dictation is off during a call" : "Speak the note")
+            .accessibilityIdentifier("report-dictate")
+          }
+          if dictation.listening {
+            Text("Listening… tap stop when done").font(.footnote).foregroundStyle(.secondary)
+          }
+          if let problem = dictation.problem { ProblemView(problem: problem) }
           // Right under the note, above the keyboard (a bottom bar sits behind it): the same report as Log it,
           // then an empty one for the next problem, no shake needed.
           Button("Log it and another") {
+            dictation.stop(why: "log_it")
             model.reportBug(note: note)
             closeForAnother()
           }
@@ -148,9 +175,15 @@ struct BugReportSheet: View {
       .navigationTitle("Report a problem")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { close() } }
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel") {
+            dictation.stop(why: "cancel")
+            close()
+          }
+        }
         ToolbarItem(placement: .confirmationAction) {
           Button("Log it") {
+            dictation.stop(why: "log_it")
             model.reportBug(note: note)
             close()
           }
@@ -159,6 +192,7 @@ struct BugReportSheet: View {
         }
       }
       .onAppear { noteFocused = true }
+      .onDisappear { dictation.stop(why: "closed") }  // a swipe down
     }
   }
 }
