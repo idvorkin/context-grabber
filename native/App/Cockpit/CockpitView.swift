@@ -1,4 +1,4 @@
-//  The Cockpit screen: the page full screen, no header, a slim footer with Done (the native app's "just the footer is
+//  The Cockpit screen: the page full screen, no header, a slim footer with Back, Cockpit (#234) and Done (the native app's "just the footer is
 //  fine"). The web view belongs to CockpitModel, so Done hides the page instead of throwing it away.
 
 import SwiftUI
@@ -43,16 +43,28 @@ struct CockpitView: View {
     .onAppear { model.appeared() }
   }
 
+  /// #234: Back while there is a page to go back to, Cockpit for the start page; Done leaves (no arrow: it is not back).
   private var footer: some View {
-    HStack {
-      Button(action: onDone) {
-        Label("Done", systemImage: "chevron.left").font(.system(size: 15, weight: .semibold))
+    HStack(spacing: 20) {
+      if model.canGoBack {
+        Button(action: model.goBack) {
+          Label("Back", systemImage: "chevron.backward").font(.system(size: 15, weight: .semibold))
+        }
+        .accessibilityIdentifier("cockpit-back")
       }
-      .foregroundStyle(accent)
-      .accessibilityIdentifier("cockpit-done")
+      if model.awayFromHome {
+        Button(action: model.goHome) {
+          Label("Cockpit", systemImage: "house").font(.system(size: 15, weight: .semibold))
+        }
+        .accessibilityIdentifier("cockpit-home")
+      }
       Spacer()
-      Text("Cockpit").font(.caption).foregroundStyle(.gray)
+      Button(action: onDone) {
+        Text("Done").font(.system(size: 15, weight: .semibold))
+      }
+      .accessibilityIdentifier("cockpit-done")
     }
+    .foregroundStyle(accent)
     .padding(.horizontal, 16)
     .padding(.vertical, 8)
     .background(Color.black.opacity(0.35))
