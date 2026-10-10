@@ -144,7 +144,7 @@ struct DiagnosticsView: View {
             model.showWhatsNew = $0
             if !$0 { model.screen = "home" }
           })
-      ) { WhatsNewView(feed: model.whatsNew) }
+      ) { WhatsNewView(feed: model.whatsNew, log: model.log) }
       .sheet(
         isPresented: Binding(
           get: { model.showEulogySong },
@@ -367,7 +367,7 @@ private struct HomeSettingsView: View {
       .environment(\.editMode, .constant(.active))
       .navigationDestination(isPresented: $showUploads) { GistSettingsView(call: model.call) }
       .navigationDestination(isPresented: $showLinks) { LinksView(log: model.log) }
-      .navigationDestination(isPresented: $showWhatsNew) { WhatsNewView(feed: model.whatsNew) }
+      .navigationDestination(isPresented: $showWhatsNew) { WhatsNewView(feed: model.whatsNew, log: model.log) }
       .navigationTitle("Home screen")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {

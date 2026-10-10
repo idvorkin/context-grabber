@@ -5,6 +5,8 @@ import SwiftUI
 
 struct WhatsNewView: View {
   let feed: WhatsNewFeed?
+  let log: SessionLog
+  @Environment(\.openURL) private var openURL
 
   var body: some View {
     List {
@@ -12,11 +14,23 @@ struct WhatsNewView: View {
         ForEach(days, id: \.day) { day in
           Section(WhatsNew.label(day: day.day, style: .long)) {
             ForEach(day.items, id: \.sha) { item in
-              VStack(alignment: .leading, spacing: 3) {
-                Text(item.text)
-                Text(item.caption).font(.caption).foregroundStyle(.secondary)
+              // #232: each change opens its story.
+              if let link = item.link.flatMap(URL.init(string:)) {
+                Button {
+                  log.event("ui", ["action": "open_story", "story": item.story, "url": link.absoluteString])
+                  openURL(link)
+                } label: {
+                  HStack {
+                    ChangeLine(item: item)
+                    Spacer()
+                    Image(systemName: "arrow.up.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                  }
+                }
+                .tint(.primary)
+                .accessibilityIdentifier("whats-new-story-\(item.story)")
+              } else {
+                ChangeLine(item: item)
               }
-              .padding(.vertical, 2)
             }
           }
         }
@@ -26,6 +40,18 @@ struct WhatsNewView: View {
     }
     .navigationTitle("What's new")
     .accessibilityIdentifier("whats-new")
+  }
+}
+
+private struct ChangeLine: View {
+  let item: WhatsNewItem
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 3) {
+      Text(item.text)
+      Text(item.caption).font(.caption).foregroundStyle(.secondary)
+    }
+    .padding(.vertical, 2)
   }
 }
 

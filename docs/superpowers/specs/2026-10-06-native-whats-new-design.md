@@ -52,12 +52,16 @@ same screen.
 
 **The What's new screen** has one section per day, newest first, headed by the weekday and date (*Monday, Oct
 5*). Each change is a line of text with, under it in small type, the story and the issue it belongs to
-(*Story 133 · #142*). An empty list says there is nothing new in the last thirty days. Back returns home.
+(*Story 133 · #142*). **Every change opens its story** (Igor, iPad, 2026-10-08, #232: *"The what's new should
+always link to the story so I can click on that"*): a tap on the line opens that user story, its use case and
+acceptance criteria, on GitHub in Safari, at the story itself rather than the top of its journey. A line shows it
+is a link (an arrow at its end). An empty list says there is nothing new in the last thirty days. Back returns
+home.
 
 ## Explaining itself
 
 Opening the screen is logged (`ui`, action open_whats_new), with how many days and changes it held and the
-newest day.
+newest day. A tap on a change is logged (`ui`, action open_story) with the story and the address.
 
 ## Acceptance criteria
 
@@ -69,3 +73,4 @@ newest day.
 - The home row names the newest day and its first change, with an ✕; opening it keeps it, ✕ removes it until a
   newer change arrives, and a relaunch does not bring it back. With no history there is no home row.
 - The cog's sheet always offers *What's new*; neither a missing nor an empty history breaks it or the screen.
+- Tapping any change opens its story on GitHub, scrolled to that story; the log has `ui` open_story (#232).
