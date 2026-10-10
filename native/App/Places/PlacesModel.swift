@@ -31,7 +31,13 @@ final class PlacesModel: ObservableObject {
   @Published private(set) var icons: [Int64: PlaceIcon] = [:]
   /// The grey dot whose card is open on the full-screen map.
   @Published var selectedUnnamed: String?
+  /// Today's path, and the last seven days' (#252); the map draws the one `routeDays` picks.
   @Published private(set) var route: [LocationPoint] = []
+  @Published private(set) var weekRoute: [LocationPoint] = []
+  /// 1 (today) or 7, remembered.
+  @Published private(set) var routeDays = 1
+  static let routeDaysKey = "places_route_days"
+  var shownRoute: [LocationPoint] { routeDays == 7 ? weekRoute : route }
   @Published private(set) var colors: [String: String] = [:]
   @Published private(set) var pointCount = 0
   @Published private(set) var retentionDays = LocationStore.defaultRetentionDays
@@ -54,6 +60,7 @@ final class PlacesModel: ObservableObject {
   init(log: SessionLog, database: AppDatabase) {
     self.log = log
     self.database = database
+    routeDays = database.setting(Self.routeDaysKey) == "7" ? 7 : 1
     retentionDays = (try? store?.retentionDays()) ?? LocationStore.defaultRetentionDays
   }
 
@@ -96,6 +103,8 @@ final class PlacesModel: ObservableObject {
       let clusters = StayClustering.cluster(points, knownPlaces: known)
       let days = PlacesDaily.build(stays: clusters.stays, points: points, days: dayCount, now: now)
       let route = PlaceStyle.todaysRoute(points, now: now)
+      // A week of breadcrumbs is thousands; 1,200 is a point every few minutes, plenty for a line on a map.
+      let weekRoute = PlaceStyle.route(points, now: now, days: dayCount, maxPoints: 1200)
       let calendar = Calendar.current
       let since = calendar.date(byAdding: .day, value: 1 - dayCount, to: calendar.startOfDay(for: Geo.date(now))).map(Geo.ms) ?? now
       let unnamed = UnnamedPlaces.summarize(clusters.stays, since: since, until: now)
@@ -104,6 +113,7 @@ final class PlacesModel: ObservableObject {
         self.stays = clusters.stays
         self.days = days
         self.route = route
+        self.weekRoute = weekRoute
         self.unnamed = unnamed
         // A named place leaves the list, and the numbers after it may move: close a card that no longer fits.
         if let open = self.selectedUnnamed, !unnamed.contains(where: { $0.placeId == open }) { self.selectedUnnamed = nil }
@@ -113,7 +123,7 @@ final class PlacesModel: ObservableObject {
           "places_open",
           [
             "reason": reason, "points": points.count, "known": known.count, "stays": clusters.stays.count,
-            "days": days.count, "today_points": route.count, "unnamed": unnamed.count, "read_ms": readMs,
+            "days": days.count, "today_points": route.count, "week_points": weekRoute.count, "unnamed": unnamed.count, "read_ms": readMs,
             "ms": Int(Date().timeIntervalSince(started) * 1000),
           ])
       }
@@ -123,6 +133,14 @@ final class PlacesModel: ObservableObject {
   // MARK: - icons (story 057)
 
   /// A place's icon; a plain pin until it is known.
+  /// #252: the map's Today · 7 days switch.
+  func setRouteDays(_ days: Int) {
+    guard days != routeDays else { return }
+    routeDays = days
+    database.setSetting(Self.routeDaysKey, String(days))
+    log.event("ui", ["action": "map_range", "days": days, "points": shownRoute.count])
+  }
+
   func icon(_ place: KnownPlace) -> PlaceIcon {
     icons[place.id] ?? PlaceIcons.resolve(name: place.name, stored: nil)
   }

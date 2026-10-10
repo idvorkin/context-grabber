@@ -38,7 +38,10 @@ final class PlacesUnnamedUITests: XCTestCase {
     app.buttons["Save"].tap()
 
     XCTAssertTrue(app.descendants(matching: .any)["UITest Spot"].waitForExistence(timeout: 10), "a named pin now")
-    XCTAssertFalse(app.buttons["unnamed-\(placeId)"].exists, "its grey dot is gone")
+    // The unnamed list is worked out again off the main thread after the save: wait for the dot to go.
+    let dotGone = NSPredicate(format: "exists == false")
+    expectation(for: dotGone, evaluatedWith: app.buttons["unnamed-\(placeId)"])
+    waitForExpectations(timeout: 10)  // its grey dot is gone
 
     // Put the fixture back: collapse the map and delete the place from Known places.
     app.buttons["Collapse map"].tap()

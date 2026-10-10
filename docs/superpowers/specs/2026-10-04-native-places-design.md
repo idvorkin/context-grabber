@@ -49,6 +49,12 @@ The home screen lists **Places** under "Ported so far". It opens full screen; *D
    on You at neighbourhood zoom; hidden with no fix), **copy** (puts "lat, lng" to six decimals on the clipboard
    and shows "✓ Copied" briefly), **expand** (the same map full screen, with the same controls; collapse or a
    swipe down returns). The full-screen map also shows the places that have no name yet (below).
+   **Today or the last 7 days** (Igor, 2026-10-10, #252: *"Location screen needs to be able to switch between
+   today and last seven days"*): a small **Today · 7 days** switch in the map's free corner chooses which path is
+   drawn, today's alone or the whole week the day cards cover, and the map reframes to hold it. The choice is
+   remembered between visits and is the same embedded and full screen; it starts on Today. A long gap in the
+   recording (a flight, the phone off) is one straight line, as it is for today. The day cards and the unnamed
+   places do not change with it. Each switch is in the session log (`ui`, action map_range).
 2. **The last seven days**, newest first (stories 043, 044, 046, 047). Each day is a card: the date and the
    elapsed hours (24h for a past day, hours so far for today); a strip of the day in time order — stays in their
    place's colour, transit faded, no data grey, the rest of today dimmest; then a bar per place (longest first,
@@ -256,6 +262,8 @@ same place across such a gap (story 044). More frequent collection would not hel
 - A file that is not a Context Grabber database is refused and nothing changes.
 - The exported file opens as SQLite on the Mac with the same tables Context Grabber's export has for locations,
   known places and settings.
+- The map's **Today · 7 days** switch draws today's path or the week's, reframes the map to it, and is remembered
+  after leaving Places and after a relaunch (#252).
 - The map shows the known places in the same colours as their bars, You, and today's path; locate, copy and
   expand work as described.
 - Every known place shows an icon on the map and in the list: from its name when a word gives it away, else from
