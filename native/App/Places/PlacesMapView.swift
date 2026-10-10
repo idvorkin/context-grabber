@@ -35,7 +35,7 @@ struct PlacesMapView: View {
   private var region: MKCoordinateRegion? {
     PlaceStyle.region(
       places: places.knownPlaces.map(\.coordinate) + unnamed.map(\.centroid), you: you,
-      path: places.route.map { Coordinate(latitude: $0.latitude, longitude: $0.longitude) }
+      path: places.shownRoute.map { Coordinate(latitude: $0.latitude, longitude: $0.longitude) }
     ).map {
       MKCoordinateRegion(center: $0.center.cl, span: MKCoordinateSpan(latitudeDelta: $0.latitudeDelta, longitudeDelta: $0.longitudeDelta))
     }
@@ -43,8 +43,8 @@ struct PlacesMapView: View {
 
   var body: some View {
     Map(position: $position) {
-      if places.route.count > 1 {
-        MapPolyline(coordinates: places.route.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) })
+      if places.shownRoute.count > 1 {
+        MapPolyline(coordinates: places.shownRoute.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) })
           .stroke(Color(hex: PlaceStyle.you).opacity(0.85), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
       }
       // Drawn first, so a named pin sits on top where they meet.
@@ -106,10 +106,38 @@ struct PlacesMapView: View {
         .padding(8)
       }
     }
+    .overlay(alignment: .bottomTrailing) {
+      // #252: which path the map draws.
+      if selected == nil {
+        HStack(spacing: 0) {
+          rangeButton("Today", days: 1)
+          rangeButton("7 days", days: 7)
+        }
+        .padding(2)
+        .background(.ultraThinMaterial, in: Capsule())
+        .padding(8)
+      }
+    }
     .onAppear(perform: frame)
     .onChange(of: places.knownPlaces) { _, _ in frame() }
-    .onChange(of: places.route.count) { _, _ in frame() }
+    .onChange(of: places.shownRoute.count) { _, _ in frame() }
+    .onChange(of: places.routeDays) { _, _ in framed = false; frame() }  // a new range: frame it afresh
     .onChange(of: places.unnamed.count) { _, _ in frame() }
+  }
+
+  private func rangeButton(_ title: String, days: Int) -> some View {
+    let on = places.routeDays == days
+    return Button {
+      withAnimation(.snappy) { places.setRouteDays(days) }
+    } label: {
+      Text(title).font(.caption.weight(.semibold))
+        .padding(.horizontal, 9).padding(.vertical, 4)
+        .foregroundStyle(on ? Color.white : Color.primary)
+        .background(on ? Color(hex: PlaceStyle.you) : Color.clear, in: Capsule())
+    }
+    .buttonStyle(.plain)
+    .accessibilityAddTraits(on ? .isSelected : [])
+    .accessibilityIdentifier("places-range-\(days)")
   }
 
   /// Frames every pin, You and the path, until Igor moves the map himself.

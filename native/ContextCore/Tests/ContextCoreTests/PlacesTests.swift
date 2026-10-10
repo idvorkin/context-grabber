@@ -89,6 +89,16 @@ final class TodaysRouteTests: XCTestCase {
     XCTAssertEqual(route.last?.timestamp, pts[999].timestamp)
   }
 
+  // #252: the week's route reaches back to midnight six days ago, and no further.
+  func testTheWeeksRouteCoversSevenLocalDays() {
+    let pts = [p(0.01, HOUR), p(0.02, 30 * HOUR), p(0.03, 6 * 24 * HOUR), p(0.04, 8 * 24 * HOUR)]
+    let week = PlaceStyle.route(pts, now: noon, days: 7, maxPoints: 1200, calendar: pacific)
+    XCTAssertEqual(week.map(\.timestamp), [noon - 6 * 24 * HOUR, noon - 30 * HOUR, noon - HOUR])
+    XCTAssertEqual(
+      PlaceStyle.route(pts, now: noon, days: 1, maxPoints: 400, calendar: pacific),
+      PlaceStyle.todaysRoute(pts, now: noon, calendar: pacific), "one day is today")
+  }
+
   func testOneAndNone() {
     XCTAssertEqual(PlaceStyle.todaysRoute([p(0.01, HOUR)], now: noon, calendar: pacific).count, 1)
     XCTAssertEqual(PlaceStyle.todaysRoute([], now: noon, calendar: pacific), [])

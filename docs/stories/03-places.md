@@ -181,8 +181,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 049:
 
 - **Summary:** Today's path follows where I actually went
-- **Status:** implemented in [067a04e](https://github.com/idvorkin/context-grabber/commit/067a04e), [c7b768c](https://github.com/idvorkin/context-grabber/commit/c7b768c); verified by `location.test.ts` (route thinning) and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `TodaysRouteTests` and a simulator screenshot of a simulated drive; the phone still to be checked by Igor (bead context-grabber-3ss.12)
-- **Issues:** [#42](https://github.com/idvorkin/context-grabber/issues/42)
+- **Status:** implemented in [067a04e](https://github.com/idvorkin/context-grabber/commit/067a04e), [c7b768c](https://github.com/idvorkin/context-grabber/commit/c7b768c); verified by `location.test.ts` (route thinning) and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `TodaysRouteTests` and a simulator screenshot of a simulated drive; the phone still to be checked by Igor (bead context-grabber-3ss.12). Native: a Today · 7 days switch on the map (#252): COMMIT; verified by `PlacesTests` on the host (the week reaches back to midnight six days ago, one day is today); on the simulator and the phone not yet
+- **Issues:** [#42](https://github.com/idvorkin/context-grabber/issues/42), [#252](https://github.com/idvorkin/context-grabber/issues/252) (today or the last 7 days)
 
 #### Use Case:
 - **As** someone who walked the long way round the lake
@@ -194,6 +194,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a dense trail of points along the lake path
 - **When:** I look at the Today or Places map
 - **Then:** the polyline follows the curve of the path, thinned so panning stays smooth, a gap where GPS went quiet is one straight segment between the last and next real points, and a day with one point draws no line
+
+- **Scenario:** Today or the last 7 days
+- **Given:** I went to the gym on Tuesday and to the office on Thursday
+- **When:** I tap *7 days* on the map's switch, leave Places and come back
+- **Then:** the path shows the whole week, Tuesday's gym and Thursday's office included, the map reframes to hold it, it is still on *7 days* when I come back, *Today* brings back today's path alone, and the log has `ui` map_range
 
 ---
 

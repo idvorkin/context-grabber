@@ -52,11 +52,19 @@ public enum PlaceStyle {
   public static func todaysRoute(
     _ points: [LocationPoint], now: Double, maxPoints: Int = 400, calendar: Calendar = .current
   ) -> [LocationPoint] {
-    let start = Geo.ms(calendar.startOfDay(for: Geo.date(now)))
-    let today = points.filter {
+    route(points, now: now, days: 1, maxPoints: maxPoints, calendar: calendar)
+  }
+
+  /// #252: the same for the last `days` local days, today included (7: the week the day cards cover).
+  public static func route(
+    _ points: [LocationPoint], now: Double, days: Int, maxPoints: Int, calendar: Calendar = .current
+  ) -> [LocationPoint] {
+    let midnight = calendar.startOfDay(for: Geo.date(now))
+    let start = Geo.ms(calendar.date(byAdding: .day, value: 1 - max(1, days), to: midnight) ?? midnight)
+    let inRange = points.filter {
       $0.timestamp >= start && $0.timestamp <= now && $0.latitude.isFinite && $0.longitude.isFinite
     }.sorted { $0.timestamp < $1.timestamp }
-    return thin(today, maxPoints)
+    return thin(inRange, maxPoints)
   }
 
   static func thin<T>(_ items: [T], _ maxPoints: Int) -> [T] {
