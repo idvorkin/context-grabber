@@ -10,6 +10,8 @@ final class AppDatabase {
   let accessoryLog: AccessoryLog?
   /// What Igor finished, for Larry (story 037).
   let activityLog: ActivityLog?
+  /// The daily strip's checks and counts (#236).
+  let dailyStrip: DailyStrip?
   /// The trail, the known places, the tracking switch and the retention (Places).
   let locations: LocationStore?
   /// The file itself, for the database export.
@@ -24,6 +26,7 @@ final class AppDatabase {
     var accessoryLog: AccessoryLog?
     var activityLog: ActivityLog?
     var locations: LocationStore?
+    var dailyStrip: DailyStrip?
     let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("SQLite", isDirectory: true)
     url = dir.appendingPathComponent("context-grabber.db")
@@ -35,6 +38,7 @@ final class AppDatabase {
       accessoryLog = try AccessoryLog(db: db)
       activityLog = try ActivityLog(db: db)
       locations = try LocationStore(db: db)
+      dailyStrip = try DailyStrip(db: db)
       healthCache = try HealthCache(db: SQLiteDatabase(path: dir.appendingPathComponent("context-grabber.db").path))
     } catch {
       // Without it nothing is remembered; the screens still work and every write says so again.
@@ -44,6 +48,7 @@ final class AppDatabase {
     self.accessoryLog = accessoryLog
     self.activityLog = activityLog
     self.locations = locations
+    self.dailyStrip = dailyStrip
     self.healthCache = healthCache
   }
 

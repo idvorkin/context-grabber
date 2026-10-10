@@ -41,6 +41,18 @@ struct DiagnosticsView: View {
             TodayCard(mirror: model.mirror) { model.openToday(from: "home_card") }
           }
         }
+        if arrangement.dailyStrip {
+          Section {
+            DailyStripView(strip: model.dailyStrip)
+              .onChange(of: model.mirror.snapshot?.timestamp) { model.dailyStrip.refresh() }  // a grab
+              // Tight (Igor): its own slim card, not a 44-point list row.
+              .padding(.vertical, 5)
+              .padding(.horizontal, 8)
+              .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+              .listRowInsets(EdgeInsets())
+              .listRowBackground(Color.clear)
+          }
+        }
         // #235: one look for every launcher. The four two by two, then the rest in order: a pair is two tiles
         // like the four's, a launcher alone one tile the width of two.
         Section {
@@ -77,6 +89,7 @@ struct DiagnosticsView: View {
       .contentMargins(.top, 8, for: .scrollContent)
       .contentMargins(.bottom, 64, for: .scrollContent)  // the last row scrolls clear of the cog
       .listSectionSpacing(.compact)
+      .environment(\.defaultMinListRowHeight, 30)  // lets the daily strip be slimmer than a list row
       .overlay(alignment: .bottomTrailing) {
         Button {
           model.openHomeSettings()

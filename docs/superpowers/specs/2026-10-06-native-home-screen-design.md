@@ -63,6 +63,26 @@ and points at the cog.
   square, the way Settings draws its rows. The names are in the ordinary text colour, one size for every row so
   nothing shrinks to fit. The same icons are on the Today card and in the cog's list of launchers.
 
+**The daily strip** (Igor, iPad, 2026-10-10, #236: *"a little strip for things I want to do every day, like gym,
+and that can get a checkmark … an up/down counter somehow that's still small. I want this all in one strip"*;
+#238: *"days since gym"*). One thin card, one line tall, between the Today card and the tiles: the few things Igor
+means to do every day, each a glance and a tap.
+
+- **Gym** — a check. Grey with *3d* beside it when the last gym day was three days ago; green ✓ once today counts.
+  Today counts when Igor taps it, when the Gym Timer finishes a workout, or when Health has a strength workout
+  today. Days since gym counts from the last day that counted, by any of the three; *never* before the first.
+- **Journal** — a check: a tap marks today written; another tap takes it back.
+- **Balloons** — a count of balloons made for others today: 🎈 and the number. A tap adds one; a long press takes
+  one off (never below 0). A soft tick on each change.
+- **Magic** — the same counter, for magic done for others: 🪄 and the number.
+
+Every item starts the day fresh at local midnight; the days before are kept, so the week can be read later (by
+Larry, in the export: a later change, not this one). A tapped gym check can be taken back the same way as the
+journal's; a check that came from the timer or Health stays. Every change is in the session log (`ui`, action
+daily_strip, with the item and its new value). The strip can be hidden from the cog like a launcher.
+
+Non-goals: choosing other items or adding new ones from the app, streaks, reminders, history charts.
+
 Order, hiding and Reset in the cog work as before: moving a launcher into the first four makes it a tile.
 
 **The cog** opens the **Home screen** sheet, with *Done* at the top right. It has two parts:
@@ -106,3 +126,8 @@ Order, hiding and Reset in the cog work as before: moving a launcher into the fi
 - A hidden journey still opens from its link, Shortcut or launch hook.
 - Every launcher under the Today card is a tile of the same look: the four two by two, a lone launcher one wide
   tile, a pair two tiles side by side the width of the four's (#235).
+
+- The daily strip shows Gym, Journal, Balloons and Magic in one line under the Today card. A tap checks Gym or
+  Journal (a second tap unchecks). A tap adds a balloon or a trick, a long press takes one off, never below 0.
+  Gym shows days since the last gym day until today counts, and a finished Gym Timer workout counts today with
+  no tap. After midnight everything starts fresh and yesterday's values are kept (#236, #238).

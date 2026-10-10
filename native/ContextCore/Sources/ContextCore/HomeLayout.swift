@@ -56,17 +56,20 @@ public struct HomeLayout: Equatable, Sendable {
   /// the next four are tiles, the rest rows, all in Igor's order.
   public struct Arrangement: Equatable, Sendable {
     public var todayCard: Bool
+    /// #236: the daily strip under the Today card; never a tile or a row.
+    public var dailyStrip: Bool = false
     public var tiles: [String]
     public var rows: [String]
   }
 
   public static let tileCount = 4
+  public static let dailyStrip = "daily_strip"
 
   public var arrangement: Arrangement {
-    let rest = visible.filter { $0 != "today" }
+    let rest = visible.filter { $0 != "today" && $0 != Self.dailyStrip }
     return Arrangement(
-      todayCard: visible.contains("today"), tiles: Array(rest.prefix(Self.tileCount)),
-      rows: Array(rest.dropFirst(Self.tileCount)))
+      todayCard: visible.contains("today"), dailyStrip: visible.contains(Self.dailyStrip),
+      tiles: Array(rest.prefix(Self.tileCount)), rows: Array(rest.dropFirst(Self.tileCount)))
   }
 
   /// #225: launchers that share one line of rows, half each, when both are rows.
