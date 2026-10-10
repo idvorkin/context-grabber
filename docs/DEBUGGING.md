@@ -88,11 +88,13 @@ writes a `bug_report` event, a line in `Documents/bugs.jsonl` (note, screen, bui
 `screenshot`) and the picture under `Documents/bugs/<stamp>/`. While Igor is on the phone, arm
 
 ```
-Monitor(command: "scripts/native/bugs-monitor.sh", description: "new shake reports on the phone", persistent: true)
+Monitor(command: "scripts/native/bugs-monitor.sh", description: "new shake reports on the phone or iPad", persistent: true)
 ```
 
-which polls `bugs.jsonl` every minute and prints one line per report that is not yet an issue (`just bugs-check`
-is the same look, once; "phone not reachable" is not a failure). On a line: `just pull-logs && just file-bugs` —
+which polls both devices' `bugs.jsonl` every minute and prints one line per report that is not yet an issue,
+`new (phone): <reported_at>  <note>` (`just bugs-check` is the same look, once; "ipad not reachable" is not a
+failure). It was silent from PR #241 to PR #256, when the check's line changed under it. bug-kit's listener
+replaces it at the migration. On a line: `just pull-logs && just file-bugs` —
 one issue per report, carrying the note, the screen, the build and the log's name. The repo is public, so the
 screenshot is never uploaded: the issue names its path under `~/tmp/agent/grabber-logs/` on the Mac. The marker `<!-- bug:<reported_at> -->` makes filing
 idempotent. Then steps 3–5 of *Bug reports* below, reading the log at the report's `session_t_ms`.
