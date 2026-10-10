@@ -75,6 +75,8 @@ final class AppModel: ObservableObject {
   @Published var showHomeSettings = false
   /// The mirror: the last grab and the exports. Set at the end of init (it reads the database and the log).
   private(set) var mirror: MirrorModel!
+  /// The daily strip (#236): made with the mirror, whose last grab says which days had a strength workout.
+  private(set) var dailyStrip: DailyStripModel!
 
   init() {
     database = AppDatabase(log: log)
@@ -94,6 +96,9 @@ final class AppModel: ObservableObject {
     liveActivity.endLeftovers()
     LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
     mirror = MirrorModel(app: self)
+    dailyStrip = DailyStripModel(log: log, database: database) { [weak self] in
+      self?.mirror.snapshot?.workoutsByDay ?? [:]
+    }
     call.willStart = { [weak self] in self?.eulogySong.yield(to: "call") }
     runLaunchHooks()
   }
@@ -101,6 +106,7 @@ final class AppModel: ObservableObject {
   /// The app came to the front (not the launch itself): prune, settle a pending permission, ask for a fix.
   func foreground() {
     usage.resume(reason: "foreground")
+    dailyStrip.refresh()
     places.prune(reason: "foreground")
     tracker.foreground()
     if showPlaces { places.reload(reason: "foreground") }
@@ -271,6 +277,7 @@ final class AppModel: ObservableObject {
   func closeGymTimer() {
     guard gymTimer != nil else { return }  // a link closed it already; this is the cover's binding catching up
     log.event("ui", ["action": "close_timer"])
+    dailyStrip.refresh()  // a finished workout makes today a gym day
     screen = "home"
     gymTimer = nil
   }

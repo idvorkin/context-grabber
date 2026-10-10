@@ -94,4 +94,15 @@ final class HomeLayoutTests: XCTestCase {
   func testAPairWithOneHiddenOrATileIsOneRow() {
     XCTAssertEqual(HomeLayout.lines(["exercise_analyzer", "eulogy"]), [["exercise_analyzer"], ["eulogy"]])
   }
+
+  // #236: the daily strip sits under the Today card; it is never one of the tiles or rows, and hides like a row.
+  func testTheDailyStripIsNeverATile() {
+    var layout = HomeLayout(known: ["today", "daily_strip", "call", "gym_timer", "breathe", "places", "cockpit"],
+      storedOrder: nil, storedHidden: nil)
+    XCTAssertTrue(layout.arrangement.dailyStrip)
+    XCTAssertEqual(layout.arrangement.tiles, ["call", "gym_timer", "breathe", "places"])
+    layout.setShown("daily_strip", false)
+    XCTAssertFalse(layout.arrangement.dailyStrip)
+    XCTAssertEqual(layout.arrangement.rows, ["cockpit"])
+  }
 }

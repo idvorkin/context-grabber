@@ -19,6 +19,8 @@ struct HomeRow: Identifiable {
   static let all: [HomeRow] = [
     HomeRow(id: "call", title: "Call Larry", icon: "phone.fill", color: .green) { $0.openCall(from: "home") },
     HomeRow(id: "today", title: "Today", icon: "heart.text.square", color: .pink) { $0.openToday(from: "home") },
+    // #236: not a launcher but the strip under the Today card; a row here so the cog can hide it.
+    HomeRow(id: HomeLayout.dailyStrip, title: "Daily strip", icon: "checklist", color: .green) { _ in },
     HomeRow(id: "gym_timer", title: "Gym Timer", icon: "timer", color: Color(red: 1.0, green: 0.23, blue: 0.19)) { $0.openGymTimer(from: "home") },
     HomeRow(id: "breathe", title: "Box breathing", icon: "wind", color: .teal) { $0.openBreathe(from: "home") },
     HomeRow(id: "places", title: "Places", icon: "map", color: .indigo) { $0.openPlaces(from: "home") },

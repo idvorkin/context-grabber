@@ -11,13 +11,11 @@ final class HomeSettingsUITests: XCTestCase {
     app.launch()
     openSheet(app)
     app.buttons["home-rows-reset"].tap()  // whatever an earlier run left
-
-    // Hide the Cockpit.
-    let cockpit = app.switches["home-row-cockpit"]
-    XCTAssertTrue(cockpit.waitForExistence(timeout: 5), app.debugDescription)
-    XCTAssertEqual(cockpit.value as? String, "1")
-    cockpit.switches.firstMatch.tap()
-    XCTAssertEqual(cockpit.value as? String, "0")
+    app.buttons["home-settings-done"].tap()
+    // Open it again at its top: a swipe down on a sheet closes it, so it is never scrolled back.
+    let cog = app.buttons["home-settings"]
+    XCTAssertTrue(cog.waitForExistence(timeout: 10), app.debugDescription)
+    cog.tap()
 
     // Drag the Gym Timer above Call Larry by its reorder handle.
     let handle = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Reorder' AND label CONTAINS 'Gym Timer'"))
@@ -27,6 +25,14 @@ final class HomeSettingsUITests: XCTestCase {
       .firstMatch
     // Slow, with a hold before letting go: a quick drag does not register on a loaded simulator.
     handle.press(forDuration: 1.0, thenDragTo: callHandle, withVelocity: .slow, thenHoldForDuration: 0.5)
+
+    // Hide the Cockpit, further down the list than the screen reaches.
+    let cockpit = app.switches["home-row-cockpit"]
+    for _ in 0..<6 where !cockpit.isHittable { app.swipeUp() }
+    XCTAssertTrue(cockpit.waitForExistence(timeout: 5), app.debugDescription)
+    XCTAssertEqual(cockpit.value as? String, "1")
+    cockpit.switches.firstMatch.tap()
+    XCTAssertEqual(cockpit.value as? String, "0")
 
     app.buttons["home-settings-done"].tap()
     assertHome(app)
@@ -47,7 +53,11 @@ final class HomeSettingsUITests: XCTestCase {
     let cog = app.buttons["home-settings"]
     XCTAssertTrue(cog.waitForExistence(timeout: 10), app.debugDescription)
     cog.tap()
-    XCTAssertTrue(app.buttons["home-rows-reset"].waitForExistence(timeout: 5), app.debugDescription)
+    let reset = app.buttons["home-rows-reset"]
+    XCTAssertTrue(app.navigationBars["Home screen"].waitForExistence(timeout: 5), app.debugDescription)
+    // Reset is under the launchers, below the fold once the list outgrows the screen.
+    for _ in 0..<6 where !reset.isHittable { app.swipeUp() }
+    XCTAssertTrue(reset.waitForExistence(timeout: 5), app.debugDescription)
   }
 
   /// The Cockpit gone, the Gym Timer first.
