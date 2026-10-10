@@ -1,5 +1,5 @@
-//  The daily strip on the home screen (#236, #238; home-screen spec, "The daily strip"): one tight line. Gym and
-//  Journal are checks; Balloons and Magic count, a tap for one more and a long press for one fewer.
+//  The daily strip on the home screen (#236, #238, #257; home-screen spec, "The daily strip"): one tight line. Gym,
+//  Meditation and Journal are checks; Balloons and Magic count, a tap for one more and a long press for one fewer.
 
 import ContextCore
 import SwiftUI
@@ -10,6 +10,9 @@ struct DailyStripView: View {
   var body: some View {
     HStack(spacing: 0) {
       check(.gym, label: "Gym", done: strip.gymToday, note: gymNote) { KettlebellIcon(size: 17) }
+      check(.meditation, label: "Meditation", done: strip.meditationToday, note: nil) {
+        Image(systemName: "figure.mind.and.body").font(.system(size: 15))
+      }
       check(.journal, label: "Journal", done: strip.value(.journal) > 0, note: nil) {
         Image(systemName: "book.closed.fill").font(.system(size: 15))
       }

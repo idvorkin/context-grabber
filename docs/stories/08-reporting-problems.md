@@ -297,15 +297,15 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ### User Story 246:
 
-- **Summary:** A daily strip: gym, journal, balloons and magic, at a glance
-- **Issues:** [#236](https://github.com/idvorkin/context-grabber/issues/236), [#238](https://github.com/idvorkin/context-grabber/issues/238)
-- **Status:** implemented in [364d3fa](https://github.com/idvorkin/context-grabber/commit/364d3fa); verified by `DailyStripTests` and `HomeLayoutTests` (host: values by day, never below 0, gym days from a tap, the timer or a strength workout, days since gym across the clock change) and `DailyStripUITests` on the simulator (above the tiles, one line, a tap adds a balloon, a long press takes one off, the journal check flips and back); a Gym Timer workout or a Health strength workout checking gym on the phone not yet
+- **Summary:** A daily strip: gym, meditation, journal, balloons and magic, at a glance
+- **Issues:** [#236](https://github.com/idvorkin/context-grabber/issues/236), [#238](https://github.com/idvorkin/context-grabber/issues/238), [#257](https://github.com/idvorkin/context-grabber/issues/257) (meditation)
+- **Status:** implemented in [364d3fa](https://github.com/idvorkin/context-grabber/commit/364d3fa); verified by `DailyStripTests` and `HomeLayoutTests` (host: values by day, never below 0, gym days from a tap, the timer or a strength workout, days since gym across the clock change) and `DailyStripUITests` on the simulator (above the tiles, one line, a tap adds a balloon, a long press takes one off, the journal check flips and back); a Gym Timer workout or a Health strength workout checking gym on the phone not yet. Meditation (#257): COMMIT; verified by `DailyStripTests` on the host (breathing today, the last grab's mindful minutes today, neither from yesterday, zero minutes); the simulator and the phone not yet
 - **Spec:** [native home screen, "The daily strip"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
 - **As someone** with a few things I mean to do every day: the gym, my journal, balloons and magic for others
 - **I want to** see at a glance which are done today, and mark them with one tap
-- **so that** the home screen holds the days up to me, including how long since the gym
+- **so that** the home screen holds the days up to me, including how long since the gym and whether I meditated
 
 #### Acceptance Criteria:
 - **Scenario:** Checks and counts
@@ -317,6 +317,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** my last gym day was three days ago
 - **When:** I open the app
 - **Then:** the kettlebell is grey with *3d*; after I finish a Gym Timer workout (or Health records a strength workout, or I tap it) it turns green with a check
+
+- **Scenario:** Meditation checks itself
+- **Given:** no tap on Meditation today
+- **When:** I finish a Box breathing session, or Today grabs and Health has mindful minutes from another app
+- **Then:** Meditation turns green with no tap, a tap does not take it back, and the log has `daily_strip_auto` with `meditation` and where it came from
 
 - **Scenario:** A new day
 - **Given:** yesterday's strip had a check and counts

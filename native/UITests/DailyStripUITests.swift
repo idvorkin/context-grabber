@@ -30,5 +30,10 @@ final class DailyStripUITests: XCTestCase {
     journal.tap()
     XCTAssertEqual(journal.value as? String, before, "and back")
     XCTAssertNotNil(app.buttons["strip-gym"].value as? String)
+    // #257: meditation sits on the same line; green on its own after breathing or Health, else a tap's check.
+    let meditation = app.buttons["strip-meditation"]
+    XCTAssertTrue(meditation.exists, app.debugDescription)
+    XCTAssertEqual(meditation.frame.midY, journal.frame.midY, accuracy: 2, "one line")
+    XCTAssertNotNil(meditation.value as? String)
   }
 }

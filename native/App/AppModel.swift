@@ -96,9 +96,7 @@ final class AppModel: ObservableObject {
     liveActivity.endLeftovers()
     LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
     mirror = MirrorModel(app: self)
-    dailyStrip = DailyStripModel(log: log, database: database) { [weak self] in
-      self?.mirror.snapshot?.workoutsByDay ?? [:]
-    }
+    dailyStrip = DailyStripModel(log: log, database: database) { [weak self] in self?.mirror.snapshot }
     call.willStart = { [weak self] in self?.eulogySong.yield(to: "call") }
     runLaunchHooks()
   }
@@ -293,6 +291,7 @@ final class AppModel: ObservableObject {
     log.event("ui", ["action": "close_breathe"])
     screen = "home"
     breathe = nil
+    dailyStrip.refresh()  // a finished session makes today a meditation day (#257)
   }
 
   /// A journey still in Context Grabber, opened there by its own link.
