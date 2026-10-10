@@ -9,12 +9,16 @@ public struct WhatsNewItem: Codable, Equatable, Sendable {
   public var text: String
   public var issue: Int?
   public var sha: String
+  /// The story on GitHub, at its own heading (#232). Nil when the build found no such story, or in a feed from an
+  /// older build.
+  public var link: String?
 
-  public init(story: Int, text: String, issue: Int? = nil, sha: String) {
+  public init(story: Int, text: String, issue: Int? = nil, sha: String, link: String? = nil) {
     self.story = story
     self.text = text
     self.issue = issue
     self.sha = sha
+    self.link = link
   }
 
   /// "Story 133 · #142", the small line under a change.
@@ -76,12 +80,18 @@ public enum WhatsNew {
   public struct Story: Equatable, Sendable {
     public var summary: String
     public var issue: Int?
+    /// Where the story lives on GitHub, when the markdown was read with its file name.
+    public var link: String?
 
-    public init(summary: String, issue: Int? = nil) {
+    public init(summary: String, issue: Int? = nil, link: String? = nil) {
       self.summary = summary
       self.issue = issue
+      self.link = link
     }
   }
+
+  /// The stories as GitHub shows them; a heading "### User Story 096:" is the anchor `user-story-096`.
+  public static let storiesURL = "https://github.com/idvorkin/context-grabber/blob/main/docs/stories/"
 
   /// What a subject says: which story, the words to show unless the story has its own, the issue it names.
   public struct Parsed: Equatable, Sendable {
@@ -132,24 +142,27 @@ public enum WhatsNew {
   // MARK: Stories
 
   /// Every "### User Story NNN:" in the markdown with its "**Summary:**" and the first issue its "**Issues:**" names.
-  public static func stories(fromMarkdown markdown: String) -> [Int: Story] {
+  /// `file`: the markdown's name under docs/stories, so each story gets its link.
+  public static func stories(fromMarkdown markdown: String, file: String? = nil) -> [Int: Story] {
     var out: [Int: Story] = [:]
     var current: Int?
+    var link: String?
     for line in markdown.split(separator: "\n", omittingEmptySubsequences: false) {
       let text = line.trimmingCharacters(in: .whitespaces)
       if text.hasPrefix("### User Story ") {
         let digits = text.dropFirst("### User Story ".count).prefix { $0.isNumber }
         current = Int(digits)
+        link = file.map { "\(storiesURL)\($0)#user-story-\(digits)" }
         continue
       }
       guard let id = current else { continue }
       if let summary = field("Summary", in: text) {
         var words = summary
         if words.hasSuffix("(technical)") { words = String(words.dropLast("(technical)".count)) }
-        out[id] = Story(summary: sentence(words), issue: out[id]?.issue)
+        out[id] = Story(summary: sentence(words), issue: out[id]?.issue, link: link)
       } else if let issues = field("Issues", in: text) {
         let issue = matches(hashNumber, issues).flatMap { group($0, 1, issues) }.flatMap(Int.init)
-        out[id] = Story(summary: out[id]?.summary ?? "", issue: issue)
+        out[id] = Story(summary: out[id]?.summary ?? "", issue: issue, link: link)
       }
     }
     return out.filter { !$0.value.summary.isEmpty }
@@ -183,7 +196,8 @@ public enum WhatsNew {
       guard !text.isEmpty else { continue }
       if byDay[day] == nil { order.append(day) }
       byDay[day, default: []].append(
-        WhatsNewItem(story: parsed.story, text: text, issue: parsed.issue ?? story?.issue, sha: commit.sha))
+        WhatsNewItem(
+          story: parsed.story, text: text, issue: parsed.issue ?? story?.issue, sha: commit.sha, link: story?.link))
     }
     return order.map { WhatsNewDay(day: $0, items: byDay[$0] ?? []) }
   }

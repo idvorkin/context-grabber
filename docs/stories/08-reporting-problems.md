@@ -194,8 +194,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 148:
 
 - **Summary:** What's new, by day, written by the build itself
-- **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165)
-- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor; the ✕ and the cog's row verified by `WhatsNewSeenUITests` and `WhatsNewTests` on the simulator: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a)
+- **Issues:** [#165](https://github.com/idvorkin/context-grabber/issues/165), [#232](https://github.com/idvorkin/context-grabber/issues/232)
+- **Status:** native app: implemented in [f3d2758](https://github.com/idvorkin/context-grabber/commit/f3d2758) ([spec](../superpowers/specs/2026-10-06-native-whats-new-design.md)); verified by host tests (`WhatsNewTests`, including every real story file) and on the simulator (screenshots of the row and the screen listing Oct 5 and Oct 4 from this checkout's history; the log's `ui` open_whats_new with 2 days and 8 changes); the phone still to be checked by Igor; the ✕ and the cog's row verified by `WhatsNewSeenUITests` and `WhatsNewTests` on the simulator: [adfed5a](https://github.com/idvorkin/context-grabber/commit/adfed5a). Each change opens its story (#232): [5227ba9](https://github.com/idvorkin/context-grabber/commit/5227ba9); verified by `WhatsNewTests` (host: the link to the story's own heading, every real story file, an older feed without links) and `WhatsNewStoryLinkUITests` on the simulator (a tap opens Safari)
 
 #### Use Case:
 - **As someone** who installs a new build of the native app most days
@@ -212,6 +212,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the last thirty days hold story changes on several days, some with status follow-ups and merges
 - **When:** I tap *What's new*
 - **Then:** I see one section per day, newest first, each change once per story per day with its story and issue under it, no status or merge lines, and the log has `ui` open_whats_new
+
+- **Scenario:** A change opens its story
+- **Given:** What's new is open
+- **When:** I tap a change
+- **Then:** its user story opens on GitHub in Safari, at that story, and the log has `ui` open_story with the story and the address
 
 - **Scenario:** Nothing to show
 - **Given:** a build made without the project's history, or with no story change in thirty days

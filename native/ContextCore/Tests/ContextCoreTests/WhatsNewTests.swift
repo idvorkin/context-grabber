@@ -68,6 +68,25 @@ final class WhatsNewTests: XCTestCase {
     XCTAssertNil(stories[199])
   }
 
+  // #232: each story links to its own heading on GitHub.
+  func testEachStoryLinksToItsHeading() {
+    let markdown = """
+      ### User Story 096:
+      - **Summary:** Cockpit in the app
+      """
+    let stories = WhatsNew.stories(fromMarkdown: markdown, file: "05-call.md")
+    XCTAssertEqual(
+      stories[96]?.link, "https://github.com/idvorkin/context-grabber/blob/main/docs/stories/05-call.md#user-story-096")
+    let days = WhatsNew.build(
+      commits: [.init(sha: "a", date: at("2026-10-06T15:00:00Z"), subject: "Story 096: the Cockpit")],
+      stories: stories, now: at("2026-10-06T20:00:00Z"), timeZone: la)
+    XCTAssertEqual(days.first?.items.first?.link, stories[96]?.link)
+    // A feed an older build wrote has no links, and still reads.
+    let old = Data(#"{"generated":"","days":[{"day":"2026-10-06","items":[{"story":1,"text":"x","sha":"a"}]}]}"#.utf8)
+    XCTAssertNil(WhatsNewFeed.decode(old)?.days.first?.items.first?.link)
+    XCTAssertNotNil(WhatsNewFeed.decode(old))
+  }
+
   func testTheFeedIsByLocalDayNewestFirstOneLinePerStoryPerDay() {
     let stories: [Int: WhatsNew.Story] = [147: .init(summary: "A cog for the rest", issue: 166)]
     let commits = [
@@ -122,11 +141,14 @@ final class WhatsNewTests: XCTestCase {
       .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("docs/stories")
     var all: [Int: WhatsNew.Story] = [:]
     for file in try FileManager.default.contentsOfDirectory(atPath: dir.path) where file.hasSuffix(".md") {
-      all.merge(WhatsNew.stories(fromMarkdown: try String(contentsOf: dir.appendingPathComponent(file), encoding: .utf8))) { a, _ in a }
+      all.merge(
+        WhatsNew.stories(fromMarkdown: try String(contentsOf: dir.appendingPathComponent(file), encoding: .utf8), file: file)
+      ) { a, _ in a }
     }
     XCTAssertGreaterThan(all.count, 50)
     XCTAssertEqual(all[140]?.summary, "The native app lives beside the current one")
     XCTAssertEqual(all[148]?.issue, 165)
+    XCTAssertEqual(all[148]?.link, WhatsNew.storiesURL + "08-reporting-problems.md#user-story-148")
   }
 
   func testHomeRowGoesOnceSeenAndComesBackForSomethingNewer() {

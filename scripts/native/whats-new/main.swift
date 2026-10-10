@@ -20,7 +20,7 @@ var stories: [Int: WhatsNew.Story] = [:]
 let dir = URL(fileURLWithPath: args[2])
 for file in ((try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []).sorted() where file.hasSuffix(".md") {
   let text = (try? String(contentsOf: dir.appendingPathComponent(file), encoding: .utf8)) ?? ""
-  stories.merge(WhatsNew.stories(fromMarkdown: text)) { first, _ in first }
+  stories.merge(WhatsNew.stories(fromMarkdown: text, file: file)) { first, _ in first }
 }
 let now = Date()
 let feed = WhatsNewFeed(generated: iso.string(from: now), days: WhatsNew.build(commits: commits, stories: stories, now: now))
