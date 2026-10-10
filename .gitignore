@@ -85,3 +85,4 @@ beads_report_*.md
 
 # The iPhone's hardware UDID for the native recipes (scripts/native/phone-udid.sh); the repo is public
 scripts/native/phone-udid.local
+scripts/native/ipad-udid.local

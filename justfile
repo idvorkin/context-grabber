@@ -102,20 +102,10 @@ native-run-device: native-build-device
     xcrun devicectl device install app --device {{native_device}} {{native_device_app}}
     xcrun devicectl device process launch --device {{native_device}} {{native_bundle}}
 
-# Copy the native app's session logs, bug reports and crash files from the iPhone to ~/tmp/agent/grabber-logs
-pull-logs: _phone
-    mkdir -p {{native_logs}}
-    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
-      --domain-identifier {{native_bundle}} --source Documents/logs --destination {{native_logs}}/logs
-    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
-      --domain-identifier {{native_bundle}} --source Documents/bugs.jsonl --destination {{native_logs}}/bugs.jsonl || true
-    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
-      --domain-identifier {{native_bundle}} --source Documents/bugs --destination {{native_logs}}/bugs || true
-    xcrun devicectl device copy from --device {{native_device}} --domain-type appDataContainer \
-      --domain-identifier {{native_bundle}} --source Documents/crashes --destination {{native_logs}}/crashes || true
-    \ls -t {{native_logs}}/logs | head -5
-    @echo "--- bug reports (newest last); each names its log file:"
-    @tail -5 {{native_logs}}/bugs.jsonl 2>/dev/null | jq -c '{reported_at, note, log, screen}' || true
+# Copy the native app's session logs, bug reports (with screenshots) and crash files from the phone and the iPad to
+# ~/tmp/agent/grabber-logs/<phone|ipad>/ (the iPad's id: IPAD=<udid> or scripts/native/ipad-udid.local)
+pull-logs:
+    scripts/native/pull-logs.sh
 
 # The same from the simulator
 pull-logs-sim:
@@ -127,9 +117,9 @@ pull-logs-sim:
 log-summary file:
     @jq -c . {{file}}
 
-# Quick check for unfiled bug reports on the phone (exit 1 when there are any)
-bugs-check: _phone
-    scripts/native/bugs-check.sh {{native_device}}
+# Quick check for unfiled bug reports on the phone and the iPad (exit 1 when there are any)
+bugs-check:
+    scripts/native/bugs-check.sh
 
 # File each new shake report from the pulled bugs.jsonl as a GitHub issue (skips ones already filed)
 file-bugs:
