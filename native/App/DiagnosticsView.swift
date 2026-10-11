@@ -1,6 +1,7 @@
 //  The home screen (stories 140, 147): the launchers in Igor's order, and a cog for the rest — which launchers
 //  show, the build, this launch's log and the way to report a problem.
 
+import BugKit
 import ContextCore
 import SwiftUI
 
@@ -113,7 +114,7 @@ struct DiagnosticsView: View {
       .sheet(isPresented: Binding(get: { model.showHomeSettings }, set: { if !$0 { model.closeHomeSettings() } })) {
         HomeSettingsView(model: model)
           // A sheet is its own presentation, as the covers are: the report sheet has to come from inside it.
-          .background(ShakeDetector { model.startBugReport(from: "shake") })
+          .bugReporting(model.reporter)
       }
       // Each cover on a view of its own (one view cannot hold two), and none on a row: a hidden row's journey
       // still opens from a link, a Shortcut or a hook.
@@ -122,7 +123,7 @@ struct DiagnosticsView: View {
           isPresented: Binding(get: { model.breathe != nil }, set: { if !$0 { model.closeBreathe() } })
         ) {
           BreatheView(app: model, launch: model.breathe ?? BreatheLaunch(), onExit: model.closeBreathe)
-            .background(ShakeDetector { model.startBugReport(from: "shake") })
+            .bugReporting(model.reporter)
         }
       }
       .background {
@@ -130,7 +131,7 @@ struct DiagnosticsView: View {
           isPresented: Binding(get: { model.card != nil }, set: { if !$0 { model.closeCard() } })
         ) {
           CardView(app: model, think: model.card ?? false, onDone: model.closeCard)
-            .background(ShakeDetector { model.startBugReport(from: "shake") })
+            .bugReporting(model.reporter)
         }
       }
       .background {
@@ -138,17 +139,17 @@ struct DiagnosticsView: View {
           isPresented: Binding(get: { model.showPlaces }, set: { if !$0 { model.closePlaces() } })
         ) {
           PlacesView(app: model, places: model.places, tracker: model.tracker, onExit: model.closePlaces)
-            .background(ShakeDetector { model.startBugReport(from: "shake") })
+            .bugReporting(model.reporter)
         }
       }
       // Its own presenter: one view cannot hold two full-screen covers.
       .fullScreenCover(isPresented: Binding(get: { model.showCockpit }, set: { if !$0 { model.closeCockpit() } })) {
         CockpitView(model: model.cockpit, onDone: model.closeCockpit)
-          .background(ShakeDetector { model.startBugReport(from: "shake") })
+          .bugReporting(model.reporter)
       }
       .fullScreenCover(isPresented: Binding(get: { model.callOpen }, set: { if !$0 { model.closeCall() } })) {
         CallView(call: model.call, onDone: model.closeCall)
-          .background(ShakeDetector { model.startBugReport(from: "shake") })
+          .bugReporting(model.reporter)
       }
       .navigationDestination(
         isPresented: Binding(
@@ -167,7 +168,7 @@ struct DiagnosticsView: View {
           })
       ) {
         EulogySongView(song: model.eulogySong) { model.openEulogySong(from: "eulogy_song_sheet") }
-          .background(ShakeDetector { model.startBugReport(from: "shake") })
+          .bugReporting(model.reporter)
       }
       .navigationDestination(isPresented: $model.showToday) {
         TodayView(app: model, mirror: model.mirror)
@@ -178,7 +179,7 @@ struct DiagnosticsView: View {
     ) {
       GymTimerView(app: model, launch: model.gymTimer ?? GymTimerLaunch(), onExit: model.closeGymTimer)
         // A cover is its own presentation: the app's shake detector and report sheet do not reach into it.
-        .background(ShakeDetector { model.startBugReport(from: "shake") })
+        .bugReporting(model.reporter)
     }
   }
 }
@@ -371,6 +372,7 @@ private struct HomeSettingsView: View {
         }
         Section {
           Button("Report a problem") { model.startBugReport(from: "button") }
+            .accessibilityIdentifier("home-settings-report")  // BugKit's hidden ⌘I button has the same name
           if !model.status.isEmpty { Text(model.status).foregroundStyle(.secondary) }
         } footer: {
           Text("Or shake the phone on any screen.")

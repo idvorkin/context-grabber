@@ -1,6 +1,7 @@
 //  Grabber Native: the Swift-native Context Grabber, built beside the React Native app until it can replace it
 //  (docs/superpowers/specs/2026-10-04-swift-native-app-design.md).
 
+import BugKit
 import SwiftUI
 
 @main
@@ -17,11 +18,10 @@ struct GrabberApp: App {
   var body: some Scene {
     WindowGroup {
       DiagnosticsView(model: model)
-        .background(ShakeDetector { model.startBugReport(from: "shake") })
+        .bugReporting(model.reporter)
         .onOpenURL { model.open(url: $0) }
         .onChange(of: scenePhase) { _, phase in
           // The first activation is the launch, which pruned already; every later one is a foreground.
-          if phase == .active { model.shakeMotion.start() } else { model.shakeMotion.stop() }
           if phase == .active {
             if wasActive { model.foreground() } else { model.tracker.foreground(); model.usage.resume(reason: "launch") }
             wasActive = true

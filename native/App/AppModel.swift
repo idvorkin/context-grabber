@@ -1,5 +1,7 @@
 //  What the whole app shares: the session log, the bug reporter, and which screen is in front (a report names it).
 
+import BugKit
+import Combine
 import ContextCore
 import SwiftUI
 
@@ -12,16 +14,14 @@ final class AppModel: ObservableObject {
   /// The trail: recording runs whatever screen is in front, and iOS may launch the app just to deliver points.
   let tracker: LocationTracker
   let places: PlacesModel
-  private let bugReporter: BugReporter
-  /// A gentle shake opens the report too (story 146).
-  private(set) lazy var shakeMotion = ShakeMotion { [weak self] peak in
-    self?.log.event("shake", ["source": "motion", "peak_g": (peak * 100).rounded() / 100])
-    self?.startBugReport(from: "shake")
-  }
+  private let logPruner: LogPruner
+  /// Shake (hard or gentle), ⌘I or the cog's button opens BugKit's report dialog (stories 142, 146). Set at the
+  /// end of init: its hooks read this model.
+  private(set) var reporter: BugReporter!
+  private var reporterStatus: AnyCancellable?
 
   /// The screen in front, as a report and the log name it. Each ported journey sets it when it appears.
   @Published var screen = "home"
-  @Published var showBugReport = false
   @Published var status = ""
   /// Under Reset audio: what the phone's audio was and is now (story 149).
   @Published private(set) var audioResetLine = ""
@@ -63,13 +63,13 @@ final class AppModel: ObservableObject {
   /// The metric whose week is open over Today.
   @Published var openMetricKey: MetricSheetItem?
   /// What's new, as the build wrote it (story 148); nil when the resource is missing or unreadable.
-  let whatsNew = WhatsNewFeed.decode(
+  let whatsNew = ContextCore.WhatsNewFeed.decode(
     Bundle.main.url(forResource: "whats-new", withExtension: "json").flatMap { try? Data(contentsOf: $0) })
   @Published var showWhatsNew = false
   /// The newest change Igor dismissed What's new at (its ✕); the home row stays away until a newer one arrives.
   @Published private(set) var whatsNewSeen: String?
   static let whatsNewSeenKey = "whats_new_seen"
-  var whatsNewOnHome: Bool { WhatsNewFeed.showsOnHome(whatsNew, seen: whatsNewSeen) }
+  var whatsNewOnHome: Bool { ContextCore.WhatsNewFeed.showsOnHome(whatsNew, seen: whatsNewSeen) }
   /// Which launchers the home screen shows, in Igor's order (story 147).
   @Published private(set) var homeLayout: HomeLayout
   @Published var showHomeSettings = false
@@ -83,7 +83,7 @@ final class AppModel: ObservableObject {
     liveActivity = LiveActivityController(log: log)
     tracker = LocationTracker(log: log, store: database.locations)
     places = PlacesModel(log: log, database: database)
-    bugReporter = BugReporter(log: log)
+    logPruner = LogPruner(log: log)
     call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
     whatsNewSeen = database.setting(Self.whatsNewSeenKey)
     homeLayout = HomeLayout(
@@ -91,11 +91,12 @@ final class AppModel: ObservableObject {
       storedHidden: database.setting(HomeLayout.hiddenKey))
     CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
     CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
-    bugReporter.pruneOldLogs()
+    logPruner.pruneOldLogs()
     places.prune(reason: "launch")
     liveActivity.endLeftovers()
     LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
     mirror = MirrorModel(app: self)
+    reporter = makeReporter()
     dailyStrip = DailyStripModel(log: log, database: database) { [weak self] in self?.mirror.snapshot }
     call.willStart = { [weak self] in self?.eulogySong.yield(to: "call") }
     runLaunchHooks()
@@ -244,25 +245,34 @@ final class AppModel: ObservableObject {
       ["action": "home_rows", "change": change, "order": homeLayout.encodedOrder, "hidden": homeLayout.encodedHidden])
   }
 
-  /// A shake or the button: the picture is taken before the sheet covers the screen.
-  /// Opens the report over whatever is in front (#182): a sheet attached to the screen underneath could not open
-  /// while that screen already had one up, and stayed "up" so every later shake was swallowed too.
+  /// The report dialog, BugKit's (bug-kit migration, step 1). "Log it and another" takes a fresh picture of the
+  /// screen underneath (story 142); dictation is off while a call holds the microphone (#239); the simulator hooks
+  /// keep their names (`GRABBER_BUG`, `GRABBER_SHAKE_AFTER`).
+  private func makeReporter() -> BugReporter {
+    var options = BugReporterOptions()
+    options.another = .recapture
+    options.dictation = true
+    options.gentleShake = true
+    options.launchHookPrefix = "GRABBER"
+    options.placeholder = "e.g. the timer skipped the rest"
+    let log = log
+    let reporter = BugReporter(
+      hooks: BugReporterHooks(
+        screen: { [unowned self] in self.screen },
+        context: { ["branch": .string(BuildInfo.branch)] },
+        sessionLog: { ("logs/" + log.url.lastPathComponent, Int(Date().timeIntervalSince(log.startedAt) * 1000)) },
+        logger: { type, fields in log.event(type, fields.mapValues(\.foundation)) },
+        microphoneBusy: { [unowned self] in self.call.snapshot.isActive }),
+      options: options)
+    reporterStatus = reporter.$lastStatus.compactMap { $0 }.receive(on: RunLoop.main)
+      .sink { [weak self] in self?.status = $0 }
+    return reporter
+  }
+
+  /// The cog's *Report a problem*.
   func startBugReport(from source: String) {
-    guard !showBugReport else { return }
-    bugReporter.capture()
-    let over = BugReportPresenter.present(
-      BugReportSheet(model: self), onGone: { [weak self] in self?.showBugReport = false },
-      another: { [weak self] in self?.startBugReport(from: "another") })
-    log.event("ui", ["action": "report_problem", "from": source, "screen": screen, "over": over ?? "nothing"])
-    showBugReport = over != nil
-  }
-
-  func bugContext() -> [String: String] {
-    ["screen": screen, "build": "\(BuildInfo.sha) \(BuildInfo.branch)", "log": log.url.lastPathComponent]
-  }
-
-  func reportBug(note: String) {
-    status = bugReporter.report(note: note, context: bugContext())
+    log.event("ui", ["action": "report_problem", "from": source, "screen": screen])
+    reporter.open(from: .button)
   }
 
   func openGymTimer(_ launch: GymTimerLaunch = GymTimerLaunch(), from source: String) {
@@ -622,20 +632,9 @@ final class AppModel: ObservableObject {
       // As if iOS had opened the link: simctl openurl stops at a confirmation a script cannot tap.
       open(url: url)
     }
-    // A shake after this many seconds, over whatever is up by then (#182: the cog's sheet, with GRABBER_HOME).
-    if let seconds = Double(env["GRABBER_SHAKE_AFTER"] ?? "") {
-      Task {
-        try? await Task.sleep(for: .seconds(seconds))
-        startBugReport(from: "hook")
-      }
-    }
-    if let note = env["GRABBER_BUG"], !note.isEmpty {
-      Task {
-        try? await Task.sleep(for: .seconds(2))  // the first frame must be on screen for the picture
-        bugReporter.capture()
-        reportBug(note: note)
-      }
-    }
+    // GRABBER_SHAKE_AFTER (a shake after that many seconds, over whatever is up: #182) and GRABBER_BUG ("a|b",
+    // reports saved with no dialog) are BugKit's hooks under this app's prefix.
+    reporter.runLaunchHooks(env)
   }
 }
 
