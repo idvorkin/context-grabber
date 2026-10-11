@@ -33,7 +33,9 @@ public (`xcrun devicectl list devices` shows the id). Without either they stop w
 is BugKit's and finds every plugged-in iPhone and iPad itself, no ids.) `pull-logs` and `file-bugs` cover the iPad too: its id is `IPAD=<udid>` or one line in the gitignored
 `scripts/native/ipad-udid.local`. Each device's logs, reports and screenshots land in
 `~/tmp/agent/grabber-logs/<phone|ipad>/`, and an issue filed from the iPad says *Report from the iPad*. A device
-that is not plugged in or reachable is named and skipped.
+that is not plugged in or reachable is named and skipped. `native-run-device` builds under the Mac's one signing lock
+(`~/tmp/agent/locks/xcode-signing.lock`, shared with every app and agent), so it waits while another signing build
+runs; run it bare, not inside another `lockf` on that lock.
 
 The simulator cannot be shaken or tapped from a script, so the app reads **launch hooks** from the environment
 (pass them through `simctl` as `SIMCTL_CHILD_<name>`); checks wait for an event in a *new* launch's log instead of

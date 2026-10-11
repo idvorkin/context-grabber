@@ -87,10 +87,13 @@ native-test-sim: native-build-sim
 _phone:
     @scripts/native/phone-udid.sh >/dev/null
 
+# One signing build at a time on this Mac, across every app and agent: the build waits on the shared lock. Don't wrap
+# this recipe in the same lockf yourself; a second lockf on the lock would wait for the first forever.
 native-build-device: _phone native-project
     #!/usr/bin/env bash
     set -uo pipefail
-    out=$(xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
+    mkdir -p ~/tmp/agent/locks
+    out=$(lockf ~/tmp/agent/locks/xcode-signing.lock xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative \
       -derivedDataPath native/Build -destination "platform=iOS,id={{native_device}}" \
       -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
       GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" build 2>&1)
