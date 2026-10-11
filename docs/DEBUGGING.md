@@ -85,16 +85,14 @@ Adding one: `log.event("snake_case_type", ["field": value])`, and a row here in 
 
 **From a shake to an issue.** A shake (or *Report a problem* behind the home screen's cog) captures the window, and *Log it*
 writes a `bug_report` event, a line in `Documents/bugs.jsonl` (note, screen, build, `log`, `session_t_ms`,
-`screenshot`) and the picture under `Documents/bugs/<stamp>/`. While Igor is on the phone, arm
-
-```
-Monitor(command: "scripts/native/bugs-monitor.sh", description: "new shake reports on the phone or iPad", persistent: true)
-```
-
-which polls both devices' `bugs.jsonl` every minute and prints one line per report that is not yet an issue,
-`new (phone): <reported_at>  <note>` (`just bugs-check` is the same look, once; "ipad not reachable" is not a
-failure). It was silent from PR #241 to PR #256, when the check's line changed under it. bug-kit's listener
-replaces it at the migration. On a line: `just pull-logs && just file-bugs` —
+`screenshot`) and the picture under `Documents/bugs/<stamp>/`. The report dialog, the shake, the store and its
+format are BugKit's (idvorkin/bug-kit). While Igor is on the phone, `just bugs-check` is BugKit's
+`pull-reports.sh --check context-grabber`: it copies each plugged-in iPhone's and iPad's `bugs.jsonl` and prints
+one line per report that is not yet an issue, `new context-grabber <device> <reported_at> <note>`, exiting 1 when
+there are any (an unreachable device is named, not a failure). To watch, loop it under a Monitor, or run BugKit's
+`listener/bug-listener`, which polls and files on its own (CG is in `~/.config/bug-kit/apps.json`). The old
+`bugs-monitor.sh` is gone. Until the listener has filed one real report end to end, file by hand.
+On a line: `just pull-logs && just file-bugs` —
 one issue per report, carrying the note, the screen, the build and the log's name. The repo is public, so the
 screenshot is never uploaded: the issue names its path under `~/tmp/agent/grabber-logs/` on the Mac. The marker `<!-- bug:<reported_at> -->` makes filing
 idempotent. Then steps 3–5 of *Bug reports* below, reading the log at the report's `session_t_ms`.

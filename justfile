@@ -117,9 +117,10 @@ pull-logs-sim:
 log-summary file:
     @jq -c . {{file}}
 
-# Quick check for unfiled bug reports on the phone and the iPad (exit 1 when there are any)
+# Quick check for unfiled bug reports on every plugged-in iPhone and iPad (exit 1 when there are any): BugKit's
+# pull-reports --check, from the checkout SwiftPM pinned (build once), else ~/gits/bug-kit
 bugs-check:
-    scripts/native/bugs-check.sh
+    "$(\ls -d native/Build/SourcePackages/checkouts/bug-kit 2>/dev/null || echo ~/gits/bug-kit)/scripts/pull-reports.sh" --check context-grabber
 
 # File each new shake report from the pulled bugs.jsonl as a GitHub issue (skips ones already filed)
 file-bugs:

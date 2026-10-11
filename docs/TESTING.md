@@ -27,10 +27,10 @@ tables below move here.
 | 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, the timer's cues, the card's deal and count, no `error` event |
 | 3 Phone | Grabber Native on the iPhone, beside Context Grabber | `just native-run-device`, then `just pull-logs` | minutes + a person | the shake, and everything the phone-only rows below list |
 
-The phone recipes (`native-run-device`, `pull-logs`, `bugs-check`) need the iPhone's hardware UDID: `DEVICE=<udid>`
+The phone recipes (`native-run-device`, `pull-logs`) need the iPhone's hardware UDID: `DEVICE=<udid>`
 in the environment, or one line in `scripts/native/phone-udid.local`, which is gitignored because the repo is
-public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so. `pull-logs`,
-`bugs-check` and `file-bugs` cover the iPad too: its id is `IPAD=<udid>` or one line in the gitignored
+public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so. (`bugs-check`
+is BugKit's and finds every plugged-in iPhone and iPad itself, no ids.) `pull-logs` and `file-bugs` cover the iPad too: its id is `IPAD=<udid>` or one line in the gitignored
 `scripts/native/ipad-udid.local`. Each device's logs, reports and screenshots land in
 `~/tmp/agent/grabber-logs/<phone|ipad>/`, and an issue filed from the iPad says *Report from the iPad*. A device
 that is not plugged in or reachable is named and skipped.
