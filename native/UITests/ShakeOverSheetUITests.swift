@@ -16,7 +16,7 @@ final class ShakeOverSheetUITests: XCTestCase {
     XCTAssertTrue(app.navigationBars["Home screen"].waitForExistence(timeout: 5), app.debugDescription)
     // A second report, from the sheet's own button: the first one's close let go of it.
     let button = app.buttons["home-settings-report"]
-    for _ in 0..<6 where !button.isHittable { app.swipeUp() }
+    for _ in 0..<10 where !button.isHittable { app.swipeUp() }  // the cog's list is long: launchers, then About
     button.tap()
     XCTAssertTrue(report.waitForExistence(timeout: 5), app.debugDescription)
   }

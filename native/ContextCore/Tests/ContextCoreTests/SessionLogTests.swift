@@ -46,32 +46,3 @@ final class SessionLogLineTests: XCTestCase {
     XCTAssertEqual(line["t"] as? Int, 7)
   }
 }
-
-final class LogRetentionTests: XCTestCase {
-  private let day = 24.0 * 3600
-
-  func testOldLogsGoRecentOnesAndReportedOnesStay() {
-    let files = [
-      (name: "old.jsonl", age: 40 * day),
-      (name: "old-reported.jsonl", age: 40 * day),
-      (name: "recent.jsonl", age: 2 * day),
-    ]
-    XCTAssertEqual(LogRetention.prune(files: files, referenced: ["old-reported.jsonl"]), ["old.jsonl"])
-  }
-
-  func testALogExactlyAtTheLimitStays() {
-    let files = [(name: "edge.jsonl", age: LogRetention.retentionSeconds)]
-    XCTAssertEqual(LogRetention.prune(files: files, referenced: []), [])
-  }
-
-  func testReferencedLogsSkipsMalformedLinesAndReportsWithoutALog() {
-    let text = """
-      {"note":"a","log":"grabber-1.jsonl"}
-      not json
-      {"note":"no log"}
-      {"note":"b","log":"grabber-2.jsonl"}
-
-      """
-    XCTAssertEqual(LogRetention.referencedLogs(bugsJsonl: text), ["grabber-1.jsonl", "grabber-2.jsonl"])
-  }
-}

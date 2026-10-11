@@ -11,8 +11,7 @@ struct GrabberApp: App {
   @State private var wasActive = false
 
   init() {
-    CrashReports.shared.install()  // before the model: its init announces last launch's crash files
-    _model = StateObject(wrappedValue: AppModel())
+    _model = StateObject(wrappedValue: AppModel())  // installs BugKit's crash capture once its log is open
   }
 
   var body: some Scene {

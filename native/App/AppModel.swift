@@ -14,7 +14,6 @@ final class AppModel: ObservableObject {
   /// The trail: recording runs whatever screen is in front, and iOS may launch the app just to deliver points.
   let tracker: LocationTracker
   let places: PlacesModel
-  private let logPruner: LogPruner
   /// Shake (hard or gentle), ⌘I or the cog's button opens BugKit's report dialog (stories 142, 146). Set at the
   /// end of init: its hooks read this model.
   private(set) var reporter: BugReporter!
@@ -83,15 +82,15 @@ final class AppModel: ObservableObject {
     liveActivity = LiveActivityController(log: log)
     tracker = LocationTracker(log: log, store: database.locations)
     places = PlacesModel(log: log, database: database)
-    logPruner = LogPruner(log: log)
     call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
     whatsNewSeen = database.setting(Self.whatsNewSeenKey)
     homeLayout = HomeLayout(
       known: HomeRow.ids, storedOrder: database.setting(HomeLayout.orderKey),
       storedHidden: database.setting(HomeLayout.hiddenKey))
-    CrashReports.shared.onEvent = { [log] type, fields in log.event(type, fields) }
-    CrashReports.shared.reportSignalLogs { type, fields in log.event(type, fields) }
-    logPruner.pruneOldLogs()
+    // BugKit's (step 2): MetricKit, signal and exception files under Documents/crashes, each announced once in this
+    // log; then logs older than 30 days go, except any a report names (story 145).
+    CrashReports.shared.install(logger: bugLogger)
+    BugStore().pruneLogs(logger: bugLogger)
     places.prune(reason: "launch")
     liveActivity.endLeftovers()
     LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
@@ -245,6 +244,12 @@ final class AppModel: ObservableObject {
       ["action": "home_rows", "change": change, "order": homeLayout.encodedOrder, "hidden": homeLayout.encodedHidden])
   }
 
+  /// BugKit's events into this launch's log.
+  private var bugLogger: BugLogger {
+    let log = log
+    return { type, fields in log.event(type, fields.mapValues(\.foundation)) }
+  }
+
   /// The report dialog, BugKit's (bug-kit migration, step 1). "Log it and another" takes a fresh picture of the
   /// screen underneath (story 142); dictation is off while a call holds the microphone (#239); the simulator hooks
   /// keep their names (`GRABBER_BUG`, `GRABBER_SHAKE_AFTER`).
@@ -261,7 +266,7 @@ final class AppModel: ObservableObject {
         screen: { [unowned self] in self.screen },
         context: { ["branch": .string(BuildInfo.branch)] },
         sessionLog: { ("logs/" + log.url.lastPathComponent, Int(Date().timeIntervalSince(log.startedAt) * 1000)) },
-        logger: { type, fields in log.event(type, fields.mapValues(\.foundation)) },
+        logger: bugLogger,
         microphoneBusy: { [unowned self] in self.call.snapshot.isActive }),
       options: options)
     reporterStatus = reporter.$lastStatus.compactMap { $0 }.receive(on: RunLoop.main)
