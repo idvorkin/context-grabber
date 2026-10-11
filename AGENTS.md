@@ -4,7 +4,7 @@ iOS app (Expo + React Native + TypeScript; Swift for the widgets and the local a
 humane mirror of Igor's week — health, places, roles, a journal — and feeds it to Larry, his AI coach, as a context
 export and over a voice call. Also a gym timer. `lib/` is the platform-free half (pure functions, tested on the
 host); `screens/` and `components/` the UI; `modules/audio-route/` and `ios/LiveActivity/` the native capability.
-Igor merges the PRs and ships them himself; work lands on a branch as one PR per issue.
+Work lands on a branch as one PR per issue, through the no-mistakes pipeline (below); the agent merges it.
 
 **The app is being rewritten Swift-native** (Igor, 2026-10-04; bead `context-grabber-3ss`, spec
 `docs/superpowers/specs/2026-10-04-swift-native-app-design.md`). `native/` holds Grabber Native, a second app
@@ -61,6 +61,10 @@ apply to the React Native app only; the native app has no OTA.
   data exposes.
 - **Background agents** that investigate are read-only, in a worktree, notes under `~/tmp/agent/notes/`; confirm
   scope before an agent that writes to the repo. Reap background commands when done.
+- **Every change goes through the no-mistakes pipeline, and the agent merges it.** The gate is installed in
+  this repo: `no-mistakes axi run --intent "…"` (or push to the `no-mistakes` remote). When the run reaches
+  `checks-passed`, merge the PR yourself and check that its commits reached `origin/main`. Don't wait for PR
+  feedback, because nobody gives it: the pipeline is the review.
 - **Architecture is discussed, not assumed**: propose with a trade-off table or a numeric plan, then one "do it".
   Prefer `just` recipes over raw commands — they carry the version generation and the native-surface checks.
 
