@@ -5,7 +5,7 @@
 import Foundation
 
 public enum DailyItem: String, CaseIterable, Sendable {
-  case gym, journal, balloons, magic
+  case gym, meditation, journal, balloons, magic
 
   public var isCounter: Bool { self == .balloons || self == .magic }
 }
@@ -63,6 +63,18 @@ public struct DailyStrip {
       days.insert(day)
     }
     return days
+  }
+
+  // MARK: Meditation (#257)
+
+  /// Where today's meditation came from without a tap: "breathing" (a Box breathing session reached Done today),
+  /// "health" (the last grab, made today, had mindful minutes), or nil.
+  public static func meditationSource(
+    today: String, activity: [ActivityEntry], healthMinutes: Double?, healthDay: String?
+  ) -> String? {
+    if activity.contains(where: { $0.kind == .breathing && $0.dateKey == today }) { return "breathing" }
+    if healthDay == today, let minutes = healthMinutes, minutes > 0 { return "health" }
+    return nil
   }
 
   /// Days from the newest gym day on or before `today` to today: 0 when today counts, nil with none ever.

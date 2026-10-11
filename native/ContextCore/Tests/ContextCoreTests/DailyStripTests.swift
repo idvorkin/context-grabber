@@ -44,4 +44,22 @@ final class DailyStripTests: XCTestCase {
     // Across the clocks going back (Nov 1 2026 in Los Angeles) a day is still a day.
     XCTAssertEqual(DailyStrip.daysSince(["2026-10-31"], today: "2026-11-02", calendar: calendar), 2)
   }
+
+  // #257: meditation counts from a breathing session today, or the last grab's mindful minutes if it was today.
+  func testMeditationComesFromBreathingOrHealthToday() {
+    let breath = ActivityEntry(id: 1, kind: .breathing, name: "Box", seconds: 240, finishedAt: 0, dateKey: "2026-10-10")
+    let gym = ActivityEntry(id: 2, kind: .gymTimer, name: "30 SEC", seconds: 600, finishedAt: 0, dateKey: "2026-10-10")
+    XCTAssertEqual(
+      DailyStrip.meditationSource(today: "2026-10-10", activity: [gym, breath], healthMinutes: nil, healthDay: nil),
+      "breathing")
+    XCTAssertEqual(
+      DailyStrip.meditationSource(today: "2026-10-10", activity: [gym], healthMinutes: 12, healthDay: "2026-10-10"),
+      "health")
+    XCTAssertNil(
+      DailyStrip.meditationSource(today: "2026-10-11", activity: [breath], healthMinutes: 12, healthDay: "2026-10-10"),
+      "yesterday's breathing and yesterday's grab do not count today")
+    XCTAssertNil(
+      DailyStrip.meditationSource(today: "2026-10-10", activity: [gym], healthMinutes: 0, healthDay: "2026-10-10"),
+      "zero minutes is not a meditation")
+  }
 }
