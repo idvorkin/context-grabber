@@ -69,10 +69,10 @@ targets:
         product: ThinkACardUI
       - package: BugKit
       - target: GrabberWidgets
-    # What's new (story 148): the last month's story commits, made from git log at every build.
+    # What's new (story 148): the last month's story commits, made from git log at every build by BugKit's script.
     postBuildScripts:
       - name: What's new
-        script: '"$SRCROOT/../scripts/native/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json"'
+        script: '"$BUILD_DIR/../../SourcePackages/checkouts/bug-kit/scripts/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json" --repo "$SRCROOT/.." --path native --base-url https://github.com/idvorkin/context-grabber/blob/main/docs/stories/'
         basedOnDependencyAnalysis: false
         showEnvVars: false
       # The card screen's stack and voice clips, from Igor's Mac, never from this repo (scripts/native/bundle-trainer.sh).

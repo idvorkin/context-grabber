@@ -61,14 +61,13 @@ final class AppModel: ObservableObject {
   @Published var showEulogySong = false
   /// The metric whose week is open over Today.
   @Published var openMetricKey: MetricSheetItem?
-  /// What's new, as the build wrote it (story 148); nil when the resource is missing or unreadable.
-  let whatsNew = ContextCore.WhatsNewFeed.decode(
-    Bundle.main.url(forResource: "whats-new", withExtension: "json").flatMap { try? Data(contentsOf: $0) })
+  /// What's new, as the build wrote it with BugKit's script (story 148); nil when the resource is missing or unreadable.
+  let whatsNew = WhatsNewSeen.bundledFeed()
   @Published var showWhatsNew = false
-  /// The newest change Igor dismissed What's new at (its ✕); the home row stays away until a newer one arrives.
-  @Published private(set) var whatsNewSeen: String?
-  static let whatsNewSeenKey = "whats_new_seen"
-  var whatsNewOnHome: Bool { ContextCore.WhatsNewFeed.showsOnHome(whatsNew, seen: whatsNewSeen) }
+  /// Where the list was opened from, for BugKit's `open_whats_new` line.
+  private(set) var whatsNewFrom = "home"
+  /// The home row shows until its ✕ (BugKit keeps that in UserDefaults; the row hides itself on the tap).
+  var whatsNewOnHome: Bool { WhatsNewSeen().showsRow(whatsNew) }
   /// Which launchers the home screen shows, in Igor's order (story 147).
   @Published private(set) var homeLayout: HomeLayout
   @Published var showHomeSettings = false
@@ -83,7 +82,10 @@ final class AppModel: ObservableObject {
     tracker = LocationTracker(log: log, store: database.locations)
     places = PlacesModel(log: log, database: database)
     call = CallModel(log: log, database: database, environment: ProcessInfo.processInfo.environment)
-    whatsNewSeen = database.setting(Self.whatsNewSeenKey)
+    // Before BugKit the ✕ was kept in the database: carry it over once, so a dismissed row stays dismissed.
+    if let seen = database.setting("whats_new_seen"), UserDefaults.standard.string(forKey: WhatsNewSeen.defaultKey) == nil {
+      UserDefaults.standard.set(seen, forKey: WhatsNewSeen.defaultKey)
+    }
     homeLayout = HomeLayout(
       known: HomeRow.ids, storedOrder: database.setting(HomeLayout.orderKey),
       storedHidden: database.setting(HomeLayout.hiddenKey))
@@ -245,7 +247,7 @@ final class AppModel: ObservableObject {
   }
 
   /// BugKit's events into this launch's log.
-  private var bugLogger: BugLogger {
+  var bugLogger: BugLogger {
     let log = log
     return { type, fields in log.event(type, fields.mapValues(\.foundation)) }
   }
@@ -498,28 +500,11 @@ final class AppModel: ObservableObject {
     call.start(from: source)
   }
 
+  /// Opens the list; BugKit's view logs `open_whats_new` as it appears.
   func openWhatsNew(from source: String) {
-    logWhatsNewOpened(from: source)
+    whatsNewFrom = source
     screen = "whats_new"
     showWhatsNew = true
-  }
-
-  func logWhatsNewOpened(from source: String) {
-    let days = whatsNew?.days ?? []
-    log.event(
-      "ui",
-      [
-        "action": "open_whats_new", "from": source, "days": days.count,
-        "changes": days.reduce(0) { $0 + $1.items.count }, "newest": days.first?.day ?? "",
-      ])
-  }
-
-  /// The home row's ✕: the newest change is dismissed and the row goes until a newer build brings another.
-  func dismissWhatsNew() {
-    guard let newest = whatsNew?.newest else { return }
-    log.event("ui", ["action": "dismiss_whats_new", "newest": newest])
-    whatsNewSeen = newest
-    database.setSetting(Self.whatsNewSeenKey, newest)
   }
 
   func openToday(from source: String) {

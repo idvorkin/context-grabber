@@ -15,24 +15,10 @@ struct DiagnosticsView: View {
         // Until its ✕; after that it lives in the cog's sheet (story 148).
         if model.whatsNewOnHome {
           Section {
-            HStack(spacing: 8) {
-              Button {
-                model.openWhatsNew(from: "home")
-              } label: {
-                WhatsNewRow(feed: model.whatsNew).frame(maxWidth: .infinity, alignment: .leading)
-              }
-              .tint(.primary)  // a quiet line above the launchers, not another launcher
-              .accessibilityIdentifier("home-whats-new")
-              Button {
-                withAnimation { model.dismissWhatsNew() }
-              } label: {
-                Image(systemName: "xmark.circle.fill").font(.title3).foregroundStyle(.secondary)
-              }
-              .accessibilityLabel("Dismiss What's new")
-              .accessibilityIdentifier("home-whats-new-dismiss")
-            }
-            // Two buttons in one row: without this a tap anywhere fires both.
-            .buttonStyle(.borderless)
+            // BugKit's row: its ✕ remembers the newest change and hides the row until a newer build.
+            WhatsNewRow(feed: model.whatsNew, logger: model.bugLogger) { model.openWhatsNew(from: "home") }
+              // Two buttons in one row: without this a tap anywhere fires both.
+              .buttonStyle(.borderless)
           }
         }
         // Story 151 (#189): the mirror first, then the launchers as tiles.
@@ -158,7 +144,7 @@ struct DiagnosticsView: View {
             model.showWhatsNew = $0
             if !$0 { model.screen = "home" }
           })
-      ) { WhatsNewView(feed: model.whatsNew, log: model.log) }
+      ) { WhatsNewView(feed: model.whatsNew, logger: model.bugLogger, from: model.whatsNewFrom) }
       .sheet(
         isPresented: Binding(
           get: { model.showEulogySong },
@@ -320,7 +306,6 @@ private struct HomeSettingsView: View {
           .tint(.primary)
           .accessibilityIdentifier("home-diagnostics-uploads")
           Button {
-            model.logWhatsNewOpened(from: "home_settings")
             showWhatsNew = true
           } label: {
             HStack {
@@ -382,7 +367,9 @@ private struct HomeSettingsView: View {
       .environment(\.editMode, .constant(.active))
       .navigationDestination(isPresented: $showUploads) { GistSettingsView(call: model.call) }
       .navigationDestination(isPresented: $showLinks) { LinksView(log: model.log) }
-      .navigationDestination(isPresented: $showWhatsNew) { WhatsNewView(feed: model.whatsNew, log: model.log) }
+      .navigationDestination(isPresented: $showWhatsNew) {
+        WhatsNewView(feed: model.whatsNew, logger: model.bugLogger, from: "home_settings")
+      }
       .navigationTitle("Home screen")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
