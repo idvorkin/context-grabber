@@ -27,13 +27,15 @@ tables below move here.
 | 2 Simulator | the app, driven by launch hooks, judged from its session log | `just native-test-sim` | ~1 min | it installs and launches, the log's first line names the build, a report is stored with its screenshot, the timer's cues, the card's deal and count, no `error` event |
 | 3 Phone | Grabber Native on the iPhone, beside Context Grabber | `just native-run-device`, then `just pull-logs` | minutes + a person | the shake, and everything the phone-only rows below list |
 
-The phone recipes (`native-run-device`, `pull-logs`, `bugs-check`) need the iPhone's hardware UDID: `DEVICE=<udid>`
+The phone recipes (`native-run-device`, `pull-logs`) need the iPhone's hardware UDID: `DEVICE=<udid>`
 in the environment, or one line in `scripts/native/phone-udid.local`, which is gitignored because the repo is
-public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so. `pull-logs`,
-`bugs-check` and `file-bugs` cover the iPad too: its id is `IPAD=<udid>` or one line in the gitignored
+public (`xcrun devicectl list devices` shows the id). Without either they stop with a line saying so. (`bugs-check`
+is BugKit's and finds every plugged-in iPhone and iPad itself, no ids.) `pull-logs` and `file-bugs` cover the iPad too: its id is `IPAD=<udid>` or one line in the gitignored
 `scripts/native/ipad-udid.local`. Each device's logs, reports and screenshots land in
 `~/tmp/agent/grabber-logs/<phone|ipad>/`, and an issue filed from the iPad says *Report from the iPad*. A device
-that is not plugged in or reachable is named and skipped.
+that is not plugged in or reachable is named and skipped. `native-run-device` builds under the Mac's one signing lock
+(`~/tmp/agent/locks/xcode-signing.lock`, shared with every app and agent), so it waits while another signing build
+runs; run it bare, not inside another `lockf` on that lock.
 
 The simulator cannot be shaken or tapped from a script, so the app reads **launch hooks** from the environment
 (pass them through `simctl` as `SIMCTL_CHILD_<name>`); checks wait for an event in a *new* launch's log instead of
@@ -58,7 +60,7 @@ sleeping, so a slow start cannot reuse the previous result ([`scripts/native/sim
 | `GRABBER_COUNT_VOICE=adam\|igor\|aussie` | with `GRABBER_TIMER` or `GRABBER_TIMER_SETTINGS`: count in that voice for this launch, not remembered and with no sample (story 182); `just native-test-sim` runs `aussie` and reads the first `timer_cue`'s `voice` |
 | `GRABBER_TIMER_DIAL=drums\|knobs\|arc\|sliders` | which control sets Custom's Work, Rest and Rounds upright (story 184): the drums are what ships; the knobs, the arc and the old sliders are only for trying and screenshots. Alone it opens the timer on CUSTOM, not started (`ui` open_timer with dial); with `GRABBER_TIMER` it draws that control for the run. Not remembered |
 | `GRABBER_TIMER_SETTINGS=1` | open the Gym Timer, not started, with *Timer settings* up (logs `ui` action: timer_settings), for a screenshot of the sheet |
-| `GRABBER_WHATS_NEW=open` | open What's new (logs `ui` action: open_whats_new with days, changes, newest), for a screenshot of the build's own history (story 148) |
+| `GRABBER_WHATS_NEW=open` | open What's new (logs `ui` action: open_whats_new with from, days, changes), for a screenshot of the build's own history (story 148) |
 | `GRABBER_HOME=settings` | open the home screen's cog sheet (logs `ui` action: home_settings), for a screenshot of the launchers and the diagnostics (story 147) |
 | `GRABBER_LINK=<url>` | route that link as if iOS had opened it (`simctl openurl` stops at an "Open in Grabber Native?" confirmation a script cannot tap): `grabbernative://timer?preset=10,10,2`, `grabbernative://breathe?breath=5&minutes=2`; the log's `open_url` says how it was read. `LinksUITests` opens real links through iOS instead, cold and warm |
 | `GRABBER_COCKPIT=open` | open the Cockpit screen, as its row on the home screen would |
@@ -68,8 +70,8 @@ What the native rungs can and cannot see of What's new (story 148, [spec](superp
 
 | Change | Where it must be verified | How |
 |---|---|---|
-| Which subjects count (Story NNN first, or stories in brackets), bookkeeping dropped, one line per story per local day, the story's summary and issue from the markdown, the home line, a missing or bad resource | Host | `WhatsNewTests` (one test parses every real file in `docs/stories/`) |
-| What a build of this checkout would list | Host | `scripts/native/whats-new.sh <out.json>` prints the counts and writes the same JSON the build phase bundles |
+| Which subjects count (Story NNN first, or stories in brackets), bookkeeping dropped, one line per story per local day, the story's summary and issue from the markdown, the home line, a missing or bad resource | BugKit's host tests | `WhatsNewTests` in idvorkin/bug-kit |
+| What a build of this checkout would list | Host | BugKit's `scripts/whats-new.sh <out.json> --repo . --path native` (from the SwiftPM checkout) prints the counts and writes the same JSON the build phase bundles |
 | The row and the screen, with the build's real days | Simulator screenshot | launch plain, and with `SIMCTL_CHILD_GRABBER_WHATS_NEW=open`, then `simctl io screenshot`; the log's `ui` open_whats_new names the days and changes |
 
 What the native rungs can and cannot see of the home screen (story 147, [spec](superpowers/specs/2026-10-06-native-home-screen-design.md)):

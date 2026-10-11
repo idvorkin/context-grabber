@@ -7,7 +7,7 @@ final class WhatsNewSeenUITests: XCTestCase {
   func testHomeRowGoesOnItsXAndStaysInTheCog() throws {
     let app = XCUIApplication()
     app.launch()
-    let row = app.buttons["home-whats-new"]
+    let row = app.buttons["whats-new-row"]
     XCTAssertTrue(row.waitForExistence(timeout: 15), app.debugDescription)
     row.tap()
     XCTAssertTrue(app.otherElements["whats-new"].waitForExistence(timeout: 5) || app.tables["whats-new"].exists
@@ -16,7 +16,7 @@ final class WhatsNewSeenUITests: XCTestCase {
     let cog = app.buttons["home-settings"]
     XCTAssertTrue(cog.waitForExistence(timeout: 5), app.debugDescription)
     XCTAssertTrue(row.waitForExistence(timeout: 5), "opening keeps the row")
-    app.buttons["home-whats-new-dismiss"].tap()
+    app.buttons["whats-new-dismiss"].tap()
     let gone = NSPredicate(format: "exists == false")
     expectation(for: gone, evaluatedWith: row)
     waitForExpectations(timeout: 5)
@@ -24,7 +24,7 @@ final class WhatsNewSeenUITests: XCTestCase {
     app.terminate()
     app.launch()
     XCTAssertTrue(cog.waitForExistence(timeout: 15), app.debugDescription)
-    XCTAssertFalse(app.buttons["home-whats-new"].exists, "a relaunch should not bring it back")
+    XCTAssertFalse(app.buttons["whats-new-row"].exists, "a relaunch should not bring it back")
 
     cog.tap()
     let inCog = app.buttons["home-settings-whats-new"]

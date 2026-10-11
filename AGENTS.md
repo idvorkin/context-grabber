@@ -46,6 +46,11 @@ apply to the React Native app only; the native app has no OTA.
   (a bug gets an `Issues:` line, a request becomes a story, no story means the spec has a hole). One PR per issue,
   referencing it; never bundle fixes. Close the issue once the build is on the phone with a comment saying what was
   verified where and what Igor should feel; Igor reopens if it is not fixed. Never leave a fixed bug open.
+- **A bug in BugKit code is fixed in [idvorkin/bug-kit](https://github.com/idvorkin/bug-kit), not here.** That covers
+  the dialog, the shake, dictation, the store and its format, crash capture, pruning, What's new, the listener and the
+  scripts. File the bug there, fix it test-first, open a PR, then bump BugKit here. Until that lands, work around it
+  only through BugKit's hooks or options, with a `ponytail:` comment that names the bug-kit issue. Bugs in our own
+  hooks are fixed here. See "Where a bug gets fixed" in the bug-kit README (bug-kit PR #5).
 - **OTA-first**: native code is a capability, what the app does with it is JavaScript. Anything under `ios/`,
   `modules/`, `patches/`, `package.json` or `app.json` is a native build *and* a runtime-version bump; `just ota`
   refuses when the native surface moved. Details under Key Patterns.

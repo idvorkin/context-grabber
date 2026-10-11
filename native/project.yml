@@ -13,6 +13,11 @@ packages:
   ThinkACard:
     url: https://github.com/idvorkin/think-a-card-trainer
     exactVersion: 0.1.0
+  # The report dialog, shake, dictation and What's new, shared with Exercise Analyzer and Magic Monitor. bug-kit has
+  # no tags yet: pinned to a commit, so a change there reaches this app when the revision here moves.
+  BugKit:
+    url: https://github.com/idvorkin/bug-kit
+    revision: 03dd0cbbf3ca55bc70069349497c6828fa0e1952
 settings:
   base:
     DEVELOPMENT_TEAM: 45P6D3439T
@@ -62,11 +67,12 @@ targets:
         product: ThinkACardCore
       - package: ThinkACard
         product: ThinkACardUI
+      - package: BugKit
       - target: GrabberWidgets
-    # What's new (story 148): the last month's story commits, made from git log at every build.
+    # What's new (story 148): the last month's story commits, made from git log at every build by BugKit's script.
     postBuildScripts:
       - name: What's new
-        script: '"$SRCROOT/../scripts/native/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json"'
+        script: '"$BUILD_DIR/../../SourcePackages/checkouts/bug-kit/scripts/whats-new.sh" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whats-new.json" --repo "$SRCROOT/.." --path native --base-url https://github.com/idvorkin/context-grabber/blob/main/docs/stories/'
         basedOnDependencyAnalysis: false
         showEnvVars: false
       # The card screen's stack and voice clips, from Igor's Mac, never from this repo (scripts/native/bundle-trainer.sh).
