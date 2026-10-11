@@ -77,6 +77,9 @@ final class AppModel: ObservableObject {
   private(set) var dailyStrip: DailyStripModel!
 
   init() {
+    // BugKit's crash capture first (story 144), so a crash anywhere in the launch comes back: MetricKit, signal and
+    // exception files under Documents/crashes, each announced once in this log.
+    CrashReports.shared.install(logger: Self.bugLogger(log))
     database = AppDatabase(log: log)
     liveActivity = LiveActivityController(log: log)
     tracker = LocationTracker(log: log, store: database.locations)
@@ -89,9 +92,7 @@ final class AppModel: ObservableObject {
     homeLayout = HomeLayout(
       known: HomeRow.ids, storedOrder: database.setting(HomeLayout.orderKey),
       storedHidden: database.setting(HomeLayout.hiddenKey))
-    // BugKit's (step 2): MetricKit, signal and exception files under Documents/crashes, each announced once in this
-    // log; then logs older than 30 days go, except any a report names (story 145).
-    CrashReports.shared.install(logger: bugLogger)
+    // BugKit's: logs older than 30 days go, except any a report names (story 145).
     BugStore().pruneLogs(logger: bugLogger)
     places.prune(reason: "launch")
     liveActivity.endLeftovers()
@@ -247,9 +248,10 @@ final class AppModel: ObservableObject {
   }
 
   /// BugKit's events into this launch's log.
-  var bugLogger: BugLogger {
-    let log = log
-    return { type, fields in log.event(type, fields.mapValues(\.foundation)) }
+  var bugLogger: BugLogger { Self.bugLogger(log) }
+
+  private static func bugLogger(_ log: SessionLog) -> BugLogger {
+    { type, fields in log.event(type, fields.mapValues(\.foundation)) }
   }
 
   /// The report dialog, BugKit's (bug-kit migration, step 1). "Log it and another" takes a fresh picture of the

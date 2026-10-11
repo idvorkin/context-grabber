@@ -11,7 +11,7 @@ struct GrabberApp: App {
   @State private var wasActive = false
 
   init() {
-    _model = StateObject(wrappedValue: AppModel())  // installs BugKit's crash capture once its log is open
+    _model = StateObject(wrappedValue: AppModel())  // installs BugKit's crash capture before anything else it builds
   }
 
   var body: some Scene {
