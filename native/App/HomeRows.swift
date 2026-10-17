@@ -74,6 +74,25 @@ struct HomeRow: Identifiable {
   static func row(_ id: String) -> HomeRow? { byID[id] }
 }
 
+/// A home tile's drawn picture (#304): `tile-<id>` in the asset catalog, or the glyph square when a row has none.
+struct TileArt: View {
+  let row: HomeRow
+  var size: CGFloat = 56
+
+  var body: some View {
+    if UIImage(named: "tile-\(row.id)") != nil {
+      Image("tile-\(row.id)")
+        .resizable()
+        .interpolation(.high)
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.24, style: .continuous))
+        .accessibilityHidden(true)
+    } else {
+      LauncherIcon(row: row, size: size)
+    }
+  }
+}
+
 /// A launcher's icon: its glyph in white on a small rounded square of its colour, as Settings draws them.
 struct LauncherIcon: View {
   let row: HomeRow

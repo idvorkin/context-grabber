@@ -211,9 +211,9 @@ private struct HomeTile: View {
     Button {
       row.open(model)
     } label: {
-      // #284: the icon above a one- or two-word name.
+      // #284: the icon above a one- or two-word name; #304: the tile's drawn art.
       VStack(spacing: 6) {
-        LauncherIcon(row: row, size: 36)
+        TileArt(row: row)
         Text(row.short).font(.footnote.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
       }
       .frame(maxWidth: .infinity, minHeight: 64)

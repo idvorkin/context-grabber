@@ -19,12 +19,14 @@ struct DailyStripView: View {
         Image(systemName: "figure.mind.and.body").font(.system(size: 15))
       }
       check(.journal, label: "Journal", done: strip.value(.journal) > 0, note: note(.journal)) {
-        // ponytail: #287 asks for a feather pen; SF Symbols has none, so `signature` until a custom symbol is drawn.
-        Image(systemName: "signature").font(.system(size: 15))
+        // #287, #299: a drawn quill, tinted like the other icons.
+        StripGlyph(name: "strip-quill")
       }
-      // ponytail: #287 asks for a balloon dog; SF Symbols has none, so `dog.fill` until a custom symbol is drawn.
-      counter(.balloons, label: "Balloons", icon: "dog.fill", color: .pink)
-      counter(.magic, label: "Magic", icon: "wand.and.sparkles", color: .purple)
+      // #287, #299: a drawn balloon poodle.
+      counter(.balloons, label: "Balloons", color: .pink) { StripGlyph(name: "strip-poodle") }
+      counter(.magic, label: "Magic", color: .purple) {
+        Image(systemName: "wand.and.sparkles").font(.system(size: 15))
+      }
     }
     .font(.subheadline.weight(.medium))
     .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
@@ -82,10 +84,12 @@ struct DailyStripView: View {
     .accessibilityIdentifier("strip-\(item.rawValue)")
   }
 
-  private func counter(_ item: DailyItem, label: String, icon: String, color: Color) -> some View {
+  private func counter<Icon: View>(
+    _ item: DailyItem, label: String, color: Color, @ViewBuilder icon: () -> Icon
+  ) -> some View {
     let count = strip.value(item)
     return HStack(spacing: 5) {
-      Image(systemName: icon).font(.system(size: 15)).foregroundStyle(count > 0 ? color : Color.secondary)
+      icon().foregroundStyle(count > 0 ? color : Color.secondary)
       // At 0, the days since the last day with any, in place of the 0 (2026-10-17).
       if count > 0 {
         Text("\(count)").font(.subheadline.weight(.semibold).monospacedDigit())
@@ -109,6 +113,16 @@ struct DailyStripView: View {
       strip.change(item, by: direction == .increment ? 1 : -1)
     }
     .accessibilityIdentifier("strip-\(item.rawValue)")
+  }
+}
+
+/// A drawn strip icon from the asset catalog, a template image, so it takes the item's colour as the symbols do.
+private struct StripGlyph: View {
+  let name: String
+
+  var body: some View {
+    Image(name).renderingMode(.template).resizable().scaledToFit().frame(width: 19, height: 19)
+      .accessibilityHidden(true)
   }
 }
 

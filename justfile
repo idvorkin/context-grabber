@@ -76,6 +76,8 @@ native-test: native-lint-format native-lint
     scripts/native/test-signing-guard.sh
     # #279: every breathing clip ends in silence, not on a click.
     scripts/native/test-breath-clips.py
+    # #304, #299: every home tile has its drawn art; the strip's poodle and quill are template images.
+    scripts/native/test-tile-art.sh
 
 # GrabberNative.xcodeproj is generated from native/project.yml and not committed
 native-project:
