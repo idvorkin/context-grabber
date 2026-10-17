@@ -163,7 +163,7 @@ private struct TodayCard: View {
       VStack(alignment: .leading, spacing: 10) {
         HStack {
           HStack(spacing: 10) {
-            if let row = HomeRow.row("today") { LauncherIcon(row: row) }
+            if let row = HomeRow.row("today") { TileArt(row: row, size: 36) }  // #304: its drawn art, as the tiles
             Text("Today").font(.headline)
           }
           Spacer()
