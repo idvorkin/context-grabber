@@ -62,9 +62,10 @@ and points at Settings.
 - **Drawn art on the tiles** (Igor, 2026-10-13, #304: *"custom icons … bigger tiles"*; settled 2026-10-17: keep
   three to a row, custom art for every tile, judge the size after). Each home tile shows its own hand-drawn
   picture, in one family (gouache and crayon on the launcher's colour), larger than the old glyph square, above
-  the same short name: a telephone for Call, a heart on a calendar for Today, a stopwatch for Timer, a leaf in a
-  breeze for Breathe, a map with a pin for Places, an ace of spades for Card, a kettlebell and chart for Analyzer,
-  headphones for Supermix, a gauge for Cockpit, a heart-shaped note for Song, an open book for Eulogy, a clock
+  the same short name: the raccoon on the phone for Call (Igor, 2026-10-17: *"more like calling a raccoon"*), a heart on a calendar
+  for Today, a stopwatch for Timer, someone sitting in full lotus for Breathe, a map with a pin for Places, an ace of spades for Card, a kettlebell and chart for Analyzer,
+  headphones for Supermix, a gauge for Cockpit, a gravestone wearing headphones for Song, a gravestone for Eulogy
+  (Igor, 2026-10-17), a clock
   with an arrow for Recent, dice for Random and a gear for Settings. Settings' list of launchers keeps the small
   glyph squares. Igor picks among three drawings of each; until he does, the first is shown.
 
@@ -83,7 +84,8 @@ means to do every day, each a glance and a tap.
   because opening the home screen asks Health nothing.
 - **Journal** — a check, shown as a drawn quill pen (Igor, #287, #299): a tap marks today written; another tap
   takes it back.
-- **Balloons** — a count of balloons made for others today, shown as a drawn balloon poodle (Igor, #287, #299)
+- **Balloons** — a count of balloons made for others today, shown as a drawn balloon poodle of few segments, one
+  per body part (Igor, #287, #299, 2026-10-17)
   and the number. A tap adds one; a long press takes
   one off (never below 0). A soft tick on each change.
 - **Magic** — the same counter, for magic done for others: 🪄 and the number.
