@@ -96,11 +96,21 @@ public enum CardDeal {
   /// A tap: the first count above `nonce` whose card for `date` is not the
   /// one showing. Every surface that reads the new count deals the same card.
   public static func nonceAfterTap(at date: Date, nonce: Int, size: Int = cardsPerRun) -> Int {
+    nonceAfterTap(at: date, nonce: nonce, avoiding: nil, size: size)
+  }
+
+  /// The same, also avoiding `onScreen`: the index, in the caller's current list of `size` cards, of the card the
+  /// tapped widget is actually showing (#230). The widget carries that card itself, so neither a skipped redraw, an
+  /// entry left up past its five minutes nor a changed *Skip easy cards* can hide it (Codex on #334). nil when the
+  /// card is not in the list any more, so it cannot be dealt. With fewer than three cards only the stored count's
+  /// card is avoided.
+  public static func nonceAfterTap(at date: Date, nonce: Int, avoiding onScreen: Int?, size: Int = cardsPerRun) -> Int {
     let s = slot(containing: date)
-    let showing = index(forSlot: s, nonce: nonce, size: size)
+    var avoid: Set<Int> = [index(forSlot: s, nonce: nonce, size: size)]
+    if let onScreen, size > 2 { avoid.insert(onScreen) }
     var next = nonce &+ 1
     guard size > 1 else { return next }  // one card cannot change
-    while index(forSlot: s, nonce: next, size: size) == showing {
+    while avoid.contains(index(forSlot: s, nonce: next, size: size)) {
       next &+= 1
     }
     return next

@@ -322,6 +322,26 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 250:
+
+- **Summary:** Today's hand: a tap after a skipped redraw still deals a card that is not on screen
+- **Status:** native app only: implemented in [45c8e32](https://github.com/idvorkin/context-grabber/commit/45c8e32); verified by `CardDealTests` (host: a tap avoids both the card showing and the last tap's card; 1,639 asserts fail without the change) and `TodaysHandUITests` on the simulator (iPhone 17, two iterations, both passed: a tap changed the card with the app in the background); the skipped-redraw case itself cannot be forced on the simulator; the phone not yet; the tapped card's own count carried by its button instead of recorded at timeline build (Codex on #334): [acf722d](https://github.com/idvorkin/context-grabber/commit/acf722d), host-checked only (lint); the widget build and `TodaysHandUITests` in the next build turn; the drawn entry's slot carried too, so a tap after a five-minute boundary avoids the card still on screen (Codex on #334): [a3aef08](https://github.com/idvorkin/context-grabber/commit/a3aef08), verified by `CardDealTests` (host; 1,638 asserts fail without it); the button carries the card itself, so a changed *Skip easy cards* can't hide it either (Codex on #334): [f01506f](https://github.com/idvorkin/context-grabber/commit/f01506f), `CardDealTests` (host); the widget on the phone in the next build turn
+- **Issues:** [#230](https://github.com/idvorkin/context-grabber/issues/230)
+- **Spec:** [Today's hand](../superpowers/specs/2026-10-08-native-large-widget-design.md)
+
+#### Use Case:
+- **As a** memdeck student tapping the big widget for another card
+- **I want to** get a different card every tap, even when iOS was slow to redraw after the last one
+- **so that** a tap never looks like it did nothing
+
+#### Acceptance Criteria:
+- **Scenario:** A tap after iOS skipped the widget's redraw
+- **Given:** *Today's hand* still shows a card from before my last tap, because iOS did not redraw it
+- **When:** I tap the card again
+- **Then:** the widget deals a card that is not the one on screen, and the app does not open
+
+---
+
 ### User Story 245:
 
 - **Summary:** Think of a card in Grabber Native is the trainer's own screen
