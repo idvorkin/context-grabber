@@ -62,7 +62,7 @@ and points at Settings.
 - **Drawn art on the tiles** (Igor, 2026-10-13, #304: *"custom icons … bigger tiles"*; settled 2026-10-17: keep
   three to a row, custom art for every tile, judge the size after). Each home tile shows its own hand-drawn
   picture, in one family (gouache and crayon on the launcher's colour), larger than the old glyph square, above
-  the same short name: Larry on the phone for Call, as he looks on the blog: the raccoon as Freud, grey beard, round glasses, tweed vest and a lobster claw (Igor, 2026-10-17: *"more like calling a raccoon"*, then *"I want Larry like he looks on my blog"*), a heart on a calendar
+  the same short name: Igor's own raccoon on the phone for Call, in the look of the eulogy post's raccoons (rainbow glasses, green shirt, mismatched crocs, soft felt; Igor, 2026-10-17: *"not Larry, should be Igor, like from the blog in eulogy, that look"*), a heart on a calendar
   for Today, a stopwatch for Timer, someone sitting in full lotus for Breathe, a map with a pin for Places, an ace of spades for Card, a kettlebell and chart for Analyzer,
   headphones for Supermix, a gauge for Cockpit, a gravestone wearing headphones for Song, a gravestone for Eulogy
   (Igor, 2026-10-17), a clock
