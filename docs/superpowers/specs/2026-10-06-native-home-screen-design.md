@@ -62,7 +62,8 @@ and points at Settings.
 - **Drawn art on the tiles** (Igor, 2026-10-13, #304: *"custom icons … bigger tiles"*; settled 2026-10-17: keep
   three to a row, custom art for every tile, judge the size after). Each home tile shows its own picture, larger
   than the old glyph square, above the same short name. Objects are painted as refined still-lifes, not cartoons
-  (Igor, 2026-10-17: *"less cartoony on everything"*), on the launcher's colour, with no faces on things. Every
+  (Igor, 2026-10-17: *"less cartoony on everything"*), all on the same warm cream (*"give all of them backgrounds
+  the same color"*), with no faces on things. The launcher's own colour stays on Settings' list. Every
   person is Igor, as the raccoon of his blog's eulogy post (rainbow glasses, green shirt, mismatched crocs, soft
   felt; *"people are always Igor from the blog"*). Call: Igor's raccoon on the phone. Today: a heart on a paper
   calendar. Timer: a steel stopwatch. Breathe: Igor's raccoon meditating in full lotus. Places: a folded map with a
@@ -87,7 +88,7 @@ means to do every day, each a glance and a tap.
 - **Journal** — a check, shown as a drawn quill pen (Igor, #287, #299): a tap marks today written; another tap
   takes it back.
 - **Balloons** — a count of balloons made for others today, shown as a balloon poodle drawn in outline, one balloon
-  segment per body part (Igor, #287, #299, 2026-10-17)
+  segment per body part, with a domed head, a pom-pom and a forward snout (Igor, #287, #299, 2026-10-17)
   and the number. A tap adds one; a long press takes
   one off (never below 0). A soft tick on each change.
 - **Magic** — the same counter, for magic done for others: 🪄 and the number.
