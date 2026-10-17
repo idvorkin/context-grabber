@@ -17,7 +17,7 @@ packages:
   # release tag exactly: every app and the Mac's reader must speak the same delivery format (bug-kit's rollout trains).
   BugKit:
     url: https://github.com/idvorkin/bug-kit
-    exactVersion: 0.3.3
+    exactVersion: 0.3.4
 settings:
   base:
     DEVELOPMENT_TEAM: 45P6D3439T

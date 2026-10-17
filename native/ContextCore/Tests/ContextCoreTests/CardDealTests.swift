@@ -40,6 +40,33 @@ final class CardDealTests: XCTestCase {
     }
   }
 
+  /// #230: the widget still shows the card of an older count (its redraw after the last tap was skipped); the next
+  /// tap must not deal that card back.
+  func testATapAfterASkippedRedrawDealsNeitherCard() {
+    for size in [3, 40, 52] {
+      for i in 0..<3_000 {
+        let moment = Date(timeIntervalSince1970: 1_700_000_000 + Double(i) * 137)
+        let shown = i % 89
+        let stored = CardDeal.nonceAfterTap(at: moment, nonce: shown, size: size)
+        let after = CardDeal.nonceAfterTap(at: moment, nonce: stored, shown: shown, size: size)
+        let s = CardDeal.slot(containing: moment)
+        let dealt = CardDeal.index(forSlot: s, nonce: after, size: size)
+        XCTAssertGreaterThan(after, stored)
+        XCTAssertNotEqual(dealt, CardDeal.index(forSlot: s, nonce: shown, size: size), "size \(size) i \(i)")
+        XCTAssertNotEqual(dealt, CardDeal.index(forSlot: s, nonce: stored, size: size), "size \(size) i \(i)")
+      }
+    }
+  }
+
+  func testWhenTheScreenIsCurrentATapIsTheSameAsBefore() {
+    for i in 0..<500 {
+      let moment = Date(timeIntervalSince1970: 1_700_000_000 + Double(i) * 211)
+      let n = i % 31
+      XCTAssertEqual(
+        CardDeal.nonceAfterTap(at: moment, nonce: n, shown: n), CardDeal.nonceAfterTap(at: moment, nonce: n))
+    }
+  }
+
   /// The old app's deal, unchanged: the same moment and tap count is the same card in both apps.
   func testTheDealMatchesTheOldApp() {
     let moment = Date(timeIntervalSince1970: 1_788_000_000)
