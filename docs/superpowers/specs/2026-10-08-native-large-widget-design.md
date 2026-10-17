@@ -48,6 +48,8 @@ The widget is listed as *Today's hand*, large size only.
 - With *Today's hand* on the home screen, a card and a role show; the card changes on its own within ten minutes
   and the role changes after midnight.
 - Tapping the card shows a different card within a second and the app does not open.
+- A tap never deals the card already on screen, even when iOS skipped redrawing the widget after an earlier tap
+  (#230): the next tap deals a card that is neither the one showing nor the one the last tap dealt.
 - With *Skip easy cards* on, no breather and no card within two of one shows on the widget.
 - Each button lands where it says: the card counting, Shortcuts playing the mix, the call screen calling.
 - Over any eleven days in a row, each role is shown once.

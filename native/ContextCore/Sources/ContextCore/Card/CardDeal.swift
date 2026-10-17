@@ -96,11 +96,19 @@ public enum CardDeal {
   /// A tap: the first count above `nonce` whose card for `date` is not the
   /// one showing. Every surface that reads the new count deals the same card.
   public static func nonceAfterTap(at date: Date, nonce: Int, size: Int = cardsPerRun) -> Int {
+    nonceAfterTap(at: date, nonce: nonce, shown: nil, size: size)
+  }
+
+  /// The same, when what is on screen may have been dealt with an older count `shown` (#230: iOS skipped the
+  /// redraw after an earlier tap): the first count above both whose card is neither the stored count's nor the
+  /// shown one's. With fewer than three cards only the stored count's card is avoided.
+  public static func nonceAfterTap(at date: Date, nonce: Int, shown: Int?, size: Int = cardsPerRun) -> Int {
     let s = slot(containing: date)
-    let showing = index(forSlot: s, nonce: nonce, size: size)
-    var next = nonce &+ 1
+    var avoid: Set<Int> = [index(forSlot: s, nonce: nonce, size: size)]
+    if let shown, size > 2 { avoid.insert(index(forSlot: s, nonce: shown, size: size)) }
+    var next = max(nonce, shown ?? nonce) &+ 1
     guard size > 1 else { return next }  // one card cannot change
-    while index(forSlot: s, nonce: next, size: size) == showing {
+    while avoid.contains(index(forSlot: s, nonce: next, size: size)) {
       next &+= 1
     }
     return next
