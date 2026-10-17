@@ -58,7 +58,8 @@ and points at Settings.
 - **How a launcher looks** (Igor, 2026-10-08: *"Doesn't it look bad? … think about making it good via
   design"*): each launcher has its own colour, and only its icon carries it, as a white glyph on a small rounded
   square, the way Settings draws its rows. The names are in the ordinary text colour, one size for every row so
-  nothing shrinks to fit. The same icons are on the Today card and in Settings' list of launchers.
+  nothing shrinks to fit. Settings' list of launchers draws them this way; the tiles and the Today card show the drawn
+  art below.
 - **Drawn art on the tiles** (Igor, 2026-10-13, #304: *"custom icons … bigger tiles"*; settled 2026-10-17: keep
   three to a row, custom art for every tile, judge the size after). Each home tile shows its own picture, larger
   than the old glyph square, above the same short name. Objects are painted as refined still-lifes, not cartoons
@@ -70,8 +71,9 @@ and points at Settings.
   pin. Card: an ace of spades. Analyzer: a kettlebell beside a bar chart. Supermix: headphones. Cockpit: a dashboard
   gauge. Song: a gravestone carved IGOR, wearing big, bold headphones. Eulogy: a gravestone carved IGOR above a small heart
   (Igor, 2026-10-17: *"make headphones more pronounced, write Igor on both stones"*). Recent: a clock with an
-  arrow. Random: dice. Settings: a brass gear. Settings' list of launchers keeps the small glyph squares. Which of
-  the drawings each tile shows is Igor's call and can change at any time.
+  arrow. Random: dice. Settings: a brass gear. The Today card's heading shows Today's drawing, small. Settings'
+  list of launchers keeps the small glyph squares. Which of the drawings each tile shows is Igor's call and can
+  change at any time.
 
 **The daily strip** (Igor, iPad, 2026-10-10, #236: *"a little strip for things I want to do every day, like gym,
 and that can get a checkmark … an up/down counter somehow that's still small. I want this all in one strip"*;
