@@ -60,14 +60,16 @@ and points at Settings.
   square, the way Settings draws its rows. The names are in the ordinary text colour, one size for every row so
   nothing shrinks to fit. The same icons are on the Today card and in Settings' list of launchers.
 - **Drawn art on the tiles** (Igor, 2026-10-13, #304: *"custom icons … bigger tiles"*; settled 2026-10-17: keep
-  three to a row, custom art for every tile, judge the size after). Each home tile shows its own hand-drawn
-  picture, in one family (gouache and crayon on the launcher's colour), larger than the old glyph square, above
-  the same short name: Igor's own raccoon on the phone for Call, in the look of the eulogy post's raccoons (rainbow glasses, green shirt, mismatched crocs, soft felt; Igor, 2026-10-17: *"not Larry, should be Igor, like from the blog in eulogy, that look"*), a heart on a calendar
-  for Today, a stopwatch for Timer, someone sitting in full lotus for Breathe, a map with a pin for Places, an ace of spades for Card, a kettlebell and chart for Analyzer,
-  headphones for Supermix, a gauge for Cockpit, a gravestone wearing headphones for Song, a gravestone for Eulogy
-  (Igor, 2026-10-17), a clock
-  with an arrow for Recent, dice for Random and a gear for Settings. Settings' list of launchers keeps the small
-  glyph squares. Igor picks among three drawings of each; until he does, the first is shown.
+  three to a row, custom art for every tile, judge the size after). Each home tile shows its own picture, larger
+  than the old glyph square, above the same short name. Objects are painted as refined still-lifes, not cartoons
+  (Igor, 2026-10-17: *"less cartoony on everything"*), on the launcher's colour, with no faces on things. Every
+  person is Igor, as the raccoon of his blog's eulogy post (rainbow glasses, green shirt, mismatched crocs, soft
+  felt; *"people are always Igor from the blog"*). Call: Igor's raccoon on the phone. Today: a heart on a paper
+  calendar. Timer: a steel stopwatch. Breathe: Igor's raccoon meditating in full lotus. Places: a folded map with a
+  pin. Card: an ace of spades. Analyzer: a kettlebell beside a bar chart. Supermix: headphones. Cockpit: a dashboard
+  gauge. Song: a gravestone with headphones on it. Eulogy: a gravestone with a carved heart. Recent: a clock with an
+  arrow. Random: dice. Settings: a brass gear. Settings' list of launchers keeps the small glyph squares. Which of
+  the drawings each tile shows is Igor's call and can change at any time.
 
 **The daily strip** (Igor, iPad, 2026-10-10, #236: *"a little strip for things I want to do every day, like gym,
 and that can get a checkmark … an up/down counter somehow that's still small. I want this all in one strip"*;
@@ -84,8 +86,8 @@ means to do every day, each a glance and a tap.
   because opening the home screen asks Health nothing.
 - **Journal** — a check, shown as a drawn quill pen (Igor, #287, #299): a tap marks today written; another tap
   takes it back.
-- **Balloons** — a count of balloons made for others today, shown as a drawn balloon poodle of few segments, one
-  per body part (Igor, #287, #299, 2026-10-17)
+- **Balloons** — a count of balloons made for others today, shown as a balloon poodle drawn in outline, one balloon
+  segment per body part (Igor, #287, #299, 2026-10-17)
   and the number. A tap adds one; a long press takes
   one off (never below 0). A soft tick on each change.
 - **Magic** — the same counter, for magic done for others: 🪄 and the number.
