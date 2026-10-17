@@ -68,7 +68,8 @@ and points at Settings.
   felt; *"people are always Igor from the blog"*). Call: Igor's raccoon on the phone. Today: a heart on a paper
   calendar. Timer: a steel stopwatch. Breathe: Igor's raccoon meditating in full lotus. Places: a folded map with a
   pin. Card: an ace of spades. Analyzer: a kettlebell beside a bar chart. Supermix: headphones. Cockpit: a dashboard
-  gauge. Song: a gravestone with headphones on it. Eulogy: a gravestone with a carved heart. Recent: a clock with an
+  gauge. Song: a gravestone carved IGOR, wearing big, bold headphones. Eulogy: a gravestone carved IGOR above a small heart
+  (Igor, 2026-10-17: *"make headphones more pronounced, write Igor on both stones"*). Recent: a clock with an
   arrow. Random: dice. Settings: a brass gear. Settings' list of launchers keeps the small glyph squares. Which of
   the drawings each tile shows is Igor's call and can change at any time.
 
