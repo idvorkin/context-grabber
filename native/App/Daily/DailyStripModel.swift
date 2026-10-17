@@ -9,8 +9,10 @@ import Foundation
 final class DailyStripModel: ObservableObject {
   @Published private(set) var today = AccessoryLog.dateKey(Date())
   @Published private(set) var values: [DailyItem: Int] = [:]
-  /// Days since the last gym day: 0 when today counts, nil when there has never been one.
-  @Published private(set) var daysSinceGym: Int?
+  /// Days since each item's last day (2026-10-17, Igor: every item, as gym has): 0 when today counts, absent when
+  /// there has never been one.
+  @Published private(set) var daysSince: [DailyItem: Int] = [:]
+  var daysSinceGym: Int? { daysSince[.gym] }
   /// Today counts as a gym day from the timer or Health, so a tap cannot take it back.
   @Published private(set) var gymFromElsewhere = false
   /// #257: where today's meditation came from without a tap ("breathing", "health"), or nil.
@@ -46,7 +48,16 @@ final class DailyStripModel: ObservableObject {
       let snapshot = health()
       let elsewhere = DailyStrip.gymDays(tapped: [], timer: timer, workoutsByDay: snapshot?.workoutsByDay ?? [:])
       gymFromElsewhere = elsewhere.contains(today)
-      daysSinceGym = DailyStrip.daysSince(tapped.union(elsewhere), today: today)
+      var since: [DailyItem: Int] = [:]
+      since[.gym] = DailyStrip.daysSince(tapped.union(elsewhere), today: today)
+      since[.meditation] = DailyStrip.daysSince(
+        // All of breathing's history, not the year above: a session from long ago is still a last day (Codex).
+        DailyStrip.meditationDays(
+          tapped: try store?.days(.meditation) ?? [],
+          activity: try activity?.entries(since: Date(timeIntervalSince1970: 0)) ?? []), today: today)
+      for item in [DailyItem.journal, .balloons, .magic] {
+        since[item] = DailyStrip.daysSince(try store?.days(item) ?? [], today: today)
+      }
       let grabDay = snapshot.flatMap {
         ISO8601DateFormatter.withFraction.date(from: $0.timestamp) ?? ISO8601DateFormatter().date(from: $0.timestamp)
       }
@@ -57,7 +68,11 @@ final class DailyStripModel: ObservableObject {
         let from = timer.contains { $0.kind == .gymTimer && $0.dateKey == today } ? "gym_timer" : "health"
         announce(.gym, from: from)
       }
-      if let from = meditationFrom { announce(.meditation, from: from) }
+      if let from = meditationFrom {
+        since[.meditation] = 0
+        announce(.meditation, from: from)
+      }
+      daysSince = since
     } catch {
       log.event("error", ["where": "daily_strip", "message": "\(error)"])
     }

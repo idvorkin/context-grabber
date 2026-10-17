@@ -78,6 +78,12 @@ public struct DailyStrip {
     return nil
   }
 
+  /// Every day meditation counts for days since (2026-10-17): a tap, or a Box breathing session that reached Done.
+  /// Health's mindful minutes say only whether today counts (`meditationSource`), so they are not here.
+  public static func meditationDays(tapped: Set<String>, activity: [ActivityEntry]) -> Set<String> {
+    tapped.union(activity.filter { $0.kind == .breathing }.map(\.dateKey))
+  }
+
   /// Days from the newest gym day on or before `today` to today: 0 when today counts, nil with none ever.
   public static func daysSince(_ days: Set<String>, today: String, calendar: Calendar = .current) -> Int? {
     guard let last = days.filter({ $0 <= today }).max(), let from = date(last, calendar), let to = date(today, calendar)

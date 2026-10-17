@@ -15,10 +15,10 @@ struct DailyStripView: View {
   var body: some View {
     HStack(spacing: 0) {
       check(.gym, label: "Gym", done: strip.gymToday, note: gymNote) { KettlebellIcon(size: 17) }
-      check(.meditation, label: "Meditation", done: strip.meditationToday, note: nil) {
+      check(.meditation, label: "Meditation", done: strip.meditationToday, note: note(.meditation)) {
         Image(systemName: "figure.mind.and.body").font(.system(size: 15))
       }
-      check(.journal, label: "Journal", done: strip.value(.journal) > 0, note: nil) {
+      check(.journal, label: "Journal", done: strip.value(.journal) > 0, note: note(.journal)) {
         // ponytail: #287 asks for a feather pen; SF Symbols has none, so `signature` until a custom symbol is drawn.
         Image(systemName: "signature").font(.system(size: 15))
       }
@@ -40,8 +40,17 @@ struct DailyStripView: View {
 
   private var gymNote: String? {
     guard !strip.gymToday else { return nil }
-    return strip.daysSinceGym.map { "\($0)d" } ?? "–"
+    return note(.gym)
   }
+
+  /// What VoiceOver says for a note (spec: "3 days since", "never"): the short "3d" spelled out.
+  static func spoken(_ note: String) -> String {
+    guard note != "–", let n = Int(note.dropLast()) else { return "never" }
+    return n == 1 ? "1 day since" : "\(n) days since"
+  }
+
+  /// Days since the item's last day, as gym says it: "3d", or "–" when there has never been one.
+  private func note(_ item: DailyItem) -> String { strip.daysSince[item].map { "\($0)d" } ?? "–" }
 
   private func check<Icon: View>(
     _ item: DailyItem, label: String, done: Bool, note: String?, @ViewBuilder icon: () -> Icon
@@ -75,7 +84,7 @@ struct DailyStripView: View {
     )
     .accessibilityAction(named: "Mark an earlier day") { backdating = Backdate(item: item, label: label) }
     .accessibilityLabel(label)
-    .accessibilityValue(done ? "done today" : note.map { $0 == "–" ? "never" : "\($0) since" } ?? "not yet")
+    .accessibilityValue(done ? "done today" : note.map(Self.spoken) ?? "not yet")
     .accessibilityIdentifier("strip-\(item.rawValue)")
   }
 
@@ -83,9 +92,14 @@ struct DailyStripView: View {
     let count = strip.value(item)
     return HStack(spacing: 5) {
       Image(systemName: icon).font(.system(size: 15)).foregroundStyle(count > 0 ? color : Color.secondary)
-      Text("\(count)").font(.subheadline.weight(.semibold).monospacedDigit())
-        .foregroundStyle(count > 0 ? Color.primary : Color.secondary)
-        .contentTransition(.numericText())
+      // At 0, the days since the last day with any, in place of the 0 (2026-10-17).
+      if count > 0 {
+        Text("\(count)").font(.subheadline.weight(.semibold).monospacedDigit())
+          .foregroundStyle(Color.primary)
+          .contentTransition(.numericText())
+      } else {
+        Text(note(item)).font(.caption.weight(.semibold).monospacedDigit()).foregroundStyle(Color.secondary)
+      }
     }
     .frame(maxWidth: .infinity, minHeight: 28)
     .contentShape(Rectangle())
@@ -94,7 +108,7 @@ struct DailyStripView: View {
     .sensoryFeedback(.increase, trigger: count)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(label)
-    .accessibilityValue("\(count)")
+    .accessibilityValue(count > 0 ? "\(count)" : Self.spoken(note(item)))
     .accessibilityAddTraits(.isButton)
     .accessibilityAction { strip.change(item, by: 1) }
     .accessibilityAdjustableAction { direction in

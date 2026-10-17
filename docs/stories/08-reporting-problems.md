@@ -355,3 +355,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** Gym reads *3d* because I forgot to tap it yesterday
 - **When:** I press and hold Gym, leave the slider on *yesterday* and tap Confirm
 - **Then:** the sheet closes, Gym reads *1d*, today is still unchecked, and the log has `daily_strip` with gym, yesterday's date and `backdated`
+
+### User Story 251:
+
+- **Summary:** Every item on the daily strip says how many days since, as Gym does
+- **Status:** native app: implemented in [f6ca898](https://github.com/idvorkin/context-grabber/commit/f6ca898); host-checked by `DailyStripTests` (meditation's days are taps and breathing; a counter taken back to 0 is not a day); the simulator and the phone in the next build turn; Codex's review (the strip's UI test reads days since at 0, breathing's whole history, VoiceOver's "3 days since"): [5b5aefb](https://github.com/idvorkin/context-grabber/commit/5b5aefb), lint only; `DailyStripUITests` in the next build turn
+- **Spec:** [native home screen, "The daily strip"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
+
+#### Use Case:
+- **As a** person keeping a few daily habits
+- **I want to** see how long it has been since each one, not just the gym
+- **so that** a habit I have let slide is as plain as a missed workout
+
+#### Acceptance Criteria:
+- **Scenario:** Days since on every item
+- **Given:** I last meditated three days ago, last journaled yesterday, last made a balloon four days ago and have never logged magic
+- **When:** I look at the daily strip today, before doing any of them
+- **Then:** Meditation shows *3d*, Journal *1d*, Balloons *4d* in place of its 0, and Magic *–*, all in grey like Gym's; and once a counter is above 0 today it shows its number again
+
+---
+

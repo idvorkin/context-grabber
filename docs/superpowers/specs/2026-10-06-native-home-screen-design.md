@@ -80,6 +80,14 @@ means to do every day, each a glance and a tap.
   one off (never below 0). A soft tick on each change.
 - **Magic** — the same counter, for magic done for others: 🪄 and the number.
 
+**Days since, on every item** (Igor, 2026-10-17: *"Everything on my daily habits lists, like balloons, should have
+the same days, since I have for exercise"*). Each item says how long it has been, as Gym does: until today counts,
+Meditation and Journal show grey *3d* beside the icon when the last day was three days ago, and *–* before the
+first. Balloons and Magic show today's number once it is above 0; at 0 they show the days since the last day
+with any, in the same grey (*2d*, or *–* before the first), in place of the 0. Meditation's last day counts a tap
+or a Box breathing session that reached Done; Health's mindful minutes count only for today, as now. VoiceOver
+reads the same: "3 days since", "never".
+
 Every item starts the day fresh at local midnight; the days before are kept, so the week can be read later (by
 Larry, in the export: a later change, not this one). A tapped gym check can be taken back the same way as the
 journal's; a check that came from the timer or Health stays. Every change is in the session log (`ui`, action
@@ -151,6 +159,7 @@ Order, hiding and Reset in Settings work as before.
 - The daily strip shows Gym, Meditation, Journal, Balloons and Magic in one line under the Today card. A tap checks Gym or
   Journal (a second tap unchecks). A tap adds a balloon or a trick, a long press takes one off, never below 0.
   Gym shows days since the last gym day until today counts, and a finished Gym Timer workout counts today with
-  no tap. After midnight everything starts fresh and yesterday's values are kept (#236, #238).
+  no tap. Meditation and Journal show days since their last day the same way, and Balloons and Magic show it in
+  place of a 0 (*–* when there has never been one). After midnight everything starts fresh and yesterday's values are kept (#236, #238).
 - After a Box breathing session reaches Done, or a grab that finds mindful minutes today, Meditation is green
   with no tap, and the log has `daily_strip_auto` naming where it came from (#257).

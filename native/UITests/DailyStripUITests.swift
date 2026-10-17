@@ -16,11 +16,17 @@ final class DailyStripUITests: XCTestCase {
     XCTAssertLessThan(balloons.frame.maxY, call.frame.minY, "above the tiles")
     XCTAssertLessThan(balloons.frame.height, 40, "one tight line")
 
-    let start = Int(balloons.value as? String ?? "") ?? -1
+    // At 0 the counter reads days since ("never", "3 days since"), not a number (story 251).
+    let atZero = balloons.value as? String
+    let start = Int(atZero ?? "") ?? 0
     balloons.tap()
     XCTAssertEqual(balloons.value as? String, "\(start + 1)", "a tap adds one")
     balloons.press(forDuration: 1.0)
-    XCTAssertEqual(balloons.value as? String, "\(start)", "a long press takes one off")
+    if start > 0 {
+      XCTAssertEqual(balloons.value as? String, "\(start)", "a long press takes one off")
+    } else {
+      XCTAssertEqual(balloons.value as? String, atZero, "a long press takes it back to 0, read as days since")
+    }
 
     let journal = app.buttons["strip-journal"]
     let before = journal.value as? String
