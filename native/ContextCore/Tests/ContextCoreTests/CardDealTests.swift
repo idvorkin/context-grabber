@@ -48,7 +48,8 @@ final class CardDealTests: XCTestCase {
         let moment = Date(timeIntervalSince1970: 1_700_000_000 + Double(i) * 137)
         let shown = i % 89
         let stored = CardDeal.nonceAfterTap(at: moment, nonce: shown, size: size)
-        let after = CardDeal.nonceAfterTap(at: moment, nonce: stored, shown: shown, size: size)
+        let onScreen = CardDeal.index(forSlot: CardDeal.slot(containing: moment), nonce: shown, size: size)
+        let after = CardDeal.nonceAfterTap(at: moment, nonce: stored, avoiding: onScreen, size: size)
         let s = CardDeal.slot(containing: moment)
         let dealt = CardDeal.index(forSlot: s, nonce: after, size: size)
         XCTAssertGreaterThan(after, stored)
@@ -67,7 +68,7 @@ final class CardDealTests: XCTestCase {
         let s = CardDeal.slot(containing: moment)
         let shown = i % 89
         let onScreen = CardDeal.index(forSlot: s - 1, nonce: shown, size: size)
-        let after = CardDeal.nonceAfterTap(at: moment, nonce: shown, shown: shown, shownSlot: s - 1, size: size)
+        let after = CardDeal.nonceAfterTap(at: moment, nonce: shown, avoiding: onScreen, size: size)
         XCTAssertNotEqual(CardDeal.index(forSlot: s, nonce: after, size: size), onScreen, "size \(size) i \(i)")
       }
     }
@@ -78,7 +79,9 @@ final class CardDealTests: XCTestCase {
       let moment = Date(timeIntervalSince1970: 1_700_000_000 + Double(i) * 211)
       let n = i % 31
       XCTAssertEqual(
-        CardDeal.nonceAfterTap(at: moment, nonce: n, shown: n), CardDeal.nonceAfterTap(at: moment, nonce: n))
+        CardDeal.nonceAfterTap(
+          at: moment, nonce: n, avoiding: CardDeal.index(forSlot: CardDeal.slot(containing: moment), nonce: n)),
+        CardDeal.nonceAfterTap(at: moment, nonce: n))
     }
   }
 

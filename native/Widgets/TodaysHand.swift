@@ -22,28 +22,27 @@ struct DealCardIntent: AppIntent {
   static let title: LocalizedStringResource = "Deal another card"
   static let description = IntentDescription("Deals a different memdeck card on Today's hand.")
 
-  /// The tap count the tapped entry was dealt with: what was on screen, carried by the drawn button itself, so a
-  /// redraw iOS skipped after an earlier tap cannot hide it (#230). nil from Shortcuts.
-  @Parameter(title: "Dealt with") var shown: Int?
-  /// The five-minute slot that card was dealt for: an entry can stay on screen past its slot until iOS redraws.
-  @Parameter(title: "Dealt for") var shownSlot: Int?
+  /// The card the tapped entry shows, by its code ("AH"), carried by the drawn button itself: a skipped redraw, an
+  /// entry left up past its five minutes or a changed Skip easy cards cannot hide it (#230, Codex on #334). nil from
+  /// Shortcuts.
+  @Parameter(title: "Showing") var shownCard: String?
 
   init() {}
 
-  init(shown: Int, slot: Int) {
-    self.shown = shown
-    shownSlot = slot
-  }
+  init(showing card: Card?) { shownCard = card?.code }
 
   func perform() async throws -> some IntentResult {
-    let size = stack.map { TrainerDeck.pool($0).count } ?? CardDeal.cardsPerRun
+    let pool = stack.map { TrainerDeck.pool($0) } ?? []
+    let size = pool.isEmpty ? CardDeal.cardsPerRun : pool.count
+    // Where the card on screen sits in today's pool; nil if it has left the pool, so it cannot be dealt.
+    let onScreen = shownCard.flatMap { code in pool.firstIndex { $0.code == code } }
     let now = Date()
     let old = CardStore.nonce()
-    let new = CardDeal.nonceAfterTap(at: now, nonce: old, shown: shown, shownSlot: shownSlot, size: size)
+    let new = CardDeal.nonceAfterTap(at: now, nonce: old, avoiding: onScreen, size: size)
     CardStore.set(new)
     let slot = CardDeal.slot(containing: now)
     widgetLog.notice(
-      "deal_tap old=\(old, privacy: .public) shown=\(shown.map(String.init) ?? "none", privacy: .public) shown_slot=\(shownSlot.map(String.init) ?? "none", privacy: .public) new=\(new, privacy: .public) stored=\(CardStore.nonce(), privacy: .public) size=\(size, privacy: .public) slot=\(slot, privacy: .public) from=\(CardDeal.index(forSlot: slot, nonce: old, size: size), privacy: .public) to=\(CardDeal.index(forSlot: slot, nonce: new, size: size), privacy: .public)"
+      "deal_tap old=\(old, privacy: .public) shown=\(shownCard ?? "none", privacy: .public) on_screen=\(onScreen.map(String.init) ?? "none", privacy: .public) new=\(new, privacy: .public) stored=\(CardStore.nonce(), privacy: .public) size=\(size, privacy: .public) slot=\(slot, privacy: .public) from=\(CardDeal.index(forSlot: slot, nonce: old, size: size), privacy: .public) to=\(CardDeal.index(forSlot: slot, nonce: new, size: size), privacy: .public)"
     )
     return .result()
   }
@@ -52,8 +51,6 @@ struct DealCardIntent: AppIntent {
 struct TodaysHandWidget: Widget {
   struct Entry: TimelineEntry {
     let date: Date
-    /// The tap count this entry was dealt with; its button hands it to the tap.
-    let nonce: Int
     /// nil when the build had no stack.
     let card: Card?
     let role: String
@@ -76,7 +73,7 @@ struct TodaysHandWidget: Widget {
       )
       let entries = timeline.map {
         Entry(
-          date: $0.date, nonce: nonce, card: pool.isEmpty ? nil : pool[$0.index], role: EulogyRoles.ofDay($0.date))
+          date: $0.date, card: pool.isEmpty ? nil : pool[$0.index], role: EulogyRoles.ofDay($0.date))
       }
       completion(Timeline(entries: entries, policy: .atEnd))
     }
@@ -84,7 +81,7 @@ struct TodaysHandWidget: Widget {
     private func entry(at date: Date, nonce: Int) -> Entry {
       let pool = stack.map { TrainerDeck.pool($0) } ?? []
       let index = CardDeal.index(forSlot: CardDeal.slot(containing: date), nonce: nonce, size: max(pool.count, 3))
-      return Entry(date: date, nonce: nonce, card: pool.isEmpty ? nil : pool[index], role: EulogyRoles.ofDay(date))
+      return Entry(date: date, card: pool.isEmpty ? nil : pool[index], role: EulogyRoles.ofDay(date))
     }
   }
 
@@ -115,7 +112,7 @@ struct TodaysHandView: View {
 
   var body: some View {
     HStack(spacing: 14) {
-      Button(intent: DealCardIntent(shown: entry.nonce, slot: CardDeal.slot(containing: entry.date))) {
+      Button(intent: DealCardIntent(showing: entry.card)) {
         HandCard(card: entry.card)
       }
       .buttonStyle(.plain)
