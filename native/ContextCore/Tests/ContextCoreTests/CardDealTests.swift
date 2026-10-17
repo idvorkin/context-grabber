@@ -58,6 +58,21 @@ final class CardDealTests: XCTestCase {
     }
   }
 
+  /// Codex on #334: the entry on screen was dealt for the slot before (iOS has not drawn the next one yet); the tap
+  /// must avoid that card, not the shown count's card for the tap's own slot.
+  func testATapAfterTheSlotTurnedAvoidsTheCardStillOnScreen() {
+    for size in [3, 40, 52] {
+      for i in 0..<3_000 {
+        let moment = Date(timeIntervalSince1970: 1_700_000_000 + Double(i) * 137)
+        let s = CardDeal.slot(containing: moment)
+        let shown = i % 89
+        let onScreen = CardDeal.index(forSlot: s - 1, nonce: shown, size: size)
+        let after = CardDeal.nonceAfterTap(at: moment, nonce: shown, shown: shown, shownSlot: s - 1, size: size)
+        XCTAssertNotEqual(CardDeal.index(forSlot: s, nonce: after, size: size), onScreen, "size \(size) i \(i)")
+      }
+    }
+  }
+
   func testWhenTheScreenIsCurrentATapIsTheSameAsBefore() {
     for i in 0..<500 {
       let moment = Date(timeIntervalSince1970: 1_700_000_000 + Double(i) * 211)

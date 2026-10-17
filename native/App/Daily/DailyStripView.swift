@@ -45,6 +45,12 @@ struct DailyStripView: View {
     return note(.gym)
   }
 
+  /// What VoiceOver says for a note (spec: "3 days since", "never"): the short "3d" spelled out.
+  static func spoken(_ note: String) -> String {
+    guard note != "–", let n = Int(note.dropLast()) else { return "never" }
+    return n == 1 ? "1 day since" : "\(n) days since"
+  }
+
   /// Days since the item's last day, as gym says it: "3d", or "–" when there has never been one.
   private func note(_ item: DailyItem) -> String { strip.daysSince[item].map { "\($0)d" } ?? "–" }
 
@@ -80,7 +86,7 @@ struct DailyStripView: View {
     )
     .accessibilityAction(named: "Mark an earlier day") { backdating = Backdate(item: item, label: label) }
     .accessibilityLabel(label)
-    .accessibilityValue(done ? "done today" : note.map { $0 == "–" ? "never" : "\($0) since" } ?? "not yet")
+    .accessibilityValue(done ? "done today" : note.map(Self.spoken) ?? "not yet")
     .accessibilityIdentifier("strip-\(item.rawValue)")
   }
 
@@ -106,7 +112,7 @@ struct DailyStripView: View {
     .sensoryFeedback(.increase, trigger: count)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(label)
-    .accessibilityValue(count > 0 ? "\(count)" : note(item) == "–" ? "never" : "\(note(item)) since")
+    .accessibilityValue(count > 0 ? "\(count)" : Self.spoken(note(item)))
     .accessibilityAddTraits(.isButton)
     .accessibilityAction { strip.change(item, by: 1) }
     .accessibilityAdjustableAction { direction in

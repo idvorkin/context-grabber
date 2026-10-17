@@ -25,20 +25,25 @@ struct DealCardIntent: AppIntent {
   /// The tap count the tapped entry was dealt with: what was on screen, carried by the drawn button itself, so a
   /// redraw iOS skipped after an earlier tap cannot hide it (#230). nil from Shortcuts.
   @Parameter(title: "Dealt with") var shown: Int?
+  /// The five-minute slot that card was dealt for: an entry can stay on screen past its slot until iOS redraws.
+  @Parameter(title: "Dealt for") var shownSlot: Int?
 
   init() {}
 
-  init(shown: Int) { self.shown = shown }
+  init(shown: Int, slot: Int) {
+    self.shown = shown
+    shownSlot = slot
+  }
 
   func perform() async throws -> some IntentResult {
     let size = stack.map { TrainerDeck.pool($0).count } ?? CardDeal.cardsPerRun
     let now = Date()
     let old = CardStore.nonce()
-    let new = CardDeal.nonceAfterTap(at: now, nonce: old, shown: shown, size: size)
+    let new = CardDeal.nonceAfterTap(at: now, nonce: old, shown: shown, shownSlot: shownSlot, size: size)
     CardStore.set(new)
     let slot = CardDeal.slot(containing: now)
     widgetLog.notice(
-      "deal_tap old=\(old, privacy: .public) shown=\(shown.map(String.init) ?? "none", privacy: .public) new=\(new, privacy: .public) stored=\(CardStore.nonce(), privacy: .public) size=\(size, privacy: .public) slot=\(slot, privacy: .public) from=\(CardDeal.index(forSlot: slot, nonce: old, size: size), privacy: .public) to=\(CardDeal.index(forSlot: slot, nonce: new, size: size), privacy: .public)"
+      "deal_tap old=\(old, privacy: .public) shown=\(shown.map(String.init) ?? "none", privacy: .public) shown_slot=\(shownSlot.map(String.init) ?? "none", privacy: .public) new=\(new, privacy: .public) stored=\(CardStore.nonce(), privacy: .public) size=\(size, privacy: .public) slot=\(slot, privacy: .public) from=\(CardDeal.index(forSlot: slot, nonce: old, size: size), privacy: .public) to=\(CardDeal.index(forSlot: slot, nonce: new, size: size), privacy: .public)"
     )
     return .result()
   }
@@ -110,8 +115,10 @@ struct TodaysHandView: View {
 
   var body: some View {
     HStack(spacing: 14) {
-      Button(intent: DealCardIntent(shown: entry.nonce)) { HandCard(card: entry.card) }
-        .buttonStyle(.plain)
+      Button(intent: DealCardIntent(shown: entry.nonce, slot: CardDeal.slot(containing: entry.date))) {
+        HandCard(card: entry.card)
+      }
+      .buttonStyle(.plain)
       VStack(alignment: .leading, spacing: 8) {
         Text("Today, be")
           .font(.caption.weight(.semibold))

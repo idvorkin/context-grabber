@@ -51,7 +51,10 @@ final class DailyStripModel: ObservableObject {
       var since: [DailyItem: Int] = [:]
       since[.gym] = DailyStrip.daysSince(tapped.union(elsewhere), today: today)
       since[.meditation] = DailyStrip.daysSince(
-        DailyStrip.meditationDays(tapped: try store?.days(.meditation) ?? [], activity: timer), today: today)
+        // All of breathing's history, not the year above: a session from long ago is still a last day (Codex).
+        DailyStrip.meditationDays(
+          tapped: try store?.days(.meditation) ?? [],
+          activity: try activity?.entries(since: Date(timeIntervalSince1970: 0)) ?? []), today: today)
       for item in [DailyItem.journal, .balloons, .magic] {
         since[item] = DailyStrip.daysSince(try store?.days(item) ?? [], today: today)
       }

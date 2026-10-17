@@ -101,11 +101,15 @@ public enum CardDeal {
 
   /// The same, when what is on screen may have been dealt with an older count `shown` (#230: iOS skipped the
   /// redraw after an earlier tap): the first count above both whose card is neither the stored count's nor the
-  /// shown one's. With fewer than three cards only the stored count's card is avoided.
-  public static func nonceAfterTap(at date: Date, nonce: Int, shown: Int?, size: Int = cardsPerRun) -> Int {
+  /// shown one's. With fewer than three cards only the stored count's card is avoided. `shownSlot` is the slot the
+  /// card on screen was dealt for (Codex on #334: an entry can stay up past its five minutes until iOS redraws);
+  /// nil means the tap's own slot.
+  public static func nonceAfterTap(
+    at date: Date, nonce: Int, shown: Int?, shownSlot: Int? = nil, size: Int = cardsPerRun
+  ) -> Int {
     let s = slot(containing: date)
     var avoid: Set<Int> = [index(forSlot: s, nonce: nonce, size: size)]
-    if let shown, size > 2 { avoid.insert(index(forSlot: s, nonce: shown, size: size)) }
+    if let shown, size > 2 { avoid.insert(index(forSlot: shownSlot ?? s, nonce: shown, size: size)) }
     var next = max(nonce, shown ?? nonce) &+ 1
     guard size > 1 else { return next }  // one card cannot change
     while avoid.contains(index(forSlot: s, nonce: next, size: size)) {

@@ -359,7 +359,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 251:
 
 - **Summary:** Every item on the daily strip says how many days since, as Gym does
-- **Status:** native app: implemented in [f6ca898](https://github.com/idvorkin/context-grabber/commit/f6ca898); host-checked by `DailyStripTests` (meditation's days are taps and breathing; a counter taken back to 0 is not a day); the simulator and the phone in the next build turn
+- **Status:** native app: implemented in [f6ca898](https://github.com/idvorkin/context-grabber/commit/f6ca898); host-checked by `DailyStripTests` (meditation's days are taps and breathing; a counter taken back to 0 is not a day); the simulator and the phone in the next build turn; Codex's review (the strip's UI test reads days since at 0, breathing's whole history, VoiceOver's "3 days since"): [5b5aefb](https://github.com/idvorkin/context-grabber/commit/5b5aefb), lint only; `DailyStripUITests` in the next build turn
 - **Spec:** [native home screen, "The daily strip"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
