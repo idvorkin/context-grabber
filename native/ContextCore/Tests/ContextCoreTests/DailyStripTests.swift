@@ -89,4 +89,26 @@ final class DailyStripTests: XCTestCase {
       DailyStrip.meditationSource(today: "2026-10-10", activity: [gym], healthMinutes: 0, healthDay: "2026-10-10"),
       "zero minutes is not a meditation")
   }
+
+  // 2026-10-17: every item says days since, as gym does. Meditation's days are its taps and its breathing sessions;
+  // a gym workout is not one.
+  func testMeditationDaysAreTapsAndBreathing() {
+    let breath = ActivityEntry(id: 1, kind: .breathing, name: "Box", seconds: 240, finishedAt: 0, dateKey: "2026-10-12")
+    let gym = ActivityEntry(id: 2, kind: .gymTimer, name: "30 SEC", seconds: 600, finishedAt: 0, dateKey: "2026-10-14")
+    let days = DailyStrip.meditationDays(tapped: ["2026-10-09"], activity: [breath, gym])
+    XCTAssertEqual(days, ["2026-10-09", "2026-10-12"])
+    XCTAssertEqual(DailyStrip.daysSince(days, today: "2026-10-15"), 3)
+  }
+
+  /// A counter's days since counts only days above 0: a balloon taken back to 0 is not a day with balloons.
+  func testACountersDaysSinceSkipsADayTakenBackToZero() throws {
+    let strip = try DailyStrip(db: SQLiteDatabase(path: ":memory:"))
+    XCTAssertNil(DailyStrip.daysSince(try strip.days(.balloons), today: "2026-10-15"), "never: no days yet")
+    try strip.set(.balloons, day: "2026-10-11", value: 2)
+    try strip.set(.balloons, day: "2026-10-13", value: 1)
+    try strip.set(.balloons, day: "2026-10-13", value: 0)
+    try strip.set(.magic, day: "2026-10-14", value: 1)
+    XCTAssertEqual(DailyStrip.daysSince(try strip.days(.balloons), today: "2026-10-15"), 4)
+    XCTAssertEqual(DailyStrip.daysSince(try strip.days(.magic), today: "2026-10-15"), 1)
+  }
 }

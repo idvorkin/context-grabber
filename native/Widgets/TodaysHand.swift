@@ -22,15 +22,27 @@ struct DealCardIntent: AppIntent {
   static let title: LocalizedStringResource = "Deal another card"
   static let description = IntentDescription("Deals a different memdeck card on Today's hand.")
 
+  /// The card the tapped entry shows, by its code ("AH"), carried by the drawn button itself: a skipped redraw, an
+  /// entry left up past its five minutes or a changed Skip easy cards cannot hide it (#230, Codex on #334). nil from
+  /// Shortcuts.
+  @Parameter(title: "Showing") var shownCard: String?
+
+  init() {}
+
+  init(showing card: Card?) { shownCard = card?.code }
+
   func perform() async throws -> some IntentResult {
-    let size = stack.map { TrainerDeck.pool($0).count } ?? CardDeal.cardsPerRun
+    let pool = stack.map { TrainerDeck.pool($0) } ?? []
+    let size = pool.isEmpty ? CardDeal.cardsPerRun : pool.count
+    // Where the card on screen sits in today's pool; nil if it has left the pool, so it cannot be dealt.
+    let onScreen = shownCard.flatMap { code in pool.firstIndex { $0.code == code } }
     let now = Date()
     let old = CardStore.nonce()
-    let new = CardDeal.nonceAfterTap(at: now, nonce: old, size: size)
+    let new = CardDeal.nonceAfterTap(at: now, nonce: old, avoiding: onScreen, size: size)
     CardStore.set(new)
     let slot = CardDeal.slot(containing: now)
     widgetLog.notice(
-      "deal_tap old=\(old, privacy: .public) new=\(new, privacy: .public) stored=\(CardStore.nonce(), privacy: .public) size=\(size, privacy: .public) slot=\(slot, privacy: .public) from=\(CardDeal.index(forSlot: slot, nonce: old, size: size), privacy: .public) to=\(CardDeal.index(forSlot: slot, nonce: new, size: size), privacy: .public)"
+      "deal_tap old=\(old, privacy: .public) shown=\(shownCard ?? "none", privacy: .public) on_screen=\(onScreen.map(String.init) ?? "none", privacy: .public) new=\(new, privacy: .public) stored=\(CardStore.nonce(), privacy: .public) size=\(size, privacy: .public) slot=\(slot, privacy: .public) from=\(CardDeal.index(forSlot: slot, nonce: old, size: size), privacy: .public) to=\(CardDeal.index(forSlot: slot, nonce: new, size: size), privacy: .public)"
     )
     return .result()
   }
@@ -60,7 +72,8 @@ struct TodaysHandWidget: Widget {
         "timeline nonce=\(nonce, privacy: .public) size=\(pool.count, privacy: .public) first=\(timeline.first?.index ?? -1, privacy: .public) card=\(timeline.first.flatMap { pool.isEmpty ? nil : pool[$0.index].spokenName } ?? "none", privacy: .public)"
       )
       let entries = timeline.map {
-        Entry(date: $0.date, card: pool.isEmpty ? nil : pool[$0.index], role: EulogyRoles.ofDay($0.date))
+        Entry(
+          date: $0.date, card: pool.isEmpty ? nil : pool[$0.index], role: EulogyRoles.ofDay($0.date))
       }
       completion(Timeline(entries: entries, policy: .atEnd))
     }
@@ -99,8 +112,10 @@ struct TodaysHandView: View {
 
   var body: some View {
     HStack(spacing: 14) {
-      Button(intent: DealCardIntent()) { HandCard(card: entry.card) }
-        .buttonStyle(.plain)
+      Button(intent: DealCardIntent(showing: entry.card)) {
+        HandCard(card: entry.card)
+      }
+      .buttonStyle(.plain)
       VStack(alignment: .leading, spacing: 8) {
         Text("Today, be")
           .font(.caption.weight(.semibold))

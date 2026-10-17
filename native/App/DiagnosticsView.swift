@@ -163,7 +163,7 @@ private struct TodayCard: View {
       VStack(alignment: .leading, spacing: 10) {
         HStack {
           HStack(spacing: 10) {
-            if let row = HomeRow.row("today") { LauncherIcon(row: row) }
+            if let row = HomeRow.row("today") { TileArt(row: row, size: 36) }  // #304: its drawn art, as the tiles
             Text("Today").font(.headline)
           }
           Spacer()
@@ -211,9 +211,9 @@ private struct HomeTile: View {
     Button {
       row.open(model)
     } label: {
-      // #284: the icon above a one- or two-word name.
+      // #284: the icon above a one- or two-word name; #304: the tile's drawn art.
       VStack(spacing: 6) {
-        LauncherIcon(row: row, size: 36)
+        TileArt(row: row)
         Text(row.short).font(.footnote.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
       }
       .frame(maxWidth: .infinity, minHeight: 64)

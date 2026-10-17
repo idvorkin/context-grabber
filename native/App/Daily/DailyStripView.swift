@@ -15,16 +15,18 @@ struct DailyStripView: View {
   var body: some View {
     HStack(spacing: 0) {
       check(.gym, label: "Gym", done: strip.gymToday, note: gymNote) { KettlebellIcon(size: 17) }
-      check(.meditation, label: "Meditation", done: strip.meditationToday, note: nil) {
+      check(.meditation, label: "Meditation", done: strip.meditationToday, note: note(.meditation)) {
         Image(systemName: "figure.mind.and.body").font(.system(size: 15))
       }
-      check(.journal, label: "Journal", done: strip.value(.journal) > 0, note: nil) {
-        // ponytail: #287 asks for a feather pen; SF Symbols has none, so `signature` until a custom symbol is drawn.
-        Image(systemName: "signature").font(.system(size: 15))
+      check(.journal, label: "Journal", done: strip.value(.journal) > 0, note: note(.journal)) {
+        // #287, #299: a drawn quill, tinted like the other icons.
+        StripGlyph(name: "strip-quill")
       }
-      // ponytail: #287 asks for a balloon dog; SF Symbols has none, so `dog.fill` until a custom symbol is drawn.
-      counter(.balloons, label: "Balloons", icon: "dog.fill", color: .pink)
-      counter(.magic, label: "Magic", icon: "wand.and.sparkles", color: .purple)
+      // #287, #299: a drawn balloon poodle.
+      counter(.balloons, label: "Balloons", color: .pink) { StripGlyph(name: "strip-poodle") }
+      counter(.magic, label: "Magic", color: .purple) {
+        Image(systemName: "wand.and.sparkles").font(.system(size: 15))
+      }
     }
     .font(.subheadline.weight(.medium))
     .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
@@ -40,8 +42,17 @@ struct DailyStripView: View {
 
   private var gymNote: String? {
     guard !strip.gymToday else { return nil }
-    return strip.daysSinceGym.map { "\($0)d" } ?? "–"
+    return note(.gym)
   }
+
+  /// What VoiceOver says for a note (spec: "3 days since", "never"): the short "3d" spelled out.
+  static func spoken(_ note: String) -> String {
+    guard note != "–", let n = Int(note.dropLast()) else { return "never" }
+    return n == 1 ? "1 day since" : "\(n) days since"
+  }
+
+  /// Days since the item's last day, as gym says it: "3d", or "–" when there has never been one.
+  private func note(_ item: DailyItem) -> String { strip.daysSince[item].map { "\($0)d" } ?? "–" }
 
   private func check<Icon: View>(
     _ item: DailyItem, label: String, done: Bool, note: String?, @ViewBuilder icon: () -> Icon
@@ -75,17 +86,24 @@ struct DailyStripView: View {
     )
     .accessibilityAction(named: "Mark an earlier day") { backdating = Backdate(item: item, label: label) }
     .accessibilityLabel(label)
-    .accessibilityValue(done ? "done today" : note.map { $0 == "–" ? "never" : "\($0) since" } ?? "not yet")
+    .accessibilityValue(done ? "done today" : note.map(Self.spoken) ?? "not yet")
     .accessibilityIdentifier("strip-\(item.rawValue)")
   }
 
-  private func counter(_ item: DailyItem, label: String, icon: String, color: Color) -> some View {
+  private func counter<Icon: View>(
+    _ item: DailyItem, label: String, color: Color, @ViewBuilder icon: () -> Icon
+  ) -> some View {
     let count = strip.value(item)
     return HStack(spacing: 5) {
-      Image(systemName: icon).font(.system(size: 15)).foregroundStyle(count > 0 ? color : Color.secondary)
-      Text("\(count)").font(.subheadline.weight(.semibold).monospacedDigit())
-        .foregroundStyle(count > 0 ? Color.primary : Color.secondary)
-        .contentTransition(.numericText())
+      icon().foregroundStyle(count > 0 ? color : Color.secondary)
+      // At 0, the days since the last day with any, in place of the 0 (2026-10-17).
+      if count > 0 {
+        Text("\(count)").font(.subheadline.weight(.semibold).monospacedDigit())
+          .foregroundStyle(Color.primary)
+          .contentTransition(.numericText())
+      } else {
+        Text(note(item)).font(.caption.weight(.semibold).monospacedDigit()).foregroundStyle(Color.secondary)
+      }
     }
     .frame(maxWidth: .infinity, minHeight: 28)
     .contentShape(Rectangle())
@@ -94,13 +112,23 @@ struct DailyStripView: View {
     .sensoryFeedback(.increase, trigger: count)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(label)
-    .accessibilityValue("\(count)")
+    .accessibilityValue(count > 0 ? "\(count)" : Self.spoken(note(item)))
     .accessibilityAddTraits(.isButton)
     .accessibilityAction { strip.change(item, by: 1) }
     .accessibilityAdjustableAction { direction in
       strip.change(item, by: direction == .increment ? 1 : -1)
     }
     .accessibilityIdentifier("strip-\(item.rawValue)")
+  }
+}
+
+/// A drawn strip icon from the asset catalog, a template image, so it takes the item's colour as the symbols do.
+private struct StripGlyph: View {
+  let name: String
+
+  var body: some View {
+    Image(name).renderingMode(.template).resizable().scaledToFit().frame(width: 19, height: 19)
+      .accessibilityHidden(true)
   }
 }
 
