@@ -818,7 +818,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 218:
 
 - **Summary:** A Direct call lets me pick its speech-to-text: Default, Nova-3 or Flux
-- **Status:** implemented on branch `native/556-direct-stt` (commit to follow on merge); host-verified by `just native-test` (`CallSTTTests`); in the simulator and on the phone not yet. The Cockpit's voice bridge already reads `stt` from a Direct call's start (`DIRECT_STT_CHOICES` in `voice_bridge.py`, Cockpit #80).
+- **Status:** implemented in [15d59d1](https://github.com/idvorkin/context-grabber/commit/15d59d1), fixed in [563c481](https://github.com/idvorkin/context-grabber/commit/563c481); host-verified by `just native-test` (`CallSTTTests`); in the simulator and on the phone not yet. The Cockpit's voice bridge already reads `stt` from a Direct call's start (`DIRECT_STT_CHOICES` in `voice_bridge.py`, Cockpit #80).
 - **Issues:** [#556](https://github.com/idvorkin/context-grabber/issues/556)
 - **Spec:** [Native call — Speech to text on Direct](../superpowers/specs/2026-08-28-native-call-screen-design.md#speech-to-text-on-direct)
 
