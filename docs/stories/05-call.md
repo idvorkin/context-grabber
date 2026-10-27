@@ -814,3 +814,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Then:** the bridge's start carries today's numbers, that the grab is twelve minutes old and the strip as the home screen shows it, a grab from an earlier day sends the strip only, the voice-model backends carry no day, and Diagnostics says *today: grab 12 min old* without the numbers
 
 ---
+
+### User Story 218:
+
+- **Summary:** A Direct call lets me pick its speech-to-text: Default, Nova-3 or Flux
+- **Status:** implemented on branch `native/556-direct-stt` (commit to follow on merge); host-verified by `just native-test` (`CallSTTTests`); in the simulator and on the phone not yet. The Cockpit's voice bridge already reads `stt` from a Direct call's start (`DIRECT_STT_CHOICES` in `voice_bridge.py`, Cockpit #80).
+- **Issues:** [#556](https://github.com/idvorkin/context-grabber/issues/556)
+- **Spec:** [Native call — Speech to text on Direct](../superpowers/specs/2026-08-28-native-call-screen-design.md#speech-to-text-on-direct)
+
+#### Use Case:
+- **As** Igor calling Direct Larry from the phone
+- **I want to** choose Flux or Nova-3 for the speech-to-text
+- **so that** I can compare the two on real calls and keep whichever ends my turns sooner without mangling words
+
+#### Acceptance Criteria:
+- **Scenario:** Picking Flux for a Direct call
+- **Given:** Direct is chosen and the Speech to text row shows Default
+- **When:** I pick Flux and start a call
+- **Then:** the bridge is told Flux at the start, the status line ends *Direct · Flux*, the call's log names it, the pick survives a relaunch, Restart and the redial keep it, Default tells the bridge nothing so it decides, and the voice-model backends show no row and send nothing
+
+---

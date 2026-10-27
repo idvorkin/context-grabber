@@ -31,6 +31,10 @@ final class CallModel: ObservableObject {
   @Published var voice = CallVoice.default {
     didSet { database.setSetting(Self.voiceKey, voice.rawValue) }
   }
+  /// #556: the speech-to-text a Direct call asks the bridge for; Default sends nothing.
+  @Published var stt = CallSTT.default {
+    didSet { database.setSetting(Self.sttKey, stt.rawValue) }
+  }
 
   let events = CallEventLog()
   let bridgeURL: String
@@ -61,6 +65,7 @@ final class CallModel: ObservableObject {
   /// The same keys as the React Native app's settings table, so the cutover keeps the picks.
   private static let backendKey = "call_backend"
   private static let voiceKey = "call_voice"
+  private static let sttKey = "call_stt"
   /// What the gist (story 094, gone from this app) left behind: the token in the Keychain and the uploads' list.
   private static let gistToken = "gist_token"
   private static let gistUploads = "gist_uploads"
@@ -75,6 +80,7 @@ final class CallModel: ObservableObject {
       ?? CallProtocol.bridgeURL(cockpit: Self.cockpitURL) ?? ""
     backend = database.setting(Self.backendKey).flatMap(CallBackend.init(rawValue:)) ?? .default
     voice = database.setting(Self.voiceKey).flatMap(CallVoice.init(rawValue:)) ?? .default
+    stt = database.setting(Self.sttKey).flatMap(CallSTT.init(rawValue:)) ?? .default
     callSettings = CallSettings(saved: database.setting(Self.settingsKey))
     forgetGist()
 
@@ -173,8 +179,10 @@ final class CallModel: ObservableObject {
     session.clearLocation()
     session.setToday(backend == .direct ? today?() : nil)
     willStart?()
-    log.event("ui", ["action": "call", "from": source, "backend": backend.rawValue, "voice": voice.rawValue])
-    session.start(backend, voice: voice)
+    log.event(
+      "ui",
+      ["action": "call", "from": source, "backend": backend.rawValue, "voice": voice.rawValue, "stt": stt.rawValue])
+    session.start(backend, voice: voice, stt: stt)
   }
 
   func hangUp(from source: String) {
@@ -192,7 +200,8 @@ final class CallModel: ObservableObject {
   /// The status line: `calling Larry… · ElevenLabs · Igor`, `live · 1:17 · ElevenLabs`, `ended — stopped`.
   func status(now: Date) -> String {
     let b = snapshot.backend ?? backend
-    let label = CallVoice.hasPick(b) ? "\(b.label) · \(snapshot.voice.label)" : b.label
+    var label = CallVoice.hasPick(b) ? "\(b.label) · \(snapshot.voice.label)" : b.label
+    if CallSTT.hasPick(b), snapshot.stt != .default { label += " · \(snapshot.stt.label)" }
     switch snapshot.state {
     case .connecting: return "calling Larry… · \(label)"
     case .live:
@@ -348,6 +357,7 @@ final class CallModel: ObservableObject {
       [
         "ended": .string(snapshot.endedReason ?? ""), "problem": .string(snapshot.problem ?? ""),
         "backend": .string(snapshot.backend?.rawValue ?? ""), "voice": .string(snapshot.voice.rawValue),
+        "stt": .string(snapshot.stt.rawValue),
       ],
       [file])
   }
@@ -425,7 +435,8 @@ final class CallModel: ObservableObject {
     [
       ("build", "\(BuildInfo.sha) (\(BuildInfo.branch))"), ("state", snapshot.state.rawValue),
       ("backend", snapshot.backend?.rawValue ?? ""), ("voice", snapshot.voice.rawValue),
-      ("ended", snapshot.endedReason ?? ""), ("problem", snapshot.problem ?? ""), ("route", route),
+      ("stt", snapshot.stt.rawValue), ("ended", snapshot.endedReason ?? ""), ("problem", snapshot.problem ?? ""),
+      ("route", route),
       ("bridge", bridgeURL), ("session log", log.url.lastPathComponent),
     ]
   }

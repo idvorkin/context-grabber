@@ -55,6 +55,30 @@ public enum CallVoice: String, CaseIterable, Sendable {
   }
 }
 
+/// The speech-to-text a Direct call hears Igor through (#556). The bridge accepts `nova-3` and `flux`; anything
+/// else, or nothing, is its own default (`DIRECT_STT`, else Nova-3). Only Direct reads it.
+public enum CallSTT: String, CaseIterable, Sendable {
+  case bridgeDefault = ""
+  case nova3 = "nova-3"
+  case flux
+
+  public static let `default` = CallSTT.bridgeDefault
+
+  public var label: String {
+    switch self {
+    case .bridgeDefault: return "Default"
+    case .nova3: return "Nova-3"
+    case .flux: return "Flux"
+    }
+  }
+
+  /// Only Direct has a speech-to-text of its own; the voice models hear Igor themselves.
+  public static func hasPick(_ backend: CallBackend?) -> Bool { backend == .direct }
+
+  /// The start frame's `stt` for this backend and pick; "" leaves the key out.
+  public func frameField(for backend: CallBackend) -> String { Self.hasPick(backend) ? rawValue : "" }
+}
+
 /// Where Igor is, as the call tells the bridge (#107): one fix rides the start frame, one small frame follows
 /// each significant move.
 public struct CallLocation: Equatable, Sendable {
@@ -148,11 +172,11 @@ public enum CallProtocol {
     return String(decoding: data, as: UTF8.self)
   }
 
-  /// Empty model / voice = the vendor's default. `client` / `build` / `location` / `today` are extra keys; a bridge
-  /// that does not know them ignores them.
+  /// Empty model / voice = the vendor's default. `client` / `build` / `location` / `today` / `stt` are extra keys; a
+  /// bridge that does not know them ignores them. An empty `stt` is left out (#556).
   public static func startFrame(
     backend: CallBackend, build: String = "", voice: String = "", model: String = "", location: CallLocation? = nil,
-    today: CallToday? = nil
+    today: CallToday? = nil, stt: String = ""
   ) -> String {
     var frame: [String: Any] = [
       "type": "start", "backend": backend.rawValue, "model": model, "voice": voice, "client": clientName,
@@ -160,6 +184,7 @@ public enum CallProtocol {
     ]
     if let location { frame["location"] = location.fields }
     if let today { frame["today"] = today.fields }
+    if !stt.isEmpty { frame["stt"] = stt }
     return json(frame)
   }
 
