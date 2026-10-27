@@ -27,7 +27,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 041:
 
 - **Summary:** Keep only the last N days of trail
-- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4); verified by `location.test.ts` and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `GeoTests`, `LocationStoreTests` and on the simulator (`just native-test-sim`: retention 7 pruned at once); the phone still to be checked by Igor (bead context-grabber-3ss.12)
+- **Status:** implemented in [8361ad4](https://github.com/idvorkin/context-grabber/commit/8361ad4); verified by `location.test.ts` and on the phone; native app: [3cc9b85](https://github.com/idvorkin/context-grabber/commit/3cc9b85), [5daab8f](https://github.com/idvorkin/context-grabber/commit/5daab8f), verified by `GeoTests`, `LocationStoreTests` and on the simulator (`just native-test-sim`: retention 7 pruned at once); the phone still to be checked by Igor (bead context-grabber-3ss.12); [12f6a67](https://github.com/idvorkin/context-grabber/commit/12f6a67): a point past the retention goes only once the archive has taken it, the rest stay and the `prune` line counts them (`unarchived_kept`); verified by `LocationStoreTests` (`just native-test`, still to run on the Mac)
+- **Issues:** [#542](https://github.com/idvorkin/context-grabber/issues/542)
 
 #### Use Case:
 - **As** someone who does not want a permanent location log on the phone
@@ -38,7 +39,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Shortening retention
 - **Given:** retention is 30 days and forty days of points exist
 - **When:** I set retention to 7
-- **Then:** points older than seven days are gone at once, the Places breakdown shrinks to match, and reopening the app tomorrow prunes again without me touching anything
+- **Then:** points older than seven days are gone at once except any the archive has not taken yet, which stay until it has, the Places breakdown shrinks to match, and reopening the app tomorrow prunes again without me touching anything
 
 ---
 

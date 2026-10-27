@@ -39,6 +39,42 @@ final class LocationStoreTests: XCTestCase {
     XCTAssertEqual(try store.count(), 7)
   }
 
+  /// M-3: with an archive, a point older than the retention goes only once the archive has taken it (its row id is
+  /// at or before the points stream's cursor); the rest stay, however old, and are counted.
+  func testPruneKeepsWhatTheArchiveHasNotTaken() throws {
+    let db = try SQLiteDatabase()
+    let store = try LocationStore(db: db)
+    let cursors = try ArchiveCursorStore(db: db)
+    // Row ids 1...40, oldest last: id 1 is today, id 40 is 39 days old.
+    try store.insert(
+      (0..<40).map {
+        LocationPoint(latitude: 47.6, longitude: -122.3, accuracy: 5, timestamp: now - Double($0) * day - 1.5)
+      })
+    XCTAssertEqual(try cursors.pointsArchivedThroughId(), 0, "nothing archived yet")
+    let none = try store.prune(retentionDays: 30, now: now, archivedThroughId: try cursors.pointsArchivedThroughId())
+    XCTAssertEqual(none.removed, 0, "an archive that has taken nothing keeps everything")
+    XCTAssertEqual(none.unarchivedKept, 10)
+
+    // The archive took ids up to 35 (the Cockpit refused the page after): 31...35 go, 36...40 stay.
+    try cursors.set(ArchiveStream.points, cursor: "35", at: 0)
+    let some = try store.prune(retentionDays: 30, now: now, archivedThroughId: try cursors.pointsArchivedThroughId())
+    XCTAssertEqual(some.removed, 5)
+    XCTAssertEqual(some.unarchivedKept, 5)
+    XCTAssertEqual(try store.count(), 35)
+
+    // Caught up: the rest of the old ones go, the recent ones stay whatever the cursor says.
+    try cursors.set(ArchiveStream.points, cursor: "40", at: 0)
+    let all = try store.prune(retentionDays: 30, now: now, archivedThroughId: try cursors.pointsArchivedThroughId())
+    XCTAssertEqual(all.removed, 5)
+    XCTAssertEqual(all.unarchivedKept, 0)
+    XCTAssertEqual(try store.count(), 30)
+
+    // No archive to wait for: by age alone, as before.
+    let byAge = try store.prune(retentionDays: 7, now: now, archivedThroughId: nil)
+    XCTAssertEqual(byAge.removed, 23)
+    XCTAssertEqual(try store.count(), 7)
+  }
+
   func testSettingsAreTheOldAppsKeys() throws {
     let db = try SQLiteDatabase()
     let store = try LocationStore(db: db)

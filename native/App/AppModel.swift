@@ -106,7 +106,9 @@ final class AppModel: ObservableObject {
     database = AppDatabase(log: log)
     liveActivity = LiveActivityController(log: log)
     tracker = LocationTracker(log: log, store: database.locations)
-    places = PlacesModel(log: log, database: database)
+    // Story 041: with an archive to send to, a prune keeps the points it has not taken yet.
+    let archiveSends = ArchiveModel.destination(ProcessInfo.processInfo.environment) != nil
+    places = PlacesModel(log: log, database: database, archiveSends: archiveSends)
     // GRABBER_CHAT_URL: the simulator's stand-in Cockpit (scripts/native/fake-cockpit.py), so nothing reaches Larry.
     let chatCockpit = ProcessInfo.processInfo.environment["GRABBER_CHAT_URL"].flatMap { $0.isEmpty ? nil : $0 }
     inbox = InboxModel(log: log, database: database, cockpit: chatCockpit ?? CockpitPage.url)

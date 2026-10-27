@@ -57,9 +57,13 @@ final class PlacesModel: ObservableObject {
   private var loggedIcons: [Int64: PlaceIcon] = [:]
   private var failedLookups: Set<Int64> = []
 
-  init(log: SessionLog, database: AppDatabase) {
+  /// Whether the archive has somewhere to send the trail (story 270); then a prune keeps what it has not taken.
+  private let archiveSends: Bool
+
+  init(log: SessionLog, database: AppDatabase, archiveSends: Bool) {
     self.log = log
     self.database = database
+    self.archiveSends = archiveSends
     routeDays = database.setting(Self.routeDaysKey) == "7" ? 7 : 1
     retentionDays = (try? store?.retentionDays()) ?? LocationStore.defaultRetentionDays
   }
@@ -279,17 +283,21 @@ final class PlacesModel: ObservableObject {
     }
   }
 
-  /// Deletes points older than the retention; logged even when nothing went.
+  /// Deletes points older than the retention that the archive has taken; logged even when nothing went. A point
+  /// the archive has not taken yet stays whatever its age, and the line says how many did.
   func prune(reason: String) {
     guard let store else { return }
     do {
       let days = try store.retentionDays()
       let started = Date()
-      let removed = try store.prune(retentionDays: days, now: Geo.ms(Date()))
+      var archived: Int64?
+      if archiveSends { archived = try database.archiveCursors?.pointsArchivedThroughId() ?? 0 }
+      let result = try store.prune(retentionDays: days, now: Geo.ms(Date()), archivedThroughId: archived)
       log.event(
         "prune",
         [
-          "reason": reason, "retention_days": days, "removed": removed,
+          "reason": reason, "retention_days": days, "removed": result.removed,
+          "unarchived_kept": result.unarchivedKept, "archive": archiveSends,
           "ms": Int(Date().timeIntervalSince(started) * 1000),
         ])
     } catch {

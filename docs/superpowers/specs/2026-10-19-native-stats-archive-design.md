@@ -43,6 +43,11 @@ Today asks, and until it has, only the trail and the strip are archived. While t
 read, so a run then sends only the trail and the strip, says so once, and the next time the app comes to the front Health's share goes. On the simulator nothing is sent unless a launch hook
 names where.
 
+**The trail is never pruned ahead of the archive.** The phone's retention (thirty days unless Igor lowers it) deletes
+an old point only once the archive has taken it. If the Cockpit is out of reach for longer than the retention, or it
+refuses a page, the points it has not taken stay on the phone, however old, until it has; the prune's log line says
+how many it kept. On a simulator with no archive to send to, retention prunes by age alone.
+
 ## The daily strip
 
 Each strip item is its own stream. A day's value can change long after the day itself: a tap just before midnight,

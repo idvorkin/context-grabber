@@ -116,11 +116,26 @@ public struct LocationStore {
   /// Deletes points older than the retention as of `now`; returns how many went.
   @discardableResult
   public func prune(retentionDays: Int, now: Double) throws -> Int {
+    try prune(retentionDays: retentionDays, now: now, archivedThroughId: nil).removed
+  }
+
+  /// Deletes points older than the retention as of `now`, but only those the archive has taken: with
+  /// `archivedThroughId` set, a point whose row id is past it is kept whatever its age, since the archive is the
+  /// trail's only other copy (a Cockpit out of reach for a month, or a refused page, must not cost points). Nil
+  /// prunes by age alone (no archive to wait for). Returns how many went and how many old ones were kept.
+  public func prune(retentionDays: Int, now: Double, archivedThroughId: Int64?) throws -> (
+    removed: Int, unarchivedKept: Int
+  ) {
+    let threshold = Geo.pruneThreshold(retentionDays: retentionDays, now: now)
     let before = try count()
-    try db.run(
-      "DELETE FROM locations WHERE timestamp < ?", [.double(Geo.pruneThreshold(retentionDays: retentionDays, now: now))]
-    )
-    return before - (try count())
+    if let archived = archivedThroughId {
+      try db.run("DELETE FROM locations WHERE timestamp < ? AND id <= ?", [.double(threshold), .int(archived)])
+    } else {
+      try db.run("DELETE FROM locations WHERE timestamp < ?", [.double(threshold)])
+    }
+    let removed = before - (try count())
+    let old = try db.run("SELECT COUNT(*) AS n FROM locations WHERE timestamp < ?", [.double(threshold)])
+    return (removed, Int(old.first?["n"]?.intValue ?? 0))
   }
 
   // MARK: - settings

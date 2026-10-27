@@ -25,6 +25,11 @@ public struct ArchiveCursorStore {
     try db.run("SELECT cursor FROM archive_cursor WHERE stream = ?", [.text(stream)]).first?["cursor"]?.textValue
   }
 
+  /// The trail's last row id the archive has taken (the points stream pages by row id), 0 before its first page.
+  public func pointsArchivedThroughId() throws -> Int64 {
+    try cursor(ArchiveStream.points).flatMap { Int64($0) } ?? 0
+  }
+
   public func set(_ stream: String, cursor: String, at ms: Int64) throws {
     try db.run(
       "INSERT OR REPLACE INTO archive_cursor (stream, cursor, updated_at) VALUES (?, ?, ?)",
