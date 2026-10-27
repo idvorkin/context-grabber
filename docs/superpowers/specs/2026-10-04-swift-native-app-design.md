@@ -338,7 +338,10 @@ with these differences while the two apps live side by side:
   and box plots as the current Body tab, and *Share summary* / *Share raw*. The current app's tabs (Today, Body,
   Move, Mind) are not rebuilt yet; what lives on them besides the cards waits for its own step (below).
 - **A grab** asks for Health access the first time (the same read types as the current app), reads today live and
-  the past six days from its own cache, and never fails as a whole: a metric Health will not give reads "—". It
+  the past six days from its own cache, and never fails as a whole: a metric Health will not give reads "—". A
+  past day is kept in the cache only once it has settled: a day cached within 36 hours of its end (the first grab
+  after midnight, before the Watch has synced its last hours) is asked again on every grab until one caches it
+  later than that, and a day Health cannot answer keeps what was cached and is never cached as empty. It
   runs when Today opens, when the app comes back to the front, every thirty minutes while Today is open, and on a
   pull. The last grab's cards show at once on the next open.
 - **The detail sheets** are drawn with the system's charts: bars for counts, a line with each day's range for

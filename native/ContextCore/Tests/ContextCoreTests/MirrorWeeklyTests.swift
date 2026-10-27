@@ -249,11 +249,108 @@ final class HealthCacheTests: XCTestCase {
 
   func testTodayIsAlwaysAskedAgain() {
     let keys = ["2026-03-13", "2026-03-14", "2026-03-15"]
+    let late = local(20, 12)
     let p = HealthCache.partition(
-      todayKey: "2026-03-15", dateKeys: keys, cached: ["2026-03-13": .null, "2026-03-15": .null])
+      todayKey: "2026-03-15", dateKeys: keys,
+      cached: [
+        "2026-03-13": CachedDay(value: .null, cachedAt: late), "2026-03-15": CachedDay(value: .null, cachedAt: late),
+      ],
+      clock: la)
     XCTAssertEqual(p.fetch, ["2026-03-14", "2026-03-15"])
     XCTAssertEqual(Array(p.cached.keys), ["2026-03-13"])
   }
+
+  /// M-2: a day cached soon after it ended (the first grab after midnight, before the Watch synced) is asked again
+  /// until a grab caches it 36 hours past its end; one cached later than that is final.
+  func testADayCachedBeforeItSettledIsAskedAgain() {
+    let end = la.endOfDay("2026-03-14")
+    let hour = 3_600_000.0
+    XCTAssertFalse(HealthCache.isSettled("2026-03-14", cachedAt: end - hour, clock: la), "cached during the day")
+    XCTAssertFalse(HealthCache.isSettled("2026-03-14", cachedAt: end + 10 * 60_000, clock: la), "at 00:10")
+    XCTAssertFalse(HealthCache.isSettled("2026-03-14", cachedAt: end + 35 * hour, clock: la))
+    XCTAssertTrue(HealthCache.isSettled("2026-03-14", cachedAt: end + 36 * hour, clock: la))
+    XCTAssertFalse(HealthCache.isSettled("2026-03-14", cachedAt: 0, clock: la), "an unknown time is not settled")
+
+    let p = HealthCache.partition(
+      todayKey: "2026-03-15", dateKeys: ["2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15"],
+      cached: [
+        "2026-03-12": CachedDay(value: .num(1), cachedAt: la.endOfDay("2026-03-12") + 40 * hour),
+        "2026-03-13": CachedDay(value: .num(2), cachedAt: la.endOfDay("2026-03-13") + hour),
+        "2026-03-14": CachedDay(value: .num(3), cachedAt: end + 10 * 60_000),
+      ], clock: la)
+    XCTAssertEqual(p.fetch, ["2026-03-13", "2026-03-14", "2026-03-15"])
+    XCTAssertEqual(Array(p.cached.keys), ["2026-03-12"])
+  }
+
+  func testCachedAtReadsBack() throws {
+    let cache = try HealthCache(db: SQLiteDatabase())
+    try cache.putComputed(.steps, "2026-03-14", DailyValue(date: "2026-03-14", value: 5).json, at: 1234)
+    XCTAssertEqual(try cache.computedEntries(.steps, ["2026-03-14"])["2026-03-14"]?.cachedAt, 1234)
+  }
+
+  /// The grab: just after midnight, yesterday's early row is asked again and replaced; a settled day is not asked.
+  func testAGrabAfterMidnightRefetchesYesterday() async throws {
+    let now = local(15, 0, 10)
+    let hour = 3_600_000.0
+    let cache = try HealthCache(db: SQLiteDatabase())
+    try cache.putComputed(.steps, "2026-03-14", DailyValue(date: "2026-03-14", value: 100).json, at: now - 60_000)
+    try cache.putComputed(
+      .steps, "2026-03-12", DailyValue(date: "2026-03-12", value: 7000).json,
+      at: la.endOfDay("2026-03-12") + 37 * hour)
+    let health = StepsHealth(steps: 9000)
+    let series = await MirrorGrab(source: health, cache: cache, clock: la).perDay(.steps, now: now)
+    let byDay = Dictionary(uniqueKeysWithValues: (series.daily ?? []).compactMap { d in d.value.map { (d.date, $0) } })
+
+    XCTAssertEqual(byDay["2026-03-14"], 9000, "the early row is asked again")
+    XCTAssertEqual(byDay["2026-03-12"], 7000, "the settled row is kept")
+    XCTAssertFalse(health.askedDays.contains("2026-03-12"))
+    XCTAssertTrue(health.askedDays.contains("2026-03-14"))
+    let rewritten = try XCTUnwrap(cache.computedEntries(.steps, ["2026-03-14"])["2026-03-14"])
+    XCTAssertEqual(DailyValue(json: rewritten.value)?.value, 9000)
+    XCTAssertEqual(rewritten.cachedAt, now, "stamped with the grab's own time")
+  }
+
+  /// A refetch Health cannot answer (a locked phone's background grab) keeps the cached value and the row.
+  func testARefetchHealthCannotAnswerKeepsTheCachedDay() async throws {
+    let now = local(15, 0, 10)
+    let cache = try HealthCache(db: SQLiteDatabase())
+    try cache.putComputed(.steps, "2026-03-14", DailyValue(date: "2026-03-14", value: 100).json, at: now - 60_000)
+    let health = StepsHealth(steps: nil)
+    let grab = MirrorGrab(source: health, cache: cache, clock: la)
+    let series = await grab.perDay(.steps, now: now)
+    let byDay = Dictionary(uniqueKeysWithValues: (series.daily ?? []).compactMap { d in d.value.map { (d.date, $0) } })
+
+    XCTAssertEqual(byDay["2026-03-14"], 100)
+    XCTAssertNil(byDay["2026-03-13"], "an uncached day Health could not answer reads empty")
+    XCTAssertEqual(try cache.computedEntries(.steps, ["2026-03-14"])["2026-03-14"]?.cachedAt, now - 60_000)
+    XCTAssertNil(try cache.computedEntries(.steps, ["2026-03-13"])["2026-03-13"], "not cached as an empty day")
+    XCTAssertEqual(Set(grab.takeFailures().map(\.query)), ["steps_day"], "a failed day's sum is a failed query")
+  }
+}
+
+/// Steps only: every day's sum is `steps`, or a failure when nil. Records which days were asked.
+private final class StepsHealth: HealthSource, @unchecked Sendable {
+  struct Unanswered: Error {}
+  let steps: Double?
+  private let lock = NSLock()
+  private var asked: [String] = []
+
+  init(steps: Double?) { self.steps = steps }
+
+  var askedDays: [String] {
+    lock.withLock { asked }
+  }
+
+  func sum(_ kind: QuantityKind, from: Double, to: Double) async throws -> Double? {
+    lock.withLock { asked.append(la.dateKey(from)) }
+    guard let steps else { throw Unanswered() }
+    return steps
+  }
+  func latest(_ kind: QuantityKind) async throws -> Double? { nil }
+  func samples(_ kind: QuantityKind, from: Double, to: Double) async throws -> [QuantitySampleRecord] { [] }
+  func sleep(from: Double, to: Double) async throws -> [SleepSample] { [] }
+  func mindful(from: Double, to: Double) async throws -> [TimeSpan] { [] }
+  func workouts(from: Double, to: Double) async throws -> [WorkoutRecord] { [] }
 }
 
 final class MirrorTextTests: XCTestCase {

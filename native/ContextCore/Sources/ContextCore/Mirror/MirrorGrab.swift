@@ -189,9 +189,9 @@ public final class MirrorGrab: @unchecked Sendable {
     if let cache {
       do {
         for day in days where day.date != todayKey {
-          try cache.putComputed(metric, day.date, day.json)
+          try cache.putComputed(metric, day.date, day.json, at: now)
           let dayRaw = raw.filter { clock.dateKey($0.start) == day.date }.map(\.json)
-          if !dayRaw.isEmpty { try cache.putRaw(metric, day.date, .array(dayRaw)) }
+          if !dayRaw.isEmpty { try cache.putRaw(metric, day.date, .array(dayRaw), at: now) }
         }
       } catch {
         cacheFail("cache_write", error)
@@ -207,11 +207,11 @@ public final class MirrorGrab: @unchecked Sendable {
   func perDay(_ metric: MetricKey, now: Double) async -> WeeklySeries {
     let todayKey = clock.dateKey(now)
     let keys = Weekly.dateKeys(endDate: now, clock: clock)
-    var cached: [String: JSValue] = [:]
+    var cached: [String: CachedDay] = [:]
     if let cache {
-      do { cached = try cache.computed(metric, keys) } catch { cacheFail("cache_read", error) }
+      do { cached = try cache.computedEntries(metric, keys) } catch { cacheFail("cache_read", error) }
     }
-    let (hits, fetch) = HealthCache.partition(todayKey: todayKey, dateKeys: keys, cached: cached)
+    let (hits, fetch) = HealthCache.partition(todayKey: todayKey, dateKeys: keys, cached: cached, clock: clock)
     var fresh: [String: (computed: JSValue, raw: JSValue)] = [:]
     await withTaskGroup(of: (String, (JSValue, JSValue)?).self) { group in
       for key in fetch {
@@ -225,14 +225,15 @@ public final class MirrorGrab: @unchecked Sendable {
       do {
         for key in fetch where key != todayKey {
           guard let r = fresh[key] else { continue }
-          try cache.putComputed(metric, key, r.computed)
-          try cache.putRaw(metric, key, r.raw)
+          try cache.putComputed(metric, key, r.computed, at: now)
+          try cache.putRaw(metric, key, r.raw, at: now)
         }
       } catch {
         cacheFail("cache_write", error)
       }
     }
-    let merged = keys.map { fresh[$0]?.computed ?? hits[$0] }
+    // A day asked again because it had not settled keeps its cached value when Health could not answer.
+    let merged = keys.map { fresh[$0]?.computed ?? hits[$0] ?? cached[$0]?.value }
     if metric.isRanged {
       return .ranged(
         zip(keys, merged).map { key, v in v.flatMap(HeartRateDaily.init(json:)) ?? HeartRateDaily(date: key) })
@@ -249,8 +250,13 @@ public final class MirrorGrab: @unchecked Sendable {
     switch metric {
     case .steps, .activeEnergy, .walkingDistance:
       let kind: QuantityKind = metric == .steps ? .steps : metric == .activeEnergy ? .activeEnergy : .distance
-      // A failed sum is a day with no value, as in the React Native app.
-      let sum = (try? await s.sum(kind, from: dayStart, to: dayEnd)) ?? nil
+      // A failed sum is no answer (nil), so it is never cached as a day with no value: the day is asked again on
+      // the next grab, and one cached before keeps its value (a locked phone's background grab fails every query).
+      // It lands in failed_queries like its exercise, heart rate and meditation siblings.
+      guard
+        case .success(let sum) = await settle(
+          "\(metric.rawValue)_day", { try await s.sum(kind, from: dayStart, to: dayEnd) })
+      else { return nil }
       let value = sum.map(round2)
       return (
         DailyValue(date: dateKey, value: value).json,
