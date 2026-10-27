@@ -281,6 +281,13 @@ struct CallView: View {
         }
         .pickerStyle(.segmented)
       }
+      if CallSTT.hasPick(call.backend) {
+        Picker("Speech to text", selection: $call.stt) {
+          ForEach(CallSTT.allCases, id: \.self) { Text($0.label).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityIdentifier("call-stt")
+      }
       Text(CallVoice.hasPick(call.backend) ? "\(call.route) · \(call.voice.label)" : call.route)
         .font(.footnote).foregroundStyle(.secondary)
         .accessibilityIdentifier("call-devices")

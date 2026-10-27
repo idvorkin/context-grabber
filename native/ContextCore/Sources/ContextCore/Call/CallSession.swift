@@ -43,6 +43,8 @@ public struct CallSnapshot: Equatable, Sendable {
   public var backend: CallBackend?
   /// The voice the call was placed in (#98).
   public var voice: CallVoice = .default
+  /// The speech-to-text a Direct call was placed with (#556).
+  public var stt: CallSTT = .default
   /// The scheduler's clock (ms) when the bridge said `ready`; the timer counts from here.
   public var startedAt: Double?
   /// The bridge's reason (or `connection lost`), raw — the screen shows `CallProtocol.endingText` of it.
@@ -233,19 +235,20 @@ public final class CallSession {
   // MARK: - controls
 
   /// No-op while a call is connecting or live: whatever asked for a call joins the one that is up. The voice only
-  /// reaches the frame on a backend whose voice is an ElevenLabs one.
-  public func start(_ backend: CallBackend, voice: CallVoice = .default) {
+  /// reaches the frame on a backend whose voice is an ElevenLabs one; the speech-to-text only on Direct (#556).
+  public func start(_ backend: CallBackend, voice: CallVoice = .default, stt: CallSTT = .default) {
     if snapshot.isActive {
       log("call_ignored", ["action": "start", "backend": backend.rawValue, "state": snapshot.state.rawValue])
       return
     }
-    resetForCall(backend: backend, voice: voice)
+    resetForCall(backend: backend, voice: voice, stt: stt)
     let fields = deps.callSettings().fields(for: backend, voice: voice)
+    let sttField = stt.frameField(for: backend)
     log(
       "call_start",
       [
         "backend": backend.rawValue, "voice": voice.rawValue, "voice_id": fields.voice, "model": fields.model,
-        "build": deps.build, "bridge": url, "model_source": fields.source,
+        "build": deps.build, "bridge": url, "model_source": fields.source, "stt": sttField,
       ])
     emit()
     let call = generation
@@ -259,11 +262,11 @@ public final class CallSession {
       self.log("call_prepare", ["ok": true])
       // A stop() during prepare lands here.
       guard self.snapshot.state == .connecting else { return }
-      self.connect(backend: backend, frame: (fields.voice, fields.model))
+      self.connect(backend: backend, frame: (fields.voice, fields.model, sttField))
     }
   }
 
-  private func connect(backend: CallBackend, frame fields: (voice: String, model: String)) {
+  private func connect(backend: CallBackend, frame fields: (voice: String, model: String, stt: String)) {
     let socket: BridgeSocket
     do {
       socket = try deps.connect(url)
@@ -285,7 +288,7 @@ public final class CallSession {
       self.send(
         CallProtocol.startFrame(
           backend: backend, build: self.deps.build, voice: fields.voice, model: fields.model, location: self.location,
-          today: today),
+          today: today, stt: fields.stt),
         frame: "start", logged)
     }
     socket.onText = { [weak self] text in self?.onText(text) }
@@ -310,9 +313,10 @@ public final class CallSession {
   public func restart() {
     guard snapshot.isActive, let backend = snapshot.backend else { return }
     let voice = snapshot.voice
+    let stt = snapshot.stt
     log("call_restart", [:])
     stop()
-    start(backend, voice: voice)
+    start(backend, voice: voice, stt: stt)
   }
 
   /// Where Igor is (#107). Before the socket opens it waits for the start frame; once open, while connecting or
@@ -568,6 +572,7 @@ public final class CallSession {
     if !redialed, let backend = snapshot.backend {
       redialed = true
       let voice = snapshot.voice
+      let stt = snapshot.stt
       log(
         "call_heal",
         [
@@ -576,7 +581,7 @@ public final class CallSession {
         ])
       sendDiagnostics(why: "redial")
       stop()
-      start(backend, voice: voice)
+      start(backend, voice: voice, stt: stt)
       return
     }
     log("call_heal", ["action": "give_up", "why": "still no mic buffer after the redial"])
@@ -806,12 +811,14 @@ public final class CallSession {
 
   // MARK: - lifecycle
 
-  private func resetForCall(backend: CallBackend, voice: CallVoice) {
+  private func resetForCall(backend: CallBackend, voice: CallVoice, stt: CallSTT) {
     generation += 1
     var next = CallSnapshot()
     next.state = .connecting
     next.backend = backend
     next.voice = voice
+    // A voice-model call does not record a leftover Direct pick (#556).
+    next.stt = CallSTT.hasPick(backend) ? stt : .default
     next.muted = snapshot.muted
     snapshot = next
     igorFinal = ""

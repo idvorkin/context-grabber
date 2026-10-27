@@ -12,6 +12,7 @@
 **Amended:** 2026-09-02, [#107](https://github.com/idvorkin/context-grabber/issues/107) — the call tells the bridge where Igor is
 **Amended:** 2026-09-02, [#95](https://github.com/idvorkin/context-grabber/issues/95) / [#105](https://github.com/idvorkin/context-grabber/issues/105) / [#106](https://github.com/idvorkin/context-grabber/issues/106) — audio that stops mid-call heals itself; the greeting waits for the speaker; the log counts both directions and survives a freeze
 **Amended:** 2026-10-26, [#467](https://github.com/idvorkin/context-grabber/issues/467) — a sentence leaves the live line the moment it is sent to Larry, marked *sent* until Larry answers
+**Amended:** 2026-10-27, [#556](https://github.com/idvorkin/context-grabber/issues/556) — a Direct call picks its speech-to-text: Default, Nova-3 or Flux
 
 ## Summary
 
@@ -99,6 +100,24 @@ He can talk over Larry to cut him off, as on the other backends. On a Direct cal
 - With five backends the row names ElevenLabs *Eleven* so every name fits a phone; the status line still says
   *ElevenLabs*.
 - Everything else — the devices line, mute, captions, restart, the automatic redial, the ending — is the same.
+
+#### Speech to text on Direct
+
+Igor, 2026-10-27 ([#556](https://github.com/idvorkin/context-grabber/issues/556)): the bridge can hear a Direct call
+through Deepgram **Flux** as well as **Nova-3** (Cockpit #80). On 40 clips of Igor's own call audio Flux closed a turn
+in about 312 ms median against Nova-3's 1,359 ms, with accuracy a wash; the phone needs a way to pick it so the two
+can be compared on real calls.
+
+- With **Direct** chosen, a **Speech to text** row sits under the backend row, with three choices: **Default**,
+  **Nova-3** and **Flux**. The other backends show no such row: their voice model hears Igor itself.
+- **Default** is the pick on a fresh install. It names nothing, so the bridge decides (Nova-3 today); changing the
+  bridge's default later needs no app build.
+- Nova-3 or Flux is told to the bridge when the call starts. A pick the bridge does not know falls back to its
+  default; a call never fails over it.
+- The pick is remembered like the backend and the voice, is fixed for the length of a call (the row is only shown
+  between calls), and Restart and the automatic redial keep it.
+- When the pick is not Default, it is on the status line (*live · 1:17 · Direct · Flux*), and the call's log, its
+  copied diagnostics and an automatic trouble report name it. The bridge's own session record names the model it used.
 
 ### The devices line
 
@@ -845,6 +864,14 @@ back. The calling treatment in the middle of the screen stays; the big
     fresh live line, then becomes a second *Igor* row marked *sent* —
     two rows, not one run-on row. When Larry speaks, both marks go. The
     same on ElevenLabs.
+
+45. **Speech to text on Direct** (#556). Choose Direct: a *Speech to
+    text* row offers Default, Nova-3 and Flux, Default chosen; choose
+    ElevenLabs and the row is gone. Pick Flux, call, say a sentence: the
+    status line ends *Direct · Flux*, Diagnostics names *stt flux*, and
+    on the Mac the bridge's session record says Flux. Quit and relaunch:
+    Flux is still picked. Pick Default and call: nothing is named, and
+    the bridge's record says its default.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
