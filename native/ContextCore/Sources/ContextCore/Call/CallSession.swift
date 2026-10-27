@@ -817,7 +817,8 @@ public final class CallSession {
     next.state = .connecting
     next.backend = backend
     next.voice = voice
-    next.stt = stt
+    // A voice-model call does not record a leftover Direct pick (#556).
+    next.stt = CallSTT.hasPick(backend) ? stt : .default
     next.muted = snapshot.muted
     snapshot = next
     igorFinal = ""

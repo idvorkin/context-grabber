@@ -59,6 +59,7 @@ final class CallSTTTests: XCTestCase {
     t.socket.open()
     XCTAssertNil(t.socket.frames[0]["stt"])
     XCTAssertEqual(t.last("call_start")?["stt"] as? String, "")
+    XCTAssertEqual(t.session.snapshot.stt, .default)
   }
 
   func testRestartKeepsThePick() {

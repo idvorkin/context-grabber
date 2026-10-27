@@ -65,6 +65,7 @@ final class CallModel: ObservableObject {
   /// The same keys as the React Native app's settings table, so the cutover keeps the picks.
   private static let backendKey = "call_backend"
   private static let voiceKey = "call_voice"
+  /// Native only (#556): the React Native app never had a speech-to-text pick, so there is nothing to carry over.
   private static let sttKey = "call_stt"
   /// What the gist (story 094, gone from this app) left behind: the token in the Keychain and the uploads' list.
   private static let gistToken = "gist_token"
@@ -181,7 +182,10 @@ final class CallModel: ObservableObject {
     willStart?()
     log.event(
       "ui",
-      ["action": "call", "from": source, "backend": backend.rawValue, "voice": voice.rawValue, "stt": stt.rawValue])
+      [
+        "action": "call", "from": source, "backend": backend.rawValue, "voice": voice.rawValue,
+        "stt": stt.frameField(for: backend),
+      ])
     session.start(backend, voice: voice, stt: stt)
   }
 
