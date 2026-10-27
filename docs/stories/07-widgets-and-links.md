@@ -528,7 +528,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** A graded drill that lands in the ledger
 - **Given:** the build has my stack, and the ledger's URL and write key are pasted in the drill's *Stats*
 - **When:** I tap *Drill the stack* under the card, pick *Mixed*, tap to see an answer, tap again for one I knew and press *Wrong* for one I missed, then open *Stats*
-- **Then:** the drill asks both ways round from my stack (only the hard positions with *Skip easy cards* on), each answer is sent to the ledger (kept and sent later when offline), *Stats* shows the last 30 days from every source with the most missed positions first, the log never pairs a card with its position or shows the key, and *Done* returns to the card
+- **Then:** the drill asks both ways round from my stack (only the hard positions with *Skip easy cards* on), a tap shows the answer as the position alone and *Wrong* is a large strip at its right edge, each answer is sent to the ledger (kept and sent later when offline), *Stats* shows the last 30 days from every source as a difficulty grid, one cell per position in stack order with its card face, with a *Taps / Voice* picker, the log never pairs a card with its position or shows the key, and *Done* returns to the card
 
 ---
 
