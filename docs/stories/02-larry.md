@@ -926,3 +926,23 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Then:** the Archive section says *Behind* and *still sending its history* for those streams, in the ordinary colour, never red, and it changes when the run ends
 
 ---
+
+### User Story 305:
+
+- **Summary:** While I speak a message in a thread, a meter shows how loud I am
+- **Status:** native app only: BugKit's live input level under the microphone row, in [5e0cbda](https://github.com/idvorkin/context-grabber/commit/5e0cbda) on BugKit 0.3.11; verified by a simulator build; the meter moving with my voice on the phone not yet
+- **Issues:** [#531](https://github.com/idvorkin/context-grabber/issues/531)
+- **Spec:** [Chat with Larry in Grabber Native — Speaking a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Larry's client speaking a message instead of typing it
+- **I want to** see my voice move a level meter while I record, as the problem report shows it
+- **so that** I know the microphone hears me, and not too loudly, before I find out from the words
+
+#### Acceptance Criteria:
+- **Scenario:** Seeing how loud I am
+- **Given:** I am recording a message in a thread
+- **When:** I speak, softly and then loudly
+- **Then:** the thin bar under the microphone row fills with my voice, green, orange near the top where it would clip, the same meter the problem report shows; it is empty when I am not recording
+
+---

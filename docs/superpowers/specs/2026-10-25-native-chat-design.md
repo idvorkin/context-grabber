@@ -79,8 +79,10 @@ sound.
   AirPods) — laid out as the problem report's microphone row is. The whole row is the target, a full finger tall
   (Igor, 2026-10-26, #544: *"the selector button for the microphone is too small"*); a tap opens the list, with *Find
   microphones* to list them. The pick is kept across launches and is the same one the problem report's dictation uses. It cannot be
-  changed while recording or during a live call. A live input-level meter beside it comes with the shared dictation
-  picker (bug-kit), not yet.
+  changed while recording or during a live call. Under the row a thin live input-level bar shows how loud the
+  microphone hears Igor while he records — green, orange near the top where the voice would clip, empty when not
+  recording — the same meter the problem report shows (#531, Igor 2026-10-26: *"Don't forget to give me a
+  Microphone box on this input as well … I really like the way it's done for Bug kit"*).
 - **Permissions.** The first tap asks for speech recognition and the microphone (the same ones the problem report's
   dictation uses). Declined, a copyable line above the bar says which is off and that the phone's Settings turns it
   back on.
