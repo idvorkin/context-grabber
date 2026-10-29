@@ -223,7 +223,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead
-- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3); verified by `just native-test` (audio not arriving test); the phone still to be checked by Igor
+- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts` and on the phone; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3); verified by `just native-test` (audio not arriving test); the phone still to be checked by Igor; #567, a barge-in's cut-off words re-sent as text raise no banner, in [ee1a185](https://github.com/idvorkin/context-grabber/commit/ee1a185) and [f4a6e62](https://github.com/idvorkin/context-grabber/commit/f4a6e62); verified by `CallSessionTests` and `CallDiagnosticsTests` (host); on the phone not yet
 
 #### Use Case:
 - **As a** Larry's client on a call where the words come and the sound does not
