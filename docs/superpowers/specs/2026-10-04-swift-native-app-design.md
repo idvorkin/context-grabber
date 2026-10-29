@@ -177,8 +177,9 @@ covers the screen with the trainer's own drill, the same one as in the trainer a
 
 - **Card → position, Position → card, or Mixed**: the question fills the top; a tap shows the answer under it (the
   position alone, no breather count: trainer #27, v0.3.2), the next tap counts it **right** and deals the next, and
-  **Wrong**, a large strip at the answer's right edge under the right thumb (trainer #33, v0.3.5), counts a miss
-  instead. Every card once per pass, never the same twice running.
+  **Wrong**, a small half-clear red button in its own row at the bottom right, under the right thumb, counts a miss
+  instead; the answer stays centred under the question (trainer #33, v0.3.5; #569 and #570, Igor 2026-10-29:
+  *"24 needs to stay centered"*, *"wrong goes smaller and partially transparent on bottom"*, v0.3.6). Every card once per pass, never the same twice running.
 - It follows *Skip easy cards* as it was when the drill opened: on, only the hard positions are drilled.
 - **Every graded answer goes to Igor's practice ledger**, the same one the trainer and Card Picker write to. Offline,
   answers wait on the phone and go when the ledger can be reached; nothing is lost by closing the app.

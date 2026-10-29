@@ -12,7 +12,7 @@ packages:
   # at a tag: a change there reaches this app when the tag here moves.
   ThinkACard:
     url: https://github.com/idvorkin/think-a-card-trainer
-    exactVersion: 0.3.5
+    exactVersion: 0.3.6
   # The report dialog, shake, dictation, What's new and iCloud delivery, shared with the other apps. Pinned to a
   # release tag exactly: every app and the Mac's reader must speak the same delivery format (bug-kit's rollout trains).
   BugKit:
