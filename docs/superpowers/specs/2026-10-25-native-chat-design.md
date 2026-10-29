@@ -112,6 +112,19 @@ appears once on the thread, and a share resent after a lost answer makes one thr
 refuses (too big, an unreadable image) reads *Larry refused it* with the reason, copyable, and is not resent; a swipe
 deletes it. Unreachable keeps it **Not sent yet**.
 
+**When the Cockpit isn't answering** (#565, 2026-10-27: the Cockpit's host was off the tailnet and Igor read the
+timeout as *"Context grabber inbox broke"*). A request that times out or cannot connect while the phone itself is
+online means the Cockpit is away, not the phone or the app. The list and an open thread then say *The Cockpit isn't
+answering — your messages are kept and go when it does*, still copyable, with the underlying reason alongside; a
+waiting message reads *Not sent yet · the Cockpit isn't answering*. This is distinct from the *No network* line, which
+is the phone being offline. Other failures (the Cockpit answering with an error) keep their plain reason.
+
+While the app is open and a message waits after a send that did not get through (the Cockpit away, or answering
+with a server error), it is tried again on its own: after 30 seconds,
+then a minute, two, four, and every five minutes after that. The wait starts over after a send that gets through, and
+the retries stop once nothing waits or the phone goes offline (the network's return sends it, as above). A refused
+message is never retried.
+
 **Hearing back.** iOS runs a background check now and then — it decides when, so a reply may wait minutes or hours.
 When the check finds a reply Igor has not seen, one notification per thread: *Larry* and the thread's title, with the
 reply's first line. Tapping it opens that thread. A reply already read on the laptop raises nothing, nor does a

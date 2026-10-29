@@ -72,12 +72,16 @@ final class ChatModel: ObservableObject {
           "unread": rows.filter { !$0.done && $0.unread > 0 }.count,
         ])
     } catch {
-      listFailed(error.localizedDescription, reason: reason)
+      listFailed(
+        error.localizedDescription, reason: reason,
+        problem: CockpitReach.problem(error, otherwise: Self.listFailure))
     }
   }
 
-  private func listFailed(_ why: String, reason: String) {
-    listProblem = "Could not read the chats from the Cockpit: \(why)"
+  private static let listFailure = "Could not read the chats from the Cockpit"
+
+  private func listFailed(_ why: String, reason: String, problem: String? = nil) {
+    listProblem = problem ?? "\(Self.listFailure): \(why)"
     log.event("chat", ["action": "refresh_failed", "why": reason, "reason": why])
   }
 
@@ -114,7 +118,7 @@ final class ChatModel: ObservableObject {
       let (data, response) = try await URLSession.shared.data(for: try ChatWire.threadRequest(key, cockpit: cockpit))
       let status = (response as? HTTPURLResponse)?.statusCode ?? 0
       guard status == 200, let rows = ChatWire.messages(data) else {
-        threadFailed(key, "HTTP \(status)")
+        threadFailed(key, "\(Self.threadFailure): HTTP \(status)", why: "HTTP \(status)")
         return false
       }
       let before = messages[key]?.last?.id
@@ -132,14 +136,16 @@ final class ChatModel: ObservableObject {
       }
       return true
     } catch {
-      threadFailed(key, error.localizedDescription)
+      threadFailed(
+        key, CockpitReach.problem(error, otherwise: Self.threadFailure), why: error.localizedDescription)
       return false
     }
   }
 
+  private static let threadFailure = "Could not read this chat from the Cockpit"
+
   /// Logged once per spell: a poll that fails the same way again stays quiet.
-  private func threadFailed(_ key: String, _ why: String) {
-    let problem = "Could not read this chat from the Cockpit: \(why)"
+  private func threadFailed(_ key: String, _ problem: String, why: String) {
     if threadProblem[key] != problem { log.event("error", ["where": "chat_thread", "thread": key, "message": why]) }
     threadProblem[key] = problem
   }

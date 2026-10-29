@@ -142,4 +142,48 @@ final class InboxSendPolicyTests: XCTestCase {
     policy.finishedSend(retry: true, now: 5)
     XCTAssertNil(policy.retryAfter)
   }
+
+  // MARK: #565, a failed send tried again on its own
+
+  func testAFailedSendBacksOffFrom30SecondsDoublingToFiveMinutes() {
+    var policy = InboxSendPolicy()
+    _ = policy.updatePath(.online)
+    XCTAssertNil(policy.backoffDelay, "nothing failed yet")
+    var delays: [Double] = []
+    for _ in 0..<7 {
+      policy.startedSend()
+      policy.finishedSend(retry: true, scheduled: true)
+      delays.append(policy.backoffDelay ?? -1)
+    }
+    XCTAssertEqual(delays, [30, 60, 120, 240, 300, 300, 300])
+  }
+
+  func testASendThatGetsThroughStartsTheWaitOver() {
+    var policy = InboxSendPolicy()
+    _ = policy.updatePath(.online)
+    for _ in 0..<3 { policy.finishedSend(retry: true, scheduled: true) }
+    policy.finishedSend(retry: false)
+    XCTAssertNil(policy.backoffDelay)
+    policy.finishedSend(retry: true)
+    XCTAssertEqual(policy.backoffDelay, 30)
+  }
+
+  func testSendsIgorStartsDoNotStretchTheWaitAndAnUnknownPathHasNone() {
+    var policy = InboxSendPolicy()
+    policy.finishedSend(retry: true)
+    XCTAssertNil(policy.backoffDelay, "no path reading yet")
+    _ = policy.updatePath(.online)
+    for _ in 0..<3 { policy.finishedSend(retry: true) }
+    XCTAssertEqual(policy.backoffDelay, 30, "composes and foregrounds while away keep the first step")
+    policy.finishedSend(retry: true, scheduled: true)
+    XCTAssertEqual(policy.backoffDelay, 60)
+  }
+
+  func testOfflineHasNoBackoffTheNetworksReturnSendsInstead() {
+    var policy = InboxSendPolicy()
+    _ = policy.updatePath(.online)
+    policy.finishedSend(retry: true)
+    _ = policy.updatePath(.offline)
+    XCTAssertNil(policy.backoffDelay)
+  }
 }

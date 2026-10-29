@@ -15,6 +15,10 @@ final class InboxModel: ObservableObject {
   var offline: Bool { sendPolicy.path == .offline }
   private let pathMonitor = NWPathMonitor()
   private var pathRetry: Task<Void, Never>?
+  /// #565: the next try on its own after a failed send, while the app is open.
+  private var backoff: Task<Void, Never>?
+  /// #565: the last send found the Cockpit not answering; a waiting message says so.
+  @Published private(set) var cockpitAway = false
   private let started = ContinuousClock.now
   private var now: Double {
     let elapsed = (ContinuousClock.now - started).components
@@ -57,6 +61,7 @@ final class InboxModel: ObservableObject {
   deinit {
     pathMonitor.cancel()
     pathRetry?.cancel()
+    backoff?.cancel()
   }
 
   private func networkChanged(available: Bool, interfaces: Set<String>, expensive: Bool, constrained: Bool) {
@@ -122,6 +127,8 @@ final class InboxModel: ObservableObject {
     }
     thumbnails = kept
     items = read.items
+    // Nothing waits, so nothing says the Cockpit is away (local review).
+    if waitingCount == 0 { cockpitAway = false }
     for name in read.unreadable { log.event("error", ["where": "inbox_read", "file": name]) }
   }
 
@@ -192,15 +199,32 @@ final class InboxModel: ObservableObject {
         log.event(type, fields)
       }
       let previousRetry = sendPolicy.retryAfter
-      sendPolicy.finishedSend(retry: report.retry != nil, now: now)
+      sendPolicy.finishedSend(retry: report.retry != nil, now: now, scheduled: reason == "backoff")
       schedulePathRetry(ifChangedFrom: previousRetry)
       sending = false
+      cockpitAway = report.unreachable
       reload()
+      scheduleBackoff()
       if !report.sent.isEmpty { didSend?() }
       if sendAgain {
         sendAgain = false
         send(reason: "again")
       }
+    }
+  }
+
+  /// #565: a failed send is tried again on its own (30 s, doubling to 5 min) until nothing waits or the phone is
+  /// offline; a send from any other trigger replaces the wait. ponytail: a suspended app's timer fires late, on resume.
+  private func scheduleBackoff() {
+    backoff?.cancel()
+    backoff = nil
+    guard let delay = sendPolicy.backoffDelay, waitingCount > 0 else { return }
+    log.event("inbox", ["action": "backoff", "seconds": delay, "failed_in_a_row": sendPolicy.failedInARow])
+    backoff = Task { [weak self] in
+      do { try await Task.sleep(for: .seconds(delay)) } catch { return }
+      // A send already out reschedules when it ends; joining it would be a second try straight after (local review).
+      guard let self, !offline, !sending, waitingCount > 0 else { return }
+      refresh(reason: "backoff")
     }
   }
 
