@@ -84,6 +84,8 @@ final class AppModel: ObservableObject {
   @Published var openMetricKey: MetricSheetItem?
   /// What's new, as the build wrote it with BugKit's script (story 148); nil when the resource is missing or unreadable.
   let whatsNew = WhatsNewSeen.bundledFeed()
+  /// This phone's own reports, read once per launch: What's new shows the ones this build fixed (BugKit 0.3.11).
+  private(set) lazy var bugReports: [BugReport] = (try? BugStore().readAll().reports) ?? []
   @Published var showWhatsNew = false
   /// Where the list was opened from, for BugKit's `open_whats_new` line.
   private(set) var whatsNewFrom = "home"

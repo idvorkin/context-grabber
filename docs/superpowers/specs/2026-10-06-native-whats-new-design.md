@@ -76,3 +76,7 @@ newest day. A tap on a change is logged (`ui`, action open_story) with the story
   newer change arrives, and a relaunch does not bring it back. With no history there is no home row.
 - The cog's sheet always offers *What's new*; neither a missing nor an empty history breaks it or the screen.
 - Tapping any change opens its story on GitHub, scrolled to that story; the log has `ui` open_story (#232).
+- *Fixed in this build* (BugKit 0.3.11, Igor 2026-10-29: bring every app's BugKit up to date): a change whose
+  commit closes an issue filed from one of this phone's own reports shows that report under it, and the home row
+  headlines the fix only in the build that brought it. The match is made on the phone; nothing about the reports
+  leaves it. A build made without GitHub access simply has no fixed reports.

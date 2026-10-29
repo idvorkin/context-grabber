@@ -66,7 +66,7 @@ What the native rungs can and cannot see of What's new (story 148, [spec](superp
 | Change | Where it must be verified | How |
 |---|---|---|
 | Which subjects count (Story NNN first, or stories in brackets), bookkeeping dropped, one line per story per local day, the story's summary and issue from the markdown, the home line, a missing or bad resource | BugKit's host tests | `WhatsNewTests` in idvorkin/bug-kit |
-| What a build of this checkout would list | Host | BugKit's `scripts/whats-new.sh <out.json> --repo . --path native` (from the SwiftPM checkout) prints the counts and writes the same JSON the build phase bundles |
+| What a build of this checkout would list | Host | BugKit's `scripts/whats-new.sh <out.json> --repo . --path native --fixed-reports` (from the SwiftPM checkout) prints the counts and writes the same JSON the build phase bundles (`--fixed-reports` reads the repo's issues with `gh`; without `gh`, auth or network the feed has no fixed reports) |
 | The row and the screen, with the build's real days | Simulator screenshot | launch plain, and with `SIMCTL_CHILD_GRABBER_WHATS_NEW=open`, then `simctl io screenshot`; the log's `ui` open_whats_new names the days and changes |
 
 What the native rungs can and cannot see of the home screen (story 147, [spec](superpowers/specs/2026-10-06-native-home-screen-design.md)):
