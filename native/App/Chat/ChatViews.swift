@@ -477,6 +477,7 @@ private struct ComposeBar: View {
         }
       }
       MicPicker(voice: voice)
+      BugInputLevelMeter(level: voice.inputLevel, accessibilityIdentifier: "chat-mic-level")
       HStack(alignment: .bottom, spacing: 8) {
         Button(action: paste) {
           Image(systemName: "photo.on.rectangle").font(.title3)
@@ -619,9 +620,8 @@ private struct MicButton: View {
 
 /// Which microphone the next recording uses (#448, Igor 2026-10-26): Automatic or one of the phone's inputs, the
 /// problem report's saved pick. Locked while recording and during a call. A full-width row a finger tall (#544), laid
-/// out as BugKit's report microphone row.
-// ponytail: no input-level meter yet — bug-kit is adding a public picker + live meter view; swap this menu for it
-// when that release is pinned.
+/// out as BugKit's report microphone row. #531: BugKit's live input level under it, as the report shows. This menu
+/// stays the app's own rather than BugKit's picker: the finger-tall row (#544), the call lock and the chat_voice lines.
 private struct MicPicker: View {
   @ObservedObject var voice: ChatVoiceModel
 

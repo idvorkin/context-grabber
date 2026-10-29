@@ -856,7 +856,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** I speak a message in a thread and read the words before I send them
 - **Status:** native app only: implemented with Deepgram in [2015662](https://github.com/idvorkin/context-grabber/commit/2015662), moved to the problem report's Apple dictation with the five-minute cap in [f040853](https://github.com/idvorkin/context-grabber/commit/f040853), with the microphone picker; verified by `ChatVoiceTests`, `ChatVoiceClockTests` and `ChatVoiceWordsTests` (host: the five-minute limit and its line, the recording clock, a timer that dies with its recording, a thread's words taken by that thread only) and `ChatVoiceUITests` (simulator: no Deepgram key in Settings any more; the thread's mic and its microphone picker are there and ready); speaking on the phone not yet; #544: the microphone picker is a full-width row a finger tall, as the problem report's is, in [442e0a5](https://github.com/idvorkin/context-grabber/commit/442e0a5); host `just native-test`; the simulator's ChatVoiceUITests and the phone not yet; #546: a Send mid-recording stops it, so no words come back into the emptied bar, in [84e4f70](https://github.com/idvorkin/context-grabber/commit/84e4f70); no automated test (the decision lives in the app target); on the phone not yet
-- **Issues:** [#448](https://github.com/idvorkin/context-grabber/issues/448), [#544](https://github.com/idvorkin/context-grabber/issues/544), [#546](https://github.com/idvorkin/context-grabber/issues/546)
+- **Issues:** [#531](https://github.com/idvorkin/context-grabber/issues/531), [#448](https://github.com/idvorkin/context-grabber/issues/448), [#544](https://github.com/idvorkin/context-grabber/issues/544), [#546](https://github.com/idvorkin/context-grabber/issues/546)
 - **Spec:** [Chat with Larry in Grabber Native — Speaking a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -874,6 +874,11 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** a thread is open and nothing is recording
 - **When:** I tap the *Microphone* row above the field (the whole row, a full finger tall, #544) and choose *Find microphones*, then a microphone
 - **Then:** the row names it and my next recording uses it; *Automatic* follows the phone's route; the pick stays after a relaunch; during a recording or a live call the picker cannot be changed
+
+- **Scenario:** Seeing how loud I am (#531)
+- **Given:** I am recording a message in a thread
+- **When:** I speak, softly and then loudly
+- **Then:** the thin bar under the microphone row fills with my voice, green, orange near the top where it would clip, the same meter the problem report shows; it is empty when I am not recording
 
 - **Scenario:** Nothing to transcribe, or no way to
 - **Given:** a recording where nothing was heard, speech recognition or the microphone declined, or a call with Larry live
