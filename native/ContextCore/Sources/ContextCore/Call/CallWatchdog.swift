@@ -17,9 +17,6 @@ public enum CallWatchdog {
   public static let clockStartMs = 2000.0
   /// Tony's words arriving as text with no audio behind them for this long: the socket or the vendor.
   public static let audioAbsentMs = 5000.0
-  /// #567: after Igor cuts in, the cut-off reply's words still arrive as text with their audio dropped; text this
-  /// soon after an interruption is that, not a starved socket.
-  public static let interruptedTextGraceMs = 2000.0
   /// Re-arm a stalled tap this many times before saying the microphone is gone.
   public static let micStallsBeforeGivingUp = 3
   /// A stalled output is reopened at most this often.
@@ -78,13 +75,20 @@ public enum CallWatchdog {
     return now - previousCheckAt >= outputStallMs ? .stalled : .ok
   }
 
-  /// Tony is talking (text keeps arriving) but nothing has come down the audio channel for `audioAbsentMs`.
-  /// 0 = never.
-  /// #567: whether Tony's text at `now` counts towards `audioAbsent`. `interruptedAt` 0 = no interruption yet.
-  public static func textArmsAudioAbsent(now: Double, interruptedAt: Double) -> Bool {
-    interruptedAt == 0 || now - interruptedAt > interruptedTextGraceMs
+  /// #567: after Igor cuts in, the bridge sends the cut-off reply's words again as text (often ending "…") with their
+  /// audio dropped. That repeat is the interruption working, not a starved socket. Short texts never count as one.
+  public static func repeatsCutOff(_ text: String, cutOff: String) -> Bool {
+    let trim = { (s: String) in
+      s.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "….")))
+    }
+    let a = trim(text)
+    let b = trim(cutOff)
+    guard a.count >= 8, b.count >= 8 else { return false }
+    return a.hasPrefix(b) || b.hasPrefix(a)
   }
 
+  /// Tony is talking (text keeps arriving) but nothing has come down the audio channel for `audioAbsentMs`.
+  /// 0 = never.
   public static func audioAbsent(now: Double, lastTextAt: Double, lastAudioAt: Double) -> Bool {
     guard lastTextAt > 0, now - lastTextAt <= audioAbsentMs else { return false }
     return now - max(lastAudioAt, 0) > audioAbsentMs

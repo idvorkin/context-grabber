@@ -185,7 +185,9 @@ public final class CallSession {
   private var bytesReceived = 0
   private var lastAudioAt = 0.0
   private var lastTextAt = 0.0
-  private var interruptedAt = 0.0
+  /// #567: Larry's last finished row, and whether an interruption since then may bring it back as text.
+  private var lastLarryRow = ""
+  private var cutOffPending = false
   /// #440, #439, story 209: the last frame of any kind each way, so a lost socket says how quiet the line was.
   private var lastRxAt = 0.0
   private var lastTxAt = 0.0
@@ -408,9 +410,12 @@ public final class CallSession {
         }
       } else if who == "larry" {
         // Larry answering means the vendor decided Igor's turn was over.
-        if CallWatchdog.textArmsAudioAbsent(now: deps.scheduler.now, interruptedAt: interruptedAt) {
+        if cutOffPending && CallWatchdog.repeatsCutOff(text, cutOff: lastLarryRow) {
+          log("call_bridge", ["kind": "cut_off_resend", "chars": text.count])
+        } else {
           lastTextAt = deps.scheduler.now
         }
+        cutOffPending = false
         promoteIgor()
         clearSent()
         appendLarry(text)
@@ -427,7 +432,7 @@ public final class CallSession {
       }
     case .interrupted:
       log("call_bridge", ["kind": "interrupted"])
-      interruptedAt = deps.scheduler.now
+      cutOffPending = true
       deps.audio.flush()
       closeLarryRow()
     case .turnEnd:
@@ -801,7 +806,10 @@ public final class CallSession {
 
   /// Larry's row is finished: the next fragment starts a new one. The finished row goes in the log once.
   private func closeLarryRow() {
-    if let row = row(larryRowId) { log("call_caption", ["who": "larry", "text": row.text]) }
+    if let row = row(larryRowId) {
+      log("call_caption", ["who": "larry", "text": row.text])
+      lastLarryRow = row.text
+    }
     larryRowId = nil
   }
 
@@ -840,7 +848,8 @@ public final class CallSession {
     bytesReceived = 0
     lastAudioAt = 0
     lastTextAt = 0
-    interruptedAt = 0
+    lastLarryRow = ""
+    cutOffPending = false
     lastRxAt = 0
     lastTxAt = 0
     audioProblem = nil

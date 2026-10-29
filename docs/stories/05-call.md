@@ -238,8 +238,8 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Scenario:** I cut in (#567)
 - **Given:** a call is live and Tony is answering
-- **When:** I talk over him, and the words of the reply I cut off arrive as text within two seconds, with no audio
-- **Then:** no banner shows and the call does not count as trouble; text that keeps coming later with no audio still raises it
+- **When:** I talk over him, and the bridge sends the words of the reply I cut off again as text, with no audio
+- **Then:** no banner shows, the call does not count as trouble, and the log has a `call_bridge` cut_off_resend line; a new reply after it that comes with no audio still raises the banner
 
 - **Issues:** [#105](https://github.com/idvorkin/context-grabber/issues/105), [#567](https://github.com/idvorkin/context-grabber/issues/567)
 

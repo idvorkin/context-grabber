@@ -28,6 +28,16 @@ final class CallWatchdogTests: XCTestCase {
     XCTAssertEqual(v(5000, 2, 2, 4000, 3, 4900), .stalled)
   }
 
+  // #567: the bridge's re-send of a cut-off reply, with or without its "…", and never a short or different text.
+  func testACutOffReplysRepeatIsRecognisedAndNothingElseIs() {
+    let said = "Let me look. Yes, it's wired in. PR eighty merged."
+    XCTAssertTrue(CallWatchdog.repeatsCutOff(said + "…", cutOff: said))
+    XCTAssertTrue(CallWatchdog.repeatsCutOff("Let me look. Yes, it's wired…", cutOff: said))
+    XCTAssertFalse(CallWatchdog.repeatsCutOff("Not from here, this call is read-only.", cutOff: said))
+    XCTAssertFalse(CallWatchdog.repeatsCutOff("Yes…", cutOff: "Yes, it is."))
+    XCTAssertFalse(CallWatchdog.repeatsCutOff(said, cutOff: ""))
+  }
+
   func testAudioIsAbsentOnlyWhileTextKeepsComingWithoutAudio() {
     XCTAssertFalse(CallWatchdog.audioAbsent(now: 10_000, lastTextAt: 0, lastAudioAt: 0))
     XCTAssertFalse(CallWatchdog.audioAbsent(now: 10_000, lastTextAt: 9_000, lastAudioAt: 8_000))

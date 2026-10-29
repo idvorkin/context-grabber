@@ -679,16 +679,19 @@ final class CallSessionCountersTests: XCTestCase {
     t.goLive(.direct)
     t.audio.mic()
     t.socket.say(["type": "mic_ack", "token": 1])
+    t.socket.say(["type": "transcript", "who": "larry", "text": "Let me look. Yes, it's wired in."])
+    t.socket.say(["type": "turn_end"])
+    t.socket.speak()
     t.clock.advance(10000)
     t.socket.say(["type": "interrupted"])
-    t.socket.say(["type": "transcript", "who": "larry", "text": "Let me look. Yes, it's wired in."])
+    t.socket.say(["type": "transcript", "who": "larry", "text": "Let me look. Yes, it's wired in…"])
     t.clock.advance(5000)
     XCTAssertNil(t.session.snapshot.problem)
+    XCTAssertTrue(t.events.contains { $0.0 == "call_bridge" && $0.1["kind"] as? String == "cut_off_resend" })
     XCTAssertFalse(
       t.events.contains { $0.0 == "call_problem" && ($0.1["problem"] as? String ?? "") != "" },
       "a barge-in is not call trouble")
-    t.clock.advance(1000)
-    t.socket.say(["type": "transcript", "who": "larry", "text": "Not from here."])
+    t.socket.say(["type": "transcript", "who": "larry", "text": "Not from here, this call is read-only."])
     t.clock.advance(5000)
     XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.audioNotArriving)
   }
