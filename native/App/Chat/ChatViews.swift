@@ -478,6 +478,8 @@ private struct ComposeBar: View {
       }
       MicPicker(voice: voice)
       BugInputLevelMeter(level: voice.inputLevel, accessibilityIdentifier: "chat-mic-level")
+        // Idle it is an empty track: VoiceOver skips it rather than read "0 percent" between the row and the bar.
+        .accessibilityHidden(!voice.listening)
       HStack(alignment: .bottom, spacing: 8) {
         Button(action: paste) {
           Image(systemName: "photo.on.rectangle").font(.title3)

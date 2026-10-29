@@ -88,6 +88,7 @@ final class ChatVoiceModel: ObservableObject {
   var microphoneName: String { dictation.selectedMicrophoneName }
   /// #531: the live level while recording, 0...1; observing it redraws only the meter.
   var inputLevel: DictationInputLevel { dictation.level }
+  var listening: Bool { dictation.listening }
   /// No pick while recording or while a call owns the session (listing inputs reconfigures it).
   var canPickMicrophone: Bool { !dictation.busy && !callLive }
 
