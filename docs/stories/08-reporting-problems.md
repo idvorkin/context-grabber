@@ -223,6 +223,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap *What's new*
 - **Then:** I see one section per day, newest first, each change once per story per day with its story and issue under it, no status or merge lines, and the log has `ui` open_whats_new; a change whose title names no story is still there when its message names the story or its issue belongs to one
 
+- **Scenario:** A report of mine fixed in this build (BugKit 0.3.11)
+- **Given:** I shook the phone to report a problem, and the build I just installed carries the commit that closed its issue
+- **When:** I open the app and then *What's new*
+- **Then:** the home row headlines that fix, and the change shows my report under it; the next build's home row no longer headlines it, and nothing about my reports leaves the phone
+
 - **Scenario:** A change opens its story
 - **Given:** What's new is open
 - **When:** I tap a change

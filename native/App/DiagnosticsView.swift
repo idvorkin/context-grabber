@@ -17,9 +17,11 @@ struct DiagnosticsView: View {
         if model.whatsNewOnHome {
           Section {
             // BugKit's row: its ✕ remembers the newest change and hides the row until a newer build.
-            WhatsNewRow(feed: model.whatsNew, logger: model.bugLogger) { model.openWhatsNew(from: "home") }
-              // Two buttons in one row: without this a tap anywhere fires both.
-              .buttonStyle(.borderless)
+            WhatsNewRow(feed: model.whatsNew, reports: model.bugReports, logger: model.bugLogger) {
+              model.openWhatsNew(from: "home")
+            }
+            // Two buttons in one row: without this a tap anywhere fires both.
+            .buttonStyle(.borderless)
           }
         }
         // Story 151 (#189): the mirror first, then the launchers as tiles.
@@ -129,7 +131,9 @@ struct DiagnosticsView: View {
             model.showWhatsNew = $0
             if !$0 { model.screen = "home" }
           })
-      ) { WhatsNewView(feed: model.whatsNew, logger: model.bugLogger, from: model.whatsNewFrom) }
+      ) {
+        WhatsNewView(feed: model.whatsNew, reports: model.bugReports, logger: model.bugLogger, from: model.whatsNewFrom)
+      }
       .sheet(
         isPresented: Binding(
           get: { model.showEulogySong },
@@ -485,7 +489,7 @@ private struct HomeSettingsView: View {
       .onReceive(model.archive.$lastRunEnded.dropFirst()) { _ in archiveLines = model.archive.statusLines() }
       .navigationDestination(isPresented: $showLinks) { LinksView(log: model.log) }
       .navigationDestination(isPresented: $showWhatsNew) {
-        WhatsNewView(feed: model.whatsNew, logger: model.bugLogger, from: "home_settings")
+        WhatsNewView(feed: model.whatsNew, reports: model.bugReports, logger: model.bugLogger, from: "home_settings")
       }
       .navigationTitle("Home screen")
       .navigationBarTitleDisplayMode(.inline)
