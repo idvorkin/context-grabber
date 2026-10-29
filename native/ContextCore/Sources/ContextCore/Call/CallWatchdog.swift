@@ -75,6 +75,18 @@ public enum CallWatchdog {
     return now - previousCheckAt >= outputStallMs ? .stalled : .ok
   }
 
+  /// #567: after Igor cuts in, the bridge sends the cut-off reply's words again as text (often ending "…") with their
+  /// audio dropped. That repeat is the interruption working, not a starved socket. Short texts never count as one.
+  public static func repeatsCutOff(_ text: String, cutOff: String) -> Bool {
+    let trim = { (s: String) in
+      s.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "….")))
+    }
+    let a = trim(text)
+    let b = trim(cutOff)
+    guard a.count >= 8, b.count >= 8 else { return false }
+    return a.hasPrefix(b) || b.hasPrefix(a)
+  }
+
   /// Tony is talking (text keeps arriving) but nothing has come down the audio channel for `audioAbsentMs`.
   /// 0 = never.
   public static func audioAbsent(now: Double, lastTextAt: Double, lastAudioAt: Double) -> Bool {

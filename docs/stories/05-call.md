@@ -834,3 +834,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Then:** the bridge is told Flux at the start, the status line ends *Direct · Flux*, the call's log names it, the pick survives a relaunch, Restart and the redial keep it, Default tells the bridge nothing so it decides, and the voice-model backends show no row and send nothing
 
 ---
+
+### User Story 219:
+
+- **Summary:** Cutting Tony off raises no "audio not arriving" banner
+- **Status:** implemented in [ee1a185](https://github.com/idvorkin/context-grabber/commit/ee1a185) and [f4a6e62](https://github.com/idvorkin/context-grabber/commit/f4a6e62); host-verified by `just native-test` (`CallSessionTests`, `CallDiagnosticsTests`); on the phone not yet
+- **Issues:** [#567](https://github.com/idvorkin/context-grabber/issues/567)
+- **Spec:** [Native call — Audio that stops](../superpowers/specs/2026-08-28-native-call-screen-design.md#audio-that-stops--either-direction)
+
+#### Use Case:
+- **As a** Larry's client who talks over Tony
+- **I want to** cut him off without the call crying wolf
+- **so that** the *audio not arriving* banner, and a trouble report, mean the sound really stopped
+
+#### Acceptance Criteria:
+- **Scenario:** I cut in while Tony is answering
+- **Given:** a call is live and Tony is answering
+- **When:** I talk over him, and the bridge sends the words of the reply I cut off again as text, with no audio
+- **Then:** no banner shows, the call does not count as trouble, and the log has a `call_bridge` cut_off_resend line
+
+---
