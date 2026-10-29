@@ -564,7 +564,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** My Inbox waits offline and sends itself when the network returns
 - **Status:** native app only: implemented in [7efc955](https://github.com/idvorkin/context-grabber/commit/7efc955); the retry on a path change after a failed send (Codex on #409) in [22c36ef](https://github.com/idvorkin/context-grabber/commit/22c36ef), and for a change that came while the failing send was out in [77d67d6](https://github.com/idvorkin/context-grabber/commit/77d67d6); a network that comes up on demand (an on-demand VPN) counts as available in [4be2267](https://github.com/idvorkin/context-grabber/commit/4be2267); verified by `InboxSendPolicyTests` and `InboxTests` with the full `just test` (host); the offline line and the send on the network's return on the phone not yet
-- **Issues:** [#406](https://github.com/idvorkin/context-grabber/issues/406)
+- **Issues:** [#406](https://github.com/idvorkin/context-grabber/issues/406), [#565](https://github.com/idvorkin/context-grabber/issues/565)
 - **Spec:** [Share into Grabber Native, and Larry's inbox — phase 2](../superpowers/specs/2026-10-17-native-share-inbox-design.md)
 
 #### Use Case:
@@ -577,6 +577,11 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** items wait in the Inbox after losing the network or failing to reach the Cockpit, each reads *Not sent yet* and the tile counts them; while the phone is offline the screen quietly says “No network — these go to Larry when you're back online” without attempting a send
 - **When:** the network returns while the app is running, including a tailnet reconnect after a failed send while Wi-Fi or cellular stayed available
 - **Then:** the offline line disappears if shown and waiting items send automatically without overlapping sends; a network that comes up on demand (an on-demand VPN) counts as available, so the send is tried and no offline line shows; after a failure (or during the send that then fails), a changed interface or metered/constrained access retries once after a burst settles for half a second, identical updates and an empty Inbox never retry; a failed send leaves its item waiting and counted, and the log records `inbox` offline_skipped, network_back and network_changed events as applicable
+
+- **Scenario:** The Cockpit is away while the app stays open (#565)
+- **Given:** the phone is online but the Cockpit is not answering, and a message waits after a send that did not get through
+- **When:** the app stays open
+- **Then:** the message is tried again on its own after 30 seconds, then a minute, two, four, and every five minutes after that, each wait logged as an `inbox` backoff line; the wait starts over after a send gets through, and the tries stop once nothing waits or the phone goes offline; a refused message is never tried again
 
 ---
 
@@ -786,7 +791,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** A message sent offline goes once when the network returns; a refused one says why
 - **Status:** native app only: implemented in [ff6e3b8](https://github.com/idvorkin/context-grabber/commit/ff6e3b8); verified by `ChatTests` (host: a refused upload refusing the message, an unreachable Cockpit stopping the run) and `InboxTests` (a failure kept for later, a deleted one never sent); never sent twice across a lost answer rests on the Cockpit's dedupe by id (cockpit#64, not merged) and is not verified on any rung; on the phone not yet
-- **Issues:** [#438](https://github.com/idvorkin/context-grabber/issues/438)
+- **Issues:** [#438](https://github.com/idvorkin/context-grabber/issues/438), [#565](https://github.com/idvorkin/context-grabber/issues/565)
 - **Spec:** [Chat with Larry in Grabber Native](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -799,6 +804,11 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** no network, or the Cockpit refuses the message (too big, an unreadable image)
 - **When:** I send
 - **Then:** offline it stays *Not sent yet* and goes by itself when the network returns, never twice even if an answer was lost; refused it says *Larry refused it* with the reason, copyable, and is never sent again; a long press deletes it
+
+- **Scenario:** The Cockpit isn't answering (#565)
+- **Given:** the phone is online but the Cockpit times out or cannot be reached
+- **When:** I open Chat or a thread, or a message I wrote tries to go
+- **Then:** the list and the thread say *The Cockpit isn't answering — your messages are kept and go when it does*, copyable, with the underlying reason; a waiting message reads *Not sent yet · the Cockpit isn't answering*; the *No network* line is only for the phone being offline, and a Cockpit that answers with an error keeps its plain reason
 
 ---
 

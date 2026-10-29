@@ -181,6 +181,34 @@ final class ChatTests: XCTestCase {
     XCTAssertEqual(paths, ["/attachments", "/attachments"], "a refused upload sends no message")
   }
 
+  // #565: a timeout or no connection is the Cockpit away; an error it answers with is not.
+  func testATimeoutIsTheCockpitAwayAndAServerErrorIsNot() async throws {
+    try store.add(InboxItem(id: "text-0001", kind: .text, sharedAt: 1, text: "waits"))
+    let away = InboxSender(store: store, cockpit: cockpit) { _ in throw URLError(.timedOut) }
+    var lines: [[String: Any]] = []
+    let report = await away.sendWaiting { lines.append($1) }
+    XCTAssertNotNil(report.retry)
+    XCTAssertTrue(report.unreachable)
+    XCTAssertEqual(lines.first?["unreachable"] as? Bool, true)
+    XCTAssertEqual(store.item("text-0001")?.status, .waiting)
+
+    let down = InboxSender(store: store, cockpit: cockpit) { Self.answer($0, 503, "down") }
+    let answered = await down.sendWaiting { _, _ in }
+    XCTAssertEqual(answered.retry, "HTTP 503")
+    XCTAssertFalse(answered.unreachable)
+  }
+
+  func testTheAwayLineKeepsTheReasonAndOtherFailuresKeepTheirOwn() {
+    XCTAssertTrue(CockpitReach.isAway(URLError(.cannotConnectToHost)))
+    XCTAssertFalse(CockpitReach.isAway(URLError(.badServerResponse)))
+    XCTAssertFalse(CockpitReach.isAway(CocoaError(.fileReadCorruptFile)))
+    let line = CockpitReach.problem(URLError(.timedOut), otherwise: "Could not read")
+    XCTAssertTrue(line.hasPrefix(CockpitReach.away), line)
+    XCTAssertTrue(line.contains(URLError(.timedOut).localizedDescription), line)
+    let other = CockpitReach.problem(URLError(.badServerResponse), otherwise: "Could not read")
+    XCTAssertTrue(other.hasPrefix("Could not read: "), other)
+  }
+
   func testAnItemSentBeforeChatIsAnEarlierShare() throws {
     try store.add(InboxItem(id: "old-00001", kind: .text, sharedAt: 1, text: "from October"))
     try store.markSent("old-00001", at: 2)

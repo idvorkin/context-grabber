@@ -15,6 +15,8 @@ public struct InboxSendPolicy: Sendable {
   private var expensive = false
   private var constrained = false
   private var failed = false
+  /// #565: steps up the backoff ladder since the last send that got through.
+  public private(set) var failedInARow = 0
   private var sendOut = false
   private var changedDuringSend = false
 
@@ -48,8 +50,11 @@ public struct InboxSendPolicy: Sendable {
   }
 
   /// A meaningful change seen while the failed send was out arms the same retry a later change would.
-  public mutating func finishedSend(retry: Bool, now: Double = 0) {
+  /// `scheduled`: the send was the backoff's own try. Only those (and the first failure) step the wait, so sends Igor
+  /// starts meanwhile do not stretch it (#565 review).
+  public mutating func finishedSend(retry: Bool, now: Double = 0, scheduled: Bool = false) {
     failed = retry
+    failedInARow = !retry ? 0 : (failedInARow == 0 || scheduled ? failedInARow + 1 : failedInARow)
     if !retry {
       retryAfter = nil
     } else if changedDuringSend && path == .online {
@@ -65,6 +70,13 @@ public struct InboxSendPolicy: Sendable {
     self.retryAfter = nil
     guard failed, path == .online else { return .wait }
     return decision(waitingCount: waitingCount, sending: sending)
+  }
+
+  /// #565: how long after a failed send to try again on its own: 30 s, doubling to 5 min; nil when the last send got
+  /// through or the phone is not online (the network's return sends instead).
+  public var backoffDelay: Double? {
+    guard failed, failedInARow > 0, path == .online else { return nil }
+    return min(30 * Double(1 << min(failedInARow - 1, 4)), 300)
   }
 
   public func decision(waitingCount: Int, sending: Bool) -> Decision {

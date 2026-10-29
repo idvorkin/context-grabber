@@ -44,8 +44,11 @@ struct ChatListView: View {
       if !chat.pendingThreads.isEmpty {
         Section("Not sent yet") {
           ForEach(chat.pendingThreads) { item in
-            PendingThreadRow(item: item, thumbnail: inbox.thumbnails[item.id], logger: logger)
-              .swipeActions { Button("Delete", role: .destructive) { inbox.delete(item) } }
+            PendingThreadRow(
+              item: item, thumbnail: inbox.thumbnails[item.id], away: inbox.cockpitAway && !inbox.offline,
+              logger: logger
+            )
+            .swipeActions { Button("Delete", role: .destructive) { inbox.delete(item) } }
           }
         }
       }
@@ -147,7 +150,10 @@ private struct ThreadRow: View {
 private struct PendingThreadRow: View {
   let item: InboxItem
   let thumbnail: CGImage?
+  /// #565: the last send found the Cockpit not answering.
+  let away: Bool
   let logger: BugLogger
+  private var notSent: String { away ? "Not sent yet · the Cockpit isn't answering" : "Not sent yet" }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 4) {
@@ -158,7 +164,7 @@ private struct PendingThreadRow: View {
         }
         VStack(alignment: .leading, spacing: 2) {
           Text(ChatSend.title(for: item)).lineLimit(2)
-          if item.status == .waiting { Text("Not sent yet").font(.caption).foregroundStyle(.orange) }
+          if item.status == .waiting { Text(notSent).font(.caption).foregroundStyle(.orange) }
         }
       }
       if let reason = item.refused {
@@ -242,10 +248,13 @@ struct ChatThreadView: View {
           // Their own ids: a message that reaches the Cockpit keeps its id, and a shared one in this LazyVStack
           // left the outbox bubble on screen after the Cockpit's had replaced it (seen on the simulator).
           ForEach(pending, id: \.pendingKey) { item in
-            PendingBubble(item: item, thumbnail: inbox.thumbnails[item.id], logger: logger)
-              .contextMenu {
-                Button("Delete", role: .destructive) { inbox.delete(item) }
-              }
+            PendingBubble(
+              item: item, thumbnail: inbox.thumbnails[item.id], away: inbox.cockpitAway && !inbox.offline,
+              logger: logger
+            )
+            .contextMenu {
+              Button("Delete", role: .destructive) { inbox.delete(item) }
+            }
           }
           Color.clear.frame(height: 1).id("bottom")
         }
@@ -322,6 +331,8 @@ private struct MessageBubble: View {
 private struct PendingBubble: View {
   let item: InboxItem
   let thumbnail: CGImage?
+  /// #565: the last send found the Cockpit not answering.
+  let away: Bool
   let logger: BugLogger
 
   var body: some View {
@@ -345,7 +356,8 @@ private struct PendingBubble: View {
               "Larry refused it: \(reason)", context: "ChatThreadView.send",
               extra: ["item": .string(item.id), "thread": .string(item.thread ?? "")]), logger: logger)
         } else {
-          Text("Not sent yet").font(.caption2).foregroundStyle(.orange)
+          Text(away ? "Not sent yet · the Cockpit isn't answering" : "Not sent yet").font(.caption2)
+            .foregroundStyle(.orange)
         }
       }
     }

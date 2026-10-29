@@ -86,6 +86,8 @@ public struct InboxSender: Sendable {
     public var sent: [String] = []
     public var refused: [String] = []
     public var retry: String?
+    /// #565: the retry was the Cockpit not answering (a timeout, no connection), not an error it answered with.
+    public var unreachable = false
   }
 
   /// `log` gets one line per item: the event's fields, never the content. Chat (spec 2026-10-25): an item is a
@@ -119,6 +121,7 @@ public struct InboxSender: Sendable {
         let (data, response) = try await transport(try ChatSend.uploadRequest(image: ready, cockpit: cockpit))
         upload = ChatSend.upload(status: (response as? HTTPURLResponse)?.statusCode, body: data)
       } catch {
+        if CockpitReach.isAway(error) { fields["unreachable"] = true }
         upload = ChatSend.upload(status: nil, body: nil, error: error.localizedDescription)
       }
       switch upload {
@@ -132,6 +135,7 @@ public struct InboxSender: Sendable {
       let (data, response) = try await transport(request)
       return ChatSend.outcome(status: (response as? HTTPURLResponse)?.statusCode, body: data)
     } catch {
+      if CockpitReach.isAway(error) { fields["unreachable"] = true }
       return ChatSend.outcome(status: nil, body: nil, error: error.localizedDescription)
     }
   }
@@ -153,6 +157,7 @@ public struct InboxSender: Sendable {
       case .retry(let reason):
         fields.merge(["action": "failed", "reason": reason]) { $1 }
         report.retry = reason
+        report.unreachable = fields["unreachable"] as? Bool == true
       }
     } catch {
       fields.merge(["action": "failed", "reason": "could not record the answer: \(error)"]) { $1 }
