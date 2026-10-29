@@ -673,6 +673,26 @@ final class CallSessionCountersTests: XCTestCase {
     XCTAssertNil(t.session.snapshot.problem)
   }
 
+  // #567: Igor cut in during a tool call; the cut-off reply's words came as text with no audio and flashed the banner.
+  func testTheCutOffReplysTextAfterAnInterruptionRaisesNoBannerButLaterTextStillDoes() {
+    let t = CallHarness()
+    t.goLive(.direct)
+    t.audio.mic()
+    t.socket.say(["type": "mic_ack", "token": 1])
+    t.clock.advance(10000)
+    t.socket.say(["type": "interrupted"])
+    t.socket.say(["type": "transcript", "who": "larry", "text": "Let me look. Yes, it's wired in."])
+    t.clock.advance(5000)
+    XCTAssertNil(t.session.snapshot.problem)
+    XCTAssertFalse(
+      t.events.contains { $0.0 == "call_problem" && ($0.1["problem"] as? String ?? "") != "" },
+      "a barge-in is not call trouble")
+    t.clock.advance(1000)
+    t.socket.say(["type": "transcript", "who": "larry", "text": "Not from here."])
+    t.clock.advance(5000)
+    XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.audioNotArriving)
+  }
+
   func testTheAudioLayersVerdictStandsAndLiftsWithoutTouchingABridgeError() {
     let t = CallHarness()
     t.goLive(.eleven)

@@ -185,6 +185,7 @@ public final class CallSession {
   private var bytesReceived = 0
   private var lastAudioAt = 0.0
   private var lastTextAt = 0.0
+  private var interruptedAt = 0.0
   /// #440, #439, story 209: the last frame of any kind each way, so a lost socket says how quiet the line was.
   private var lastRxAt = 0.0
   private var lastTxAt = 0.0
@@ -407,7 +408,9 @@ public final class CallSession {
         }
       } else if who == "larry" {
         // Larry answering means the vendor decided Igor's turn was over.
-        lastTextAt = deps.scheduler.now
+        if CallWatchdog.textArmsAudioAbsent(now: deps.scheduler.now, interruptedAt: interruptedAt) {
+          lastTextAt = deps.scheduler.now
+        }
         promoteIgor()
         clearSent()
         appendLarry(text)
@@ -424,6 +427,7 @@ public final class CallSession {
       }
     case .interrupted:
       log("call_bridge", ["kind": "interrupted"])
+      interruptedAt = deps.scheduler.now
       deps.audio.flush()
       closeLarryRow()
     case .turnEnd:
@@ -836,6 +840,7 @@ public final class CallSession {
     bytesReceived = 0
     lastAudioAt = 0
     lastTextAt = 0
+    interruptedAt = 0
     lastRxAt = 0
     lastTxAt = 0
     audioProblem = nil

@@ -236,7 +236,12 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** no audio has come down the socket for five seconds
 - **Then:** the screen says *Tony's audio is not arriving from the bridge*, the captions keep updating, and the banner clears the moment audio resumes
 
-- **Issues:** [#105](https://github.com/idvorkin/context-grabber/issues/105)
+- **Scenario:** I cut in (#567)
+- **Given:** a call is live and Tony is answering
+- **When:** I talk over him, and the words of the reply I cut off arrive as text within two seconds, with no audio
+- **Then:** no banner shows and the call does not count as trouble; text that keeps coming later with no audio still raises it
+
+- **Issues:** [#105](https://github.com/idvorkin/context-grabber/issues/105), [#567](https://github.com/idvorkin/context-grabber/issues/567)
 
 ---
 

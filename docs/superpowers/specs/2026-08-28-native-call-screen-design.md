@@ -362,7 +362,11 @@ can**:
   ([#105](https://github.com/idvorkin/context-grabber/issues/105): *"I
   don't hear you. Can I read what you're saying at least?"* — yes: the
   captions have always shown Tony's transcript as he speaks), and the
-  banner clears the moment audio resumes.
+  banner clears the moment audio resumes. When Igor cuts in, the words of
+  the reply he cut off still arrive as text with their audio dropped; that
+  is the interruption working, not a starved socket, so the text arriving
+  within two seconds of an interruption raises no banner
+  ([#567](https://github.com/idvorkin/context-grabber/issues/567)).
 
 ### A microphone that never delivers
 
