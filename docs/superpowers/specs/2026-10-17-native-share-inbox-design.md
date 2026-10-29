@@ -43,7 +43,8 @@ While the phone has no network, one quiet line says “No network — these go t
 
 **Phase 2: to Larry.** When the phone can reach the Cockpit, each item waiting goes to Larry's inbox there, oldest
 first, once each. A failure leaves it waiting, never marked sent or removed, and is retried the next time the app
-is opened or the network returns while the app is running. Larry sees the item, the note and when it was shared.
+is opened, the network returns while the app is running, or, while the app stays open, on its own after a wait
+(#565, see *When the Cockpit isn't answering* in the [chat spec](2026-10-25-native-chat-design.md)). Larry sees the item, the note and when it was shared.
 
 How it goes (the Cockpit's side shipped 2026-10-18, cockpit#63):
 
