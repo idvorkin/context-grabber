@@ -224,6 +224,8 @@ final class CallModel: ObservableObject {
     if snap.state == .connecting, was != .connecting { watchNetwork() }
     if snap.state == .ended, was != .ended {
       stopWatchingNetwork()
+      // #440: a handoff redial keeps the devices Igor picked and files no trouble report; its log still archives.
+      if snap.redialing { return archiveCallLog() }
       releaseDevices()
       onEnded()
     }
@@ -234,10 +236,14 @@ final class CallModel: ObservableObject {
   private func watchNetwork() {
     stopWatchingNetwork()
     let monitor = NWPathMonitor()
-    monitor.pathUpdateHandler = { [weak self] path in
+    monitor.pathUpdateHandler = { [weak self, weak monitor] path in
       let snapshot = Self.networkPath(path)
       DispatchQueue.main.async {
-        MainActor.assumeIsolated { self?.onPath(snapshot) }
+        MainActor.assumeIsolated {
+          // Fable on #440: a reading the cancelled monitor queued is not the new call's first.
+          guard let self, let monitor, self.pathMonitor === monitor else { return }
+          self.onPath(snapshot)
+        }
       }
     }
     pathMonitor = monitor
@@ -255,6 +261,8 @@ final class CallModel: ObservableObject {
     let first = lastPath == nil
     lastPath = path
     event("call_network", path.fields.merging(["action": first ? "start" : "change"]) { _, new in new })
+    // #440: a lost connection soon after redials, but only onto a network that is up: no network is not a handoff.
+    if !first, path.status == "satisfied" { session.networkChanged() }
   }
 
   private nonisolated static func networkPath(_ path: NWPath) -> CallNetworkPath {

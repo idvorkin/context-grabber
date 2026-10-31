@@ -278,6 +278,147 @@ final class CallSessionConnectingTests: XCTestCase {
   }
 }
 
+/// #440, #575, story 322: a connection lost in a network handoff redials once.
+final class CallSessionHandoffTests: XCTestCase {
+  private func redials(_ t: CallHarness) -> [[String: Any]] {
+    t.events.filter {
+      $0.0 == "call_heal" && $0.1["action"] as? String == "redial"
+        && $0.1["why"] as? String == "connection lost after a network change"
+    }.map(\.1)
+  }
+
+  func testALossSoonAfterANetworkChangeRedialsOnTheSameBackendAndVoice() {
+    let t = CallHarness()
+    t.goLive(.eleven, voice: .igor)
+    t.audio.mic()
+    t.socket.speak()
+    t.clock.advance(4000)
+    t.session.networkChanged()
+    t.clock.advance(200)
+    let second = t.nextSocket()
+    t.socket.drop()
+    XCTAssertEqual(redials(t).count, 1)
+    XCTAssertEqual(redials(t).first?["since_change_ms"] as? Double, 200)
+    XCTAssertEqual(t.connects.count, 2, "dialled again")
+    XCTAssertEqual(t.session.snapshot.state, .connecting)
+    second.open()
+    XCTAssertEqual(second.frames.first?["type"] as? String, "start")
+    XCTAssertEqual(second.frames.first?["backend"] as? String, "eleven")
+    XCTAssertEqual(t.session.snapshot.voice, .igor)
+  }
+
+  /// Fable on #440: the ended snapshot says it is redialing, and the redialed start frame keeps where Igor is.
+  func testTheRedialsEndingSaysSoAndItsStartKeepsTheLocation() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.setLocation(CallLocation(lat: 47.6, lon: -122.3, accuracyM: 9, at: "2026-10-31T16:00:00Z", place: "home"))
+    t.session.networkChanged()
+    let second = t.nextSocket()
+    t.socket.drop()
+    XCTAssertEqual(t.states.last { $0.state == .ended }?.redialing, true)
+    XCTAssertEqual(t.session.snapshot.redialing, false, "the redial's own snapshot is a fresh call")
+    second.open()
+    XCTAssertNotNil(second.frames.first?["location"])
+  }
+
+  /// Fable on #440: a redial whose connect throws ends the call; nothing dials in a loop.
+  func testARedialThatCannotConnectEndsTheCall() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.networkChanged()
+    t.connectError = URLError(.notConnectedToInternet)
+    t.socket.drop()
+    XCTAssertEqual(t.connects.count, 2)
+    XCTAssertEqual(t.session.snapshot.state, .ended)
+    XCTAssertEqual(t.session.snapshot.redialing, false)
+  }
+
+  /// Fable on #440: a call Igor places after a failed redial may redial on its own first handoff.
+  func testANewCallAfterAFailedRedialMayRedialAgain() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.networkChanged()
+    let second = t.nextSocket()
+    t.socket.drop()
+    second.drop()  // the redial lost before any audio: the call ends
+    XCTAssertEqual(t.session.snapshot.state, .ended)
+    let third = t.nextSocket()
+    t.session.start(.gemini, voice: .tony)
+    third.open()
+    third.say(["type": "ready", "out_rate": 24000, "backend": "gemini", "session": "s3"])
+    t.audio.mic()
+    t.session.networkChanged()
+    t.nextSocket()
+    third.drop()
+    XCTAssertEqual(redials(t).count, 2)
+  }
+
+  func testALossWithNoNetworkChangeNearbyEndsTheCall() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.networkChanged()
+    t.clock.advance(CallSession.handoffWindowMs + 1)
+    t.socket.drop()
+    XCTAssertEqual(redials(t).count, 0)
+    XCTAssertEqual(t.session.snapshot.state, .ended)
+    XCTAssertEqual(t.session.snapshot.endedReason, CallProtocol.connectionLost)
+  }
+
+  func testARedialLostAgainBeforeAnyAudioEndsTheCall() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.networkChanged()
+    let second = t.nextSocket()
+    t.socket.drop()
+    second.open()
+    second.say(["type": "ready", "out_rate": 24000, "backend": "gemini", "session": "s2"])
+    t.session.networkChanged()
+    second.drop()
+    XCTAssertEqual(redials(t).count, 1, "one redial until a call carries audio")
+    XCTAssertEqual(t.session.snapshot.state, .ended)
+  }
+
+  func testACallThatCarriedAudioMayRedialOnTheNextHandoff() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.networkChanged()
+    let second = t.nextSocket()
+    t.socket.drop()
+    second.open()
+    second.say(["type": "ready", "out_rate": 24000, "backend": "gemini", "session": "s2"])
+    second.speak()
+    t.audio.mic()
+    t.clock.advance(60_000)
+    t.session.networkChanged()
+    let third = t.nextSocket()
+    second.drop()
+    XCTAssertEqual(redials(t).count, 2)
+    XCTAssertEqual(t.connects.count, 3)
+    XCTAssertNotNil(third.onOpen)
+  }
+
+  func testAChangeBeforeThisCallStartedDoesNotCount() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.session.networkChanged()
+    t.session.stop()
+    let second = t.nextSocket()
+    t.session.start(.gemini, voice: .tony)
+    second.open()
+    second.say(["type": "ready", "out_rate": 24000, "backend": "gemini", "session": "s2"])
+    second.drop()
+    XCTAssertEqual(redials(t).count, 0)
+    XCTAssertEqual(t.session.snapshot.state, .ended)
+  }
+}
+
 final class CallSessionMicTests: XCTestCase {
   func testReadyGoesLivePlaybackAtTheNamedRateSttStartThenTheMic() {
     let t = CallHarness()

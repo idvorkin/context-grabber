@@ -573,8 +573,19 @@ screen's, and they do not care which client is connected.
   Igor returns. Phase 2 (CallKit) makes the phone-call case graceful; phase
   1 only promises "resume if the bridge is still there".
 - **Losing the network** (walking out of Wi-Fi with no cell coverage, the
-  tailnet dropping): the call ends with a *connection lost* reason. Phase 1
-  does not reconnect; a fresh tap starts a fresh call.
+  tailnet dropping): the call ends with a *connection lost* reason; a fresh
+  tap starts a fresh call.
+- **A handoff between networks redials** ([#440](https://github.com/idvorkin/context-grabber/issues/440),
+  [#575](https://github.com/idvorkin/context-grabber/issues/575); Igor, 2026-10-31). When the phone moves the
+  call from cellular to Wi-Fi or back (arriving home, the car finding a hotspot), the connection to the bridge
+  dies with it: on 2026-10-29 the socket was lost 0.2 s after the call moved onto Wi-Fi. A connection lost
+  within ten seconds of the phone moving onto a network that is up redials on its own, once, on the same backend
+  in the same voice, on the microphone and output Igor picked: *Calling Larry…* briefly, then *live*. Larry
+  starts a fresh session (his greeting again); the ended call's captions give way to the new one's, Diagnostics
+  keep both, and a redial that gets through files no trouble report. Losing every network is not a handoff and
+  ends the call. If the redial itself fails, or the
+  connection is lost again before Larry's audio has come through on it, the call ends *connection lost* as
+  before. A loss with no network change nearby is not a handoff and ends the call.
 - **A lost connection says why** ([#440](https://github.com/idvorkin/context-grabber/issues/440),
   [#439](https://github.com/idvorkin/context-grabber/issues/439)). Two calls from home in October ended
   *connection lost* seconds in; the phone saw the network connection drop and the bridge saw the phone vanish,
