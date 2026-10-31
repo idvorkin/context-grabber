@@ -62,6 +62,13 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   /// of how his frames arrived and were queued, logged as `call_playback`.
   private var rxStream = PCM16Stream()
   private var window = PlaybackWindow()
+  /// #578: a copy of what is scheduled, so a heal's rebuild can play what the old player had not reached.
+  private var tail = PlaybackTail(rate: 16000)
+  /// The player's last running time: a stopped engine reads 0, and a rebuild after an OS stop must not replay what
+  /// was heard (Fable on #578).
+  private var heardPlayerS = 0.0
+  /// A failed rebuild is waiting to be tried again: Larry's frames go to the tail, not the floor (Fable on #578).
+  private var rebuildRetryPending = false
 
   /// The output, read from main for the stats line: guarded by `lock`.
   private let lock = NSLock()
@@ -128,6 +135,8 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       self.outRate = outRate
       rxStream = PCM16Stream()
       window = PlaybackWindow()
+      tail = PlaybackTail(rate: outRate)
+      heardPlayerS = 0
       do {
         try connectPlayer()
         try startEngine(why: "playback")
@@ -174,7 +183,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   }
 
   /// A heal: the whole graph down and up again — the second call is the one that always worked (#88) — with the
-  /// session re-asserted. Larry's queued audio is lost (a short gap); the next frames play.
+  /// session re-asserted. Larry's unheard audio plays on the new graph after a short gap (#578).
   func restartMic(_ done: @escaping (Error?) -> Void) {
     queue.async { [self] in
       log("call_audio", ["action": "restart", "why": "heal"])
@@ -191,6 +200,17 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
   func play(_ pcm: Data) {
     queue.async { [self] in
       guard let player, let format = playerFormat, let engine, engine.isRunning else {
+        if rebuildRetryPending {
+          // #578: the retry's new player plays it after what the old one had not reached.
+          let samples = rxStream.decode(pcm)
+          let duration = Double(samples.count) / outRate
+          tail.append(samples, at: tail.durationS)
+          lock.withLock {
+            scheduledS += duration
+            playhead += duration
+          }
+          return
+        }
         // Nowhere to put it: the frame is lost, but its bytes still say where the next sample starts (#442).
         rxStream.skip(pcm)
         window.dropped()
@@ -208,16 +228,9 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       }
       for x in samples { rxPeak = max(rxPeak, abs(x)) }
       if rxPeak > 0.01, firstLoudRxAt == nil { firstLoudRxAt = nowMs }
-      guard !samples.isEmpty,
-        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count))
-      else { return }
-      buffer.frameLength = AVAudioFrameCount(samples.count)
-      samples.withUnsafeBufferPointer { src in
-        // An empty chunk has no base address; a float buffer always has channel data.
-        guard let channels = buffer.floatChannelData, let base = src.baseAddress else { return }
-        channels[0].update(from: base, count: samples.count)
-      }
-      player.scheduleBuffer(buffer, completionHandler: nil)
+      guard schedule(samples, on: player, format: format) else { return }
+      tail.prune(before: now)
+      tail.append(samples, at: max(head, now))
       let duration = Double(samples.count) / outRate
       lock.withLock {
         scheduledS += duration
@@ -228,11 +241,28 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     }
   }
 
+  /// One buffer of Larry's samples onto the player; false when there is nothing to schedule.
+  private func schedule(_ samples: [Float], on player: AVAudioPlayerNode, format: AVAudioFormat) -> Bool {
+    guard !samples.isEmpty,
+      let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(samples.count))
+    else { return false }
+    buffer.frameLength = AVAudioFrameCount(samples.count)
+    samples.withUnsafeBufferPointer { src in
+      // An empty chunk has no base address; a float buffer always has channel data.
+      guard let channels = buffer.floatChannelData, let base = src.baseAddress else { return }
+      channels[0].update(from: base, count: samples.count)
+    }
+    player.scheduleBuffer(buffer, completionHandler: nil)
+    return true
+  }
+
   /// Barge-in: everything of Larry's not yet heard goes. The player's clock restarts from zero.
   func flush() {
     queue.async { [self] in
       // #442: what follows is a new stream, even when a failed rebuild left no player to stop.
       rxStream.reset()
+      tail.reset()
+      heardPlayerS = 0
       guard let player else { return }
       let now = currentPlayerTime()
       player.stop()
@@ -457,6 +487,20 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     // The stream's alignment stays (#442): a rebuild is local, and the bridge's bytes carry on where they were.
     lastScheduledAt = 0
     micStallRearm = false
+    if wasPlaying {
+      // #578: how far the old player got, read before it goes (the watchdog's last reading when its clock is gone),
+      // and the tail cut there: what plays again on the new graph starts at its zero.
+      let heardTo = max(currentPlayerTime(), heardPlayerS)
+      tail.rebase(at: heardTo)
+      heardPlayerS = 0
+      let keepS = tail.durationS
+      lock.withLock {
+        // What the old player held beyond what plays again is what the rebuild lost.
+        scheduledS -= max(0, playhead - heardTo - keepS)
+        playhead = keepS
+        playerTimeS = 0
+      }
+    }
     teardownEngineOnly()
     try configureSession()
     try buildEngine()
@@ -464,10 +508,10 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       try connectPlayer()
       try startEngine(why: why)
       player?.play()
-      lock.withLock {
-        scheduledS -= max(0, playhead - playerTimeS)
-        playhead = 0
-        playerTimeS = 0
+      let keep = tail.unplayed(at: 0)
+      if let player, let format = playerFormat, schedule(keep, on: player, format: format) {
+        lastScheduledAt = nowMs
+        log("call_audio", ["action": "requeue", "why": why, "kept_s": (tail.durationS * 100).rounded() / 100])
       }
       clockPrev = 0
       clockAdvancedAt = nowMs
@@ -485,6 +529,7 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     let listening = listening ?? (micListener != nil)
     do {
       try rebuild(why: why, playing: playing, listening: listening)
+      rebuildRetryPending = false
       if attempt > 0 { log("call_heal", ["action": "rebuild", "why": why, "ok": true, "attempt": attempt + 1]) }
     } catch {
       let retries = CallWatchdog.rebuildRetryMs
@@ -494,7 +539,11 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
           "action": "rebuild", "why": why, "ok": false, "attempt": attempt + 1, "message": describe(error),
           "retry_in_ms": attempt < retries.count ? retries[attempt] : -1,
         ])
-      guard attempt < retries.count else { return setHealth(CallWatchdog.audioGone) }
+      guard attempt < retries.count else {
+        rebuildRetryPending = false
+        return setHealth(CallWatchdog.audioGone)
+      }
+      rebuildRetryPending = true
       queue.asyncAfter(deadline: .now() + retries[attempt] / 1000) { [weak self] in
         guard let self else { return }
         // The call ended or restarted, or a newer heal took over: this retry is not this call's any more.
@@ -530,6 +579,10 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     let now = nowMs
     let t = currentPlayerTime()
     lock.withLock { playerTimeS = t }
+    if t > 0 {
+      heardPlayerS = t
+      tail.prune(before: t)  // an idle tail empties as the player drains
+    }
     // The clock: polled every 50 ms until it runs; the greeting waits on it (#95).
     if playerFormat != nil, !clockLive {
       if t > 0 {
@@ -705,6 +758,9 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       return
     }
     paused = false
+    // Fable on #578: a pause, not a heal; what was queued before a phone call is stale after it.
+    tail.reset()
+    heardPlayerS = 0
     do {
       try rebuild(why: "interruption ended")
       log("call_audio", ["action": "resumed", "ok": true])
@@ -752,6 +808,9 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     observers = []
     paused = false
     clockLive = false
+    tail.reset()
+    heardPlayerS = 0
+    rebuildRetryPending = false
     lock.withLock {
       playbackOpen = false
       scheduledS = 0
