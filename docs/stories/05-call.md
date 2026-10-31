@@ -205,7 +205,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 089:
 
 - **Summary:** Tony's greeting is heard in full, every call
-- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d), [9c50345](https://github.com/idvorkin/context-grabber/commit/9c50345); verified by `callSession.test.ts` and on the phone; native app: [d782599](https://github.com/idvorkin/context-grabber/commit/d782599) (`clock_running` with after_ms before the first frame; reopened once after 2 s); verified by `just native-test-sim` (real audio: the clock ran and the bridge's second of PCM was scheduled); the phone still to be checked by Igor; a reopen keeps the unheard greeting (#578): COMMIT578, verified by `just test` (host: `PlaybackTailTests`); the phone in the next build turn
+- **Status:** implemented in [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d), [9c50345](https://github.com/idvorkin/context-grabber/commit/9c50345); verified by `callSession.test.ts` and on the phone; native app: [d782599](https://github.com/idvorkin/context-grabber/commit/d782599) (`clock_running` with after_ms before the first frame; reopened once after 2 s); verified by `just native-test-sim` (real audio: the clock ran and the bridge's second of PCM was scheduled); the phone still to be checked by Igor; a reopen keeps the unheard greeting (#578): [dc197a1](https://github.com/idvorkin/context-grabber/commit/dc197a1), verified by `just test` (host: `PlaybackTailTests`); the phone in the next build turn
 
 #### Use Case:
 - **As a** Larry's client answering on speaker
