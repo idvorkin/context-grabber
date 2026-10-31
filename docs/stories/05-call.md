@@ -260,6 +260,66 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 322:
+
+- **Summary:** A call that loses its connection in a network handoff redials on its own
+- **Status:** native app only: [8984bad](https://github.com/idvorkin/context-grabber/commit/8984bad), verified by `just test` (host: `CallSessionHandoffTests`); the phone in the next build turn
+- **Issues:** [#440](https://github.com/idvorkin/context-grabber/issues/440), [#575](https://github.com/idvorkin/context-grabber/issues/575) (2026-10-29, the car: the socket died 0.2 s after the phone moved the call from cellular onto Wi-Fi)
+- **Spec:** [Native call — interruptions](../superpowers/specs/2026-08-28-native-call-screen-design.md#interruptions)
+
+#### Use Case:
+- **As a** Larry's client who walks into Wi-Fi, or drives out of it, mid-call
+- **I want to** have the call reconnect by itself when the phone switches networks
+- **so that** arriving home or the car finding Wi-Fi doesn't end my conversation
+
+#### Acceptance Criteria:
+- **Scenario:** The phone hands the call from cellular to Wi-Fi
+- **Given:** a live call
+- **When:** the phone's network changes and the connection to the bridge is lost within ten seconds
+- **Then:** the call redials once on the same backend in the same voice — *Calling Larry…* briefly, then *live* with Larry greeting me — without a tap, and Diagnostics say it redialed after a network change
+
+---
+
+### User Story 323:
+
+- **Summary:** A connection lost with no network change still ends the call
+- **Status:** native app only: [8984bad](https://github.com/idvorkin/context-grabber/commit/8984bad), verified by `just test` (host: `CallSessionHandoffTests`); the phone in the next build turn
+- **Issues:** [#440](https://github.com/idvorkin/context-grabber/issues/440)
+- **Spec:** [Native call — interruptions](../superpowers/specs/2026-08-28-native-call-screen-design.md#interruptions)
+
+#### Use Case:
+- **As a** Larry's client on a live call
+- **I want to** see the call end *connection lost* when the bridge goes away and my network has not changed
+- **so that** the app only redials for a handoff and never hides a real outage behind a retry
+
+#### Acceptance Criteria:
+- **Scenario:** The connection drops with no handoff
+- **Given:** a live call whose network has not changed in the last ten seconds
+- **When:** the connection to the bridge is lost
+- **Then:** the call ends *connection lost*, as before
+
+---
+
+### User Story 324:
+
+- **Summary:** A handoff redial that cannot get through ends the call instead of looping
+- **Status:** native app only: [8984bad](https://github.com/idvorkin/context-grabber/commit/8984bad), verified by `just test` (host: `CallSessionHandoffTests`); the phone in the next build turn
+- **Issues:** [#440](https://github.com/idvorkin/context-grabber/issues/440)
+- **Spec:** [Native call — interruptions](../superpowers/specs/2026-08-28-native-call-screen-design.md#interruptions)
+
+#### Use Case:
+- **As a** Larry's client whose phone has moved onto a network that cannot carry a call
+- **I want to** have the call end after its one redial fails
+- **so that** the app does not dial Larry over and over on a network that will not hold
+
+#### Acceptance Criteria:
+- **Scenario:** The redial cannot get through either
+- **Given:** a call that just redialed after a handoff
+- **When:** its connection is lost before any of Larry's audio arrives
+- **Then:** the call ends *connection lost* and does not redial again
+
+---
+
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead

@@ -51,6 +51,8 @@ public struct CallSnapshot: Equatable, Sendable {
   public var endedReason: String?
   /// True when the ending was a failure rather than a hang-up.
   public var endedBadly = false
+  /// #440: this ending is a handoff's, and the call is dialling again at once: not a call that ended.
+  public var redialing = false
   public var captions: [CaptionRow] = []
   public var muted = false
   /// A problem that did not end the call — the mic not reaching Larry, a bridge error.
@@ -157,6 +159,8 @@ public final class CallSession {
   /// Mic buffers that are exactly zero before the mic is re-armed. A dead capture graph is zero to the sample; a
   /// quiet room never is (#88). Ten buffers ≈ one second.
   public static let zeroBuffersBeforeRearm = 10
+  /// #440, story 322: a connection lost this soon after the phone's network changed is a handoff, and redials.
+  public static let handoffWindowMs = 10_000.0
   /// #577: Larry's audio still this far ahead of the speaker holds a zero-run rearm on a mic that was live.
   public static let rearmHoldQueuedS = 0.3
   public static let micSilent = "the microphone is delivering silence"
@@ -211,6 +215,13 @@ public final class CallSession {
   private var audioReset = false
   /// One automatic redial per dead burst; cleared by a call whose mic delivers.
   private var redialed = false
+  /// #440: when the phone's network last changed under this call (0: not since it started).
+  private var networkChangedAt = 0.0
+  /// One handoff redial until a call's audio comes through, so a network that cannot carry a call is not dialled
+  /// in a loop; kept across the redial's own start.
+  private var handoffRedialed = false
+  /// The session's own redial is calling `start`; a start from anywhere else is a new call (Fable on #440).
+  private var redialStart = false
   /// #441, story 208: the line a mic that failed to open put up, cleared by its first buffer.
   private var micOpenProblem: String?
   private var micBuffers = 0
@@ -248,6 +259,8 @@ public final class CallSession {
       log("call_ignored", ["action": "start", "backend": backend.rawValue, "state": snapshot.state.rawValue])
       return
     }
+    if !redialStart { handoffRedialed = false }  // a call Igor placed may redial on its first handoff
+    redialStart = false
     resetForCall(backend: backend, voice: voice, stt: stt)
     let fields = deps.callSettings().fields(for: backend, voice: voice)
     let sttField = stt.frameField(for: backend)
@@ -335,6 +348,12 @@ public final class CallSession {
     send(CallProtocol.locationFrame(location), frame: "location", ["location": location.description])
   }
 
+  /// #440: the phone's network changed under the call (not its first reading).
+  public func networkChanged() {
+    guard snapshot.isActive else { return }
+    networkChangedAt = deps.scheduler.now
+  }
+
   /// Forgets the last fix, so a new call carries only a fix given for it.
   public func clearLocation() { location = nil }
 
@@ -363,7 +382,10 @@ public final class CallSession {
     framesReceived += 1
     bytesReceived += data.count
     lastAudioAt = deps.scheduler.now
-    if framesReceived == 1 { log("call_rx", ["action": "first_audio", "bytes": data.count]) }
+    if framesReceived == 1 {
+      log("call_rx", ["action": "first_audio", "bytes": data.count])
+      handoffRedialed = false  // this call carried audio; the next handoff may redial again
+    }
     if snapshot.problem == CallWatchdog.audioNotArriving { setProblem(nil) }
   }
 
@@ -377,6 +399,25 @@ public final class CallSession {
         "action": "lost", "message": why, "since_rx_ms": since(lastRxAt), "since_tx_ms": since(lastTxAt),
         "live_ms": since(snapshot.startedAt ?? 0),
       ])
+    // #440, #575: the phone moving the call between cellular and Wi-Fi takes the socket with it (0.2 s after the
+    // path moved, 2026-10-29). Lost that soon after a change, the call dials again on its own, once.
+    if !handoffRedialed, networkChangedAt > 0, now - networkChangedAt <= Self.handoffWindowMs,
+      let backend = snapshot.backend
+    {
+      handoffRedialed = true
+      let voice = snapshot.voice
+      let stt = snapshot.stt
+      log(
+        "call_heal",
+        [
+          "action": "redial", "why": "connection lost after a network change",
+          "since_change_ms": since(networkChangedAt),
+        ])
+      finish(CallProtocol.connectionLost, badly: true, redialing: true)
+      redialStart = true
+      start(backend, voice: voice, stt: stt)
+      return
+    }
     finish(CallProtocol.connectionLost, badly: true)
   }
 
@@ -594,6 +635,7 @@ public final class CallSession {
         ])
       sendDiagnostics(why: "redial")
       stop()
+      redialStart = true
       start(backend, voice: voice, stt: stt)
       return
     }
@@ -884,6 +926,7 @@ public final class CallSession {
     zeroRearmed = false
     micHeard = false
     rearmHeld = false
+    networkChangedAt = 0
     awaitingSoundAfterRearm = false
     micBuffers = 0
     audioReset = false
@@ -892,7 +935,7 @@ public final class CallSession {
     firstFrameTimer = nil
   }
 
-  private func finish(_ reason: String, badly: Bool) {
+  private func finish(_ reason: String, badly: Bool, redialing: Bool = false) {
     guard snapshot.isActive else { return }
     closeLarryRow()
     promoteIgor()
@@ -925,6 +968,7 @@ public final class CallSession {
       $0.state = .ended
       $0.endedReason = reason
       $0.endedBadly = badly
+      $0.redialing = redialing
     }
     deps.audio.stop()
     onLevel?(0)
