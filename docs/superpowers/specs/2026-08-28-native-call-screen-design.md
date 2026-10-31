@@ -333,7 +333,8 @@ can**:
 - **A speaker whose clock stops** — Larry's audio is queued and due, and
   the output clock has not moved for a second — is reopened, and the
   screen says *Tony's audio is arriving but not playing* until it moves
-  again. What was queued is lost (a short gap); the next frames play.
+  again. What was queued and not yet heard plays on the reopened speaker
+  (a short gap, nothing skipped); the next frames follow it.
 - **A speaker that plays silence** — Larry's audio has been in hand for at
   least a second and a half and everything the speaker rendered was silent
   — is reopened the same way. Audio that only just landed does not count:
@@ -355,6 +356,15 @@ can**:
   microphone reset that can fire in the same breath: what was held rides
   through the reset and plays on the speaker that comes back (the phone's
   log of 2026-09-05 showed a greeting lost exactly there).
+- **No heal skips Larry's words** ([#578](https://github.com/idvorkin/context-grabber/issues/578)). Every
+  reopen of the call's audio — the speaker that never started, the speaker that stalled, the microphone reset,
+  and a reopen that failed and is being tried again — keeps whatever of Larry's audio the speaker had not yet
+  reached, plus what arrives while it is down, and plays it from where it stopped once the speaker is back. (A
+  speaker that played silence had already run past the words it swallowed; those are not replayed.) Only a
+  barge-in throws his queued words away, and a phone call that interrupts ours leaves nothing stale to play
+  after it. (2026-10-30, on AirPods: the
+  speaker had not started after two seconds, the reopen threw Tony's whole greeting away, and the call opened
+  in silence.)
 - **Audio that is not arriving at all** — Tony's words keep arriving as
   text, but no audio has come down the socket for five seconds — is not
   the phone's to heal. The screen says *Tony's audio is not arriving from
@@ -434,7 +444,7 @@ started the audio engine; on every later call it was already on before.
 Now it is switched on the moment the call's audio session is configured,
 before anything starts. And if the mic nonetheless delivers a second of
 exact zeros, the call's audio is torn down and brought back up the way a
-second call would (a short gap in Larry's voice), with a line in
+second call would (a short gap in Larry's voice, then his words carry on from where they stopped), with a line in
 Diagnostics saying so. Only if it is still silent after that does the
 screen say *the microphone is delivering silence*.
 
