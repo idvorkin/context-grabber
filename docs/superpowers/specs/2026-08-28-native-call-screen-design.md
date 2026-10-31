@@ -448,6 +448,17 @@ second call would (a short gap in Larry's voice, then his words carry on from wh
 Diagnostics saying so. Only if it is still silent after that does the
 screen say *the microphone is delivering silence*.
 
+A mic that has already carried Igor's voice and goes to exact zeros while
+Larry is speaking is not reset until Larry's queued words have played
+([#577](https://github.com/idvorkin/context-grabber/issues/577)): on the car's
+Bluetooth the mic gives runs of exact zeros while the car plays Larry, the
+reset did not stop them, and it threw away 13.7 s of his reply (with his
+unheard words now kept across a reset, it would still cost a two-second gap
+mid-sentence). The wait applies only while his audio is actually playing. If
+the zeros are still there once he has finished, the reset happens then. The
+accepted cost: a mic that truly died during a long reply is reset, and if
+need be reported, a few seconds after the reply ends rather than during it.
+
 **The bridge knows it is the app.** The call introduces itself —
 `client: context-grabber` and the build — so the bridge's records can tell
 an app call from a browser call ([#78](https://github.com/idvorkin/context-grabber/issues/78),
