@@ -263,7 +263,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 322:
 
 - **Summary:** A call that loses its connection in a network handoff redials on its own
-- **Status:** native app only: COMMIT440, verified by `just test` (host: `CallSessionHandoffTests`); the phone in the next build turn
+- **Status:** native app only: [8984bad](https://github.com/idvorkin/context-grabber/commit/8984bad), verified by `just test` (host: `CallSessionHandoffTests`); the phone in the next build turn
 - **Issues:** [#440](https://github.com/idvorkin/context-grabber/issues/440), [#575](https://github.com/idvorkin/context-grabber/issues/575) (2026-10-29, the car: the socket died 0.2 s after the phone moved the call from cellular onto Wi-Fi)
 - **Spec:** [Native call — interruptions](../superpowers/specs/2026-08-28-native-call-screen-design.md#interruptions)
 
