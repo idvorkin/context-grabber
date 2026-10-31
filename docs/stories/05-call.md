@@ -240,6 +240,26 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 321:
+
+- **Summary:** A car mic that gives zeros while Larry speaks does not cut his reply
+- **Status:** native app only: [30c692a](https://github.com/idvorkin/context-grabber/commit/30c692a); verified by `just test` (host: `CallSessionZerosTests`); the phone in the next build turn
+- **Issues:** [#577](https://github.com/idvorkin/context-grabber/issues/577) (2026-10-29, the car: the zero-run reset fired mid-reply and cut 13.7 s of Larry)
+- **Spec:** [Native call — Audio that stops](../superpowers/specs/2026-08-28-native-call-screen-design.md#audio-that-stops--either-direction)
+
+#### Use Case:
+- **As a** Larry's client on a call in the car over Bluetooth
+- **I want to** hear Larry's whole reply even when the car's mic goes to zeros while he speaks
+- **so that** a mic quirk the reset cannot fix never costs me his words or raises a false alarm
+
+#### Acceptance Criteria:
+- **Scenario:** The car's mic gives zeros while Larry speaks
+- **Given:** a live call on the car's Bluetooth whose mic has already carried my voice
+- **When:** the mic gives a second of exact zeros while Larry's reply is still playing
+- **Then:** his reply plays to the end without a gap or a silence warning, and only if the zeros are still there once it has finished is the call's audio reset, or if it already was, the silence said
+
+---
+
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead

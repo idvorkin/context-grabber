@@ -157,6 +157,8 @@ public final class CallSession {
   /// Mic buffers that are exactly zero before the mic is re-armed. A dead capture graph is zero to the sample; a
   /// quiet room never is (#88). Ten buffers ≈ one second.
   public static let zeroBuffersBeforeRearm = 10
+  /// #577: Larry's audio still this far ahead of the speaker holds a zero-run rearm on a mic that was live.
+  public static let rearmHoldQueuedS = 0.3
   public static let micSilent = "the microphone is delivering silence"
   public static let micNotReaching = "the microphone is not reaching Larry"
   /// Ordinary startup watch (#88); Bluetooth and a zero input rate get longer (#423).
@@ -198,6 +200,8 @@ public final class CallSession {
   private var zeroRearmed = false
   /// #364: whether any mic buffer this call carried sound, so a zero-run heal says if the mic was ever live.
   private var micHeard = false
+  /// #577: a zero-run rearm is waiting for Larry's queued words to play; logged once per wait.
+  private var rearmHeld = false
   /// A zero-run rearm's restart has finished and waits for its first sound, for `audio_back` whether or not the mic
   /// was live before.
   private var awaitingSoundAfterRearm = false
@@ -645,12 +649,31 @@ public final class CallSession {
       }
       awaitingSoundAfterRearm = false
       micHeard = true
+      rearmHeld = false
       zeroRun = 0
       if snapshot.problem == Self.micSilent { setProblem(nil) }
       return
     }
     zeroRun += 1
-    guard zeroRun == Self.zeroBuffersBeforeRearm else { return }
+    guard zeroRun >= Self.zeroBuffersBeforeRearm else { return }
+    // #577: the car's Bluetooth mic gives runs of exact zeros while it plays Larry, and the restart neither stopped
+    // them nor spared his reply. A mic that was live waits for his queued words to play, before the reset and before
+    // the silence report; first-call zeros (#88), a mic never heard, do not.
+    if micHeard, let stats = deps.audio.stats(), stats.clockRunning,
+      stats.scheduledS - stats.playedS > Self.rearmHoldQueuedS
+    {
+      if !rearmHeld {
+        rearmHeld = true
+        log(
+          "call_mic",
+          [
+            "action": zeroRearmed ? "silence_held" : "rearm_held", "why": "Larry's audio is still queued",
+            "buffers": micBuffers,
+          ].merging(playbackFields()) { mine, _ in mine })
+      }
+      return
+    }
+    rearmHeld = false
     if !zeroRearmed {
       zeroRearmed = true
       zeroRun = 0
@@ -677,6 +700,7 @@ public final class CallSession {
       }
       return
     }
+    guard snapshot.problem != Self.micSilent else { return }
     log("call_mic", ["action": "zeros", "why": "still exact zeros after the re-arm"])
     setProblem(Self.micSilent)
   }
@@ -859,6 +883,7 @@ public final class CallSession {
     zeroRun = 0
     zeroRearmed = false
     micHeard = false
+    rearmHeld = false
     awaitingSoundAfterRearm = false
     micBuffers = 0
     audioReset = false
