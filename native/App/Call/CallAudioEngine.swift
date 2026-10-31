@@ -760,7 +760,6 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
     paused = false
     // Fable on #578: a pause, not a heal; what was queued before a phone call is stale after it.
     tail.reset()
-    heardPlayerS = 0
     do {
       try rebuild(why: "interruption ended")
       log("call_audio", ["action": "resumed", "ok": true])
