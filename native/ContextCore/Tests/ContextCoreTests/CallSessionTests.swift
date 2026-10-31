@@ -278,7 +278,7 @@ final class CallSessionConnectingTests: XCTestCase {
   }
 }
 
-/// #440, #575, story 322: a connection lost in a network handoff redials once.
+/// #440, #575, stories 322–324: a connection lost in a network handoff redials once.
 final class CallSessionHandoffTests: XCTestCase {
   private func redials(_ t: CallHarness) -> [[String: Any]] {
     t.events.filter {
