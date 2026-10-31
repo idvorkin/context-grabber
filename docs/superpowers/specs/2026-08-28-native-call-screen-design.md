@@ -455,7 +455,9 @@ Bluetooth the mic gives runs of exact zeros while the car plays Larry, the
 reset did not stop them, and it threw away 13.7 s of his reply (with his
 unheard words now kept across a reset, it would still cost a two-second gap
 mid-sentence). The wait applies only while his audio is actually playing. If
-the zeros are still there once he has finished, the reset happens then. The
+the zeros are still there once he has finished, the reset happens then. After
+the call's one reset, zeros that come back while Larry speaks wait the same
+way before the screen says *the microphone is delivering silence*. The
 accepted cost: a mic that truly died during a long reply is reset, and if
 need be reported, a few seconds after the reply ends rather than during it.
 

@@ -601,6 +601,32 @@ final class CallSessionZerosTests: XCTestCase {
     XCTAssertEqual(t.session.snapshot.problem, CallSession.micSilent)
   }
 
+  /// #577: after the one reset, zeros that recur while Larry's next reply is queued are not reported mid-reply;
+  /// they are once it has played.
+  func testZerosAfterTheResetWaitForLarrysReplyBeforeTheSilenceReport() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic(480, value: 0.2)
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.audio.restarts, 1)
+    t.audio.mic(480, value: 0.2)
+    t.audio.statsValue = PlaybackStats(scheduledS: 40, playedS: 30, clockRunning: true, pendingS: 0)
+    zeros(t, CallSession.zeroBuffersBeforeRearm * 3)
+    XCTAssertNil(t.session.snapshot.problem, "no silence report mid-reply")
+    let held = t.events.filter { $0.0 == "call_mic" && $0.1["action"] as? String == "silence_held" }
+    XCTAssertEqual(held.count, 1)
+    XCTAssertFalse(
+      CallEventLog.hadTrouble(
+        t.events.drop(while: { $0.0 != "call_mic" || $0.1["action"] as? String != "audio_back" }).map {
+          CallEvent(t: 0, type: $0.0, fields: $0.1)
+        }))
+
+    t.audio.statsValue = PlaybackStats(scheduledS: 40, playedS: 40, clockRunning: true, pendingS: 0)
+    zeros(t, 1)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micSilent, "the reply has played: the zeros are said")
+    XCTAssertEqual(t.audio.restarts, 1)
+  }
+
   /// #577: a speaker whose clock is not running is not Larry speaking; the zeros get their reset.
   func testAStoppedSpeakerDoesNotHoldTheReset() {
     let t = CallHarness()

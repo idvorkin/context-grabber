@@ -656,24 +656,25 @@ public final class CallSession {
     }
     zeroRun += 1
     guard zeroRun >= Self.zeroBuffersBeforeRearm else { return }
-    if !zeroRearmed {
-      // #577: the car's Bluetooth mic gives runs of exact zeros while it plays Larry, and the restart neither stopped
-      // them nor spared his reply. A mic that was live waits for his queued words to play; first-call zeros (#88),
-      // a mic never heard, do not.
-      if micHeard, let stats = deps.audio.stats(), stats.clockRunning,
-        stats.scheduledS - stats.playedS > Self.rearmHoldQueuedS
-      {
-        if !rearmHeld {
-          rearmHeld = true
-          log(
-            "call_mic",
-            ["action": "rearm_held", "why": "Larry's audio is still queued", "buffers": micBuffers].merging(
-              playbackFields()
-            ) { mine, _ in mine })
-        }
-        return
+    // #577: the car's Bluetooth mic gives runs of exact zeros while it plays Larry, and the restart neither stopped
+    // them nor spared his reply. A mic that was live waits for his queued words to play, before the reset and before
+    // the silence report; first-call zeros (#88), a mic never heard, do not.
+    if micHeard, let stats = deps.audio.stats(), stats.clockRunning,
+      stats.scheduledS - stats.playedS > Self.rearmHoldQueuedS
+    {
+      if !rearmHeld {
+        rearmHeld = true
+        log(
+          "call_mic",
+          [
+            "action": zeroRearmed ? "silence_held" : "rearm_held", "why": "Larry's audio is still queued",
+            "buffers": micBuffers,
+          ].merging(playbackFields()) { mine, _ in mine })
       }
-      rearmHeld = false
+      return
+    }
+    rearmHeld = false
+    if !zeroRearmed {
       zeroRearmed = true
       zeroRun = 0
       log(
@@ -699,7 +700,7 @@ public final class CallSession {
       }
       return
     }
-    guard zeroRun == Self.zeroBuffersBeforeRearm else { return }
+    guard snapshot.problem != Self.micSilent else { return }
     log("call_mic", ["action": "zeros", "why": "still exact zeros after the re-arm"])
     setProblem(Self.micSilent)
   }

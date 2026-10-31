@@ -166,7 +166,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 087:
 
 - **Summary:** The first call after launch works like every other call
-- **Status:** implemented in [62953e1](https://github.com/idvorkin/context-grabber/commit/62953e1), [ae01372](https://github.com/idvorkin/context-grabber/commit/ae01372), [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts`, `callWatchdog.test.ts` and on the phone — the silent first call still recurs; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599), voice processing on from prepare every call; verified by `just native-test` (no-first-frame and zeros tests); the phone still to be checked by Igor; the zero-run rearm's evidence and its edges (#364): [6cd1ff0](https://github.com/idvorkin/context-grabber/commit/6cd1ff0), [2bba05e](https://github.com/idvorkin/context-grabber/commit/2bba05e), [387088f](https://github.com/idvorkin/context-grabber/commit/387088f), [b02aeca](https://github.com/idvorkin/context-grabber/commit/b02aeca), [00153f0](https://github.com/idvorkin/context-grabber/commit/00153f0) (the heal says what the mic and the playback held, *audio back* is logged once the restart has finished, and a recovery finishing after the hang-up logs and reports nothing for the ended call), verified by `just native-test` (`CallSessionZerosTests`, `testAProbeRearmThatFailsAfterTheHangUpIsIgnored`); the simulator in the next build turn; the 1.5-second watch narrowed to a built-in recorder with a valid sample rate, Bluetooth and a zero rate waiting 10 s (#423, story 204): [c841779](https://github.com/idvorkin/context-grabber/commit/c841779), [538d3f1](https://github.com/idvorkin/context-grabber/commit/538d3f1), verified by `just test` (host, the no-first-frame tests) and the simulator build; no zero-run reset while Larry's words are still queued (#577): [30c692a](https://github.com/idvorkin/context-grabber/commit/30c692a), verified by `just test` (host: `CallSessionZerosTests`); the phone in the next build turn
+- **Status:** implemented in [62953e1](https://github.com/idvorkin/context-grabber/commit/62953e1), [ae01372](https://github.com/idvorkin/context-grabber/commit/ae01372), [7db050d](https://github.com/idvorkin/context-grabber/commit/7db050d); verified by `callSession.test.ts`, `callWatchdog.test.ts` and on the phone — the silent first call still recurs; native app: [f6092a3](https://github.com/idvorkin/context-grabber/commit/f6092a3), [d782599](https://github.com/idvorkin/context-grabber/commit/d782599), voice processing on from prepare every call; verified by `just native-test` (no-first-frame and zeros tests); the phone still to be checked by Igor; the zero-run rearm's evidence and its edges (#364): [6cd1ff0](https://github.com/idvorkin/context-grabber/commit/6cd1ff0), [2bba05e](https://github.com/idvorkin/context-grabber/commit/2bba05e), [387088f](https://github.com/idvorkin/context-grabber/commit/387088f), [b02aeca](https://github.com/idvorkin/context-grabber/commit/b02aeca), [00153f0](https://github.com/idvorkin/context-grabber/commit/00153f0) (the heal says what the mic and the playback held, *audio back* is logged once the restart has finished, and a recovery finishing after the hang-up logs and reports nothing for the ended call), verified by `just native-test` (`CallSessionZerosTests`, `testAProbeRearmThatFailsAfterTheHangUpIsIgnored`); the simulator in the next build turn; the 1.5-second watch narrowed to a built-in recorder with a valid sample rate, Bluetooth and a zero rate waiting 10 s (#423, story 204): [c841779](https://github.com/idvorkin/context-grabber/commit/c841779), [538d3f1](https://github.com/idvorkin/context-grabber/commit/538d3f1), verified by `just test` (host, the no-first-frame tests) and the simulator build
 
 #### Use Case:
 - **As a** Larry's client placing the day's first call
@@ -180,12 +180,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** I tap Call Larry and say a sentence as soon as Tony greets me
 - **Then:** the call's audio is torn down and brought back up on its own, and if it is still silent the call redials itself once on the same backend — *Calling Larry…* briefly, then *live* — without a tap, and my sentence is captioned; if I hang up while a recovery is still finishing, the ended call shows no new problem
 
-- **Scenario:** The car's mic gives zeros while Larry speaks
-- **Given:** a live call on the car's Bluetooth whose mic has already carried my voice
-- **When:** the mic gives a second of exact zeros while Larry's reply is still playing
-- **Then:** his reply plays to the end without a gap, and only if the zeros are still there once it has finished is the call's audio reset
-
-- **Issues:** [#88](https://github.com/idvorkin/context-grabber/issues/88) fixed; [#95](https://github.com/idvorkin/context-grabber/issues/95) open — the bridge still receives zero mic frames on some first calls; [#364](https://github.com/idvorkin/context-grabber/issues/364) open — on the simulator the mic gives a silent first second, and the heal's restart drops queued playback; the heal now logs the evidence; [#577](https://github.com/idvorkin/context-grabber/issues/577) (2026-10-29, the car: the zero-run reset fired mid-reply and cut 13.7 s of Larry)
+- **Issues:** [#88](https://github.com/idvorkin/context-grabber/issues/88) fixed; [#95](https://github.com/idvorkin/context-grabber/issues/95) open — the bridge still receives zero mic frames on some first calls; [#364](https://github.com/idvorkin/context-grabber/issues/364) open — on the simulator the mic gives a silent first second, and the heal's restart drops queued playback; the heal now logs the evidence
 
 ---
 
@@ -242,6 +237,26 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a call has just gone *live* on AirPods and Tony's greeting has arrived
 - **When:** the output clock has not started after two seconds, so playback is reopened
 - **Then:** the whole greeting plays on the reopened speaker, and Diagnostics shows a `call_audio` requeue line with the seconds it kept
+
+---
+
+### User Story 321:
+
+- **Summary:** A car mic that gives zeros while Larry speaks does not cut his reply
+- **Status:** native app only: [30c692a](https://github.com/idvorkin/context-grabber/commit/30c692a); verified by `just test` (host: `CallSessionZerosTests`); the phone in the next build turn
+- **Issues:** [#577](https://github.com/idvorkin/context-grabber/issues/577) (2026-10-29, the car: the zero-run reset fired mid-reply and cut 13.7 s of Larry)
+- **Spec:** [Native call — Audio that stops](../superpowers/specs/2026-08-28-native-call-screen-design.md#audio-that-stops--either-direction)
+
+#### Use Case:
+- **As a** Larry's client on a call in the car over Bluetooth
+- **I want to** hear Larry's whole reply even when the car's mic goes to zeros while he speaks
+- **so that** a mic quirk the reset cannot fix never costs me his words or raises a false alarm
+
+#### Acceptance Criteria:
+- **Scenario:** The car's mic gives zeros while Larry speaks
+- **Given:** a live call on the car's Bluetooth whose mic has already carried my voice
+- **When:** the mic gives a second of exact zeros while Larry's reply is still playing
+- **Then:** his reply plays to the end without a gap or a silence warning, and only if the zeros are still there once it has finished is the call's audio reset, or if it already was, the silence said
 
 ---
 
