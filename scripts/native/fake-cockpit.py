@@ -78,6 +78,9 @@ THREADS["igor2-88g.603"] = {"title": "A board picture", "seen": "", "messages": 
 THREADS["igor2-88g.604"] = {"title": "A board since deleted", "seen": "", "messages": [
     row("igor2-88g.604", "igor", "", attachments=[WHITE_PICTURE], board="board-gone-603"),
 ]}
+THREADS["igor2-88g.629"] = {"title": "Larry asks", "seen": "", "messages": [
+    row("igor2-88g.629", "larry", "Shall we ship it?"),
+]}
 
 
 def summary(key, t):

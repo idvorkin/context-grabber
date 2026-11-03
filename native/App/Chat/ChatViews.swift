@@ -364,6 +364,10 @@ struct ChatThreadView: View {
   @State private var newThread = ChatNewThread()
   /// A new chat's own name for the bar and the mic, the same across attempts and after it lands.
   @State private var screenID = UUID().uuidString.lowercased()
+  /// Why the last Yes or No could not be kept on the phone (#629).
+  @State private var reactionProblem: BugProblem?
+  /// A message whose Quote in reply was tapped: the bar takes it (#629).
+  @State private var quoting: ChatMessage?
   @Environment(\.dismiss) private var dismiss
 
   init(chat: ChatModel, voice: ChatVoiceModel, key: String, title: String, logger: @escaping BugLogger) {
@@ -421,7 +425,7 @@ struct ChatThreadView: View {
           ForEach(messages) { message in
             MessageBubble(
               message: message, thread: key ?? "", answerFailed: answerFailed.contains(message.id), chat: chat,
-              logger: logger)
+              logger: logger, react: { react($0, to: message) }, quote: { quoting = message })
           }
           // Their own ids: a message that reaches the Cockpit keeps its id, and a shared one in this LazyVStack
           // left the outbox bubble on screen after the Cockpit's had replaced it (seen on the simulator).
@@ -446,18 +450,26 @@ struct ChatThreadView: View {
     }
     // Not in the scroll view: it opens at the newest message, so a long thread would hide this.
     .safeAreaInset(edge: .top) {
-      if let problem = chat.archiveProblem {
-        BugProblemView(
-          problem: .grabber(problem, context: "ChatThreadView.archive", extra: ["cockpit": .string(chat.cockpit)]),
-          logger: logger
-        )
-        .padding(.horizontal, 12)
-        .background(Color(.systemGroupedBackground))
+      VStack(spacing: 0) {
+        if let problem = chat.archiveProblem {
+          BugProblemView(
+            problem: .grabber(problem, context: "ChatThreadView.archive", extra: ["cockpit": .string(chat.cockpit)]),
+            logger: logger
+          )
+          .padding(.horizontal, 12)
+          .background(Color(.systemGroupedBackground))
+        }
+        if let reactionProblem {
+          BugProblemView(problem: reactionProblem, logger: logger)
+            .padding(.horizontal, 12)
+            .background(Color(.systemGroupedBackground))
+        }
       }
     }
     .safeAreaInset(edge: .bottom) {
       ComposeBar(
-        chat: chat, voice: voice, thread: barKey, target: target, answeredBy: answeredBy, logger: logger, first: first
+        chat: chat, voice: voice, thread: barKey, target: target, answeredBy: answeredBy, logger: logger, first: first,
+        quoting: $quoting
       ) {
         newThread.attempt(at: target)
       }
@@ -495,6 +507,26 @@ struct ChatThreadView: View {
       chat.open(thread)
     }
   }
+
+  /// Yes or No, sent at once as an ordinary message (#629). The bar's draft is left alone.
+  private func react(_ reaction: ChatReaction, to message: ChatMessage) {
+    guard let key else { return }
+    // Something still on its way is newer than anything the Cockpit shows.
+    let newest = pending.isEmpty && messages.last?.id == message.id
+    var draft = InboxDraft()
+    draft.text = reaction.text(answering: message, newest: newest)
+    do {
+      try chat.send(&draft, thread: key)
+      reactionProblem = nil
+      chat.logAction(
+        "reaction", ["reaction": reaction.rawValue, "thread": key, "message": message.id, "newest": newest])
+    } catch {
+      reactionProblem = .grabber(
+        "Your \(reaction.label) could not be kept on the phone: \(error.localizedDescription)",
+        context: "ChatThreadView.react",
+        extra: ["thread": .string(key), "message": .string(message.id), "reaction": .string(reaction.rawValue)])
+    }
+  }
 }
 
 private struct MessageBubble: View {
@@ -504,6 +536,10 @@ private struct MessageBubble: View {
   let answerFailed: Bool
   let chat: ChatModel
   let logger: BugLogger
+  let react: (ChatReaction) -> Void
+  let quote: () -> Void
+
+  private var hasWords: Bool { !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
   var body: some View {
     if message.isError { failure } else { bubble }
@@ -555,14 +591,32 @@ private struct MessageBubble: View {
             )
             .foregroundStyle(message.fromIgor ? Color.white : Color.primary)
             .tint(message.fromIgor ? .white : .accentColor)
-            .textSelection(.enabled)
         }
         if message.fromIgor { receipt }
       }
+      // #629: on the bubble, not the row, so holding the empty side opens nothing. It replaces selecting the text,
+      // whose long press would take the same gesture; Copy keeps what that was for.
+      .contextMenu { menu }
       if !message.fromIgor { Spacer(minLength: 48) }
     }
     .accessibilityElement(children: .combine)
     .accessibilityIdentifier(message.fromIgor ? "chat-mine" : message.author == nil ? "chat-larry" : "chat-skill")
+  }
+
+  /// Answering himself means nothing, and a picture alone has no words to quote or copy (story 445).
+  @ViewBuilder private var menu: some View {
+    if !message.fromIgor {
+      ForEach(ChatReaction.allCases, id: \.self) { reaction in
+        Button(reaction.label, systemImage: reaction == .yes ? "hand.thumbsup" : "hand.thumbsdown") { react(reaction) }
+      }
+    }
+    if hasWords {
+      Button("Quote in reply", systemImage: "text.quote", action: quote)
+      Button("Copy", systemImage: "doc.on.doc") {
+        UIPasteboard.general.string = message.text
+        chat.logAction("copy", ["message": message.id])
+      }
+    }
   }
 
   @ViewBuilder private var receipt: some View {
@@ -756,6 +810,8 @@ private struct ComposeBar: View {
   let logger: BugLogger
   /// A new chat's first message on the phone, for the bar's line when it was refused (story 491).
   let first: InboxItem?
+  /// A message to quote into the bar (#629): taken as soon as it is set.
+  @Binding var quoting: ChatMessage?
   /// A new chat's next first message: a fresh id, now the one the screen follows.
   var startAttempt: () -> String? = { nil }
   @State private var draft = InboxDraft()
@@ -859,6 +915,9 @@ private struct ComposeBar: View {
     .fileImporter(isPresented: $picking, allowedContentTypes: [.data]) { attach($0) }
     // The words stream into the draft as Igor speaks, after what was typed, for him to read before he sends (#448).
     .onChange(of: voice.words) { _, _ in takeWords() }
+    .onChange(of: quoting) { _, message in
+      if let message { take(quote: message) }
+    }
     .onAppear {
       takeWords()
       guard target == .new else { return }
@@ -879,6 +938,16 @@ private struct ComposeBar: View {
   private func takeWords() {
     guard let words = voice.take(thread: thread) else { return }
     draft.text = words
+  }
+
+  /// A recording writes over the bar from where it began, so it stops first, its words so far kept (story 448).
+  private func take(quote message: ChatMessage) {
+    takeWords()
+    voice.sent(thread: thread, why: "quoted")
+    draft.text = ChatQuote.appended(message, to: draft.text)
+    focused = true
+    quoting = nil
+    chat.logAction("quote", ["thread": thread, "message": message.id])
   }
 
   private func paste() {

@@ -154,12 +154,13 @@ final class ChatVoiceModel: ObservableObject {
   }
 
   /// A Send from this thread's bar (#546): the message took the words heard so far, so the recording stops here and
-  /// nothing more comes back into the emptied bar (stop discards the recognizer's late results).
-  func sent(thread: String) {
+  /// nothing more comes back into the emptied bar (stop discards the recognizer's late results). A quote does the same
+  /// (#629): the bar took the words so far, and a recording going on would write over the quote.
+  func sent(thread: String, why: String = "sent") {
     guard self.thread == thread else { return }
     _ = words.take(thread: thread)
     guard recording else { return }
-    drop(why: "sent")
+    drop(why: why)
   }
 
   /// The words spoken for this thread, once: the bar takes them as they come, or on its return if it was away.
