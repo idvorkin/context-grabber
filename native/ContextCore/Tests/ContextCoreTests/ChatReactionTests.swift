@@ -24,6 +24,10 @@ final class ChatReactionTests: XCTestCase {
     XCTAssertEqual(ChatQuote.quoted(larry("one\n\ntwo\n")), "> one\n>\n> two")
   }
 
+  func testEveryLineIsMarkedWhenTheLinesEndInCRLF() {
+    XCTAssertEqual(ChatQuote.quoted(larry("one\r\n\r\ntwo")), "> one\n>\n> two")
+  }
+
   func testALongMessageIsCutToTheLimit() {
     let exact = String(repeating: "a", count: ChatQuote.maxCharacters)
     XCTAssertEqual(ChatQuote.quoted(larry(exact)), "> " + exact)

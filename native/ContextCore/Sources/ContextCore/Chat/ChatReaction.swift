@@ -28,7 +28,7 @@ public enum ChatQuote {
       words.count > maxCharacters
       ? String(words.prefix(maxCharacters - 1)).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
       : words.isEmpty ? picture : words
-    return kept.split(separator: "\n", omittingEmptySubsequences: false)
+    return kept.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
       .map { $0.isEmpty ? ">" : "> " + $0 }
       .joined(separator: "\n")
   }
