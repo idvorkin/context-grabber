@@ -96,6 +96,8 @@ final class ChatVoiceModel: ObservableObject {
     guard canPickMicrophone else { return }
     Task {
       await dictation.refreshMicrophones()
+      // #637: a recording that began first turned this listing away; the next picker on screen names the saved one.
+      if dictation.microphones.isEmpty { namedSavedMicrophone = false }
       log.event("chat_voice", ["action": "microphones", "count": dictation.microphones.count])
     }
   }
@@ -116,6 +118,7 @@ final class ChatVoiceModel: ObservableObject {
   // MARK: - the button
 
   static let callHasMic = "A call with Larry is using the microphone. End it to speak a message."
+  static let stillRecording = "The last recording is still finishing. Tap the mic to speak."
   static let callTookMic = "A call started, so the recording stopped. The words so far are in the message."
 
   /// Starts dictating into `draft` (the bar's text now), or stops a recording.
@@ -133,6 +136,23 @@ final class ChatVoiceModel: ObservableObject {
       return
     }
     dictation.toggle(note: draft) { [weak self] text in self?.heard(text, thread: thread) }
+  }
+
+  /// The voice button's new chat coming on screen (#637): the mic tapped for him, but never its toggle, so it can only
+  /// start. A listing of the microphones (this bar's picker just asked for one) gives way rather than eat the tap.
+  func startNewChat(thread: String, draft: String) {
+    switch ChatNewChatVoice.start(callLive: callLive, recording: recording) {
+    case .record:
+      if dictation.refreshingMicrophones { dictation.stop(why: "new_chat") }
+      tap(thread: thread, draft: draft)
+    case .callHasMic:
+      // tap's own refusal: the line in this thread's bar and the log.
+      tap(thread: thread, draft: draft)
+    case .stillRecording:
+      self.thread = thread
+      notice = Self.stillRecording
+      log.event("chat_voice", ["action": "refused", "why": "still_recording"])
+    }
   }
 
   /// A recording is under way: listing the microphones alone is not one, so a Send then stops nothing.

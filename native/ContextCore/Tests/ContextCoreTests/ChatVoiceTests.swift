@@ -76,3 +76,34 @@ final class ChatVoiceWordsTests: XCTestCase {
     XCTAssertEqual(words.take(thread: "A"), "hello there")
   }
 }
+
+/// The voice button beside the + (#637, stories 470 and 473).
+final class ChatNewChatVoiceTests: XCTestCase {
+  func testTheVoiceButtonRecordsOnceSoABarComingBackDoesNotRecordAgain() {
+    var ask = ChatNewChatVoice()
+    ask.open(voice: true)
+    XCTAssertTrue(ask.take())
+    XCTAssertFalse(ask.take())
+  }
+
+  func testThePlusNeverRecordsEvenRightAfterAnUntakenVoiceTap() {
+    var ask = ChatNewChatVoice()
+    XCTAssertFalse(ask.take())
+    ask.open(voice: true)
+    ask.open(voice: false)
+    XCTAssertFalse(ask.take())
+  }
+
+  func testALiveCallKeepsTheMicrophone() {
+    XCTAssertEqual(ChatNewChatVoice.start(callLive: true, recording: false), .callHasMic)
+    XCTAssertEqual(ChatNewChatVoice.start(callLive: true, recording: true), .callHasMic)
+  }
+
+  func testAnEarlierRecordingIsNeverToggledOff() {
+    XCTAssertEqual(ChatNewChatVoice.start(callLive: false, recording: true), .stillRecording)
+  }
+
+  func testOtherwiseItRecords() {
+    XCTAssertEqual(ChatNewChatVoice.start(callLive: false, recording: false), .record)
+  }
+}

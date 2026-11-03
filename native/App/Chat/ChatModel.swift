@@ -21,6 +21,7 @@ final class ChatModel: ObservableObject {
   @Published var linkThread: String?
   /// The + (#536): a new, empty thread is on screen, its first Send starts it.
   @Published var newChatOpen = false
+  private var newChatVoice = ChatNewChatVoice()
   /// The last archive from the list, offered back for five seconds (#589).
   @Published private(set) var undoArchive: [ChatSummary] = []
   /// Why the last archive or unarchive didn't take.
@@ -301,11 +302,16 @@ final class ChatModel: ObservableObject {
 
   // MARK: Writing
 
-  /// The + (#536): an empty thread with the ordinary bar, not a sheet.
-  func openNewChat(from source: String) {
-    log.event("ui", ["action": "open_new_chat", "from": source])
+  /// The + (#536): an empty thread with the ordinary bar, not a sheet. `voice`: the button beside it (#637), the same
+  /// thread with its mic tapped as it opens.
+  func openNewChat(from source: String, voice: Bool = false) {
+    log.event("ui", ["action": "open_new_chat", "from": source, "voice": voice])
+    newChatVoice.open(voice: voice)
     newChatOpen = true
   }
+
+  /// Whether the new chat coming on screen should start recording, once per tap.
+  func takeNewChatVoice() -> Bool { newChatVoice.take() }
 
   /// One message, kept on the phone first and sent through the Inbox's sender. `thread` nil starts a new one, under
   /// `id` so a new chat's screen can follow its first message to the thread it lands in.

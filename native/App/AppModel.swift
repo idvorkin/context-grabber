@@ -811,10 +811,10 @@ final class AppModel: ObservableObject {
         log.event("error", ["where": "chat_hook", "message": "\(error)"])
       }
     }
-    if env["GRABBER_CHAT_NEW"] == "open" {
-      // #536: Chat with its + already tapped, a new thread on screen.
+    if env["GRABBER_CHAT_NEW"] == "open" || env["GRABBER_CHAT_NEW"] == "voice" {
+      // #536: Chat with its + already tapped, a new thread on screen; #637: `voice`, the button beside it.
       openInbox(from: "hook")
-      chat.openNewChat(from: "hook")
+      chat.openNewChat(from: "hook", voice: env["GRABBER_CHAT_NEW"] == "voice")
     }
     // Story 270: an archive run now, to GRABBER_ARCHIVE_URL (the simulator sends nowhere else).
     if env["GRABBER_ARCHIVE"] == "run" { archive.run(reason: "hook") }

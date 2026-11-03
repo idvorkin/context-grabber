@@ -153,20 +153,18 @@ struct ChatListView: View {
       }
     }
     .overlay(alignment: .bottomTrailing) {
-      Button {
-        chat.openNewChat(from: "chat")
-      } label: {
-        Image(systemName: "plus")
-          .font(.title2.weight(.semibold))
-          .foregroundStyle(.white)
-          .frame(width: 56, height: 56)
-          .background(Color.accentColor, in: Circle())
-          .contentShape(Circle())
+      HStack(spacing: 12) {
+        NewChatVoiceButton(chat: chat, voice: voice)
+        Button {
+          chat.openNewChat(from: "chat")
+        } label: {
+          NewChatCircle(systemName: "plus", color: .accentColor)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("New chat")
+        .accessibilityIdentifier("inbox-add")
+        .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
       }
-      .buttonStyle(.plain)
-      .accessibilityLabel("New chat")
-      .accessibilityIdentifier("inbox-add")
-      .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
       .padding(16)
     }
     .navigationDestination(isPresented: $chat.newChatOpen) {
@@ -226,6 +224,40 @@ struct ChatListView: View {
         Button("Archive") { Task { await chat.setArchived(thread.key, true, from: "swipe") } }.tint(.indigo)
       }
     }
+  }
+}
+
+/// One of the two round thumb targets at the list's lower right.
+private struct NewChatCircle: View {
+  let systemName: String
+  let color: Color
+
+  var body: some View {
+    Image(systemName: systemName)
+      .font(.title2.weight(.semibold))
+      .foregroundStyle(.white)
+      .frame(width: 56, height: 56)
+      .background(color, in: Circle())
+      .contentShape(Circle())
+  }
+}
+
+/// A new chat already recording (#637, story 470). Its own view so only it redraws with the dictation; dimmed during a
+/// call, when a tap still opens the new chat, whose bar says why nothing records (story 473).
+private struct NewChatVoiceButton: View {
+  let chat: ChatModel
+  @ObservedObject var voice: ChatVoiceModel
+
+  var body: some View {
+    Button {
+      chat.openNewChat(from: "chat", voice: true)
+    } label: {
+      NewChatCircle(systemName: "mic.fill", color: voice.callLive ? .secondary : .accentColor)
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel("New chat by voice")
+    .accessibilityIdentifier("inbox-add-voice")
+    .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
   }
 }
 
@@ -729,8 +761,11 @@ private struct ComposeBar: View {
     .onChange(of: voice.words) { _, _ in takeWords() }
     .onAppear {
       takeWords()
-      // A new chat opens with the keyboard up (spec "A new chat", story 262).
-      if target == .new { focused = true }
+      guard target == .new else { return }
+      // The voice button's new chat records as it opens (#637); the bar's own tap, so words and refusals land here.
+      if chat.takeNewChatVoice() { voice.startNewChat(thread: thread, draft: draft.text) }
+      // A new chat opens with the keyboard up (spec "A new chat", story 262), unless he is talking.
+      if !voice.recording { focused = true }
     }
     .onDisappear { voice.cancel(thread: thread, why: "left_thread") }
     .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
