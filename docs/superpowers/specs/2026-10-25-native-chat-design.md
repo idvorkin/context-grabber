@@ -290,12 +290,13 @@ nothing is tried again on a timer. A phone or an iPad behaves as it always has.
 - `chat` reply_failed (thread, message id, the skill; once per failure on screen, never the text); opening a thread
   names its skill.
 - `chat_voice` events: record_start (thread), record_stop (thread, seconds), capped (at the five-minute limit),
-  dropped (left the thread, a call started), refused (a live call). The dictation's own `dictation_start`,
+  dropped (left the thread, a call started, a quote), refused (a live call). The dictation's own `dictation_start`,
   `dictation_stop` and `dictation_error` lines (the problem report's) carry the recognizer's side. Never the words.
 - `chat` no_address, once at each launch of a simulator with no address, says why chat reaches nothing; `inbox` no_address
   (how many wait, what asked) at each send it held back; a refresh that could not run says the same in its reason.
 - `chat` events for the press-and-hold menu: reaction (yes or no, thread, message id, whether it was the newest), quote
-  and copy (thread, message id). Never the text.
+  and copy (thread, message id). A Yes or No the phone could not keep logs an error with the same fields and the
+  reason. Never the text.
 - A thread that cannot be read logs one error when the problem starts or changes, not one per poll.
 - Every error on screen is copyable, with the thread and the Cockpit's answer.
 

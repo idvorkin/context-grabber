@@ -368,6 +368,8 @@ struct ChatThreadView: View {
   @State private var reactionProblem: BugProblem?
   /// A message whose Quote in reply was tapped: the bar takes it (#629).
   @State private var quoting: ChatMessage?
+  /// GRABBER_CHAT_HOLD=yes / no / quote / copy: that choice taps itself on Larry's newest message, for the simulator.
+  @State private var holdHook = ProcessInfo.processInfo.environment["GRABBER_CHAT_HOLD"]
   @Environment(\.dismiss) private var dismiss
 
   init(chat: ChatModel, voice: ChatVoiceModel, key: String, title: String, logger: @escaping BugLogger) {
@@ -425,7 +427,7 @@ struct ChatThreadView: View {
           ForEach(messages) { message in
             MessageBubble(
               message: message, thread: key ?? "", answerFailed: answerFailed.contains(message.id), chat: chat,
-              logger: logger, react: { react($0, to: message) }, quote: { quoting = message })
+              logger: logger, react: { react($0, to: message) }, quote: { quote(message) }, copy: { copy(message) })
           }
           // Their own ids: a message that reaches the Cockpit keeps its id, and a shared one in this LazyVStack
           // left the outbox bubble on screen after the Cockpit's had replaced it (seen on the simulator).
@@ -506,6 +508,32 @@ struct ChatThreadView: View {
       newThread.land(in: thread)
       chat.open(thread)
     }
+    .onChange(of: messages.last?.id, initial: true) { runHoldHook() }
+  }
+
+  private func runHoldHook() {
+    guard let hook = holdHook, let message = messages.last(where: { !$0.fromIgor }) else { return }
+    holdHook = nil
+    switch hook {
+    case "quote": quote(message)
+    case "copy": copy(message)
+    default: if let reaction = ChatReaction(rawValue: hook) { react(reaction, to: message) }
+    }
+  }
+
+  private func quote(_ message: ChatMessage) {
+    quoting = message
+    logHeld("quote", message)
+  }
+
+  private func copy(_ message: ChatMessage) {
+    UIPasteboard.general.string = message.text
+    logHeld("copy", message)
+  }
+
+  private func logHeld(_ action: String, _ message: ChatMessage) {
+    guard let key else { return }
+    chat.logAction(action, ["thread": key, "message": message.id])
   }
 
   /// Yes or No, sent at once as an ordinary message (#629). The bar's draft is left alone.
@@ -525,6 +553,7 @@ struct ChatThreadView: View {
         "Your \(reaction.label) could not be kept on the phone: \(error.localizedDescription)",
         context: "ChatThreadView.react",
         extra: ["thread": .string(key), "message": .string(message.id), "reaction": .string(reaction.rawValue)])
+      chat.logReactionFailure(error, reaction: reaction, thread: key, message: message.id)
     }
   }
 }
@@ -538,6 +567,7 @@ private struct MessageBubble: View {
   let logger: BugLogger
   let react: (ChatReaction) -> Void
   let quote: () -> Void
+  let copy: () -> Void
 
   private var hasWords: Bool { !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
@@ -603,7 +633,7 @@ private struct MessageBubble: View {
     .accessibilityIdentifier(message.fromIgor ? "chat-mine" : message.author == nil ? "chat-larry" : "chat-skill")
   }
 
-  /// Answering himself means nothing, and a picture alone has no words to quote or copy (story 445).
+  /// Answering himself means nothing, and a picture alone has no words to quote or copy (story 500).
   @ViewBuilder private var menu: some View {
     if !message.fromIgor {
       ForEach(ChatReaction.allCases, id: \.self) { reaction in
@@ -612,10 +642,7 @@ private struct MessageBubble: View {
     }
     if hasWords {
       Button("Quote in reply", systemImage: "text.quote", action: quote)
-      Button("Copy", systemImage: "doc.on.doc") {
-        UIPasteboard.general.string = message.text
-        chat.logAction("copy", ["message": message.id])
-      }
+      Button("Copy", systemImage: "doc.on.doc", action: copy)
     }
   }
 
@@ -940,14 +967,13 @@ private struct ComposeBar: View {
     draft.text = words
   }
 
-  /// A recording writes over the bar from where it began, so it stops first, its words so far kept (story 448).
+  /// A recording writes over the bar from where it began, so it stops first, its words so far kept (story 503).
   private func take(quote message: ChatMessage) {
     takeWords()
     voice.sent(thread: thread, why: "quoted")
     draft.text = ChatQuote.appended(message, to: draft.text)
     focused = true
     quoting = nil
-    chat.logAction("quote", ["thread": thread, "message": message.id])
   }
 
   private func paste() {

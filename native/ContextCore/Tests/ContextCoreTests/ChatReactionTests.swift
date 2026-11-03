@@ -2,7 +2,7 @@ import XCTest
 
 @testable import ContextCore
 
-/// What press and hold writes (#629, stories 446-448).
+/// What press and hold writes (#629, stories 501-503).
 final class ChatReactionTests: XCTestCase {
   private func larry(_ text: String) -> ChatMessage { ChatMessage(id: "m", ts: "", who: "larry", text: text) }
 

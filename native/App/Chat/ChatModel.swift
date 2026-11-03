@@ -159,6 +159,16 @@ final class ChatModel: ObservableObject {
     log.event("error", fields.merging(["where": "chat_attach"]) { _, new in new })
   }
 
+  /// Story 504: a Yes or No the phone could not keep. Which one and where, never the words.
+  func logReactionFailure(_ error: Error, reaction: ChatReaction, thread: String, message: String) {
+    log.event(
+      "error",
+      [
+        "where": "chat_react", "thread": thread, "message": message, "reaction": reaction.rawValue,
+        "reason": error.localizedDescription,
+      ])
+  }
+
   /// The ticked threads, together (#599). The undo offer covers only this batch.
   func archiveSelected(_ keys: [String]) async {
     undoArchive = []

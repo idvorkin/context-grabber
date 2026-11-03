@@ -1,4 +1,4 @@
-//  Stories 445-448 (#629) on the simulator, against the fake Cockpit (scripts/native/test-chat-ui.sh starts it). Its
+//  Stories 500-503 (#629) on the simulator, against the fake Cockpit (scripts/native/test-chat-ui.sh starts it). Its
 //  Larry repeats what he hears, so his replies show the exact text each reaction sent. One walkthrough in a thread of
 //  its own: the fake Cockpit outlives a test, and which message is the newest depends on what came before.
 
@@ -29,7 +29,7 @@ final class ChatReactionUITests: XCTestCase {
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launch()
 
-    // Story 445: Larry's offers all four.
+    // Story 500: Larry's offers all four.
     holdLarrys(app)
     let yes = app.buttons["Yes"].firstMatch
     XCTAssertTrue(yes.waitForExistence(timeout: 5), app.debugDescription)
@@ -37,19 +37,19 @@ final class ChatReactionUITests: XCTestCase {
     XCTAssertTrue(app.buttons["Quote in reply"].firstMatch.exists)
     XCTAssertTrue(app.buttons["Copy"].firstMatch.exists)
 
-    // Story 446: the newest gets the bare word.
+    // Story 501: the newest gets the bare word.
     yes.tap()
     XCTAssertTrue(
       element(app, "label CONTAINS %@", "Larry heard: Yes").waitForExistence(timeout: 15), app.debugDescription)
 
-    // Story 447: now it is older, so the answer carries its quote.
+    // Story 502: now it is older, so the answer carries its quote.
     holdLarrys(app)
     app.buttons["No"].firstMatch.tap()
     XCTAssertTrue(
       element(app, "label CONTAINS %@", "Larry heard: > \(larrysWords)").waitForExistence(timeout: 15),
       app.debugDescription)
 
-    // Story 445: my own offers no answer to myself.
+    // Story 500: my own offers no answer to myself.
     let mine = element(app, "label BEGINSWITH %@", "Yes")
     XCTAssertTrue(mine.waitForExistence(timeout: 5), app.debugDescription)
     mine.press(forDuration: 1.2)
@@ -57,7 +57,7 @@ final class ChatReactionUITests: XCTestCase {
     XCTAssertTrue(quote.waitForExistence(timeout: 5), app.debugDescription)
     XCTAssertFalse(app.buttons["Yes"].firstMatch.exists, "no Yes on my own message")
 
-    // Story 448: the quote lands in the bar and goes nowhere.
+    // Story 503: the quote lands in the bar and goes nowhere.
     quote.tap()
     XCTAssertTrue(element(app, "value BEGINSWITH %@", "> Yes").waitForExistence(timeout: 5), app.debugDescription)
     XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5), "the keyboard is up for the reply")
