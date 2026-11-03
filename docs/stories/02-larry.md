@@ -1997,3 +1997,103 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Then:** it reads *idvorkin refused it* with the reason, as a copyable problem
 
 ---
+
+### User Story 445:
+
+- **Summary:** Holding a message offers what I can do with it
+- **Status:** not implemented; asked for in #629
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
+- **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Larry's client reading a thread on the phone or the iPad
+- **I want to** press and hold a message and see *Yes*, *No*, *Quote in reply* and *Copy*
+- **so that** answering takes one gesture, and I am only offered what makes sense for that message
+
+#### Acceptance Criteria:
+- **Scenario:** Holding each kind of message
+- **Given:** a thread with a message from Larry and one of mine
+- **When:** I press and hold each
+- **Then:** Larry's offers *Yes*, *No*, *Quote in reply* and *Copy*; mine offers only *Quote in reply* and *Copy*; a message that is only a picture offers neither *Quote in reply* nor *Copy*
+
+---
+
+### User Story 446:
+
+- **Summary:** Yes or No to Larry's newest message sends that one word
+- **Status:** not implemented; asked for in #629
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
+- **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Larry's client asked a yes-or-no question
+- **I want to** hold his message and tap *Yes* or *No*
+- **so that** he has my answer without my typing it, even with no network
+
+#### Acceptance Criteria:
+- **Scenario:** Answering the newest message
+- **Given:** Larry's message is the newest in the thread and I have words half typed in the bar
+- **When:** I hold it and tap *Yes*
+- **Then:** a message reading *Yes* appears at once as **Not sent yet**, reaches the Cockpit once and wakes Larry like any message, my half-typed words stay in the bar, and the log's `chat` reaction line names the reaction and the message but never the text
+
+---
+
+### User Story 447:
+
+- **Summary:** Yes or No to an older message says which message it answers
+- **Status:** not implemented; asked for in #629
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
+- **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Larry's client answering something further up the thread
+- **I want to** have my *Yes* or *No* carry a quote of what it answers
+- **so that** Larry never takes it as an answer to whatever was said last
+
+#### Acceptance Criteria:
+- **Scenario:** Answering further up
+- **Given:** a message of Larry's with newer messages after it, sent or still waiting on the phone
+- **When:** I hold it and tap *No*
+- **Then:** the message sent is that message's words, each line marked `> ` and at most 280 characters, then a blank line, then *No*; a message that was only a picture is quoted as *A picture*
+
+---
+
+### User Story 448:
+
+- **Summary:** Quote in reply puts the message in the bar for me to answer
+- **Status:** not implemented; asked for in #629
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
+- **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Larry's client replying to one point in a long thread
+- **I want to** quote a message into the bar and write under it
+- **so that** my reply is plainly about that message, on the phone and on the laptop alike
+
+#### Acceptance Criteria:
+- **Scenario:** Quoting into the bar
+- **Given:** a message in the thread, and maybe words already in the bar or a recording going on
+- **When:** I hold it and tap *Quote in reply*
+- **Then:** nothing is sent; the bar holds what it held, then the message's words with each line marked `> ` and at most 280 characters, then a blank line, with the keyboard up; a recording stops with its words so far kept
+
+---
+
+### User Story 449:
+
+- **Summary:** A Yes or No that can't be kept says why
+- **Status:** not implemented; asked for in #629
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
+- **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Larry's client who tapped *Yes* and looked away
+- **I want to** be told if the phone could not keep it
+- **so that** I never believe I answered when nothing was sent
+
+#### Acceptance Criteria:
+- **Scenario:** The phone can't keep the message
+- **Given:** the phone cannot store a message
+- **When:** I hold a message of Larry's and tap *Yes*
+- **Then:** a copyable problem at the top of the thread says so, naming the thread and the message it answered, and no message appears
+
+---

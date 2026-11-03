@@ -97,6 +97,27 @@ the same ladder as the Cockpit's web page (Igor, 2026-11-03, #630: *"Look at how
 everyone."*). A state this build doesn't know reads as 👀. Opening a thread marks it read here and on the laptop. The thread updates by itself every few seconds while it is open, and the list on each return to
 it.
 
+**Press and hold a message** (Igor, 2026-11-03, #629: *"Maybe let me do press-and-hold reactions for yes, no, quote in
+reply"*). Holding one of Larry's messages opens a menu: *Yes*, *No*, *Quote in reply*, *Copy*. Holding one of Igor's own
+offers *Quote in reply* and *Copy*, since answering himself means nothing. A message that is only a picture has nothing
+to quote or copy, so Larry's offers *Yes* and *No* and Igor's opens no menu. Tapping a link or a picture works as ever. The menu's *Copy* takes the
+whole message and replaces selecting its text by a long press, which the same gesture can't also do.
+
+- **Yes and No** send at once, with no second tap: an ordinary message reading *Yes* or *No*, in the thread, under every
+  rule a typed message has. It shows **Not sent yet** until the Cockpit has it, waits out no network, lands once and wakes
+  Larry. The Cockpit has no reactions of its own, so there is no mark on the message Igor held. Whatever is in the bar
+  stays there.
+- **An older message.** A bare *Yes* answers whatever was said last, so when the held message isn't the thread's newest,
+  the *Yes* or *No* goes under a quote of what it answers (*A picture* for a picture alone). Larry never reads it as an
+  answer to something else.
+- **Quote in reply** sends nothing. The message's words go into the bar, each line marked `> ` and at most 280 characters
+  (cut with …), with a blank line after for the reply and the keyboard up. They follow anything already written, so
+  quoting two messages keeps both. Igor edits and sends it as any message. A recording going on stops first, its words so
+  far staying in the bar, as a Send mid-recording does. The quote is plain text in the message: the laptop's page and
+  Larry read the same words.
+- **A failure.** A *Yes* or *No* that can't be kept on the phone says so in a copyable problem at the top of the thread,
+  with the thread and the message it answered, and nothing is sent.
+
 **Writing.** One bar at the bottom: a growing text field with the keyboard's dictation mic, a paperclip for a file, a
 *Paste image* control when the clipboard holds an image (preview, remove), and *Send*. Send needs text, an image or a
 file. A sent message appears
@@ -273,6 +294,8 @@ nothing is tried again on a timer. A phone or an iPad behaves as it always has.
   `dictation_stop` and `dictation_error` lines (the problem report's) carry the recognizer's side. Never the words.
 - `chat` no_address, once at each launch of a simulator with no address, says why chat reaches nothing; `inbox` no_address
   (how many wait, what asked) at each send it held back; a refresh that could not run says the same in its reason.
+- `chat` events for the press-and-hold menu: reaction (yes or no, thread, message id, whether it was the newest), quote
+  and copy (thread, message id). Never the text.
 - A thread that cannot be read logs one error when the problem starts or changes, not one per poll.
 - Every error on screen is copyable, with the thread and the Cockpit's answer.
 
@@ -289,6 +312,9 @@ nothing is tried again on a timer. A phone or an iPad behaves as it always has.
   thread; a reply already read elsewhere, or in a Done thread, raises none; the first check after install raises
   none.
 - A refused message says why, copyably, and is never resent on its own; only a file offers *Send again*.
+- Holding Larry's newest message and tapping *Yes* sends *Yes*; on an older one it sends a quote of that message, then
+  *Yes*; *No* the same. *Quote in reply* fills the bar, sends nothing and leaves what was typed in place. Igor's own
+  messages offer no *Yes* or *No*.
 - The picker lists the phone's microphones and the next recording uses the one picked; *Automatic* follows the
   phone's route.
 - Tap the mic, speak, tap again: the words appear in the field as they are spoken, after what was typed, and nothing
