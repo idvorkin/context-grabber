@@ -108,7 +108,11 @@ nothing recording.
 A live call still holds the microphone. During a call the voice button is dimmed, and a tap opens the new chat with the
 keyboard up, records nothing, and the bar says the call has the mic, as the thread's own mic does. A permission that is
 off, or a recognizer that will not start, shows its copyable line in the new chat's bar, and the new chat stays open to
-type in or to try the mic again.
+type in or to try the mic again. An older copyable line from the mic never hides these quieter lines: both show.
+
+If an earlier recording is still finishing when he taps the voice button, the new chat opens without ending it or
+starting another, the keyboard stays down, and the bar says *The last recording is still finishing. Tap the mic to
+speak.*
 
 **Speaking a message** (#448). Igor, 2026-10-26, first: *"transcription based, use a good model like we do in
 cockpit"*; then, on learning the problem reports' dictation is Apple's own recognizer: *"All right, use that."* So the

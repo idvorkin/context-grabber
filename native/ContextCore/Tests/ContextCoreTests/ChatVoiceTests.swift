@@ -77,7 +77,7 @@ final class ChatVoiceWordsTests: XCTestCase {
   }
 }
 
-/// The voice button beside the + (#637, stories 470 and 473).
+/// The voice button beside the + (#637, stories 470, 473, 475 and 476).
 final class ChatNewChatVoiceTests: XCTestCase {
   func testTheVoiceButtonRecordsOnceSoABarComingBackDoesNotRecordAgain() {
     var ask = ChatNewChatVoice()

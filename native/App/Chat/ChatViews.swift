@@ -696,11 +696,12 @@ private struct ComposeBar: View {
             failure, context: "ChatThreadView.send",
             extra: ["thread": .string(thread), "text_bytes": .int(draft.text.utf8.count)]), logger: logger)
       }
-      // #448: what the mic could not do, copyable, or its quieter line (a call has the mic, the five-minute stop),
-      // each in the thread it came from only; then, in a new chat, where its next message stands (#536). Both show.
+      // #448: what the mic could not do, copyable, and its quieter line (a call has the mic, the five-minute stop),
+      // each in the thread it came from only; then, in a new chat, where its next message stands (#536). All show.
       if voice.thread == thread, let problem = voice.problem {
         BugProblemView(problem: problem, logger: logger)
-      } else if voice.thread == thread, let notice = voice.notice {
+      }
+      if voice.thread == thread, let notice = voice.notice {
         Text(notice).font(.footnote).foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier("chat-voice-notice")

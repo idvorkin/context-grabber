@@ -1,7 +1,7 @@
 //  Stories 262–264 and 301 (#536) on the simulator: Chat's + opens a new, empty thread with the ordinary bar (the field,
 //  Paste image, the mic), not the old New chat sheet. Against the fake Cockpit (scripts/native/test-chat-ui.sh starts
 //  it), the first Send starts the thread under its first line, the bar holds the next message back until it lands,
-//  and the next one goes into that thread. The voice button beside the + (#637, stories 470–474) too: its mic is
+//  and the next one goes into that thread. The voice button beside the + (#637, stories 470–475) too: its mic is
 //  tapped as it opens, and a live call keeps the microphone from it. Speaking and pasting are phone checks.
 
 import XCTest
@@ -133,7 +133,7 @@ final class ChatNewThreadUITests: XCTestCase {
     XCTAssertTrue(plus.waitForExistence(timeout: 5), app.debugDescription)
     XCTAssertFalse(app.descendants(matching: .any)["chat-pending-waiting"].exists, "no new thread waits to go")
 
-    // Story 470: the + after it records nothing.
+    // Story 475: the + after it records nothing.
     plus.tap()
     XCTAssertTrue(field(app).waitForExistence(timeout: 5), app.debugDescription)
     XCTAssertTrue(app.buttons["Speak a message"].waitForExistence(timeout: 5), "the + leaves the mic idle")
