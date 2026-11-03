@@ -95,6 +95,21 @@ says the first was refused — which starts the chat afresh; deleting the waitin
 attempt is its own message, so a new try is never mistaken for the refused or deleted one, and the screen follows
 the newest.
 
+**A new chat by voice** (#637). Igor, 2026-11-03: a voice button beside the **+**, for a first message that is spoken.
+It sits immediately to the left of the **+**, the same size, so the **+** stays where the thumb knows it. A tap opens a
+new chat just as the **+** does — an empty thread titled *New chat*, the same bar, no sheet or dialog — and starts
+recording straight away with the chat mic described below, as if he had tapped that mic himself. Everything about the
+recording is the chat mic's: the red button and the seconds, the words in the field as he speaks, a tap to stop, the
+five-minute stop. Nothing is sent until he taps Send, and that Send starts the thread as any first Send does. Going back
+stops the recording and leaves no thread behind. The keyboard stays down while it records, since he is talking and the
+words fill the field by themselves; a tap on the field brings it up. The **+** itself is unchanged: keyboard up,
+nothing recording.
+
+A live call still holds the microphone. During a call the voice button is dimmed, and a tap opens the new chat with the
+keyboard up, records nothing, and the bar says the call has the mic, as the thread's own mic does. A permission that is
+off, or a recognizer that will not start, shows its copyable line in the new chat's bar, and the new chat stays open to
+type in or to try the mic again.
+
 **Speaking a message** (#448). Igor, 2026-10-26, first: *"transcription based, use a good model like we do in
 cockpit"*; then, on learning the problem reports' dictation is Apple's own recognizer: *"All right, use that."* So the
 chat mic is the same dictation the problem report's note uses — Apple's speech recognizer, on the phone when it can
@@ -211,6 +226,10 @@ in an open thread, the phone's copy (and its picture) is dropped, so the phone d
 - The + opens an empty *New chat* thread with the ordinary bar (text, Paste image, mic); its first Send starts the
   thread, which becomes the live thread once the Cockpit has it; leaving before sending leaves nothing. A refused or
   deleted first message lets the next Send start the chat afresh, as a new message that reaches Larry.
+- The voice button beside the + opens the same empty *New chat* thread already recording, the keyboard down; the words
+  land in the field, nothing is sent until Send, and that Send starts the thread; back leaves nothing. During a live
+  call it is dimmed, and a tap opens the new chat recording nothing, with the keyboard up and a line saying the call has
+  the mic. The + still opens with the keyboard up and records nothing.
 - Waiting Inbox items become threads on first launch; sent ones stay under *Earlier shares*.
 
 ## Depends on the Cockpit
