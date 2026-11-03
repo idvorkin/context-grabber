@@ -1241,7 +1241,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 470:
 
 - **Summary:** A voice button beside the + opens a new chat already recording
-- **Status:** not implemented yet, #637 story 470
+- **Status:** native app only: implemented in [26b7d387](https://github.com/idvorkin/context-grabber/commit/26b7d387); verified by `ChatNewChatVoiceTests` (host: recording once per tap, the + never) and `ChatNewThreadUITests` (simulator: the button sits beside the +, opens *New chat* with no sheet, its mic tapped as it opens; the + after it leaves the mic idle); the red seconds and the keyboard staying down on the phone not yet
 - **Issues:** [#637](https://github.com/idvorkin/context-grabber/issues/637)
 - **Spec:** [Chat with Larry in Grabber Native — A new chat by voice](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -1266,7 +1266,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 471:
 
 - **Summary:** A spoken first message waits for my Send
-- **Status:** not implemented yet, #637 story 471
+- **Status:** native app only: implemented in [26b7d387](https://github.com/idvorkin/context-grabber/commit/26b7d387); verified by the first-Send path in `ChatNewThreadUITests` (simulator: nothing sent on opening); speaking, stopping and sending on the phone not yet
 - **Issues:** [#637](https://github.com/idvorkin/context-grabber/issues/637)
 - **Spec:** [Chat with Larry in Grabber Native — A new chat by voice](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -1286,7 +1286,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 472:
 
 - **Summary:** Backing out of a voice chat leaves nothing
-- **Status:** not implemented yet, #637 story 472
+- **Status:** native app only: implemented in [26b7d387](https://github.com/idvorkin/context-grabber/commit/26b7d387); verified by `ChatNewThreadUITests` (simulator: back leaves no thread waiting); the recording stopping mid-sentence on the phone not yet
 - **Issues:** [#637](https://github.com/idvorkin/context-grabber/issues/637)
 - **Spec:** [Chat with Larry in Grabber Native — A new chat by voice](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -1306,7 +1306,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 473:
 
 - **Summary:** A live call keeps the microphone from the voice button
-- **Status:** not implemented yet, #637 story 473
+- **Status:** native app only: implemented in [26b7d387](https://github.com/idvorkin/context-grabber/commit/26b7d387); verified by `ChatNewChatVoiceTests` (host) and `ChatNewThreadUITests` against the fake bridge (simulator: a live call, the new chat opens with its mic idle, the line, the keyboard up); a real call's sound on the phone not yet
 - **Issues:** [#637](https://github.com/idvorkin/context-grabber/issues/637)
 - **Spec:** [Chat with Larry in Grabber Native — A new chat by voice](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -1326,7 +1326,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 474:
 
 - **Summary:** A voice chat that can't record still opens
-- **Status:** not implemented yet, #637 story 474
+- **Status:** native app only: implemented in [26b7d387](https://github.com/idvorkin/context-grabber/commit/26b7d387); verified by `ChatNewThreadUITests` (simulator: the mic's copyable line or a recording, whichever the simulator's permissions give, with nothing sent); declining on the phone not yet
 - **Issues:** [#637](https://github.com/idvorkin/context-grabber/issues/637)
 - **Spec:** [Chat with Larry in Grabber Native — A new chat by voice](../superpowers/specs/2026-10-25-native-chat-design.md)
 
