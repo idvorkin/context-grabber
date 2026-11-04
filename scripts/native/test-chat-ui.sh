@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The chat UI tests on the simulator (stories 262, 263, 301, 303, 306–309, 311–314, 316–319, 228, 500–506, 512–515; #536, #589, #592, #598, #599, #603, #629, #632, #637), with a fake Cockpit for the ones that send:
+# The chat UI tests on the simulator (stories 262, 263, 301, 303, 306–309, 311–314, 316–319, 228, 500–506, 512–515, 518–521; #536, #589, #592, #598, #599, #603, #629, #632, #637), with a fake Cockpit for the ones that send:
 # scripts/native/fake-cockpit.py on a local port, its POST /chat held a few seconds so a new chat's waiting state shows.
 # And scripts/native/fake-bridge.py for a live call the voice button must stand down for (GRABBER_FAKE_BRIDGE).
 # The tests read the address as GRABBER_FAKE_COCKPIT (xcodebuild passes TEST_RUNNER_* through to the runner).

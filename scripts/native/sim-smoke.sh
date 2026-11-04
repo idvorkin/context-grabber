@@ -514,7 +514,7 @@ pictured=$(jq -sr '[.[] | select(.type=="ui" and .action=="open_chat_image")] | 
 failed=$(jq -c 'select(.type=="error")' "$f")
 if [ "$pictured" -ge 1 ] && [ -z "$failed" ]; then ok "chat: a picture opened full size from the hook, no error events"
 else bad "chat: open_chat_image x$pictured, errors: $failed"; fi
-# Stories 500-503 (#629): the hold menu's choices tap themselves on Larry's newest; ChatReactionUITests holds it for real.
+# Stories 518-521 (#629): the hold menu's choices tap themselves on Larry's newest; ChatReactionUITests holds it for real.
 SIMCTL_CHILD_GRABBER_CHAT_URL="http://localhost:$CHAT_PORT" SIMCTL_CHILD_GRABBER_CHAT_HOLD=yes \
   SIMCTL_CHILD_GRABBER_LINK="grabbernative://chat?thread=igor2-88g.629" relaunch
 wait_jq 'select(.type=="chat" and .action=="sent" and .thread=="igor2-88g.629")' 20 || echo "      (timed out waiting for the Yes to send)"

@@ -1998,11 +1998,10 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ---
 
-### User Story 445:
-### User Story 500:
+### User Story 518:
 
 - **Summary:** Holding a message offers what I can do with it
-- **Status:** native app only: implemented in [47e0cb1](https://github.com/idvorkin/context-grabber/commit/47e0cb1); verified by `ChatReactionUITests` (simulator, fake Cockpit: all four on Larry's message, no *Yes* on mine); a picture-only message's menu not exercised on any rung; the feel of the hold on the phone and iPad, and links staying tappable, not yet
+- **Status:** native app only: implemented in [99cd3a0](https://github.com/idvorkin/context-grabber/commit/99cd3a0); verified by `ChatReactionUITests` (simulator, fake Cockpit: all four on Larry's message, no *Yes* on mine); a picture-only message's menu not exercised on any rung; the feel of the hold on the phone and iPad, and links staying tappable, not yet
 - **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -2019,10 +2018,10 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ---
 
-### User Story 501:
+### User Story 519:
 
 - **Summary:** Yes or No to Larry's newest message sends that one word
-- **Status:** native app only: implemented in [47e0cb1](https://github.com/idvorkin/context-grabber/commit/47e0cb1); verified by `ChatReactionTests` (host) and `ChatReactionUITests` (simulator: the fake's Larry repeats *Yes*); half-typed words staying in the bar and a *Yes* with no network follow from the code, not exercised on any rung; a real Larry waking on the phone not yet
+- **Status:** native app only: implemented in [99cd3a0](https://github.com/idvorkin/context-grabber/commit/99cd3a0); verified by `ChatReactionTests` (host) and `ChatReactionUITests` (simulator: the fake's Larry repeats *Yes*); half-typed words staying in the bar and a *Yes* with no network follow from the code, not exercised on any rung; a real Larry waking on the phone not yet
 - **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -2039,10 +2038,10 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ---
 
-### User Story 502:
+### User Story 520:
 
 - **Summary:** Yes or No to an older message says which message it answers
-- **Status:** native app only: implemented in [47e0cb1](https://github.com/idvorkin/context-grabber/commit/47e0cb1); verified by `ChatReactionTests` (host: the quote, its lines, the 280-character cut, a picture alone) and `ChatReactionUITests` (simulator: *No* on an older message reaches the fake under its quote); older because something newer still waits on the phone not exercised on any rung
+- **Status:** native app only: implemented in [99cd3a0](https://github.com/idvorkin/context-grabber/commit/99cd3a0); verified by `ChatReactionTests` (host: the quote, its lines, the 280-character cut, a picture alone) and `ChatReactionUITests` (simulator: *No* on an older message reaches the fake under its quote); older because something newer still waits on the phone not exercised on any rung
 - **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -2059,10 +2058,10 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ---
 
-### User Story 503:
+### User Story 521:
 
 - **Summary:** Quote in reply puts the message in the bar for me to answer
-- **Status:** native app only: implemented in [47e0cb1](https://github.com/idvorkin/context-grabber/commit/47e0cb1); verified by `ChatReactionTests` (host: after what the bar held, two quotes kept) and `ChatReactionUITests` (simulator: the bar filled, the keyboard up, nothing sent); a quote during a recording needs the phone's microphone, not yet
+- **Status:** native app only: implemented in [99cd3a0](https://github.com/idvorkin/context-grabber/commit/99cd3a0); verified by `ChatReactionTests` (host: after what the bar held, two quotes kept) and `ChatReactionUITests` (simulator: the bar filled, the keyboard up, nothing sent); a quote during a recording needs the phone's microphone, not yet
 - **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -2079,10 +2078,10 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ---
 
-### User Story 504:
+### User Story 522:
 
 - **Summary:** A Yes or No that can't be kept says why
-- **Status:** native app only: implemented in [47e0cb1](https://github.com/idvorkin/context-grabber/commit/47e0cb1); not verified on any rung: no hook makes the phone's store fail
+- **Status:** native app only: implemented in [99cd3a0](https://github.com/idvorkin/context-grabber/commit/99cd3a0); not verified on any rung: no hook makes the phone's store fail
 - **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 

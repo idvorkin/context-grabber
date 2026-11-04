@@ -633,7 +633,7 @@ private struct MessageBubble: View {
     .accessibilityIdentifier(message.fromIgor ? "chat-mine" : message.author == nil ? "chat-larry" : "chat-skill")
   }
 
-  /// Answering himself means nothing, and a picture alone has no words to quote or copy (story 500).
+  /// Answering himself means nothing, and a picture alone has no words to quote or copy (story 518).
   @ViewBuilder private var menu: some View {
     if !message.fromIgor {
       ForEach(ChatReaction.allCases, id: \.self) { reaction in
@@ -967,7 +967,7 @@ private struct ComposeBar: View {
     draft.text = words
   }
 
-  /// A recording writes over the bar from where it began, so it stops first, its words so far kept (story 503).
+  /// A recording writes over the bar from where it began, so it stops first, its words so far kept (story 521).
   private func take(quote message: ChatMessage) {
     takeWords()
     voice.sent(thread: thread, why: "quoted")

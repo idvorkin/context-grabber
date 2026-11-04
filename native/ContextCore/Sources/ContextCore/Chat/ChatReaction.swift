@@ -1,4 +1,4 @@
-//  Press and hold a message in Chat (#629, chat spec "Press and hold a message", stories 500-504): what Yes, No and
+//  Press and hold a message in Chat (#629, chat spec "Press and hold a message", stories 518-522): what Yes, No and
 //  Quote in reply write. The Cockpit has no reactions, so a reaction is an ordinary message and a quote is its text.
 
 import Foundation

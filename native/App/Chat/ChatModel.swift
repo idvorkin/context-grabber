@@ -159,7 +159,7 @@ final class ChatModel: ObservableObject {
     log.event("error", fields.merging(["where": "chat_attach"]) { _, new in new })
   }
 
-  /// Story 504: a Yes or No the phone could not keep. Which one and where, never the words.
+  /// Story 522: a Yes or No the phone could not keep. Which one and where, never the words.
   func logReactionFailure(_ error: Error, reaction: ChatReaction, thread: String, message: String) {
     log.event(
       "error",
