@@ -77,9 +77,10 @@ public struct BoardIndex: Codable, Equatable, Sendable {
   public static func editable(_ board: BoardEntry, on device: String) -> Bool { board.device == device }
 
   /// Every board opens on paper (Igor, 2026-11-07: the old canvas is gone). Only a board made on paper, on the device
-  /// that made it, can be drawn on; the rest are look-only.
-  public static func drawable(_ board: BoardEntry, on device: String) -> Bool {
-    board.onPages == true && editable(board, on: device)
+  /// that made it, can be drawn on; the rest are look-only. Nothing is drawn on a phone, its own boards included
+  /// (story 746; Igor, 2026-11-10: "we can't do hand drawing").
+  public static func drawable(_ board: BoardEntry, on device: String, onPhone: Bool = false) -> Bool {
+    !onPhone && board.onPages == true && editable(board, on: device)
   }
 
   /// Drawn on the canvas that's gone: its ink sits where that canvas put it, so it's moved onto pages to be shown, and
@@ -87,7 +88,8 @@ public struct BoardIndex: Codable, Equatable, Sendable {
   public static func drawnOnTheOldCanvas(_ board: BoardEntry) -> Bool { board.onPages != true }
 
   /// What the bar says on a board that can't be drawn on here; nil on one that can.
-  public static func lookOnlyNote(_ board: BoardEntry, on device: String) -> String? {
+  public static func lookOnlyNote(_ board: BoardEntry, on device: String, onPhone: Bool = false) -> String? {
+    if onPhone { return "Look only on iPhone: draw on the iPad" }
     if drawable(board, on: device) { return nil }
     if !editable(board, on: device) { return "Drawn on \(board.deviceName): look only" }
     return "Drawn on the old canvas: look only"

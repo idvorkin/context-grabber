@@ -386,6 +386,18 @@ final class BoardIndexTests: XCTestCase {
     XCTAssertEqual(BoardIndex.lookOnlyNote(theirsOld, on: "ipad"), "Drawn on iPhone: look only")
   }
 
+  /// Story 746: on a phone every board is look-only, its own on paper too, and the bar says to draw on the iPad.
+  func testNothingIsDrawnOnAPhone() {
+    var index = BoardIndex()
+    let mine = index.add(id: "mine", at: aDate, device: "iphone", deviceName: "iPhone", onPages: true)
+    let ipads = index.add(id: "ipads", at: aDate, device: "ipad", deviceName: "iPad", onPages: true)
+    XCTAssertTrue(BoardIndex.drawable(mine, on: "iphone"), "the same board, off a phone")
+    XCTAssertFalse(BoardIndex.drawable(mine, on: "iphone", onPhone: true))
+    XCTAssertFalse(BoardIndex.drawable(ipads, on: "iphone", onPhone: true))
+    XCTAssertEqual(BoardIndex.lookOnlyNote(mine, on: "iphone", onPhone: true), "Look only on iPhone: draw on the iPad")
+    XCTAssertEqual(BoardIndex.lookOnlyNote(ipads, on: "iphone", onPhone: true), "Look only on iPhone: draw on the iPad")
+  }
+
   func testAListFromBeforePaperStillReadsAndNoBoardInItIsOnPaper() throws {
     let board = #"{"id":"a","title":"T","created":1,"updated":2,"strokes":1,"device":"ipad","deviceName":"iPad"}"#
     let old = #"{"boards":["# + board + #"],"deleted":[]}"#

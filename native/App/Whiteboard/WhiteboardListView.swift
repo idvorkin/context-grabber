@@ -54,13 +54,16 @@ struct WhiteboardListView: View {
         ToolbarItem(placement: .topBarLeading) {
           Button("Done", action: onDone).accessibilityIdentifier("whiteboard-done")
         }
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            path.append(store.create())
-          } label: {
-            Label("New board", systemImage: "plus")
+        // Story 746: an iPhone only looks at boards.
+        if !store.onPhone {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button {
+              path.append(store.create())
+            } label: {
+              Label("New board", systemImage: "plus")
+            }
+            .accessibilityIdentifier("whiteboard-new")
           }
-          .accessibilityIdentifier("whiteboard-new")
         }
       }
       .navigationDestination(for: String.self) { id in
