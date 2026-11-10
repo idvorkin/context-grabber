@@ -871,7 +871,13 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
           "action": "paper_redraw_nudge", "board": self.model.board.id, "zoom": zoom, "to": nudged,
           "range_lo": range.lowerBound, "range_hi": range.upperBound, "visible": self.rect(place), "skipped": centred,
         ])
-      if centred { return }
+      if centred {
+        // #833: centred, a point down and back instead, which draws the missed tile without setting the zoom.
+        self.paper.contentVisibleFrame = place.offsetBy(dx: 0, dy: 1)
+        try? await Task.sleep(for: .seconds(0.05))
+        if self.touchesDown == 0 { self.paper.contentVisibleFrame = place }
+        return
+      }
       config.zoomScale = nudged
       try? await Task.sleep(for: .seconds(0.05))
       config.zoomScale = zoom
