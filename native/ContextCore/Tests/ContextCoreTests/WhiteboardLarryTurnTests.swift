@@ -102,10 +102,23 @@ final class WhiteboardLarryTurnTests: XCTestCase {
     guard case .send(let words) = turn.paused(version: 1, words: "draw a box", now: at(0)) else {
       return XCTFail("the first pause sends")
     }
+    let sent = turn.state
     _ = turn.paused(version: 1, words: "now", now: at(1))
-    turn.failed(words: words)
+    turn.failed(sent, words: words)
     XCTAssertFalse(turn.looking)
     XCTAssertEqual(turn.paused(version: 2, words: nil, now: at(5)), .send(words: "draw a box now"))
+  }
+
+  func testAnOlderPictureFailingLeavesANewerTurnOut() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.paused(version: 1, words: nil, now: at(0))
+    let first = turn.state
+    XCTAssertNil(turn.tapped(version: 2, now: at(4)))
+    turn.failed(first, words: "draw a box")
+    XCTAssertTrue(turn.looking, "the tapped picture's answer is still out")
+    XCTAssertEqual(turn.state, .awaiting(since: at(4), sent: 2))
+    XCTAssertEqual(turn.paused(version: 3, words: nil, now: at(6)), .held, "one turn out at a time")
+    XCTAssertEqual(turn.replied(version: 3, now: at(60)), .send(words: "draw a box"))
   }
 
   func testGhostsOffForgetsWhatWasWaiting() {

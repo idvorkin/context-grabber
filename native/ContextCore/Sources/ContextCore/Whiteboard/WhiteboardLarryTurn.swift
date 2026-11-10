@@ -66,9 +66,10 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
     return words
   }
 
-  /// The picture didn't reach him: no turn is out, and its words wait for the next one.
-  public mutating func failed(words: String?) {
-    state = .idle
+  /// The picture sent as `turn` didn't reach him: its words wait for the next one, and the turn is free unless a newer
+  /// one has gone since.
+  public mutating func failed(_ turn: State, words: String?) {
+    if state == turn { state = .idle }
     if let words { queued = queued.map { "\(words) \($0)" } ?? words }
   }
 
