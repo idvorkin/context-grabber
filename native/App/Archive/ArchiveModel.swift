@@ -13,13 +13,6 @@ import UIKit
 
 @MainActor
 final class ArchiveModel: ObservableObject {
-  static let lastRunKey = "archive_last_run"
-  /// Story 304: how the last run ended (ArchiveOutcome JSON), when a run last caught every stream up, when one last
-  /// made progress (ArchiveOutcome.madeProgress), and when the first run started.
-  static let lastOutcomeKey = "archive_last_outcome"
-  static let lastCaughtUpKey = "archive_last_caught_up"
-  static let lastProgressKey = "archive_last_progress"
-  static let firstRunKey = "archive_first_run"
   static let deviceKey = "archive_device_id"
   /// Pages per stream in a refresh or foreground run (seconds of background time), and in the end-of-day
   /// processing task (minutes): a backfill of years of heart rate takes a few of each.
@@ -82,12 +75,20 @@ final class ArchiveModel: ObservableObject {
     runIfDue(reason: "launch")
   }
 
-  /// A run once the interval has passed since the last one; nothing otherwise.
+  /// A run when the last counted one says so (spec "When a run is due"): never run, four hours after one that got
+  /// somewhere, at once after one that never reached the Cockpit.
   func runIfDue(reason: String) {
-    let last = database.setting(Self.lastRunKey).flatMap(Double.init).map { Date(timeIntervalSince1970: $0 / 1000) }
-    guard ArchiveSchedule.isDue(lastRun: last, now: Date()) else { return }
+    var state = ArchiveState.never
+    do {
+      state = try ledger?.state() ?? .never
+    } catch {
+      log.event("error", ["where": "archive_state", "message": "\(error)"])
+    }
+    guard ArchiveSchedule.isDue(state, now: Date()) else { return }
     run(reason: reason)
   }
+
+  private var ledger: ArchiveLedger? { database.settings.map(ArchiveLedger.init(settings:)) }
 
   /// A run now, whatever the clock says (a background task, the hook); the one in flight is shared.
   @discardableResult
@@ -157,93 +158,44 @@ final class ArchiveModel: ObservableObject {
     #endif
   }
 
+  /// The run itself is ArchiveRun's (host-tested); this supplies the phone's streams, its lock and HealthKit.
   private func perform(reason: String, maxPages: Int) async {
     guard let cockpit else {
       let place = ChatCockpit.isMac ? "a Mac build" : "the simulator"
       log.event("archive", ["action": "skipped", "why": reason, "reason": "no archive URL on \(place)"])
       return
     }
-    guard let cursors = database.archiveCursors else {
+    guard let cursors = database.archiveCursors, let ledger else {
       log.event("error", ["where": "archive_run", "message": "no database"])
       return
     }
-    let started = Date()
     var sources: [ArchiveSource] = []
     if let locations = database.locations { sources.append(LocationArchiveSource(store: locations)) }
     // Story 271: the strip's days, every device's taps merged as the strip shows them; readable while locked.
     if let strip = database.dailyStrip {
       sources += DailyItem.allCases.map { StripArchiveSource(strip: strip, item: $0) as ArchiveSource }
     }
-    var locked = !UIApplication.shared.isProtectedDataAvailable
-    if locked {
-      log.event("archive", ["action": "health_skipped", "why": reason, "reason": "phone locked"])
-    } else {
-      sources += await healthSources()
-    }
     var uploader = ArchiveUploader(cursors: cursors, cockpit: cockpit, deviceId: deviceId) {
       try await URLSession.shared.data(for: $0)
     }
     uploader.maxPages = maxPages
-    var pages = 0
-    var records = 0
-    var inserted = 0
-    var duplicate = 0
-    var stopped: [String: String] = [:]
-    var refused: [String: Int] = [:]
-    for source in sources {
-      if cancelled {
-        stopped[source.stream] = "cancelled"
-        break
-      }
-      let report = await uploader.upload(source) { [log] type, fields in
-        log.event(type, fields.merging(["why": reason]) { $1 })
-      }
-      pages += report.pages
-      records += report.records
-      inserted += report.inserted
-      duplicate += report.duplicate
-      if let why = report.stopped { stopped[source.stream] = why }
-      if let status = report.refusedStatus { refused[source.stream] = status }
-      // The Cockpit is away: every stream after this one would fail the same way.
-      if report.stopped == "retry" { break }
-      if report.stopped == "read" && !UIApplication.shared.isProtectedDataAvailable {
-        locked = true
-        log.event("archive", ["action": "health_skipped", "why": reason, "reason": "phone locked"])
-        break
-      }
-    }
-    let startedMs = Int64(started.timeIntervalSince1970 * 1000)
-    if !cancelled && !locked {
-      database.setSetting(Self.lastRunKey, String(startedMs))
-    }
-    // Story 304: the Settings line, from runs that could read everything. Most background runs find the phone
-    // locked and skip Health; recording those would read "Behind" until the next unlocked run, so they say nothing.
-    // By design a locked run discards its whole outcome, the trail's and the strip's streams with it, even a
-    // refusal or a Cockpit out of reach: the next unlocked run, at the latest the next foreground, says it.
-    if !locked {
-      let outcome = ArchiveOutcome(at: startedMs, stopped: stopped, refused: refused)
-      database.setSetting(Self.lastOutcomeKey, outcome.json)
-      if database.setting(Self.firstRunKey) == nil { database.setSetting(Self.firstRunKey, String(startedMs)) }
-      if outcome.caughtUp { database.setSetting(Self.lastCaughtUpKey, String(startedMs)) }
-      if outcome.madeProgress { database.setSetting(Self.lastProgressKey, String(startedMs)) }
-    }
+    let run = ArchiveRun(
+      reason: reason, sources: sources, healthSources: { [weak self] in await self?.healthSources() ?? [] },
+      isUnlocked: { UIApplication.shared.isProtectedDataAvailable },
+      isCancelled: { [weak self] in self?.cancelled ?? true }, ledger: ledger, uploader: uploader)
+    _ = await run.perform { [log] type, fields in log.event(type, fields) }
     lastRunEnded = Date()
-    log.event(
-      "archive_run",
-      [
-        "why": reason, "streams": sources.count, "pages": pages, "records": records, "inserted": inserted,
-        "duplicate": duplicate, "stopped": stopped, "ms": Int(Date().timeIntervalSince(started) * 1000),
-      ])
   }
 
   /// Story 304: the archive's lines for Settings, from the last run's outcome.
   func statusLines(now: Date = Date()) -> [ArchiveStatus.Line] {
-    ArchiveStatus.lines(
-      sends: cockpit != nil, outcome: ArchiveOutcome(json: database.setting(Self.lastOutcomeKey)),
-      lastCaughtUp: database.setting(Self.lastCaughtUpKey).flatMap { Int64($0) },
-      lastProgress: database.setting(Self.lastProgressKey).flatMap { Int64($0) },
-      firstRun: database.setting(Self.firstRunKey).flatMap { Int64($0) },
-      now: Int64(now.timeIntervalSince1970 * 1000))
+    do {
+      return try ledger?.statusLines(sends: cockpit != nil, now: Int64(now.timeIntervalSince1970 * 1000))
+        ?? ArchiveStatus.lines(sends: cockpit != nil, outcome: nil, lastCaughtUp: nil, now: 0)
+    } catch {
+      log.event("error", ["where": "archive_status", "message": "\(error)"])
+      return ArchiveStatus.lines(sends: cockpit != nil, outcome: nil, lastCaughtUp: nil, now: 0)
+    }
   }
 
   /// One stream per type the mirror reads, only once Health has been asked about all of them (Today asks; an

@@ -21,7 +21,7 @@ final class ArchiveStatusTests: XCTestCase {
   }
 
   func testTheCockpitOutOfReachNamesTheLastTimeItCaughtUp() {
-    let outcome = ArchiveOutcome(at: now - 10 * 60_000, stopped: [ArchiveStream.points: "retry"])
+    let outcome = ArchiveOutcome(at: now - 10 * 60_000, stopped: [ArchiveStream.points: .cockpitAway])
     let lines = ArchiveStatus.lines(sends: true, outcome: outcome, lastCaughtUp: now - 50 * hour, now: now)
     XCTAssertEqual(
       texts(lines),
@@ -38,7 +38,7 @@ final class ArchiveStatusTests: XCTestCase {
   func testARefusedStreamIsRedWithItsStatus() {
     let outcome = ArchiveOutcome(
       at: now - hour,
-      stopped: ["strip.balloons": "refused", "health.HKQuantityTypeIdentifierHeartRate": "pages"],
+      stopped: ["strip.balloons": .refused, "health.HKQuantityTypeIdentifierHeartRate": .pages],
       refused: ["strip.balloons": 404])
     let lines = ArchiveStatus.lines(
       sends: true, outcome: outcome, lastCaughtUp: nil, firstRun: now - 30 * hour, now: now)
@@ -57,7 +57,7 @@ final class ArchiveStatusTests: XCTestCase {
   func testABackfillIsNeverRed() {
     let backfill = ArchiveOutcome(
       at: now - hour,
-      stopped: ["health.HKQuantityTypeIdentifierHeartRate": "pages", ArchiveStream.points: "cancelled"])
+      stopped: ["health.HKQuantityTypeIdentifierHeartRate": .pages, ArchiveStream.points: .cancelled])
     XCTAssertTrue(backfill.madeProgress)
     let first = ArchiveStatus.lines(
       sends: true, outcome: backfill, lastCaughtUp: nil, lastProgress: nil, firstRun: now - 3 * 24 * hour, now: now)
@@ -69,7 +69,7 @@ final class ArchiveStatusTests: XCTestCase {
 
   /// No progress: red a day after the last run that made any, or a day after the first run when none ever has.
   func testNoProgressForADayIsRed() {
-    let away = ArchiveOutcome(at: now - 10 * 60_000, stopped: [ArchiveStream.points: "retry"])
+    let away = ArchiveOutcome(at: now - 10 * 60_000, stopped: [ArchiveStream.points: .cockpitAway])
     XCTAssertFalse(away.madeProgress)
     func red(progress: Int64?, firstRun: Int64?) -> Bool {
       ArchiveStatus.lines(
@@ -80,8 +80,8 @@ final class ArchiveStatusTests: XCTestCase {
     XCTAssertFalse(red(progress: nil, firstRun: now - 2 * hour), "the first day of a Cockpit never reached")
     XCTAssertTrue(red(progress: nil, firstRun: now - 30 * hour))
     XCTAssertFalse(red(progress: nil, firstRun: nil), "the first run")
-    XCTAssertFalse(ArchiveOutcome(at: 0, stopped: ["a": "refused", "b": "pages"]).madeProgress)
-    XCTAssertFalse(ArchiveOutcome(at: 0, stopped: ["a": "read"]).madeProgress)
+    XCTAssertFalse(ArchiveOutcome(at: 0, stopped: ["a": .refused, "b": .pages]).madeProgress)
+    XCTAssertFalse(ArchiveOutcome(at: 0, stopped: ["a": .unreadable]).madeProgress)
   }
 
   func testNotRunYetAndNoArchive() {
@@ -103,9 +103,25 @@ final class ArchiveStatusTests: XCTestCase {
   }
 
   func testTheOutcomeRoundTripsThroughItsSetting() {
-    let outcome = ArchiveOutcome(at: 5, stopped: ["a": "refused"], refused: ["a": 413])
+    let outcome = ArchiveOutcome(at: 5, stopped: ["a": .refused], refused: ["a": 413])
     XCTAssertEqual(ArchiveOutcome(json: outcome.json), outcome)
     XCTAssertNil(ArchiveOutcome(json: nil))
     XCTAssertNil(ArchiveOutcome(json: "not json"))
+  }
+
+  /// The phone has outcomes stored with the stop reasons as words; they read back, and are written back the same.
+  func testAStoredOutcomeReadsBackWithItsWords() throws {
+    let stored =
+      #"{"at": 5, "stopped": {"a": "retry", "b": "read", "c": "pages", "d": "cancelled", "e": "refused", "f": "new"}, "refused": {"e": 404}}"#
+    let outcome = try XCTUnwrap(ArchiveOutcome(json: stored))
+    XCTAssertEqual(
+      outcome.stopped, ["a": .cockpitAway, "b": .unreadable, "c": .pages, "d": .cancelled, "e": .refused],
+      "a reason this build does not know is dropped, not the outcome")
+    XCTAssertEqual(outcome.refused, ["e": 404])
+    let written = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: Data(outcome.json.utf8)) as? [String: Any])
+    XCTAssertEqual((written["stopped"] as? [String: String])?["a"], "retry")
+    XCTAssertEqual((written["stopped"] as? [String: String])?["b"], "read")
+    XCTAssertEqual(ArchiveOutcome(json: #"{"at": 9}"#), ArchiveOutcome(at: 9))
   }
 }

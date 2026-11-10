@@ -55,10 +55,13 @@ public struct CallSnapshot: Equatable, Sendable {
   public var redialing = false
   public var captions: [CaptionRow] = []
   public var muted = false
-  /// A problem that did not end the call — the mic not reaching Larry, a bridge error.
-  public var problem: String?
+  /// Each problem that did not end the call, in its own slot.
+  public var problems = CallProblems()
 
   public init() {}
+
+  /// The problem line: the worst one still standing (the mic not reaching Larry, a bridge error, …). Computed.
+  public var problem: String? { problems.line }
 
   public var isActive: Bool { state == .connecting || state == .live }
 
@@ -198,10 +201,10 @@ public final class CallSession {
   private var lastRxAt = 0.0
   private var lastTxAt = 0.0
   private var statsTimer: CallTimer?
-  private var audioProblem: String?
-  private var bridgeProblem: String?
   private var zeroRun = 0
-  private var zeroRearmed = false
+  /// The call's one mic restart, shared by the three watches that may ask for it: no first buffer, a run of zeros,
+  /// and a missed mic_ack. Whichever asks after it is spent reports instead (state-machine audit, 2026-11-10).
+  private var micRestarted = false
   /// #364: whether any mic buffer this call carried sound, so a zero-run heal says if the mic was ever live.
   private var micHeard = false
   /// #577: a zero-run rearm is waiting for Larry's queued words to play; logged once per wait.
@@ -212,7 +215,6 @@ public final class CallSession {
   private var firstFrameTimer: CallTimer?
   private var micOpenedAt = 0.0
   private var firstFrameDeadline = MicStartupDeadline()
-  private var audioReset = false
   /// One automatic redial per dead burst; cleared by a call whose mic delivers.
   private var redialed = false
   /// #440: when the phone's network last changed under this call (0: not since it started).
@@ -222,8 +224,6 @@ public final class CallSession {
   private var handoffRedialed = false
   /// The session's own redial is calling `start`; a start from anywhere else is a new call (Fable on #440).
   private var redialStart = false
-  /// #441, story 208: the line a mic that failed to open put up, cleared by its first buffer.
-  private var micOpenProblem: String?
   private var micBuffers = 0
   private var nextRowId = 1
   private var igorFinal = ""
@@ -237,7 +237,6 @@ public final class CallSession {
   private var toolRowId: Int?
   private var probeToken = 0
   private var probeSent = false
-  private var rearmed = false
   private var probeTimer: CallTimer?
   private var socketOpen = false
   /// The last fix the app gave; rides the start frame, and a `location` frame when it changes (#107).
@@ -387,7 +386,7 @@ public final class CallSession {
       log("call_rx", ["action": "first_audio", "bytes": data.count])
       handoffRedialed = false  // this call carried audio; the next handoff may redial again
     }
-    if snapshot.problem == CallWatchdog.audioNotArriving { setProblem(nil) }
+    setProblems { $0.audioNotArriving = false }
   }
 
   private func onSocketGone(_ why: String) {
@@ -513,8 +512,7 @@ public final class CallSession {
       _ = addRow(.note, "warning: \(message)")
     case .error(let message):
       log("call_bridge", ["kind": "error", "message": message])
-      bridgeProblem = message
-      setProblem(message)
+      setProblems { $0.bridge = message }
     case .vendorClosed(let kind, let message):
       log("call_bridge", ["kind": "vendor_closed", "vendor_kind": kind, "message": message])
       finish(message.isEmpty ? (kind == "quota" ? "vendor quota exhausted" : "vendor hung up") : message, badly: true)
@@ -546,9 +544,7 @@ public final class CallSession {
         // The call goes on — Larry may still be heard — but say so. #441, story 208: a mic that failed to open is
         // one that never delivers, so the same reset-then-redial watch runs from here.
         self.log("call_mic", ["action": "open", "ok": false, "message": describe(error)])
-        let problem = "microphone failed: \(describe(error))"
-        self.micOpenProblem = problem
-        self.setProblem(problem)
+        self.setProblems { $0.micOpenFailed = "microphone failed: \(describe(error))" }
         self.armFirstFrameWatch()
         return
       }
@@ -575,11 +571,7 @@ public final class CallSession {
         ])
       let absent = CallWatchdog.audioAbsent(
         now: self.deps.scheduler.now, lastTextAt: self.lastTextAt, lastAudioAt: self.lastAudioAt)
-      if absent, self.snapshot.problem == nil {
-        self.setProblem(CallWatchdog.audioNotArriving)
-      } else if !absent, self.snapshot.problem == CallWatchdog.audioNotArriving {
-        self.setProblem(nil)
-      }
+      self.setProblems { $0.audioNotArriving = absent }
       self.scheduleStats()
     }
   }
@@ -612,8 +604,8 @@ public final class CallSession {
         return
       }
     }
-    if !audioReset {
-      audioReset = true
+    if !micRestarted {
+      micRestarted = true
       log(
         "call_heal",
         [
@@ -648,7 +640,7 @@ public final class CallSession {
       return
     }
     log("call_heal", ["action": "give_up", "why": "still no mic buffer after the redial"])
-    setProblem(Self.micSilent)
+    setProblems { $0.micSilent = true }
   }
 
   private func onMicBuffer(_ samples: [Float], _ sampleRate: Double) {
@@ -658,14 +650,14 @@ public final class CallSession {
       firstFrameTimer?.cancel()
       firstFrameTimer = nil
       redialed = false  // this burst delivered; the next dead call may redial again
-      if let p = micOpenProblem {
-        micOpenProblem = nil
-        if snapshot.problem == p { setProblem(nil) }
-      }
+      setProblems { $0.micOpenFailed = nil }
     }
     // Heard even while muted: "is my mic working" and "am I muted" are different questions.
     onLevel?(PCM.micLevel(samples))
+    let restartWasSpent = micRestarted
     watchForZeros(samples)
+    // This buffer is the old graph's: the one that made the zero watch restart the mic sends no probe.
+    let restartedNow = !restartWasSpent && micRestarted
     if snapshot.muted { return }
     socket?.send(data: PCM.encodeMicFrame(samples, sampleRate: sampleRate))
     lastTxAt = deps.scheduler.now
@@ -673,7 +665,7 @@ public final class CallSession {
     if framesSent == 1 {
       log("call_mic", ["action": "first_frame", "samples": samples.count, "rate": sampleRate])
     }
-    if !probeSent {
+    if !probeSent, !restartedNow {
       probeSent = true
       probeToken += 1
       send(CallProtocol.micProbeFrame(token: probeToken), frame: "mic_probe", ["token": probeToken])
@@ -701,7 +693,10 @@ public final class CallSession {
       micHeard = true
       rearmHeld = false
       zeroRun = 0
-      if snapshot.problem == Self.micSilent { setProblem(nil) }
+      setProblems {
+        $0.micSilent = false
+        $0.micRestartFailed = nil
+      }
       return
     }
     zeroRun += 1
@@ -717,15 +712,15 @@ public final class CallSession {
         log(
           "call_mic",
           [
-            "action": zeroRearmed ? "silence_held" : "rearm_held", "why": "Larry's audio is still queued",
+            "action": micRestarted ? "silence_held" : "rearm_held", "why": "Larry's audio is still queued",
             "buffers": micBuffers,
           ].merging(playbackFields()) { mine, _ in mine })
       }
       return
     }
     rearmHeld = false
-    if !zeroRearmed {
-      zeroRearmed = true
+    if !micRestarted {
+      micRestarted = true
       zeroRun = 0
       log(
         "call_heal",
@@ -733,10 +728,12 @@ public final class CallSession {
           "action": "rearm_mic", "why": "\(Self.zeroBuffersBeforeRearm) buffers of exact zeros", "buffers": micBuffers,
           "heard_before": micHeard,
         ].merging(playbackFields()) { mine, _ in mine })
+      restartProbe()
       let call = generation
       deps.audio.restartMic { [weak self] error in
         // Codex on #365: a hang-up keeps the generation, so a rebuild that finishes after it is not this call's.
         guard let self, call == self.generation, self.snapshot.state == .live else { return }
+        self.probeSent = false  // the rebuilt graph's next buffer asks the bridge about it
         // #364: the queue again once the engine is back, so what the restart dropped is the difference.
         guard let error else {
           // Codex on #365: armed once the rebuilt graph is up, so a buffer the old tap had queued cannot claim it.
@@ -746,13 +743,13 @@ public final class CallSession {
           return
         }
         self.log("call_heal", ["action": "rearm_mic", "ok": false, "message": describe(error)])
-        self.setProblem("microphone failed: \(describe(error))")
+        self.setProblems { $0.micRestartFailed = "microphone failed: \(describe(error))" }
       }
       return
     }
-    guard snapshot.problem != Self.micSilent else { return }
-    log("call_mic", ["action": "zeros", "why": "still exact zeros after the re-arm"])
-    setProblem(Self.micSilent)
+    guard !snapshot.problems.micSilent else { return }
+    log("call_mic", ["action": "zeros", "why": "still exact zeros after the call's one restart"])
+    setProblems { $0.micSilent = true }
   }
 
   private func onProbeMissed() {
@@ -761,12 +758,12 @@ public final class CallSession {
     log(
       "call_heal",
       [
-        "action": rearmed ? "mic_not_reaching" : "rearm_mic", "why": "mic_ack missed", "token": probeToken,
+        "action": micRestarted ? "mic_not_reaching" : "rearm_mic", "why": "mic_ack missed", "token": probeToken,
         "mic_frames": framesSent, "buffers": micBuffers,
       ])
-    if !rearmed {
+    if !micRestarted {
       // Once. Two silent capture graphs in a row is a fact, not a hiccup.
-      rearmed = true
+      micRestarted = true
       probeSent = false
       let call = generation
       deps.audio.restartMic { [weak self] error in
@@ -777,37 +774,44 @@ public final class CallSession {
           return
         }
         self.log("call_heal", ["action": "rearm_mic", "ok": false, "message": describe(error)])
-        self.setProblem("microphone failed: \(describe(error))")
+        self.setProblems { $0.micRestartFailed = "microphone failed: \(describe(error))" }
       }
       return
     }
     sendDiagnostics(why: "mic_ack timeout")
-    setProblem(Self.micNotReaching)
+    setProblems { $0.micNotReaching = true }
   }
 
   private func clearProbe() {
     probeTimer?.cancel()
     probeTimer = nil
-    if snapshot.problem == Self.micNotReaching { setProblem(nil) }
+    setProblems { $0.micNotReaching = false }
+  }
+
+  /// A mic restart: the waiting probe asked about the graph being torn down. It is dropped, and no new one goes until
+  /// the restart finishes, so the next probe asks about the rebuilt graph, not a buffer the old tap had queued.
+  private func restartProbe() {
+    probeTimer?.cancel()
+    probeTimer = nil
+    probeSent = true
   }
 
   // MARK: - the audio layer's verdict
 
-  /// Shown while it stands; when it lifts, the bridge's own error (if any) comes back.
+  /// Its own slot: shown while it stands, and when it lifts the next problem still standing shows.
   private func onAudioHealth(_ problem: String?) {
-    let previous = audioProblem
-    audioProblem = problem
-    if let problem {
-      setProblem(problem)
-    } else if let previous, snapshot.problem == previous {
-      setProblem(bridgeProblem)
-    }
+    setProblems { $0.audio = problem }
   }
 
-  private func setProblem(_ problem: String?) {
-    guard snapshot.problem != problem else { return }
-    log("call_problem", ["problem": problem ?? ""])
-    update { $0.problem = problem }
+  /// Every problem writer goes through here and touches only its own slot; the line is recomputed, and logged
+  /// when the worst standing problem changes.
+  private func setProblems(_ change: (inout CallProblems) -> Void) {
+    var next = snapshot.problems
+    change(&next)
+    guard next != snapshot.problems else { return }
+    let line = next.line
+    if line != snapshot.problem { log("call_problem", ["problem": line ?? ""]) }
+    update { $0.problems = next }
   }
 
   // MARK: - captions
@@ -933,7 +937,6 @@ public final class CallSession {
     larryRowId = nil
     toolRowId = nil
     probeSent = false
-    rearmed = false
     probeTimer?.cancel()
     probeTimer = nil
     socketOpen = false
@@ -946,19 +949,15 @@ public final class CallSession {
     cutOffPending = false
     lastRxAt = 0
     lastTxAt = 0
-    audioProblem = nil
-    bridgeProblem = nil
     statsTimer?.cancel()
     statsTimer = nil
     zeroRun = 0
-    zeroRearmed = false
+    micRestarted = false
     micHeard = false
     rearmHeld = false
     networkChangedAt = 0
     awaitingSoundAfterRearm = false
     micBuffers = 0
-    audioReset = false
-    micOpenProblem = nil
     firstFrameTimer?.cancel()
     firstFrameTimer = nil
   }

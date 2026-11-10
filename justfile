@@ -66,8 +66,9 @@ native-test-host:
     # Where a UI test run's time went, from a real run's log.
     scripts/native/test-ui-timings.sh
 
-# The Linux rung, on a Linux box (scripts/native/test-linux.sh says what it needs): ContextCore's portable tests run on
-# Linux, then the package and its tests cross-built for macOS, iOS and the simulator with a Darwin Swift SDK.
+# Rung 1L, on a Linux box (scripts/native/test-linux.sh says what it needs): ContextCore's portable tests run on Linux,
+# the package and its tests cross-built for macOS, iOS and the simulator with a Darwin Swift SDK, the app's sources
+# (App, widgets, share extension, UI tests) compiled for iOS, and the portable script checks.
 test-linux:
     scripts/native/test-linux.sh
 

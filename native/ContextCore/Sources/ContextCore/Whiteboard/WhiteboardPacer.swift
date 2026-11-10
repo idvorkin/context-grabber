@@ -4,6 +4,9 @@
 //  pause.
 
 public struct WhiteboardPacer: Sendable {
+  /// How long the Pencil rests before Claude is asked: half a second since 2026-11-10 (story 660; 1 s before).
+  public static let pause: Duration = .milliseconds(500)
+
   /// Bumped when Igor sends Claude's turn away (a dismissal, Ghosts off): an answer asked under an older one is stale.
   public private(set) var generation = 0
   private var pausing = false

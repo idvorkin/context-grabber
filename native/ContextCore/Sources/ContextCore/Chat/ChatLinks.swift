@@ -8,6 +8,8 @@ public struct ChatLink: Equatable, Sendable, Identifiable {
     case pullRequest(repo: String, number: Int)
     case gist
     case web
+    /// A thread on the Cockpit, an Inbox question being one (story 744): its Cockpit link or `larry://inbox/<key>`.
+    case inbox(thread: String)
 
     /// The session log's name for it; never the link itself.
     public var logName: String {
@@ -15,6 +17,7 @@ public struct ChatLink: Equatable, Sendable, Identifiable {
       case .pullRequest: return "pr"
       case .gist: return "gist"
       case .web: return "web"
+      case .inbox: return "inbox"
       }
     }
   }
@@ -56,13 +59,20 @@ public enum ChatLinks {
   }
 
   private static func found(in text: String, _ finder: Finder) -> [ChatLink] {
-    finder.written(in: text).compactMap { match in
-      let written = trimmed(match)
+    located(in: text, finder).map(\.link)
+  }
+
+  /// Each link with where it is written in `text`, its sentence punctuation left outside (`trimmed`).
+  static func located(in text: String, _ finder: Finder) -> [(range: Range<String.Index>, link: ChatLink)] {
+    finder.ranges(in: text).compactMap { match in
+      let written = trimmed(String(text[match]))
       let lower = written.lowercased()
-      guard lower.hasPrefix("https://") || lower.hasPrefix("http://"), let url = URL(string: written),
+      guard lower.hasPrefix("https://") || lower.hasPrefix("http://") || lower.hasPrefix(ChatCockpitLink.prefix),
+        let url = URL(string: written),
         let host = url.host?.lowercased(), !host.isEmpty
       else { return nil }
-      return link(url, host: host)
+      let end = text.index(match.lowerBound, offsetBy: written.count)
+      return (range: match.lowerBound..<end, link: link(url, host: host))
     }
   }
 
@@ -81,7 +91,7 @@ public enum ChatLinks {
 
   #if canImport(Darwin)
     /// What NSDataDetector calls a link, as written.
-    private struct Finder {
+    struct Finder {
       let detector: NSDataDetector
 
       init?() {
@@ -91,11 +101,13 @@ public enum ChatLinks {
         self.detector = detector
       }
 
-      func written(in text: String) -> [String] {
-        let ns = text as NSString
-        return detector.matches(in: text, range: NSRange(location: 0, length: ns.length)).map {
-          ns.substring(with: $0.range)
-        }
+      /// The detector's links, and each `larry://` link, which it does not know (story 744).
+      func ranges(in text: String) -> [Range<String.Index>] {
+        let all = NSRange(location: 0, length: (text as NSString).length)
+        let larry = ChatLinks.schemeRanges(in: text, [ChatCockpitLink.prefix])
+        let found = detector.matches(in: text, range: all).compactMap { Range($0.range, in: text) }
+          .filter { match in !larry.contains { $0.overlaps(match) } }
+        return (found + larry).sorted { $0.lowerBound < $1.lowerBound }
       }
     }
   #else
@@ -104,36 +116,40 @@ public enum ChatLinks {
     /// sentence, as it does for the detector. The same tests run on both, but only the Mac's say the app is right.
     /// ponytail: a link the detector finds without a scheme never counts anyway; a link with a space in it would need
     /// the detector's own rules.
-    private struct Finder {
+    struct Finder {
       init?() {}
 
-      func written(in text: String) -> [String] {
-        var out: [String] = []
-        let chars = Array(text)
-        var i = 0
-        while i < chars.count {
-          let startsWord = i == 0 || !(chars[i - 1].isLetter || chars[i - 1].isNumber)
-          if startsWord, let scheme = Self.scheme(chars, at: i) {
-            var end = i + scheme
-            while end < chars.count, !chars[end].isWhitespace, !"<>\"".contains(chars[end]) { end += 1 }
-            if end > i + scheme { out.append(String(chars[i..<end])) }
-            i = end
-          } else {
-            i += 1
-          }
-        }
-        return out
-      }
-
-      /// How long the `http://` or `https://` at `i` is, in any case.
-      private static func scheme(_ chars: [Character], at i: Int) -> Int? {
-        for prefix in ["https://", "http://"] where i + prefix.count <= chars.count {
-          if String(chars[i..<(i + prefix.count)]).lowercased() == prefix { return prefix.count }
-        }
-        return nil
+      func ranges(in text: String) -> [Range<String.Index>] {
+        ChatLinks.schemeRanges(in: text, ["https://", "http://", ChatCockpitLink.prefix])
       }
     }
   #endif
+
+  /// Each link starting with one of `prefixes` (in any case) at the start of a word, running to the next space, angle
+  /// bracket or double quote: the Linux stand-in for the detector, and on both how `larry://` links are found.
+  static func schemeRanges(in text: String, _ prefixes: [String]) -> [Range<String.Index>] {
+    var out: [Range<String.Index>] = []
+    let chars = Array(text)
+    var i = 0
+    while i < chars.count {
+      let startsWord = i == 0 || !(chars[i - 1].isLetter || chars[i - 1].isNumber)
+      let scheme = prefixes.first { prefix in
+        i + prefix.count <= chars.count && String(chars[i..<(i + prefix.count)]).lowercased() == prefix
+      }
+      if startsWord, let scheme {
+        var end = i + scheme.count
+        while end < chars.count, !chars[end].isWhitespace, !"<>\"".contains(chars[end]) { end += 1 }
+        if end > i + scheme.count {
+          let lower = text.index(text.startIndex, offsetBy: i)
+          out.append(lower..<text.index(lower, offsetBy: end - i))
+        }
+        i = end
+      } else {
+        i += 1
+      }
+    }
+    return out
+  }
 
   /// The strip's chips, and what *All links* adds past them.
   public static func strip(_ links: [ChatLink]) -> (shown: [ChatLink], more: Int) {
@@ -142,7 +158,7 @@ public enum ChatLinks {
 
   /// Ends a sentence or wraps the link, so it is not part of it: a full stop, quotes, backticks, a bold mark's stars,
   /// a closing bracket with no opening one.
-  static func trimmed(_ written: String) -> String {
+  public static func trimmed(_ written: String) -> String {
     var s = Substring(written)
     while let last = s.last {
       if ".,;:!?'\"`*~>".contains(last) {
@@ -159,6 +175,9 @@ public enum ChatLinks {
   }
 
   private static func link(_ url: URL, host rawHost: String) -> ChatLink {
+    if let key = ChatCockpitLink.threadKey(url) {
+      return ChatLink(url: url, kind: .inbox(thread: key), label: "Inbox", id: "inbox:\(key)")
+    }
     let host = rawHost.hasPrefix("www.") ? String(rawHost.dropFirst(4)) : rawHost
     let parts = url.path.split(separator: "/").map(String.init)
     if host == "github.com", parts.count >= 4, parts[2] == "pull", let number = Int(parts[3]) {
@@ -172,12 +191,24 @@ public enum ChatLinks {
   }
 
   /// The site and the last part of the path, with the part before it when the last is only a number.
+  /// The Cockpit's long tailnet host reads *Larry* (story 744): *Larry*, *Larry: ai-journal*.
   private static func webLabel(host: String, parts: [String]) -> String {
-    guard let last = parts.last else { return host }
+    let cockpit = host == CockpitPage.host
+    guard let last = parts.last else { return cockpit ? "Larry" : host }
     var path = last
     if parts.count > 1, last.allSatisfy(\.isNumber) { path = parts[parts.count - 2] + "/" + last }
     path = path.removingPercentEncoding ?? path
     if path.count > pathLimit { path = String(path.prefix(pathLimit - 1)) + "…" }
-    return host + "/" + path
+    return cockpit ? "Larry: " + path : host + "/" + path
+  }
+
+  /// A link's address where the app spells it out (*All links*): as written, but a Cockpit thread as its short form and
+  /// any other Cockpit link with *Larry* for the tailnet host, which never shows (story 744).
+  public static func address(_ link: ChatLink) -> String {
+    if case .inbox(let key) = link.kind { return ChatCockpitLink.prefix + "inbox/" + key }
+    guard link.url.host?.lowercased() == CockpitPage.host else { return link.url.absoluteString }
+    let port = link.url.port.map { ":\($0)" } ?? ""
+    let rest = link.url.path + (link.url.query.map { "?" + $0 } ?? "") + (link.url.fragment.map { "#" + $0 } ?? "")
+    return "Larry" + port + rest
   }
 }

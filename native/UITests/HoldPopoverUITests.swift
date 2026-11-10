@@ -1,5 +1,5 @@
-//  #391, stories 222-225: press and hold a home tile for a popover of its choices; a choice opens as its own tile
-//  would. The light tick and the drawn art are the phone's to judge.
+//  #391, story 222: press and hold a home tile for a popover of its choices, and a tap outside opens nothing. What a
+//  choice opens is host-tested; the light tick and the drawn art are the phone's to judge.
 
 import XCTest
 
@@ -11,45 +11,9 @@ final class HoldPopoverUITests: XCTestCase {
     row.press(forDuration: 1.5)
   }
 
-  // Story 223: the timer's presets and Custom, and a preset starts its workout.
-  func testTheTimerPopoverStartsAPreset() throws {
-    let app = XCUIApplication()
-    app.launch()
-    hold("gym_timer", in: app)
-    for id in ["30sec", "1min", "2min", "5-1", "custom"] {
-      XCTAssertTrue(app.buttons["timer-\(id)"].appears(within: 10), "\(id): \(app.debugDescription)")
-    }
-    app.buttons["timer-1min"].tap()
-    let face = app.descendants(matching: .any).matching(identifier: "timer-face").firstMatch
-    XCTAssertTrue(face.appears(within: 10), "the timer opened: \(app.debugDescription)")
-    XCTAssertTrue(app.buttons["STOP"].appears(within: 10), "and started")
-  }
-
-  // Story 225: Drill the stack from the card's popover opens the drill without the card screen's button.
-  func testTheCardPopoverOpensTheDrill() throws {
-    let app = XCUIApplication()
-    app.launch()
-    hold("think_a_card", in: app)
-    XCTAssertTrue(app.buttons["card-think"].appears(within: 10), app.debugDescription)
-    XCTAssertTrue(app.buttons["card-face"].exists)
-    app.buttons["card-drill"].tap()
-    XCTAssertTrue(app.buttons["Tap to see its position"].appears(within: 10), app.debugDescription)
-  }
-
-  // Stories 465, 466 (#392): Random's topics, and a topic leaves for the browser. Which link it opens is the host's
-  // (BlogLinksTests); which post lands is the blog's.
-  func testTheRandomPopoverOffersTheTopics() throws {
-    let app = XCUIApplication()
-    app.launch()
-    hold("random", in: app)
-    for id in ["anything", "ai", "tech", "family", "health", "mind", "work", "books"] {
-      XCTAssertTrue(app.buttons["random-\(id)"].appears(within: 10), "\(id): \(app.debugDescription)")
-    }
-    app.buttons["random-ai"].tap()
-    let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
-    XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "AI opened the browser")
-    safari.terminate()
-  }
+  // What each choice opens (stories 223-225, 465-466) is the host's: HomeStackTests'
+  // `testEveryHeldChoiceOpensItsScreenFromHome`, HoldChoicesTests and BlogLinksTests (test-ladder card 2). This keeps
+  // the one real press and hold.
 
   // Story 222: a tap outside closes the popover with nothing opened, and the tile's tap still works after a hold.
   func testATapOutsideOpensNothing() throws {

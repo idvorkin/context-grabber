@@ -49,6 +49,63 @@ final class InboxTests: XCTestCase {
     XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: dir.path).sorted(), ["a.json", "c.json"])
   }
 
+  // MARK: One state each (#809)
+
+  private func write(_ id: String, _ json: String) throws {
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    try Data(json.utf8).write(to: dir.appendingPathComponent("\(id).json"))
+  }
+
+  func testFilesInTheShapeBeforeOneStateStillLoad() throws {
+    try write("w", #"{"id":"w","kind":"text","shared_at":1,"text":"x","thread":"k"}"#)
+    try write("s", #"{"id":"s","kind":"text","shared_at":2,"text":"x","sent_at":5,"chat_thread":"k"}"#)
+    try write("e", #"{"id":"e","kind":"link","shared_at":3,"url":"https://a.b","sent_at":6}"#)
+    try write("r", #"{"id":"r","kind":"file","shared_at":4,"file_name":"a.pdf","refused":"pictures only"}"#)
+    try write(
+      "both", #"{"id":"both","kind":"text","shared_at":5,"text":"x","sent_at":7,"chat_thread":"k","refused":"no"}"#)
+    let read = store.items()
+    XCTAssertEqual(read.unreadable, [])
+    let byID = Dictionary(uniqueKeysWithValues: read.items.map { ($0.id, $0.delivery) })
+    XCTAssertEqual(byID["w"], .waiting)
+    XCTAssertEqual(byID["s"], .sent(at: 5, thread: "k"))
+    XCTAssertEqual(byID["e"], .sent(at: 6, thread: nil))
+    XCTAssertEqual(store.item("e")?.isEarlierShare, true)
+    XCTAssertEqual(byID["r"], .refused("pictures only"))
+    XCTAssertEqual(byID["both"], .sent(at: 7, thread: "k"), "the Cockpit took it: sent wins over refused")
+    XCTAssertEqual(store.item("both")?.refused, nil)
+  }
+
+  func testAnOldFileRewrittenTakesTheNewShapeAndReadsTheSame() throws {
+    try write("r", #"{"id":"r","kind":"file","shared_at":4,"file_name":"a.pdf","refused":"pictures only"}"#)
+    try store.sendAgain("r")
+    XCTAssertEqual(store.item("r")?.delivery, .waiting, "Send again: refused to waiting")
+    try store.markSent("r", at: 9, thread: "k")
+    let raw = try String(contentsOf: dir.appendingPathComponent("r.json"), encoding: .utf8)
+    XCTAssertTrue(raw.contains(#""delivery":{"#), raw)
+    XCTAssertFalse(raw.contains("sent_at"), raw)
+    XCTAssertFalse(raw.contains("refused"), raw)
+    XCTAssertEqual(store.item("r")?.delivery, .sent(at: 9, thread: "k"))
+  }
+
+  func testEveryStateRoundTripsThroughItsFile() throws {
+    for (id, delivery) in [
+      ("w", InboxItem.Delivery.waiting), ("s", .sent(at: 3, thread: "k")), ("e", .sent(at: 4, thread: nil)),
+      ("r", .refused("too big")),
+    ] {
+      var item = InboxItem(id: id, kind: .text, sharedAt: 1, text: "x")
+      item.delivery = delivery
+      try store.add(item)
+      XCTAssertEqual(store.item(id), item)
+    }
+  }
+
+  func testSendAgainLeavesASentMessageSent() throws {
+    try store.add(InboxItem(id: "a", kind: .text, sharedAt: 1, text: "x"))
+    try store.markSent("a", at: 2, thread: "k")
+    try store.sendAgain("a")
+    XCTAssertEqual(store.item("a")?.delivery, .sent(at: 2, thread: "k"))
+  }
+
   func testAnEmptyNoteIsNoNoteAndABrokenFileIsNamedNotFatal() throws {
     try store.add(InboxItem(id: "a", kind: .text, sharedAt: 1, text: "x", note: ""))
     try Data("{".utf8).write(to: dir.appendingPathComponent("broken.json"))

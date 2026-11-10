@@ -13,7 +13,7 @@
 import AVFoundation
 import ContextCore
 
-final class GymAudio: DuckSession, @unchecked Sendable {
+final class GymAudio: TimerAudio, @unchecked Sendable {
   private let log: SessionLog
   private let queue = DispatchQueue(label: "grabber.gym.audio")
   private let session = AVAudioSession.sharedInstance()

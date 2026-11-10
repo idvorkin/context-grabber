@@ -1,12 +1,14 @@
-//  Story 147 on the simulator: a launcher hidden through the home screen's Settings tile stays hidden after a relaunch,
-//  and a launcher moved there stays moved. Run: xcodebuild … -only-testing:GrabberNativeUITests/HomeSettingsUITests
+//  Story 147 on the simulator: a launcher hidden through the home screen's Settings tile leaves the home screen, and a
+//  launcher dragged there moves. That both are read back the same at the next launch is HomeLayoutTests' on the host
+//  (testTheRememberedOrderAndHiddenRowsHold, testWhatIsStoredReadsBackTheSame), so this no longer relaunches.
+//  Run: xcodebuild … -only-testing:GrabberNativeUITests/HomeSettingsUITests
 
 import XCTest
 
 final class HomeSettingsUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
-  func testAHiddenRowStaysHiddenAndAMovedRowStaysMovedAfterARelaunch() throws {
+  func testHidingAndMovingARowChangesTheHomeScreen() throws {
     let app = XCUIApplication()
     app.launch()
     openSheet(app)
@@ -35,10 +37,6 @@ final class HomeSettingsUITests: XCTestCase {
     XCTAssertEqual(cockpit.value as? String, "0")
 
     app.buttons["home-settings-done"].tap()
-    assertHome(app)
-
-    app.terminate()
-    app.launch()
     assertHome(app)
 
     // Put things back for the next run, and check Reset does it.

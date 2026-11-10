@@ -391,7 +391,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Hold the Gym Timer tile to start a preset
 - **Issues:** [#391](https://github.com/idvorkin/context-grabber/issues/391)
-- **Status:** native app only: implemented in [61fba62](https://github.com/idvorkin/context-grabber/commit/61fba62); verified by `HoldChoicesTests` (host: the four presets and Custom, each starting) and `HoldPopoverUITests.testTheTimerPopoverStartsAPreset` (simulator: 1 MIN opens the timer running); on the phone not yet
+- **Status:** native app only: implemented in [61fba62](https://github.com/idvorkin/context-grabber/commit/61fba62); verified by `HoldChoicesTests` (host: the four presets and Custom, each starting) and `HoldPopoverUITests.testTheTimerPopoverStartsAPreset` (simulator: 1 MIN opens the timer running); since [35457eed](https://github.com/idvorkin/context-grabber/commit/35457eed) that UI test is a host test, `HomeStackTests.testEveryHeldChoiceOpensItsScreenFromHome` (each preset brings the timer up at once, started), verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending; on the phone not yet
 - **Spec:** [Press and hold a tile: a popover of drawn icons](../superpowers/specs/2026-10-18-press-and-hold-popovers-design.md)
 
 #### Use Case:
@@ -431,7 +431,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Hold the card tile to think, see a card or drill
 - **Issues:** [#391](https://github.com/idvorkin/context-grabber/issues/391), [#400](https://github.com/idvorkin/context-grabber/issues/400) (the drill's prompt is a button, so the UI test looks for one)
-- **Status:** native app only: implemented in [61fba62](https://github.com/idvorkin/context-grabber/commit/61fba62); verified by `HoldChoicesTests` (host: think, face up, drill in order) and `HoldPopoverUITests.testTheCardPopoverOpensTheDrill` (simulator: Drill the stack opens the drill), which looks for the prompt as a button since #400; a hand simulator run at [ea7e334](https://github.com/idvorkin/context-grabber/commit/ea7e334) passed 4 tests with 0 failures, but its record does not name them, so whether it re-ran this test is unconfirmed; on the phone not yet
+- **Status:** native app only: implemented in [61fba62](https://github.com/idvorkin/context-grabber/commit/61fba62); verified by `HoldChoicesTests` (host: think, face up, drill in order) and `HoldPopoverUITests.testTheCardPopoverOpensTheDrill` (simulator: Drill the stack opens the drill; since [35457eed](https://github.com/idvorkin/context-grabber/commit/35457eed) a host test, `HomeStackTests.testEveryHeldChoiceOpensItsScreenFromHome`, the drill over the card, verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending), which looks for the prompt as a button since #400; a hand simulator run at [ea7e334](https://github.com/idvorkin/context-grabber/commit/ea7e334) passed 4 tests with 0 failures, but its record does not name them, so whether it re-ran this test is unconfirmed; on the phone not yet
 - **Spec:** [Press and hold a tile: a popover of drawn icons](../superpowers/specs/2026-10-18-press-and-hold-popovers-design.md)
 
 #### Use Case:
@@ -555,8 +555,8 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 135:
 
 - **Summary:** A link and a Shortcuts action for every screen of Grabber Native
-- **Status:** implemented in [5c1f4ad](https://github.com/idvorkin/context-grabber/commit/5c1f4ad), *Open Grabber Native* in [68229b3](https://github.com/idvorkin/context-grabber/commit/68229b3) (simulator build; Shortcuts on the phone not yet); verified by `AppLinkTests` (host) and `LinksUITests` on the simulator (real links through iOS, cold and warm: `timer?preset=10,10,2` counting down, `breathe?breath=5&minutes=2` begun over the running timer, `nowhere` on home, `timer?preset=9min` ready; Copy on the Links screen), with `just native-test-sim` passing; the Shortcuts actions, Siri and the Action Button on the phone not yet
-- **Issues:** [#167](https://github.com/idvorkin/context-grabber/issues/167), [#808](https://github.com/idvorkin/context-grabber/issues/808) (which screen is up as one tested model; no visible change)
+- **Status:** implemented in [5c1f4ad](https://github.com/idvorkin/context-grabber/commit/5c1f4ad), *Open Grabber Native* in [68229b3](https://github.com/idvorkin/context-grabber/commit/68229b3) (simulator build; Shortcuts on the phone not yet); verified by `AppLinkTests` (host) and `LinksUITests` on the simulator (real links through iOS, cold and warm: `timer?preset=10,10,2` counting down, `breathe?breath=5&minutes=2` begun over the running timer, `nowhere` on home, `timer?preset=9min` ready; Copy on the Links screen; since [35457eed](https://github.com/idvorkin/context-grabber/commit/35457eed) the warm half is `HomeStackTests`, with the screen stack one reducer: a second link inside the wait replaces the first (#818), a link home leaves home in front and named, verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending), with `just native-test-sim` passing; the Shortcuts actions, Siri and the Action Button on the phone not yet
+- **Issues:** [#167](https://github.com/idvorkin/context-grabber/issues/167), [#808](https://github.com/idvorkin/context-grabber/issues/808) (which screen is up as one tested model; no visible change), [#818](https://github.com/idvorkin/context-grabber/issues/818) (two links inside the wait each presented)
 
 #### Use Case:
 - **As a** man wiring the Action Button and a few Shortcuts to the native app
@@ -568,6 +568,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** Grabber Native is closed (and again with it open on another screen)
 - **When:** I open `grabbernative://timer?preset=10,10,2`, `grabbernative://breathe?breath=5&minutes=2`, `grabbernative://today`, `grabbernative://places`, `grabbernative://cockpit`, `grabbernative://call` or `grabbernative://card`
 - **Then:** each lands on its screen, the timer counting down and the breathing begun within about a second; `grabbernative://nowhere` opens the home screen, a preset it does not know opens the timer ready, and none of them shows an error
+
+- **Scenario:** Two links close together, and a link home
+- **Given:** the timer is up, or Chat is open
+- **When:** two links arrive a tenth of a second apart (`places`, then `cockpit`), or `grabbernative://home` arrives from Chat, and then I shake to report
+- **Then:** only the Cockpit comes up, once, and Places never shows; from Chat the home screen is in front, and the report names *home*
 
 - **Scenario:** Shortcuts and the Links screen
 - **Given:** the Shortcuts app lists *Open Grabber Native*, *Open Today*, *Start Gym Timer*, *Start Box Breathing*, *Open Places*, *Open Cockpit* and *Call Larry* under Grabber Native
@@ -609,7 +614,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** My eulogy, its song and the blog's recent changes, one tap each
 - **Issues:** [#177](https://github.com/idvorkin/context-grabber/issues/177), [#195](https://github.com/idvorkin/context-grabber/issues/195), [#197](https://github.com/idvorkin/context-grabber/issues/197), [#201](https://github.com/idvorkin/context-grabber/issues/201), [#205](https://github.com/idvorkin/context-grabber/issues/205)
-- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541), [2b75d3a](https://github.com/idvorkin/context-grabber/commit/2b75d3a), [6dc7848](https://github.com/idvorkin/context-grabber/commit/6dc7848); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (Eulogy and Recent bring Safari forward; the song plays in the app, pauses, resumes from where it was after the sheet closes, and Open on Suno opens the song the post embeds; the scrubber moves it, restart plays from the start, and with the sheet closed the small player pauses in place, opens the sheet as it is, and its ✕ takes it away); the lock screen, playing on with the phone locked, and the phone not yet
+- **Status:** implemented in [0a3f541](https://github.com/idvorkin/context-grabber/commit/0a3f541), [2b75d3a](https://github.com/idvorkin/context-grabber/commit/2b75d3a), [6dc7848](https://github.com/idvorkin/context-grabber/commit/6dc7848); verified by `BlogLinksTests` (host, the post as served 2026-10-07) and `EulogyUITests` on the simulator (Eulogy and Recent bring Safari forward; the song plays in the app, pauses, resumes from where it was after the sheet closes, and Open on Suno opens the song the post embeds; the scrubber moves it, restart plays from the start, and with the sheet closed the small player pauses in place, opens the sheet as it is, and its ✕ takes it away); the lock screen, playing on with the phone locked, and the phone not yet; the player's rules (play and resume where it was, the scrub, restart, the ✕, the finish, a call pausing it and holding it off, a song that cannot load or start saying so and letting the audio go) moved from `EulogyUITests` to host tests (`SongPlaybackTests`); the simulator keeps one play with restart and the small player, the blog launchers and Open on Suno: [00b1c66](https://github.com/idvorkin/context-grabber/commit/00b1c66), verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending
 - **Spec:** [native Eulogy](../superpowers/specs/2026-10-07-native-eulogy-design.md)
 
 #### Use Case:
@@ -669,7 +674,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** The eulogy song plays at its own speed, in the car too
 - **Issues:** [#370](https://github.com/idvorkin/context-grabber/issues/370)
-- **Status:** implemented in [d0a1353](https://github.com/idvorkin/context-grabber/commit/d0a1353) (the session set before the player is prepared, a player prepared at another sample rate replaced at the same place, and the rate, route and any clock drift in the log) and [4ff9f1b](https://github.com/idvorkin/context-grabber/commit/4ff9f1b) with the review fix after it (a song that will not load, or will not start, lets the session go so other audio comes back); verified by `just native-lint`, and the app compiled in the simulator build at 3106eb2 (2026-10-18 build turn); the car on the phone is still for Igor to check
+- **Status:** implemented in [d0a1353](https://github.com/idvorkin/context-grabber/commit/d0a1353) (the session set before the player is prepared, a player prepared at another sample rate replaced at the same place, and the rate, route and any clock drift in the log) and [4ff9f1b](https://github.com/idvorkin/context-grabber/commit/4ff9f1b) with the review fix after it (a song that will not load, or will not start, lets the session go so other audio comes back); verified by `just native-lint`, and the app compiled in the simulator build at 3106eb2 (2026-10-18 build turn); the car on the phone is still for Igor to check; the reload at a new sample rate and the drift line are now host tests (`SongPlaybackTests`): [00b1c66](https://github.com/idvorkin/context-grabber/commit/00b1c66), verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending
 - **Spec:** [native Eulogy](../superpowers/specs/2026-10-07-native-eulogy-design.md)
 
 #### Use Case:
@@ -714,7 +719,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Holding Random offers the blog's topics
 - **Issues:** [#392](https://github.com/idvorkin/context-grabber/issues/392)
-- **Status:** native app only: implemented in [765ffa1](https://github.com/idvorkin/context-grabber/commit/765ffa1); verified by `HoldChoicesTests` (host: the eight choices in order) and `HoldPopoverUITests.testTheRandomPopoverOffersTheTopics` (simulator); the tick and the look on the phone not yet
+- **Status:** native app only: implemented in [765ffa1](https://github.com/idvorkin/context-grabber/commit/765ffa1); verified by `HoldChoicesTests` (host: the eight choices in order) and `HoldPopoverUITests.testTheRandomPopoverOffersTheTopics` (simulator; dropped in [35457eed](https://github.com/idvorkin/context-grabber/commit/35457eed), the choices' order being `HoldChoicesTests`' and the popover itself still shown by `testATapOutsideOpensNothing`); the tick and the look on the phone not yet
 - **Spec:** [Press and hold a tile: a popover of drawn icons](../superpowers/specs/2026-10-18-press-and-hold-popovers-design.md)
 
 #### Use Case:
@@ -734,7 +739,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** A topic opens the blog's random link for that topic
 - **Issues:** [#392](https://github.com/idvorkin/context-grabber/issues/392)
-- **Status:** native app only: implemented in [765ffa1](https://github.com/idvorkin/context-grabber/commit/765ffa1); verified by `BlogLinksTests` (host: each topic's link) and `HoldPopoverUITests.testTheRandomPopoverOffersTheTopics` (simulator: AI brings the browser forward); the post being on that topic needs the blog's change (story 468)
+- **Status:** native app only: implemented in [765ffa1](https://github.com/idvorkin/context-grabber/commit/765ffa1); verified by `BlogLinksTests` (host: each topic's link) and `HoldPopoverUITests.testTheRandomPopoverOffersTheTopics` (simulator: AI brings the browser forward; since [35457eed](https://github.com/idvorkin/context-grabber/commit/35457eed) the host's `HomeStackTests.testEveryHeldChoiceOpensItsScreenFromHome` checks AI asks for its topic, and the browser coming forward is the phone's to see); the post being on that topic needs the blog's change (story 468)
 - **Spec:** [Press and hold a tile: a popover of drawn icons](../superpowers/specs/2026-10-18-press-and-hold-popovers-design.md)
 
 #### Use Case:

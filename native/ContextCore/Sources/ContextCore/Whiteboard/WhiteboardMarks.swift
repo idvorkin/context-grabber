@@ -110,6 +110,9 @@ public struct WhiteboardMarks: Sendable {
     public var say: String?
     /// New rows whose shapes have nowhere to go.
     public var unplaced: [String] = []
+    /// He answered since the last look: a new row of his, marks or not (story 662). Never on the first look, whose rows
+    /// were there before.
+    public var replied = false
   }
 
   private var seen: Set<String>?
@@ -122,6 +125,7 @@ public struct WhiteboardMarks: Sendable {
     var update = Update()
     if let seen {
       let new = rows.filter { !seen.contains($0.id) }
+      update.replied = !new.isEmpty
       update.marks = new.last(where: \.drawable)
       update.say = new.last { !$0.text.isEmpty }?.text
       update.unplaced = new.filter { !$0.drawable && !$0.shapes.isEmpty }.map(\.id)

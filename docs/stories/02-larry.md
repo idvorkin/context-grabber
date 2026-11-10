@@ -588,7 +588,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 270:
 
 - **Summary:** Everything the app collects is archived off the phone on its own, once each
-- **Status:** implemented in [f4080b8](https://github.com/idvorkin/context-grabber/commit/f4080b8), [78961b4](https://github.com/idvorkin/context-grabber/commit/78961b4) and [85e5b66](https://github.com/idvorkin/context-grabber/commit/85e5b66) (the phone half; the Cockpit's `POST /archive` is its story 124), plus the review round (the next slots asked for before a background run, Health skipped while the phone is locked); verified on the host (`just test`: `ArchiveTests`, swift-format, SwiftLint) and the simulator (`just native-test-sim` 45/45, the archive hook included). Not yet verified: the phone, and the Cockpit's `/archive` endpoint (cockpit's archive-endpoint branch); until it is live a run stops on the error and retries later.
+- **Status:** implemented in [f4080b8](https://github.com/idvorkin/context-grabber/commit/f4080b8), [78961b4](https://github.com/idvorkin/context-grabber/commit/78961b4) and [85e5b66](https://github.com/idvorkin/context-grabber/commit/85e5b66) (the phone half; the Cockpit's `POST /archive` is its story 124), plus the review round (the next slots asked for before a background run, Health skipped while the phone is locked); verified on the host (`just test`: `ArchiveTests`, swift-format, SwiftLint) and the simulator (`just native-test-sim` 45/45, the archive hook included). Not yet verified: the phone, and the Cockpit's `/archive` endpoint (cockpit's archive-endpoint branch); until it is live a run stops on the error and retries later. When a run is due, by how the last one ended (a run that never reached the Cockpit is due again at the next foreground; the run itself host-tested in `ArchiveTests`, smoke's archive relaunch dropped): [76152e1](https://github.com/idvorkin/context-grabber/commit/76152e1); verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending.
 - **Why:** Igor, Cockpit chat 2026-10-19: "let's archive all the stats we can do it every four hours. Be sure to Delta stamp them somehow so we don't get duplicates. Should work for history as a one off, and then as habits happen. Then maybe final daily batch. Since all guid marked no duplicates"
 - **Issues:** context-grabber-3il
 - **Spec:** [Everything off the phone: the stats archive](../superpowers/specs/2026-10-19-native-stats-archive-design.md)
@@ -602,14 +602,14 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Scenario:** A delta every few hours, history the first time
 - **Given:** Today has asked for Health, the Cockpit is reachable, and the trail and Health hold records the archive has not seen
 - **When:** four hours pass since the last run (a background refresh, or the app comes to the front), or the end-of-day batch runs
-- **Then:** every new point and sample goes to the Cockpit in pages, once each (a lost answer sends the same page again and the Cockpit counts it as already there), the cursor of each stream moves only after the Cockpit took the page, an unreachable Cockpit stops the run at its first page and the next run sends it again, and the log has one `archive` line per page with counts and never a record; launch remains safe with an existing database, and a simulator sends only to an explicitly supplied test destination; a run while the phone is locked sends the trail, says once that Health was skipped, and is not counted, so the app's next time in front sends Health's share; a delayed daily batch keeps its pending slot across midnight, and a rolled-back import cannot enter the archive or advance its cursor
+- **Then:** every new point and sample goes to the Cockpit in pages, once each (a lost answer sends the same page again and the Cockpit counts it as already there), the cursor of each stream moves only after the Cockpit took the page, an unreachable Cockpit stops the run at its first page and the next run sends it again, and the log has one `archive` line per page with counts and never a record; launch remains safe with an existing database, and a simulator sends only to an explicitly supplied test destination; a run while the phone is locked sends the trail, says once that Health was skipped, and is not counted, so the app's next time in front sends Health's share; a run that could not reach the Cockpit holds nothing off, so the next time the app comes to the front runs again, while one that caught up or was refused holds the next foreground off four hours; a run iOS cuts short keeps every cursor a taken page moved; a delayed daily batch keeps its pending slot across midnight, and a rolled-back import cannot enter the archive or advance its cursor
 
 ---
 
 ### User Story 271:
 
 - **Summary:** The daily strip's days are archived too, each day as the strip shows it
-- **Status:** implemented in [d06ac21](https://github.com/idvorkin/context-grabber/commit/d06ac21); verified on the host (`just test`: `ArchiveTests`, swift-format, SwiftLint) and the simulator (`just native-test-sim`, the archive hook included). Not yet verified: the phone.
+- **Status:** implemented in [d06ac21](https://github.com/idvorkin/context-grabber/commit/d06ac21); verified on the host (`just test`: `ArchiveTests`, swift-format, SwiftLint) and the simulator (`just native-test-sim`, the archive hook included). Not yet verified: the phone. The run that carries the strip moved into the core in [76152e1](https://github.com/idvorkin/context-grabber/commit/76152e1) (the strip still goes while locked, `ArchiveTests`); verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending.
 - **Why:** Igor, 2026-10-19, about story 270's archive: "Did it include when I did balloons and magic, not just health?"
 - **Issues:** [#415](https://github.com/idvorkin/context-grabber/issues/415)
 - **Spec:** [Everything off the phone: the stats archive](../superpowers/specs/2026-10-19-native-stats-archive-design.md), "The daily strip"
@@ -855,7 +855,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 303:
 
 - **Summary:** I speak a message in a thread and read the words before I send them
-- **Status:** native app only: implemented with Deepgram in [2015662](https://github.com/idvorkin/context-grabber/commit/2015662), moved to the problem report's Apple dictation with the five-minute cap in [f040853](https://github.com/idvorkin/context-grabber/commit/f040853), with the microphone picker; verified by `ChatVoiceTests`, `ChatVoiceClockTests` and `ChatVoiceWordsTests` (host: the five-minute limit and its line, the recording clock, a timer that dies with its recording, a thread's words taken by that thread only) and `ChatVoiceUITests` (Settings asks for no Deepgram key because that section is gone from the code; on the simulator: the thread's mic and its microphone picker are there and ready); speaking on the phone not yet; #544: the microphone picker is a full-width row a finger tall, as the problem report's is, in [442e0a5](https://github.com/idvorkin/context-grabber/commit/442e0a5); host `just native-test`; the simulator's ChatVoiceUITests and the phone not yet; #546: a Send mid-recording stops it, so no words come back into the emptied bar, in [84e4f70](https://github.com/idvorkin/context-grabber/commit/84e4f70); no automated test (the decision lives in the app target); on the phone not yet; #625: the mic moved beside Send in [f52d9dd](https://github.com/idvorkin/context-grabber/commit/f52d9dd); verified by ChatVoiceUITests on the iPhone 17 simulator, where it measures the order, the gap and the 44-point targets; the iPad and a finger on it are still to try; #559: a chat recording holds the microphone against the problem report, in [080fbf7](https://github.com/idvorkin/context-grabber/commit/080fbf7); host `just native-test` and a simulator compile; dictating on the phone not yet.
+- **Status:** native app only: implemented with Deepgram in [2015662](https://github.com/idvorkin/context-grabber/commit/2015662), moved to the problem report's Apple dictation with the five-minute cap in [f040853](https://github.com/idvorkin/context-grabber/commit/f040853), with the microphone picker; verified by `ChatVoiceTests`, `ChatVoiceClockTests` and `ChatVoiceWordsTests` (host: the five-minute limit and its line, the recording clock, a timer that dies with its recording, a thread's words taken by that thread only) and `ChatVoiceUITests` (Settings asks for no Deepgram key because that section is gone from the code; on the simulator: the thread's mic and its microphone picker are there and ready); speaking on the phone not yet; #544: the microphone picker is a full-width row a finger tall, as the problem report's is, in [442e0a5](https://github.com/idvorkin/context-grabber/commit/442e0a5); host `just native-test`; the simulator's ChatVoiceUITests and the phone not yet; #546: a Send mid-recording stops it, so no words come back into the emptied bar, in [84e4f70](https://github.com/idvorkin/context-grabber/commit/84e4f70); no automated test (the decision lives in the app target); on the phone not yet; #625: the mic moved beside Send in [f52d9dd](https://github.com/idvorkin/context-grabber/commit/f52d9dd); verified by ChatVoiceUITests on the iPhone 17 simulator, where it measures the order, the gap and the 44-point targets; the iPad and a finger on it are still to try; #559: a chat recording holds the microphone against the problem report, in [080fbf7](https://github.com/idvorkin/context-grabber/commit/080fbf7); host `just native-test` and a simulator compile; dictating on the phone not yet.; since [1101e05d](https://github.com/idvorkin/context-grabber/commit/1101e05d) who has the microphone is one floor ([spec](../superpowers/specs/2026-11-10-microphone-floor-design.md)): a tap asks it, a call takes it from the recording, the report's dictation waits for it, verified on the Linux rung (host tests, `AudioFloorTests`); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending
 - **Issues:** [#559](https://github.com/idvorkin/context-grabber/issues/559), [#448](https://github.com/idvorkin/context-grabber/issues/448), [#544](https://github.com/idvorkin/context-grabber/issues/544), [#546](https://github.com/idvorkin/context-grabber/issues/546), [#625](https://github.com/idvorkin/context-grabber/issues/625)
 - **Spec:** [Chat with Larry in Grabber Native — Speaking a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -874,6 +874,11 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** I'm recording a message in a thread
 - **When:** I shake to report a problem
 - **Then:** the recording keeps going with its words intact, and the report's mic is off, as it is during a call, until I stop recording; if the recording ends with the report still open, the mic comes back at my next keystroke
+
+- **Scenario:** One microphone, one holder
+- **Given:** I'm recording a message in a thread
+- **When:** a call with Larry starts, or (on an iPad, once the board asks too, #821) I tap the board's mic beside the thread
+- **Then:** the call takes the microphone: the recording stops with its words kept and a line saying the call took it; the board's mic does not start while the recording goes on, and says another recording has it
 
 - **Scenario:** The mic sits by Send (#625)
 - **Given:** a thread or a new chat is open, on iPhone or iPad
@@ -915,7 +920,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 304:
 
 - **Summary:** Settings tells me whether everything reached the archive, and which stream did not
-- **Status:** native app only: implemented in [5f8260c](https://github.com/idvorkin/context-grabber/commit/5f8260c), [c9b87d3](https://github.com/idvorkin/context-grabber/commit/c9b87d3) (a locked run leaves the line alone), [208c2a2](https://github.com/idvorkin/context-grabber/commit/208c2a2) (red only after a day without progress, so a backfill is never red; the section follows a run that ends while it is open); host-verified by `just native-test` (`ArchiveStatusTests`, `ArchiveTests` refusal status); the simulator and the phone not yet
+- **Status:** native app only: implemented in [5f8260c](https://github.com/idvorkin/context-grabber/commit/5f8260c), [c9b87d3](https://github.com/idvorkin/context-grabber/commit/c9b87d3) (a locked run leaves the line alone), [208c2a2](https://github.com/idvorkin/context-grabber/commit/208c2a2) (red only after a day without progress, so a backfill is never red; the section follows a run that ends while it is open); host-verified by `just native-test` (`ArchiveStatusTests`, `ArchiveTests` refusal status); the simulator and the phone not yet. The headline and "is a run due" read one state, and the stored stop reasons read back unchanged: [76152e1](https://github.com/idvorkin/context-grabber/commit/76152e1); verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending
 - **Issues:** [#547](https://github.com/idvorkin/context-grabber/issues/547)
 - **Spec:** [Everything off the phone — In Settings](../superpowers/specs/2026-10-19-native-stats-archive-design.md#in-settings)
 
@@ -2021,8 +2026,8 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 519:
 
 - **Summary:** Yes or No to Larry's newest message sends that one word
-- **Status:** native app only: implemented in [1d5008e](https://github.com/idvorkin/context-grabber/commit/1d5008e); verified by `ChatReactionTests` (host) and `ChatReactionUITests` (simulator: the fake's Larry repeats *Yes*); half-typed words staying in the bar and a *Yes* with no network follow from the code, not exercised on any rung; a real Larry waking on the phone not yet
-- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (a sent message its thread never returns would make *Yes* go out quoted; the log's `chat` outbox_thread line is there to settle whether it happens)
+- **Status:** native app only: implemented in [1d5008e](https://github.com/idvorkin/context-grabber/commit/1d5008e); verified by `ChatReactionTests` (host) and `ChatReactionUITests` (simulator: the fake's Larry repeats *Yes*); `sim-smoke.sh` no longer relaunches the app to tap *Yes* through the hook, a copy of those two (test-ladder audit, 2026-11-10; [bbbeafd](https://github.com/idvorkin/context-grabber/commit/bbbeafd)); half-typed words staying in the bar and a *Yes* with no network follow from the code, not exercised on any rung; a real Larry waking on the phone not yet
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (a sent message its thread never returns made *Yes* go out quoted for good; since [1586a17](https://github.com/idvorkin/context-grabber/commit/1586a17) it stops counting as waiting five minutes after the send and leaves the phone after seven days, verified on the Linux rung (host tests: `ChatOutboxLookTests`, `InboxOutboxTests`, `InboxTests`); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -2036,13 +2041,18 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **When:** I hold it and tap *Yes*
 - **Then:** a message reading *Yes* appears at once as **Not sent yet**, reaches the Cockpit once and wakes Larry like any message, my half-typed words stay in the bar, and the log's `chat` reaction line names the reaction and the message but never the text
 
+- **Scenario:** A sent message the thread never shows (#809)
+- **Given:** a message I sent on this thread more than five minutes ago, which the Cockpit took but its thread does not list
+- **When:** I hold Larry's newest message and tap *Yes*
+- **Then:** my old message shows no pending bubble, *Yes* goes as the bare word, not quoted, and the old message is gone from the phone seven days after I sent it, whether or not I open the thread again
+
 ---
 
 ### User Story 540:
 
 - **Summary:** Yes or No to an older message says which message it answers
 - **Status:** native app only: implemented in [1d5008e](https://github.com/idvorkin/context-grabber/commit/1d5008e); verified by `ChatReactionTests` (host: the quote, its lines, the 280-character cut, a picture alone) and `ChatReactionUITests` (simulator: *No* on an older message reaches the fake under its quote); older because something newer still waits on the phone not exercised on any rung
-- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (whether a sent message can count as still waiting for good; see story 519)
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (a sent message could count as still waiting for good, so every answer was older than it; since [1586a17](https://github.com/idvorkin/context-grabber/commit/1586a17) a sent message stops counting five minutes after the send, see story 519)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -2561,5 +2571,43 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** I started a chat from a link five hours ago and another from the same link two hours ago, both live
 - **When:** I share that link again
 - **Then:** the chat from two hours ago is the first row and the only one marked *Same link*
+
+---
+
+### User Story 743:
+
+- **Summary:** A message's links are chips in its bubble: a PR reads *PR*, the blog *Preview*
+- **Status:** native app only: implemented on branch `chat-short-link-labels` (first as short underlined words, then as chips after Igor's review); `ChatBubbleLinksTests` (host) written but not run (no Swift toolchain on the Linux box that built it, no Mac); not yet seen on the simulator or the phone
+- **Spec:** [Chat with Larry in Grabber Native — Links in a thread](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, reading Larry's reply that links the PR he opened and a blog preview
+- **I want to** see a *PR* chip and a *Preview* chip where the long addresses were, like the chips above the thread
+- **so that** the message reads as words, and the links are still one tap away
+
+#### Acceptance Criteria:
+- **Scenario:** One PR and one preview, then two PRs
+- **Given:** a message "Opened https://github.com/idvorkin/context-grabber/pull/734, preview at http://c-5004.squeaker-teeth.ts.net:8445/ai-journal." and another linking PRs #734 and #736
+- **When:** I open the thread
+- **Then:** the first bubble reads "Opened [PR], preview at [Preview]." with the two as chips, the comma and full stop beside them, each opening its full address; the second has two *PR* chips, each with its state once known; the chips under the title are unchanged, and *Copy* on either bubble copies the full addresses
+
+---
+
+### User Story 744:
+
+- **Summary:** An Inbox chip in Larry's reply, and on the strip above, opens that thread in the app
+- **Status:** native app only: implemented on branch `chat-cockpit-thread-links`; `ChatCockpitLinkTests`, `ChatBubbleLinksTests` and `AppLinkTests` (host) written but not run (no Swift toolchain on the Linux box that built it, no Mac); the `larry` URL scheme is registered but not opened on a device; not yet seen on the simulator or the phone
+- **Spec:** [Chat with Larry in Grabber Native — Links in a thread](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, reading Larry's reply that says a decision is waiting in the Inbox
+- **I want to** tap its *Inbox* chip, there or on the strip above the thread, and land on that question's thread in the app
+- **so that** I answer it without Safari, the web Cockpit or the long tailnet address
+
+#### Acceptance Criteria:
+- **Scenario:** Both spellings, a known thread, then an unknown one
+- **Given:** Larry's reply "It's in the Inbox: https://c-5004.squeaker-teeth.ts.net/#thread/igor2-88g.1411.2, same as larry://inbox/igor2-88g.1411.2", a thread the chat list shows
+- **When:** I open the thread and tap either *Inbox* chip in the bubble, or the one *Inbox* chip on the strip
+- **Then:** the bubble shows two *Inbox* chips and no address, the strip one; that thread opens in the app over this one and Back returns here; a thread the list does not show opens on the Cockpit page; *All links* lists it as larry://inbox/igor2-88g.1411.2; and larry://inbox/igor2-88g.1411.2 tapped in Notes opens the app on that thread
 
 ---

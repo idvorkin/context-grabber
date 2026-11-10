@@ -11,11 +11,8 @@ final class ChatNewThreadScreenTests: XCTestCase {
     text: String = "first line\nmore"
   ) -> InboxItem {
     var item = InboxItem(id: id, kind: .text, sharedAt: at, text: text, thread: thread)
-    item.refused = refused
-    if let landed {
-      item.sentAt = at + 1
-      item.chatThread = landed
-    }
+    if let refused { item.delivery = .refused(refused) }
+    if let landed { item.delivery = .sent(at: at + 1, thread: landed) }
     return item
   }
 
@@ -133,9 +130,9 @@ final class ChatNewThreadScreenTests: XCTestCase {
       item("late", thread: "k", at: 5), item("early", thread: "k", at: 2), item("there", thread: "k", at: 1),
       item("sent", landed: "k", at: 3), item("elsewhere", thread: "j", at: 4),
     ]
-    let held = ChatNewThread().pending(fixedKey: "k", items: items, messages: ["k": [message("there")]])
+    let held = ChatNewThread().pending(fixedKey: "k", items: items, messages: ["k": [message("there")]], now: 10)
     XCTAssertEqual(held.map(\.id), ["early", "sent", "late"], "the Cockpit's copy replaces the phone's")
     XCTAssertEqual(
-      ChatWire.pending(in: "k", items: items, messages: nil).map(\.id), ["there", "early", "sent", "late"])
+      ChatWire.pending(in: "k", items: items, messages: nil, now: 10).map(\.id), ["there", "early", "sent", "late"])
   }
 }

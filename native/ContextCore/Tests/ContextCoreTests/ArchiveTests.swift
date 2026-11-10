@@ -108,7 +108,7 @@ final class ArchiveTests: XCTestCase {
     let sent = await seen.batches
     XCTAssertEqual(sent, [["a", "b"], ["c", "d"]], "the third page waits behind the 503")
     XCTAssertEqual(try cursors.cursor("test.stream"), "0", "page 2 was not taken, so its cursor is not kept")
-    XCTAssertEqual(report.stopped, "retry")
+    XCTAssertEqual(report.stopped, .cockpitAway)
     XCTAssertEqual(report.pages, 2)
     XCTAssertEqual(report.records, 4)
     XCTAssertEqual(report.inserted, 2)
@@ -134,7 +134,7 @@ final class ArchiveTests: XCTestCase {
       lines.append(f)
     }
     XCTAssertNil(try cursors.cursor("test.stream"))
-    XCTAssertEqual(report.stopped, "refused")
+    XCTAssertEqual(report.stopped, .refused)
     XCTAssertEqual(report.refusedStatus, 415, "for the Settings line")
     XCTAssertEqual(lines.last?["action"] as? String, "refused")
     XCTAssertEqual(lines.last?["status"] as? Int, 415)
@@ -148,7 +148,7 @@ final class ArchiveTests: XCTestCase {
     uploader.maxPages = 1
     let report = await uploader.upload(Pages(pages: [["a"], ["b"], ["c"]])) { _, _ in }
     XCTAssertEqual(report.pages, 1)
-    XCTAssertEqual(report.stopped, "pages")
+    XCTAssertEqual(report.stopped, .pages)
     XCTAssertEqual(try cursors.cursor("test.stream"), "0")
   }
 
@@ -352,7 +352,7 @@ final class ArchiveTests: XCTestCase {
 
     // The Cockpit away on the first page: nothing is taken, so nothing is remembered as taken.
     let failed = await makeUploader(cursors, answers: [503], seen: Seen()).upload(source) { _, _ in }
-    XCTAssertEqual(failed.stopped, "retry")
+    XCTAssertEqual(failed.stopped, .cockpitAway)
     XCTAssertNil(try cursors.cursor("strip.magic"))
 
     let seen = Seen()
@@ -419,11 +419,232 @@ final class ArchiveTests: XCTestCase {
 
   // MARK: When
 
-  func testARunIsDueAfterFourHoursOrNever() {
+  func testARunIsDueFourHoursAfterOneThatGotSomewhere() {
     let now = Date(timeIntervalSince1970: 1_760_000_000)
-    XCTAssertTrue(ArchiveSchedule.isDue(lastRun: nil, now: now))
-    XCTAssertFalse(ArchiveSchedule.isDue(lastRun: now.addingTimeInterval(-3 * 3600), now: now))
-    XCTAssertTrue(ArchiveSchedule.isDue(lastRun: now.addingTimeInterval(-4 * 3600), now: now))
+    let ms = { (ago: TimeInterval) in Int64(now.addingTimeInterval(-ago).timeIntervalSince1970 * 1000) }
+    XCTAssertTrue(ArchiveSchedule.isDue(.never, now: now))
+    for state in [
+      ArchiveState.caughtUp(at: ms(3 * 3600)), .backfilling(at: ms(3 * 3600)),
+      .blocked(.refused(stream: "a", status: 400), since: ms(3 * 3600)), .blocked(.unreadable, since: ms(3 * 3600)),
+    ] {
+      XCTAssertFalse(ArchiveSchedule.isDue(state, now: now), "\(state)")
+    }
+    XCTAssertTrue(ArchiveSchedule.isDue(.caughtUp(at: ms(4 * 3600)), now: now))
+    XCTAssertTrue(ArchiveSchedule.isDue(.backfilling(at: ms(4 * 3600)), now: now))
+  }
+
+  /// State-machine audit finding 5: "last run" meant "last attempt", so a run that never reached the Cockpit held the
+  /// next foreground off for four hours.
+  func testAfterACockpitAwayRunAForegroundIsDue() {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+    let fiveMinAgo = Int64(now.addingTimeInterval(-300).timeIntervalSince1970 * 1000)
+    let outcome = ArchiveOutcome(at: fiveMinAgo, stopped: [ArchiveStream.points: .cockpitAway])
+    XCTAssertEqual(ArchiveState(outcome), .blocked(.cockpitAway, since: fiveMinAgo))
+    XCTAssertTrue(ArchiveSchedule.isDue(ArchiveState(outcome), now: now), "back on the tailnet, opening the app runs")
+    let lines = ArchiveStatus.lines(
+      sends: true, outcome: outcome, lastCaughtUp: nil, now: Int64(now.timeIntervalSince1970 * 1000))
+    XCTAssertTrue(lines[0].text.hasPrefix("Cockpit out of reach"), "Settings reads the same state")
+  }
+
+  func testTheStateAnOutcomeLeaves() {
+    XCTAssertEqual(ArchiveState(nil), .never)
+    XCTAssertEqual(ArchiveState(ArchiveOutcome(at: 1)), .caughtUp(at: 1))
+    XCTAssertEqual(ArchiveState(ArchiveOutcome(at: 1, stopped: ["a": .pages, "b": .cancelled])), .backfilling(at: 1))
+    XCTAssertEqual(
+      ArchiveState(
+        ArchiveOutcome(at: 1, stopped: ["b": .refused, "a": .unreadable, "c": .refused], refused: ["b": 413])),
+      .blocked(.refused(stream: "b", status: 413), since: 1), "a refusal beats an unreadable stream")
+    XCTAssertEqual(
+      ArchiveState(ArchiveOutcome(at: 1, stopped: ["a": .refused, "z": .cockpitAway])),
+      .blocked(.cockpitAway, since: 1), "the Cockpit out of reach beats everything")
+    XCTAssertEqual(ArchiveState(ArchiveOutcome(at: 1, stopped: ["a": .unreadable])), .blocked(.unreadable, since: 1))
+  }
+
+  // MARK: A run (ArchiveRun)
+
+  private struct Rig {
+    let db: SQLiteDatabase
+    let cursors: ArchiveCursorStore
+    let ledger: ArchiveLedger
+    var lines: [(String, [String: Any])] = []
+
+    init() throws {
+      db = try SQLiteDatabase()
+      cursors = try ArchiveCursorStore(db: db)
+      ledger = ArchiveLedger(settings: try SettingsStore(db: db))
+    }
+
+    func actions(_ type: String = "archive") -> [String] {
+      lines.filter { $0.0 == type }.compactMap { $0.1["action"] as? String }
+    }
+  }
+
+  private static let runStart = Date(timeIntervalSince1970: 1_800_000_000)
+
+  @MainActor
+  private func run(
+    _ rig: inout Rig, sources: [ArchiveSource], health: [ArchiveSource] = [], answers: [Int] = [],
+    unlocked: @escaping () -> Bool = { true }, cancelled: @escaping () -> Bool = { false }
+  ) async -> ArchiveRun.Result {
+    let run = ArchiveRun(
+      reason: "test", sources: sources, healthSources: { health }, isUnlocked: unlocked, isCancelled: cancelled,
+      now: { Self.runStart }, ledger: rig.ledger, uploader: makeUploader(rig.cursors, answers: answers, seen: Seen()))
+    var lines: [(String, [String: Any])] = []
+    let result = await run.perform { lines.append(($0, $1)) }
+    rig.lines += lines
+    return result
+  }
+
+  private struct Named: ArchiveSource {
+    let stream: String
+    let pages: [[String]]
+    func page(after cursor: String?, limit: Int) async throws -> ArchivePage {
+      try await Pages(pages: pages).page(after: cursor, limit: limit)
+    }
+  }
+
+  @MainActor
+  func testACaughtUpRunHoldsTheNextForegroundOff() async throws {
+    var rig = try Rig()
+    let result = await run(
+      &rig, sources: [Named(stream: "a", pages: [["x"]])], health: [Named(stream: "h", pages: [["y"]])])
+    XCTAssertEqual(result.stopped, [:])
+    XCTAssertEqual(result.streams, 2, "Health goes while the phone is unlocked")
+    XCTAssertEqual(try rig.ledger.state(), .caughtUp(at: Int64(Self.runStart.timeIntervalSince1970 * 1000)))
+    XCTAssertFalse(ArchiveSchedule.isDue(try rig.ledger.state(), now: Self.runStart.addingTimeInterval(300)))
+    XCTAssertTrue(ArchiveSchedule.isDue(try rig.ledger.state(), now: Self.runStart.addingTimeInterval(4 * 3600)))
+    XCTAssertNotNil(try rig.ledger.lastCaughtUp())
+    XCTAssertNotNil(try rig.ledger.firstRun())
+  }
+
+  @MainActor
+  func testAnUnreachedRunIsDueAgain() async throws {
+    var rig = try Rig()
+    let result = await run(
+      &rig, sources: [Named(stream: "a", pages: [["x"]]), Named(stream: "b", pages: [["y"]])], answers: [503])
+    XCTAssertEqual(result.stopped, ["a": .cockpitAway], "b is not tried: it would fail the same way")
+    XCTAssertEqual(
+      try rig.ledger.state(), .blocked(.cockpitAway, since: Int64(Self.runStart.timeIntervalSince1970 * 1000)))
+    XCTAssertTrue(ArchiveSchedule.isDue(try rig.ledger.state(), now: Self.runStart.addingTimeInterval(300)))
+    XCTAssertEqual(try rig.ledger.statusLines(sends: true, now: 0).first?.text.hasPrefix("Cockpit out of reach"), true)
+  }
+
+  @MainActor
+  func testARefusedRunHoldsTheNextForegroundOff() async throws {
+    var rig = try Rig()
+    _ = await run(&rig, sources: [Named(stream: "a", pages: [["x"]])], answers: [400])
+    XCTAssertEqual(
+      try rig.ledger.state(),
+      .blocked(.refused(stream: "a", status: 400), since: Int64(Self.runStart.timeIntervalSince1970 * 1000)))
+    XCTAssertFalse(ArchiveSchedule.isDue(try rig.ledger.state(), now: Self.runStart.addingTimeInterval(300)))
+  }
+
+  @MainActor
+  func testALockedRunRecordsNothing() async throws {
+    var rig = try Rig()
+    var askedHealth = false
+    let run = ArchiveRun(
+      reason: "refresh", sources: [Named(stream: "a", pages: [["x"]])],
+      healthSources: {
+        askedHealth = true
+        return []
+      }, isUnlocked: { false }, now: { Self.runStart }, ledger: rig.ledger,
+      uploader: makeUploader(rig.cursors, answers: [503], seen: Seen()))
+    var lines: [(String, [String: Any])] = []
+    let result = await run.perform { lines.append(($0, $1)) }
+    rig.lines = lines
+    XCTAssertFalse(askedHealth, "Health is not read while locked")
+    XCTAssertTrue(result.locked)
+    XCTAssertNil(result.recorded)
+    XCTAssertEqual(result.stopped, ["a": .cockpitAway], "the trail and the strip still go")
+    XCTAssertEqual(try rig.ledger.state(), .never, "not even a Cockpit out of reach is recorded")
+    XCTAssertNil(try rig.ledger.firstRun())
+    XCTAssertEqual(rig.actions().first, "health_skipped")
+    XCTAssertEqual(lines.first?.1["reason"] as? String, "phone locked")
+  }
+
+  @MainActor
+  func testAPhoneLockedMidRunRecordsNothing() async throws {
+    struct Unreadable: ArchiveSource {
+      let stream = "health.x"
+      func page(after cursor: String?, limit: Int) async throws -> ArchivePage {
+        throw URLError(.noPermissionsToReadFile)
+      }
+    }
+    var rig = try Rig()
+    _ = try rig.ledger.record(ArchiveOutcome(at: 7))
+    var unlocked = true
+    let result = await run(
+      &rig, sources: [Named(stream: "a", pages: [["x"]])], health: [Unreadable(), Named(stream: "h", pages: [["y"]])],
+      unlocked: {
+        defer { unlocked = false }
+        return unlocked
+      })
+    XCTAssertTrue(result.locked)
+    XCTAssertEqual(result.stopped, ["health.x": .unreadable], "the stream after it is not tried")
+    XCTAssertEqual(try rig.ledger.state(), .caughtUp(at: 7), "the run before it still decides")
+  }
+
+  @MainActor
+  func testACancelKeepsCursors() async throws {
+    var rig = try Rig()
+    var taken = 0
+    let counting = ArchiveUploader(cursors: rig.cursors, cockpit: "https://cockpit.test", deviceId: "dev") { request in
+      (
+        Data(#"{"ok": true, "inserted": 1, "duplicate": 0}"#.utf8),
+        HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+      )
+    }
+    let source = Named(stream: "a", pages: [["x"], ["y"], ["z"]])
+    let run = ArchiveRun(
+      reason: "refresh", sources: [source, Named(stream: "b", pages: [["w"]])], isUnlocked: { true },
+      isCancelled: {
+        taken += 1
+        return taken > 2  // the run's check before "a", the uploader's before page 1, then iOS takes the time back
+      }, now: { Self.runStart }, ledger: rig.ledger, uploader: counting)
+    let result = await run.perform { _, _ in }
+    XCTAssertEqual(result.pages, 1)
+    XCTAssertEqual(result.stopped, ["a": .cancelled, "b": .cancelled], "nothing after the stream in flight starts")
+    XCTAssertEqual(try rig.cursors.cursor("a"), "0", "the taken page's cursor stays")
+    XCTAssertNil(try rig.cursors.cursor("b"))
+    XCTAssertEqual(try rig.ledger.state(), .backfilling(at: Int64(Self.runStart.timeIntervalSince1970 * 1000)))
+  }
+
+  /// Was sim-smoke.sh's archive check: against an unreachable Cockpit the trail's first page goes, fails with the
+  /// reason, and the run stops there; the run's line says `retry` for the trail.
+  @MainActor
+  func testAnUnreachableCockpitFailsTheTrailsFirstPageAndStopsTheRun() async throws {
+    var rig = try Rig()
+    let locations = try LocationStore(db: rig.db)
+    try locations.insert((0..<3).map { LocationPoint(latitude: 47, longitude: -122, timestamp: Double(1_000 + $0)) })
+    let away = ArchiveUploader(cursors: rig.cursors, cockpit: "https://127.0.0.1:65530/", deviceId: "dev") { _ in
+      throw URLError(.cannotConnectToHost)
+    }
+    let run = ArchiveRun(
+      reason: "hook", sources: [LocationArchiveSource(store: locations), Named(stream: "strip.magic", pages: [["m"]])],
+      isUnlocked: { true }, now: { Self.runStart }, ledger: rig.ledger, uploader: away)
+    var lines: [(String, [String: Any])] = []
+    let result = await run.perform { lines.append(($0, $1)) }
+    let failed = lines.first { $0.0 == "archive" && $0.1["action"] as? String == "failed" }?.1
+    XCTAssertEqual(failed?["stream"] as? String, ArchiveStream.points)
+    XCTAssertEqual(failed?["records"] as? Int, 3)
+    XCTAssertEqual(failed?["why"] as? String, "hook")
+    XCTAssertEqual(result.stopped, [ArchiveStream.points: .cockpitAway])
+    let summary = lines.last { $0.0 == "archive_run" }?.1
+    XCTAssertEqual(
+      (summary?["stopped"] as? [String: String])?[ArchiveStream.points], "retry", "the log keeps its words")
+    XCTAssertEqual(try rig.cursors.cursor(ArchiveStream.points), nil)
+  }
+
+  func testTheStateReadsWhatOlderBuildsStored() throws {
+    let settings = try SettingsStore(db: SQLiteDatabase())
+    let ledger = ArchiveLedger(settings: settings)
+    XCTAssertEqual(try ledger.state(), .never)
+    try settings.set(ArchiveLedger.legacyLastRunKey, "42")
+    XCTAssertEqual(
+      try ledger.state(), .caughtUp(at: 42), "a build before the outcome: its last run holds off as before")
+    try settings.set(ArchiveLedger.outcomeKey, #"{"at": 50, "stopped": {"location.points": "retry"}, "refused": {}}"#)
+    XCTAssertEqual(try ledger.state(), .blocked(.cockpitAway, since: 50), "the outcome wins once there is one")
   }
 
   func testTheDailySlotIsTheNext2330Local() throws {

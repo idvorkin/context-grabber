@@ -31,7 +31,8 @@ Mac, never by hand: watch `~/tmp/agent/bugs/inbox.jsonl` (or its Herdr notificat
 - Shared practices for all apps live in idvorkin/bug-kit (README: Shared practices for every app). A bug in BugKit's own code (the report dialog, dictation, the store, crash capture, CloudKit, the listener, What's new) or a practice that applies to every app is filed there and linked from this repo's issue, never fixed here.
 - **Test ladder**: `just test-ladder` climbs it, cheapest rung first, stopping at the first failure (`--dry-run` says
   what it would run). Rung 0 lint and 1 host are `just test` (swift-format and SwiftLint, `ContextCore`'s XCTest, the
-  script checks; seconds) → 1.5 the Mac build (`just native-build-mac`) → 2 the simulator (`just native-test-sim`,
+  script checks; seconds); off the Mac, rung 1L `just test-linux` stands in first (ContextCore's tests on Linux, the
+  package and the app's sources compiled for Apple, the portable script checks) → 1.5 the Mac build (`just native-build-mac`) → 2 the simulator (`just native-test-sim`,
   launch hooks judged from the session log, and the UI tests in `native/UITests/`; never while another xcodebuild runs)
   → 3 the phone (`just native-run-device`). Verify on the cheapest rung that can see the change and **say which rung
   you used**. Audio session behaviour, HealthKit, GPS, widgets, Live Activities,

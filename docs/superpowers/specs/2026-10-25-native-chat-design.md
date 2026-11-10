@@ -145,6 +145,28 @@ strip of chips under the thread's title, so the PR Larry opened an hour ago is o
 - **No links, no strip.** A thread with none shows nothing extra; the strip appears as soon as a message with a link
   arrives, and a new chat gains it once its first message with a link is on the Cockpit.
 - **Links in the bubbles stay tappable** as they are; press and hold on a bubble works as ever.
+- **Links in a bubble are chips** (Igor, 2026-11-10: *"if it's just a single PR, might as well just say PR. Same with
+  Preview on idvorkin"*; *"Your PR chips are already perfect"*; then, on the first try, *"Your inline messages should
+  be chipped when you have them in the chat, just like you have the chat links above"* and *"You can abandon, I think,
+  PR with the number"*). Inside a message's own words every link the strip would collect stands as a chip, the same
+  chip as the strip's, where the link was written: a pull request reads *PR* (with its state once the Cockpit reports
+  it, as on the strip), however many the message holds; a link to Igor's blog — *idvork.in*, *idvorkin.github.io*, or
+  a preview of it on the tailnet (the Cockpit's host on a port from 8400 to 8499) — reads *Preview*; any other link
+  reads its strip chip's words (*gist*, *github.com/issues/736*). The words around a chip wrap as text does, and
+  punctuation written against a link (a full stop, a closing bracket, bold stars) stays beside its chip. Tapping a chip
+  opens the link, as the strip's does; *Copy* copies the message as written, full addresses included. A line with no
+  link reads exactly as before, and the strip itself does not change.
+- **A Cockpit thread link opens here** (Igor, 2026-11-10: to jump from a chat message straight to an Inbox question;
+  then *"make sure that's a short link and maybe gets an inbox chip in the thread view … c5004 … needs a short name.
+  Maybe it's Larry: whatever or just inbox something"*). A link to a thread on the Cockpit — an Inbox question is a
+  thread too — is an *Inbox* chip, in its bubble and on the strip above the thread with the PR chips, one chip per
+  thread. Larry can write it two ways, both read and work the same: the Cockpit's address ending `#thread/` and the
+  key, or the short `larry://inbox/<key>`, which the app also opens from anywhere else on the phone. Tapping an
+  *Inbox* chip opens that thread's own screen in the app, over the one it was tapped in, with Back returning there; a
+  chip for the thread already open does nothing; a thread the chat list does not know opens on the Cockpit page as any
+  link would. The Cockpit's long tailnet address never shows in the app: any other Cockpit link reads *Larry*, or
+  *Larry: ai-journal* for a page on it, and *All links* spells a thread as `larry://inbox/<key>` and other Cockpit
+  links with *Larry* in place of the address.
 
 **Links in the thread list on an iPad or a Mac** (#736). Where the screen is wide — an iPad in full width (or a wide
 enough window) and the Mac — each row in the list also shows that thread's three newest link chips under its last
@@ -423,8 +445,37 @@ need Igor's permission, asked once, the first time he sends a message; declining
 already sent to Larry's inbox stay readable under one *Earlier shares* row at the bottom of the list, read-only, and
 can be swiped away.
 
-**What the phone keeps.** A message stays on the phone until the Cockpit's thread shows it; once Igor sees it there,
-in an open thread, the phone's copy (and its picture) is dropped, so the phone does not fill up with old chat.
+**What the phone keeps** (#809). Each message on the phone is in exactly one state: **waiting** (not yet taken),
+**sent** (the Cockpit took it, into a named thread), or **refused** (the Cockpit said why). Sent and refused at once
+cannot happen. From there:
+
+- *Waiting → sent*: the Cockpit's answer that it has the message. *Waiting → refused*: the Cockpit's answer that the
+  message itself is wrong. Anything else (no network, the Cockpit away or failing) leaves it waiting.
+- *Refused → waiting*: only *Send again*, which only a file offers; the same message goes under the same id. A swipe
+  deletes a message in any state.
+- *Sent → delivered*: a read of its thread lists it. The phone's copy (and its picture or file) is dropped at that read.
+- *Sent → unconfirmed*: five minutes after the send, its thread still doesn't list it. It stops showing as a pending
+  bubble: the Cockpit has it, so the phone no longer stands in for it, and *Yes* or *No* on Larry's newest message
+  goes out as the bare word, not quoted. The log's `chat` outbox_thread line counts it, once, when it turns.
+- *Sent → dropped*: seven days after the send, whether or not its thread was ever opened, checked each time the app
+  starts, comes to the front or sends. The log says how many went.
+- A message sent to Larry's inbox before chat (an *Earlier share*, which has no thread) is kept until swiped away, as
+  above: it is the only place the phone shows it.
+
+**Why five minutes and seven days.** The Cockpit answers *taken* only once the message is in the thread, and an open
+thread is read every few seconds, so a sent message its thread doesn't list after five minutes is not a read racing
+the send: the thread is not returning it (a cut-short or restored thread, a deleted message). Five minutes also clears
+the three minutes the log already treats as stuck. Seven days keeps a week of sent messages countable in a pulled
+phone log, so a thread that loses them still shows up as evidence, and bounds the outbox at a week of sends (the
+simulator had 83 going back a week when #809 was filed). Neither is visible to Igor except as bubbles that go away.
+
+**Who wins** when two things say different things about one message:
+
+- The thread listing it beats everything: a sent message it lists is delivered and dropped, however old.
+- The Cockpit's *taken* beats a refusal on the same message (a message an older build stored as both reads as sent).
+- A message's age beats an unopened thread: seven days drops it without a visit.
+- The phone's clock set back makes a message younger, never older: an age below zero reads as just sent.
+- Messages stored by an older build still load, in the state above that their fields say.
 
 **On a simulator (#525).** A simulator reaches the tailnet too, so like the stats archive it talks to the real Cockpit
 only when a launch hook names an address, and a hook can name a stand-in or the real one. Without one, chat, the Inbox, the
@@ -492,6 +543,9 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   call it is dimmed, and a tap opens the new chat recording nothing, with the keyboard up and a line saying the call has
   the mic. The + still opens with the keyboard up and records nothing.
 - Waiting Inbox items become threads on first launch; sent ones stay under *Earlier shares*.
+- A sent message its thread never lists stops showing as pending five minutes after the send, so *Yes* on Larry's
+  newest message there goes as the bare word; seven days after the send it is gone from the phone, thread opened or
+  not. A message the thread lists is gone at that read. Messages an older build stored still load, in one state each.
 - On the Mac, Command+= makes chat's text one size bigger and Command+Minus one smaller, Command+0 puts it back, the
   size is the same after a relaunch, and nothing outside chat changes size.
 - On the Mac, a picture copied in another app makes *Paste image* live on coming back to the window, and Command+V or

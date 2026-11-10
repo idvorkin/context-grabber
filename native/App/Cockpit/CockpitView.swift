@@ -24,10 +24,10 @@ struct CockpitView: View {
     VStack(spacing: 0) {
       ZStack {
         WebViewHost(webView: model.webView)
-          .opacity(model.error == nil ? 1 : 0)
-        if let error = model.error {
-          errorPanel(error)
-        } else if model.loading {
+          .opacity(failure == nil ? 1 : 0)
+        if let failure {
+          errorPanel(why: failure.why, url: failure.url)
+        } else if model.state.isLoading {
           VStack(spacing: 10) {
             ProgressView().controlSize(.large).tint(accent)
             Text("Cockpit").font(.footnote).kerning(1).foregroundStyle(.gray)
@@ -44,16 +44,21 @@ struct CockpitView: View {
     .onAppear { model.appeared() }
   }
 
+  private var failure: (why: String, url: String)? {
+    if case .failed(let why, let url) = model.state.page { return (why, url) }
+    return nil
+  }
+
   /// #234: Back while there is a page to go back to, Cockpit for the start page; Done leaves (no arrow: it is not back).
   private var footer: some View {
     HStack(spacing: 20) {
-      if model.canGoBack {
+      if model.state.canGoBack {
         Button(action: model.goBack) {
           Label("Back", systemImage: "chevron.backward").font(.system(size: 15, weight: .semibold))
         }
         .accessibilityIdentifier("cockpit-back")
       }
-      if model.awayFromHome {
+      if model.state.awayFromHome {
         Button(action: model.goHome) {
           Label("Cockpit", systemImage: "house").font(.system(size: 15, weight: .semibold))
         }
@@ -71,7 +76,7 @@ struct CockpitView: View {
     .background(Color.black.opacity(0.35))
   }
 
-  private func errorPanel(_ error: CockpitModel.LoadError) -> some View {
+  private func errorPanel(why: String, url: String) -> some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 12) {
         Text("Can't reach the Cockpit").font(.title3.weight(.bold)).foregroundStyle(.white)
@@ -79,7 +84,7 @@ struct CockpitView: View {
           Text("Check that Tailscale is connected and the machine serving the Cockpit is awake.")
             .font(.subheadline).foregroundStyle(Color(white: 0.67))
         }
-        Text(error.url).font(.system(.footnote, design: .monospaced)).foregroundStyle(accent).textSelection(.enabled)
+        Text(url).font(.system(.footnote, design: .monospaced)).foregroundStyle(accent).textSelection(.enabled)
         Button("Try again") { model.retry() }
           .font(.system(size: 15, weight: .semibold))
           .padding(.horizontal, 18).padding(.vertical, 10)
@@ -88,7 +93,7 @@ struct CockpitView: View {
           .accessibilityIdentifier("cockpit-retry")
         // The app's copyable error: the message, and a button that carries it with the address and the build.
         VStack(alignment: .leading, spacing: 8) {
-          Text(error.message).font(.footnote).foregroundStyle(Color(red: 1, green: 0.55, blue: 0.55))
+          Text(why).font(.footnote).foregroundStyle(Color(red: 1, green: 0.55, blue: 0.55))
             .textSelection(.enabled)
           Button(copied ? "Copied" : "Copy error") {
             UIPasteboard.general.string = model.errorReport()
@@ -103,6 +108,6 @@ struct CockpitView: View {
       .padding(24)
     }
     .accessibilityIdentifier("cockpit-error")
-    .onChange(of: error) { copied = false }
+    .onChange(of: model.state.page) { copied = false }
   }
 }

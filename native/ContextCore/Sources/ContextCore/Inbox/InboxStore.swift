@@ -21,16 +21,18 @@ public struct InboxItem: Codable, Equatable, Sendable, Identifiable {
   /// A document (#633): its name as picked, and its bytes beside the item.
   public var fileName: String?
   public var attachedFile: String?
+  /// #809: waiting, sent or refused, one at a time (`InboxDelivery.swift`).
+  public var delivery: Delivery = .waiting
   /// Unix ms when the Cockpit took it.
-  public var sentAt: Int64?
+  public var sentAt: Int64? { if case .sent(let at, _) = delivery { at } else { nil } }
   /// The Cockpit's reason when it said the item itself is wrong; such an item is never sent again on its own
   /// (a document can go again on a tap: `canSendAgain`).
-  public var refused: String?
+  public var refused: String? { if case .refused(let reason) = delivery { reason } else { nil } }
   /// Chat (spec 2026-10-25): the Cockpit thread this message goes to; nil starts a new thread (a share with *New chat* ticked, every +).
   public var thread: String?
-  /// The thread it landed on, set with `sentAt`. A sent item without one went to Larry's inbox before chat: an
+  /// The thread it landed on, once sent. A sent item without one went to Larry's inbox before chat: an
   /// *Earlier share*.
-  public var chatThread: String?
+  public var chatThread: String? { if case .sent(_, let thread) = delivery { thread } else { nil } }
   /// A whiteboard's picture: which board, which picture and where on the board it is (story 381).
   public var whiteboard: WhiteboardPicture?
   /// The board's strokes beside the item, `WhiteboardStrokes.wire` JSON, sent before the picture (story 424).
@@ -50,7 +52,13 @@ public struct InboxItem: Codable, Equatable, Sendable, Identifiable {
 
   public enum Status: Equatable, Sendable { case waiting, sent, refused }
 
-  public var status: Status { sentAt != nil ? .sent : refused != nil ? .refused : .waiting }
+  public var status: Status {
+    switch delivery {
+    case .waiting: .waiting
+    case .sent: .sent
+    case .refused: .refused
+    }
+  }
 
   /// A simulator fixture's id (the `GRABBER_INBOX_FIXTURE` hook): such an item is never sent to Larry.
   public static func fixtureID() -> String { "fixture-" + UUID().uuidString.lowercased() }
@@ -77,15 +85,47 @@ public struct InboxItem: Codable, Equatable, Sendable, Identifiable {
   }
 
   enum CodingKeys: String, CodingKey {
-    case id, kind, url, text, note, refused, thread, whiteboard, offered
-    case chatThread = "chat_thread"
+    case id, kind, url, text, note, thread, whiteboard, offered, delivery
     case sharedAt = "shared_at"
     case imageFile = "image_file"
-    case sentAt = "sent_at"
     case strokesFile = "strokes_file"
     case fileName = "file_name"
     case attachedFile = "attached_file"
     case shareTypes = "share_types"
+  }
+
+  /// The fields an item file held before #809, read when it has no `delivery`.
+  private enum LegacyKeys: String, CodingKey {
+    case refused
+    case sentAt = "sent_at"
+    case chatThread = "chat_thread"
+  }
+
+  public init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    id = try c.decode(String.self, forKey: .id)
+    kind = try c.decode(Kind.self, forKey: .kind)
+    sharedAt = try c.decode(Int64.self, forKey: .sharedAt)
+    url = try c.decodeIfPresent(String.self, forKey: .url)
+    text = try c.decodeIfPresent(String.self, forKey: .text)
+    note = try c.decodeIfPresent(String.self, forKey: .note)
+    imageFile = try c.decodeIfPresent(String.self, forKey: .imageFile)
+    fileName = try c.decodeIfPresent(String.self, forKey: .fileName)
+    attachedFile = try c.decodeIfPresent(String.self, forKey: .attachedFile)
+    thread = try c.decodeIfPresent(String.self, forKey: .thread)
+    whiteboard = try c.decodeIfPresent(WhiteboardPicture.self, forKey: .whiteboard)
+    strokesFile = try c.decodeIfPresent(String.self, forKey: .strokesFile)
+    offered = try c.decodeIfPresent(String.self, forKey: .offered)
+    shareTypes = try c.decodeIfPresent(String.self, forKey: .shareTypes)
+    if let delivery = try c.decodeIfPresent(Delivery.self, forKey: .delivery) {
+      self.delivery = delivery
+    } else {
+      let old = try decoder.container(keyedBy: LegacyKeys.self)
+      delivery = .legacy(
+        sentAt: try old.decodeIfPresent(Int64.self, forKey: .sentAt),
+        chatThread: try old.decodeIfPresent(String.self, forKey: .chatThread),
+        refused: try old.decodeIfPresent(String.self, forKey: .refused))
+    }
   }
 }
 
@@ -200,19 +240,24 @@ public struct InboxStore: Sendable {
   }
 
   public func markSent(_ id: String, at: Int64, thread: String? = nil) throws {
-    try update(id) {
-      $0.sentAt = at
-      $0.chatThread = thread
-    }
+    try update(id) { $0.delivery = .sent(at: at, thread: thread) }
   }
 
   public func markRefused(_ id: String, reason: String) throws {
-    try update(id) { $0.refused = reason }
+    try update(id) { $0.delivery = .refused(reason) }
   }
 
   /// Story 488: a refused item is waiting again, the same message under the same id.
   public func sendAgain(_ id: String) throws {
-    try update(id) { $0.refused = nil }
+    try update(id) { if case .refused = $0.delivery { $0.delivery = .waiting } }
+  }
+
+  /// #809: sent chat messages seven days old leave the phone, their thread opened or not. Returns how many went.
+  @discardableResult
+  public func dropOldSent(now: Int64) throws -> Int {
+    let due = items().items.filter { $0.isDueToDrop(now: now) }
+    for item in due { try delete(item) }
+    return due.count
   }
 
   public func delete(_ item: InboxItem) throws {

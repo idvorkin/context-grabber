@@ -1,9 +1,10 @@
-//  Story 240 (#147): the cog picks a ring style, and the next launch remembers it.
+//  Story 240 (#147): the cog picks a ring style. That the next launch reads it back is BreathStyleTests' on the host
+//  (testEveryStyleIsReadBackAsItIsStored), so this no longer relaunches.
 
 import XCTest
 
 final class BreatheStyleUITests: XCTestCase {
-  func testPickTideAndItIsRememberedNextLaunch() throws {
+  func testTheCogPicksTide() throws {
     let app = XCUIApplication()
     app.launchEnvironment["GRABBER_BREATHE"] = "open"
     app.launch()
@@ -17,14 +18,7 @@ final class BreatheStyleUITests: XCTestCase {
     let shot = XCTAttachment(screenshot: app.screenshot())
     shot.lifetime = .keepAlways
     add(shot)
-    app.buttons["breathe-style-done"].tap()
-
-    app.terminate()
-    app.launch()
-    XCTAssertTrue(cog.appears(within: 15))
-    cog.tap()
-    XCTAssertTrue(app.buttons["breathe-style-tide"].appears(within: 5))
-    XCTAssertTrue(app.buttons["breathe-style-tide"].isSelected, "Tide is remembered across launches")
     XCTAssertFalse(app.buttons["breathe-style-line"].isSelected)
+    app.buttons["breathe-style-done"].tap()
   }
 }

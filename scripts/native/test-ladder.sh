@@ -47,7 +47,7 @@ whiteboard_area="WhiteboardOnPaperUITests WhiteboardPaperGhostsUITests Whiteboar
 # LiveActivity, so those paths stay unmapped and the output says so.
 gym_area="GymTimerDialsUITests GymTimerUITests"
 breathe_area="BreatheMindfulUITests BreathePresetsUITests BreatheStyleUITests"
-places_area="PlaceIconUITests PlacesProblemUITests PlacesRangeUITests PlacesUnnamedUITests"
+places_area="PlaceIconUITests PlacesUnnamedUITests"
 mirror_area="HomeTodayCardUITests MetricDetailUITests"
 card_area="CardUITests TodaysHandUITests"
 cockpit_area="CockpitBackUITests CockpitCallUITests"
@@ -87,6 +87,7 @@ for f in ${changed[@]+"${changed[@]}"}; do
     scripts/native/fake-cockpit.py) add_classes $chat_area $whiteboard_area ;;
     native/App/Gym/* | native/ContextCore/Sources/ContextCore/Gym/*) add_classes $gym_area ;;
     native/App/Breathe/* | native/ContextCore/Sources/ContextCore/Breathe/*) add_classes $breathe_area ;;
+    native/App/AppSessionHost.swift | native/ContextCore/Sources/ContextCore/Session/*) add_classes $gym_area $breathe_area ;;
     native/App/Places/* | native/ContextCore/Sources/ContextCore/Places/*) add_classes $places_area ;;
     native/App/Mirror/* | native/ContextCore/Sources/ContextCore/Mirror/*) add_classes $mirror_area ;;
     # A file whose feature isn't its directory's, before the directories.
@@ -100,7 +101,7 @@ for f in ${changed[@]+"${changed[@]}"}; do
     native/App/Card/* | native/ContextCore/Sources/ContextCore/Card/*) add_classes $card_area ;;
     native/App/Cockpit/* | native/ContextCore/Sources/ContextCore/Cockpit/*) add_classes $cockpit_area ;;
     native/App/Daily/* | native/ContextCore/Sources/ContextCore/Daily/*) add_classes $daily_area ;;
-    native/App/Eulogy/*) add_classes $eulogy_area ;;
+    native/App/Eulogy/* | native/ContextCore/Sources/ContextCore/Eulogy/*) add_classes $eulogy_area ;;
     native/App/Links/* | native/ContextCore/Sources/ContextCore/Links/*) add_classes $links_area ;;
     native/UITests/*.swift)
       in_file=$(classes_in "$f")
@@ -235,7 +236,7 @@ fresh_boot() {
   xcrun simctl boot "$udid" && xcrun simctl bootstatus "$udid" >/dev/null || { echo "the simulator did not boot" >&2; return 1; }
 }
 start_cockpit() {  # <port> <seconds POST /chat is held>
-  FAKE_COCKPIT_NEW_DELAY=$2 scripts/native/fake-cockpit.py "$1" "$(mktemp -t fake-cockpit)" >/dev/null 2>&1 &
+  FAKE_COCKPIT_NEW_DELAY=$2 scripts/native/fake-cockpit.py "$1" "$(mktemp "${TMPDIR:-/tmp}/fake-cockpit.XXXXXX")" >/dev/null 2>&1 &
   cockpit=$!
   disown
   sleep 1
@@ -265,7 +266,7 @@ step() {  # <label> <command...>: times one step of rung 2
 
 chat_classes() {
   start_cockpit "${CHAT_PORT:-8798}" "${FAKE_COCKPIT_NEW_DELAY:-2}" || return
-  scripts/native/fake-bridge.py "${CHAT_BRIDGE_PORT:-8797}" "$(mktemp -t fake-bridge)" >/dev/null 2>&1 &
+  scripts/native/fake-bridge.py "${CHAT_BRIDGE_PORT:-8797}" "$(mktemp "${TMPDIR:-/tmp}/fake-bridge.XXXXXX")" >/dev/null 2>&1 &
   bridge=$!
   disown
   sleep 1
@@ -303,7 +304,7 @@ places_classes() {
   [ -n "$container" ] || { echo "no data container for the app on the simulator" >&2; return 1; }
   mkdir -p "$container/Documents" || return
   cp -f __tests__/fixtures/context-grabber.db "$container/Documents/import-fixture.db" || return
-  since=$(mktemp -t ladder-places)
+  since=$(mktemp "${TMPDIR:-/tmp}/ladder-places.XXXXXX")
   xcrun simctl terminate "$udid" "$bundle" >/dev/null 2>&1
   SIMCTL_CHILD_GRABBER_IMPORT_DB="import-fixture.db,recent" xcrun simctl launch "$udid" "$bundle" >/dev/null || { rm -f "$since"; return 1; }
   # The import's own event in a session log this launch wrote: never a wait for a time.
@@ -390,7 +391,7 @@ if [ "$in_lane" -eq 1 ]; then
 fi
 
 report=()
-waited=$(mktemp -t ladder-wait)
+waited=$(mktemp "${TMPDIR:-/tmp}/ladder-wait.XXXXXX")
 trap 'rm -f "$waited"' EXIT
 finish() {
   echo "seconds per rung:"

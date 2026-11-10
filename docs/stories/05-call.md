@@ -519,7 +519,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 096:
 
 - **Summary:** The Cockpit dashboard lives in a tab and keeps its place
-- **Status:** implemented in [a11f583](https://github.com/idvorkin/context-grabber/commit/a11f583), [4e12d89](https://github.com/idvorkin/context-grabber/commit/4e12d89); verified by `CockpitScreen.test.tsx` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (a screen kept for the launch, story 200); verified by `CockpitBridgeTests` (host) and the `cockpit:` checks in `sim-smoke.sh` (simulator) and a simulator screenshot of the tailnet page; on the phone: not yet
+- **Status:** implemented in [a11f583](https://github.com/idvorkin/context-grabber/commit/a11f583), [4e12d89](https://github.com/idvorkin/context-grabber/commit/4e12d89); verified by `CockpitScreen.test.tsx` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (a screen kept for the launch, story 200); verified by `CockpitBridgeTests` (host) and the `cockpit:` checks in `sim-smoke.sh` (simulator) and a simulator screenshot of the tailnet page; on the phone: not yet. The unreachable panel, and that it comes down when a page then loads, moved from the smoke to `CockpitPageStateTests`: [a3436a9](https://github.com/idvorkin/context-grabber/commit/a3436a9); verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending
 
 #### Use Case:
 - **As a** Larry's client answering a decision on the phone between errands
@@ -598,7 +598,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 200:
 
 - **Summary:** In Grabber Native the Cockpit is a full-screen page from the home screen, and Done keeps it
-- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet. Back and Cockpit in the footer (#234): [c1c6e53](https://github.com/idvorkin/context-grabber/commit/c1c6e53); verified by `CockpitBackUITests` on the simulator (a page the stand-in Cockpit opened in place shows Back, Back returns and the button goes, Cockpit returns from two pages deep, Done leaves) and `CockpitCallUITests` still passing
+- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet. Back and Cockpit in the footer (#234): [c1c6e53](https://github.com/idvorkin/context-grabber/commit/c1c6e53); verified by `CockpitBackUITests` on the simulator (a page the stand-in Cockpit opened in place shows Back, Back returns and the button goes, Cockpit returns from two pages deep, Done leaves) and `CockpitCallUITests` still passing. The panel no longer outlives a failed page (Back or Cockpit after a 404 loads, then shows the page with no panel), and which buttons show is `CockpitPageStateTests`: [a3436a9](https://github.com/idvorkin/context-grabber/commit/a3436a9); verified on the Linux rung (host tests); the train's simulator pass on native/larry-train-1110 (iPhone 17, 2026-11-10: the Mac build and the UI tests green); the phone pending
 - **Issues:** [#234](https://github.com/idvorkin/context-grabber/issues/234)
 - **Spec:** [native Cockpit](../superpowers/specs/2026-10-05-native-cockpit-design.md)
 
@@ -617,6 +617,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** I opened Lavish (or a blog proposal) from the dashboard, and it opened in place
 - **When:** I tap *Back* in the footer, or *Cockpit* from a page or two deeper
 - **Then:** Back goes one page back and disappears on the dashboard, Cockpit goes straight to the dashboard, *Done* still leaves the Cockpit, and the session log has `cockpit_page`, `cockpit_back` and `cockpit_home` with the addresses
+
+- **Scenario:** Back from a page that failed
+- **Given:** a page the dashboard opened answered 404 (or could not load), and the *Can't reach the Cockpit* panel covers it
+- **When:** I tap *Back* or *Cockpit* in the footer
+- **Then:** the panel comes down and the spinner shows while the page loads, then the page before it shows with no panel over it; a page that fails again brings the panel back with its own address and reason
 
 - **Scenario:** The page's ☎ stays in the app
 - **Given:** Grabber Native's Cockpit is open and no call is up
@@ -987,5 +992,35 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a call is live and Tony is answering
 - **When:** I talk over him, and the bridge sends the words of the reply I cut off again as text, with no audio
 - **Then:** no banner shows, the call does not count as trouble, and the log has a `call_bridge` cut_off_resend line
+
+---
+
+### User Story 751:
+
+- **Summary:** The call's problem line shows the worst thing still wrong, and the mic is restarted once
+- **Status:** implemented in [56c468f](https://github.com/idvorkin/context-grabber/commit/56c468f); verified on the Linux rung (host tests: `CallSessionProblemLineTests`, the rest of `CallSession*Tests` green); simulator/phone pending, needs the Mac
+- **Issues:** state-machine audit of 2026-11-10, finding 1
+- **Spec:** [Native call — The problem line](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-problem-line)
+
+#### Use Case:
+- **As a** Larry's client on a call that has more than one thing wrong
+- **I want to** see the worst problem still standing, and the next one when it lifts
+- **so that** an empty line means the call is fine, not that one fix wiped the others
+
+#### Acceptance Criteria:
+- **Scenario:** A bridge error outlives a second of silence
+- **Given:** a live call where the bridge reported an error
+- **When:** the mic delivers exact zeros past its one restart, then makes a sound
+- **Then:** the line says *the microphone is delivering silence* while the zeros last, then the bridge's error again, not nothing
+
+- **Scenario:** *Not reaching Larry* outlives an audio warning
+- **Given:** the line says *the microphone is not reaching Larry*
+- **When:** the phone's audio reports *the microphone stopped delivering*, then recovers
+- **Then:** the line shows the audio warning while it stands, then *not reaching Larry* again until the bridge acknowledges the mic
+
+- **Scenario:** One restart per call
+- **Given:** a call whose first second is exact zeros, so the mic is restarted
+- **When:** the bridge does not acknowledge the mic within five seconds
+- **Then:** the mic is not restarted a second time; the bridge is asked about the rebuilt mic, and if it stays silent the line says *the microphone is not reaching Larry*
 
 ---

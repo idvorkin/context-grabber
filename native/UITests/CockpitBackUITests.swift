@@ -1,5 +1,6 @@
-//  #234: a page the Cockpit opens in place can be backed out of. Back appears once there is a page to go back to and
-//  takes one step; Cockpit goes straight to the start page from any depth; Done is no longer drawn as back.
+//  #234: a page the Cockpit opens in place can be backed out of: Back takes one real step, Cockpit goes straight to the
+//  start page from two deep, Done leaves. Which buttons show when, and that the panel never outlives a failed page,
+//  are CockpitPageStateTests on the host; this keeps only what needs WebKit's own back list.
 
 import XCTest
 
@@ -14,16 +15,12 @@ final class CockpitBackUITests: XCTestCase {
 
     let away = app.links["Open another page"]
     XCTAssertTrue(away.appears(within: 15), app.debugDescription)
-    XCTAssertFalse(app.buttons["cockpit-back"].exists, "no Back on the start page")
     away.tap()
     let back = app.buttons["cockpit-back"]
-    XCTAssertTrue(back.appears(within: 10), "Back appears on the page the Cockpit opened")
-    XCTAssertTrue(app.buttons["cockpit-home"].exists)
-    shot(app, "cockpit-away")
+    XCTAssertTrue(back.appears(within: 10), app.debugDescription)
 
     back.tap()
     XCTAssertTrue(away.appears(within: 10), "Back returns to the dashboard")
-    XCTAssertTrue(app.buttons["cockpit-back"].waitForNonExistence(timeout: 5), "and Back goes")
 
     // Two pages deep, then Cockpit: the start page in one tap.
     away.tap()
@@ -36,10 +33,5 @@ final class CockpitBackUITests: XCTestCase {
 
     app.buttons["cockpit-done"].tap()
     XCTAssertTrue(row.appears(within: 5), "Done leaves the Cockpit")
-  }
-
-  private func shot(_ app: XCUIApplication, _ name: String) {
-    guard let dir = ProcessInfo.processInfo.environment["GRABBER_SHOTS"] else { return }
-    try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: "\(dir)/\(name).png"))
   }
 }

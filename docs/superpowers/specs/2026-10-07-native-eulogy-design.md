@@ -64,6 +64,24 @@ ships inside the app, so it plays offline, the moment it is tapped, and keeps go
 - All four are launchers like the others: they can be hidden and moved from the cog. In a phone that already has
   its own order, they show at the end of it until moved.
 
+## Who wins the audio
+
+The rules as they stand, for the song meeting anything else that sounds:
+
+- **The song takes the audio like music** when it starts: whatever else was playing pauses. It lets the audio go,
+  telling the others they may resume, when it is stopped with the ✕, when it ends, and when it cannot load or start.
+  A pause, from anywhere, keeps the audio: resuming needs nothing back.
+- **A Larry call wins.** Starting a call pauses a playing song where it is. While a call holds the audio, a play from
+  the sheet, the small player or the lock screen is refused with the sheet's *waits until the call ends*, and the
+  song never lets go of the audio either, because the call's audio is the call's. The first play after the call
+  clears the line.
+- **The card's spoken ask wins too:** the card speaking pauses a playing song.
+- **The song's own player beats a Gym Timer workout:** opening it pauses a running workout (the timer's spec has its
+  side). A song opened on Suno is someone else's music and plays alongside.
+- **A play that is refused is tried twice more** before it is a failure: the same player made ready again at the
+  same place, then a fresh player at that place. Only when all three refuse does the sheet show *The song would not
+  start.*, and the audio is let go.
+
 ## Explaining itself
 
 Each tap is in the session log: playing, pausing, scrubbing (from where to where), restarting, stopping, finishing and interruptions with where the song was, and if the

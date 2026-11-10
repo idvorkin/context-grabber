@@ -11,36 +11,7 @@
 import AVFoundation
 import ContextCore
 
-enum BreathPhrase: String, CaseIterable {
-  case begin = "breath-begin"
-  case breatheIn = "breath-in"
-  case hold = "breath-hold"
-  case breatheOut = "breath-out"
-  /// The second hold, lower and slower, so the two are told apart by ear.
-  case holdLow = "breath-hold-low"
-  case wellDone = "breath-done"
-
-  var text: String {
-    switch self {
-    case .begin: return "Let's begin"
-    case .breatheIn: return "Breathe in"
-    case .hold, .holdLow: return "Hold"
-    case .breatheOut: return "Breathe out"
-    case .wellDone: return "Well done"
-    }
-  }
-
-  static func phrase(for phase: BreathPhase) -> BreathPhrase {
-    switch phase {
-    case .inhale: return .breatheIn
-    case .holdFull: return .hold
-    case .exhale: return .breatheOut
-    case .holdEmpty: return .holdLow
-    }
-  }
-}
-
-final class BreatheAudio: @unchecked Sendable {
+final class BreatheAudio: BreathAudio, @unchecked Sendable {
   private let log: SessionLog
   private let queue = DispatchQueue(label: "grabber.breathe.audio")
   private let session = AVAudioSession.sharedInstance()

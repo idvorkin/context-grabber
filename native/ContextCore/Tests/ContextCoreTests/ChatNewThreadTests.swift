@@ -7,11 +7,8 @@ import XCTest
 final class ChatNewThreadTests: XCTestCase {
   private func item(_ id: String, refused: String? = nil, landed: String? = nil) -> InboxItem {
     var item = InboxItem(id: id, kind: .text, sharedAt: 1, text: "first line\nmore")
-    item.refused = refused
-    if let landed {
-      item.sentAt = 2
-      item.chatThread = landed
-    }
+    if let refused { item.delivery = .refused(refused) }
+    if let landed { item.delivery = .sent(at: 2, thread: landed) }
     return item
   }
 

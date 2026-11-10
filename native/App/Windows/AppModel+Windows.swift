@@ -80,7 +80,7 @@ extension AppModel {
 
   /// What the home window is showing: the covers first, as they sit over everything in its stack.
   private var homeWindowName: String {
-    switch HomeStack.named(of: up) {
+    switch screens.named {
     case .home: return "Home"
     case .whatsNew: return "What's new"  // the home row's words; it has no tile
     // Everything else in `HomeStack.order` has a tile; the drill and a metric's week are never in `up`.
@@ -195,27 +195,9 @@ extension AppModel {
 
   /// True when it was showing there.
   private func closeInHomeWindow(_ screen: WindowScreen) -> Bool {
-    switch screen {
-    case .chat:
-      guard showInbox else { return false }
-      showInbox = false
-    case .today:
-      guard showToday else { return false }
-      showToday = false
-    case .cockpit:
-      guard showCockpit else { return false }
-      closeCockpit()
-    case .places:
-      guard showPlaces else { return false }
-      closePlaces()
-    case .whiteboard:
-      guard showWhiteboard else { return false }
-      closeWhiteboard()
-    case .card:
-      guard card != nil else { return false }
-      closeCard()
-    }
-    nowShowing(.home)
+    // A window's raw value is its screen's route name (HomeStackTests pins it).
+    guard let shown = HomeStack.Screen(routeName: screen.rawValue), screens.isUp(shown) else { return false }
+    close(shown)
     return true
   }
 

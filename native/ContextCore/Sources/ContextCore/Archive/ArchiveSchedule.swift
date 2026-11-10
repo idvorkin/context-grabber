@@ -14,10 +14,15 @@ public enum ArchiveSchedule {
   public static let refreshTask = "com.idvorkin.grabbernative.archive.refresh"
   public static let dailyTask = "com.idvorkin.grabbernative.archive.daily"
 
-  /// Whether a foreground or launch should run the archive now: never run, or the interval has passed.
-  public static func isDue(lastRun: Date?, now: Date) -> Bool {
-    guard let lastRun else { return true }
-    return now.timeIntervalSince(lastRun) >= interval
+  /// Whether a foreground or launch should run the archive now (spec: "When a run is due"). Only a run that got
+  /// somewhere holds the next one off for the interval; one that never reached the Cockpit is due at once.
+  public static func isDue(_ state: ArchiveState, now: Date) -> Bool {
+    let since: Int64
+    switch state {
+    case .never, .blocked(.cockpitAway, _): return true
+    case .caughtUp(let at), .backfilling(let at), .blocked(_, let at): since = at
+    }
+    return now.timeIntervalSince(Date(timeIntervalSince1970: Double(since) / 1000)) >= interval
   }
 
   /// The next end-of-day slot after `now`: today's if it is still ahead, else tomorrow's.

@@ -65,18 +65,28 @@ extension ChatNewThread {
   }
 
   /// What this screen shows under the thread's messages: the phone's messages for its thread the Cockpit doesn't hold
-  /// yet, or before it has one, the first message on its way.
+  /// yet, or before it has one, the first message on its way. `now`: Unix ms.
   public func pending(
-    fixedKey: String?, items: [InboxItem], messages: [String: [ChatMessage]]
+    fixedKey: String?, items: [InboxItem], messages: [String: [ChatMessage]],
+    now: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
   ) -> [InboxItem] {
-    if let key = key(fixedKey: fixedKey) { return ChatWire.pending(in: key, items: items, messages: messages[key]) }
+    if let key = key(fixedKey: fixedKey) {
+      return ChatWire.pending(in: key, items: items, messages: messages[key], now: now)
+    }
     return first(in: items).map { [$0] } ?? []
   }
 }
 
 extension ChatWire {
-  /// This phone's messages for a thread that the Cockpit does not list yet: waiting, or refused. Oldest first.
-  public static func pending(in key: String, items: [InboxItem], messages: [ChatMessage]?) -> [InboxItem] {
+  /// This phone's messages for a thread that the Cockpit does not list yet: waiting, refused, or sent so lately that
+  /// a read may not show it yet. A sent one five minutes old is unconfirmed (#809): the Cockpit has it, so it is no
+  /// bubble, and Larry's newest message stays the newest. Oldest first. `now`: Unix ms.
+  public static func pending(in key: String, items: [InboxItem], messages: [ChatMessage]?, now: Int64) -> [InboxItem] {
+    unheld(in: key, items: items, messages: messages).filter { !$0.isUnconfirmed(now: now) }
+  }
+
+  /// Every message of the thread's on the phone that the Cockpit's thread does not list, sent or not. Oldest first.
+  static func unheld(in key: String, items: [InboxItem], messages: [ChatMessage]?) -> [InboxItem] {
     let known = Set((messages ?? []).map(\.id))
     return items.filter { ($0.thread == key || $0.chatThread == key) && !known.contains($0.id) }
       .sorted { $0.sharedAt < $1.sharedAt }

@@ -40,7 +40,7 @@ struct CardView: View {
             .accessibilityIdentifier("card-drill")
           }
           // A report from inside the drill names it, not the card under it (Codex on #381).
-          .onChange(of: drills, initial: true) { _, open in app.nowShowingCard(drill: open) }
+          .onChange(of: drills, initial: true) { _, open in app.drillShown(open) }
           .fullScreenCover(isPresented: $drills) {
             if let deck {
               StackDrillScreen(

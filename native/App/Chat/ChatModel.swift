@@ -372,9 +372,10 @@ final class ChatModel: ObservableObject {
     }
   }
 
-  /// This phone's messages for a thread that the Cockpit does not list yet: waiting, or refused.
+  /// This phone's messages for a thread that the Cockpit does not list yet: waiting, refused, or just sent.
   func pending(in key: String) -> [InboxItem] {
-    ChatWire.pending(in: key, items: inbox.items, messages: messages[key])
+    ChatWire.pending(
+      in: key, items: inbox.items, messages: messages[key], now: Int64(Date().timeIntervalSince1970 * 1000))
   }
 
   /// New threads not yet on the Cockpit (a share or a + that has not left the phone, or was refused), and a message

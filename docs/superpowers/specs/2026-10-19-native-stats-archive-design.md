@@ -50,6 +50,27 @@ refuses a page, the points it has not taken stay on the phone, however old, unti
 how many it kept, and the footer under Places' tracking settings says that such points stay. On a simulator with no
 archive to send to, retention prunes by age alone.
 
+## When a run is due
+
+The app comes to the front, or launches, and asks whether to run. The answer comes from how the last counted run
+ended, the same state the Settings section reads, never from the clock alone:
+
+- **Never run:** due now.
+- **Caught up**, or **still sending its history** (some stream reached its page limit, or iOS cut the run short):
+  due four hours after that run started.
+- **Cockpit out of reach** (a page got no answer): due at the next time the app comes to the front, however soon. A
+  run that never reached the Cockpit holds nothing off, so coming back onto the tailnet and opening the app sends
+  what waited, instead of four hours later.
+- **Refused** (the Cockpit answered with a 4xx for some stream) or **could not be read on the phone**: due four hours
+  after that run started. The Cockpit was reached, or the phone could not read its own data; running again at once
+  would only fail the same way.
+
+When more than one stream stopped, the Cockpit being out of reach wins, then a refusal, then an unreadable stream.
+
+**A locked run is not counted.** A run that found the phone locked (Health cannot be read) changes neither the state
+nor Settings, so the next time the app comes to the front is due by the run before it. Background tasks (the refresh
+and the end-of-day batch) run whenever iOS starts them, whatever the state.
+
 ## In Settings
 
 From the 2026-10-26 review (proposal P-3, picked by Igor). Settings has an **Archive** section, so a Cockpit out of
@@ -102,6 +123,9 @@ check's latest change), and when the phone saw it. **The newest observation of a
 - Four hours after a run, with the app in the background, a refresh run sends what came since; the log shows it.
 - A run while the phone is locked sends the trail and the strip, logs one line saying Health was skipped, and does not count as
   a run: the app's next time in front runs again and sends Health's share.
+- A run that could not reach the Cockpit is due again the next time the app comes to the front; a run that caught
+  up, or one the Cockpit refused, holds the next foreground run off for four hours.
+- A run iOS cuts short keeps every cursor a taken page moved, and starts no stream after the one in flight.
 - A daily batch delayed past midnight keeps its pending slot across refreshes and launches until it runs.
 - An import that rolls back cannot contribute archived points or advance the archive past those points.
 - Launching the app remains safe before the first archive run, including when an existing database is upgraded.

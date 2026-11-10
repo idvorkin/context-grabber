@@ -12,17 +12,6 @@ final class AudioFloorTests: XCTestCase {
     AudioFloor.decide(ask, holding: holding)
   }
 
-  /// The table's rows for an ask: how the rows a class enforces itself are read, since `decide` skips them.
-  private func rows(_ ask: AudioAsk) -> [AudioRule] { AudioFloor.rules.filter { $0.ask == ask } }
-
-  private func assertOwnClassRow(
-    _ ask: AudioAsk, _ holder: AudioUser, _ outcome: AudioRule.Outcome, line: UInt = #line
-  ) {
-    let found = rows(ask).filter { $0.holder == holder }
-    XCTAssertEqual(found.map(\.outcome), [outcome], line: line)
-    XCTAssertEqual(found.map(\.enforcedBy), [.itsOwnClass], line: line)
-  }
-
   // MARK: the timer gives way (story 191)
 
   /// AppModel.swift:767 openCall.
@@ -54,17 +43,9 @@ final class AudioFloorTests: XCTestCase {
 
   // MARK: a call takes the session
 
-  /// AppModel.swift:184 and :186 call.willStart: the song (#197), then chat's dictation (#448), in that order.
-  func testCallStartingPausesTheSongThenStopsChatDictation() {
-    XCTAssertEqual(
-      decide(.callStarts, [.song, .chatVoice]), [.yield(.song, to: "call"), .yield(.chatVoice, to: "call")])
-  }
-
-  /// ChatVoiceModel.swift:207 callChanged and WhiteboardView.swift:1133: each watches the call for itself.
-  func testCallGoingLiveStopsChatDictationAndTheWhiteboardMic() {
-    XCTAssertEqual(rows(.callWentLive).map(\.holder), [.chatVoice, .whiteboardMic])
-    assertOwnClassRow(.callWentLive, .chatVoice, .holderYields(to: "call"))
-    assertOwnClassRow(.callWentLive, .whiteboardMic, .holderYields(to: "call"))
+  /// AppModel.swift:184 call.willStart: the song (#197). Chat's dictation stopping next is the microphone's (below).
+  func testCallStartingPausesTheSong() {
+    XCTAssertEqual(decide(.callStarts, [.song, .chatVoice]), [.yield(.song, to: "call")])
   }
 
   // MARK: a live call refuses
@@ -83,24 +64,6 @@ final class AudioFloorTests: XCTestCase {
   /// AppModel.swift:567 mayTheCardSpeak (#219).
   func testCardSpeakingPausesTheSong() {
     XCTAssertEqual(decide(.cardSpeaks, [.song]), [.yield(.song, to: "card")])
-  }
-
-  /// ChatVoiceModel.swift:132 tap (#448).
-  func testChatDictationRefusedDuringACall() {
-    assertOwnClassRow(.chatVoiceTap, .call, .askerRefused)
-  }
-
-  /// WhiteboardView.swift:526 tapMic.
-  func testWhiteboardMicRefusedDuringACall() {
-    assertOwnClassRow(.whiteboardMicTap, .call, .askerRefused)
-  }
-
-  /// AppModel.swift:454 microphoneBusy: a call (#239), or a chat recording (#559).
-  func testReportDictationRefusedByACallOrAChatRecording() {
-    XCTAssertEqual(decide(.reportDictation, [.call]), [.refuse(by: .call)])
-    XCTAssertEqual(decide(.reportDictation, [.chatVoice]), [.refuse(by: .chatVoice)])
-    XCTAssertEqual(decide(.reportDictation, [.call, .chatVoice]), [.refuse(by: .call)])
-    XCTAssertEqual(decide(.reportDictation, [.timer, .song, .breathe]), [])
   }
 
   /// AppModel.swift:694 resetAudio, DiagnosticsView.swift:472 (story 149).
@@ -136,17 +99,13 @@ final class AudioFloorTests: XCTestCase {
   func testEveryAskWithEveryoneHolding() {
     let expected: [AudioAsk: [AudioDecision]] = [
       .callScreenOpens: [.yield(.timer, to: "call")],
-      .callStarts: [.yield(.song, to: "call"), .yield(.chatVoice, to: "call")],
-      .callWentLive: [],
+      .callStarts: [.yield(.song, to: "call")],
       .timerStarts: [],
       .breatheOpens: [.yield(.timer, to: "breathe")],
       .breatheStarts: [],
       .songOpens: [.yield(.timer, to: "eulogy_song")],
       .songPlays: [.refuse(by: .call)],
       .cardSpeaks: [.refuse(by: .call)],
-      .chatVoiceTap: [],
-      .reportDictation: [.refuse(by: .call)],
-      .whiteboardMicTap: [],
       .cockpitOpens: [.yield(.timer, to: "cockpit")],
       .audioReset: [.refuse(by: .call)],
     ]
@@ -154,7 +113,7 @@ final class AudioFloorTests: XCTestCase {
     for ask in AudioAsk.allCases {
       XCTAssertEqual(decide(ask, everyone), expected[ask], ask.rawValue)
     }
-    XCTAssertEqual(AudioFloor.rules.count, 16)
+    XCTAssertEqual(AudioFloor.rules.count, 9, "the seven microphone rows are MicFloor's")
     XCTAssertTrue(AudioFloor.rules.allSatisfy { !$0.source.isEmpty })
   }
 
@@ -162,38 +121,26 @@ final class AudioFloorTests: XCTestCase {
   /// ChatVoiceModel.yieldToCall each return at once when they are not sounding, as the pairwise lines relied on.
   func testYieldsAreAskedWhetherOrNotTheHolderIsKnownToHold() {
     XCTAssertEqual(decide(.breatheOpens, []), [.yield(.timer, to: "breathe")])
-    XCTAssertEqual(decide(.callStarts, []), [.yield(.song, to: "call"), .yield(.chatVoice, to: "call")])
+    XCTAssertEqual(decide(.callStarts, []), [.yield(.song, to: "call")])
   }
 
-  /// AppModel answers `isHolding` for these two only (AppModel.swift:454 read `call.snapshot.isActive ||
-  /// chatVoice.recording`), and the second is not read when the first is true or when the ask has no rule for it.
-  func testOnlyRefusingHoldersAreAskedAboutInOrder() {
-    var asked: [AudioUser] = []
-    _ = AudioFloor.decide(.reportDictation) {
-      asked.append($0)
-      return true
-    }
-    XCTAssertEqual(asked, [.call])
-    asked = []
-    _ = AudioFloor.decide(.reportDictation) {
-      asked.append($0)
-      return false
-    }
-    XCTAssertEqual(asked, [.call, .chatVoice])
-    for ask in AudioAsk.allCases where ask != .reportDictation {
-      asked = []
+  /// Only a call refuses anything now, so a call is all `isHolding` is ever asked about, and only for an ask with a
+  /// refusal row.
+  func testOnlyRefusingHoldersAreAskedAbout() {
+    for ask in AudioAsk.allCases {
+      var asked: [AudioUser] = []
       _ = AudioFloor.decide(ask) {
         asked.append($0)
         return false
       }
-      XCTAssertTrue(asked.allSatisfy { $0 == .call }, ask.rawValue)
+      XCTAssertEqual(asked, [.songPlays, .cardSpeaks, .audioReset].contains(ask) ? [.call] : [], ask.rawValue)
     }
   }
 
-  /// AppModel's `holdsAudio` answers for exactly these two and says false for every other user. A new refuser in a
-  /// row AppModel carries out needs a case in `holdsAudio` (native/App/AppModel.swift) before this set changes.
-  func testRefusersAreTheCallAndChatDictation() {
-    XCTAssertEqual(AudioFloor.refusers, [.call, .chatVoice])
+  /// AppModel's `holdsAudio` answers for the call and says false for every other user. A new refuser needs a case
+  /// in `holdsAudio` (native/App/AppModel.swift) before this set changes.
+  func testTheOnlyRefuserIsTheCall() {
+    XCTAssertEqual(AudioFloor.refusers, [.call])
   }
 
   /// The one raw value that reaches the session log: AppModel's `song.heldBy` hands a refusing holder's raw value to
@@ -204,23 +151,113 @@ final class AudioFloorTests: XCTestCase {
     XCTAssertEqual(decide(.songPlays, everyone), [.refuse(by: .call)])
   }
 
-  /// `decide` answers from the rows AppModel carries out and never from a class's own: asked at one of those
-  /// moments it does nothing, whoever holds, rather than carry out the half AppModel can reach.
-  func testDecideNeverReturnsARowItsOwnClassEnforces() {
-    for ask in [AudioAsk.callWentLive, .chatVoiceTap, .whiteboardMicTap] {
-      XCTAssertFalse(rows(ask).isEmpty, ask.rawValue)
-      XCTAssertEqual(decide(ask, everyone), [], ask.rawValue)
-      XCTAssertEqual(decide(ask, []), [], ask.rawValue)
+  // MARK: - the microphone: one holder or nobody (audit finding 4, spec 2026-11-10-microphone-floor-design.md)
+
+  private let recorders = MicFloor.recorders
+  private let nobodyElse: (AudioUser) -> Bool = { _ in true }
+
+  /// Audit test 4: three dictations and a call, and the floor arbitrated one pair. Every ordered pair has a row now,
+  /// a recorder asking again included.
+  func testEveryMicPairHasARow() {
+    XCTAssertEqual(recorders, [.call, .chatVoice, .reportDictation, .whiteboardMic])
+    XCTAssertEqual(MicFloor.rules.count, 16)
+    for asker in recorders {
+      for holder in recorders {
+        let rows = MicFloor.rules.filter { $0.asker == asker && $0.holder == holder }
+        XCTAssertEqual(rows.count, 1, "\(asker) asking while \(holder) holds")
+      }
     }
-    XCTAssertEqual(AudioFloor.asked.count, 12)
-    XCTAssertTrue(AudioFloor.asked.allSatisfy { $0.enforcedBy == .appModel })
+    // The pairs nothing arbitrated before: the board against either dictation, and the two dictations' other way.
+    for (asker, holder) in [
+      (AudioUser.whiteboardMic, AudioUser.chatVoice), (.whiteboardMic, .reportDictation), (.chatVoice, .whiteboardMic),
+      (.chatVoice, .reportDictation), (.reportDictation, .whiteboardMic),
+    ] {
+      XCTAssertEqual(MicFloor.rule(asker, holder).outcome, .refused, "\(asker) asking while \(holder) holds")
+    }
   }
 
-  /// The asks AppModel never makes: their classes check for themselves, as before the table.
-  func testRulesTheirOwnClassesEnforce() {
-    let own = Set(AudioFloor.rules.filter { $0.enforcedBy == .itsOwnClass }.map(\.ask))
-    XCTAssertEqual(own, [.callWentLive, .chatVoiceTap, .whiteboardMicTap])
-    let appModel = Set(AudioFloor.rules.filter { $0.enforcedBy == .appModel }.map(\.ask))
-    XCTAssertTrue(own.isDisjoint(with: appModel))
+  /// The whole table: a call beats all three, anyone else waits for whoever has it, a holder asking again keeps it.
+  func testTheMicTable() {
+    for asker in recorders {
+      for holder in recorders {
+        let expected: MicRule.Outcome = asker == holder ? .keeps : asker == .call ? .takes : .refused
+        XCTAssertEqual(MicFloor.rule(asker, holder).outcome, expected, "\(asker) asking while \(holder) holds")
+      }
+    }
+  }
+
+  func testNobodyHoldingGrantsTheAsker() {
+    for user in recorders {
+      var floor = MicFloor()
+      XCTAssertEqual(floor.request(user, stillHolding: nobodyElse), .granted(took: nil))
+      XCTAssertEqual(floor.holder, user)
+    }
+  }
+
+  /// A call starting takes the mic from whoever has it: AppModel stops that one, as #448 and #546 did for chat.
+  func testACallTakesTheMicFromAnyone() {
+    for holder in [AudioUser.chatVoice, .reportDictation, .whiteboardMic] {
+      var floor = MicFloor()
+      _ = floor.request(holder, stillHolding: nobodyElse)
+      XCTAssertEqual(floor.request(.call, stillHolding: nobodyElse), .granted(took: holder))
+      XCTAssertEqual(floor.holder, .call)
+    }
+  }
+
+  /// #239, #559 and the audit's gaps: the first one keeps it, and a refusal changes nothing.
+  func testAnyoneElseWaitsForWhoeverHasIt() {
+    for holder in recorders {
+      for asker in recorders where asker != holder && asker != .call {
+        var floor = MicFloor()
+        _ = floor.request(holder, stillHolding: nobodyElse)
+        XCTAssertEqual(floor.request(asker, stillHolding: nobodyElse), .refused(by: holder), "\(asker) vs \(holder)")
+        XCTAssertEqual(floor.holder, holder)
+      }
+    }
+  }
+
+  func testAskingAgainKeepsIt() {
+    var floor = MicFloor()
+    _ = floor.request(.chatVoice, stillHolding: nobodyElse)
+    XCTAssertEqual(floor.request(.chatVoice, stillHolding: nobodyElse), .granted(took: nil))
+    XCTAssertEqual(floor.holder, .chatVoice)
+  }
+
+  /// Only the holder's letting go frees it; after that the next to ask gets it.
+  func testTheHolderLetsGo() {
+    var floor = MicFloor()
+    _ = floor.request(.call, stillHolding: nobodyElse)
+    floor.release(.chatVoice)
+    XCTAssertEqual(floor.holder, .call)
+    floor.release(.call)
+    XCTAssertNil(floor.holder)
+    XCTAssertEqual(floor.request(.reportDictation, stillHolding: nobodyElse), .granted(took: nil))
+  }
+
+  /// A recorder that stopped without saying so (a dictation that never started, the report dialog closed) holds
+  /// nothing: the next ask finds it gone.
+  func testAHolderNoLongerRecordingIsLetGo() {
+    var floor = MicFloor()
+    _ = floor.request(.chatVoice, stillHolding: nobodyElse)
+    XCTAssertEqual(floor.request(.reportDictation) { $0 != .chatVoice }, .granted(took: nil))
+    XCTAssertEqual(floor.holder, .reportDictation)
+    XCTAssertNil(floor.heldByAnother(than: .chatVoice) { _ in false }, "stale: nobody really has it")
+    XCTAssertEqual(floor.heldByAnother(than: .chatVoice, stillHolding: nobodyElse), .reportDictation)
+    XCTAssertNil(floor.heldByAnother(than: .reportDictation, stillHolding: nobodyElse), "its own hold")
+  }
+
+  /// Who enforces each row: the floor for the call and the two dictations; the board still checks the call for itself;
+  /// and nobody yet for the board against either dictation, because the board's screen doesn't ask (#821 rewrites it).
+  func testWhoEnforcesEachMicRow() {
+    let nobodyYet = MicFloor.rules.filter { $0.enforcedBy == .nobodyYet }.map { "\($0.asker)/\($0.holder)" }
+    XCTAssertEqual(
+      Set(nobodyYet),
+      [
+        "chatVoice/whiteboardMic", "reportDictation/whiteboardMic", "whiteboardMic/chatVoice",
+        "whiteboardMic/reportDictation",
+      ])
+    let board = MicFloor.rules.filter { $0.enforcedBy == .theBoard }.map { "\($0.asker)/\($0.holder)" }
+    XCTAssertEqual(Set(board), ["whiteboardMic/call", "call/whiteboardMic", "whiteboardMic/whiteboardMic"])
+    XCTAssertEqual(MicFloor.rules.filter { $0.enforcedBy == .floor }.count, 9)
   }
 }

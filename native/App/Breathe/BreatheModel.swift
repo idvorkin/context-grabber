@@ -1,6 +1,7 @@
 //  The breathing screen's state (stories 160–165): the three choices, the session against the clock, the cues.
 //
-//  ContextCore's BreathRun decides everything from the clock; this owns the clock, the sound and the log.
+//  ContextCore's BreathRun decides everything from the clock, and BreathSession when the cues, the keepalive, the lit
+//  screen and the card are taken and let go; this publishes the stage, remembers the choices and saves to Health.
 
 import ContextCore
 import SwiftUI
@@ -25,7 +26,7 @@ struct BreatheLaunch: Equatable {
 
 @MainActor
 final class BreatheModel: ObservableObject {
-  enum Stage { case setup, session, done }
+  typealias Stage = BreathSession.Stage
 
   @Published private(set) var stage = Stage.setup
   /// The preset chosen (story 241), or nil for Custom.
@@ -35,7 +36,9 @@ final class BreatheModel: ObservableObject {
   @Published private(set) var customIn: Int
   @Published private(set) var customOut: Int
   @Published private(set) var sessionMinutes: Int
-  @Published private(set) var cue: BreathCue
+  @Published private(set) var cue: BreathCue {
+    didSet { session.cue = cue }
+  }
   /// How the circle draws the breath (story 240).
   @Published private(set) var style: BreathStyle
   @Published private(set) var paused = false
@@ -45,28 +48,19 @@ final class BreatheModel: ObservableObject {
   private let log: SessionLog
   private let database: AppDatabase
   private let audio: BreatheAudio
-  private let liveActivity: LiveActivityController
-  private var run: BreathRun?
-  private var clock: Timer?
-  private var pauseAt: Double?
+  private let session: BreathSession
 
   private static let sessionKey = "breathe_session_minutes"
   private static let cueKey = "breathe_cue"
-  /// Room for "Let's begin" before the first inhale.
-  private static let voiceLeadIn = 2.0
-
-  /// Story 242: where a session goes in Health; the app saves it as a Mindful Session.
-  private let saveMindful: (TimeSpan, String) -> Void
 
   init(
     log: SessionLog, database: AppDatabase, liveActivity: LiveActivityController,
     saveMindful: @escaping (TimeSpan, String) -> Void = { _, _ in }
   ) {
-    self.saveMindful = saveMindful
     self.log = log
     self.database = database
-    self.liveActivity = liveActivity
-    audio = BreatheAudio(log: log)
+    let audio = BreatheAudio(log: log)
+    self.audio = audio
     let (setup, seeds) = BreathSetup.restore(database.setting)
     for seed in seeds { database.setSetting(seed.key, seed.value) }
     preset = setup.preset
@@ -74,8 +68,15 @@ final class BreatheModel: ObservableObject {
     customIn = setup.customIn
     customOut = setup.customOut
     sessionMinutes = database.setting(Self.sessionKey).flatMap(Int.init) ?? BreathPlan.defaultSession
-    cue = database.setting(Self.cueKey).flatMap(BreathCue.init(rawValue:)) ?? .voice
+    let cue = database.setting(Self.cueKey).flatMap(BreathCue.init(rawValue:)) ?? .voice
+    self.cue = cue
     style = BreathStyle.decode(database.setting(BreathStyle.settingKey))
+    session = BreathSession(
+      cue: cue, host: AppSessionHost(log: log, liveActivity: liveActivity), audio: audio, saveMindful: saveMindful,
+      finished: { [database] plan in
+        database.logActivity(.breathing, name: ActivityLog.breathName(plan), seconds: plan.totalSeconds)
+      })
+    session.onChange = { [weak self] in self?.mirror() }
     audio.load()
   }
 
@@ -84,7 +85,6 @@ final class BreatheModel: ObservableObject {
     if let preset { return BreathPlan(breathSeconds: preset, sessionMinutes: sessionMinutes) }
     return BreathPlan(inSeconds: customIn, outSeconds: customOut, sessionMinutes: sessionMinutes)
   }
-  private var now: Double { Date().timeIntervalSince1970 }
 
   // MARK: - setup
 
@@ -164,179 +164,30 @@ final class BreatheModel: ObservableObject {
           ?? preset.map { BreathPlan(breathSeconds: $0, sessionMinutes: minutes) }
           ?? BreathPlan(inSeconds: customIn, outSeconds: customOut, sessionMinutes: minutes)
       } ?? self.plan)
-    pauseAt = launch.pauseAt
-    let leadIn = cue == .voice ? Self.voiceLeadIn : 0
-    var run = BreathRun(plan: plan, leadIn: leadIn)
-    run.start(now: now)
-    self.run = run
-    sessionPlan = plan
-    paused = false
-    stage = .session
-    log.event(
-      "breath_start",
-      [
-        "breath": plan.inSeconds, "hold_in": plan.holdInSeconds, "out": plan.outSeconds,
-        "hold_out": plan.holdOutSeconds, "cycles": plan.cycles, "total": plan.totalSeconds,
-        "cue": cue.rawValue,
-        "lead_in_ms": Int(leadIn * 1000),
-      ])
-    keepAwake(true)
-    audio.hush()  // a sample still sounding
-    if cue == .voice { audio.say(.begin) }
-    audio.keepAlive(true)
-    startClock()
-    tick()
-    syncLiveActivity()
+    session.begin(plan, pauseAt: launch.pauseAt)
   }
 
-  func togglePause() {
-    guard var run, stage == .session else { return }
-    if paused {
-      run.start(now: now)
-      log.event("breath_resume", ["time_left": run.moment(now: now).secondsLeft])
-      self.run = run
-      paused = false
-      audio.keepAlive(true)
-      startClock()
-      syncLiveActivity()
-    } else {
-      pause(reason: "circle")
-    }
-  }
+  /// A tap on the circle.
+  func togglePause() { session.togglePause() }
 
   /// The back chevron: out at once, no question.
-  func back() {
-    guard stage == .session, let run else { return }
-    log.event("breath_exit", ["elapsed_ms": Int(max(0, run.elapsed(now: now)) * 1000), "paused": paused])
-    if let span = run.mindfulSpan(now: now) {
-      saveMindful(span, "back")
-    } else {
-      log.event("mindful_skipped", ["why": "under a minute", "breathed_ms": Int(max(0, run.elapsed(now: now)) * 1000)])
-    }
-    endSession()
-    stage = .setup
-    liveActivity.end(.breathe, reason: "back")
-  }
+  func back() { session.back() }
 
-  func backToStart() {
-    audio.hush()
-    stage = .setup
-    liveActivity.end(.breathe, reason: "back")
-  }
+  func backToStart() { session.backToStart() }
 
   /// Leaving the screen altogether.
-  func disappear() {
-    if stage == .session { back() }
-    audio.stop()
-    liveActivity.end(.breathe, reason: "leave")
-  }
+  func disappear() { session.disappear() }
 
   /// Where the ring is at `date`; frozen while paused.
-  func moment(at date: Date) -> BreathMoment? {
-    run?.moment(now: date.timeIntervalSince1970)
-  }
+  func moment(at date: Date) -> BreathMoment? { session.moment(now: date.timeIntervalSince1970) }
 
   /// True in the quiet before the first inhale.
-  func inLeadIn(at date: Date) -> Bool {
-    (run?.elapsed(now: date.timeIntervalSince1970) ?? 0) < 0
-  }
+  func inLeadIn(at date: Date) -> Bool { session.inLeadIn(now: date.timeIntervalSince1970) }
 
-  // MARK: - private
-
-  private func pause(reason: String) {
-    guard var run else { return }
-    run.pause(now: now)
-    self.run = run
-    paused = true
-    stopClock()
-    audio.hush()
-    audio.keepAlive(false)
-    let m = run.moment(now: now)
-    log.event(
-      "breath_pause",
-      ["reason": reason, "phase": "\(m.phase)", "cycle": m.cycle, "time_left": m.secondsLeft])
-    syncLiveActivity()
-  }
-
-  /// What the lock screen and the island show (story 166): pushed only when the step, the pause or the finish
-  /// changed, which the controller works out from the content's key.
-  private func syncLiveActivity() {
-    guard let run else { return }
-    let t = now
-    liveActivity.sync(
-      LiveActivityContent(
-        breath: run.plan, elapsed: run.elapsed(now: t), leadIn: run.leadIn, paused: paused, finished: run.isFinished),
-      kind: .breathe, stepEndsAt: run.stepEndsAt(now: t))
-  }
-
-  private func startClock() {
-    stopClock()
-    // Twenty looks a second: no step is noticed more than 50 ms late, and lateness cannot add up, because
-    // every look derives the step from the clock.
-    let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
-      MainActor.assumeIsolated { self?.tick() }
-    }
-    RunLoop.main.add(timer, forMode: .common)
-    clock = timer
-  }
-
-  private func stopClock() {
-    clock?.invalidate()
-    clock = nil
-  }
-
-  private func tick() {
-    guard var run else { return }
-    let effects = run.tick(now: now)
-    self.run = run
-    for effect in effects {
-      switch effect {
-      case .phase(let phase, let cycle, let lateMs):
-        log.event("breath_phase", ["phase": "\(phase)", "cycle": cycle, "late_ms": lateMs])
-        switch cue {
-        case .voice: audio.say(BreathPhrase.phrase(for: phase))
-        case .tone: audio.play(BreathTone.tone(for: phase))
-        case .off: break
-        }
-        if UIAccessibility.isVoiceOverRunning {
-          UIAccessibility.post(notification: .announcement, argument: phase.word)
-        }
-      case .finished(let lateMs):
-        log.event(
-          "breath_finished", ["cycles": run.plan.cycles, "total": run.plan.totalSeconds, "late_ms": lateMs])
-        database.logActivity(.breathing, name: ActivityLog.breathName(run.plan), seconds: run.plan.totalSeconds)
-        if let span = run.mindfulSpan(now: now) { saveMindful(span, "finished") }
-        endSession()
-        stage = .done
-        switch cue {
-        case .voice: audio.say(.wellDone)
-        case .tone: audio.play(.closing)
-        case .off: break
-        }
-        if UIAccessibility.isVoiceOverRunning {
-          UIAccessibility.post(notification: .announcement, argument: "Done")
-        }
-      }
-    }
-    if !effects.isEmpty { syncLiveActivity() }
-    if let at = pauseAt, stage == .session, run.elapsed(now: now) >= at {
-      pauseAt = nil
-      pause(reason: "hook")
-    }
-  }
-
-  private func endSession() {
-    pauseAt = nil
-    stopClock()
-    audio.hush()
-    audio.keepAlive(false)
-    paused = false
-    keepAwake(false)
-  }
-
-  private func keepAwake(_ on: Bool) {
-    guard UIApplication.shared.isIdleTimerDisabled != on else { return }
-    UIApplication.shared.isIdleTimerDisabled = on
-    log.event("keep_awake", ["on": on, "reason": "breathe"])
+  /// The session's stage, pause and plan, published.
+  private func mirror() {
+    if stage != session.stage { stage = session.stage }
+    if paused != session.paused { paused = session.paused }
+    if sessionPlan != session.sessionPlan { sessionPlan = session.sessionPlan }
   }
 }
