@@ -1220,8 +1220,9 @@ struct WhiteboardView: View {
                     model.menuChose?()
                   }))
             }
-            // Story 659: who answers a pause, the board's own on the Cockpit.
-            Section("Responder") {
+            // Story 659: who answers a pause, the board's own on the Cockpit. A submenu, not a section: three more rows
+            // make the iPad show the menu as a full-height list that stays up after a pick (#848).
+            Menu {
               ForEach(WhiteboardResponder.allCases, id: \.self) { responder in
                 Toggle(
                   responder.name,
@@ -1232,6 +1233,8 @@ struct WhiteboardView: View {
                       model.menuChose?()
                     }))
               }
+            } label: {
+              Label("Responder: \(model.responder.shown.name)", systemImage: "person.wave.2")
             }
           } label: {
             Label("Board", systemImage: "paintpalette")
