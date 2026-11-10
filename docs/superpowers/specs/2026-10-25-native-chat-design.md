@@ -156,6 +156,17 @@ strip of chips under the thread's title, so the PR Larry opened an hour ago is o
   punctuation written against a link (a full stop, a closing bracket, bold stars) stays beside its chip. Tapping a chip
   opens the link, as the strip's does; *Copy* copies the message as written, full addresses included. A line with no
   link reads exactly as before, and the strip itself does not change.
+- **A Cockpit thread link opens here** (Igor, 2026-11-10: to jump from a chat message straight to an Inbox question;
+  then *"make sure that's a short link and maybe gets an inbox chip in the thread view … c5004 … needs a short name.
+  Maybe it's Larry: whatever or just inbox something"*). A link to a thread on the Cockpit — an Inbox question is a
+  thread too — is an *Inbox* chip, in its bubble and on the strip above the thread with the PR chips, one chip per
+  thread. Larry can write it two ways, both read and work the same: the Cockpit's address ending `#thread/` and the
+  key, or the short `larry://inbox/<key>`, which the app also opens from anywhere else on the phone. Tapping an
+  *Inbox* chip opens that thread's own screen in the app, over the one it was tapped in, with Back returning there; a
+  chip for the thread already open does nothing; a thread the chat list does not know opens on the Cockpit page as any
+  link would. The Cockpit's long tailnet address never shows in the app: any other Cockpit link reads *Larry*, or
+  *Larry: ai-journal* for a page on it, and *All links* spells a thread as `larry://inbox/<key>` and other Cockpit
+  links with *Larry* in place of the address.
 
 **Links in the thread list on an iPad or a Mac** (#736). Where the screen is wide — an iPad in full width (or a wide
 enough window) and the Mac — each row in the list also shows that thread's three newest link chips under its last

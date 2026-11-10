@@ -183,6 +183,19 @@ struct ChatListView: View {
         ChatThreadView(chat: chat, voice: voice, key: key, title: chat.title(of: key), logger: logger)
       }
     }
+    // Story 744: a wide row's Inbox chip opens its thread here too.
+    .environment(
+      \.openURL,
+      OpenURLAction { url in
+        switch ChatCockpitLink.jump(url, from: nil, known: Set(chat.threads.map(\.key))) {
+        case .thread(let key):
+          chat.linkThread = key
+          return .handled
+        case .web(let page): return .systemAction(page)
+        case .here, nil: return .systemAction
+        }
+      }
+    )
     .chatTextSize()
   }
 
@@ -325,7 +338,7 @@ private struct LinkChip: View {
     }
     .buttonStyle(.borderless)
     .accessibilityLabel(link.chipText)
-    .accessibilityHint(link.url.absoluteString)
+    .accessibilityHint(ChatLinks.address(link))
     .accessibilityIdentifier("chat-link-chip")
     .accessibilityValue(link.state?.rawValue ?? "")
   }
@@ -346,6 +359,7 @@ private struct LinkChip: View {
     case .pullRequest: return "arrow.triangle.pull"
     case .gist: return "doc.text"
     case .web: return "link"
+    case .inbox: return "tray"
     }
   }
 }
@@ -436,7 +450,7 @@ private struct AllLinksView: View {
         } label: {
           VStack(alignment: .leading, spacing: 2) {
             Text(link.chipText).font(.body)
-            Text(link.url.absoluteString).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            Text(ChatLinks.address(link)).font(.caption).foregroundStyle(.secondary).lineLimit(2)
           }
         }
       }
@@ -543,6 +557,8 @@ struct ChatThreadView: View {
   @State private var quoting: ChatMessage?
   /// GRABBER_CHAT_HOLD=yes / no / quote / copy: that choice taps itself on Larry's newest message, for the simulator.
   @State private var holdHook = LaunchHooks.current.chat.hold
+  /// A Cockpit thread link tapped in a bubble (story 744): that thread, pushed over this one.
+  @State private var jumpTo: String?
   @Environment(\.dismiss) private var dismiss
 
   init(chat: ChatModel, voice: ChatVoiceModel, key: String, title: String, logger: @escaping BugLogger) {
@@ -678,7 +694,31 @@ struct ChatThreadView: View {
       if let landed = newThread.firstMoved(to: thread) { chat.open(landed) }
     }
     .onChange(of: messages.last?.id, initial: true) { runHoldHook() }
+    .navigationDestination(item: $jumpTo) { target in
+      ChatThreadView(chat: chat, voice: voice, key: target, title: chat.title(of: target), logger: logger)
+    }
+    // Story 744: an Inbox chip, in a bubble or the strip above, opens its thread here; any other link as ever.
+    .environment(\.openURL, OpenURLAction(handler: openInApp))
     .chatTextSize()
+  }
+
+  /// Story 744: a Cockpit thread the list knows opens here, an unknown one on the Cockpit; any other link as before.
+  private func openInApp(_ url: URL) -> OpenURLAction.Result {
+    guard let jump = ChatCockpitLink.jump(url, from: key, known: Set(chat.threads.map(\.key))) else {
+      return .systemAction
+    }
+    switch jump {
+    case .here:
+      chat.logAction("cockpit_link", ["thread": key ?? "", "opened": "here"])
+      return .handled
+    case .thread(let target):
+      chat.logAction("cockpit_link", ["thread": key ?? "", "opened": "app"])
+      jumpTo = target
+      return .handled
+    case .web(let page):
+      chat.logAction("cockpit_link", ["thread": key ?? "", "opened": "browser"])
+      return .systemAction(page)
+    }
   }
 
   private func runHoldHook() {

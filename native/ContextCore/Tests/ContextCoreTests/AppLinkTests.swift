@@ -91,6 +91,11 @@ final class AppLinkTests: XCTestCase {
     XCTAssertEqual(route("grabbernative://chat"), .chat(thread: nil))
     XCTAssertEqual(route("grabbernative://inbox"), .chat(thread: nil))
     XCTAssertEqual(route("grabbernative://chat?thread=igor2-88g.500"), .chat(thread: "igor2-88g.500"))
+    // Story 744: Larry's short form of a Cockpit thread.
+    XCTAssertEqual(route("larry://inbox/igor2-88g.1411.2"), .chat(thread: "igor2-88g.1411.2"))
+    XCTAssertTrue(understood("larry://inbox/igor2-88g.1411.2"))
+    XCTAssertEqual(route("larry://somewhere"), .chat(thread: nil))
+    XCTAssertFalse(understood("larry://somewhere"))
     XCTAssertEqual(route("grabbernative://call?via=skype"), .call(via: nil))
     XCTAssertFalse(understood("grabbernative://call?via=skype"))
   }

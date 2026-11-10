@@ -109,6 +109,13 @@ public enum AppLink {
   }
 
   public static func parse(_ url: URL) -> Parsed {
+    // Story 744: larry://inbox/<key>, the short form of a Cockpit thread Larry writes, opens that thread.
+    if url.scheme?.lowercased() == ChatCockpitLink.scheme {
+      guard let key = ChatCockpitLink.threadKey(url) else {
+        return Parsed(route: .chat(thread: nil), understood: false)
+      }
+      return Parsed(route: .chat(thread: key), understood: true)
+    }
     guard let scheme = url.scheme?.lowercased(), schemes.contains(scheme),
       let parts = URLComponents(url: url, resolvingAgainstBaseURL: false)
     else { return Parsed(route: .home, understood: false) }

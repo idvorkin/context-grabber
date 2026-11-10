@@ -88,6 +88,8 @@
 			<array>
 				<!-- Not grabber: Context Grabber owns it until the cutover (story 135). -->
 				<string>grabbernative</string>
+				<!-- Story 744: larry://inbox/<key>, a Cockpit thread as Larry writes it in a chat. -->
+				<string>larry</string>
 			</array>
 		</dict>
 	</array>
