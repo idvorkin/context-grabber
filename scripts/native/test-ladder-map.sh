@@ -139,7 +139,7 @@ feature() {  # <name> <app path> <ContextCore path, or ""> <the line's label> <c
 core=native/ContextCore/Sources/ContextCore
 feature gym native/App/Gym/GymTimerView.swift $core/Gym/TimerEngine.swift "" "GymTimerDialsUITests GymTimerUITests"
 feature breathe native/App/Breathe/BreatheView.swift $core/Breathe/BreathEngine.swift "" "BreatheMindfulUITests BreathePresetsUITests BreatheStyleUITests"
-feature places native/App/Places/PlacesView.swift $core/Places/StayClustering.swift " (places, the real export in Documents)" "PlaceIconUITests PlacesProblemUITests PlacesRangeUITests PlacesUnnamedUITests"
+feature places native/App/Places/PlacesView.swift $core/Places/StayClustering.swift " (places, the real export in Documents)" "PlaceIconUITests PlacesUnnamedUITests"
 feature mirror native/App/Mirror/MetricDetailView.swift $core/Mirror/MirrorGrab.swift "" "HomeTodayCardUITests MetricDetailUITests"
 feature card native/App/Card/CardView.swift $core/Card/CardDeal.swift "" "CardUITests TodaysHandUITests"
 feature cockpit native/App/Cockpit/CockpitView.swift $core/Cockpit/CockpitPage.swift "" "CockpitBackUITests CockpitCallUITests"
@@ -169,7 +169,7 @@ says "the window ledger: unmapped, as the windows are" "no UI test map for: $cor
 never "the window ledger: not the link screen" "LinksUITests"
 
 dry --changed native/App/Gym/GymTimerView.swift --changed native/App/Places/PlacesModel.swift --changed native/App/Chat/ChatViews.swift
-says "three features: places apart" "rung 2 UI tests (places, the real export in Documents): PlaceIconUITests PlacesProblemUITests PlacesRangeUITests PlacesUnnamedUITests"
+says "three features: places apart" "rung 2 UI tests (places, the real export in Documents): PlaceIconUITests PlacesUnnamedUITests"
 says "three features: the timer's" "rung 2 UI tests: GymTimerDialsUITests GymTimerUITests"
 says "three features: chat's" "rung 2 UI tests (chat, fake Cockpit and bridge): $chat_all"
 

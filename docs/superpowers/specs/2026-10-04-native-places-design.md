@@ -225,6 +225,40 @@ that is not a Context Grabber database is refused with a line saying why, and no
 older than the retention are pruned like any others, so an old export brings back only what retention allows once
 the archive has taken them.
 
+### Who wins when two things want the screen
+
+The screen's own rules, for the cases where two things disagree (written down 2026-11-10; this is what the
+screen already did, not a change):
+
+- **The Today · 7 days switch.** The remembered choice is what Places opens on; with nothing remembered, or a
+  value it does not recognise, it opens on Today. The launch hooks open Places, the map and the cards but never pick
+  the range, and an import leaves it alone, so the remembered choice stands under all of them. Tapping the one
+  already chosen does nothing and logs nothing. If the choice cannot be saved, the switch still moves for this
+  visit and the session log has the error.
+- **Retention.** A number outside 1–365 is taken as the nearest end. Lowering it prunes at once (keeping what the
+  archive has not taken) and reads the trail again; raising it, or setting the same number, deletes nothing. If it
+  cannot be saved, the screen still shows the new number and the session log has the error.
+- **The naming card.** A known place within 500 m means the card offering to grow it comes first; *Create new*
+  turns it into the name card at the same position and radius, and nothing turns a name card back. *Expand* or a
+  saved name closes the card and reads the trail again. *Save* waits for a name; a failure to save keeps the card
+  open with the copyable failure in it. A radius left blank, zero, negative or not a number is 100 m, on the card
+  and in *Add place* alike, where a blank name or a position off the globe is refused with a plain line saying why.
+- **A grey dot's card** closes by itself when the trail is read again and that place is no longer listed (it was
+  just named, or its last visit left the seven days). Not yet true when the named place is not the last "Place N":
+  the next place's number moves into the named one's, and the card stays open on that other place (found
+  2026-11-10; to be fixed on its own).
+- **Two reads at once.** When the trail is read again before the last read has finished, only the newest read's
+  answer is shown.
+- **The line under the map** holds one thing: a plain line (progress, success, a hint about the input) or a
+  copyable failure. A new plain line takes the failure away; a new failure takes the line, and any earlier failure,
+  away. Starting an import, an export, a naming, an add, an expand, a delete, an icon choice or opening a known place
+  takes the last failure away first, so a refused import followed by a good one ends with the good one's line, and a
+  good import followed by a refused one ends with the refusal. Reading the trail again (opening the screen, coming to
+  the front, pulling down, after an action) takes away only a failure to read the trail or to open the database: any
+  other failure, a refused import say, stays through it until the next action.
+- **Importing places as JSON** that parses to no usable place is a plain line ("No valid places found in the
+  JSON."), not a failure; JSON that does not parse is a failure.
+
 ## Differences from Context Grabber while both live side by side
 
 - **Two trails.** Each app records its own; with both switched on the phone records twice (the battery risk in

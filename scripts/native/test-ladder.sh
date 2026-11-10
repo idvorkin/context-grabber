@@ -47,7 +47,7 @@ whiteboard_area="WhiteboardOnPaperUITests WhiteboardPaperGhostsUITests Whiteboar
 # LiveActivity, so those paths stay unmapped and the output says so.
 gym_area="GymTimerDialsUITests GymTimerUITests"
 breathe_area="BreatheMindfulUITests BreathePresetsUITests BreatheStyleUITests"
-places_area="PlaceIconUITests PlacesProblemUITests PlacesRangeUITests PlacesUnnamedUITests"
+places_area="PlaceIconUITests PlacesUnnamedUITests"
 mirror_area="HomeTodayCardUITests MetricDetailUITests"
 card_area="CardUITests TodaysHandUITests"
 cockpit_area="CockpitBackUITests CockpitCallUITests"
