@@ -1512,3 +1512,122 @@ final class CallSessionEndingTests: XCTestCase {
     XCTAssertTrue(second.binaries.isEmpty)
   }
 }
+
+/// The state-machine audit of 2026-11-10, finding 1: every problem keeps its own slot, the line shows the worst one
+/// still standing, and clearing one reveals the next. The mic is restarted at most once per call.
+final class CallSessionProblemLineTests: XCTestCase {
+  private func zeros(_ t: CallHarness, _ n: Int) { for _ in 0..<n { t.audio.mic(480) } }
+
+  // 1a. A bridge error stands; a second of silence after the re-arm outranks it; sound brings it back.
+  func testTheBridgeErrorComesBackWhenTheSilenceLifts() {
+    let t = CallHarness()
+    t.goLive(.eleven)
+    t.socket.say(["type": "error", "message": "bridge boom"])
+    XCTAssertEqual(t.session.snapshot.problem, "bridge boom")
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micSilent)
+    t.audio.mic(480, value: 0.2)
+    XCTAssertEqual(t.session.snapshot.problem, "bridge boom", "the bridge error was never withdrawn")
+  }
+
+  // 1b. The audio layer's verdict outranks the silence, and the silence lifting does not wipe it.
+  func testTheAudioVerdictStandsThroughTheSilenceAndItsLifting() {
+    let t = CallHarness()
+    t.goLive(.eleven)
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micSilent)
+    t.audio.onHealth?(CallWatchdog.audioNotPlaying)
+    XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.audioNotPlaying)
+    zeros(t, 1)
+    XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.audioNotPlaying, "more zeros do not take the line back")
+    t.audio.mic(480, value: 0.2)
+    XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.audioNotPlaying, "the verdict still stands")
+    t.audio.onHealth?(nil)
+    XCTAssertNil(t.session.snapshot.problem)
+  }
+
+  // 1c. "not reaching Larry" comes back once an unrelated audio verdict lifts, and goes only with the ack.
+  func testNotReachingComesBackWhenTheAudioVerdictLifts() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic(480, value: 0.2)
+    t.clock.advance(CallSession.micAckMs)
+    t.audio.mic(480, value: 0.2)
+    t.clock.advance(CallSession.micAckMs)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micNotReaching)
+    t.audio.onHealth?(CallWatchdog.micStopped)
+    XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.micStopped)
+    t.audio.onHealth?(nil)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micNotReaching, "no mic_ack ever came")
+    t.socket.say(["type": "mic_ack", "token": 2])
+    XCTAssertNil(t.session.snapshot.problem)
+  }
+
+  // 1d. One restart budget: a silent first second and a missed ack restart the mic once, then report.
+  func testZerosAndAMissedAckShareOneRestart() {
+    let t = CallHarness()
+    t.goLive()
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.audio.restarts, 1)
+    t.clock.advance(CallSession.micAckMs)
+    XCTAssertEqual(t.audio.restarts, 1, "the ack watch does not restart the mic a second time")
+    XCTAssertNil(t.session.snapshot.problem, "the probe of the torn-down mic says nothing about the rebuilt one")
+    t.audio.mic(480, value: 0.2)  // the rebuilt mic's first sound sends a fresh probe
+    t.clock.advance(CallSession.micAckMs)
+    XCTAssertEqual(t.audio.restarts, 1)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micNotReaching)
+  }
+
+  // The other order: the ack watch spends the restart, so zeros after it are reported, not restarted.
+  func testAMissedAckThenZerosShareOneRestart() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic(480, value: 0.2)
+    t.clock.advance(CallSession.micAckMs)
+    XCTAssertEqual(t.audio.restarts, 1)
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.audio.restarts, 1)
+    XCTAssertEqual(t.session.snapshot.problem, CallSession.micSilent)
+  }
+
+  // Tony's audio not arriving outranks the bridge error, and the error shows again once audio comes.
+  func testAudioNotArrivingOutranksTheBridgeErrorAndRevealsItWhenAudioComes() {
+    let t = CallHarness()
+    t.goLive(.eleven)
+    t.audio.mic()
+    t.socket.say(["type": "mic_ack", "token": 1])
+    t.socket.say(["type": "error", "message": "vendor 500"])
+    t.socket.say(["type": "transcript", "who": "larry", "text": "Hello there."])
+    t.clock.advance(5000)
+    XCTAssertEqual(t.session.snapshot.problem, CallWatchdog.audioNotArriving)
+    t.socket.speak()
+    XCTAssertEqual(t.session.snapshot.problem, "vendor 500")
+  }
+
+  // A failed restart stands over the silence until the mic makes a sound.
+  func testAFailedRestartStandsUntilTheMicMakesASound() {
+    let t = CallHarness()
+    t.audio.restartError = Boom("no input")
+    t.goLive()
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.session.snapshot.problem, "microphone failed: no input")
+    zeros(t, CallSession.zeroBuffersBeforeRearm)
+    XCTAssertEqual(t.session.snapshot.problem, "microphone failed: no input", "the cause outranks the silence")
+    t.audio.mic(480, value: 0.2)
+    XCTAssertNil(t.session.snapshot.problem)
+  }
+
+  // The line changes only when the worst standing problem does: a hidden slot changing logs nothing.
+  func testAHiddenProblemChangingLogsNoProblemLine() {
+    let t = CallHarness()
+    t.goLive(.eleven)
+    t.audio.onHealth?(CallWatchdog.micStopped)
+    let before = t.events.filter { $0.0 == "call_problem" }.count
+    t.socket.say(["type": "error", "message": "bridge boom"])
+    XCTAssertEqual(t.events.filter { $0.0 == "call_problem" }.count, before)
+    t.audio.onHealth?(nil)
+    XCTAssertEqual(t.last("call_problem")?["problem"] as? String, "bridge boom")
+  }
+}

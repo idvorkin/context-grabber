@@ -989,3 +989,33 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Then:** no banner shows, the call does not count as trouble, and the log has a `call_bridge` cut_off_resend line
 
 ---
+
+### User Story 751:
+
+- **Summary:** The call's problem line shows the worst thing still wrong, and the mic is restarted once
+- **Status:** implemented in [56c468f](https://github.com/idvorkin/context-grabber/commit/56c468f); verified on the Linux rung (host tests: `CallSessionProblemLineTests`, the rest of `CallSession*Tests` green); simulator/phone pending, needs the Mac
+- **Issues:** state-machine audit of 2026-11-10, finding 1
+- **Spec:** [Native call — The problem line](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-problem-line)
+
+#### Use Case:
+- **As a** Larry's client on a call that has more than one thing wrong
+- **I want to** see the worst problem still standing, and the next one when it lifts
+- **so that** an empty line means the call is fine, not that one fix wiped the others
+
+#### Acceptance Criteria:
+- **Scenario:** A bridge error outlives a second of silence
+- **Given:** a live call where the bridge reported an error
+- **When:** the mic delivers exact zeros past its one restart, then makes a sound
+- **Then:** the line says *the microphone is delivering silence* while the zeros last, then the bridge's error again, not nothing
+
+- **Scenario:** *Not reaching Larry* outlives an audio warning
+- **Given:** the line says *the microphone is not reaching Larry*
+- **When:** the phone's audio reports *the microphone stopped delivering*, then recovers
+- **Then:** the line shows the audio warning while it stands, then *not reaching Larry* again until the bridge acknowledges the mic
+
+- **Scenario:** One restart per call
+- **Given:** a call whose first second is exact zeros, so the mic is restarted
+- **When:** the bridge does not acknowledge the mic within five seconds
+- **Then:** the mic is not restarted a second time; the bridge is asked about the rebuilt mic, and if it stays silent the line says *the microphone is not reaching Larry*
+
+---

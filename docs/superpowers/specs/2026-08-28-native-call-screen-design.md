@@ -714,6 +714,57 @@ captions and the tab bar: the transcript gets the bottom of the screen
 back. The calling treatment in the middle of the screen stays; the big
 **Call Larry** button is only there when there is no call.
 
+### The problem line
+
+A problem that does not end the call shows as one orange line above the
+captions, with **Copy** beside it. Five things can put a line there, and
+more than one can be true at once: the phone's own audio saying something
+is wrong (*the microphone stopped delivering*, *Tony's audio is arriving
+but not playing*, *the phone's audio stopped: hang up and call again*); the
+call's watch on the microphone (*microphone failed: …*, *the microphone is
+delivering silence*, *the microphone is not reaching Larry*); Tony's words
+arriving with no audio (*Tony's audio is not arriving from the bridge*);
+and an error the bridge reported.
+
+**Who wins.** Each of those is kept on its own, standing until its own
+cause lifts, and the line shows the first one still standing in this
+order:
+
+1. **The phone's audio** — it is the phone's own engine speaking, and it
+   carries the one line that asks Igor to act (*hang up and call again*).
+2. **The microphone** — first *microphone failed*, then *delivering
+   silence*, then *not reaching Larry*: the most specific cause first.
+3. **Tony's audio not arriving.**
+4. **The bridge's error** — last, because nothing withdraws it: the bridge
+   never says its error is over, so it stands for the rest of the call, and
+   ranked any higher it would hide every newer problem.
+
+Clearing one never clears another: when the top one lifts, the next one
+still standing shows, and the line is empty only when nothing stands.
+(Before 2026-11-10 the line was one slot every watcher wrote and cleared in
+turn: a bridge error, then a second of silence, then sound coming back,
+left the line empty with the bridge error still true; and *the microphone
+is not reaching Larry* vanished when an unrelated audio warning came and
+went.)
+
+What lifts each one: the phone's audio, when it says it is fine again;
+*microphone failed* after a mic that failed to open, its first buffer;
+after a restart that failed, its first sound; *delivering silence*, the
+first sound; *not reaching Larry*, the bridge acknowledging the mic; Tony's
+audio, the next audio frame, or his text going quiet. The bridge's error
+lifts only when the call ends.
+
+**The microphone is restarted at most once per call.** Three watches can
+ask for it — no buffer at all after it opens, a second of exact zeros, and
+the bridge not acknowledging the mic within five seconds — and they share
+the one restart. Whichever asks first gets it; a watch that asks after it
+is spent reports its problem instead of restarting again, and every
+restart starts the acknowledgement watch over, so the bridge is asked
+about the rebuilt mic rather than the one that was torn down. (Before,
+each watch had its own: a first five seconds of silence restarted the mic
+twice, the second time mid-greeting.) The redial for a mic that never
+delivers is separate and unchanged: once per dead burst.
+
 ## Acceptance criteria
 
 1. **Call Larry** on a fresh install (nothing remembered): the call is on
@@ -926,6 +977,17 @@ back. The calling treatment in the middle of the screen stays; the big
     on the Mac the bridge's session record says Flux. Quit and relaunch:
     Flux is still picked. Pick Default and call: nothing is named, and
     the bridge's record says its default.
+
+46. **The problem line shows the worst thing still wrong** (state-machine
+    audit, 2026-11-10). On the fake bridge: send an error, then a second
+    of silence and a second more: the line says *the microphone is
+    delivering silence*; make a sound: the line says the bridge's error
+    again, not nothing. With *the microphone is not reaching Larry*
+    showing, let the phone's audio report *the microphone stopped
+    delivering* and recover: the line goes back to *not reaching Larry*
+    until the bridge acknowledges the mic. A call whose first second is
+    exact zeros and whose mic the bridge never acknowledges restarts the
+    mic once, not twice, then says *not reaching Larry*.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends
