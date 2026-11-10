@@ -101,7 +101,7 @@ for f in ${changed[@]+"${changed[@]}"}; do
     native/App/Card/* | native/ContextCore/Sources/ContextCore/Card/*) add_classes $card_area ;;
     native/App/Cockpit/* | native/ContextCore/Sources/ContextCore/Cockpit/*) add_classes $cockpit_area ;;
     native/App/Daily/* | native/ContextCore/Sources/ContextCore/Daily/*) add_classes $daily_area ;;
-    native/App/Eulogy/*) add_classes $eulogy_area ;;
+    native/App/Eulogy/* | native/ContextCore/Sources/ContextCore/Eulogy/*) add_classes $eulogy_area ;;
     native/App/Links/* | native/ContextCore/Sources/ContextCore/Links/*) add_classes $links_area ;;
     native/UITests/*.swift)
       in_file=$(classes_in "$f")

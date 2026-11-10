@@ -150,7 +150,7 @@ never "usage: not the Cockpit's" "CockpitBackUITests"
 dry --changed native/App/Cockpit/CockpitView.swift
 never "cockpit code: not the usage tile, which needs the tailnet" "UsageTileUITests"
 feature daily native/App/Daily/DailyStripView.swift $core/Daily/DailyStrip.swift "" "DailyStripUITests"
-feature eulogy native/App/Eulogy/EulogySong.swift "" "" "EulogyUITests"
+feature eulogy native/App/Eulogy/EulogySong.swift $core/Eulogy/SongPlayback.swift "" "EulogyUITests"
 feature links native/App/Links/LinksView.swift $core/Links/AppLink.swift "" "LinksUITests"
 # Files whose feature isn't their directory's.
 feature "the role of the day" $core/Card/EulogyRoles.swift "" "" "TodaysHandUITests"

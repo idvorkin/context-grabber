@@ -84,7 +84,7 @@ script's dry run:
 | The Cockpit, in the app or `ContextCore` | `CockpitBackUITests`, `CockpitCallUITests` |
 | The usage strip's files (`Usage*`, `CockpitUsage.swift`), in the app or `ContextCore` | `UsageTileUITests`, which needs the real Cockpit reachable from this Mac: a Cockpit change off the tailnet doesn't run it |
 | The daily strip, in the app or `ContextCore` | `DailyStripUITests` |
-| The eulogy; the blog's links in `ContextCore` | `EulogyUITests` |
+| The eulogy, or the song's player or the blog's links in `ContextCore` | `EulogyUITests` |
 | The links, in the app or `ContextCore` | `LinksUITests` |
 | The supermix link in `ContextCore` | `WorkoutSupermixUITests` |
 | A held tile's choices in `ContextCore` | `HoldPopoverUITests` |
@@ -249,6 +249,15 @@ What the native rungs can and cannot see of links and Shortcuts ([spec](superpow
 | What every link asks for, its parameters, ranges, bad input, the link each route is written as, the Links screen's list | Host | `AppLinkTests` |
 | A link through iOS opening the app cold and warm, starting the timer or the breathing, an unknown link landing on home, Copy on the Links screen | Simulator | `xcodebuild … -only-testing:GrabberNativeUITests/LinksUITests test` (the warm case taps SpringBoard's *Open*), then the log's `open_url` |
 | The Shortcuts actions and Siri phrases, the Action Button, a link from another app or a widget | Phone only | build a shortcut of *Start Gym Timer* (1 MIN), run it with the app closed, `just pull-logs`, read `open_url` from: shortcut |
+
+What the native rungs can and cannot see of the eulogy song ([spec](superpowers/specs/2026-10-07-native-eulogy-design.md)):
+
+| Change | Where it must be verified | How |
+|---|---|---|
+| Play, pause and resume where it was, a scrub (playing or paused as it was), restart, the ✕, the finish, a call pausing it and holding it off, a refused play's two retries, a song that cannot load or start and letting the audio go, the #370 reload and drift lines | Host | `SongPlaybackTests` with a fake player and clock |
+| The song really playing, restart, the small player's pause, open and ✕ | Simulator | `EulogyUITests` (`testThePlayRestartAndTheSmallPlayer`) |
+| The blog's launchers and *Open on Suno* leaving for Safari | Simulator | `EulogyUITests` |
+| The lock screen's play, pause and scrubber, a call or Siri interrupting, music pausing and coming back, the car's hands-free line | Phone only | play it with music on, lock, use the lock screen, start a call; `just pull-logs`, read `eulogy_song` |
 
 What the native rungs can and cannot see of the live tile ([spec](superpowers/specs/2026-10-06-native-live-tile-design.md)):
 
