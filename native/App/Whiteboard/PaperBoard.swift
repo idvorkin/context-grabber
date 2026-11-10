@@ -863,15 +863,22 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
       let nudged = zoom * (zoom < range.upperBound ? 1.002 : 0.998)
       // #829: with the page narrower than the screen PaperKit centres it (the view starts left of the page), and a zoom
       // set there recursed inside PaperKit until the stack ran out: zoom 1.017 at the bottom of 1.017...3, asked 1.019, on
-      // an iPad simulator. Centred, the nudge is skipped; the miss it works around was measured on a phone.
+      // an iPad simulator. Centred, the zoom is left alone and the view moves instead (#833).
       let centred = place.minX < 0
       self.log.event(
         "whiteboard",
         [
           "action": "paper_redraw_nudge", "board": self.model.board.id, "zoom": zoom, "to": nudged,
-          "range_lo": range.lowerBound, "range_hi": range.upperBound, "visible": self.rect(place), "skipped": centred,
+          "range_lo": range.lowerBound, "range_hi": range.upperBound, "visible": self.rect(place),
+          "how": centred ? "frame" : "zoom",
         ])
-      if centred { return }
+      if centred {
+        // #833: centred, a point down and back instead, which draws the missed tile without setting the zoom.
+        self.paper.contentVisibleFrame = place.offsetBy(dx: 0, dy: 1)
+        try? await Task.sleep(for: .seconds(0.05))
+        if self.touchesDown == 0 { self.paper.contentVisibleFrame = place }
+        return
+      }
       config.zoomScale = nudged
       try? await Task.sleep(for: .seconds(0.05))
       config.zoomScale = zoom
