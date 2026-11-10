@@ -2,7 +2,7 @@
 # The whiteboard turn, paste and boards-list UI tests on the simulator (stories 344, 345, 349, 354, 357, 360, 371, 378, 380, 382, 383, 386, 388, 390, 391, 392, 393, 396, 399, 402, 403, 435–439, 524–534, 590–626, 637–641, 643–646, 650, 652–657), with a fake Cockpit:
 # scripts/native/fake-cockpit.py on a local port.
 # The tests read the address as GRABBER_FAKE_COCKPIT (xcodebuild passes TEST_RUNNER_* through to the runner).
-# Usage: test-whiteboard-ui.sh <simulator udid>   — run it in the build lane:
+# Usage: test-whiteboard-ui.sh <simulator udid>   — an iPad simulator's: an iPhone only looks at boards (story 746)   — run it in the build lane:
 #   lockf -k -t 3600 ~/tmp/agent/locks/build.lock ~/gits/mac-driver/bin/time-limit 40 caffeinate -i \
 #     scripts/native/test-whiteboard-ui.sh <udid>
 set -uo pipefail

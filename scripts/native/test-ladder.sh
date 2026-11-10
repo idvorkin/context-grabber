@@ -41,7 +41,7 @@ fi
 
 # The areas' classes. The suite scripts hold what each area runs in full.
 chat_area="ChatArchiveUITests ChatImageUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests ChatVoiceUITests"
-whiteboard_area="WhiteboardOnPaperUITests WhiteboardPaperGhostsUITests WhiteboardPaperLinesUITests WhiteboardPaperPasteUITests WhiteboardPasteUITests WhiteboardRowDeleteUITests WhiteboardTurnUITests"
+whiteboard_area="PhoneBoardsUITests WhiteboardOnPaperUITests WhiteboardPaperGhostsUITests WhiteboardPaperLinesUITests WhiteboardPaperPasteUITests WhiteboardPasteUITests WhiteboardRowDeleteUITests WhiteboardTurnUITests"
 # #795: the other features' own classes, by directory. Only classes that run on the ladder's simulator and open that
 # feature: Windows has none (IPadUITests skips on a phone, MacKeysUITests is the Mac build's), nor Call, Archive or
 # LiveActivity, so those paths stay unmapped and the output says so.
@@ -281,12 +281,19 @@ chat_classes() {
 }
 
 whiteboard_classes() {
-  local port=${WHITEBOARD_PORT:-8799}
+  local port=${WHITEBOARD_PORT:-8799} phone=$udid status
+  # Story 746: an iPhone only looks at boards, so the drawing classes run on an iPad simulator. One simulator at a time:
+  # the phone's goes down first, and comes back by itself for the next step's xcodebuild.
+  xcrun simctl shutdown "$phone" 2>/dev/null
+  udid=$(scripts/native/sim-udid.sh "${WHITEBOARD_SIM:-iPad Pro 11-inch (M5)}") || { udid=$phone; return 1; }
   # Keys reach the app only in the first test after a boot that presses any (test-whiteboard-ui.sh), and one test does.
-  fresh_boot || return
-  start_cockpit "$port" 0 || return
-  TEST_RUNNER_GRABBER_FAKE_COCKPIT="http://localhost:$port" \
-    xcodebuild_sim whiteboard "TEST EXECUTE SUCCEEDED" $(only_testing "${whiteboard[@]}") test-without-building
+  fresh_boot && start_cockpit "$port" 0 \
+    && TEST_RUNNER_GRABBER_FAKE_COCKPIT="http://localhost:$port" \
+      xcodebuild_sim whiteboard "TEST EXECUTE SUCCEEDED" $(only_testing "${whiteboard[@]}") test-without-building
+  status=$?
+  xcrun simctl shutdown "$udid" 2>/dev/null
+  udid=$phone
+  return $status
 }
 
 places_classes() {
@@ -336,7 +343,12 @@ simulator_steps() {
   [ "$full" -eq 1 ] || return 0
   # The build above is the suites' too (SUITE_PREBUILT; the whiteboard's script doesn't read it yet).
   if [ "$n_chat" -gt 0 ]; then step "chat suite" env SUITE_PREBUILT=1 scripts/native/test-chat-ui.sh "$udid" || return; fi
-  if [ "$n_whiteboard" -gt 0 ]; then step "whiteboard suite" scripts/native/test-whiteboard-ui.sh "$udid" || return; fi
+  # Story 746: the whiteboard draws on an iPad simulator; the phone's is shut first, one simulator at a time.
+  if [ "$n_whiteboard" -gt 0 ]; then
+    xcrun simctl shutdown "$udid" 2>/dev/null
+    step "whiteboard suite" scripts/native/test-whiteboard-ui.sh \
+      "$(scripts/native/sim-udid.sh "${WHITEBOARD_SIM:-iPad Pro 11-inch (M5)}")" || return
+  fi
 }
 
 rung_simulator() {

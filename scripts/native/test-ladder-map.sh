@@ -109,6 +109,7 @@ never "chat code: no suite without --full" "rung 2 full"
 
 dry --changed native/App/Whiteboard/PaperBoard.swift
 says "whiteboard code: its classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): $board_all"
+says "whiteboard code: the iPhone's look-only class too (story 746)" "rung 2 UI tests: PhoneBoardsUITests"
 never "whiteboard code: no chat" "Chat"
 
 dry --changed docs/TESTING.md --changed README.md

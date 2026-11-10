@@ -54,13 +54,16 @@ struct WhiteboardListView: View {
         ToolbarItem(placement: .topBarLeading) {
           Button("Done", action: onDone).accessibilityIdentifier("whiteboard-done")
         }
-        ToolbarItem(placement: .topBarTrailing) {
-          Button {
-            path.append(store.create())
-          } label: {
-            Label("New board", systemImage: "plus")
+        // Story 746: an iPhone only looks at boards.
+        if !store.onPhone {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button {
+              path.append(store.create())
+            } label: {
+              Label("New board", systemImage: "plus")
+            }
+            .accessibilityIdentifier("whiteboard-new")
           }
-          .accessibilityIdentifier("whiteboard-new")
         }
       }
       .navigationDestination(for: String.self) { id in
@@ -146,7 +149,7 @@ struct WhiteboardListView: View {
     let when = RelativeDateTimeFormatter().localizedString(
       for: Date(timeIntervalSince1970: Double(board.updated) / 1000), relativeTo: Date())
     guard store.editable(board) else { return "Changed \(when) · Drawn on \(board.deviceName)" }
-    return store.drawable(board) ? "Changed \(when) · On paper" : "Changed \(when)"
+    return board.onPages == true ? "Changed \(when) · On paper" : "Changed \(when)"
   }
 }
 

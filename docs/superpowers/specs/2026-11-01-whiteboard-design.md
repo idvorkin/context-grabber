@@ -17,7 +17,9 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
 - **Then we draw together.** When Igor lifts the pen, faint suggestions appear on the board. A tap keeps one, and
   a tap off them dismisses the rest (Igor's pick: ghost suggestions, "b + c"). Igor's voice steers the suggestions.
   A later step: Larry draws during a call.
-- **The phone can view.** Boards drawn on the iPad can be seen on the phone.
+- **The phone only looks.** Boards drawn on the iPad can be seen on the phone, and nothing is drawn on a phone (Igor,
+  2026-11-10: "too hard to draw on the whiteboard on the iPhone ... we can't do hand drawing"). Talking about a board
+  stays: its thread is in Chat on the phone like any other.
 
 ## Non-goals
 
@@ -34,7 +36,7 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
 - A **Whiteboard** tile on home. It opens **the boards**: a list of rows, newest change first, on the iPad and the iPhone
   alike. Each row shows the board's picture, its name, and when it last changed. A board from another device also says
   where it was drawn ("Drawn on iPad").
-- **+ New board** opens a fresh, empty board named for the day (*Board, Nov 1*; a second that day is *Board, Nov 1
+- **+ New board** (not on an iPhone, which only looks) opens a fresh, empty board named for the day (*Board, Nov 1*; a second that day is *Board, Nov 1
   (2)*). A new board that's left without a stroke is gone when it closes, so empty boards never pile up.
 - A **swipe left** on a row offers *Delete*, as Chat's rows offer their actions; a **long press** offers it too, and
   *Rename* on a board drawn on this device. (Igor, 2026-11-02, #613: "I need to be able to delete boards", from the
@@ -55,6 +57,11 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
   list fetches it straight away.
 - **Read-only elsewhere:** a board opens for drawing only on the device that made it. On any other device it opens
   to look at: pan and pinch, no tool picker, and a note in the bar saying where it's drawn.
+- **On an iPhone every board is look-only**, its own included (Igor, 2026-11-10). The list has no *+ New board*;
+  every board opens to pan and pinch, with no tool picker, no Board menu and no ghosts, and the bar says *Look only on
+  iPhone: draw on the iPad*. *Send to Larry* stays, as on any look-only board: a board can still be talked about
+  from the phone (Igor: "Maybe we can do chat"). Delete and, on the iPhone's own boards, Rename stay in the list. A board the iPhone drew
+  before this keeps its ink and opens look-only like the rest.
 - **Without iCloud** (signed out, or no network), the list shows what this device already has and says that boards
   aren't syncing. Drawing still works, and the board goes up the next time it can.
 - **The board drawn before the list existed** becomes the first board in the list, and nothing on it is lost.
@@ -68,7 +75,7 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
 - **Who draws:**
   - With a Pencil paired, only the Pencil draws, and a finger moves the board. A palm resting on the glass never
     leaves a mark.
-  - Without a Pencil (the iPhone, or an iPad with none paired), a finger draws and two fingers move the board.
+  - Without a Pencil (an iPad with none paired), a finger draws and two fingers move the board.
   - This follows the system's "Only Draw with Apple Pencil" setting.
 - **The board is a column of pages** (#636; Igor, 2026-11-03: "the board is way too big maybe do the set up like
   Notability"; he chose page-width over sideways growth).
@@ -215,8 +222,6 @@ so." New boards are on paper from now on, on every device, though the rest of th
 - **The Board menu never costs a stroke.** The first stroke after the menu closes draws, whether something was chosen or not.
 - **What a board on paper can't do yet.** *Send to Larry*, *Larry's turn*, ghosts, the mic and paste work: see
   *Ghosts and Larry on paper* and *Paste on paper*. The picture is still the whole drawing.
-- **On a phone, the first ink moves the view.** One page at a phone's width is shorter than the screen, so PaperKit centres it;
-  the page the first ink brings fills the screen, and the view settles at the top. The ink doesn't move on the board.
 - **Undo and a new page.** Adding a page can count as a step of undo: one press may take back the page and not a stroke.
   The next stroke brings the page back. Whether this matters on the iPad is still to be seen.
 

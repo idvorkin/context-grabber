@@ -299,7 +299,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
-- **As someone** drawing with a finger, on an iPhone or an iPad with no Pencil
+- **As someone** drawing with a finger, on an iPad with no Pencil (an iPhone only looks since story 746)
 - **I want to** keep or dismiss a ghost with the finger I draw with
 - **so that** tapping a suggestion doesn't draw a dot and lose it
 
@@ -3872,3 +3872,24 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Given:** he is looking and the board has moved on
 - **When:** I tap *Larry's turn*
 - **Then:** a picture of the board goes at once with any words that waited, and his answer to the earlier one sends nothing more
+
+---
+
+### User Story 746:
+
+- **Summary:** On an iPhone, boards are for looking, not drawing
+- **Status:** implemented in [df438e6](https://github.com/idvorkin/context-grabber/commit/df438e6), [d053c9a](https://github.com/idvorkin/context-grabber/commit/d053c9a); verified by host tests (`BoardIndexTests`), `PhoneBoardsUITests` on the iPhone simulator, and the whiteboard classes on the iPad simulator (`just test-ladder`)
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *On an iPhone every board is look-only*
+
+#### Use Case:
+- **As Igor,** on my iPhone, where a finger on a small screen is too hard to draw with ("we can't do hand drawing")
+- **I want to** open any board to look at what was drawn, with nothing offering to draw
+- **so that** the phone shows the boards without pretending to be a drawing surface, and the drawing happens on the iPad
+
+#### Acceptance Criteria:
+- **Scenario:** Opening the boards on an iPhone
+- **Given:** an iPhone whose list holds a board it drew earlier and a board drawn on the iPad
+- **and Given:** the list has no *+ New board*
+- **When:** I open either board
+- **Then:** it opens to pan and pinch with no tool picker, no Board menu and no ghosts, *Send to Larry* still there to talk about it, and the bar says *Look only on iPhone: draw on the iPad*
+
