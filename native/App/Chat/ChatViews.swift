@@ -782,7 +782,7 @@ private struct MessageBubble: View {
           }
         }
         if !message.text.isEmpty {
-          Text(ChatText.linked(message.text))
+          BubbleText(text: message.text, chat: chat, thread: thread)
             .padding(.horizontal, 12).padding(.vertical, 8)
             .background(
               message.fromIgor ? Color.accentColor : Color(.secondarySystemBackground),
@@ -994,6 +994,98 @@ enum ChatText {
       out[lower..<upper].link = url
     }
     return out
+  }
+}
+
+/// A message's words with its links as the strip's chips (story 743, `ChatBubbleLinks`): a line with no chip is one
+/// text as before; a line with one flows word by word, so the chip sits where the link was written.
+private struct BubbleText: View {
+  let text: String
+  let chat: ChatModel
+  let thread: String
+  @Environment(\.openURL) private var openURL
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      ForEach(Array(ChatBubbleLinks.paragraphs(in: text).enumerated()), id: \.offset) { _, paragraph in
+        switch paragraph {
+        case .plain(let words):
+          Text(ChatText.linked(words.isEmpty ? " " : words))
+        case .flow(let tokens):
+          WordFlow {
+            ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
+              switch token {
+              case .word(let word):
+                Text(ChatText.linked(word))
+              case .chip(let link, let leading, let trailing):
+                HStack(spacing: 1) {
+                  if !leading.isEmpty { Text(leading) }
+                  LinkChip(link: chat.withStates([link]).first ?? link) { open(link) }
+                  if !trailing.isEmpty { Text(trailing) }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private func open(_ link: ChatLink) {
+    chat.logLinkOpened(link, thread: thread, from: "bubble")
+    openURL(link.url)
+  }
+}
+
+/// Words and chips left to right, wrapping as text does (story 743).
+/// ponytail: a single word wider than the bubble is not broken, it is squeezed to the bubble's width.
+private struct WordFlow: Layout {
+  var spacing: CGFloat = 4
+  var lineSpacing: CGFloat = 4
+
+  private struct Row {
+    var items: [Int] = []
+    var width: CGFloat = 0
+    var height: CGFloat = 0
+  }
+
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let laidOut = rows(width: proposal.width ?? .infinity, subviews)
+    let height = laidOut.reduce(0) { $0 + $1.height } + lineSpacing * CGFloat(max(0, laidOut.count - 1))
+    return CGSize(width: laidOut.map(\.width).max() ?? 0, height: height)
+  }
+
+  func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    var y = bounds.minY
+    for row in rows(width: bounds.width, subviews) {
+      var x = bounds.minX
+      for index in row.items {
+        var size = subviews[index].sizeThatFits(.unspecified)
+        size.width = min(size.width, bounds.width)
+        subviews[index].place(
+          at: CGPoint(x: x, y: y + (row.height - size.height) / 2), proposal: ProposedViewSize(size))
+        x += size.width + spacing
+      }
+      y += row.height + lineSpacing
+    }
+  }
+
+  private func rows(width: CGFloat, _ subviews: Subviews) -> [Row] {
+    var rows: [Row] = []
+    var row = Row()
+    for index in subviews.indices {
+      var size = subviews[index].sizeThatFits(.unspecified)
+      size.width = min(size.width, width)
+      if !row.items.isEmpty, row.width + spacing + size.width > width {
+        rows.append(row)
+        row = Row()
+      }
+      row.width = row.items.isEmpty ? size.width : row.width + spacing + size.width
+      row.height = max(row.height, size.height)
+      row.items.append(index)
+    }
+    if !row.items.isEmpty { rows.append(row) }
+    return rows
   }
 }
 

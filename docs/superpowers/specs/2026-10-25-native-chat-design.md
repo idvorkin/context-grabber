@@ -145,6 +145,17 @@ strip of chips under the thread's title, so the PR Larry opened an hour ago is o
 - **No links, no strip.** A thread with none shows nothing extra; the strip appears as soon as a message with a link
   arrives, and a new chat gains it once its first message with a link is on the Cockpit.
 - **Links in the bubbles stay tappable** as they are; press and hold on a bubble works as ever.
+- **Links in a bubble are chips** (Igor, 2026-11-10: *"if it's just a single PR, might as well just say PR. Same with
+  Preview on idvorkin"*; *"Your PR chips are already perfect"*; then, on the first try, *"Your inline messages should
+  be chipped when you have them in the chat, just like you have the chat links above"* and *"You can abandon, I think,
+  PR with the number"*). Inside a message's own words every link the strip would collect stands as a chip, the same
+  chip as the strip's, where the link was written: a pull request reads *PR* (with its state once the Cockpit reports
+  it, as on the strip), however many the message holds; a link to Igor's blog — *idvork.in*, *idvorkin.github.io*, or
+  a preview of it on the tailnet (the Cockpit's host on a port from 8400 to 8499) — reads *Preview*; any other link
+  reads its strip chip's words (*gist*, *github.com/issues/736*). The words around a chip wrap as text does, and
+  punctuation written against a link (a full stop, a closing bracket, bold stars) stays beside its chip. Tapping a chip
+  opens the link, as the strip's does; *Copy* copies the message as written, full addresses included. A line with no
+  link reads exactly as before, and the strip itself does not change.
 
 **Links in the thread list on an iPad or a Mac** (#736). Where the screen is wide — an iPad in full width (or a wide
 enough window) and the Mac — each row in the list also shows that thread's three newest link chips under its last
