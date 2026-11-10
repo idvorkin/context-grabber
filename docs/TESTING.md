@@ -243,7 +243,7 @@ What the native rungs can and cannot see of the Gym Timer:
 | The drums (and the knobs and arc to try): their look, a swipe and a tap moving Work | Simulator | `GRABBER_TIMER_DIAL=<style>` screenshots; `GymTimerDialsUITests` (taps and a swipe on the Work drum). The haptic ticks are the phone's |
 | Custom preset snapping, the LED glyphs and geometry, the turn's margins, the stopwatch, the accessory log's SQL and grouping | Host | `CustomPresetTests`, `SevenSegmentTests`, `DeviceTurnTests`, `StopwatchTests`, `AccessoryLogTests` (real SQLite, in memory, in a pinned time zone) |
 | The timer in the app: every cue's file playing in the count voice, nothing about the audio session failing | Simulator | the `timer:` checks in `sim-smoke.sh` (one 15 s workout) |
-| A breathing link pausing a workout left running, found paused (story 191, #791) | Simulator | `LinksUITests` (the timer found paused, RESUME) |
+| A breathing link pausing a workout left running, found paused (story 191, #791); the breathing link closing the timer, the workout giving way and an unknown preset starting nothing | Host | `HomeStackTests`' `testWarmLinksOverTheTimer` |
 | Which voice counts: the default, the remembered choice, every voice having all six files | Host, then simulator | `CountVoiceTests` (the files on disk); the `voice:` checks in `sim-smoke.sh` (`voice: adam` by default, the hook's `aussie`) |
 | Timer settings: the gear, the three rows and the checkmark | Simulator screenshot | `SIMCTL_CHILD_GRABBER_TIMER_SETTINGS=1 xcrun simctl launch …`, then `simctl io screenshot` |
 | Hearing each voice, the sample on a tap, a change taking effect mid-workout | Phone only | choose each voice in the sheet, start 30 SEC, `just pull-logs`, read `ui` count_voice / `timer_voice_sample` / `timer_cue` voice |
@@ -259,7 +259,8 @@ What the native rungs can and cannot see of links and Shortcuts ([spec](superpow
 | Change | Where it must be verified | How |
 |---|---|---|
 | What every link asks for, its parameters, ranges, bad input, the link each route is written as, the Links screen's list | Host | `AppLinkTests` |
-| A link through iOS opening the app cold and warm, starting the timer or the breathing, an unknown link landing on home, Copy on the Links screen | Simulator | `xcodebuild … -only-testing:GrabberNativeUITests/LinksUITests test` (the warm case taps SpringBoard's *Open*), then the log's `open_url` |
+| Where a link lands from every screen, which screen is in front and what a report names, who wins when two links come within the 0.7 s wait (#818), a link home, the warm links over a running timer, what each held tile's choice opens | Host | `HomeStackTests` (the stack's reducer over every link pair), `HoldChoicesTests` |
+| A link through iOS opening the app cold and starting the timer, Copy on the Links screen | Simulator | `xcodebuild … -only-testing:GrabberNativeUITests/LinksUITests test`, then the log's `open_url` |
 | The Shortcuts actions and Siri phrases, the Action Button, a link from another app or a widget | Phone only | build a shortcut of *Start Gym Timer* (1 MIN), run it with the app closed, `just pull-logs`, read `open_url` from: shortcut |
 
 What the native rungs can and cannot see of the eulogy song ([spec](superpowers/specs/2026-10-07-native-eulogy-design.md)):

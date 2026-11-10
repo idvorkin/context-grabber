@@ -135,34 +135,25 @@ struct DiagnosticsView: View {
       .navigationDestination(
         isPresented: Binding(
           get: { model.showWhatsNew },
-          set: {
-            model.showWhatsNew = $0
-            if !$0 { model.nowShowing(.home) }
-          })
+          set: { if !$0 { model.close(.whatsNew) } })
       ) {
         WhatsNewView(feed: model.whatsNew, reports: model.bugReports, logger: model.bugLogger, from: model.whatsNewFrom)
       }
       .sheet(
         isPresented: Binding(
           get: { model.showEulogySong },
-          set: {
-            model.showEulogySong = $0
-            if !$0 { model.nowShowing(.home) }
-          })
+          set: { if !$0 { model.close(.eulogySong) } })
       ) {
         EulogySongView(song: model.eulogySong) { model.openEulogySong(from: "eulogy_song_sheet") }
           .bugReporting(model.reporter)
       }
-      .navigationDestination(isPresented: $model.showToday) {
+      .navigationDestination(isPresented: Binding(get: { model.showToday }, set: { if !$0 { model.close(.today) } })) {
         TodayView(app: model, mirror: model.mirror)
       }
       .navigationDestination(
         isPresented: Binding(
           get: { model.showInbox },
-          set: {
-            model.showInbox = $0
-            if !$0 { model.nowShowing(.home) }
-          })
+          set: { if !$0 { model.close(.chat) } })
       ) { ChatListView(chat: model.chat, voice: model.chatVoice, logger: model.bugLogger) }
     }
     .fullScreenCover(
@@ -574,7 +565,7 @@ private struct HomeLaunchersView: View {
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         // Closes the whole sheet, as the sheet's own Done does; a pushed page's dismiss would only pop back.
-        Button("Done") { model.showHomeSettings = false }.accessibilityIdentifier("home-settings-done")
+        Button("Done") { model.closeHomeSettings() }.accessibilityIdentifier("home-settings-done")
       }
     }
   }

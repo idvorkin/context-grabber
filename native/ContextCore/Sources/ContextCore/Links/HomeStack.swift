@@ -1,5 +1,5 @@
-//  #808: the home window's screens under one name each, and the steps that put one in front. Pure; AppModel keeps
-//  the state (one flag per screen) and carries out the steps.
+//  #808: the home window's screens under one name each, and the steps that put one in front. Pure; the state they
+//  change is `HomeStack.State` (HomeStackState.swift), which AppModel holds and nothing else writes.
 //
 //  A screen is spelled several ways, and each spelling is seen outside the app: a link and the log's `open_url` say
 //  `timer`, a report and `report_problem` say `gym_timer`, its home tile (and so its window's title) is `gym_timer`,
@@ -122,7 +122,8 @@ public enum HomeStack {
   /// home window. `ownWindow`: the route's screen is in a window of its own.
   ///
   /// Whatever is in front goes, then the route's screen comes up. The screen already in front stays when the link
-  /// starts nothing; the call screen stays either way (a live call is brought forward, not restarted).
+  /// starts nothing; the call screen stays either way (a live call is brought forward, not restarted). Home has
+  /// nothing to bring up, so a link home closes what is in front and waits for nothing (#818).
   public static func go(to route: AppRoute, up: Set<Screen>, ownWindow: Bool) -> [Step] {
     // The supermix is another app: nothing here needs to move.
     guard let screen = Screen(route: route) else { return [.present(route)] }
@@ -135,6 +136,7 @@ public enum HomeStack {
     // What a link closes: the screens a route names. A sheet over home stays up.
     let closing = order.filter { up.contains($0) && $0.routeName != nil }
     guard !closing.isEmpty else { return [.showHomeWindow, .present(route)] }
+    if screen == .home { return [.showHomeWindow] + closing.map(Step.close) }
     return [.showHomeWindow] + closing.map(Step.close) + [.wait(milliseconds: coverSettles), .present(route)]
   }
 }

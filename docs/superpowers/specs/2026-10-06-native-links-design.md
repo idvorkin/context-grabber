@@ -72,6 +72,16 @@ the cutover registers `grabber` and every saved link keeps working.
   link during a breathing session ends the session and starts the workout. A call carries on behind any screen,
   as it does when its own screen is closed. A link to the screen already in front with nothing to start leaves
   it as it is.
+- **Who wins when links come close together** (#818). Closing a full-screen screen takes a moment (about 0.7 s)
+  before another can come up, so a link that closed something waits that long before its screen comes up. A link
+  that arrives in that moment replaces the waiting one: only the latest link's screen comes up, once, and the
+  earlier one never shows. The latest link still waits out the moment if it would come up in the home window; a
+  link home, to a screen in a window of its own, or to the supermix cancels the waiting screen and shows at once.
+  Choosing a home tile or a tile's popover choice in that moment counts as the latest ask too.
+- **What a link home leaves in front.** A link home from any screen (Chat, Today, the timer, the Cockpit…) closes
+  it and leaves the home screen in front; a sheet over home (the eulogy song, the home screen's settings, What's
+  new) stays up. A report or a shake made then names what is now on top: the home screen, or the sheet. Wherever
+  a screen comes from (a link, a tile, a Done, a swipe back), a report names the screen on top at that moment.
 - **What is not understood is never an error on screen.** An unknown route opens the home screen. An unknown
   preset opens the timer ready on the remembered preset; a breath or length that is not a number is ignored;
   an unknown backend calls on the remembered one. Each is logged as a link that was not fully understood.
@@ -118,6 +128,10 @@ a file).
 - `grabbernative://nowhere`, `grabbernative://timer?preset=9min` and `grabbernative://breathe?minutes=lots` open
   the home screen, the timer ready, and the sliders respectively, with no error on screen, and the log says each
   was not fully understood.
+- Two links opened a tenth of a second apart while the timer is up (`places`, then `cockpit`) leave the Cockpit in
+  front, and Places never comes up; the log has both links.
+- `grabbernative://home` opened from Chat leaves the home screen in front, and a shake then files a report naming
+  *home*.
 - The six actions are in the Shortcuts app under Grabber Native; a shortcut of *Start Gym Timer* (1 MIN) run with
   the app closed opens the timer counting down.
 - The Links screen lists every link above but the one needing a board's id; Copy puts exactly that link on the clipboard.

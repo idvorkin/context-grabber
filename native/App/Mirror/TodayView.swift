@@ -68,11 +68,7 @@ struct TodayView: View {
         .accessibilityLabel("Settings")
       }
     }
-    .onAppear {
-      app.nowShowing(.today)
-      mirror.grab(reason: "open")
-    }
-    .onDisappear { if app.isShowing(.today) { app.nowShowing(.home) } }
+    .onAppear { mirror.grab(reason: "open") }
     .onChange(of: scenePhase) { _, phase in if phase == .active { mirror.grab(reason: "foreground") } }
     .onReceive(every30) { _ in mirror.grab(reason: "timer") }
     // In a wide window a sheet is a small dialog: the detail takes the whole window there (#672).
