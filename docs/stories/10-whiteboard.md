@@ -3590,6 +3590,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 - **Summary:** Ink the app adds always shows
 - **Status:** implemented in [869cb8d](https://github.com/idvorkin/context-grabber/commit/869cb8d); the simulator only, iPhone 17, iOS 27: pasted ink missing from the screen in 15 of 180 runs before the fix, 0 of 60 after it (`testAPasteLandsInTheMiddleOfThePaperOnScreen`, read from `paper_ink_look`). The wait for the view to come to rest came after those counts, in [a86ac93](https://github.com/idvorkin/context-grabber/commit/a86ac93). Whether it happens on a real iPad, and whether the small redraw can be felt there, is still to be seen.
+- **Issues:** [#829](https://github.com/idvorkin/context-grabber/issues/829): on an iPad, where the page is narrower than the screen and PaperKit centres it, the redraw's zoom recursed inside PaperKit until the app crashed. A centred page now skips the redraw, verified on an iPad Pro 11-inch simulator (`testAGhostLeftShowingIsNotSaved`: crashed before, passes after, `paper_redraw_nudge` says `skipped`). Whether a centred iPad page misses ink without it is unmeasured
 - **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
