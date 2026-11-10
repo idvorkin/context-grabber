@@ -519,7 +519,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 096:
 
 - **Summary:** The Cockpit dashboard lives in a tab and keeps its place
-- **Status:** implemented in [a11f583](https://github.com/idvorkin/context-grabber/commit/a11f583), [4e12d89](https://github.com/idvorkin/context-grabber/commit/4e12d89); verified by `CockpitScreen.test.tsx` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (a screen kept for the launch, story 200); verified by `CockpitBridgeTests` (host) and the `cockpit:` checks in `sim-smoke.sh` (simulator) and a simulator screenshot of the tailnet page; on the phone: not yet
+- **Status:** implemented in [a11f583](https://github.com/idvorkin/context-grabber/commit/a11f583), [4e12d89](https://github.com/idvorkin/context-grabber/commit/4e12d89); verified by `CockpitScreen.test.tsx` and on the phone. Native: [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (a screen kept for the launch, story 200); verified by `CockpitBridgeTests` (host) and the `cockpit:` checks in `sim-smoke.sh` (simulator) and a simulator screenshot of the tailnet page; on the phone: not yet. The unreachable panel, and that it comes down when a page then loads, moved from the smoke to `CockpitPageStateTests`: [a3436a9](https://github.com/idvorkin/context-grabber/commit/a3436a9); verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As a** Larry's client answering a decision on the phone between errands
@@ -598,7 +598,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 200:
 
 - **Summary:** In Grabber Native the Cockpit is a full-screen page from the home screen, and Done keeps it
-- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet. Back and Cockpit in the footer (#234): [c1c6e53](https://github.com/idvorkin/context-grabber/commit/c1c6e53); verified by `CockpitBackUITests` on the simulator (a page the stand-in Cockpit opened in place shows Back, Back returns and the button goes, Cockpit returns from two pages deep, Done leaves) and `CockpitCallUITests` still passing
+- **Status:** implemented in [63a012a](https://github.com/idvorkin/context-grabber/commit/63a012a) (native), the ☎ staying in the app in [d061129](https://github.com/idvorkin/context-grabber/commit/d061129) (`CockpitCallUITests` on the simulator: one call on the page's backend, the fallback link caught as a duplicate); verified by `CockpitBridgeTests` (host), the `cockpit:` checks in `sim-smoke.sh` and a simulator screenshot of the tailnet page, the bridge test page and the unreachable panel; on the phone: not yet. Back and Cockpit in the footer (#234): [c1c6e53](https://github.com/idvorkin/context-grabber/commit/c1c6e53); verified by `CockpitBackUITests` on the simulator (a page the stand-in Cockpit opened in place shows Back, Back returns and the button goes, Cockpit returns from two pages deep, Done leaves) and `CockpitCallUITests` still passing. The panel no longer outlives a failed page (Back or Cockpit after a 404 loads, then shows the page with no panel), and which buttons show is `CockpitPageStateTests`: [a3436a9](https://github.com/idvorkin/context-grabber/commit/a3436a9); verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 - **Issues:** [#234](https://github.com/idvorkin/context-grabber/issues/234)
 - **Spec:** [native Cockpit](../superpowers/specs/2026-10-05-native-cockpit-design.md)
 
@@ -617,6 +617,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** I opened Lavish (or a blog proposal) from the dashboard, and it opened in place
 - **When:** I tap *Back* in the footer, or *Cockpit* from a page or two deeper
 - **Then:** Back goes one page back and disappears on the dashboard, Cockpit goes straight to the dashboard, *Done* still leaves the Cockpit, and the session log has `cockpit_page`, `cockpit_back` and `cockpit_home` with the addresses
+
+- **Scenario:** Back from a page that failed
+- **Given:** a page the dashboard opened answered 404 (or could not load), and the *Can't reach the Cockpit* panel covers it
+- **When:** I tap *Back* or *Cockpit* in the footer
+- **Then:** the panel comes down and the spinner shows while the page loads, then the page before it shows with no panel over it; a page that fails again brings the panel back with its own address and reason
 
 - **Scenario:** The page's ☎ stays in the app
 - **Given:** Grabber Native's Cockpit is open and no call is up

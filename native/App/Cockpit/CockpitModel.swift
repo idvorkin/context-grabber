@@ -11,17 +11,9 @@ import WebKit
 
 @MainActor
 final class CockpitModel: NSObject, ObservableObject {
-  struct LoadError: Equatable {
-    let message: String
-    let url: String
-  }
-
-  @Published private(set) var loading = true
-  @Published private(set) var error: LoadError?
-  /// #234: a page the dashboard opened in place can be backed out of.
-  @Published private(set) var canGoBack = false
-  /// The page in front is not the dashboard's start page.
-  @Published private(set) var awayFromHome = false
+  /// Loading, the page, or the panel for the page that failed, with Back and Cockpit (#234): one value, decided in
+  /// ContextCore from WebKit's events (spec "Can't connect"); this model only feeds it and applies what it says.
+  @Published private(set) var state: CockpitPage.State
   private var backObservation: NSKeyValueObservation?
 
   private let log: SessionLog
@@ -35,8 +27,6 @@ final class CockpitModel: NSObject, ObservableObject {
   /// The page sends its ☎ twice — the message, then its fallback link — so a second call hand-off this soon is the
   /// same tap.
   private var lastCallHandoff: Date?
-  private var loadStarted = Date()
-  private var pendingHTTPError: String?
   /// Only the page knows when its call is live; the screen is held for exactly that long (keep-awake spec).
   private var callLive = false
 
@@ -64,6 +54,7 @@ final class CockpitModel: NSObject, ObservableObject {
     address = base?.absoluteString ?? raw
     loadURL = base.flatMap { URL(string: CockpitPage.taggedURL($0.absoluteString, build: BuildInfo.sha)) }
     home = base?.host
+    state = CockpitPage.State(address: base?.absoluteString ?? raw, start: loadURL, now: Date())
     super.init()
     route.onRouteChange = { [weak self] snapshot, reason in
       self?.emit(AudioBridge.routeChangedPayload(snapshot, reason: reason))
@@ -88,7 +79,7 @@ final class CockpitModel: NSObject, ObservableObject {
     web.navigationDelegate = self
     // Back-forward list changes (including the page's own pushState) move canGoBack without a didFinish.
     backObservation = web.observe(\.canGoBack, options: [.new]) { [weak self] web, _ in
-      Task { @MainActor in self?.canGoBack = web.canGoBack }
+      Task { @MainActor in self?.state.apply(.backList(canGoBack: web.canGoBack)) }
     }
     web.uiDelegate = self
     web.allowsBackForwardNavigationGestures = true
@@ -114,15 +105,14 @@ final class CockpitModel: NSObject, ObservableObject {
 
   private func load(into web: WKWebView) {
     guard address != ChatCockpit.nowhere else {
-      fail("This Mac build has no Cockpit address: set GRABBER_COCKPIT_URL.")
+      unavailable("This Mac build has no Cockpit address: set GRABBER_COCKPIT_URL.")
       return
     }
     guard let loadURL else {
-      fail("Not a URL: \(address)")
+      unavailable("Not a URL: \(address)")
       return
     }
-    loading = true
-    error = nil
+    state.apply(.started(url: loadURL.absoluteString, at: Date()))
     setCallLive(false, why: "load")
     if loadURL.isFileURL {
       web.loadFileURL(loadURL, allowingReadAccessTo: loadURL.deletingLastPathComponent())
@@ -142,28 +132,37 @@ final class CockpitModel: NSObject, ObservableObject {
     webView.reload()
   }
 
-  private func finished(ok: Bool, message: String? = nil) {
-    loading = false
-    webView.scrollView.refreshControl?.endRefreshing()
-    var fields: [String: Any] = [
-      "url": webView.url?.absoluteString ?? loadURL?.absoluteString ?? address, "ok": ok,
-      "ms": Int(Date().timeIntervalSince(loadStarted) * 1000),
-    ]
-    if let message { fields["error"] = message }
-    log.event("cockpit_load", fields)
+  /// No navigation can start: the panel straight away.
+  private func unavailable(_ message: String) {
+    state.apply(.started(url: nil, at: Date()))
+    land(.failed(why: message, cancelled: false))
   }
 
-  private func fail(_ message: String) {
-    finished(ok: false, message: message)
-    setCallLive(false, why: "load_failed")
-    error = LoadError(message: message, url: address)
+  /// A navigation ended (finished or failed): the state decides what shows; the log, the refresh control, the call
+  /// and the bridge follow it.
+  private func land(_ event: CockpitPage.Event) {
+    var since = Date()
+    if case .loading(let started) = state.page { since = started }
+    state.apply(event)
+    var fields: [String: Any] = ["ms": Int(Date().timeIntervalSince(since) * 1000)]
+    switch state.page {
+    case .loading: return  // a cancelled navigation: the one that replaced it lands instead
+    case .shown(let url):
+      fields.merge(["url": url, "ok": true]) { $1 }
+    case .failed(let why, let url):
+      fields.merge(["url": url, "ok": false, "error": why]) { $1 }
+      setCallLive(false, why: "load_failed")
+    }
+    builtWebView?.scrollView.refreshControl?.endRefreshing()
+    log.event("cockpit_load", fields)
+    if case .shown = state.page { emit(AudioBridge.readyPayload(available: true)) }
   }
 
   /// What Copy error puts on the clipboard: enough to debug without the session log.
   func errorReport() -> String {
-    guard let error else { return "" }
+    guard case .failed(let why, let url) = state.page else { return "" }
     return [
-      "Error: \(error.message)", "Context: CockpitView.load", "URL: \(error.url)",
+      "Error: \(why)", "Context: CockpitView.load", "URL: \(url)",
       "Build: \(BuildInfo.sha) \(BuildInfo.branch)", "Log: \(log.url.lastPathComponent)",
     ].joined(separator: "\n")
   }
@@ -276,11 +275,7 @@ extension CockpitModel {
     }
   }
 
-  /// The dashboard's own page: the start address's host and path (the query carries the client tag).
-  func isStartPage(_ url: URL) -> Bool {
-    guard let loadURL else { return false }
-    return url.host == loadURL.host && url.path == loadURL.path
-  }
+  func isStartPage(_ url: URL) -> Bool { state.isStartPage(url) }
 }
 
 extension CockpitModel: WKNavigationDelegate {
@@ -310,9 +305,9 @@ extension CockpitModel: WKNavigationDelegate {
     _ webView: WKWebView, decidePolicyFor response: WKNavigationResponse,
     decisionHandler: @escaping @MainActor (WKNavigationResponsePolicy) -> Void
   ) {
-    if response.isForMainFrame, let http = response.response as? HTTPURLResponse, http.statusCode >= 400 {
-      let text = HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
-      pendingHTTPError = "HTTP \(http.statusCode) — \(text)"
+    if response.isForMainFrame, let http = response.response as? HTTPURLResponse {
+      state.apply(
+        .httpStatus(http.statusCode, text: HTTPURLResponse.localizedString(forStatusCode: http.statusCode)))
     }
     decisionHandler(.allow)
   }
@@ -320,24 +315,17 @@ extension CockpitModel: WKNavigationDelegate {
   // WebKit's own signature.
   // swiftlint:disable:next implicitly_unwrapped_optional
   func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-    loadStarted = Date()
-    pendingHTTPError = nil
-    loading = true
+    // Back, Cockpit, a reload or a link: whatever showed, the screen is loading again (the panel comes down).
+    state.apply(.started(url: webView.url?.absoluteString, at: Date()))
     setCallLive(false, why: "load")  // a reload ends whatever call the old page had
   }
 
   // WebKit's own signature.
   // swiftlint:disable:next implicitly_unwrapped_optional
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-    canGoBack = webView.canGoBack
-    awayFromHome = webView.url.map { !isStartPage($0) } ?? false
+    state.apply(.backList(canGoBack: webView.canGoBack))
     log.event("cockpit_page", ["url": webView.url?.absoluteString ?? "", "can_go_back": webView.canGoBack])
-    if let http = pendingHTTPError {
-      fail(http)
-      return
-    }
-    finished(ok: true)
-    emit(AudioBridge.readyPayload(available: true))
+    land(.finished(url: webView.url?.absoluteString))
   }
 
   func webView(
@@ -357,8 +345,8 @@ extension CockpitModel: WKNavigationDelegate {
   private func failed(_ error: any Error) {
     let ns = error as NSError
     // A navigation replaced by another (a second tap, a reload mid-load) is not a failure.
-    if ns.domain == NSURLErrorDomain, ns.code == NSURLErrorCancelled { return }
-    fail("\(ns.localizedDescription) (\(ns.domain) \(ns.code))")
+    let cancelled = ns.domain == NSURLErrorDomain && ns.code == NSURLErrorCancelled
+    land(.failed(why: "\(ns.localizedDescription) (\(ns.domain) \(ns.code))", cancelled: cancelled))
   }
 
   /// iOS reclaims the web content process under memory pressure; without a reload the screen comes back empty.

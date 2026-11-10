@@ -133,14 +133,8 @@ else bad "cockpit: audio_route '$roster', keep_awake '$awake'"; fi
 errors=$(jq -c 'select(.type=="error")' "$f")
 if [ -z "$errors" ]; then ok "cockpit: no error events"; else bad "cockpit: error events: $errors"; fi
 
-# Story 096: an unreachable Cockpit is the error panel with its reason, never a blank page.
-SIMCTL_CHILD_GRABBER_COCKPIT=open SIMCTL_CHILD_GRABBER_COCKPIT_URL=https://127.0.0.1:65530/ relaunch
-wait_for cockpit_load 30 || echo "      (timed out waiting for cockpit_load)"
-f=$(newest_log)
-failed_load=$(jq -sr '[.[] | select(.type=="cockpit_load")][0] | "\(.ok) \(.error)"' "$f")
-if [[ "$failed_load" == "false "* ]] && [[ "$failed_load" != "false null" ]]; then ok "cockpit: unreachable → '${failed_load#false }'"
-else bad "cockpit: unreachable load '$failed_load'"; fi
-
+# Story 096: an unreachable Cockpit is the panel with its reason, and a page after it shows with the panel gone:
+# CockpitPageStateTests on the host (it was a relaunch and a wait of up to 30 s here).
 fi  # cockpit
 
 if want whiteboard; then

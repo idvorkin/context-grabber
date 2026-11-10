@@ -39,6 +39,14 @@ Everything the four specs above promise, with the tab replaced by a screen:
   *Can't reach the Cockpit*, the hint to check Tailscale and the machine, the address tried, **Try again**, and the
   error itself with a **Copy error** button that carries the error, the address and the build. Never a blank page.
   A web page that crashes in the background is reloaded rather than left empty.
+- **The panel belongs to the page that failed, not to the screen.** The screen is always in exactly one of three
+  states: *loading* (a spinner over the page), *showing a page*, or *failed* (the panel). Every navigation that
+  starts — Back, Cockpit, Try again, pull to refresh, a link, the page's own reload — goes to *loading*, which takes
+  the panel down; a page that then finishes shows, and one that fails, or answers with an HTTP error, brings the
+  panel back with that page's address and reason. So after a failed page, Back or Cockpit loading fine shows the page,
+  never the old panel over it. A navigation cancelled by another (a second tap, a reload mid-load) is not a failure.
+  Back shows whenever the web view has a page to go back to, and Cockpit whenever the page in front is not the
+  dashboard's start page; both stay in the footer under the panel, so a failed page can always be left.
 - **The screen stays awake while a call is live in the page** — from the page saying the call is starting until it
   says it ended, or the page goes away (reload, failure, a crash). With no call, the Cockpit locks on the phone's
   normal schedule. A function of the call, not of the screen being open.
@@ -134,6 +142,7 @@ Acceptance (strip):
 4. The page's address carries `client=context-grabber&v=<the native build>`.
 5. Off the tailnet: the *Can't reach the Cockpit* panel with the address, the error, Copy error and Try again; with
    Tailscale back, Try again loads the page without restarting the app.
+5. A page that fails or answers 404, then Back (or Cockpit): the spinner, then the page before it, and no panel.
 6. A live call in the page keeps the screen lit past the auto-lock interval; with no call the screen locks.
 7. An off-Cockpit link opens Safari and leaves the dashboard in place.
 8. Open a page the dashboard links to on its own machine: the footer shows **Back**; Back returns to the dashboard
