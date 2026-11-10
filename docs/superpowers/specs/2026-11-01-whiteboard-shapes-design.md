@@ -77,8 +77,9 @@ that labels are no longer bold.
 Igor, 2026-11-10: "settings or a knob to go between haiku, sonnet, and the real Larry … everything measured". The
 first piece of the live-whiteboard plan: a knob to compare who answers, and the iPad's own timings to compare them by.
 
-- **The Board menu has a Responder section: Haiku, Sonnet and Larry**, one of them ticked. It is the board's own
-  setting, kept on the Cockpit, so every device drawing that board answers the same way. A board nobody has set
+- **The Board menu has a Responder submenu: Haiku, Sonnet and Larry**, one of them ticked, and the submenu's row
+  shows which. It is a submenu so the Board menu stays short enough to close when a colour or lines are picked (#848).
+  It is the board's own setting, kept on the Cockpit, so every device drawing that board answers the same way. A board nobody has set
   answers with Sonnet.
 - **Opening a board asks the Cockpit which one it has.** Until it answers, or when it can't be reached, Sonnet is
   ticked, and the board draws as before. A choice Igor makes before the answer comes wins over it.
@@ -199,7 +200,7 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
 ## Acceptance
 
 - Draw a circle and lift the Pencil: the turn goes half a second later (the session log's pause), not a second.
-- Open the Board menu: Responder shows Haiku, Sonnet and Larry with the board's own ticked. Pick Haiku, close and reopen
+- Open the Board menu: the Responder row names the board's own; open it and it shows Haiku, Sonnet and Larry with that one ticked. Pick Haiku, close and reopen
   the board, and on another device: Haiku is ticked on both, and the next ghost turn's log says Haiku answered.
 - Pick Larry and draw: no orange ghosts come; the bar says *Larry is looking…*, the picture is in the board's chat
   thread, and his blue marks arrive when he answers.

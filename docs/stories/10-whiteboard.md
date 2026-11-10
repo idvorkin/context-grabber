@@ -3777,6 +3777,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 - **Summary:** I pick who answers a board's pause: Haiku, Sonnet or the real Larry
 - **Status:** implemented in [10ee878](https://github.com/idvorkin/context-grabber/commit/10ee878); verified on the host (`WhiteboardResponderTests`: the read and the write on the wire, the tick while they are on their way, a failed write taking it back, who answered from a stream or a whole answer, when a Larry board's pause goes to his thread) and the Linux cross-builds of ContextCore. The menu, the Cockpit's live knob and a Larry board's hand-off not yet seen on the Mac or the iPad
+- **Issues:** [#848](https://github.com/idvorkin/context-grabber/issues/848) (the section made the iPad's Board menu too tall to close on a pick; now a submenu)
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Who answers the pause*
 
 #### Use Case:
@@ -3788,7 +3789,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** The board's own choice
 - **Given:** a board I draw on, which nobody has set
 - **When:** I open its Board menu
-- **Then:** Responder shows Haiku, Sonnet and Larry with Sonnet ticked, and when I pick Haiku the tick moves at once and the board has Haiku when I reopen it, here and on my other devices
+- **Then:** its Responder row says Sonnet and opens on Haiku, Sonnet and Larry with Sonnet ticked, and when I pick Haiku the tick moves at once and the board has Haiku when I reopen it, here and on my other devices
 
 - **Scenario:** A Larry board
 - **Given:** a board whose responder is Larry, with Ghosts on
