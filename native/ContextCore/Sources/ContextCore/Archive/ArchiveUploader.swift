@@ -57,9 +57,8 @@ public struct ArchiveUploader {
     public var records = 0
     public var inserted = 0
     public var duplicate = 0
-    /// Why the run ended before the stream was caught up: `retry`, `refused`, `read`, `pages`, `cancelled`; nil
-    /// when it is caught up.
-    public var stopped: String?
+    /// Why the run ended before the stream was caught up; nil when it is caught up.
+    public var stopped: ArchiveStop?
     /// The HTTP status when the stream was `refused` (story 304's Settings line).
     public var refusedStatus: Int?
     public init() {}
@@ -78,14 +77,14 @@ public struct ArchiveUploader {
       cursor = try cursors.cursor(source.stream)
     } catch {
       log("error", ["where": "archive_cursor", "stream": source.stream, "message": "\(error)"])
-      report.stopped = "read"
+      report.stopped = .unreadable
       return report
     }
     var first = cursor == nil
     while report.pages < maxPages {
       // The task iOS is taking back (ArchiveModel.cancel), or the caller's own say.
       if Task.isCancelled || isCancelled() {
-        report.stopped = "cancelled"
+        report.stopped = .cancelled
         break
       }
       let page: ArchivePage
@@ -93,7 +92,7 @@ public struct ArchiveUploader {
         page = try await source.page(after: cursor, limit: pageSize)
       } catch {
         log("error", ["where": "archive_read", "stream": source.stream, "message": "\(error)"])
-        report.stopped = "read"
+        report.stopped = .unreadable
         break
       }
       if page.restarted {
@@ -133,17 +132,17 @@ public struct ArchiveUploader {
       case .refused(let status, let reason):
         fields.merge(["ok": false, "action": "refused", "status": status, "reason": reason]) { $1 }
         log("archive", fields)
-        report.stopped = "refused"
+        report.stopped = .refused
         report.refusedStatus = status
         return report
       case .retry(let reason):
         fields.merge(["ok": false, "action": "failed", "reason": reason]) { $1 }
         log("archive", fields)
-        report.stopped = "retry"
+        report.stopped = .cockpitAway
         return report
       }
     }
-    if report.stopped == nil && report.pages >= maxPages { report.stopped = "pages" }
+    if report.stopped == nil && report.pages >= maxPages { report.stopped = .pages }
     return report
   }
 

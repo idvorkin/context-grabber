@@ -304,17 +304,8 @@ rows=$( [ -s "$path" ] && sqlite3 "$path" "select (select count(*) from location
 if [ "$rows" = "36601 4" ]; then ok "places: export holds 36601 points and 4 places"
 else bad "places: export '$path' rows '$rows'"; fi
 
-# Story 270: an archive run against an unreachable Cockpit sends the trail's first page (the fixture imported
-# above), fails it with the reason, and stops the run there. On the simulator a run sends only to
-# GRABBER_ARCHIVE_URL, so the fixture never lands in the real archive.
-SIMCTL_CHILD_GRABBER_ARCHIVE=run SIMCTL_CHILD_GRABBER_ARCHIVE_URL=https://127.0.0.1:65530/ relaunch
-wait_for archive_run 60 || echo "      (timed out waiting for archive_run)"
-f=$(newest_log)
-archive_stop=$(jq -sr '[.[] | select(.type=="archive_run")][0].stopped["location.points"] // ""' "$f")
-archive_failed=$(jq -sr '[.[] | select(.type=="archive" and .action=="failed")][0] | "\(.stream) \(.records)"' "$f")
-if [ "$archive_stop" = "retry" ] && [[ "$archive_failed" == "location.points "[1-9]* ]]; then
-  ok "archive: unreachable → the trail's first page failed ($archive_failed records), run stopped"
-else bad "archive: stopped '$archive_stop', failed '$archive_failed'"; fi
+# Story 270: the archive run against an unreachable Cockpit (the trail's first page fails with the reason, the run
+# stops, the next foreground is due) is ArchiveTests on the host; the phone runs it for real.
 
 # Story 040: the switch with Always granted records points as the simulator moves.
 SIMCTL_CHILD_GRABBER_TRACKING=on relaunch

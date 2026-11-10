@@ -4,26 +4,50 @@
 
 import Foundation
 
+/// Why a stream stopped before it was caught up. The raw values are what the phone has stored and logged since story
+/// 270 (`archive_last_outcome`, the `archive_run` line's `stopped`), so a stored outcome reads back unchanged.
+public enum ArchiveStop: String, Equatable, Sendable, Codable {
+  /// The Cockpit did not answer (no network, off the tailnet, a 5xx): the next page would fail the same way.
+  case cockpitAway = "retry"
+  /// The Cockpit answered with a 4xx.
+  case refused
+  /// The phone could not read the stream (its cursor or a page).
+  case unreadable = "read"
+  /// The run reached its page limit: the stream is still sending its history.
+  case pages
+  /// iOS took the background time back.
+  case cancelled
+}
+
 /// What the last archive run ended with, kept for Settings (a `settings` row, JSON).
 public struct ArchiveOutcome: Equatable, Sendable, Codable {
   /// When the run started, UTC milliseconds.
   public var at: Int64
-  /// Each stream that did not catch up, and why: `retry`, `refused`, `read`, `pages`, `cancelled`.
-  public var stopped: [String: String]
+  /// Each stream that did not catch up, and why.
+  public var stopped: [String: ArchiveStop]
   /// The HTTP status of each refused stream.
   public var refused: [String: Int]
 
-  public init(at: Int64, stopped: [String: String] = [:], refused: [String: Int] = [:]) {
+  public init(at: Int64, stopped: [String: ArchiveStop] = [:], refused: [String: Int] = [:]) {
     self.at = at
     self.stopped = stopped
     self.refused = refused
+  }
+
+  /// Reads what any build stored: a reason this build does not know is dropped rather than losing the outcome.
+  public init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    at = try c.decode(Int64.self, forKey: .at)
+    let raw = try c.decodeIfPresent([String: String].self, forKey: .stopped) ?? [:]
+    stopped = raw.compactMapValues(ArchiveStop.init(rawValue:))
+    refused = try c.decodeIfPresent([String: Int].self, forKey: .refused) ?? [:]
   }
 
   public var caughtUp: Bool { stopped.isEmpty }
 
   /// Every stream caught up, sent another stretch of its history (`pages`, a restarted stream's re-read too) or
   /// was cut short by iOS: the archive moved, nothing is wrong. A first backfill is runs of these.
-  public var madeProgress: Bool { stopped.values.allSatisfy { $0 == "pages" || $0 == "cancelled" } }
+  public var madeProgress: Bool { stopped.values.allSatisfy { $0 == .pages || $0 == .cancelled } }
 
   public var json: String {
     (try? JSONEncoder().encode(self)).map { String(decoding: $0, as: UTF8.self) } ?? "{}"
@@ -32,6 +56,45 @@ public struct ArchiveOutcome: Equatable, Sendable, Codable {
   public init?(json: String?) {
     guard let json, let value = try? JSONDecoder().decode(Self.self, from: Data(json.utf8)) else { return nil }
     self = value
+  }
+}
+
+/// Where the archive stands, from the last counted run (spec: "When a run is due"). Settings' headline and whether a
+/// foreground run is due both read this one value.
+public enum ArchiveState: Equatable, Sendable {
+  case never
+  /// Every stream caught up; `at` is when that run started (UTC ms).
+  case caughtUp(at: Int64)
+  /// The run moved the archive but some stream has more to send (its page limit, or iOS cut it short).
+  case backfilling(at: Int64)
+  /// The run could not finish; `since` is when it started.
+  case blocked(Block, since: Int64)
+
+  public enum Block: Equatable, Sendable {
+    case cockpitAway
+    case refused(stream: String, status: Int?)
+    case unreadable
+  }
+
+  /// The state a run's outcome leaves. When several streams stopped, the Cockpit out of reach wins, then a refusal
+  /// (the first stream by name), then an unreadable stream.
+  public init(_ outcome: ArchiveOutcome?) {
+    guard let outcome else {
+      self = .never
+      return
+    }
+    let stops = outcome.stopped
+    if stops.isEmpty {
+      self = .caughtUp(at: outcome.at)
+    } else if stops.values.contains(.cockpitAway) {
+      self = .blocked(.cockpitAway, since: outcome.at)
+    } else if let stream = stops.filter({ $0.value == .refused }).keys.sorted().first {
+      self = .blocked(.refused(stream: stream, status: outcome.refused[stream]), since: outcome.at)
+    } else if stops.values.contains(.unreadable) {
+      self = .blocked(.unreadable, since: outcome.at)
+    } else {
+      self = .backfilling(at: outcome.at)
+    }
   }
 }
 
@@ -64,14 +127,14 @@ public enum ArchiveStatus {
     }
     let since = lastCaughtUp.map { "last caught up \(ago($0, now: now))" } ?? "never caught up"
     let headline =
-      outcome.stopped.values.contains("retry")
+      ArchiveState(outcome) == .blocked(.cockpitAway, since: outcome.at)
       ? "Cockpit out of reach \u{00B7} tried \(ago(outcome.at, now: now))"
       : "Behind \u{00B7} last run \(ago(outcome.at, now: now))"
     out.append(Line(text: "\(headline) \u{00B7} \(since)", trouble: stale))
     for stream in outcome.stopped.keys.sorted() {
-      let why = outcome.stopped[stream] ?? ""
+      guard let why = outcome.stopped[stream] else { continue }
       let text = "\(name(stream)): \(reason(why, status: outcome.refused[stream]))"
-      out.append(Line(text: text, trouble: why == "refused"))
+      out.append(Line(text: text, trouble: why == .refused))
     }
     return out
   }
@@ -101,14 +164,13 @@ public enum ArchiveStatus {
     return stream
   }
 
-  static func reason(_ why: String, status: Int?) -> String {
+  static func reason(_ why: ArchiveStop, status: Int?) -> String {
     switch why {
-    case "retry": return "waiting for the Cockpit"
-    case "refused": return "refused\(status.map { " (\($0))" } ?? ""); the rest waits on the phone"
-    case "read": return "could not be read on the phone"
-    case "pages": return "still sending its history"
-    case "cancelled": return "cut short by iOS"
-    default: return why
+    case .cockpitAway: return "waiting for the Cockpit"
+    case .refused: return "refused\(status.map { " (\($0))" } ?? ""); the rest waits on the phone"
+    case .unreadable: return "could not be read on the phone"
+    case .pages: return "still sending its history"
+    case .cancelled: return "cut short by iOS"
     }
   }
 
