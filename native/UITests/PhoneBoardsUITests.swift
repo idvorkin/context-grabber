@@ -20,7 +20,8 @@ final class PhoneBoardsUITests: XCTestCase {
     XCTAssertFalse(app.buttons["whiteboard-new"].exists, "an iPhone starts no board")
 
     app.open(try XCTUnwrap(URL(string: "grabbernative://whiteboard?board=\(id)")))
-    let note = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Look only on iPhone: draw on the iPad"))
+    let note = app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS %@", "Look only on iPhone: draw on the iPad"))
     XCTAssertTrue(note.firstMatch.appears(within: 10), app.debugDescription)
     XCTAssertFalse(app.buttons["whiteboard-send"].exists, "nothing to send")
     XCTAssertFalse(app.buttons["whiteboard-board"].exists, "no Board menu")
