@@ -22,10 +22,14 @@ struct PaperScreen {
   private let bytes: [UInt8]
   /// Where the search starts, as a part of the screen's height: by default a fifth, clear of the bars.
   private let top: CGFloat
+  /// Where the search stops on the right, as a part of the screen's width: by default the whole width.
+  private let right: CGFloat
 
   /// `top`: start higher, for ink at the very top of a page (#845: an iPad's page puts it under the navigation bar).
-  init(_ app: XCUIApplication, top: CGFloat = 0.2) {
+  /// `right`: stop short of the page number, which a search that high would otherwise read as ink.
+  init(_ app: XCUIApplication, top: CGFloat = 0.2, right: CGFloat = 1) {
     self.top = top
+    self.right = right
     let image = app.screenshot().image.cgImage!
     width = image.width
     height = image.height
@@ -49,7 +53,7 @@ struct PaperScreen {
       // Clear of the bars and the page number above, and the tool picker below.
       for y in stride(from: Int(CGFloat(height) * top), to: height * 3 / 4, by: 2) {
         var i = y * width * 4
-        for x in stride(from: 0, to: width, by: 2) {
+        for x in stride(from: 0, to: Int(CGFloat(width) * right), by: 2) {
           if matches(Int(bytes[i]), Int(bytes[i + 1]), Int(bytes[i + 2])) {
             (minX, maxX) = (min(minX, x), max(maxX, x))
             (minY, maxY) = (min(minY, y), max(maxY, y))
