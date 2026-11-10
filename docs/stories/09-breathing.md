@@ -11,7 +11,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 160:
 
 - **Summary:** Follow a circle through a box-breathing session
-- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathPlanTests`, `BreathRunTests`) and on the simulator (`just native-test-sim`: every step on its second); redesigned circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), seen in simulator screenshots (inhale, hold); not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathPlanTests`, `BreathRunTests`) and on the simulator (`just native-test-sim`: every step on its second); redesigned circle in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), seen in simulator screenshots (inhale, hold); not yet on the phone; the steps on their seconds are now host tests (`BreathSessionTests`); the smoke keeps one 10 s session for the real sound: [131e96b](https://github.com/idvorkin/context-grabber/commit/131e96b), verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As someone** who wants to settle before a hard conversation
@@ -66,7 +66,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 163:
 
 - **Summary:** See the session finished
-- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: finishes once, on time, 30 cycles without drift) and on the simulator (`just native-test-sim`: `breath_finished` on its second); redesigned Done in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), seen in a simulator screenshot; not yet on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathRunTests`: finishes once, on time, 30 cycles without drift) and on the simulator (`just native-test-sim`: `breath_finished` on its second); redesigned Done in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97), seen in a simulator screenshot; not yet on the phone; the finish (Done, the keepalive stopped, the lit screen given back) is now a host test (`BreathSessionTests`): [131e96b](https://github.com/idvorkin/context-grabber/commit/131e96b), verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As someone** breathing with my attention elsewhere
@@ -84,7 +84,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 164:
 
 - **Summary:** Breathe with my eyes closed, by tone
-- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathToneTests`) and on the simulator (`just native-test-sim`: a `breath_cue` per step, each played); not yet heard on the phone
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37); verified by host tests (`BreathToneTests`) and on the simulator (`just native-test-sim`: a `breath_cue` per step, each played); not yet heard on the phone; the tones' order is now a host test (`BreathSessionTests`); the smoke's tone run is gone: [131e96b](https://github.com/idvorkin/context-grabber/commit/131e96b), verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As someone** who settles faster with eyes shut
@@ -103,7 +103,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Be talked through it by a calm voice
 - **Issues:** [#279](https://github.com/idvorkin/context-grabber/issues/279)
-- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37) with the Mac's Australian voice (Karen); the bundled clips since re-rendered with an ElevenLabs calm, gently spoken Australian woman's voice (eleven_v3, best of four takes) in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97); verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone; the clips fade out instead of clicking (#279): [b411e50](https://github.com/idvorkin/context-grabber/commit/b411e50), verified by `scripts/native/test-breath-clips.py` (host); listening on the phone in the next build turn
+- **Status:** implemented in [7c4fb37](https://github.com/idvorkin/context-grabber/commit/7c4fb37) with the Mac's Australian voice (Karen); the bundled clips since re-rendered with an ElevenLabs calm, gently spoken Australian woman's voice (eleven_v3, best of four takes) in [2e68c97](https://github.com/idvorkin/context-grabber/commit/2e68c97); verified on the simulator (`just native-test-sim`: clips found and played); not yet heard on the phone; the clips fade out instead of clicking (#279): [b411e50](https://github.com/idvorkin/context-grabber/commit/b411e50), verified by `scripts/native/test-breath-clips.py` (host); listening on the phone in the next build turn; every phrase in order is now a host test (`BreathSessionTests`); the smoke still plays each from its file: [131e96b](https://github.com/idvorkin/context-grabber/commit/131e96b), verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As someone** who finds tones clinical
@@ -121,7 +121,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 166:
 
 - **Summary:** Breathe with the phone locked, and see the step on the lock screen
-- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified by `just native-test` (`BreatheActivityContentTests`), `just native-test-sim` (the keepalive for the session; the card pushed at each step) and a simulator screenshot of the compact island running (*OUT 1/3*, *0:06*); the card starts at Begin and says *Ready* through the lead-in: [5d2978b](https://github.com/idvorkin/context-grabber/commit/5d2978b), verified by `just native-test` (`testTheQuietBeforeTheFirstInhaleSaysReadyAndTheTimeToIt`); the lock-screen card and the voice with the phone locked not yet on the phone
+- **Status:** native app only: implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified by `just native-test` (`BreatheActivityContentTests`), `just native-test-sim` (the keepalive for the session; the card pushed at each step) and a simulator screenshot of the compact island running (*OUT 1/3*, *0:06*); the card starts at Begin and says *Ready* through the lead-in: [5d2978b](https://github.com/idvorkin/context-grabber/commit/5d2978b), verified by `just native-test` (`testTheQuietBeforeTheFirstInhaleSaysReadyAndTheTimeToIt`); the lock-screen card and the voice with the phone locked not yet on the phone; the card per step is now a host test (`BreathSessionTests`); the smoke's Live Activity line runs on one cycle: [131e96b](https://github.com/idvorkin/context-grabber/commit/131e96b), verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As someone** who wants the screen dark while breathing
@@ -175,7 +175,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 169:
 
 - **Summary:** Keep breathing when I leave the app or lock the phone
-- **Status:** implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified on the simulator (`just native-test-sim`: the keepalive runs for the session and stops at its end); the locked phone not yet checked
+- **Status:** implemented in [ea8c689](https://github.com/idvorkin/context-grabber/commit/ea8c689); verified on the simulator (`just native-test-sim`: the keepalive runs for the session and stops at its end); the locked phone not yet checked; the keepalive for the session, stopped on a pause and at the end, is now a host test (`BreathSessionTests`): [131e96b](https://github.com/idvorkin/context-grabber/commit/131e96b), verified on the Linux rung (host tests); simulator/phone pending, needs the Mac
 
 #### Use Case:
 - **As someone** who does not want a lit screen while breathing

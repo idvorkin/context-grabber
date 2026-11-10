@@ -181,41 +181,31 @@ else bad "whiteboard: old-canvas board open '$opened', shown '$shown', errors: $
 fi  # whiteboard
 
 if want timer; then
-# Stories 100, 104, 105: a 10 s work / 10 s rest / 2 round workout started as a widget tile would. Every cue
-# falls on its second (within 0.4 s), the duck window opens once per boundary, and the session is let go at the end.
-# Story 182: with no voice chosen Adam counts; a choice left by hand on this simulator is forgotten first.
+# Stories 100, 104: a short workout (10 s of work, one round) started as a widget tile would, for the real sound:
+# every cue's file plays in the count voice and nothing about the audio session fails. When each cue falls, one duck
+# window per boundary, the keepalive and letting go at the end are host tests against a hand-moved clock
+# (TimerSessionTests). Story 182: with no voice chosen Adam counts; a choice left by hand on this simulator is
+# forgotten first.
 sqlite3 "$DOCS/SQLite/context-grabber.db" "DELETE FROM settings WHERE key='gym_count_voice'" 2>/dev/null || true
-SIMCTL_CHILD_GRABBER_TIMER="10,10,2" relaunch
-wait_for timer_finished 70 || echo "      (timed out waiting for timer_finished)"
+SIMCTL_CHILD_GRABBER_TIMER="10,0,1" relaunch
+wait_for timer_finished 30 || echo "      (timed out waiting for timer_finished)"
 sleep 4  # "done" sounds, then the window lets go of the session
 f=$(newest_log)
-cues=$(jq -sr '
-  ([.[] | select(.type=="timer_start")][0].t) as $t0 |
-  [.[] | select(.type=="timer_cue") | "\(((.t - $t0) / 1000 + 0.3) | floor):\(.cue)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
-want="2:three 3:two 4:one 5:go 12:three 13:two 14:one 15:rest 22:three 23:two 24:one 25:go 32:three 33:two 34:one 35:done"
-late=$(jq -s '
-  ([.[] | select(.type=="timer_start")][0].t) as $t0 |
-  [.[] | select(.type=="timer_cue") | ((.t - $t0) % 1000)] | map(select(. > 400 and . < 700)) | length' "$f")
-if [ "$cues" = "$want" ] && [ "$late" = "0" ]; then ok "timer: 16 cues, each on its second"
-else bad "timer: cues '$cues' ($late late)"; fi
-opens=$(jq -s '[.[] | select(.type=="timer_duck" and .action=="open")] | length' "$f")
-closes=$(jq -s '[.[] | select(.type=="timer_duck" and .action=="released")] | length' "$f")
-last_session=$(jq -sr '[.[] | select(.type=="timer_session")][-1] | "\(.action) \(.ok)"' "$f")
-if [ "$opens" = "4" ] && [ "$closes" = "4" ] && [ "$last_session" = "inactive true" ]; then
-  ok "timer: 4 duck windows, session let go at the end"
-else bad "timer: $opens opens, $closes releases, last session event '$last_session'"; fi
+cues=$(jq -sr '[.[] | select(.type=="timer_cue") | "\(.cue)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
+if [ "$cues" = "three two one go three two one done" ]; then ok "timer: 8 cues played from their files"
+else bad "timer: cues '$cues'"; fi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("timer_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "timer: nothing failed"; else bad "timer: $failed"; fi
 voices=$(jq -sr '[.[] | select(.type=="timer_cue") | .voice] | unique | join(",")' "$f")
 if [ "$voices" = "adam" ]; then ok "voice: every cue by adam, the default"; else bad "voice: cues by '$voices'"; fi
 
-# Story 106: the Live Activity is requested with the ready count, pushed once at each phase (not every second),
-# and ended on DONE!, each accepted. A card an earlier launch left behind is ended at launch (reason leftover) and
-# is not part of this workout. With Live Activities off, one `unavailable` line per session is what the app must say instead.
+# Story 106: the Live Activity is requested with the ready count, pushed at the phase (not every second), and ended
+# on DONE!, each accepted. A card an earlier launch left behind is ended at launch (reason leftover) and is not part
+# of this workout. With Live Activities off, one `unavailable` line per session is what the app must say instead.
 la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "gymTimer")
   | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
-if [ "$la" = "start:GET READY update:WORK update:REST update:WORK end:DONE!" ]; then
-  ok "live activity: started, pushed at 3 phases, ended on DONE!"
+if [ "$la" = "start:GET READY update:WORK end:DONE!" ]; then
+  ok "live activity: started, pushed at the phase, ended on DONE!"
 elif [ "$la" = "unavailable:" ]; then ok "live activity: Live Activities are off on this simulator (logged once per session)"
 else bad "live activity: '$la'"; fi
 
@@ -226,45 +216,24 @@ else bad "live activity: '$la'"; fi
 fi  # timer
 
 if want breathe; then
-# Stories 160, 163, 165: two cycles of 2 s breaths with the voice. Every step is noticed on its second, each
-# phrase is a bundled file that played (none fell back to the phone's voice), and the screen lock is given back.
-SIMCTL_CHILD_GRABBER_BREATHE="2,2,voice" relaunch
-wait_for breath_finished 40 || echo "      (timed out waiting for breath_finished)"
+# Stories 163, 165: one cycle of 2 s breaths with the voice, for the real sound: each phrase is a bundled file that
+# played (none fell back to the phone's voice). When each step falls, the lit screen, the keepalive and the tones'
+# order are host tests against a hand-moved clock (BreathSessionTests).
+SIMCTL_CHILD_GRABBER_BREATHE="2,1,voice" relaunch
+wait_for breath_finished 25 || echo "      (timed out waiting for breath_finished)"
 sleep 3  # "Well done", and the Live Activity's end, which ActivityKit takes most of a second to accept
 f=$(newest_log)
-steps=$(jq -sr '
-  ([.[] | select(.type=="breath_start")][0]) as $s |
-  [.[] | select(.type=="breath_phase" or .type=="breath_finished")
-       | "\(((.t - $s.t - $s.lead_in_ms) / 1000 + 0.3) | floor):\(.phase // "done")"] | join(" ")' "$f")
-want="0:inhale 2:holdFull 4:exhale 6:holdEmpty 8:inhale 10:holdFull 12:exhale 14:holdEmpty 16:done"
-late=$(jq -s '[.[] | select(.type=="breath_phase" or .type=="breath_finished") | .late_ms] | max' "$f")
-if [ "$steps" = "$want" ] && [ "${late:-999}" -le 150 ] 2>/dev/null; then ok "breathe: 8 steps and the finish, each on its second (worst ${late} ms late)"
-else bad "breathe: steps '$steps' (worst ${late} ms late)"; fi
 said=$(jq -sr '[.[] | select(.type=="breath_cue") | "\(.name)\(if .ok and (.fallback|not) then "" else "!" end)"] | join(" ")' "$f")
-want_said="breath-begin breath-in breath-hold breath-out breath-hold-low breath-in breath-hold breath-out breath-hold-low breath-done"
-awake=$(jq -sr '[.[] | select(.type=="keep_awake") | "\(.on)"] | join(" ")' "$f")
-if [ "$said" = "$want_said" ] && [ "$awake" = "true false" ]; then ok "breathe: 10 phrases from their files, screen lock given back"
-else bad "breathe: said '$said', keep_awake '$awake'"; fi
-# Story 169: the keepalive runs for the session, so a locked phone keeps it going, and stops at the end.
-alive=$(jq -sr '[.[] | select(.type=="breath_keepalive") | "\(.action)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
-if [ "$alive" = "start stop" ]; then ok "breathe: keepalive for the session, stopped at the end"
-else bad "breathe: keepalive '$alive'"; fi
+want_said="breath-begin breath-in breath-hold breath-out breath-hold-low breath-done"
+if [ "$said" = "$want_said" ]; then ok "breathe: 6 phrases from their files"
+else bad "breathe: said '$said'"; fi
 # Story 166: the Live Activity appears at Begin saying Ready, is pushed once per step, and ends on Done.
 la=$(jq -sr '[.[] | select(.type=="live_activity" and .reason != "leftover" and .kind == "breathe")
   | "\(.action):\(.title // "")\(if .ok == false then "!" else "" end)"] | join(" ")' "$f")
-if [ "$la" = "start:Ready update:Inhale update:Hold update:Exhale update:Hold update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
-  ok "breathe: live activity started at Begin, pushed at 8 steps, ended on Done"
+if [ "$la" = "start:Ready update:Inhale update:Hold update:Exhale update:Hold end:Done" ]; then
+  ok "breathe: live activity started at Begin, pushed at 4 steps, ended on Done"
 elif [ "$la" = "unavailable:" ]; then ok "breathe: Live Activities are off on this simulator (logged once per session)"
 else bad "breathe: live activity '$la'"; fi
-
-# Story 164: the same with tones, one cycle of 1 s breaths.
-SIMCTL_CHILD_GRABBER_BREATHE="1,1,tone" relaunch
-wait_for breath_finished 20 || echo "      (timed out waiting for breath_finished)"
-sleep 1
-f=$(newest_log)
-tones=$(jq -sr '[.[] | select(.type=="breath_cue") | "\(.name)\(if .ok then "" else "!" end)"] | join(" ")' "$f")
-if [ "$tones" = "rising tick falling tick closing" ]; then ok "breathe: a tone per step and the closing tone"
-else bad "breathe: tones '$tones'"; fi
 failed=$(jq -c 'select(.type=="error" or ((.type|startswith("breath_")) and .ok == false))' "$f")
 if [ -z "$failed" ]; then ok "breathe: nothing failed"; else bad "breathe: $failed"; fi
 

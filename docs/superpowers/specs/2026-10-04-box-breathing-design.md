@@ -169,6 +169,26 @@ file is ever missing, the phone's own Australian voice says the phrase instead. 
 begin", fits inside the two-second lead-in.
 Each phrase fades out into silence at its end, so nothing clicks or crackles as it stops (#279).
 
+## Sharing the phone
+
+Who wins when breathing meets another session (the rules as they stand; the Gym Timer's side is in the native app
+spec's Gym Timer section):
+
+- **Opening breathing pauses a running Gym Timer workout** (story 191). The workout, off the screen by then, lets go
+  of its audio session and its card first, so the two never sound or show at once. A paused or finished workout
+  already holds neither.
+- **Breathing gives way to nothing while it runs.** No other session pauses it; it ends when its screen is left
+  (Back, the close button, or any other screen taking its place), and leaving is always the full end: the cues
+  stop, the keepalive stops, the audio session is let go (telling others they may resume), the card goes and the
+  lit screen is given back.
+- **The keepalive follows the session, not the screen.** It starts at Begin, stops on a pause, starts again on
+  resume, and stops at the finish or on leaving.
+- **The lit screen** is held from Begin to the finish, Back or leaving, pauses included. It is the phone's one switch,
+  shared with the Gym Timer, the call and the Cockpit's call: breathing turns it on only if it is off and off only
+  if it is on, without asking the others, so the last screen to change it wins.
+- **The lock-screen card** is one card for the whole app: breathing's Begin takes it from the Gym Timer, and the
+  timer's next push takes it back.
+
 ## Edge cases
 
 - The longest breath with the shortest session (15 s, 2 min) is two cycles; no setting gives less than one.

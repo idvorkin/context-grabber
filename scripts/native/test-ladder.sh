@@ -87,6 +87,7 @@ for f in ${changed[@]+"${changed[@]}"}; do
     scripts/native/fake-cockpit.py) add_classes $chat_area $whiteboard_area ;;
     native/App/Gym/* | native/ContextCore/Sources/ContextCore/Gym/*) add_classes $gym_area ;;
     native/App/Breathe/* | native/ContextCore/Sources/ContextCore/Breathe/*) add_classes $breathe_area ;;
+    native/App/AppSessionHost.swift | native/ContextCore/Sources/ContextCore/Session/*) add_classes $gym_area $breathe_area ;;
     native/App/Places/* | native/ContextCore/Sources/ContextCore/Places/*) add_classes $places_area ;;
     native/App/Mirror/* | native/ContextCore/Sources/ContextCore/Mirror/*) add_classes $mirror_area ;;
     # A file whose feature isn't its directory's, before the directories.

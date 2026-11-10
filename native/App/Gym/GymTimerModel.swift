@@ -1,8 +1,9 @@
 //  The Gym Timer's state for the app's lifetime (#791): the rounds engine and its clock, the stopwatch, the set
 //  count, the mode, the chosen preset, and which way the phone is turned. The app owns one, so a workout outlives
 //  the screen: leaving it lets go of only what the screen needed (the lit screen, the accelerometer), and of the
-//  audio and the card too when nothing is running. The logic is ContextCore's; this class owns the clock, carries
-//  out the engine's effects, remembers, and writes the session log.
+//  audio and the card too when nothing is running. The logic is ContextCore's: TimerEngine says what each second
+//  calls and TimerSession when the audio, the lit screen, the clock and the card are taken and let go; this class
+//  publishes the state, remembers, reads the accelerometer and records the finish.
 
 import BugKit
 import ContextCore
@@ -27,48 +28,37 @@ final class GymTimerModel: ObservableObject {
   }
   @Published private(set) var presetId = "30sec"
   @Published private(set) var custom = CustomPreset.default
-  /// Every change reaches the lock screen from here, and only from here (story 106).
-  @Published private(set) var timer: TimerState {
-    didSet { syncLiveActivity() }
-  }
+  /// TimerSession's state; the session syncs the lock-screen card at every change (story 106).
+  @Published private(set) var timer: TimerState
   @Published private(set) var stopwatch = Stopwatch()
   @Published private(set) var sets = 0
   @Published private(set) var turn = DeviceTurn.upright
   @Published private(set) var countVoice = CountVoice.default
 
-  private var engine: TimerEngine
-  private var clock: Timer?
+  private let session: TimerSession
   private let audio: GymAudio
-  private let liveActivity: LiveActivityController
   private let log: SessionLog
   private let database: AppDatabase
   private let motion = CMMotionManager()
-  private lazy var duck = DuckWindow(
-    session: audio,
-    schedule: { afterMs, block in
-      let item = DispatchWorkItem(block: block)
-      DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(afterMs), execute: item)
-      return { item.cancel() }
-    },
-    log: { [log] action, holdMs in log.event("timer_duck", ["action": action, "hold_ms": holdMs]) })
 
   private static let presetKey = "gym_custom_preset"
   private static let chosenKey = "gym_active_preset"
   private static let setsKey = "gym_sets_count"
   private static let modeKey = "gym_mode"
-  /// The timer screen is up: keep-awake and the accelerometer are on.
-  private var onScreen = false
-
   init(log: SessionLog, database: AppDatabase, liveActivity: LiveActivityController) {
     self.log = log
     self.database = database
-    self.liveActivity = liveActivity
-    audio = GymAudio(log: log)
-    let first = TimerProfile.presets[0].profile
-    engine = TimerEngine(profile: first)
-    timer = engine.state
+    let audio = GymAudio(log: log)
+    self.audio = audio
+    var record: (TimerProfile) -> Void = { _ in }
+    session = TimerSession(
+      profile: TimerProfile.presets[0].profile, host: AppSessionHost(log: log, liveActivity: liveActivity),
+      audio: audio, finished: { record($0) })
+    timer = session.state
     sets = SetCounter.clamp(Int(database.setting(Self.setsKey) ?? "") ?? 0)
     if let stored = database.setting(Self.modeKey).flatMap(GymMode.init(rawValue:)) { mode = stored }
+    record = { [weak self] profile in self?.recordFinish(profile) }
+    session.onChange = { [weak self] state in self?.timer = state }
     restoreSaved()
     audio.loadCues()
   }
@@ -84,7 +74,7 @@ final class GymTimerModel: ObservableObject {
   }
 
   /// The chips and the Custom sliders are inert from START until RESET or the finish.
-  var locked: Bool { engine.isEngaged }
+  var locked: Bool { session.locked }
 
   private var now: Double { Date().timeIntervalSince1970 }
 
@@ -120,108 +110,36 @@ final class GymTimerModel: ObservableObject {
 
   /// The chosen preset onto the face. After a finish that is a RESET: donE goes and the new preset stands ready.
   private func applyProfile() {
-    if timer.phase == .done {
-      resetTimer()
-    } else {
-      engine.setProfile(profile)
-      timer = engine.state
-    }
+    session.choose(profile)
   }
 
   func toggleTimer() {
-    if timer.isRunning {
-      engine.pause(now: now)
-      clock?.invalidate()
-      clock = nil
-      timer = engine.state
-      log.event(
-        "timer_pause", ["phase": timer.phase.rawValue, "round": timer.currentRound, "time_left": timer.timeLeft])
-      return
-    }
-    let p = engine.profile
-    log.event(
-      "timer_start",
-      [
-        "preset": p.name, "work": p.workTime, "rest": p.restTime, "rounds": p.rounds, "prep": p.prepTime,
-        "resumed": timer.isPaused,
-      ])
-    audio.start()
-    perform(engine.start(now: now))
-    clock?.invalidate()
-    // Ten looks a second: a boundary is called within a tenth of its true time, and the engine only answers
-    // when the second changes.
-    // In the common modes: a finger dragging the lap list or the accessory sheet must not stop the clock.
-    let ticking = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
-      Task { @MainActor in self?.tick() }
-    }
-    RunLoop.main.add(ticking, forMode: .common)
-    clock = ticking
+    session.toggle()
   }
 
-  /// A link, tile or hook that starts a workout (story 188): a running one is left alone (a tap on its card or a
-  /// tile must never pause it), a paused one resumes, a finished one goes back to ready and starts again.
+  /// A link, tile or hook that starts a workout (story 188), in Rounds: a running one is left alone, a paused one
+  /// resumes, a finished one goes back to ready and starts again.
   func autostart() {
     mode = .rounds
-    if timer.isRunning {
-      log.event("timer_autostart", ["action": "already_running", "round": timer.currentRound])
-      return
-    }
-    if timer.phase == .done { resetTimer() }
-    toggleTimer()
+    session.autostart(profile)
   }
 
   func resetTimer() {
-    clock?.invalidate()
-    clock = nil
-    engine.reset()
-    engine.setProfile(profile)
-    timer = engine.state
-    audio.stop()
-    duck.close()
-    log.event("timer_reset")
+    session.reset(to: profile)
   }
 
-  /// Pushes only when the phase, round or pause changed: the card counts down by itself between.
-  private func syncLiveActivity() {
-    liveActivity.sync(
-      LiveActivityContent(timer: timer, profile: engine.profile), kind: .gymTimer, stepEndsAt: engine.phaseEndsAt)
-  }
-
-  private func tick() {
-    perform(engine.tick(now: now))
-  }
-
-  /// The app came back to the front: move the state to now. The engine replays nothing that was missed and
-  /// still calls what is due this second (story 107).
+  /// The app came back to the front: move the state to now (story 107).
   func catchUp() {
-    guard timer.isRunning else { return }
-    tick()
-    log.event(
-      "timer_catchup", ["phase": timer.phase.rawValue, "round": timer.currentRound, "time_left": timer.timeLeft])
+    session.catchUp()
   }
 
-  private func perform(_ effects: [TimerEffect]) {
-    for effect in effects {
-      switch effect {
-      case .duckHold(let ms): duck.hold(ms)
-      case .cue(let cue): audio.play(cue)
-      case .phaseChanged(let from, let to, let round):
-        log.event("timer_phase", ["from": from.rawValue, "to": to.rawValue, "round": round])
-      case .finished:
-        clock?.invalidate()
-        clock = nil
-        log.event("timer_finished", ["rounds": engine.profile.rounds])
-        let custom = presetId == CustomPreset.id
-        let label = TimerProfile.presets.first { $0.id == presetId }?.label ?? "CUSTOM"
-        database.logActivity(
-          .gymTimer, name: ActivityLog.gymName(label: label, profile: engine.profile, custom: custom),
-          seconds: ActivityLog.gymSeconds(engine.profile))
-        // "done" is still sounding: the window's release lets go of the session. With no window open (a
-        // finish found on coming back) there is nothing to wait for.
-        if duck.isOpen { audio.stopWhenReleased() } else { audio.stop() }
-      }
-    }
-    if timer != engine.state { timer = engine.state }
+  /// The finish, in the activity log under the chip's name.
+  private func recordFinish(_ finished: TimerProfile) {
+    let custom = presetId == CustomPreset.id
+    let label = TimerProfile.presets.first { $0.id == presetId }?.label ?? "CUSTOM"
+    database.logActivity(
+      .gymTimer, name: ActivityLog.gymName(label: label, profile: finished, custom: custom),
+      seconds: ActivityLog.gymSeconds(finished))
   }
 
   // MARK: - the count voice (stories 182, 187)
@@ -267,12 +185,7 @@ final class GymTimerModel: ObservableObject {
   /// The timer is open: the screen stays lit (story 115) and the display follows the phone's turn (story 109).
   /// A workout left running (story 188) is shown where it is now.
   func appear(forcedTurn: DeviceTurn? = nil) {
-    onScreen = true
-    UIApplication.shared.isIdleTimerDisabled = true
-    log.event(
-      "keep_awake",
-      ["on": true, "reason": "gym_timer", "mode": mode.rawValue, "running": timer.isRunning || stopwatch.isRunning])
-    if timer.isRunning { tick() }
+    session.appear(mode: mode.rawValue, stopwatchRunning: stopwatch.isRunning)
     if let forcedTurn {
       turn = forcedTurn
       return
@@ -295,17 +208,8 @@ final class GymTimerModel: ObservableObject {
   /// Done: the lock goes back to the phone's own setting. A running workout carries on, cues, card and all, as
   /// with the phone locked (story 188); with nothing running the session and the card are let go.
   func disappear() {
-    onScreen = false
     motion.stopAccelerometerUpdates()
-    UIApplication.shared.isIdleTimerDisabled = false
-    log.event(
-      "keep_awake",
-      [
-        "on": false, "reason": "gym_timer", "running": timer.isRunning, "stopwatch": stopwatch.isRunning,
-      ])
-    if timer.isRunning { return }
-    release(reason: "leave")
-    restoreSaved()
+    if session.disappear(stopwatchRunning: stopwatch.isRunning) { restoreSaved() }
   }
 
   /// The saved Custom, chip and count voice; on leaving, a visit's one-off profile and voice give way to them. A
@@ -316,28 +220,13 @@ final class GymTimerModel: ObservableObject {
     guard !locked else { return }
     custom = CustomPreset.decode(database.setting(Self.presetKey))
     presetId = database.setting(Self.chosenKey).flatMap { Self.isPreset($0) ? $0 : nil } ?? TimerProfile.presets[0].id
-    guard timer.phase != .done else { return }
-    engine.setProfile(profile)
-    timer = engine.state
+    session.restore(profile)
   }
 
-  /// Box breathing, a call, the Cockpit or the eulogy song's player is opening (story 191): two voices, two cards or
-  /// a microphone would fight, so a running rounds workout pauses where it is, to resume on coming back. Off the
-  /// screen, its session and card go too.
+  /// Box breathing, a call, the Cockpit or the eulogy song's player is opening (story 191): a running rounds workout
+  /// pauses, and off the screen lets go of its session and card (TimerSession.yield).
   func yield(to other: String) {
-    guard timer.isRunning else { return }
-    log.event("timer_yield", ["to": other, "on_screen": onScreen])
-    toggleTimer()
-    if !onScreen { release(reason: "yield") }
-  }
-
-  /// Nothing running and nothing on screen to sound for: the clock, the audio session and the card go.
-  private func release(reason: String) {
-    clock?.invalidate()
-    clock = nil
-    audio.stop()
-    duck.close()
-    liveActivity.end(.gymTimer, reason: reason)
+    session.yield(to: other)
   }
 
   // MARK: - accessory work

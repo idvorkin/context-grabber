@@ -241,6 +241,26 @@ The timer does what stories 100–116 say, with these differences while the two 
   song's in-app player pauses a running rounds workout (two voices, two cards, or a microphone and a timer
   fighting over the phone's audio), and the pause is there to resume on coming back. A song opened in another
   app (Suno) plays alongside, like any music. Quitting the app ends everything.
+- **Who wins when the timer meets another session** (the rules as they stand; breathing's side is in its spec,
+  [Box breathing](2026-10-04-box-breathing-design.md), *Sharing the phone*):
+  - *The audio session.* While a rounds workout runs, the timer holds the audio session: active from START, with
+    the keepalive loop, and one duck window per boundary (opened a silent second before the *three*, held by each
+    word, let go about a second after the last). A pause keeps the session and its loop; only RESET, leaving the
+    timer with nothing running, or the finish let go of it. At the finish *done* is still sounding, so the last
+    window's own release is the letting go; a finish found on coming back, with no window open, lets go at once.
+    Each is one release: never a second deactivation for the same window.
+  - *Breathing, a call, the Cockpit or the eulogy song's player opening* pauses a running rounds workout. If the
+    timer is off the screen, the pause also lets go of its audio session, closes any open duck window and takes
+    its card down. If the timer is still on the screen, only the clock stops: the session and the card (now
+    reading paused) stay until RESET or leaving. A workout that is not running (paused, finished, idle) gives way
+    to nothing, because it already holds nothing: leaving the timer let go of its session and card.
+  - *The stopwatch and Sets* make no sound, hold no session and no card, and give way to nothing.
+  - *The lit screen.* The timer keeps the screen awake while it is on the screen, whatever is running, and gives it
+    back on leaving, whatever is running. It is the phone's one switch, shared with breathing, the call and the
+    Cockpit's call, and the last screen to set it wins: none of them asks the others before letting go.
+  - *The lock-screen card.* There is one card. A session that starts or moves takes the card, replacing the other
+    screen's: breathing beginning ends a paused workout's card, and the workout's next push (RESUME) takes it
+    back.
 - **A link's one-off settings last one visit.** A custom profile from a link (`?custom=…`) or a count voice from
   a launch hook is used for that visit and never saved; leaving the timer with nothing running puts back the
   saved Custom, preset chip and count voice.
