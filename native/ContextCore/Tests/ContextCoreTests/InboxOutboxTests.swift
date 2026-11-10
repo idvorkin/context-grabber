@@ -153,6 +153,41 @@ final class InboxOutboxTests: XCTestCase {
     try store.add(InboxItem(id: id, kind: .text, sharedAt: at, text: "message \(id)", thread: thread))
   }
 
+  // MARK: What the phone keeps (#809, chat spec)
+
+  private let day: Int64 = 24 * 3_600_000
+
+  /// The audit's finding: a sent message left the phone only when its thread was opened and listed it.
+  func testAnUnopenedThreadsSentMessagesLeaveThePhoneSevenDaysAfterTheirSend() throws {
+    try text("old")
+    try text("young")
+    try text("waiting")
+    try text("refused")
+    try text("earlier-share", thread: nil)
+    try store.add(InboxItem(id: "photo", kind: .image, sharedAt: 1, thread: "igor2-88g.900"), image: Data([7]))
+    let now = 100 * day
+    try store.markSent("old", at: now - 7 * day, thread: "igor2-88g.900")
+    try store.markSent("photo", at: now - 30 * day, thread: "igor2-88g.900")
+    try store.markSent("young", at: now - 7 * day + 1, thread: "igor2-88g.900")
+    try store.markRefused("refused", reason: "too big")
+    try store.markSent("earlier-share", at: now - 90 * day)
+
+    XCTAssertEqual(try store.dropOldSent(now: now), 2, "no thread was ever read")
+    XCTAssertEqual(store.items().items.map(\.id).sorted(), ["earlier-share", "refused", "waiting", "young"])
+    XCTAssertFalse(
+      try FileManager.default.contentsOfDirectory(atPath: dir.path).contains { $0.hasPrefix("photo") },
+      "its picture goes with it")
+    XCTAssertEqual(try store.dropOldSent(now: now), 0, "nothing more is due")
+    XCTAssertEqual(try store.dropOldSent(now: now + 1), 1, "the young one, a millisecond later")
+  }
+
+  func testAClockSetBackDropsNothing() throws {
+    try text("a")
+    try store.markSent("a", at: 100 * day, thread: "igor2-88g.900")
+    XCTAssertEqual(try store.dropOldSent(now: 0), 0)
+    XCTAssertEqual(store.items().items.map(\.id), ["a"])
+  }
+
   // MARK: The path (#406, story 269)
 
   @MainActor func testALaunchWaitsForThePathAndTheFirstReadingSends() async throws {

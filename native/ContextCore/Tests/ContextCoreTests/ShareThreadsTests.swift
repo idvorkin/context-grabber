@@ -175,8 +175,7 @@ final class ShareThreadsTests: XCTestCase {
 
   func testTheListShowsWhatNoThreadOnScreenCouldShow() {
     var sent = InboxItem(id: "sent", kind: .text, sharedAt: 1, text: "x", thread: "unlisted")
-    sent.sentAt = 2
-    sent.chatThread = "unlisted"
+    sent.delivery = .sent(at: 2, thread: "unlisted")
     let items = [
       InboxItem(id: "new", kind: .text, sharedAt: 1, text: "x"),
       InboxItem(id: "into-listed", kind: .text, sharedAt: 1, text: "x", thread: "listed"),

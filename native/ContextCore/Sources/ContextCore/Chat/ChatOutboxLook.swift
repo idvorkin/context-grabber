@@ -11,15 +11,17 @@ public enum ChatOutboxLook {
     public var sent = 0
     /// What `ChatWire.pending` shows as bubbles: the ones whose id the thread does not hold.
     public var pending = 0
-    /// Sent, and still pending: the Cockpit took it and its thread does not list it.
+    /// Sent, and not in the thread: the Cockpit took it and its thread does not list it (a bubble or not).
     public var sentPending = 0
+    /// Of those, the ones sent five minutes ago or more: unconfirmed, no longer bubbles.
+    public var unconfirmed = 0
     /// Hours since the oldest of those was sent; nil with none.
     public var oldestSentPendingHours: Double?
 
     public func logFields(thread: String) -> [String: Any] {
       var fields: [String: Any] = [
         "action": "outbox_thread", "thread": thread, "items": items, "sent": sent, "pending": pending,
-        "sent_pending": sentPending,
+        "sent_pending": sentPending, "unconfirmed": unconfirmed,
       ]
       if let oldestSentPendingHours { fields["oldest_sent_pending_hours"] = oldestSentPendingHours }
       return fields
@@ -27,18 +29,15 @@ public enum ChatOutboxLook {
   }
 
   /// Which of an open thread's reads log a line: the first, any where `sentPending` changed, and once more when
-  /// what is sent and pending has stayed so long enough to be no race between a send and a poll.
+  /// one of them turns unconfirmed: stayed unlisted long enough to be no race between a send and a poll.
   public struct ThreadLog: Equatable, Sendable {
-    /// The age, as logged, from which a sent and pending item is stuck and not just landing: 0.1 h is three minutes
-    /// or more, an age being rounded to a tenth.
-    public static let stuckHours = 0.1
     private var sentPending: Int?
     private var saidStuck = false
 
     public init() {}
 
     public mutating func logs(_ look: Thread) -> Bool {
-      let stuck = (look.oldestSentPendingHours ?? 0) >= Self.stuckHours
+      let stuck = look.unconfirmed > 0
       if sentPending != look.sentPending {
         sentPending = look.sentPending
         saidStuck = stuck
@@ -74,11 +73,12 @@ public enum ChatOutboxLook {
   /// `now`: Unix ms, as `sentAt`.
   public static func thread(_ key: String, items: [InboxItem], messages: [ChatMessage]?, now: Int64) -> Thread {
     let mine = items.filter { $0.thread == key || $0.chatThread == key }
-    let pending = ChatWire.pending(in: key, items: mine, messages: messages)
-    let sentPending = pending.filter { $0.status == .sent }
+    let sentPending = ChatWire.unheld(in: key, items: mine, messages: messages).filter { $0.status == .sent }
     return Thread(
-      items: mine.count, sent: mine.count { $0.status == .sent }, pending: pending.count,
-      sentPending: sentPending.count, oldestSentPendingHours: oldestHours(sentPending, now: now))
+      items: mine.count, sent: mine.count { $0.status == .sent },
+      pending: ChatWire.pending(in: key, items: mine, messages: messages, now: now).count,
+      sentPending: sentPending.count, unconfirmed: sentPending.count { $0.isUnconfirmed(now: now) },
+      oldestSentPendingHours: oldestHours(sentPending, now: now))
   }
 
   public static func whole(_ items: [InboxItem], now: Int64) -> Whole {

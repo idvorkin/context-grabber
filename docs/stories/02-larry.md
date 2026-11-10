@@ -2022,7 +2022,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** Yes or No to Larry's newest message sends that one word
 - **Status:** native app only: implemented in [1d5008e](https://github.com/idvorkin/context-grabber/commit/1d5008e); verified by `ChatReactionTests` (host) and `ChatReactionUITests` (simulator: the fake's Larry repeats *Yes*); half-typed words staying in the bar and a *Yes* with no network follow from the code, not exercised on any rung; a real Larry waking on the phone not yet
-- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (a sent message its thread never returns would make *Yes* go out quoted; the log's `chat` outbox_thread line is there to settle whether it happens)
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (a sent message its thread never returns made *Yes* go out quoted for good; since [1586a17](https://github.com/idvorkin/context-grabber/commit/1586a17) it stops counting as waiting five minutes after the send and leaves the phone after seven days, verified on the Linux rung (host tests: `ChatOutboxLookTests`, `InboxOutboxTests`, `InboxTests`); simulator/phone pending, needs the Mac)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -2036,13 +2036,18 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **When:** I hold it and tap *Yes*
 - **Then:** a message reading *Yes* appears at once as **Not sent yet**, reaches the Cockpit once and wakes Larry like any message, my half-typed words stay in the bar, and the log's `chat` reaction line names the reaction and the message but never the text
 
+- **Scenario:** A sent message the thread never shows (#809)
+- **Given:** a message I sent on this thread more than five minutes ago, which the Cockpit took but its thread does not list
+- **When:** I hold Larry's newest message and tap *Yes*
+- **Then:** my old message shows no pending bubble, *Yes* goes as the bare word, not quoted, and the old message is gone from the phone seven days after I sent it, whether or not I open the thread again
+
 ---
 
 ### User Story 540:
 
 - **Summary:** Yes or No to an older message says which message it answers
 - **Status:** native app only: implemented in [1d5008e](https://github.com/idvorkin/context-grabber/commit/1d5008e); verified by `ChatReactionTests` (host: the quote, its lines, the 280-character cut, a picture alone) and `ChatReactionUITests` (simulator: *No* on an older message reaches the fake under its quote); older because something newer still waits on the phone not exercised on any rung
-- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (whether a sent message can count as still waiting for good; see story 519)
+- **Issues:** [#629](https://github.com/idvorkin/context-grabber/issues/629), [#809](https://github.com/idvorkin/context-grabber/issues/809) (a sent message could count as still waiting for good, so every answer was older than it; since [1586a17](https://github.com/idvorkin/context-grabber/commit/1586a17) a sent message stops counting five minutes after the send, see story 519)
 - **Spec:** [Chat with Larry in Grabber Native — Press and hold a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:

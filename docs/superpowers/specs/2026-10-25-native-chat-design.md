@@ -445,8 +445,37 @@ need Igor's permission, asked once, the first time he sends a message; declining
 already sent to Larry's inbox stay readable under one *Earlier shares* row at the bottom of the list, read-only, and
 can be swiped away.
 
-**What the phone keeps.** A message stays on the phone until the Cockpit's thread shows it; once Igor sees it there,
-in an open thread, the phone's copy (and its picture) is dropped, so the phone does not fill up with old chat.
+**What the phone keeps** (#809). Each message on the phone is in exactly one state: **waiting** (not yet taken),
+**sent** (the Cockpit took it, into a named thread), or **refused** (the Cockpit said why). Sent and refused at once
+cannot happen. From there:
+
+- *Waiting → sent*: the Cockpit's answer that it has the message. *Waiting → refused*: the Cockpit's answer that the
+  message itself is wrong. Anything else (no network, the Cockpit away or failing) leaves it waiting.
+- *Refused → waiting*: only *Send again*, which only a file offers; the same message goes under the same id. A swipe
+  deletes a message in any state.
+- *Sent → delivered*: a read of its thread lists it. The phone's copy (and its picture or file) is dropped at that read.
+- *Sent → unconfirmed*: five minutes after the send, its thread still doesn't list it. It stops showing as a pending
+  bubble: the Cockpit has it, so the phone no longer stands in for it, and *Yes* or *No* on Larry's newest message
+  goes out as the bare word, not quoted. The log's `chat` outbox_thread line counts it, once, when it turns.
+- *Sent → dropped*: seven days after the send, whether or not its thread was ever opened, checked each time the app
+  starts, comes to the front or sends. The log says how many went.
+- A message sent to Larry's inbox before chat (an *Earlier share*, which has no thread) is kept until swiped away, as
+  above: it is the only place the phone shows it.
+
+**Why five minutes and seven days.** The Cockpit answers *taken* only once the message is in the thread, and an open
+thread is read every few seconds, so a sent message its thread doesn't list after five minutes is not a read racing
+the send: the thread is not returning it (a cut-short or restored thread, a deleted message). Five minutes also clears
+the three minutes the log already treats as stuck. Seven days keeps a week of sent messages countable in a pulled
+phone log, so a thread that loses them still shows up as evidence, and bounds the outbox at a week of sends (the
+simulator had 83 going back a week when #809 was filed). Neither is visible to Igor except as bubbles that go away.
+
+**Who wins** when two things say different things about one message:
+
+- The thread listing it beats everything: a sent message it lists is delivered and dropped, however old.
+- The Cockpit's *taken* beats a refusal on the same message (a message an older build stored as both reads as sent).
+- A message's age beats an unopened thread: seven days drops it without a visit.
+- The phone's clock set back makes a message younger, never older: an age below zero reads as just sent.
+- Messages stored by an older build still load, in the state above that their fields say.
 
 **On a simulator (#525).** A simulator reaches the tailnet too, so like the stats archive it talks to the real Cockpit
 only when a launch hook names an address, and a hook can name a stand-in or the real one. Without one, chat, the Inbox, the
@@ -514,6 +543,9 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   call it is dimmed, and a tap opens the new chat recording nothing, with the keyboard up and a line saying the call has
   the mic. The + still opens with the keyboard up and records nothing.
 - Waiting Inbox items become threads on first launch; sent ones stay under *Earlier shares*.
+- A sent message its thread never lists stops showing as pending five minutes after the send, so *Yes* on Larry's
+  newest message there goes as the bare word; seven days after the send it is gone from the phone, thread opened or
+  not. A message the thread lists is gone at that read. Messages an older build stored still load, in one state each.
 - On the Mac, Command+= makes chat's text one size bigger and Command+Minus one smaller, Command+0 puts it back, the
   size is the same after a relaunch, and nothing outside chat changes size.
 - On the Mac, a picture copied in another app makes *Paste image* live on coming back to the window, and Command+V or

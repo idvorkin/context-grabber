@@ -79,6 +79,13 @@ final class InboxModel: ObservableObject {
     } catch {
       log.event("error", ["where": "inbox_link_starts", "message": "\(error)"])
     }
+    // #809: a sent chat message leaves the phone seven days after its send, its thread opened or not.
+    do {
+      let dropped = try store?.dropOldSent(now: Int64(Date().timeIntervalSince1970 * 1000)) ?? 0
+      if dropped > 0 { log.event("inbox", ["action": "sent_dropped", "count": dropped]) }
+    } catch {
+      log.event("error", ["where": "inbox_sent_dropped", "message": "\(error)"])
+    }
     reload()
     // #809: what the outbox still holds, each time the app starts or comes to the front.
     if reason == "launch" || reason == "foreground" {
