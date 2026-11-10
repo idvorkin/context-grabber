@@ -10,6 +10,11 @@ final class BreathStyleTests: XCTestCase {
     XCTAssertEqual(BreathStyle.decode("tide"), .tide)
   }
 
+  /// What the cog stores is what the next open reads (BreatheStyleUITests used to check it by relaunching the app).
+  func testEveryStyleIsReadBackAsItIsStored() {
+    for style in BreathStyle.allCases { XCTAssertEqual(BreathStyle.decode(style.rawValue), style) }
+  }
+
   func testBeadsLightInPairsFromTheBottom() {
     XCTAssertEqual(BreathStyle.litBeads(progress: 0), [])
     // Just begun: the bottom bead.

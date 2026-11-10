@@ -63,6 +63,12 @@ echo "lockf $3 $4" >>"$MARKS/lockf"
 shift 4
 exec "$@"
 F
+# macOS's caffeinate -i <command>: here it only runs the command, so the self-test also runs on the Linux rung.
+cat >"$fakes/caffeinate" <<'F'
+#!/usr/bin/env bash
+[ "$1" = -i ] && shift
+exec "$@"
+F
 cat >"$fakes/uv" <<'F'
 #!/usr/bin/env bash
 exec sleep 30

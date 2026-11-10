@@ -236,7 +236,7 @@ fresh_boot() {
   xcrun simctl boot "$udid" && xcrun simctl bootstatus "$udid" >/dev/null || { echo "the simulator did not boot" >&2; return 1; }
 }
 start_cockpit() {  # <port> <seconds POST /chat is held>
-  FAKE_COCKPIT_NEW_DELAY=$2 scripts/native/fake-cockpit.py "$1" "$(mktemp -t fake-cockpit)" >/dev/null 2>&1 &
+  FAKE_COCKPIT_NEW_DELAY=$2 scripts/native/fake-cockpit.py "$1" "$(mktemp "${TMPDIR:-/tmp}/fake-cockpit.XXXXXX")" >/dev/null 2>&1 &
   cockpit=$!
   disown
   sleep 1
@@ -266,7 +266,7 @@ step() {  # <label> <command...>: times one step of rung 2
 
 chat_classes() {
   start_cockpit "${CHAT_PORT:-8798}" "${FAKE_COCKPIT_NEW_DELAY:-2}" || return
-  scripts/native/fake-bridge.py "${CHAT_BRIDGE_PORT:-8797}" "$(mktemp -t fake-bridge)" >/dev/null 2>&1 &
+  scripts/native/fake-bridge.py "${CHAT_BRIDGE_PORT:-8797}" "$(mktemp "${TMPDIR:-/tmp}/fake-bridge.XXXXXX")" >/dev/null 2>&1 &
   bridge=$!
   disown
   sleep 1
@@ -304,7 +304,7 @@ places_classes() {
   [ -n "$container" ] || { echo "no data container for the app on the simulator" >&2; return 1; }
   mkdir -p "$container/Documents" || return
   cp -f __tests__/fixtures/context-grabber.db "$container/Documents/import-fixture.db" || return
-  since=$(mktemp -t ladder-places)
+  since=$(mktemp "${TMPDIR:-/tmp}/ladder-places.XXXXXX")
   xcrun simctl terminate "$udid" "$bundle" >/dev/null 2>&1
   SIMCTL_CHILD_GRABBER_IMPORT_DB="import-fixture.db,recent" xcrun simctl launch "$udid" "$bundle" >/dev/null || { rm -f "$since"; return 1; }
   # The import's own event in a session log this launch wrote: never a wait for a time.
@@ -391,7 +391,7 @@ if [ "$in_lane" -eq 1 ]; then
 fi
 
 report=()
-waited=$(mktemp -t ladder-wait)
+waited=$(mktemp "${TMPDIR:-/tmp}/ladder-wait.XXXXXX")
 trap 'rm -f "$waited"' EXIT
 finish() {
   echo "seconds per rung:"

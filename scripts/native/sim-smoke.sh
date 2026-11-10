@@ -19,12 +19,6 @@ smoke_init "$SIM" "$BUNDLE"
 DOCS=$SMOKE_DOCS
 relaunch() { launch "$@"; }  # CG's call sites pass their hooks as SIMCTL_CHILD_* assignments in front
 bad() { not_ok "$@"; }
-# #801: a failed check's session log is pruned or overwritten before anyone reads it, so the check keeps what it judged.
-keep_evidence() {  # keep_evidence <check> <file>...: copies them to $SMOKE_EVIDENCE/<check>-<time>/ and says where
-  local dir; dir="${SMOKE_EVIDENCE:-$HOME/tmp/agent/notes/smoke}/$1-$(date +%Y%m%d-%H%M%S)"; shift
-  if mkdir -p "$dir" && cp -f "$@" "$dir/"; then echo "      evidence kept in $dir"
-  else echo "      could not keep evidence in $dir"; fi
-}
 listening() {  # listening <port>: waits up to 5 s for a fake server to take connections, a tenth of a second at a time; the caller judges
   local tries=0
   until nc -z localhost "$1" 2>/dev/null || [ "$tries" -ge 50 ]; do
@@ -493,26 +487,9 @@ pictured=$(jq -sr '[.[] | select(.type=="ui" and .action=="open_chat_image")] | 
 failed=$(jq -c 'select(.type=="error")' "$f")
 if [ "$pictured" -ge 1 ] && [ -z "$failed" ]; then ok "chat: a picture opened full size from the hook, no error events"
 else bad "chat: open_chat_image x$pictured, errors: $failed"; fi
-# Stories 518-519, 540-541 (#629): the hold menu's choices tap themselves on Larry's newest; ChatReactionUITests holds it for real.
-# #801: an earlier run's Yes stays in the simulator's outbox, and this fake Cockpit never heard it, so the thread would
-# show it as still on its way and Larry's question would not be the newest. The thread starts as the Cockpit has it.
-xcrun simctl terminate "$SIM" "$BUNDLE" >/dev/null 2>&1 || true
-forgot=$("$(dirname "$0")/forget-chat-thread.sh" "$SIM" "$BUNDLE" igor2-88g.629) || bad "chat: the outbox's leftovers for igor2-88g.629 could not be removed"
-SIMCTL_CHILD_GRABBER_CHAT_URL="http://localhost:$CHAT_PORT" SIMCTL_CHILD_GRABBER_CHAT_HOLD=yes \
-  SIMCTL_CHILD_GRABBER_LINK="grabbernative://chat?thread=igor2-88g.629" relaunch
-wait_jq 'select(.type=="chat" and .action=="sent" and .thread=="igor2-88g.629")' 20 || echo "      (timed out waiting for the Yes to send)"
-f=$(newest_log)
-reacted=$(jq -sr '[.[] | select(.type=="chat" and .action=="reaction" and .reaction=="yes" and .thread=="igor2-88g.629" and .newest==true)] | length' "$f")
-yes_posts=$(jq -sr '[.[] | select(.method=="POST" and .path=="/chat/igor2-88g.629" and .chars==3)] | length' "$CHAT_REPORT")
-failed=$(jq -c 'select(.type=="error")' "$f")
-if [ "$reacted" = 1 ] && [ "$yes_posts" = 1 ] && [ -z "$failed" ]; then ok "chat: Yes on the newest went up once as the bare word, no error events"
-else
-  bad "chat: reaction x$reacted, POST of three characters x$yes_posts, outbox leftovers removed x${forgot:-?}, errors: $failed"
-  keep_evidence chat-hold "$f" "$CHAT_REPORT"
-fi
-# Quote and Copy (stories 540-541) are not relaunches here: which choices a message offers and what GRABBER_CHAT_HOLD
-# names are ChatReactionTests' (`ChatHold`), the quote's words are `ChatQuote`'s, and ChatReactionUITests holds a
-# message for real and quotes it. Neither calls the outbox; the Yes above is the hold menu reaching a Cockpit.
+# Stories 518-519, 540-541 (#629): the hold menu is not a smoke launch. Which choices a message offers, what
+# GRABBER_CHAT_HOLD names and the bare Yes that goes up are ChatReactionTests' (`ChatHold`, `ChatQuote`), and
+# ChatReactionUITests holds Larry's newest for real, hears "Larry heard: Yes" from the fake Cockpit and quotes it.
 
 # Stories 312, 314: the hook reviews what looks done and archives it; ChatArchiveUITests taps Select and Undo.
 SIMCTL_CHILD_GRABBER_CHAT_URL="http://localhost:$CHAT_PORT" SIMCTL_CHILD_GRABBER_INBOX=open \
