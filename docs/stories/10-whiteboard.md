@@ -3878,7 +3878,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 746:
 
 - **Summary:** On an iPhone, boards are for looking, not drawing
-- **Status:** not implemented; branch native/phone-boards-look-only
+- **Status:** implemented in [df438e6](https://github.com/idvorkin/context-grabber/commit/df438e6), [d053c9a](https://github.com/idvorkin/context-grabber/commit/d053c9a); verified by host tests (`BoardIndexTests`), `PhoneBoardsUITests` on the iPhone simulator, and the whiteboard classes on the iPad simulator (`just test-ladder`)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *On an iPhone every board is look-only*
 
 #### Use Case:

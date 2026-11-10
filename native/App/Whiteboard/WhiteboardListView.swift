@@ -149,7 +149,7 @@ struct WhiteboardListView: View {
     let when = RelativeDateTimeFormatter().localizedString(
       for: Date(timeIntervalSince1970: Double(board.updated) / 1000), relativeTo: Date())
     guard store.editable(board) else { return "Changed \(when) · Drawn on \(board.deviceName)" }
-    return store.drawable(board) ? "Changed \(when) · On paper" : "Changed \(when)"
+    return board.onPages == true ? "Changed \(when) · On paper" : "Changed \(when)"
   }
 }
 

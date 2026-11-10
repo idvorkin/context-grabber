@@ -287,10 +287,9 @@ whiteboard_classes() {
   xcrun simctl shutdown "$phone" 2>/dev/null
   udid=$(scripts/native/sim-udid.sh "${WHITEBOARD_SIM:-iPad Pro 11-inch (M5)}") || { udid=$phone; return 1; }
   # Keys reach the app only in the first test after a boot that presses any (test-whiteboard-ui.sh), and one test does.
-  fresh_boot || { udid=$phone; return 1; }
-  start_cockpit "$port" 0 || { udid=$phone; return 1; }
-  TEST_RUNNER_GRABBER_FAKE_COCKPIT="http://localhost:$port" \
-    xcodebuild_sim whiteboard "TEST EXECUTE SUCCEEDED" $(only_testing "${whiteboard[@]}") test-without-building
+  fresh_boot && start_cockpit "$port" 0 \
+    && TEST_RUNNER_GRABBER_FAKE_COCKPIT="http://localhost:$port" \
+      xcodebuild_sim whiteboard "TEST EXECUTE SUCCEEDED" $(only_testing "${whiteboard[@]}") test-without-building
   status=$?
   xcrun simctl shutdown "$udid" 2>/dev/null
   udid=$phone
