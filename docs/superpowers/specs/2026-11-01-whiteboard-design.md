@@ -58,8 +58,9 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
 - **Read-only elsewhere:** a board opens for drawing only on the device that made it. On any other device it opens
   to look at: pan and pinch, no tool picker, and a note in the bar saying where it's drawn.
 - **On an iPhone every board is look-only**, its own included (Igor, 2026-11-10). The list has no *+ New board*;
-  every board opens to pan and pinch, with no tool picker, no Board menu and no Send, and the bar says *Look only on
-  iPhone: draw on the iPad*. Delete and, on the iPhone's own boards, Rename stay in the list. A board the iPhone drew
+  every board opens to pan and pinch, with no tool picker, no Board menu and no ghosts, and the bar says *Look only on
+  iPhone: draw on the iPad*. *Send to Larry* stays, as on any look-only board: a board can still be talked about
+  from the phone (Igor: "Maybe we can do chat"). Delete and, on the iPhone's own boards, Rename stay in the list. A board the iPhone drew
   before this keeps its ink and opens look-only like the rest.
 - **Without iCloud** (signed out, or no network), the list shows what this device already has and says that boards
   aren't syncing. Drawing still works, and the board goes up the next time it can.

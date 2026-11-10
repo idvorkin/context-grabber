@@ -1,5 +1,6 @@
 //  Story 746 on an iPhone simulator: the boards are for looking. The list has no + New board, and a board this phone
-//  drew on paper opens look-only, the bar saying to draw on the iPad. Every other whiteboard class runs on an iPad
+//  drew on paper opens look-only, the bar saying to draw on the iPad,
+//  with Send to Larry still there. Every other whiteboard class runs on an iPad
 //  simulator (the ladder's whiteboard step), where drawing is.
 
 import XCTest
@@ -23,7 +24,7 @@ final class PhoneBoardsUITests: XCTestCase {
     let note = app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS %@", "Look only on iPhone: draw on the iPad"))
     XCTAssertTrue(note.firstMatch.appears(within: 10), app.debugDescription)
-    XCTAssertFalse(app.buttons["whiteboard-send"].exists, "nothing to send")
+    XCTAssertTrue(app.buttons["whiteboard-send"].exists, "Send to Larry stays: the phone can talk about a board")
     XCTAssertFalse(app.buttons["whiteboard-board"].exists, "no Board menu")
     XCTAssertFalse(app.buttons["whiteboard-ghosts"].exists, "no ghosts")
   }

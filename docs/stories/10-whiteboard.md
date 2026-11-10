@@ -3891,5 +3891,5 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Given:** an iPhone whose list holds a board it drew earlier and a board drawn on the iPad
 - **and Given:** the list has no *+ New board*
 - **When:** I open either board
-- **Then:** it opens to pan and pinch with no tool picker, no Board menu and no Send, and the bar says *Look only on iPhone: draw on the iPad*
+- **Then:** it opens to pan and pinch with no tool picker, no Board menu and no ghosts, *Send to Larry* still there to talk about it, and the bar says *Look only on iPhone: draw on the iPad*
 
