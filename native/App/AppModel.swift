@@ -31,6 +31,9 @@ final class AppModel: ObservableObject {
   private var reporterStatus: AnyCancellable?
   /// #107: the tracker's fixes, passed to a live call.
   private var callLocationWatch: AnyCancellable?
+  /// Audit finding 4: who has the microphone, one holder or nobody (`MicFloor`, ContextCore, host-tested).
+  private var mic = MicFloor()
+  private var callMicWatch: AnyCancellable?
 
   /// #808, #818: every screen up in the home window, and a link waiting to bring one up. Its reducer (ContextCore,
   /// host-tested) is the only writer: each flag below reads it, and AppModel carries out what it returns.
@@ -197,11 +200,21 @@ final class AppModel: ObservableObject {
     startDelivery()
     dailyStrip = DailyStripModel(log: log, database: database) { [weak self] in self?.mirror.snapshot }
     call.willStart = { [weak self] in
-      // The song pauses (#197), then chat's dictation stops (#448). Before the call configures the session: chat
-      // dictation's restore must land first, or the call's mic is dead.
+      // The song pauses (#197), then the call takes the microphone and whoever had it stops (#448). Before the call
+      // configures the session: chat dictation's restore must land first, or the call's mic is dead.
       self?.askAudio(.callStarts)
+      _ = self?.requestMic(.call)
       self?.locateForCall()
     }
+    // A call going live takes the mic too (it may not have come through willStart); an ended one lets it go. No hop to
+    // the next run loop: a late stop would restore the session over the call's.
+    callMicWatch = call.$snapshot.map(\.isActive).removeDuplicates().dropFirst().sink { [weak self] live in
+      MainActor.assumeIsolated {
+        if live { _ = self?.requestMic(.call) } else { self?.mic.release(.call) }
+      }
+    }
+    chatVoice.askMic = { [weak self] in self?.requestMic(.chatVoice) }
+    chatVoice.micHeldElsewhere = { [weak self] in self?.micHeld(otherThan: .chatVoice) }
     // Story 217: a Direct call starts knowing the day so far: the last grab and the strip as the home screen shows it.
     call.today = { [weak self] in
       guard let self else { return nil }
@@ -455,8 +468,8 @@ final class AppModel: ObservableObject {
         context: { ["branch": .string(BuildInfo.branch)] },
         sessionLog: { ("logs/" + log.url.lastPathComponent, Int(Date().timeIntervalSince(log.startedAt) * 1000)) },
         logger: bugLogger,
-        // #559: two recognizers at once kill the first, so a chat recording holds the microphone like a call.
-        microphoneBusy: { [unowned self] in self.askAudio(.reportDictation) != nil },
+        // #239, #559: the microphone's floor; a call or a chat recording has it, so the dialog's mic stands down.
+        microphoneBusy: { [unowned self] in self.requestMic(.reportDictation) != nil },
         flushLog: { log.flush() }),
       options: options, delivery: delivery)
     reporterStatus = reporter.$lastStatus.compactMap { $0 }.receive(on: RunLoop.main)
@@ -477,8 +490,8 @@ final class AppModel: ObservableObject {
         switch holder {
         case .timer: gymModel?.yield(to: other)
         case .song: eulogySong.yield(to: other)
-        case .chatVoice: chatVoice.yieldToCall()
-        case .call, .breathe, .card, .reportDictation, .whiteboardMic, .cockpit: break  // no rule AppModel carries out
+        // The recorders give way through the microphone's floor (`requestMic`), not here.
+        case .call, .breathe, .card, .chatVoice, .reportDictation, .whiteboardMic, .cockpit: break
         }
       }
     }
@@ -489,8 +502,45 @@ final class AppModel: ObservableObject {
   private func holdsAudio(_ user: AudioUser) -> Bool {
     switch user {
     case .call: return call.snapshot.isActive
+    case .timer, .breathe, .song, .card, .chatVoice, .reportDictation, .whiteboardMic, .cockpit: return false
+    }
+  }
+
+  /// Audit finding 4 (spec 2026-11-10-microphone-floor-design.md): `user` wants the microphone. Nil when it may
+  /// record; otherwise who has it. A call takes it from anyone, and the one it took from stops here.
+  private func requestMic(_ user: AudioUser) -> AudioUser? {
+    switch mic.request(user, stillHolding: { self.isRecording($0) }) {
+    case .refused(let holder):
+      log.event("mic_floor", ["action": "refused", "asker": user.rawValue, "holder": holder.rawValue])
+      return holder
+    case .granted(let took):
+      if let took { log.event("mic_floor", ["action": "taken", "by": user.rawValue, "from": took.rawValue]) }
+      if user == .call {
+        // Chat's dictation yields to any call, as before the floor: it ignores this when idle, and a listing of the
+        // microphones (which holds no floor) gives way too.
+        chatVoice.yieldToCall()
+        if took == .reportDictation { reporter.dictation.stop(why: "call_started") }
+      }
+      return nil
+    }
+  }
+
+  /// Who other than `user` has the microphone now, without asking for it.
+  private func micHeld(otherThan user: AudioUser) -> AudioUser? {
+    mic.heldByAnother(than: user) { self.isRecording($0) }
+  }
+
+  /// Whether a holder on record is still recording: one that stopped without saying so holds nothing.
+  private func isRecording(_ user: AudioUser) -> Bool {
+    switch user {
+    case .call: return call.snapshot.isActive
     case .chatVoice: return chatVoice.recording
-    case .timer, .breathe, .song, .card, .reportDictation, .whiteboardMic, .cockpit: return false
+    case .reportDictation: return reporter.dictation.busy
+    // ponytail: the board's screen neither asks the floor nor says its mic is on (WhiteboardView, rewritten by #821),
+    // so the floor never records it as a holder. Wiring it: tapMic asks `requestMic(.whiteboardMic)`, its dictation's
+    // hostMicrophoneBusy asks `micHeld(otherThan: .whiteboardMic)`, and this answers its `micOn || micStarting`.
+    case .whiteboardMic: return false
+    case .timer, .breathe, .song, .card, .cockpit: return false
     }
   }
 

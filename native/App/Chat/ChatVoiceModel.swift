@@ -1,7 +1,8 @@
 //  Speaking a message in Chat (#448, chat spec "Speaking a message", story 303): the thread's mic is BugKit's
 //  NoteDictation, the problem report's Apple dictation (Igor, 2026-10-26: "All right, use that."). The words stream
-//  into that thread's bar as he speaks, after what was typed, never sent. A live call owns the microphone: the button
-//  stands down, and a call that starts mid-recording stops it. A recording stops itself at ChatVoice.limit.
+//  into that thread's bar as he speaks, after what was typed, never sent. Who has the microphone is the floor's
+//  (`MicFloor`, spec 2026-11-10-microphone-floor-design.md): a tap asks it first, and a call taking it stops the
+//  recording through `yieldToCall`. A recording stops itself at ChatVoice.limit.
 
 import BugKit
 import Combine
@@ -29,8 +30,13 @@ final class ChatVoiceModel: ObservableObject {
   @Published private(set) var thread = ""
 
   private let log: SessionLog
+  /// The floor, asked at a tap: nil lets the recording start, otherwise who has the microphone. AppModel sets it.
+  var askMic: @MainActor () -> AudioUser? = { nil }
+  /// Who else has the microphone, without asking for it: what the recognizer checks again as it starts and before
+  /// it lists the microphones. AppModel sets it.
+  var micHeldElsewhere: @MainActor () -> AudioUser? = { nil }
   private lazy var dictation = NoteDictation(
-    logger: log.bugLogger, hostMicrophoneBusy: { [weak self] in self?.callLive ?? false })
+    logger: log.bugLogger, hostMicrophoneBusy: { [weak self] in self?.micHeldElsewhere() != nil })
   /// Each recording's start, stop and five-minute timer (ContextCore, host-tested).
   private var clock = ChatVoiceClock()
   /// The saved microphone is named once per launch, the first time a picker shows (story 303).
@@ -119,6 +125,7 @@ final class ChatVoiceModel: ObservableObject {
 
   static let callHasMic = "A call with Larry is using the microphone. End it to speak a message."
   static let callTookMic = "A call started, so the recording stopped. The words so far are in the message."
+  static let otherHasMic = "Another recording is using the microphone. Speak your message when it stops."
 
   /// Starts dictating into `draft` (the bar's text now), or stops a recording.
   func tap(thread: String, draft: String) {
@@ -129,9 +136,10 @@ final class ChatVoiceModel: ObservableObject {
     guard !dictation.busy else { return }
     self.thread = thread
     notice = nil
-    guard !callLive else {
-      notice = Self.callHasMic
-      log.event("chat_voice", ["action": "refused", "why": "call_live"])
+    if let holder = askMic() {
+      notice = holder == .call ? Self.callHasMic : Self.otherHasMic
+      log.event(
+        "chat_voice", ["action": "refused", "why": holder == .call ? "call_live" : "mic_held", "by": holder.rawValue])
       return
     }
     dictation.toggle(note: draft) { [weak self] text in self?.heard(text, thread: thread) }
@@ -194,23 +202,21 @@ final class ChatVoiceModel: ObservableObject {
     await dictation.finish(why: "capped")
   }
 
-  // MARK: - the call owns the mic
+  // MARK: - the call takes the mic
 
-  /// A call is about to start (CallModel.willStart, before it touches the session): stop dictating now, so the
-  /// dictation's session restore cannot land after the call has set `.playAndRecord` / `.voiceChat`.
+  /// The floor gave the microphone to a call (CallModel.willStart, before it touches the session, or the call going
+  /// live): stop dictating now, so the dictation's session restore cannot land after the call has set
+  /// `.playAndRecord` / `.voiceChat`.
   func yieldToCall() {
     guard dictation.busy else { return }
     drop(why: "call_started")
     notice = Self.callTookMic
   }
 
+  /// The button stands down while a call is live; stopping a recording for it is the floor's (`yieldToCall`).
   private func callChanged(_ live: Bool) {
     callLive = live
     if !live, notice == Self.callHasMic || notice == Self.callTookMic { notice = nil }
-    if live, dictation.busy {
-      drop(why: "call_started")
-      notice = Self.callTookMic
-    }
   }
 
   private func drop(why: String) {
