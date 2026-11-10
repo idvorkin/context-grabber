@@ -7,7 +7,7 @@ GET /chat, GET /chat/<key>, POST /chat (a new thread), POST /chat/<key>, POST /c
 POST /chat/<key>/archive and /unarchive (#589; a new message brings a thread back; 415 unless application/json, as on
 the Cockpit's write boundary),
 GET /attachments/<ref>, POST /whiteboard/strokes (story 419: counted and answered, never kept), POST /whiteboard/suggest (a ghost circle at the picture's right edge, streamed as NDJSON when the request
-accepts it, as one JSON when not). A chat URL ending /plain gets a Cockpit that doesn't stream whatever is asked; one ending /many gets six marks of every kind, 400 ms apart; one ending /far gets a circle far below the picture, past a board on paper's last page. GET /fake/strokes says the ids of each POST /whiteboard/strokes so far. A message resent with an id the thread has is a duplicate, as on the Cockpit. Larry
+accepts it, as one JSON when not). A chat URL ending /plain gets a Cockpit that doesn't stream whatever is asked; one ending /many gets six marks of every kind, 400 ms apart; one ending /far gets a circle far below the picture, past a board on paper's last page. GET /fake/strokes says the ids of each POST /whiteboard/strokes so far. GET and POST /whiteboard/responder keep each board's knob (story 659), Sonnet by default. A message resent with an id the thread has is a duplicate, as on the Cockpit. Larry
 answers every message of Igor's a second later ("Larry heard: <text>"), and a message with a board's picture with marks (cockpit#85: an arrow and a
 label as kind + points, with the picture's picture_id and frame echoed). POST /fake/larry-draws {"count": n} is a test's way to have him draw
 unprompted on the newest board thread (n circles, as /whiteboard/suggest strokes). Every request is a JSON line in REPORT.
@@ -39,6 +39,13 @@ THREADS = {
 CREATED = {}
 BOARD_MESSAGES = {}  # thread -> the newest message of Igor's carrying a board's picture
 STROKE_SENDS = []  # the ids in each POST /whiteboard/strokes
+RESPONDERS = {}  # board -> haiku | sonnet | larry, as POST /whiteboard/responder set it (story 659)
+
+
+def responder_answer(board):
+    """GET /whiteboard/responder?board=<id> as the Cockpit answers it (whiteboard.py, cockpit-m28)."""
+    return {"ok": True, "board": board, "responder": RESPONDERS.get(board, "sonnet"), "set": board in RESPONDERS,
+            "at": None, "default": "sonnet", "choices": ["haiku", "sonnet", "larry"]}
 WHITE_PICTURE = "2026-11-01/0000000000000592.png"
 IMAGES = {WHITE_PICTURE: base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAAAAAC86un7AAAADElEQVR4nGP4z/AfAAQAAf8iCjrwAAAAAElFTkSuQmCC")}
@@ -176,6 +183,9 @@ class Handler(BaseHTTPRequestHandler):
         with LOCK:
             if path == "/fake/strokes":
                 return self._json(200, {"ok": True, "sends": STROKE_SENDS})
+            if path.endswith("/whiteboard/responder"):
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+                return self._json(200, responder_answer((query.get("board") or [""])[0]))
             if path == "/chat":
                 rows = [summary(k, t) for k, t in THREADS.items() if t["messages"] or t.get("pinned")]
                 return self._json(200, {"ok": True, "threads": rows})
@@ -214,6 +224,17 @@ class Handler(BaseHTTPRequestHandler):
                           "frame": data.get("frame"), "origin": self.headers.get("Origin")})
             return self._json(200, {"ok": True, "board": data["board"], "picture_id": data["picture_id"],
                                     "count": len(strokes), "new": len(strokes), "erased": 0})
+        if path.endswith("/whiteboard/responder"):
+            # Story 659: the board's knob. A Larry board's suggest still draws here: the fake has one answerer.
+            self._report({"body": data})
+            if data.get("responder") not in ("haiku", "sonnet", "larry", None) or not data.get("board"):
+                return self._json(400, {"ok": False, "error": "responder must be one of haiku, sonnet, larry, or null"})
+            with LOCK:
+                if data.get("responder") is None:
+                    RESPONDERS.pop(data["board"], None)
+                else:
+                    RESPONDERS[data["board"]] = data["responder"]
+                return self._json(200, responder_answer(data["board"]))
         if path == "/fake/larry-draws":
             return self._draws(data)
         if path == "/fake/skill-thread":

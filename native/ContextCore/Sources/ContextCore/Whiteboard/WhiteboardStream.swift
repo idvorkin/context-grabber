@@ -16,6 +16,8 @@ public struct WhiteboardStream: Sendable {
   private var buffer = Data()
   /// What the last line said went wrong.
   private var reason: String?
+  /// Who the last line said answered (story 659).
+  private var lastResponder: WhiteboardResponder?
 
   /// `status` is nil when no response came, which reads as a failure in `answer`.
   public init(status: Int?, contentType: String?) {
@@ -45,11 +47,18 @@ public struct WhiteboardStream: Sendable {
     if error != nil || json["done"] as? Bool == true {
       done = true
       reason = error
+      lastResponder = WhiteboardResponder.of(json["responder"])
       return nil
     }
     guard let shape = WhiteboardTurn.shapeJSON(stroke: json).flatMap({ WhiteboardTurn.shape($0) }) else { return nil }
     shapes.append(shape)
     return shape
+  }
+
+  /// Who answered, as the Cockpit said: the stream's last line, or the whole answer's own field. Nil from a Cockpit
+  /// that doesn't say, or before the answer has ended.
+  public var responder: WhiteboardResponder? {
+    streaming ? lastResponder : WhiteboardResponder.of(body: buffer)
   }
 
   /// How the turn went, given what stopped the reading, if anything. Once a mark has arrived, nothing counts as failure.
