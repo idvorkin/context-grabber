@@ -3756,7 +3756,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 658:
 
 - **Summary:** A board drawn on the old canvas opens to look at, on paper
-- **Status:** implemented in [71bba7e](https://github.com/idvorkin/context-grabber/commit/71bba7e); verified by host tests (`BoardIndexTests`: only a board made on paper, on its own device, is drawn on; the bar's words for each look-only board; `BoardKeepingTests`: through a relaunch; `BoardPagesTests`: the ink moved, never scaled) and on the simulator (`WhiteboardOnPaperUITests.testAnOldCanvasBoardOpensLookOnlyOnPaper`; the smoke's `paper_open`). Igor's own old boards on the iPad not yet seen
+- **Status:** implemented in [71bba7e](https://github.com/idvorkin/context-grabber/commit/71bba7e); verified by host tests (`BoardIndexTests`: only a board made on paper, on its own device, is drawn on; the bar's words for each look-only board; `BoardKeepingTests`: through a relaunch; `BoardPagesTests`: the ink moved, never scaled) and on the simulator (`WhiteboardOnPaperUITests.testAnOldCanvasBoardOpensLookOnlyOnPaper`, on an iPad Pro 11-inch simulator too since [#845](https://github.com/idvorkin/context-grabber/issues/845): it searches for the old ink from under the navigation bar and drags right to left, as a swipe right is Back; `paper_ink_look` why `open` counted the ink drawn in 6 of 6 opens; the smoke's `paper_open`). Igor's own old boards on the iPad not yet seen
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Paper is the only canvas*
 
 #### Use Case:

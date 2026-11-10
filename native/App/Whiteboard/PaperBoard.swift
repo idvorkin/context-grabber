@@ -364,6 +364,10 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
       guard let self else { return }
       if first { self.load() }
       self.fitToPage(first: first)
+      // #845: whether an opened board's ink is drawn, on every device's geometry.
+      if first, let ink = self.paper.markup?.inkDrawing, !ink.strokes.isEmpty {
+        self.lookForInk(ink.bounds, why: "open")
+      }
     }
   }
 
