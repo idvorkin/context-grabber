@@ -120,11 +120,19 @@ final class WhiteboardOnPaperUITests: XCTestCase {
     XCTAssertFalse(app.buttons["whiteboard-ghosts"].exists, "no ghosts")
     sleep(2)
     keep(app, "an old-canvas board, look only")
-    let ink = try XCTUnwrap(PaperScreen(app).ink, "the old ink on the first page")
+    // The old ink is a row at the page's very top: search from just under the navigation bar (#845), left of the page
+    // number, whose black text would otherwise pass for ink.
+    let window = app.windows.firstMatch.frame
+    let top = app.navigationBars.firstMatch.frame.maxY / window.height + 0.01
+    let right = page.frame.minX / window.width
+    let ink = try XCTUnwrap(PaperScreen(app, top: top, right: right).ink, "the old ink on the first page")
 
-    stroke(app, atHeight: 0.75)
+    // Right to left: since iOS 26 a swipe to the right anywhere is Back, and on an iPad the page fits the width, so
+    // nothing scrolls sideways to take it first (#845).
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.75))
+      .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.75)))
     sleep(2)
-    let after = try XCTUnwrap(PaperScreen(app).ink, "the old ink still there")
+    let after = try XCTUnwrap(PaperScreen(app, top: top, right: right).ink, "the old ink still there")
     XCTAssertEqual(after.maxY - after.minY, ink.maxY - ink.minY, accuracy: 0.02, "a drag below the ink drew nothing")
   }
 
