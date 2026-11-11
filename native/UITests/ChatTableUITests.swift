@@ -16,16 +16,14 @@ final class ChatTableUITests: XCTestCase {
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launch()
 
-    let table = app.descendants(matching: .any)["chat-table"].firstMatch
-    XCTAssertTrue(table.appears(within: 20), app.debugDescription)
-    for cell in ["Battery", "Pro 14", "$1,299"] {
-      XCTAssertTrue(table.staticTexts[cell].exists, "\(cell) in the grid: \(table.debugDescription)")
-    }
-    let words = { (text: String) in app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-    XCTAssertTrue(words("Here's how they compare:").exists, app.debugDescription)
-    XCTAssertTrue(words("Want the cheapest?").exists, app.debugDescription)
-    XCTAssertFalse(words("|---").exists, "no dashes row as written")
+    let bubble = app.descendants(matching: .any).matching(
+      NSPredicate(format: "identifier == 'chat-larry' AND label BEGINSWITH %@", "Here's how they compare:")
+    ).firstMatch
+    XCTAssertTrue(bubble.appears(within: 20), app.debugDescription)
+    // The grid reads row by row, each cell after its heading, between the words around it.
+    XCTAssertTrue(bubble.label.contains("Pro 14, Weight 1.6 kg, Battery 22 h, Price $1,999"), bubble.label)
+    XCTAssertTrue(bubble.label.hasSuffix("Want the cheapest?"), bubble.label)
+    XCTAssertFalse(bubble.label.contains("|"), "no pipes or dashes as written: \(bubble.label)")
     let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
     shot.name = "story 747: the laptop table"
     shot.lifetime = .keepAlways

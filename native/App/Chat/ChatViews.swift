@@ -1073,7 +1073,18 @@ private struct BubbleTable: View {
       }
       .padding(.vertical, 2)
     }
-    .accessibilityIdentifier("chat-table")
+    // A scroll view's cells are lost in the bubble's combined label, so the table says its rows itself.
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(spoken)
+  }
+
+  /// Row by row, each cell after its heading: "Air: Weight 1.2 kg, Battery 18 h".
+  private var spoken: String {
+    table.rows.map { row in
+      let pairs = zip(table.heading.dropFirst(), row.dropFirst()).map { "\($0) \($1)" }
+      return ([row.first ?? ""] + pairs).filter { !$0.isEmpty }.joined(separator: ", ")
+    }
+    .joined(separator: "; ")
   }
 
   private func cells(_ texts: [String]) -> some View {

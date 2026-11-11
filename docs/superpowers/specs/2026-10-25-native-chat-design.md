@@ -107,7 +107,8 @@ dashes row marks `:--:` or `--:` is centred or right-aligned. A table wider than
 and the rest of the bubble stays put. Words before and after the table read as they always have, and a link in a cell
 is tappable or a chip, as anywhere in a bubble. Only a complete table becomes a grid: pipes with no dashes row under
 them stay as written, and a row with fewer cells than the heading leaves the rest empty, one with more drops the extra.
-*Copy* and *Quote in reply* take the message as written, pipes and all. Other Markdown (bold, lists, headings) is
+VoiceOver reads the table row by row, each cell after its heading ("Pro 14, Weight 1.6 kg, Battery 22 h"). *Copy* and
+*Quote in reply* take the message as written, pipes and all. Other Markdown (bold, lists, headings) is
 still shown as written, in a cell too.
 
 **Press and hold a message** (Igor, 2026-11-03, #629: *"Maybe let me do press-and-hold reactions for yes, no, quote in
