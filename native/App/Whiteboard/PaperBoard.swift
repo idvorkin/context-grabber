@@ -1080,6 +1080,8 @@ struct PaperBoardCanvas: View {
     )
     .overlay(alignment: .topTrailing) {
       Text(controller.pageText).font(.footnote.monospacedDigit())
+        // Story 673. On this text, not Send: a toolbar button drops its accessibility value (iOS 27 simulator).
+        .accessibilityValue(model.dirty ? "unsaved" : "saved")
         .padding(.vertical, 4).padding(.horizontal, 10)
         .background(.thinMaterial, in: Capsule())
         .padding(10)
