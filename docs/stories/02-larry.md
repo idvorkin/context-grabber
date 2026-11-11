@@ -2615,7 +2615,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 747:
 
 - **Summary:** A table in Larry's message reads as a table
-- **Status:** native app: implemented on branch `native/817-chat-tables`, issue [#817](https://github.com/idvorkin/context-grabber/issues/817); verified by `ChatTablesTests` (host, 10 cases), the Mac build, and on the simulator (iPhone 17, 2026-11-10: `ChatTableUITests` reads the grid row by row in the bubble's label, the screenshot shows the bold heading, row lines and right-aligned Battery; the other 16 chat UI tests pass with the new fake thread); the phone pending
+- **Status:** native app: implemented in [fdb12f0](https://github.com/idvorkin/context-grabber/commit/fdb12f0), [56a557c](https://github.com/idvorkin/context-grabber/commit/56a557c) (VoiceOver reads it row by row) and [161e3ef](https://github.com/idvorkin/context-grabber/commit/161e3ef) (a table with only a heading still speaks), issue [#817](https://github.com/idvorkin/context-grabber/issues/817); verified by `ChatTablesTests` (host, 10 cases), the Mac build, and on the simulator (iPhone 17, 2026-11-10: `ChatTableUITests` reads the grid row by row in the bubble's label, the screenshot shows the bold heading, row lines and right-aligned Battery; the other 16 chat UI tests pass with the new fake thread); on the phone since f668bc4 (2026-11-10), not yet seen there by Igor
 - **Spec:** [Chat with Larry in Grabber Native — A table in a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
