@@ -45,7 +45,9 @@ cat >"$fakes/xcrun" <<'F'
 #!/usr/bin/env bash
 echo "xcrun $*" >>"$MARKS/xcrun"
 case "$*" in
-  "simctl list devices available") printf '    iPhone 17 (00000000-0000-0000-0000-000000000000) (Shutdown)\n' ;;
+  "simctl list devices available")
+    printf '    iPhone 17 (00000000-0000-0000-0000-000000000000) (Shutdown)\n'
+    printf '    iPad Pro 11-inch (M5) (00000000-0000-0000-0000-000000000001) (Shutdown)\n' ;;  # the whiteboard's (story 746)
   "simctl get_app_container "*) echo "${FAKE_CONTAINER:-}" ;;
   "simctl launch "*)
     # The app, importing as its launch hook says: the session log's import event.
@@ -111,6 +113,18 @@ dry --changed native/App/Whiteboard/PaperBoard.swift
 says "whiteboard code: its classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): $board_all"
 says "whiteboard code: the iPhone's look-only class too (story 746)" "rung 2 UI tests: PhoneBoardsUITests"
 never "whiteboard code: no chat" "Chat"
+
+# The whiteboard's rules run only the classes that show them; its views still run them all.
+dry --changed native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardPaste.swift
+says "a paste rule: the two paste classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardPaperPasteUITests WhiteboardPasteUITests"
+dry --changed native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardGhostTurns.swift
+says "a ghost rule: the turn and ghosts classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardPaperGhostsUITests WhiteboardTurnUITests"
+never "a ghost rule: not the lines" "WhiteboardPaperLinesUITests"
+dry --changed native/App/Whiteboard/WhiteboardStore.swift
+says "the board list: row delete and on paper" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardOnPaperUITests WhiteboardRowDeleteUITests"
+says "the board list: the iPhone's look-only class too" "rung 2 UI tests: PhoneBoardsUITests"
+dry --changed native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardLaunchHooks.swift
+says "the hooks: every class" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): $board_all"
 
 dry --changed docs/TESTING.md --changed README.md
 says "docs: nothing to format" "rung 0 Lint: swift-format over 0 touched Swift file(s), SwiftLint over the tree"

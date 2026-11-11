@@ -82,6 +82,31 @@ for f in ${changed[@]+"${changed[@]}"}; do
     native/App/Chat/* | native/App/Inbox/* | native/ContextCore/Sources/ContextCore/Chat/* | \
       native/ContextCore/Sources/ContextCore/Inbox/* | scripts/native/test-chat-ui.sh | scripts/native/fake-bridge.py)
       add_classes $chat_area ;;
+    # The whiteboard's rules by what shows them (the timing study of 2026-11-10: any whiteboard file ran all 8 classes,
+    # 9–11 min). The views, the hooks and the suite's script run them all; so does anything not named here.
+    native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardPaste.swift)
+      add_classes WhiteboardPasteUITests WhiteboardPaperPasteUITests ;;
+    native/ContextCore/Sources/ContextCore/Whiteboard/BoardPaper.swift)
+      add_classes WhiteboardPaperLinesUITests WhiteboardOnPaperUITests ;;
+    native/ContextCore/Sources/ContextCore/Whiteboard/BoardPages.swift)
+      add_classes WhiteboardOnPaperUITests WhiteboardPaperLinesUITests WhiteboardPaperPasteUITests ;;
+    native/ContextCore/Sources/ContextCore/Whiteboard/PaperProbe.swift)
+      add_classes WhiteboardOnPaperUITests ;;  # what the log says about a touch
+    native/ContextCore/Sources/ContextCore/Whiteboard/BoardIndex.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/BoardKeeping.swift | native/App/Whiteboard/WhiteboardListView.swift | \
+      native/App/Whiteboard/WhiteboardStore.swift)
+      add_classes WhiteboardRowDeleteUITests WhiteboardOnPaperUITests PhoneBoardsUITests ;;
+    native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardGhostTurns.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardPacer.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardTurn.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardStream.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardMarks.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardStrokes.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardFrame.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardResponder.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardLarryTurn.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardSpeech.swift)
+      add_classes WhiteboardTurnUITests WhiteboardPaperGhostsUITests ;;
     native/App/Whiteboard/* | native/ContextCore/Sources/ContextCore/Whiteboard/* | scripts/native/test-whiteboard-ui.sh)
       add_classes $whiteboard_area ;;
     scripts/native/fake-cockpit.py) add_classes $chat_area $whiteboard_area ;;

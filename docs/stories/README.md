@@ -27,7 +27,7 @@ its `Issues:` line.
 | [Reporting problems](08-reporting-problems.md) | The native app beside this one: the session log, the shake, crashes, reports that become issues. | 140–159 |
 | [Breathing](09-breathing.md) | The native app's box-breathing screen: the circle, the sliders, pause, tones and the voice. | 160–179, 240–259, 280–299 |
 | [The whiteboard](10-whiteboard.md) | Drawing with the Pencil on a board bigger than the screen, Larry seeing it, and Claude drawing along. | 340–439, 520–539, 590–609, 610–629, 630–649, 650–669 |
-| [Building and testing](11-building-and-testing.md) | How a change reaches the phone quickly: testing on the Mac, the simulator kept for what needs it, practices shared with the other apps. | 670–689 |
+| [Building and testing](11-building-and-testing.md) | How a change reaches the phone quickly: testing on the Mac, the simulator kept for what needs it, practices shared with the other apps. | 670–689, 753–759 |
 
 New stories take the next free ID in their journey's range; a journey that outgrows its range takes the next
 unused block of twenty.
