@@ -295,7 +295,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 754:
 
 - **Summary:** UI tests don't wait for screens to slide
-- **Status:** implemented in ed896a9 and the commit that keeps the whiteboard's animations; verified on the simulator (iPhone 17, 2026-11-10): the chat suite's 16 tests went from about 243 s to 193 s, all passing; the whiteboard's classes keep their animations, as PaperLines on the iPad simulator counted a second stroke after the Board menu without them (the menu's closing tap reaching the canvas), until #850 is settled
+- **Status:** implemented in ed896a9 and be6e45f; verified on the simulator (iPhone 17, 2026-11-10): the chat suite's 16 tests went from about 243 s to 193 s, all passing; the whiteboard's classes keep their animations, as PaperLines on the iPad simulator counted a second stroke after the Board menu without them (the menu's closing tap reaching the canvas), until #850 is settled
 
 #### Use Case:
 - **As Igor,** waiting on a test run
