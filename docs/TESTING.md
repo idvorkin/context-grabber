@@ -109,6 +109,12 @@ class it names is gone. A file whose feature isn't its directory's has a row of 
 their ledger in `ContextCore`: `IPadUITests` skips on a phone and `MacKeysUITests` exists only in the Mac build.
 `HealthAccessUITests` stays the smoke's.
 
+**One running app per class** (story 672). A launch costs 5-9 s a test. A class whose tests start on the same screen
+gets its app from `SharedApp.open(environment, for: self) { app in … }`: the first test launches, and each later one
+gets the running app back through the closure, the class's own way back to where its launch hook lands (a Back tap).
+Not a link home: XCTest then waits for the app to idle, 33 s on the chat list. A failed test, another class or another
+environment launches fresh. `ChatArchiveUITests` went from 56-70 s to 26 s.
+
 A whiteboard class list is the suite less its fake-Cockpit report checks, so a change to the whiteboard's app code
 costs about the suite's time; a change to one test file costs that file. `--full` runs the whole suite of each area the
 change touched, in place of that area's classes.
