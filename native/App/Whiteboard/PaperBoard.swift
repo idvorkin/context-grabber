@@ -341,6 +341,20 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
     model.zoom = { [weak self] in self?.screenScale ?? 1 }
     model.draw = { [weak self] _, added in self?.keep(added) }
     model.menuChose = { [weak self] in self?.takeTheResponderBack() }
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(keyboardShown(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+  }
+
+  /// #850: whether a board raises the on-screen keyboard. On the iPad simulator one rose over an open Board menu and its
+  /// tap didn't take; this says whether a real iPad does it too.
+  @objc private func keyboardShown(_ note: Notification) {
+    let frame = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect) ?? .zero
+    log.event(
+      "whiteboard",
+      [
+        "action": "keyboard_shown", "height": Int(frame.height), "paper_has_it": paper.isFirstResponder,
+        "taking_back": responding != nil,
+      ])
   }
 
   /// The part of the column on screen: the visible frame runs past the paper where a phone's one page is shorter than the
@@ -475,6 +489,7 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
       self?.log.event(
         "whiteboard",
         ["action": "paper_responder", "times_lost": lost, "has_it": self?.paper.isFirstResponder ?? false])
+      self?.responding = nil
     }
   }
 
