@@ -271,3 +271,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** the run ends
 - **Then:** the failed case alone ran again and the run's timing summary names it as passed only on retry, the long case failed at two minutes, and xcodebuild was stopped 30 s after the suite closed with the log's result kept
 
+---
+
+### User Story 753:
+
+- **Summary:** A change to one whiteboard rule runs only the whiteboard tests that show it
+- **Status:** implemented in 1107aad; verified on the host by `scripts/native/test-ladder-map.sh` (the paste, ghost and board-list rules, and the hooks running every class)
+- **Issues:** the pipeline timing study of 2026-11-10 (any whiteboard file ran all 8 classes, 9–11 min)
+
+#### Use Case:
+- **As Igor,** waiting on a whiteboard fix to reach the iPad
+- **I want to** have the simulator run only the whiteboard tests a change can break
+- **so that** a change to how a paste is laid out doesn't cost a 10-minute pass of every board test
+
+#### Acceptance Criteria:
+- **Scenario:** A change to the paste rule
+- **Given:** a branch that changes only how a paste is laid out on a board
+- **When:** the test ladder climbs
+- **Then:** the simulator runs the two paste test classes and no other whiteboard class, while a change to the board's own views or its launch hooks still runs every whiteboard class
+

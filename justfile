@@ -52,8 +52,9 @@ native-test: native-lint-format native-lint native-test-host
 # Native rung 1: ContextCore's host tests on the Mac and the script checks (seconds)
 native-test-host:
     #!/usr/bin/env bash
-    # pipefail: a failing suite must fail the recipe instead of hiding behind tail's exit 0.
-    set -uo pipefail
+    # pipefail: a failing suite must fail the recipe instead of hiding behind tail's exit 0; -e: so must every script
+    # check, not only the last (the ladder's map check failed unseen from story 746 until 2026-11-10).
+    set -euo pipefail
     (cd native/ContextCore && swift test 2>&1 | grep -E "Test Suite 'All tests'|Executed|failed|error" | tail -20) || exit 1
     # The device build's signing path, with fakes: BugKit's screen-lock guard and "No Accounts" (bug-kit#53).
     scripts/native/test-signing-guard.sh

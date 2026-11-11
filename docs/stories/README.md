@@ -18,7 +18,7 @@ its `Issues:` line.
 | Journey | What it covers | IDs |
 |---|---|---|
 | [The mirror](01-mirror.md) | Today and the week at a glance: the metric cards, the detail sheets, sleep, movement, mind; Settings and About. | 001–019, 440–459 |
-| [Feeding Larry](02-larry.md) | Grab Context: the summary and raw exports, the 7-day window, what the coach sees. | 020–039, 260–279, 300–319, 480–499, 500–519, 540–559, 740–759 |
+| [Feeding Larry](02-larry.md) | Grab Context: the summary and raw exports, the 7-day window, what the coach sees. | 020–039, 260–279, 300–319, 480–499, 500–519, 540–559, 740–752 |
 | [Places](03-places.md) | Background location, stays and known places, the per-day breakdown, the map, the database export. | 040–059 |
 | [Roles and the journal](04-roles-and-journal.md) | Who I have been: the identity threads, time-since, the journal and its tags, gratitude, affirmations, mood. | 060–079 |
 | [Calling Larry](05-call.md) | The native Call tab that survives the lock, the Cockpit page, voices, diagnostics that reach Larry. | 080–099, 200–219, 320–339 |
@@ -27,7 +27,7 @@ its `Issues:` line.
 | [Reporting problems](08-reporting-problems.md) | The native app beside this one: the session log, the shake, crashes, reports that become issues. | 140–159 |
 | [Breathing](09-breathing.md) | The native app's box-breathing screen: the circle, the sliders, pause, tones and the voice. | 160–179, 240–259, 280–299 |
 | [The whiteboard](10-whiteboard.md) | Drawing with the Pencil on a board bigger than the screen, Larry seeing it, and Claude drawing along. | 340–439, 520–539, 590–609, 610–629, 630–649, 650–669 |
-| [Building and testing](11-building-and-testing.md) | How a change reaches the phone quickly: testing on the Mac, the simulator kept for what needs it, practices shared with the other apps. | 670–689 |
+| [Building and testing](11-building-and-testing.md) | How a change reaches the phone quickly: testing on the Mac, the simulator kept for what needs it, practices shared with the other apps. | 670–689, 753–759 |
 
 New stories take the next free ID in their journey's range; a journey that outgrows its range takes the next
 unused block of twenty.
