@@ -90,6 +90,11 @@ THREADS["igor2-88g.604"] = {"title": "A board since deleted", "seen": "", "messa
 THREADS["igor2-88g.629"] = {"title": "Larry asks", "seen": "", "messages": [
     row("igor2-88g.629", "larry", "Shall we ship it?"),
 ]}
+THREADS["igor2-88g.817"] = {"title": "Laptops", "seen": "", "messages": [  # story 747: a table in a bubble
+    row("igor2-88g.817", "larry", "Here's how they compare:\n| | Weight | Battery | Price |\n|---|:---:|---:|---|\n"
+        "| Air | 1.2 kg | 18 h | $1,099 |\n| Pro 14 | 1.6 kg | 22 h | $1,999 |\n| XPS | 1.4 kg | 12 h | $1,299 |\n"
+        "Want the cheapest?"),
+]}
 
 
 def summary(key, t):
