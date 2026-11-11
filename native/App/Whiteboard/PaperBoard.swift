@@ -489,6 +489,7 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
       self?.log.event(
         "whiteboard",
         ["action": "paper_responder", "times_lost": lost, "has_it": self?.paper.isFirstResponder ?? false])
+      self?.responding = nil
     }
   }
 
