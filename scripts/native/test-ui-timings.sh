@@ -37,6 +37,14 @@ out=$("$here/ui-timings.py" "$dir/synth.log")
 grep -q "launching the app 20 s" <<<"$out" || fail "an Open … element is not launch: $out"
 grep -q "15.0 s  Step F" <<<"$out" || fail "the sixth gap kind counts toward the run: $out"
 
+# A case that failed, then passed on the retry, is named.
+{ echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' started."
+  echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' failed (3.000 seconds)."
+  echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' started."
+  echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' passed (2.000 seconds)."; } >"$dir/retry.log"
+out=$("$here/ui-timings.py" "$dir/retry.log")
+grep -q "passed only on retry (1): SynthUITests.testFlaky" <<<"$out" || fail "a retried case is named: $out"
+
 : >"$dir/empty.log"
 "$here/ui-timings.py" "$dir/empty.log" --jsonl "$dir/none.jsonl" | grep -q "no test cases" || fail "an empty log"
 [ ! -e "$dir/none.jsonl" ] || fail "an empty log writes no JSON"

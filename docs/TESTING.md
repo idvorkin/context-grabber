@@ -124,6 +124,12 @@ and `just native-test-sim` start, says so, and refuses with exit 75 after half a
 appears during the run, the rung says so at the end: a failure is reported as contention. A pass stands, with a note,
 because contention makes a test fail when it shouldn't, not pass.
 
+**Every UI test run has a time limit, one retry and a short hang wait** (story 689). The wrapper all test runs go
+through gives each case two minutes (`UI_TEST_ALLOWANCE_SECONDS`), runs a failed case once more on its own rather than
+the whole list again (`UI_TEST_RETRY=0` turns that off), and stops an xcodebuild that sits idle 30 s after its last
+suite closes (`XCODEBUILD_IDLE_SECONDS`), taking the result from the log. The timing summary names every case that
+passed only on its retry: that is a flake to fix, not a pass to forget.
+
 The host rung has no report suites to skip: nothing in `native/ContextCore/Tests` prints (checked 2026-11-05, 985
 tests).
 

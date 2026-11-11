@@ -83,6 +83,12 @@ def report(cases, top):
         f" ({100 * launch / total if total else 0:.0f}%), {sum(c['retries'] for c in cases)} retried steps,"
         f" {sum(c['attachments'] for c in cases)} attachments"
     ]
+    # A case that failed and then passed on xcodebuild's retry: named, so a flake is never hidden by the retry.
+    failed = {(c["class"], c["test"]) for c in cases if c["state"] == "failed"}
+    passed = {(c["class"], c["test"]) for c in cases if c["state"] == "passed"}
+    flaky = sorted(failed & passed)
+    if flaky:
+        out.append(f"  passed only on retry ({len(flaky)}): " + ", ".join(f"{k}.{t}" for k, t in flaky))
     per_class = defaultdict(lambda: [0, 0.0, 0.0])
     for c in cases:
         p = per_class[c["class"]]

@@ -251,3 +251,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a pool worktree was built for one branch and returned
 - **When:** an agent leases it for a new branch and builds for the simulator
 - **Then:** the build reuses what the earlier one compiled, and the Mac holds no more build folders than the pool has worktrees
+
+---
+
+### User Story 689:
+
+- **Summary:** A stuck or flaky UI test costs a minute or two, not a whole rerun
+- **Status:** verified on the host by `scripts/native/test-xcodebuild-log.sh` (a fake xcodebuild: the time limit, the retry, the stopped hang) and `scripts/native/test-ui-timings.sh` (a retried case named)
+- **Issues:** the pipeline timing study of 2026-11-10 (Igor: "I don't want to be spending 20 minutes in the simulator"; "fix all the issues")
+
+#### Use Case:
+- **As Igor,** waiting on a change to reach the phone
+- **I want to** have a UI test that hangs or fails once cost little, while still being told about it
+- **so that** one flaky case doesn't buy another 10-minute pass of the whole list
+
+#### Acceptance Criteria:
+- **Scenario:** A UI test run on the simulator
+- **Given:** a run where one case fails once and passes on a second try, one case runs past two minutes, and xcodebuild sits idle after the last suite closes
+- **When:** the run ends
+- **Then:** the failed case alone ran again and the run's timing summary names it as passed only on retry, the long case failed at two minutes, and xcodebuild was stopped 30 s after the suite closed with the log's result kept
+

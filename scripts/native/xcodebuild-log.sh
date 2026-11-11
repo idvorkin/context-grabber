@@ -18,8 +18,21 @@ else
   show=(grep -E "error:|BUILD|Test Case|TEST (SUCCEEDED|FAILED)")
 fi
 # xcodebuild can sit idle for good once the tests are done, holding the build lock: stop it a while after the last
-# suite closes, and let the log say how the tests went.
-idle=${XCODEBUILD_IDLE_SECONDS:-90}
+# suite closes, and let the log say how the tests went. 30 s: a good run's tail is 1–5 s, the longest seen 36 s on a
+# run with failures (the timing study of 2026-11-10: the old 90 s cost 1.5 min on 10 of 27 runs).
+idle=${XCODEBUILD_IDLE_SECONDS:-30}
+# Every UI test gets a time limit, so a stuck case fails at 2 minutes instead of running on (one took 425 s against
+# 47 s when it passes). XCTest rounds the allowance up to whole minutes; the slowest passing case takes about 61 s.
+if [ "${1##*/}" = xcodebuild ]; then
+  case " $* " in
+    *" test "* | *" test-without-building "*)
+      set -- "$@" -test-timeouts-enabled YES -default-test-execution-time-allowance "${UI_TEST_ALLOWANCE_SECONDS:-120}"
+      # A failed case runs once more, alone, rather than the whole list again (Igor, 2026-11-10: "fix all the issues").
+      # ui-timings names every case that passed only on its retry, so a flake is still seen; UI_TEST_RETRY=0 turns it off.
+      [ "${UI_TEST_RETRY:-1}" = 1 ] && set -- "$@" -retry-tests-on-failure -test-iterations 2
+      ;;
+  esac
+fi
 stopped=$(mktemp -u)
 : >"$log"
 (
