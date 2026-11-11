@@ -71,3 +71,34 @@ extension XCTestCase {
       line: line)
   }
 }
+
+/// Story 672: one running app for a class's tests, so each test after the first skips its launch (5-9 s each in the
+/// timing study). A test gets the running app back through `back`, the class's own way to the screen its launch hook
+/// lands on (a Back tap, say). Not a link home: XCTest then waited 33 s for the app to idle, more than a launch. A fresh
+/// launch instead when there is no app yet, the class or the environment differs, or the last test on it failed (its
+/// state is then unknown). Tests about what survives a restart launch for themselves.
+enum SharedApp {
+  private static var app: XCUIApplication?
+  private static var owner = ""
+  private static var environment: [String: String] = [:]
+  private static var spoiled = false
+
+  /// `environment` goes on top of `XCUIApplication.forTests()`'s.
+  static func open(
+    _ environment: [String: String], for test: XCTestCase, back: (XCUIApplication) -> Void
+  ) -> XCUIApplication {
+    let owner = String(describing: type(of: test))
+    test.addTeardownBlock {
+      if (test.testRun?.totalFailureCount ?? 1) > 0 { spoiled = true }
+    }
+    if let app, !spoiled, owner == self.owner, environment == self.environment, app.state == .runningForeground {
+      back(app)
+      return app
+    }
+    let fresh = XCUIApplication.forTests()
+    fresh.launchEnvironment.merge(environment) { $1 }
+    fresh.launch()
+    (self.app, self.owner, self.environment, spoiled) = (fresh, owner, environment, false)
+    return fresh
+  }
+}
