@@ -3,7 +3,7 @@
 # xcbeautify's digest on screen: the tasks with warnings or errors, and the test results. Succeeds only if the
 # command exits 0 and the log carries the <done> line ("BUILD SUCCEEDED", "TEST SUCCEEDED"); a grep on exit codes
 # alone would pass a failed build through a pipe. The exception is an xcodebuild that hangs after its tests finish: it
-# is stopped and the log's closing suite line decides (passed exits 0, failed exits 65). Without xcbeautify the screen
+# is stopped and the log's last closing suite line decides (passed exits 0, failed exits 65). Without xcbeautify the screen
 # gets the error and result lines instead.
 # Usage: xcodebuild-log.sh <name> <done> <command...>
 set -uo pipefail
@@ -17,9 +17,22 @@ if command -v xcbeautify >/dev/null; then
 else
   show=(grep -E "error:|BUILD|Test Case|TEST (SUCCEEDED|FAILED)")
 fi
-# xcodebuild can sit idle for good once the tests are done, holding the build lock: stop it a while after the last
-# suite closes, and let the log say how the tests went.
-idle=${XCODEBUILD_IDLE_SECONDS:-90}
+# xcodebuild can sit idle for good once the tests are done, holding the build lock: once a suite has closed, stop it
+# after this long with no new output (a retry prints on), and let the log say how the tests went. 30 s: a good run's tail is 1–5 s, the longest seen 36 s on a
+# run with failures (the timing study of 2026-11-10: the old 90 s cost 1.5 min on 10 of 27 runs).
+idle=${XCODEBUILD_IDLE_SECONDS:-30}
+# Every UI test gets a time limit, so a stuck case fails at 2 minutes instead of running on (one took 425 s against
+# 47 s when it passes). XCTest rounds the allowance up to whole minutes; the slowest passing case takes about 61 s.
+if [ "${1##*/}" = xcodebuild ]; then
+  case " $* " in
+    *" test "* | *" test-without-building "*)
+      set -- "$@" -test-timeouts-enabled YES -default-test-execution-time-allowance 120
+      # A failed case runs once more, alone, rather than the whole list again (Igor, 2026-11-10: "fix all the issues").
+      # ui-timings names every case that passed only on its retry, so a flake is still seen; UI_TEST_RETRY=0 turns it off.
+      [ "${UI_TEST_RETRY:-1}" = 1 ] && set -- "$@" -retry-tests-on-failure -test-iterations 2
+      ;;
+  esac
+fi
 stopped=$(mktemp -u)
 : >"$log"
 (
@@ -27,7 +40,13 @@ stopped=$(mktemp -u)
     kill -0 $$ 2>/dev/null || exit
     sleep 5 || exit
   done
-  sleep "$idle" || exit
+  size=-1 quiet=0
+  while [ "$quiet" -lt "$idle" ]; do
+    kill -0 $$ 2>/dev/null || exit
+    now=$(wc -c <"$log")
+    if [ "$now" = "$size" ]; then quiet=$((quiet + 1)); else size=$now quiet=0; fi
+    sleep 1 || exit
+  done
   kill -0 $$ 2>/dev/null || exit
   touch "$stopped"
   pkill -TERM -P $$ -f '/xcodebuild '
@@ -50,7 +69,8 @@ fi
 if [ -e "$stopped" ]; then
   rm -f "$stopped"
   echo "xcodebuild hung after the tests finished, so it was stopped; the log has the result: $log" >&2
-  if grep -qE "^Test Suite '(All|Selected) tests' passed" "$log"; then exit 0; else exit 65; fi
+  last=$(grep -E "^Test Suite '(All|Selected) tests' (passed|failed)" "$log" | tail -1)
+  case $last in *" passed"*) exit 0 ;; *) exit 65 ;; esac
 fi
 if [ "$status" -ne 0 ]; then
   echo "the build exited $status; the whole log: $log" >&2

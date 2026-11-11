@@ -67,6 +67,8 @@ test:
     files). Do not re-run `just test`: the gate already ran it. Report which rung verified the change,
     and list what only the simulator or the phone can show (HealthKit, GPS, the audio session, widgets, Live
     Activities, Shortcuts, the voice bridge, iCloud delivery) as "to verify live".
+    A finding the host rung can't fix (it needs the simulator, the phone or Igor) is reported as "to verify live"
+    or as a question, never sent to a fix round: 13 of 23 test fix rounds up to 2026-11-10 changed nothing.
     If a simulator is ever used despite the above: only one simulator on this Mac at a time, so before booting,
     check `xcrun simctl list devices booted` and wait until it is empty. When done, pass or fail, run
     `xcrun simctl shutdown` on every device you or your `xcodebuild` booted, `xcrun simctl delete` on every device

@@ -65,6 +65,8 @@ native-test-host:
     scripts/native/test-ladder-map.sh
     # Where a UI test run's time went, from a real run's log.
     scripts/native/test-ui-timings.sh
+    # Story 689: a UI test run gets a time limit per case and one retry of a failed case; a hang after it is stopped.
+    scripts/native/test-xcodebuild-log.sh
 
 # Rung 1L, on a Linux box (scripts/native/test-linux.sh says what it needs): ContextCore's portable tests run on Linux,
 # the package and its tests cross-built for macOS, iOS and the simulator with a Darwin Swift SDK, the app's sources
