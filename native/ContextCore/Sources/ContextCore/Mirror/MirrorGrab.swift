@@ -13,7 +13,7 @@ public struct MirrorSnapshot: Equatable, Sendable {
   public var weekly: [MetricKey: WeeklySeries]
   /// Noon-to-noon nights for the Sleep sheet.
   public var sleepBundle: SleepDetailedBundle?
-  /// Each week's workouts by local day of their start (the Exercise sheet).
+  /// The last fourteen days' workouts by local day of their start (the Exercise sheet, the strip's two weeks).
   public var workoutsByDay: [String: [WorkoutEntry]]
 
   public init(
@@ -302,12 +302,13 @@ public final class MirrorGrab: @unchecked Sendable {
     }
   }
 
-  /// The week's workouts by the local day they began (the Exercise sheet's lists).
+  /// The last fourteen days' workouts by the local day they began: the Exercise sheet's lists (it reads the week's days)
+  /// and Gym's automatic days in the strip's two-week grid (#435: a strength workout 8-13 days ago was missing).
   public func workoutsByDay(now: Double) async -> [String: [WorkoutEntry]] {
     let s = source
     guard
       case .success(let workouts) = await settle(
-        "workouts_week", { try await s.workouts(from: now - 7 * 24 * 60 * 60 * 1000, to: now) })
+        "workouts_week", { try await s.workouts(from: now - 14 * 24 * 60 * 60 * 1000, to: now) })
     else { return [:] }
     var byDay: [String: [WorkoutEntry]] = [:]
     for w in workouts { byDay[clock.dateKey(w.start), default: []].append(w.entry) }

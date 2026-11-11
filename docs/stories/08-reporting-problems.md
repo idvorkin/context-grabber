@@ -389,7 +389,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 255:
 
 - **Summary:** Review and correct two weeks of strip check marks
-- **Issues:** [#290](https://github.com/idvorkin/context-grabber/issues/290), [#414](https://github.com/idvorkin/context-grabber/issues/414)
+- **Issues:** [#290](https://github.com/idvorkin/context-grabber/issues/290), [#414](https://github.com/idvorkin/context-grabber/issues/414), [#435](https://github.com/idvorkin/context-grabber/issues/435) (Gym's grid took Health's strength workouts from only the last seven days, so one 8-13 days ago showed as an open day; the grab now asks Health for fourteen days, verified on the host by `DailyStripFortnightWorkoutsTests`, which failed before the change)
 - **Status:** implemented in [b39d4f0](https://github.com/idvorkin/context-grabber/commit/b39d4f0) (#414); verified by `CheckFortnightTests`, `DailyStripTests` and `CounterWeekTests` with the full `just test` (host: calendar and clock-change boundaries, staged toggles and summaries, save rollback, a peer's take-back syncing, days since), the simulator build, and `DailyStripUITests` on the simulator (press and hold edits two weeks; checks and counters); the phone not yet.
 - **Spec:** [native home screen, “An earlier day”](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
