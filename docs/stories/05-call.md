@@ -325,6 +325,26 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 752:
+
+- **Summary:** A call that can't reach the Cockpit says so, and names Tailscale
+- **Status:** native app only: verified by `just test` (host: `CallSessionTests`)
+- **Issues:** [#784](https://github.com/idvorkin/context-grabber/issues/784)
+- **Spec:** [Native call — interruptions](../superpowers/specs/2026-08-28-native-call-screen-design.md#interruptions)
+
+#### Use Case:
+- **As a** Larry's client starting a call on a device whose Tailscale is off
+- **I want to** see that the call never reached the Cockpit, and why it might not have
+- **so that** I turn Tailscale on instead of thinking the call dropped
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit's address can't be found
+- **Given:** the device can't find or reach the Cockpit
+- **When:** I start a call
+- **Then:** the call ends *can't reach the Cockpit: is Tailscale on?*, and the automatic trouble report is still filed
+
+---
+
 ### User Story 324:
 
 - **Summary:** A handoff redial that cannot get through ends the call instead of looping

@@ -247,6 +247,14 @@ public enum CallProtocol {
 
   /// The client's own reason for a socket that dropped without a `closed`.
   public static let connectionLost = "connection lost"
+  /// #784, story 752: the call's connection failed before it was live because the Cockpit couldn't be found or
+  /// reached, most often Tailscale being off.
+  public static let cockpitUnreachable = "can't reach the Cockpit: is Tailscale on?"
+
+  /// A lost socket's message that means the Cockpit was never reached: its address not found, or nothing answering.
+  public static func neverReached(_ message: String) -> Bool {
+    message.contains("NSURLErrorDomain -1003") || message.contains("NSURLErrorDomain -1004")
+  }
   /// The bridge's reason for a tap on Hang up.
   public static let stopped = "stopped"
 
