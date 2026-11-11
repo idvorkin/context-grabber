@@ -8,7 +8,7 @@ final class WhiteboardRowDeleteUITests: XCTestCase {
 
   /// The boards, with a board the iPad drew on a fresh id, so runs on one simulator don't meet each other's boards.
   private func openWithAnIPadBoard(_ id: String) -> XCUIApplication {
-    let app = XCUIApplication.forTests()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_BOARD_FIXTURE"] = id
@@ -56,7 +56,7 @@ final class WhiteboardRowDeleteUITests: XCTestCase {
 
     // Still gone next launch, and a link to it is a copyable problem.
     app.terminate()
-    app = XCUIApplication.forTests()
+    app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_LINK"] = "grabbernative://whiteboard?board=\(id)"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launch()

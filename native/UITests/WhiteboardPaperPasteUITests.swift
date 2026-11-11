@@ -14,7 +14,7 @@ final class WhiteboardPaperPasteUITests: XCTestCase {
 
   /// A new board on paper, with Ghosts off so nothing else lands on it.
   private func openBoard(_ extra: [String: String] = [:]) throws -> XCUIApplication {
-    let app = XCUIApplication.forTests()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = try cockpit()

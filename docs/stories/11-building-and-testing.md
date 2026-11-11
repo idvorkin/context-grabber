@@ -295,7 +295,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 754:
 
 - **Summary:** UI tests don't wait for screens to slide
-- **Status:** not implemented; the timing study's item 7 (2026-11-10)
+- **Status:** implemented in ed896a9 and the commit that keeps the whiteboard's animations; verified on the simulator (iPhone 17, 2026-11-10): the chat suite's 16 tests went from about 243 s to 193 s, all passing; the whiteboard's classes keep their animations, as PaperLines on the iPad simulator counted a second stroke after the Board menu without them (the menu's closing tap reaching the canvas), until #850 is settled
 
 #### Use Case:
 - **As Igor,** waiting on a test run
@@ -304,6 +304,6 @@ Part of the [user stories](README.md); persona and format are described there.
 
 #### Acceptance Criteria:
 - **Scenario:** A UI test opens a screen and a menu
-- **Given:** any UI test, launched the way every UI test launches the app
+- **Given:** any UI test but the whiteboard's, launched the way every UI test launches the app
 - **When:** it pushes a screen, opens a sheet or a menu
 - **Then:** the screen, sheet or menu is there at once rather than after its animation, and the app the phone runs is unchanged

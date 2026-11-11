@@ -13,7 +13,7 @@ final class WhiteboardPasteUITests: XCTestCase {
   private func openBoard(pasting text: String? = nil) throws -> XCUIApplication {
     let cockpit = try XCTUnwrap(
       ProcessInfo.processInfo.environment["GRABBER_FAKE_COCKPIT"], "run through scripts/native/test-whiteboard-ui.sh")
-    let app = XCUIApplication.forTests()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit

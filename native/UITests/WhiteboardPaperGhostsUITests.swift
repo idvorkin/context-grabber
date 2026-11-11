@@ -93,7 +93,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
 
   /// A new board on paper, Ghosts on, that doesn't fade while a test looks at it.
   private func openBoard(way: String = "", _ extra: [String: String] = [:]) throws -> XCUIApplication {
-    let app = XCUIApplication.forTests()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = try cockpit() + way
