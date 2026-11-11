@@ -429,11 +429,25 @@ final class CallAudioEngine: CallAudio, @unchecked Sendable {
       "input_channels": session.inputNumberOfChannels, "output_channels": session.outputNumberOfChannels,
       "since_build_ms": (nowMs - builtAt).rounded(),
       "in_vp": engine.inputNode.isVoiceProcessingEnabled,
+      // #582: every start failed with the app's scene inactive, and the heal's reset and redial could not help.
+      "app_state": Self.appState(),
       "mic_hw_format": describe(engine.inputNode.inputFormat(forBus: 0)),
       "mic_format": describe(engine.inputNode.outputFormat(forBus: 0)),
       "out_format": describe(engine.outputNode.inputFormat(forBus: 0)),
       "out_hw_format": describe(engine.outputNode.outputFormat(forBus: 0)),
     ]
+  }
+
+  /// #582: whether the app was active, inactive or in the background when a start failed. Read only on the main
+  /// thread, where UIKit allows it; elsewhere the field says so rather than wait on the main thread.
+  private static func appState() -> String {
+    guard Thread.isMainThread else { return "unknown_off_main" }
+    switch UIApplication.shared.applicationState {
+    case .active: return "active"
+    case .inactive: return "inactive"
+    case .background: return "background"
+    @unknown default: return "unknown"
+    }
   }
 
   private func armTap() throws {
