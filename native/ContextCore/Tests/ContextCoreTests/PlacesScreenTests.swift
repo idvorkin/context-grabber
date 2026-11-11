@@ -178,8 +178,7 @@ final class PlacesScreenTests: XCTestCase {
 
   /// On the real export: naming a grey dot far from every known place opens the name card with the suggested radius;
   /// saving it closes the card, re-reads, the dot is gone and its card closes by itself. The highest-numbered such
-  /// place, so its number goes too: naming a lower one renumbers the next into its id and the card stays open on the
-  /// other place (found here, filed as a GitHub issue; this change keeps behaviour as it is).
+  /// place, so its number goes too (a lower one is the next test).
   func testNamingAGreyDotOnTheRealExport() throws {
     var s = try withTheRealExport()
     let number = { (place: UnnamedPlace) in Int(place.placeId.dropFirst("Place ".count)) ?? 0 }
@@ -203,6 +202,29 @@ final class PlacesScreenTests: XCTestCase {
       s.unnamed.contains { Geo.distance($0.centroid, far.centroid) < 100 }, "the grey dot became a named place")
     XCTAssertNil(s.selectedUnnamed, "its card closed by itself")
     XCTAssertTrue(s.stays.contains { $0.placeId == "Park" })
+  }
+
+  /// #843, on the real export: naming a grey dot that isn't the last "Place N" closes its card at once, and the re-read,
+  /// which moves the next place's number into the named one's id, doesn't open it on that other place.
+  func testNamingALowerNumberedGreyDotClosesItsCard() throws {
+    var s = try withTheRealExport()
+    let number = { (place: UnnamedPlace) in Int(place.placeId.dropFirst("Place ".count)) ?? 0 }
+    let far = s.unnamed.filter { place in s.knownPlaces.allSatisfy { Geo.distance($0.coordinate, place.centroid) > 500 }
+    }
+    let low = try XCTUnwrap(far.min { number($0) < number($1) })
+    XCTAssertTrue(
+      s.unnamed.contains { number($0) > number(low) }, "a higher-numbered place to move into its id: \(s.unnamed.count)"
+    )
+    s.selectUnnamed(low.placeId, from: "tap")
+    s.startNaming(low)
+    _ = s.addPlace(
+      name: "Park", latitude: low.centroid.latitude, longitude: low.centroid.longitude, radius: low.suggestedRadius,
+      from: "name_place")
+    XCTAssertNil(s.selectedUnnamed, "its card closed on save")
+    XCTAssertNil(s.naming)
+    try read(&s, reason: "add_place")
+    XCTAssertTrue(s.unnamed.contains { $0.placeId == low.placeId }, "the next place took its number")
+    XCTAssertNil(s.selectedUnnamed, "and no card opened on it")
   }
 
   /// On the real export: a stay within 500 m of a known place offers to grow it first; *Create new* turns that into
