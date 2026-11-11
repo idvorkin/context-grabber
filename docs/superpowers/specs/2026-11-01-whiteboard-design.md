@@ -244,7 +244,8 @@ paper. That description is the requirement, and this lists only where paper need
   the ink. That's the one difference in how it looks, and it's what keeps it from ever lagging. It's Igor's to overrule.
 - **A ghost is never ink until it's kept.** It isn't in the drawing, the saved file, any picture or the strokes Larry gets.
   Leaving the board with a ghost showing saves nothing of it.
-- **A finger tap keeps or dismisses,** as on the old canvas: on a ghost it keeps that one, off them it dismisses them all.
+- **A finger tap keeps or dismisses,** as on the old canvas: on a ghost it keeps that one, off them it dismisses Claude's; Larry's go only to a tap off them once Claude's are
+  gone (#823).
   While ghosts show, a finger doesn't draw, wherever a finger would, so a tap leaves no dot and selects nothing. With none left it
   goes back to what it did. What a finger drag does in those seconds is part of what the iPad has yet to settle.
 - **A kept ghost is ink like his own.** It's in its author's colour, the eraser and lasso treat it like his, and it saves a moment

@@ -296,6 +296,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 - **Summary:** Ghosts on a device where a finger draws
 - **Status:** app side implemented on this branch; `WhiteboardTurnUITests.testAFingerTapOffAGhostDismissesItAndOnOneKeepsIt` verified on the simulator by `WhiteboardTurnUITests` (an old-canvas test, dropped 2026-11-07; on paper `WhiteboardPaperGhostsUITests.testAGhostShowsOnThePaperAndATapKeepsIt` and `testATapOffDismissesLeavesNoDotAndAFingerDrawsAgain` hold it); an iPhone and an iPad with no Pencil not yet tried
+- **Issues:** [#823](https://github.com/idvorkin/context-grabber/issues/823) (one stray tap dismissed Larry's marks for good)
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
@@ -307,8 +308,13 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** A finger tap while ghosts show
 - **Given:** a finger draws on this device and ghosts are showing
 - **When:** I tap a ghost
-- **Then:** it becomes ink and no dot is drawn; once no ghost is left, or after a tap off them that dismisses them all, my finger draws again
+- **Then:** it becomes ink and no dot is drawn; once no ghost is left, or after a tap off them that dismisses them, my finger draws again
 
+
+- **Scenario:** A stray tap leaves Larry's marks (#823)
+- **Given:** Claude's ghosts and Larry's marks are both showing
+- **When:** I tap off them
+- **Then:** Claude's go and Larry's stay; a second tap off them, with only his left, dismisses his
 ---
 
 ### User Story 355:

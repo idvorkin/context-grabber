@@ -199,22 +199,25 @@ public struct WhiteboardGhostTurns<Ghost: WhiteboardGhost> {
     case nothing
     /// The caller turns it into ink and calls `keep`.
     case keep(Ghost)
-    /// The caller calls `dismiss`; `larrys`: his row is settled, so it doesn't come back.
+    /// The caller calls `dismiss(larrys:)` with it; `larrys`: these are Larry's, whose row is then settled and doesn't
+    /// come back.
     case dismiss(count: Int, larrys: Bool)
   }
 
-  /// A finger tap (story 354): on a ghost keeps it, anywhere else dismisses them all.
+  /// A finger tap (story 354): on a ghost keeps it; anywhere else dismisses Claude's, and Larry's only when his are all
+  /// that's left, so one stray tap never loses his marks (#823).
   public func tap(hitting: (Ghost) -> Bool) -> Tap {
     guard !ghosts.isEmpty else { return .nothing }
     if let ghost = ghosts.first(where: hitting) { return .keep(ghost) }
-    return .dismiss(count: ghosts.count, larrys: ghosts.contains { $0.who == .larry })
+    let claudes = ghosts.filter { $0.who != .larry }.count
+    return claudes > 0 ? .dismiss(count: claudes, larrys: false) : .dismiss(count: ghosts.count, larrys: true)
   }
 
-  /// Every ghost goes, and Claude's turn with them: a waiting pause is forgotten (the caller cancels its timer) and an
-  /// answer on its way lands stale.
-  public mutating func dismiss() {
+  /// Claude's ghosts go, or with `larrys` Larry's, and Claude's turn with them: a waiting pause is forgotten (the caller
+  /// cancels its timer) and an answer on its way lands stale.
+  public mutating func dismiss(larrys: Bool) {
     pacer.dropped()
-    ghosts = []
+    ghosts.removeAll { ($0.who == .larry) == larrys }
   }
 
   /// A ghost kept as ink leaves the ghosts. True when it was Larry's: his row is settled.

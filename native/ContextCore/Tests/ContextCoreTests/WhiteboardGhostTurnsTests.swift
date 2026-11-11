@@ -253,7 +253,7 @@ final class WhiteboardGhostTurnsTests: XCTestCase {
     guard case .dismiss(let count, let larrys) = turns.tap(hitting: { _ in false }) else { return XCTFail() }
     XCTAssertEqual(count, 1)
     XCTAssertFalse(larrys)
-    turns.dismiss()
+    turns.dismiss(larrys: larrys)
     XCTAssertFalse(turns.current(asked), "a streamed mark of it is dropped")
     let landing = turns.answered(.shapes(shapes(1)), who: .claude, asked: asked, streamed: false, said: nil)
     XCTAssertTrue(landing.stale)
@@ -402,7 +402,28 @@ final class WhiteboardGhostTurnsTests: XCTestCase {
     XCTAssertEqual(count, 1)
     XCTAssertTrue(hadLarrys)
     XCTAssertEqual(turns.ghosts.count, 1, "the tap only decides")
-    turns.dismiss()
+    turns.dismiss(larrys: hadLarrys)
+    XCTAssertTrue(turns.ghosts.isEmpty)
+  }
+
+  /// #823: one stray tap never loses Larry's marks; with only his left, a tap off them is his to dismiss.
+  func testATapOffDismissesClaudesFirstAndLarrysOnlyWhenTheyAreAlone() {
+    var turns = turns()
+    let claudes = ghosts(.claude, 1)
+    let larrys = ghosts(.larry, 2)
+    turns.land(claudes, who: .claude, first: true, now: t0)
+    turns.larrysMarks(larrys)
+
+    guard case .dismiss(let count, let hisToo) = turns.tap(hitting: { _ in false }) else { return XCTFail() }
+    XCTAssertEqual(count, 1, "Claude's")
+    XCTAssertFalse(hisToo)
+    turns.dismiss(larrys: hisToo)
+    XCTAssertEqual(turns.ghosts, larrys, "Larry's stay")
+
+    guard case .dismiss(let again, let his) = turns.tap(hitting: { _ in false }) else { return XCTFail() }
+    XCTAssertEqual(again, 2)
+    XCTAssertTrue(his)
+    turns.dismiss(larrys: his)
     XCTAssertTrue(turns.ghosts.isEmpty)
   }
 
@@ -411,7 +432,7 @@ final class WhiteboardGhostTurnsTests: XCTestCase {
     turns.land(ghosts(.claude, 1), who: .claude, first: true, now: t0)
     XCTAssertTrue(turns.stroked())
     turns.toolWentDown()
-    turns.dismiss()
+    turns.dismiss(larrys: false)
     XCTAssertFalse(turns.toolLifted(), "the dismissed turn's pause doesn't restart")
   }
 }

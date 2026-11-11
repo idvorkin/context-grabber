@@ -776,14 +776,15 @@ final class WhiteboardModel: ObservableObject {
     problem = .grabber(message, context: "WhiteboardView.larry", extra: extra)
   }
 
-  /// A tap at `point` (board points) keeps the ghost under it; a tap anywhere else dismisses the ghosts.
+  /// A tap at `point` (board points) keeps the ghost under it; a tap anywhere else dismisses Claude's ghosts, or Larry's
+  /// when only his are left (#823).
   func tap(at point: CGPoint, zoom: CGFloat) {
     switch turns.tap(hitting: { WhiteboardTurn.hit($0.lines, at: point, tolerance: 22 / zoom) }) {
     case .nothing: return
     case .keep(let ghost): keep(ghost)
     case .dismiss(let count, let larrys):
-      log.event("whiteboard", ["action": "ghosts_dismissed", "board": board.id, "count": count])
-      turns.dismiss()
+      log.event("whiteboard", ["action": "ghosts_dismissed", "board": board.id, "count": count, "larrys": larrys])
+      turns.dismiss(larrys: larrys)
       cancelPause()
       if larrys { settleLarrysRow() }
     }
