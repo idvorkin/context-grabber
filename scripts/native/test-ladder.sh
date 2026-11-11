@@ -40,7 +40,7 @@ if [ "$given" -eq 0 ]; then
 fi
 
 # The areas' classes. The suite scripts hold what each area runs in full.
-chat_area="ChatArchiveUITests ChatImageUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests ChatVoiceUITests"
+chat_area="ChatArchiveUITests ChatImageUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests ChatTableUITests ChatVoiceUITests"
 whiteboard_area="PhoneBoardsUITests WhiteboardOnPaperUITests WhiteboardPaperGhostsUITests WhiteboardPaperLinesUITests WhiteboardPaperPasteUITests WhiteboardPasteUITests WhiteboardRowDeleteUITests WhiteboardTurnUITests"
 # #795: the other features' own classes, by directory. Only classes that run on the ladder's simulator and open that
 # feature: Windows has none (IPadUITests skips on a phone, MacKeysUITests is the Mac build's), nor Call, Archive or

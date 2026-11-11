@@ -99,6 +99,18 @@ the same ladder as the Cockpit's web page (Igor, 2026-11-03, #630: *"Look at how
 everyone."*). A state this build doesn't know reads as 👀. Opening a thread marks it read here and on the laptop. The thread updates by itself every few seconds while it is open, and the list on each return to
 it.
 
+**A table in a message** (Igor, 2026-11-10, #817: *"Log a bug to do table renders. Look how bad they look"*). When
+Larry writes a Markdown table (a row of cells between `|`, a row of dashes under it, then its rows), the bubble shows
+it as a grid instead of pipes and dashes: the first row in bold as the heading, a thin line between rows, each column
+as wide as its widest cell up to about half a phone's width, a longer cell wrapping inside its column. A column the
+dashes row marks `:--:` or `--:` is centred or right-aligned. A table wider than the bubble scrolls sideways inside it
+and the rest of the bubble stays put. Words before and after the table read as they always have, and a link in a cell
+is tappable or a chip, as anywhere in a bubble. Only a complete table becomes a grid: pipes with no dashes row under
+them stay as written, and a row with fewer cells than the heading leaves the rest empty, one with more drops the extra.
+VoiceOver reads the table row by row, each cell after its heading ("Pro 14, Weight 1.6 kg, Battery 22 h"). *Copy* and
+*Quote in reply* take the message as written, pipes and all. Other Markdown (bold, lists, headings) is
+still shown as written, in a cell too.
+
 **Press and hold a message** (Igor, 2026-11-03, #629: *"Maybe let me do press-and-hold reactions for yes, no, quote in
 reply"*). Holding one of Larry's messages opens a menu: *Yes*, *No*, *Quote in reply*, *Copy*. Holding one of Igor's own
 offers *Quote in reply* and *Copy*, since answering himself means nothing. A message that is only a picture has nothing

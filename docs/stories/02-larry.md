@@ -2611,3 +2611,20 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Then:** the bubble shows two *Inbox* chips and no address, the strip one; that thread opens in the app over this one and Back returns here; a thread the list does not show opens on the Cockpit page; *All links* lists it as larry://inbox/igor2-88g.1411.2; and larry://inbox/igor2-88g.1411.2 tapped in Notes opens the app on that thread
 
 ---
+
+### User Story 747:
+
+- **Summary:** A table in Larry's message reads as a table
+- **Status:** native app: implemented on branch `native/817-chat-tables`, issue [#817](https://github.com/idvorkin/context-grabber/issues/817); verified by `ChatTablesTests` (host, 10 cases), the Mac build, and on the simulator (iPhone 17, 2026-11-10: `ChatTableUITests` reads the grid row by row in the bubble's label, the screenshot shows the bold heading, row lines and right-aligned Battery; the other 16 chat UI tests pass with the new fake thread); the phone pending
+- **Spec:** [Chat with Larry in Grabber Native — A table in a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, reading Larry's comparison of three laptops on the phone
+- **I want to** see his Markdown table as a grid of rows and columns
+- **so that** I can compare the options at a glance instead of decoding pipes and dashes
+
+#### Acceptance Criteria:
+- **Scenario:** A three-row, four-column comparison
+- **Given:** Larry's message "Here's how they compare:", then a table with the heading `| | Weight | Battery | Price |`, its dashes row, and three rows, then "Want the cheapest?"
+- **When:** I open the thread on the iPhone
+- **Then:** the bubble reads the first line, then a grid with the heading in bold and one row per laptop, then the last line; the grid scrolls sideways inside the bubble if it is wider than it, and *Copy* copies the message with its pipes

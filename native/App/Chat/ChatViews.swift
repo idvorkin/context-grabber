@@ -1020,7 +1020,7 @@ private struct ChatImage: View {
   }
 }
 
-/// Links in a message are tappable; nothing else is interpreted (a message is never Markdown).
+/// Links in a message's words are tappable; a table is the only Markdown a bubble reads (story 747).
 enum ChatText {
   static func linked(_ text: String) -> AttributedString {
     var out = AttributedString(text)
@@ -1037,9 +1037,79 @@ enum ChatText {
   }
 }
 
-/// A message's words with its links as the strip's chips (story 743, `ChatBubbleLinks`): a line with no chip is one
-/// text as before; a line with one flows word by word, so the chip sits where the link was written.
+/// A message as its words and tables (story 747, `ChatTables`): a table is a grid, the rest `BubbleWords`.
 private struct BubbleText: View {
+  let text: String
+  let chat: ChatModel
+  let thread: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      ForEach(Array(ChatTables.blocks(in: text).enumerated()), id: \.offset) { _, block in
+        switch block {
+        case .text(let words): BubbleWords(text: words, chat: chat, thread: thread)
+        case .table(let table): BubbleTable(table: table, chat: chat, thread: thread)
+        }
+      }
+    }
+  }
+}
+
+/// A table in a bubble (story 747): the heading in bold, a line between rows, a long cell wrapping in its column, and
+/// sideways scrolling when it is wider than the bubble.
+private struct BubbleTable: View {
+  let table: ChatTables.Table
+  let chat: ChatModel
+  let thread: String
+
+  var body: some View {
+    ScrollView(.horizontal, showsIndicators: false) {
+      Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
+        GridRow { cells(table.heading).bold() }
+        ForEach(Array(table.rows.enumerated()), id: \.offset) { _, row in
+          Divider().gridCellUnsizedAxes(.horizontal)
+          GridRow { cells(row) }
+        }
+      }
+      .padding(.vertical, 2)
+    }
+    // A scroll view's cells are lost in the bubble's combined label, so the table says its rows itself.
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(spoken)
+  }
+
+  /// Row by row, each cell after its heading: "Air: Weight 1.2 kg, Battery 18 h".
+  private var spoken: String {
+    if table.rows.isEmpty { return table.heading.filter { !$0.isEmpty }.joined(separator: ", ") }
+    return table.rows.map { row in
+      let pairs = zip(table.heading.dropFirst(), row.dropFirst()).map { "\($0) \($1)" }
+      return ([row.first ?? ""] + pairs).filter { !$0.isEmpty }.joined(separator: ", ")
+    }
+    .joined(separator: "; ")
+  }
+
+  private func cells(_ texts: [String]) -> some View {
+    ForEach(Array(texts.enumerated()), id: \.offset) { column, text in
+      let (grid, frame, words) = align(column)
+      BubbleWords(text: text, chat: chat, thread: thread)
+        .frame(maxWidth: 180, alignment: frame)
+        .multilineTextAlignment(words)
+        .gridColumnAlignment(grid)
+    }
+  }
+
+  private func align(_ column: Int) -> (HorizontalAlignment, Alignment, TextAlignment) {
+    switch column < table.alignments.count ? table.alignments[column] : .leading {
+    case .leading: (.leading, .leading, .leading)
+    case .center: (.center, .center, .center)
+    case .trailing: (.trailing, .trailing, .trailing)
+    }
+  }
+}
+
+/// Words with their links as the strip's chips (story 743, `ChatBubbleLinks`): a line with no chip is one text as
+/// before; a line with one flows word by word, so the chip sits where the link was written.
+private struct BubbleWords: View {
   let text: String
   let chat: ChatModel
   let thread: String
