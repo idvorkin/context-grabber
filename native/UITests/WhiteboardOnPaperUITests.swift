@@ -83,7 +83,7 @@ final class WhiteboardOnPaperUITests: XCTestCase {
     waitFor(colours, label: "Board, Sage")
     sleep(1)
     keep(app, "the paper in sage")
-    sleep(1)  // Past the second the board waits before it saves, and it's the save that's being looked at.
+    waitForTheSave(app)  // It's the save that's being looked at.
 
     // Killed, not closed: what's on the board is what the save wrote a moment after the stroke.
     app.terminate()
@@ -151,7 +151,7 @@ final class WhiteboardOnPaperUITests: XCTestCase {
     sleep(1)
     stroke(app, atHeight: 0.5)
     waitFor(app.buttons["whiteboard-send"], label: "Send to Larry, 2 strokes")
-    sleep(1)
+    _ = PaperScreen.settled(app) { $0.ink }
     let shot = app.screenshot()
     keep(app, "ink in dark mode")
     let image = try XCTUnwrap(shot.image.cgImage)

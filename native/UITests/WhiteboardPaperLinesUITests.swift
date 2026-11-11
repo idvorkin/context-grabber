@@ -128,9 +128,8 @@ final class WhiteboardPaperLinesUITests: XCTestCase {
     let app = try openBoard()
     stroke(app)
     wait(send(app), label: "Send to Larry, 1 strokes")
-    sleep(1)
+    let ink = try XCTUnwrap(PaperScreen.settled(app) { $0.ink }, "the stroke on screen")
     let plain = Screen(app)
-    let ink = try XCTUnwrap(PaperScreen(app).ink, "the stroke on screen")
 
     menu(app, "Ruled lines", expect: "Board, Plain, ruled lines on")
     keep("ruled")
@@ -163,8 +162,7 @@ final class WhiteboardPaperLinesUITests: XCTestCase {
     card.tap()
     XCTAssertTrue(board(app).appears(within: 10), app.debugDescription)
     wait(board(app), label: "Board, Cream, ruled lines on")
-    sleep(1)
-    XCTAssertNotNil(PaperScreen(app).ink, "the ink is back with its colour and lines")
+    XCTAssertNotNil(PaperScreen.settled(app) { $0.ink }, "the ink is back with its colour and lines")
 
     app.navigationBars.buttons.element(boundBy: 0).tap()
     let new = app.buttons["whiteboard-new"]
@@ -181,8 +179,7 @@ final class WhiteboardPaperLinesUITests: XCTestCase {
   func testEveryColourShowsItsLinesAndKeepsTheInk() throws {
     let app = try openBoard(["GRABBER_WHITEBOARD_PASTE": "HI"])
     wait(send(app), label: "Send to Larry, 2 strokes")
-    sleep(2)
-    let ink = try XCTUnwrap(PaperScreen(app).ink, "dark letters on screen")
+    let ink = try XCTUnwrap(PaperScreen.settled(app) { $0.ink }, "dark letters on screen")
     for colour in ["Lilac", "Plain"] {
       menu(app, colour, expect: "Board, \(colour)")
       let bare = Screen(app)

@@ -84,11 +84,7 @@ final class WhiteboardPaperPasteUITests: XCTestCase {
     let app = try openBoard(["GRABBER_WHITEBOARD_PASTE": "HI"])
     wait(send(app), label: strokes(2))
     wait(pageNumber(app), label: "Page 1 of 2")
-    var seen: PaperScreen.Box?
-    for _ in 0..<8 where seen == nil {
-      sleep(1)
-      seen = PaperScreen(app).ink
-    }
+    let seen = PaperScreen.settled(app, within: 8) { $0.ink }
     shot(app, "pasted")
     let ink = try XCTUnwrap(seen, "dark letters on screen")
     XCTAssertEqual(ink.center.x, 0.5, accuracy: 0.03, "across the middle")
@@ -126,7 +122,7 @@ final class WhiteboardPaperPasteUITests: XCTestCase {
     let first = try strokeIDs(cockpit, after: before)
     XCTAssertEqual(first.count, 2, "\(first)")
 
-    sleep(2)  // Past the save.
+    waitForTheSave(app)
     app.terminate()
     app.launchEnvironment["GRABBER_WHITEBOARD_PASTE"] = nil
     app.launch()

@@ -57,3 +57,14 @@ extension XCUIApplication {
     return app
   }
 }
+
+extension XCTestCase {
+  /// Story 673: until the board has saved its ink, as the Send button's value says, in place of a fixed second past
+  /// the save. Asked after the stroke is counted, so the ink is already marked unsaved.
+  func waitForTheSave(
+    _ app: XCUIApplication, timeout: TimeInterval = 10, file: StaticString = #filePath, line: UInt = #line
+  ) {
+    waitUntil(
+      NSPredicate(format: "value == 'saved'"), app.buttons["whiteboard-send"], timeout: timeout, file: file, line: line)
+  }
+}

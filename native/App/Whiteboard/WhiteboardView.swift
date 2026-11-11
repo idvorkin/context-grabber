@@ -92,7 +92,8 @@ final class WhiteboardModel: ObservableObject {
   private var pauseTask: Task<Void, Never>?
   private var fadeTask: Task<Void, Never>?
   private var saveTask: Task<Void, Never>?
-  private var dirty = false
+  /// Ink not saved yet; the Send button says so (story 673: what a UI test waits on instead of a fixed second).
+  @Published private(set) var dirty = false
   private var saveFailing = false
   private var marks = WhiteboardMarks()
   /// On paper: each stroke's box, for what's on screen (story 433), and the frame the last Send showed.
@@ -1311,6 +1312,7 @@ struct WhiteboardView: View {
           }
           // How much is drawn, for VoiceOver and the UI test, in the label for the reason above.
           .accessibilityLabel("Send to Larry, \(model.drawing.strokes.count) strokes")
+          .accessibilityValue(model.dirty ? "unsaved" : "saved")
           .disabled(model.isEmpty || model.nothingOnScreen || model.sent != nil || model.larrySending)
           .accessibilityIdentifier("whiteboard-send")
         }

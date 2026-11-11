@@ -8,7 +8,7 @@ import XCTest
 
 /// What's on the screen, by colour, as parts of the window (0...1), between the bars.
 struct PaperScreen {
-  struct Box {
+  struct Box: Equatable {
     var minX: CGFloat
     var minY: CGFloat
     var maxX: CGFloat
@@ -83,6 +83,25 @@ struct PaperScreen {
   }
 }
 
+extension PaperScreen {
+  /// Story 673: what `look` finds once it has stopped changing, two looks a quarter second apart finding the same box,
+  /// in place of a fixed wait before reading the screen. Nil when nothing settles within `timeout`.
+  static func settled(
+    _ app: XCUIApplication, top: CGFloat = 0.2, right: CGFloat = 1, within timeout: TimeInterval = 6,
+    _ look: (PaperScreen) -> Box?
+  ) -> Box? {
+    let deadline = Date().addingTimeInterval(timeout)
+    var last = look(PaperScreen(app, top: top, right: right))
+    while Date() < deadline {
+      RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+      let now = look(PaperScreen(app, top: top, right: right))
+      if let now, now == last { return now }
+      last = now
+    }
+    return nil
+  }
+}
+
 final class WhiteboardPaperGhostsUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
@@ -138,8 +157,8 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
   private func strokeBringsAGhost(_ app: XCUIApplication) -> PaperScreen.Box? {
     stroke(app)
     wait(ghosts(app), label: "Ghosts on, 1 showing", timeout: 10)
-    sleep(1)  // Past the note arriving above the board and the ghost drawing in.
-    return PaperScreen(app).ghost
+    // Past the note arriving above the board and the ghost drawing in.
+    return PaperScreen.settled(app) { $0.ghost }
   }
 
   /// Stories 598, 613, 614, 615: the bar, a ghost that can be seen, and a tap on it that makes it ink of its colour.
@@ -187,7 +206,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     shot(app, "before")
 
     app.pinch(withScale: 2, velocity: 1)
-    sleep(2)
+    _ = PaperScreen.settled(app) { $0.ink }  // The zoom over.
     shot(app, "zoomed in")
     let (ghostZoomed, inkZoomed) = (PaperScreen(app).ghost, PaperScreen(app).ink)
     let bigGhost = try XCTUnwrap(ghostZoomed, "the ghost is still on screen")
@@ -246,7 +265,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let first = try strokeIDs(cockpit, after: before)
     XCTAssertEqual(first.count, 2, "\(first)")
 
-    sleep(2)  // Past the save.
+    waitForTheSave(app)
     app.navigationBars.buttons.element(boundBy: 0).tap()
     let card = app.buttons.matching(identifier: "whiteboard-card")
       .matching(NSPredicate(format: "label CONTAINS 'On paper'")).firstMatch
@@ -268,7 +287,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
   func testAGhostLeftShowingIsNotSaved() throws {
     let app = try openBoard()
     _ = try XCTUnwrap(strokeBringsAGhost(app))
-    sleep(2)  // Past the save.
+    waitForTheSave(app)
     app.terminate()
     app.launch()
     let card = app.buttons.matching(identifier: "whiteboard-card")
