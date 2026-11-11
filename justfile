@@ -125,6 +125,9 @@ native-build-device: _phone native-project
 # Native rung 3: build, install and launch Grabber Native on the iPhone (a locked phone fails the launch only)
 native-run-device: native-build-device
     xcrun devicectl device install app --device {{native_device}} {{native_device_app}}
+    @# The deploy ledger, once the app is installed: a locked device then fails the launch below, and that still counts.
+    @# ponytail: only where mac-driver is checked out (Igor's Mac); elsewhere it is skipped.
+    @r="$HOME/gits/mac-driver/bin/record-deploy"; [ ! -x "$r" ] || "$r" context-grabber "$([ "{{native_device}}" = "$(cat scripts/native/ipad-udid.local 2>/dev/null)" ] && echo ipad || echo phone)" "$(git rev-parse HEAD)" || true
     xcrun devicectl device process launch --device {{native_device}} {{native_bundle}}
 
 # Native rung 1.5, the Mac app (#638), with no signing identity: no iCloud, nothing asked of Xcode's account.
