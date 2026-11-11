@@ -292,7 +292,10 @@ public final class CallSession {
       socket = try deps.connect(url)
     } catch {
       log("call_socket", ["action": "connect", "ok": false, "message": describe(error)])
-      finish("\(CallProtocol.connectionLost): \(describe(error))", badly: true)
+      let unreachable = [.cannotFindHost, .cannotConnectToHost].contains((error as? URLError)?.code)
+      finish(
+        unreachable ? CallProtocol.cockpitUnreachable : "\(CallProtocol.connectionLost): \(describe(error))",
+        badly: true)
       return
     }
     self.socket = socket
@@ -418,7 +421,9 @@ public final class CallSession {
       start(backend, voice: voice, stt: stt)
       return
     }
-    finish(CallProtocol.connectionLost, badly: true)
+    // #784: never live, and the Cockpit was never reached: say so, rather than a call that dropped.
+    let unreached = snapshot.startedAt == nil && CallProtocol.neverReached(why)
+    finish(unreached ? CallProtocol.cockpitUnreachable : CallProtocol.connectionLost, badly: true)
   }
 
   private func send(_ text: String, frame: String, _ fields: [String: Any] = [:]) {

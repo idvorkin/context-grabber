@@ -610,12 +610,17 @@ screen's, and they do not care which client is connected.
   (connected or not; which of Wi-Fi, cellular, wired, or a tunnel the call is using, and which are available;
   whether it is metered or in Low Data Mode), and the lost connection's own error code and the error underneath
   it, with how long it had been since anything came in from the bridge and since anything went out. Nothing about the ending the screen shows changes.
+- **A call that never reaches the Cockpit says so** ([#784](https://github.com/idvorkin/context-grabber/issues/784);
+  2026-11-08, an iPad with Tailscale off). When the call's connection fails before the call is live because the
+  Cockpit's address can't be found or nothing answers there, the call ends *can't reach the Cockpit: is Tailscale
+  on?* instead of *connection lost*, which reads as a call that dropped mid-way. It still files the automatic trouble
+  report. A connection lost once the call is live, or for any other reason, ends *connection lost* as before.
 
 ### Endings
 
 The call ends and the screen says why, in the same words the page uses:
 *stopped*, *idle 2 min*, *hang-up intent*, *Larry hung up*, *vendor ended
-the call*, *vendor max duration*, *connection lost*. The captions stay on
+the call*, *vendor max duration*, *connection lost*, *can't reach the Cockpit: is Tailscale on?*. The captions stay on
 screen until the next call starts; the **Call Larry** button is back.
 
 Gemini Live caps a call at roughly fifteen minutes and the bridge warns

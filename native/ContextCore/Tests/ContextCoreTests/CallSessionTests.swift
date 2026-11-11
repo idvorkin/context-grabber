@@ -74,7 +74,7 @@ final class FakeSocket: BridgeSocket {
     onText?(String(decoding: data, as: UTF8.self))
   }
   func speak(_ bytes: Int = 480) { onBinary?(Data(count: bytes)) }
-  func drop() { onClose?("network") }
+  func drop(_ why: String = "network") { onClose?(why) }
 
   var frames: [[String: Any]] {
     texts.map { try! JSONSerialization.jsonObject(with: Data($0.utf8)) as! [String: Any] }
@@ -251,6 +251,25 @@ final class CallSessionConnectingTests: XCTestCase {
     t.session.start(.gemini)
     XCTAssertEqual(t.session.snapshot.endedReason, "connection lost: no route")
     XCTAssertTrue(t.session.snapshot.endedBadly)
+  }
+
+  /// #784, story 752: a call that never reached the Cockpit (its address not found, or nothing answering) says so.
+  func testACallThatNeverReachesTheCockpitSaysSoAndNamesTailscale() {
+    let t = CallHarness()
+    t.session.start(.gemini)
+    t.socket.drop(SocketErrorDetail.describe(URLError(.cannotFindHost)))
+    XCTAssertEqual(t.session.snapshot.endedReason, CallProtocol.cockpitUnreachable)
+    XCTAssertTrue(t.session.snapshot.endedBadly, "the trouble report is still filed")
+
+    let refused = CallHarness()
+    refused.connectError = URLError(.cannotConnectToHost)
+    refused.session.start(.gemini)
+    XCTAssertEqual(refused.session.snapshot.endedReason, CallProtocol.cockpitUnreachable)
+
+    let live = CallHarness()
+    live.goLive()
+    live.socket.drop(SocketErrorDetail.describe(URLError(.cannotFindHost)))
+    XCTAssertEqual(live.session.snapshot.endedReason, CallProtocol.connectionLost, "a live call that drops is lost")
   }
 
   func testASocketThatDropsWhileConnectingIsAConnectionLost() {
