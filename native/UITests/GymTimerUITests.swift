@@ -5,7 +5,7 @@ import XCTest
 
 final class GymTimerUITests: XCTestCase {
   func testTapTheTimeUprightPausesAndResumes() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_TIMER"] = "30,10,3"
     app.launchEnvironment["GRABBER_TURN"] = "upright"
     app.launch()

@@ -4,7 +4,7 @@ import XCTest
 
 final class WhatsNewStoryLinkUITests: XCTestCase {
   func testAChangeOpensItsStory() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     // Through Settings, which always has it: the home row may have been dismissed already.
     app.openHomeSettings()

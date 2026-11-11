@@ -4,7 +4,7 @@ import XCTest
 
 final class ShakeOverSheetUITests: XCTestCase {
   func testReportOpensOverTheCogSheetTwice() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_HOME"] = "settings"
     app.launchEnvironment["GRABBER_SHAKE_AFTER"] = "6"
     app.launch()

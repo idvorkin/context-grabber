@@ -73,6 +73,8 @@ public struct LaunchHooks: Equatable, Sendable {
   public var silent: Bool
   /// `GRABBER_SONG=missing`: the eulogy song not found.
   public var songMissing: Bool
+  /// `GRABBER_NO_ANIMATIONS=1`: UIKit's animations off, for the UI tests (story 754).
+  public var noAnimations: Bool
   /// `GRABBER_COCKPIT_URL`, `GRABBER_USAGE_URL` and `GRABBER_CHAT_URL`, as written: `ChatCockpit` and the models
   /// decide what an empty one means.
   public var cockpitURL: String?
@@ -90,6 +92,7 @@ public struct LaunchHooks: Equatable, Sendable {
     }
     silent = env["GRABBER_SILENT"] == "1"
     songMissing = env["GRABBER_SONG"] == "missing"
+    noAnimations = env["GRABBER_NO_ANIMATIONS"] == "1"
     cockpitURL = env["GRABBER_COCKPIT_URL"]
     usageURL = env["GRABBER_USAGE_URL"]
     chatURL = env["GRABBER_CHAT_URL"]

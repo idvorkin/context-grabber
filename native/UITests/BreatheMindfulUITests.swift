@@ -6,7 +6,7 @@ import XCTest
 final class BreatheMindfulUITests: XCTestCase {
   func testAFinishedSessionIsSavedToHealth() throws {
     // Today asks to read Health and to write Mindful Minutes, in one sheet; allow it.
-    let first = XCUIApplication()
+    let first = XCUIApplication.forTests()
     first.launch()
     let today = first.buttons["home-today-card"]
     XCTAssertTrue(today.appears(within: 15), first.debugDescription)
@@ -19,7 +19,7 @@ final class BreatheMindfulUITests: XCTestCase {
     }
     first.terminate()
 
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_BREATHE"] = "5,3,off"  // three 20 s cycles: one minute, no sound
     app.launch()
     XCTAssertTrue(app.staticTexts["Done"].appears(within: 90), app.debugDescription)

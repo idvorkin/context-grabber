@@ -14,7 +14,7 @@ final class LinksUITests: XCTestCase {
   /// The warm links (over a running screen, an unknown one, an unknown preset) are host tests now: HomeStackTests'
   /// `testWarmLinksOverTheTimer` and the link pairs (test-ladder card 2). This keeps the one only iOS can do.
   func testATimerLinkStartsTheAppCold() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     // Cold: the link launches the app.
     app.open(URL(string: "grabbernative://timer?preset=10,10,2")!)
     XCTAssertTrue(app.buttons["STOP"].appears(within: 20), "the link starts the workout")
@@ -22,7 +22,7 @@ final class LinksUITests: XCTestCase {
   }
 
   func testTheLinksScreenCopiesALink() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     // The Links screen sits behind the home screen's Settings tile (story 147).
     app.openHomeSettings()

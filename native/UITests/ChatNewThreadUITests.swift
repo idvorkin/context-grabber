@@ -28,7 +28,7 @@ final class ChatNewThreadUITests: XCTestCase {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
     let first = "New chat test \(Int(Date().timeIntervalSince1970))"
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit
     app.launchEnvironment["GRABBER_INBOX"] = "open"
     app.launch()
@@ -83,7 +83,7 @@ final class ChatNewThreadUITests: XCTestCase {
   /// The simulator's first run asks for speech recognition; declining is story 504's copyable line, in the new chat's
   /// bar. Whichever way the recognizer goes, a tap was made for him: the mic is on its way, or it says why not.
   func testTheVoiceButtonOpensANewChatWithItsMicTapped() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_CHAT_URL"] = "http://127.0.0.1:9"
     app.launchEnvironment["GRABBER_INBOX"] = "open"
     app.launch()
@@ -146,7 +146,7 @@ final class ChatNewThreadUITests: XCTestCase {
     guard let bridge = ProcessInfo.processInfo.environment["GRABBER_FAKE_BRIDGE"], !bridge.isEmpty else {
       throw XCTSkip("needs the fake bridge: run scripts/native/test-chat-ui.sh")
     }
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_CHAT_URL"] = "http://127.0.0.1:9"
     app.launchEnvironment["GRABBER_CALL"] = bridge
     app.launchEnvironment["GRABBER_CALL_AUDIO"] = "synthetic"

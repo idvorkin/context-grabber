@@ -16,7 +16,7 @@ final class WhiteboardTurnUITests: XCTestCase {
   private func openBoard(say: String? = nil) throws -> (XCUIApplication, XCUIElement) {
     let cockpit = try XCTUnwrap(
       ProcessInfo.processInfo.environment["GRABBER_FAKE_COCKPIT"], "run through scripts/native/test-whiteboard-ui.sh")
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit

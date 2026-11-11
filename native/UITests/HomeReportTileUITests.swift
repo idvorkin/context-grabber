@@ -7,7 +7,7 @@ final class HomeReportTileUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
   func testTheBeetleTileOpensTheReportSheet() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let tile = app.buttons["home-report_problem"]
     for _ in 0..<8 where !(tile.exists && tile.isHittable) { app.swipeUp() }

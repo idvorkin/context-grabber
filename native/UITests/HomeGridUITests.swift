@@ -7,7 +7,7 @@ final class HomeGridUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
   func testTilesGoThreeToALineWithSettingsLast() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     // Igor's default order, whatever an earlier run left.
     app.openLaunchers()

@@ -6,7 +6,7 @@ import XCTest
 
 final class HealthAccessUITests: XCTestCase {
   func testGrantHealthAccessAndGrabTheFixtureWeek() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_MIRROR"] = "healthkit"
     app.launch()
     let done = app.staticTexts["hook-done"]

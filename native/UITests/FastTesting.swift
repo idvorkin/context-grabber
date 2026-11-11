@@ -44,3 +44,13 @@ extension XCTestCase {
     }
   }
 }
+
+extension XCUIApplication {
+  /// The app as every UI test launches it: UIKit's animations off, so a screen, sheet or menu is there at once rather
+  /// than after its slide (story 754).
+  static func forTests() -> XCUIApplication {
+    let app = XCUIApplication()
+    app.launchEnvironment["GRABBER_NO_ANIMATIONS"] = "1"
+    return app
+  }
+}

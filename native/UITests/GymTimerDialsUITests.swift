@@ -9,7 +9,7 @@ final class GymTimerDialsUITests: XCTestCase {
   }
 
   func testSwipeAndTapTheWorkDrum() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_TIMER_DIAL"] = "drums"
     app.launch()
     let work = app.descendants(matching: .any)["dial-work"]

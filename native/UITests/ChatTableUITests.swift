@@ -10,7 +10,7 @@ final class ChatTableUITests: XCTestCase {
     guard let cockpit = ProcessInfo.processInfo.environment["GRABBER_FAKE_COCKPIT"], !cockpit.isEmpty else {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit
     app.launchEnvironment["GRABBER_LINK"] = "grabbernative://chat?thread=igor2-88g.817"
     app.launchEnvironment["GRABBER_SILENT"] = "1"

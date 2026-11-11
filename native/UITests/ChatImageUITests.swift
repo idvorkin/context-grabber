@@ -12,7 +12,7 @@ final class ChatImageUITests: XCTestCase {
     guard let cockpit = ProcessInfo.processInfo.environment["GRABBER_FAKE_COCKPIT"], !cockpit.isEmpty else {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit
     app.launchEnvironment["GRABBER_CHAT_IMAGE"] = "open"
     app.launchEnvironment["GRABBER_LINK"] = "grabbernative://chat?thread=\(thread)"
@@ -105,7 +105,7 @@ final class ChatImageUITests: XCTestCase {
     guard ProcessInfo.processInfo.environment["GRABBER_FAKE_COCKPIT"]?.isEmpty == false else {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_LINK"] = "grabbernative://whiteboard?board=board-gone-603"
     app.launch()
     XCTAssertTrue(app.buttons["copy-error"].appears(within: 20), app.debugDescription)

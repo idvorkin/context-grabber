@@ -6,7 +6,7 @@ import XCTest
 
 final class CockpitBackUITests: XCTestCase {
   func testBackAndCockpitLeaveAPageTheDashboardOpened() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_COCKPIT_URL"] = "cockpit-bridge-test"
     app.launch()
     let row = app.buttons["home-cockpit"]

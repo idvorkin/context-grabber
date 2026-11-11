@@ -4,7 +4,7 @@ import XCTest
 
 final class CockpitCallUITests: XCTestCase {
   func testPageCallButtonStaysInTheApp() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_COCKPIT"] = "open"
     app.launchEnvironment["GRABBER_COCKPIT_URL"] = "cockpit-bridge-test"
     app.launch()

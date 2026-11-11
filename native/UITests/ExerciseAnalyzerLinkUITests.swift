@@ -6,7 +6,7 @@ import XCTest
 final class ExerciseAnalyzerLinkUITests: XCTestCase {
   func testHomeRowOpensExerciseAnalyzer() throws {
     let analyzer = XCUIApplication(bundleIdentifier: "com.idvorkin.exerciseanalyzer")
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let row = app.buttons["home-exercise_analyzer"]
     XCTAssertTrue(row.appears(within: 15), app.debugDescription)

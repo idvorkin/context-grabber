@@ -5,7 +5,7 @@ import XCTest
 
 final class BreatheStyleUITests: XCTestCase {
   func testTheCogPicksTide() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_BREATHE"] = "open"
     app.launch()
     let cog = app.buttons["breathe-style"]

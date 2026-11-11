@@ -5,7 +5,7 @@ import XCTest
 
 final class WhatsNewSeenUITests: XCTestCase {
   func testHomeRowGoesOnItsXAndStaysInTheCog() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let row = app.buttons["whats-new-row"]
     XCTAssertTrue(row.appears(within: 15), app.debugDescription)
