@@ -20,7 +20,7 @@ public enum LaunchHook: Equatable, Sendable {
   case export
   /// `GRABBER_DRILL=<mode>`, as written: the trainer's package reads the mode.
   case drill(String)
-  /// `GRABBER_COCKPIT=open`.
+  /// `GRABBER_COCKPIT=open`, or `browser`.
   case cockpit
   case boardFixture(BoardFixtureHook)
   /// `GRABBER_WHITEBOARD=open`.
@@ -80,6 +80,8 @@ public struct LaunchHooks: Equatable, Sendable {
   public var cockpitURL: String?
   public var usageURL: String?
   public var chatURL: String?
+  /// `GRABBER_COCKPIT=browser`: the Cockpit opened, and its first page handed to the browser (story 326).
+  public var cockpitOpenInBrowser: Bool
 
   public init(_ env: [String: String] = [:]) {
     steps = Self.steps(env)
@@ -96,6 +98,7 @@ public struct LaunchHooks: Equatable, Sendable {
     cockpitURL = env["GRABBER_COCKPIT_URL"]
     usageURL = env["GRABBER_USAGE_URL"]
     chatURL = env["GRABBER_CHAT_URL"]
+    cockpitOpenInBrowser = env["GRABBER_COCKPIT"] == "browser"
   }
 
   private static func steps(_ env: [String: String]) -> [LaunchHook] {
@@ -110,7 +113,7 @@ public struct LaunchHooks: Equatable, Sendable {
     add(PlacesHook(env).map(LaunchHook.places))
     if env["GRABBER_EXPORT"] == "1" { add(.export) }
     add(env["GRABBER_DRILL"].map(LaunchHook.drill))
-    if env["GRABBER_COCKPIT"] == "open" { add(.cockpit) }
+    if env["GRABBER_COCKPIT"] == "open" || env["GRABBER_COCKPIT"] == "browser" { add(.cockpit) }
     add(BoardFixtureHook(env).map(LaunchHook.boardFixture))
     if env["GRABBER_WHITEBOARD"] == "open" { add(.whiteboard) }
     if env["GRABBER_WHATS_NEW"] == "open" { add(.whatsNew) }

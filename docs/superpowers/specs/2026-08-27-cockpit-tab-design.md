@@ -126,6 +126,11 @@ request, an external article — opens it in the phone's default browser. The
 Cockpit tab stays where it was, so coming back to the app returns to the
 dashboard rather than to a stranded page.
 
+**Open in browser** (Igor, 2026-11-11, #871: *"Cockpit should have a page that lets me go to 'Open in Safari'"*).
+The footer has a browser button beside Done whenever a page is showing. It opens the page Igor is on, at its current
+address, in the default browser (Safari unless he changed it); the Cockpit stays where it was. With no page (the
+"Can't reach the Cockpit" panel) there is no button: the panel's address is already copyable.
+
 ### When it can't connect
 
 If the Cockpit can't be reached — Tailscale is off, the phone has no internet, the
