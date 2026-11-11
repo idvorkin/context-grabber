@@ -44,3 +44,16 @@ extension XCTestCase {
     }
   }
 }
+
+extension XCUIApplication {
+  /// The app as every UI test launches it: UIKit's animations off, so a screen, sheet or menu is there at once rather
+  /// than after its slide (story 754; the chat suite went from about 243 s to 193 s). `animated` keeps them.
+  /// ponytail: the whiteboard's classes keep their animations. Without the Board menu's closing animation a stroke
+  /// after it counted 2 where 1 was drawn (PaperLines, iPad simulator, 2026-11-10), so the menu's closing tap may reach
+  /// the canvas. Turn them off there once #850's responder fight is settled, and measure again.
+  static func forTests(animated: Bool = false) -> XCUIApplication {
+    let app = XCUIApplication()
+    if !animated { app.launchEnvironment["GRABBER_NO_ANIMATIONS"] = "1" }
+    return app
+  }
+}

@@ -8,7 +8,7 @@ final class WhiteboardOnPaperUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
   private func launch(_ environment: [String: String] = [:]) -> XCUIApplication {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = "http://127.0.0.1:65530"

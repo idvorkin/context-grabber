@@ -4,7 +4,7 @@ import XCTest
 
 final class ResetAudioUITests: XCTestCase {
   func testResetAudioShowsTheRouteBeforeAndAfter() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     app.openHomeSettings()
     let reset = app.buttons["home-reset-audio"]

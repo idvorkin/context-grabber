@@ -9,7 +9,7 @@ final class HomeSettingsUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
   func testHidingAndMovingARowChangesTheHomeScreen() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     openSheet(app)
     app.buttons["home-rows-reset"].tap()  // whatever an earlier run left

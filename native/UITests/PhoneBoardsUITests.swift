@@ -12,7 +12,7 @@ final class PhoneBoardsUITests: XCTestCase {
     try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "an iPhone simulator only")
     // This phone's own board on paper, on a fresh id so runs on one simulator don't meet each other's boards.
     let id = "phone-\(UUID().uuidString.lowercased())"
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_BOARD_FIXTURE"] = id

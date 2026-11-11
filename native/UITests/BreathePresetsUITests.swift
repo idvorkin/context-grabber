@@ -4,7 +4,7 @@ import XCTest
 
 final class BreathePresetsUITests: XCTestCase {
   func testAPresetIsOneTapAndCustomShowsItsSides() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_BREATHE"] = "open"
     app.launch()
     let twelve = app.buttons["breathe-preset-12"]

@@ -14,6 +14,8 @@ struct GrabberApp: App {
     // now so its background-task handlers are registered before launch finishes (and crash capture starts here).
     let model = AppModel()
     _model = StateObject(wrappedValue: model)
+    // Story 754: the UI tests' launches only.
+    if LaunchHooks.current.noAnimations { UIView.setAnimationsEnabled(false) }
   }
 
   var body: some Scene {

@@ -5,7 +5,7 @@ import XCTest
 
 final class MetricDetailUITests: XCTestCase {
   private func launchOnTheDetail(_ extraEnvironment: [String: String] = [:]) -> XCUIApplication {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_MIRROR"] = "fixture"
     app.launchEnvironment["GRABBER_METRIC"] = "sleep"
     app.launchEnvironment["GRABBER_SILENT"] = "1"

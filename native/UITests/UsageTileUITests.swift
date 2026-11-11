@@ -12,7 +12,7 @@ final class UsageTileUITests: XCTestCase {
   }
 
   func testTheTileOnTheHomeScreenDrawsTheReading() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     // The strip is drawn once a reading loaded; that load is what writes the tile's reading.
     XCTAssertTrue(app.buttons["usage-strip"].appears(within: 30), "the Cockpit is reachable from this Mac")

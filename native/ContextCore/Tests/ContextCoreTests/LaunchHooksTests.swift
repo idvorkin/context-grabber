@@ -390,16 +390,18 @@ final class LaunchHooksTests: XCTestCase {
   func testSoundAndAddresses() {
     let hooks = LaunchHooks([
       "GRABBER_SILENT": "1", "GRABBER_SONG": "missing", "GRABBER_COCKPIT_URL": "cockpit-bridge-test",
-      "GRABBER_USAGE_URL": "http://127.0.0.1:1", "GRABBER_CHAT_URL": "",
+      "GRABBER_USAGE_URL": "http://127.0.0.1:1", "GRABBER_CHAT_URL": "", "GRABBER_NO_ANIMATIONS": "1",
     ])
     XCTAssertTrue(hooks.silent)
+    XCTAssertTrue(hooks.noAnimations)
     XCTAssertTrue(hooks.songMissing)
     XCTAssertEqual(hooks.cockpitURL, "cockpit-bridge-test")
     XCTAssertEqual(hooks.usageURL, "http://127.0.0.1:1")
     XCTAssertEqual(hooks.chatURL, "", "empty goes through: ChatCockpit decides it means unset")
     XCTAssertEqual(hooks.steps, [], "none of these does anything at launch")
-    let odd = LaunchHooks(["GRABBER_SILENT": "yes", "GRABBER_SONG": "1"])
+    let odd = LaunchHooks(["GRABBER_SILENT": "yes", "GRABBER_SONG": "1", "GRABBER_NO_ANIMATIONS": "true"])
     XCTAssertFalse(odd.silent)
+    XCTAssertFalse(odd.noAnimations)
     XCTAssertFalse(odd.songMissing)
   }
 

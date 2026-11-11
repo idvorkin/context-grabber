@@ -6,7 +6,7 @@ import XCTest
 
 final class ReportDictationUITests: XCTestCase {
   func testTheMicrophoneSitsBesideTheNote() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_SHAKE_AFTER"] = "4"
     app.launch()
     XCTAssertTrue(app.navigationBars["Report a problem"].appears(within: 15), app.debugDescription)

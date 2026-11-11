@@ -6,7 +6,7 @@ import XCTest
 
 final class DailyStripUITests: XCTestCase {
   func testChecksAndCounters() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let balloons =
       app.otherElements["strip-balloons"].exists
@@ -62,7 +62,7 @@ final class DailyStripUITests: XCTestCase {
 
   /// #414, story 255: staging, Cancel, save and taking yesterday back, with today's mark untouched.
   func testPressAndHoldEditsTwoWeeks() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let journal = app.buttons["strip-journal"]
     XCTAssertTrue(journal.appears(within: 15), app.debugDescription)

@@ -9,7 +9,7 @@ final class CardUITests: XCTestCase {
   private let cardName = NSPredicate(format: "label MATCHES[c] %@", ".* of (spades|hearts|diamonds|clubs)")
 
   func testTheTrainersScreenAsksThenDeals() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let row = app.buttons["home-think_a_card"]
     XCTAssertTrue(row.appears(within: 15), app.debugDescription)
@@ -51,7 +51,7 @@ final class CardUITests: XCTestCase {
   // Story 220: Drill the stack covers the card with the trainer's drill, asking Card → position first; Done returns
   // to the card. The taps that grade, and the ledger, are the phone's to check (the simulator has no ledger key).
   func testDrillTheStackOpensTheTrainersDrill() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     let row = app.buttons["home-think_a_card"]
     XCTAssertTrue(row.appears(within: 15), app.debugDescription)

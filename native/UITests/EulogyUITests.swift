@@ -15,7 +15,7 @@ final class EulogyUITests: XCTestCase {
 
   func testBlogLaunchersLeaveTheApp() throws {
     for id in ["eulogy", "recent", "random"] {
-      let app = XCUIApplication()
+      let app = XCUIApplication.forTests()
       app.launch()
       row(id, in: app).tap()
       XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "\(id) opened the browser")
@@ -27,7 +27,7 @@ final class EulogyUITests: XCTestCase {
   /// closed the small player (#195) carries it: pause in place, ✕ stops it and it goes away. What play, pause,
   /// resume, a scrub, a call and a song that cannot play do is SongPlaybackTests, on the host.
   func testThePlayRestartAndTheSmallPlayer() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     row("eulogy_song", in: app).tap()
     let elapsed = app.staticTexts["eulogy-song-elapsed"]
@@ -52,7 +52,7 @@ final class EulogyUITests: XCTestCase {
 
   /// #205: Open on Suno opens the song the post embeds, on suno.com, not the post it falls back to.
   func testOpenOnSunoOpensTheSongNotThePost() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     row("eulogy_song", in: app).tap()
     let suno = app.buttons["eulogy-song-suno"]

@@ -290,3 +290,20 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** the test ladder climbs
 - **Then:** the simulator runs the two paste test classes and no other whiteboard class, while a change to the board's own views or its launch hooks still runs every whiteboard class
 
+---
+
+### User Story 754:
+
+- **Summary:** UI tests don't wait for screens to slide
+- **Status:** implemented in ed896a9 and be6e45f; verified on the simulator (iPhone 17, 2026-11-10): the chat suite's 16 tests went from about 243 s to 193 s, all passing; the whiteboard's classes keep their animations, as PaperLines on the iPad simulator counted a second stroke after the Board menu without them (the menu's closing tap reaching the canvas), until #850 is settled
+
+#### Use Case:
+- **As Igor,** waiting on a test run
+- **I want to** have the app under UI test skip its sliding and fading animations
+- **so that** each step stops waiting out an animation nobody is watching, and a whiteboard pass gets shorter
+
+#### Acceptance Criteria:
+- **Scenario:** A UI test opens a screen and a menu
+- **Given:** any UI test but the whiteboard's, launched the way every UI test launches the app
+- **When:** it pushes a screen, opens a sheet or a menu
+- **Then:** the screen, sheet or menu is there at once rather than after its animation, and the app the phone runs is unchanged

@@ -8,7 +8,7 @@ import XCTest
 
 final class PlacesUnnamedUITests: XCTestCase {
   func testNameAnUnnamedPlaceFromTheMap() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_IMPORT_DB"] = "import-fixture.db,recent"
     app.launchEnvironment["GRABBER_PLACES"] = "map,unnamed"
     app.launch()

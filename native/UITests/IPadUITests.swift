@@ -8,7 +8,7 @@ final class IPadUITests: XCTestCase {
     try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad, "an iPad simulator only")
     let shots = ProcessInfo.processInfo.environment["GRABBER_SHOTS"]
     for id in ["home", "call", "today", "gym_timer", "breathe", "places", "cockpit"] {
-      let app = XCUIApplication()
+      let app = XCUIApplication.forTests()
       app.launch()
       XCUIDevice.shared.orientation = .landscapeLeft
       // Today is the card across the top (story 151); the launchers below it are half-width tiles and rows.

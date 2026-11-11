@@ -6,7 +6,7 @@ import XCTest
 
 final class TodaysHandUITests: XCTestCase {
   func testTheLargeWidgetDealsInPlaceAndStartsTheCount() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     XCTAssertTrue(app.buttons["home-think_a_card"].appears(within: 15))
 

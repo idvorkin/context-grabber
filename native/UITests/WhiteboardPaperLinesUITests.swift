@@ -9,7 +9,7 @@ final class WhiteboardPaperLinesUITests: XCTestCase {
   override func setUp() { continueAfterFailure = false }
 
   private func openBoard(ghostsOn: Bool = false, _ extra: [String: String] = [:]) throws -> XCUIApplication {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests(animated: true)
     app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = try XCTUnwrap(

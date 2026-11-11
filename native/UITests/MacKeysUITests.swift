@@ -6,7 +6,7 @@
 
   final class MacKeysUITests: XCTestCase {
     func testEnterAndCommandEnterSendAndShiftEnterDoesNot() throws {
-      let app = XCUIApplication()
+      let app = XCUIApplication.forTests()
       // A Cockpit nobody answers on: the message waits in a test launch's own outbox and nothing reaches Larry (story 588).
       app.launchEnvironment["GRABBER_CHAT_URL"] = "http://127.0.0.1:9"
       app.launchEnvironment["GRABBER_LINK"] = "grabbernative://chat?thread=igor2-88g.900"

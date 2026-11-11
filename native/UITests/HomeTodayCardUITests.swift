@@ -5,7 +5,7 @@ import XCTest
 
 final class HomeTodayCardUITests: XCTestCase {
   func testTheCardShowsTheLastGrabAndTheTilesLead() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_MIRROR"] = "fixture"
     app.launch()
     XCTAssertTrue(app.staticTexts["hook-done"].appears(within: 60), app.debugDescription)

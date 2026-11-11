@@ -4,7 +4,7 @@ import XCTest
 
 final class LogItAndAnotherUITests: XCTestCase {
   func testTwoReportsInARow() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_SHAKE_AFTER"] = "4"
     app.launch()
     let report = app.navigationBars["Report a problem"]

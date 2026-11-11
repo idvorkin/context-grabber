@@ -6,7 +6,7 @@ import XCTest
 
 final class PlaceIconUITests: XCTestCase {
   func testChooseAnIconThenUseTheGuess() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_PLACES"] = "open,edit:Home"
     app.launch()
     let heart = app.buttons["icon-heart.fill"]

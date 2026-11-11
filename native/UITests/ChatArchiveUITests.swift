@@ -17,7 +17,7 @@ final class ChatArchiveUITests: XCTestCase {
     guard let cockpit = ProcessInfo.processInfo.environment["GRABBER_FAKE_COCKPIT"], !cockpit.isEmpty else {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit
     app.launchEnvironment["GRABBER_INBOX"] = "open"
     app.launchEnvironment["GRABBER_SILENT"] = "1"

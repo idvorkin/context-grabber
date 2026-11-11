@@ -17,7 +17,7 @@ final class HoldPopoverUITests: XCTestCase {
 
   // Story 222: a tap outside closes the popover with nothing opened, and the tile's tap still works after a hold.
   func testATapOutsideOpensNothing() throws {
-    let app = XCUIApplication()
+    let app = XCUIApplication.forTests()
     app.launch()
     hold("breathe", in: app)
     XCTAssertTrue(app.buttons["breathe-10"].appears(within: 10), app.debugDescription)
