@@ -328,7 +328,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 752:
 
 - **Summary:** A call that can't reach the Cockpit says so, and names Tailscale
-- **Status:** native app only: verified by `just test` (host: `CallSessionTests`)
+- **Status:** implemented in [075a476](https://github.com/idvorkin/context-grabber/commit/075a476); verified on the host (`just test`: `CallSessionTests`), the Mac build (`just native-build-mac`) and the simulator call smoke (`just native-test-sim`: calls clean, a dropped call files one report)
 - **Issues:** [#784](https://github.com/idvorkin/context-grabber/issues/784)
 - **Spec:** [Native call — interruptions](../superpowers/specs/2026-08-28-native-call-screen-design.md#interruptions)
 

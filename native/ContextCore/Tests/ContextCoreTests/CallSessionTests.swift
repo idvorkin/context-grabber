@@ -257,7 +257,7 @@ final class CallSessionConnectingTests: XCTestCase {
   func testACallThatNeverReachesTheCockpitSaysSoAndNamesTailscale() {
     let t = CallHarness()
     t.session.start(.gemini)
-    t.socket.drop("A server with the specified hostname could not be found. (NSURLErrorDomain -1003)")
+    t.socket.drop(SocketErrorDetail.describe(URLError(.cannotFindHost)))
     XCTAssertEqual(t.session.snapshot.endedReason, CallProtocol.cockpitUnreachable)
     XCTAssertTrue(t.session.snapshot.endedBadly, "the trouble report is still filed")
 
@@ -268,7 +268,7 @@ final class CallSessionConnectingTests: XCTestCase {
 
     let live = CallHarness()
     live.goLive()
-    live.socket.drop("A server with the specified hostname could not be found. (NSURLErrorDomain -1003)")
+    live.socket.drop(SocketErrorDetail.describe(URLError(.cannotFindHost)))
     XCTAssertEqual(live.session.snapshot.endedReason, CallProtocol.connectionLost, "a live call that drops is lost")
   }
 
