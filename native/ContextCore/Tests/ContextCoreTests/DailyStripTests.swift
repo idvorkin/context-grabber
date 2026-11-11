@@ -112,3 +112,39 @@ final class DailyStripTests: XCTestCase {
     XCTAssertEqual(DailyStrip.daysSince(try strip.days(.magic), today: "2026-10-15"), 1)
   }
 }
+
+/// #435: Health's workouts over two weeks, as a grab asks for them.
+private struct TwoWeeksOfWorkouts: HealthSource {
+  let workouts: [WorkoutRecord]
+  func sum(_ kind: QuantityKind, from: Double, to: Double) async throws -> Double? { nil }
+  func latest(_ kind: QuantityKind) async throws -> Double? { nil }
+  func samples(_ kind: QuantityKind, from: Double, to: Double) async throws -> [QuantitySampleRecord] { [] }
+  func sleep(from: Double, to: Double) async throws -> [SleepSample] { [] }
+  func mindful(from: Double, to: Double) async throws -> [TimeSpan] { [] }
+  func workouts(from: Double, to: Double) async throws -> [WorkoutRecord] {
+    self.workouts.filter { $0.end > from && $0.start < to }
+  }
+}
+
+final class DailyStripFortnightWorkoutsTests: XCTestCase {
+  /// #435, story 255: a strength workout in Health 8-13 days ago is one of Gym's automatic days in the two-week grid,
+  /// as one this week is; a run that long ago isn't.
+  func testAStrengthWorkoutTenDaysAgoIsAGymDay() async {
+    // 6 pm on 20 October in Los Angeles.
+    let now = ISO8601DateFormatter().date(from: "2026-10-21T01:00:00Z")!.timeIntervalSince1970 * 1000
+    let day = 24 * 60 * 60 * 1000.0
+    func workout(_ type: Int, daysAgo: Double) -> WorkoutRecord {
+      let start = now - daysAgo * day
+      return WorkoutRecord(
+        activityType: type, start: start, end: start + 3_600_000, durationSeconds: 3600, energyKcal: nil,
+        distanceMeters: nil)
+    }
+    let source = TwoWeeksOfWorkouts(workouts: [
+      workout(50, daysAgo: 3), workout(50, daysAgo: 10), workout(37, daysAgo: 12), workout(50, daysAgo: 20),
+    ])
+    let byDay = await MirrorGrab(source: source, cache: nil, clock: la).workoutsByDay(now: now)
+    XCTAssertEqual(
+      DailyStrip.gymDays(tapped: [], timer: [], workoutsByDay: byDay), ["2026-10-17", "2026-10-10"],
+      "this week's and ten days ago's strength workouts; not the run, nor one older than the grid")
+  }
+}

@@ -141,7 +141,8 @@ The headline says “N of the last 14 days”. Under it, “Last done today”, 
 “Last done K days ago”, or “Last done not in two weeks” reflects the edited days. Unsaved edits append
 “ · K change(s) to save”, with singular wording for one. A legend shows done and changed swatches and
 “Tap a day to mark or unmark it”. Tapping toggles a day locally, including taking a tapped day back;
-a check supplied by the timer, breathing or Health stays, just as on today's strip. Done saves every changed
+a check supplied by the timer, breathing or Health stays, just as on today's strip. Health's strength workouts
+supply Gym's days across all fourteen tiles, not only the last week's (#435). Done saves every changed
 day and closes; Cancel or dismissing saves nothing. Taking a tapped day back syncs with the same latest-change-wins
 rule as today's un-tap. The strip and Gym's days since update immediately after Done.
 Balloons and Magic still open their week (below). Each changed day saved produces one `ui` event, action
