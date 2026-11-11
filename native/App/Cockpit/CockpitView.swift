@@ -65,6 +65,14 @@ struct CockpitView: View {
         .accessibilityIdentifier("cockpit-home")
       }
       Spacer()
+      if failure == nil {
+        // Story 326 (#871).
+        Button(action: model.openInBrowser) {
+          Image(systemName: "safari").font(.system(size: 17, weight: .semibold))
+        }
+        .accessibilityLabel("Open in browser")
+        .accessibilityIdentifier("cockpit-open-in-browser")
+      }
       Button(action: onDone) {
         Text("Done").font(.system(size: 15, weight: .semibold))
       }

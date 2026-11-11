@@ -264,6 +264,13 @@ extension CockpitModel {
     webView.goBack()
   }
 
+  /// Story 326 (#871): the page showing, in the default browser; the Cockpit keeps its place.
+  func openInBrowser() {
+    guard let url = webView.url else { return }
+    log.event("cockpit_open_in_browser", ["url": url.absoluteString])
+    UIApplication.shared.open(url)
+  }
+
   /// #234: straight to the dashboard's start page, from any depth.
   func goHome() {
     guard let loadURL else { return }
