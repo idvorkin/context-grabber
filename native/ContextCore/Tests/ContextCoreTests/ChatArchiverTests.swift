@@ -110,8 +110,18 @@ final class ChatArchiverTests: XCTestCase {
   }
 
   private func finish(_ running: Running, file: StaticString = #filePath, line: UInt = #line) async {
-    for _ in 0..<500 where !running.finished { await Task.yield() }
+    await until(running.finished)
     XCTAssertTrue(running.finished, "the change never finished", file: file, line: line)
+  }
+
+  /// Waits for a state the archiver's tasks reach, up to five real seconds: a loaded machine can take more than
+  /// `settle`'s yields to schedule them (#844).
+  private func until(_ condition: @autoclosure () -> Bool) async {
+    let deadline = ContinuousClock.now + .seconds(5)
+    while !condition(), ContinuousClock.now < deadline {
+      await Task.yield()
+      try? await Task.sleep(for: .milliseconds(1))
+    }
   }
 
   // MARK: One change
@@ -290,13 +300,14 @@ final class ChatArchiverTests: XCTestCase {
   func testTheOfferLastsFiveSeconds() async {
     let (list, cockpit, clock, archiver) = make([row("a")])
     let done = start { await archiver.setArchived("a", true, from: "swipe") }
-    await settle()
+    await until(cockpit.requests.count == 1)
     cockpit.answer(0)
     await finish(done)
+    await until(clock.asked.count == 1)
     XCTAssertEqual(clock.asked, [.seconds(5)])
     XCTAssertEqual(ChatArchiver.undoLine(list.undoArchive), #"Archived "Ta""#)
     clock.end(0)
-    await settle()
+    await until(list.undoArchive.isEmpty)
     XCTAssertEqual(list.undoArchive, [], "gone after five seconds")
     XCTAssertEqual(list.row("a")?.archived, true, "and the archive stands")
   }
