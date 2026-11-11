@@ -120,7 +120,8 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
   - Drawing and panning feel the same with the grid on as with it off, even on a big board.
 - **The board is kept.** Leaving, quitting or restarting the app never loses a stroke, and neither does a link that
   opens another screen. The board saves a moment after each stroke, and again on close or when the app goes to the
-  background. If a saved board can't be read, it's kept aside and the screen says so; if it can't even be moved
+  background. On paper, VoiceOver hears with the page number whether the latest ink is saved yet: *Page 1 of 2, unsaved*,
+  then *saved* (the UI tests wait on it, story 673). If a saved board can't be read, it's kept aside and the screen says so; if it can't even be moved
   aside, it's left untouched, nothing drawn that time is saved over it, and the screen says that too.
 - **Send to Larry** (top bar): sends a picture of everything drawn, on white, on the board's chat thread, titled with
   the board's name: the first send or Larry's turn on a board starts the thread, and later ones go to it, so marks he

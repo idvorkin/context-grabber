@@ -69,7 +69,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 673:
 
 - **Summary:** A test checks for what it needs without a fixed wait
-- **Status:** partly implemented in d91ca4d, 2e67445, 2fcd476: the UI tests wait with `appears(within:)`, verified on the simulator (rung 2, the board suite 63 tests in 1621 s, chat 22 of 22); the fixed `sleep` pauses remain; bead `context-grabber-3k6`
+- **Status:** partly implemented in d91ca4d, 2e67445, 2fcd476: the UI tests wait with `appears(within:)`, verified on the simulator (rung 2, the board suite 63 tests in 1621 s, chat 22 of 22); on branch `native/673-waits` the whiteboard's waits for the save (the page number's *saved* value) and for ink to settle on screen replace 11 fixed pauses, verified on the simulator (2026-11-10: all 30 whiteboard tests pass in a ladder climb, 545 s against 661 s for the run before it; the four save waits pass alone on the iPad; PhoneBoardsUITests passes alone, its failure in the climb's order is #868); the rest remain: a new board settling (tangled with #850), a wait that proves nothing happened, and pauses before a screenshot kept for a person; bead `context-grabber-3k6`
 
 #### Use Case:
 - **As Igor,** waiting on a test run

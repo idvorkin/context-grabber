@@ -92,7 +92,8 @@ final class WhiteboardModel: ObservableObject {
   private var pauseTask: Task<Void, Never>?
   private var fadeTask: Task<Void, Never>?
   private var saveTask: Task<Void, Never>?
-  private var dirty = false
+  /// Ink not saved yet; a board on paper's page number says so (story 673: what a UI test waits on, not a fixed second).
+  @Published private(set) var dirty = false
   private var saveFailing = false
   private var marks = WhiteboardMarks()
   /// On paper: each stroke's box, for what's on screen (story 433), and the frame the last Send showed.
