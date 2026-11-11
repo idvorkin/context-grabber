@@ -31,7 +31,8 @@ suggest changes the board until Igor keeps it.
   ghosts and leaves Larry's: the old set stays until the first new mark lands, so the board is never blank between
   them, and an answer with nothing to add clears them when it ends. Claude's fade by themselves **30 s** after the last
   of them appears; Larry's stay until kept or dismissed.
-- **A tap off the ghosts dismisses them all.**
+- **A tap off the ghosts dismisses Claude's and leaves Larry's** (#823): one stray tap must not lose Larry's marks, which
+  don't come back. With only Larry's left, a tap off them dismisses his, so clearing them takes a tap of its own.
 - **Where a finger draws** (an iPhone, an iPad with no Pencil, or with the system's Pencil-only setting off), it stops
   drawing while ghosts show: it taps and pans, so keeping a ghost leaves no dot. With no ghost left it draws again.
 - A ghost turn gives up **10 s** after it was asked, however much has arrived by then (the Cockpit's model takes about
@@ -224,7 +225,7 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
 - Draw again before the ghosts come, or while they show: they stay, and the next pause brings a new set that replaces
   Claude's. Leave them alone: they fade after 30 s. Larry's blue marks stay through all of it.
 - On a device where a finger draws: a tap on a ghost keeps it with no dot drawn, and a tap off the ghosts dismisses
-  them; then the finger draws again.
+  Claude's (Larry's once they're all that's left); then the finger draws again.
 - Turn Ghosts off: lifting the Pencil asks nothing (the session log shows no turn). Larry's blue ghosts stay showing.
 - Tap Larry's turn: the bar says *Larry is looking…* straight away and the Pencil keeps drawing. Chat has a thread
   named after the board holding the picture. Minutes later, with no tap, blue ghosts and his line appear on what he saw,

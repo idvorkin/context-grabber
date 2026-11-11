@@ -295,7 +295,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 354:
 
 - **Summary:** Ghosts on a device where a finger draws
-- **Status:** app side implemented on this branch; `WhiteboardTurnUITests.testAFingerTapOffAGhostDismissesItAndOnOneKeepsIt` verified on the simulator by `WhiteboardTurnUITests` (an old-canvas test, dropped 2026-11-07; on paper `WhiteboardPaperGhostsUITests.testAGhostShowsOnThePaperAndATapKeepsIt` and `testATapOffDismissesLeavesNoDotAndAFingerDrawsAgain` hold it); an iPhone and an iPad with no Pencil not yet tried
+- **Status:** app side implemented on this branch; `WhiteboardTurnUITests.testAFingerTapOffAGhostDismissesItAndOnOneKeepsIt` verified on the simulator by `WhiteboardTurnUITests` (an old-canvas test, dropped 2026-11-07; on paper `WhiteboardPaperGhostsUITests.testAGhostShowsOnThePaperAndATapKeepsIt` and `testATapOffDismissesLeavesNoDotAndAFingerDrawsAgain` hold it); an iPhone and an iPad with no Pencil not yet tried. Since [a117e38](https://github.com/idvorkin/context-grabber/commit/a117e38) a tap off them dismisses Claude's first and Larry's only once his are all that's left (stories 663, 664)
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
@@ -307,7 +307,47 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** A finger tap while ghosts show
 - **Given:** a finger draws on this device and ghosts are showing
 - **When:** I tap a ghost
-- **Then:** it becomes ink and no dot is drawn; once no ghost is left, or after a tap off them that dismisses them all, my finger draws again
+- **Then:** it becomes ink and no dot is drawn; once no ghost is left, or after a tap off them that dismisses them, my finger draws again
+
+---
+
+### User Story 663:
+
+- **Summary:** A stray tap leaves Larry's marks
+- **Status:** implemented in [a117e38](https://github.com/idvorkin/context-grabber/commit/a117e38); verified on the host (`WhiteboardGhostTurnsTests.testATapOffDismissesClaudesFirstAndLarrysOnlyWhenTheyAreAlone`) and the Mac build. The whiteboard UI tests are blocked by [#850](https://github.com/idvorkin/context-grabber/issues/850) (Board-menu taps swallowed on the iPad simulator) and weren't run; not yet tried on an iPad
+- **Issues:** [#823](https://github.com/idvorkin/context-grabber/issues/823) (one stray tap dismissed Larry's marks for good)
+- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board where Claude and Larry have both drawn back
+- **I want to** dismiss only Claude's ghosts when I tap off them
+- **so that** one stray tap can't lose Larry's marks, which can't come back
+
+#### Acceptance Criteria:
+- **Scenario:** A tap off the ghosts with both showing
+- **Given:** Claude's ghosts and Larry's marks are both showing
+- **When:** I tap off them
+- **Then:** Claude's are dismissed and Larry's stay
+
+---
+
+### User Story 664:
+
+- **Summary:** A deliberate tap clears Larry's marks
+- **Status:** implemented in [a117e38](https://github.com/idvorkin/context-grabber/commit/a117e38); verified on the host (`WhiteboardGhostTurnsTests.testATapOffDismissesClaudesFirstAndLarrysOnlyWhenTheyAreAlone`) and the Mac build. The whiteboard UI tests are blocked by [#850](https://github.com/idvorkin/context-grabber/issues/850) (Board-menu taps swallowed on the iPad simulator) and weren't run; not yet tried on an iPad
+- **Issues:** [#823](https://github.com/idvorkin/context-grabber/issues/823) (one stray tap dismissed Larry's marks for good)
+- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
+
+#### Use Case:
+- **As someone** who has looked at Larry's marks and doesn't want them
+- **I want to** dismiss Larry's marks with a tap off them once they're all that's left
+- **so that** clearing his always takes a tap of its own
+
+#### Acceptance Criteria:
+- **Scenario:** A tap off the ghosts with only Larry's left
+- **Given:** only Larry's marks are showing
+- **When:** I tap off them
+- **Then:** his marks are dismissed
 
 ---
 
@@ -2909,7 +2949,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 616:
 
 - **Summary:** A finger doesn't draw while ghosts show on paper
-- **Status:** implemented in [24280a2](https://github.com/idvorkin/context-grabber/commit/24280a2) and [e3167f1](https://github.com/idvorkin/context-grabber/commit/e3167f1); verified on an iPhone simulator and an iPad simulator, where a finger draws (`WhiteboardPaperGhostsUITests`, `WhiteboardTurnOnPaperUITests`: no dot, and the next stroke draws). What a finger drag does while ghosts show, with a Pencil paired or not, isn't settled: `paper_touch`'s `touch_mode` is `selection` then. Since bead `context-grabber-y8r`, `WhiteboardPaperGhostsUITests` alone
+- **Status:** implemented in [24280a2](https://github.com/idvorkin/context-grabber/commit/24280a2) and [e3167f1](https://github.com/idvorkin/context-grabber/commit/e3167f1); verified on an iPhone simulator and an iPad simulator, where a finger draws (`WhiteboardPaperGhostsUITests`, `WhiteboardTurnOnPaperUITests`: no dot, and the next stroke draws). What a finger drag does while ghosts show, with a Pencil paired or not, isn't settled: `paper_touch`'s `touch_mode` is `selection` then. Since bead `context-grabber-y8r`, `WhiteboardPaperGhostsUITests` alone. Since [a117e38](https://github.com/idvorkin/context-grabber/commit/a117e38) a tap off them dismisses Claude's first (stories 663, 664)
 - **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
@@ -2922,7 +2962,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** A tap off them
 - **Given:** a finger draws here, and ghosts show
 - **When:** I tap away from them
-- **Then:** they're all dismissed, no dot is drawn and nothing is selected, and my finger draws again
+- **Then:** they're dismissed (Larry's only once Claude's are gone, stories 663, 664), no dot is drawn and nothing is selected, and my finger draws again
 
 ---
 
