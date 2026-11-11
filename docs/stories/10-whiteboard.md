@@ -2630,7 +2630,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 - **Summary:** The log tells the Pencil from a finger
 - **Status:** implemented in [a2e922f](https://github.com/idvorkin/context-grabber/commit/a2e922f); the line verified on the simulator's log for a finger (`whiteboard` action: paper_touch); the Pencil's is for the iPad. This story says only that the log tells them apart, not what a finger does
-- **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636)
+- **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636), [#825](https://github.com/idvorkin/context-grabber/issues/825) (a run was typed by its first touch, so a palm made the Pencil's strokes a finger's)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Use Case:
@@ -2643,6 +2643,11 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Given:** a board on paper
 - **When:** I touch it with the Pencil or a finger
 - **Then:** a line says which it was, how far it went, and whether it drew, panned, selected, moved ink or did nothing
+
+- **Scenario:** A palm resting before the Pencil (#825)
+- **Given:** a board on paper
+- **When:** my palm lands first and then the Pencil draws, before both lift
+- **Then:** the line says the Pencil drew (a Pencil in a touch makes it the Pencil's), counts how many touches of each kind it held, and gives the largest finger contact's size, so a palm can be told from a finger in the next iPad log
 
 ---
 

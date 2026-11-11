@@ -44,6 +44,8 @@ class PaperHost: UIViewController {
     var zoomAtStart: CGFloat
     var tool: String
     var facts = PaperProbe.TouchFacts()
+    /// Every touch in it, so the Pencil is the Pencil whatever landed first (#825).
+    var tally = PaperProbe.TouchTally()
     var selected = 0
     var frames = 0
     var maxGap: Double = 0
@@ -163,6 +165,7 @@ class PaperHost: UIViewController {
         startRun(touch, at: at)
       }
       touchStarts[id] = (at, CACurrentMediaTime(), 0)
+      run?.tally.down(id.hashValue, Self.name(touch.type), radius: touch.majorRadius)
       if touch.type == .pencil { pencilDown = true }
       if touch.type == .direct {
         fingersDown += 1
@@ -1029,7 +1032,8 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
     log.event(
       "whiteboard",
       [
-        "action": "paper_touch", "board": model.board.id, "touch_type": run.type,
+        "action": "paper_touch", "board": model.board.id, "touch_type": run.tally.type ?? run.type,
+        "touch_types": run.tally.types, "finger_radius": round(run.tally.fingerRadius),
         "gesture": PaperProbe.gesture(run.facts), "outcome": PaperProbe.outcome(run.facts),
         "travel": round(run.facts.travel), "fingers": run.facts.fingers, "seconds": seconds(run.facts.seconds),
         "scroll_dx": round(dx), "scroll_dy": round(dy), "zoom_from": Double(run.zoomAtStart), "zoom_to": Double(zoom),

@@ -87,6 +87,29 @@ public enum PaperProbe {
     return facts.travel < 10 && facts.seconds < 0.5 ? "tap" : (facts.travel < 10 ? "press" : "drag")
   }
 
+  /// Every touch in one run, from the first down to the last up (#825): a Pencil anywhere in it makes it the Pencil's,
+  /// whatever touched first, so a palm landing before the Pencil doesn't turn its strokes into a finger's. The largest
+  /// finger contact is kept so the log can tell a resting palm from a finger.
+  public struct TouchTally: Equatable, Sendable {
+    public private(set) var types: [String: Int] = [:]
+    /// The largest finger contact's radius, in points; 0 with no finger.
+    public private(set) var fingerRadius: CGFloat = 0
+    private var seen: Set<Int> = []
+    private var first: String?
+
+    public init() {}
+
+    /// The run's kind: pencil when any touch was the Pencil, else the first touch's; nil before any.
+    public var type: String? { types["pencil", default: 0] > 0 ? "pencil" : first }
+
+    public mutating func down(_ id: Int, _ kind: String, radius: CGFloat) {
+      guard seen.insert(id).inserted else { return }
+      if first == nil { first = kind }
+      types[kind, default: 0] += 1
+      if kind == "finger" { fingerRadius = max(fingerRadius, radius) }
+    }
+  }
+
   /// A finger's tap on a ghost: short, staying put, and the only finger, whatever a Pencil is doing beside it.
   public static func isFingerTap(travel: CGFloat, seconds: Double, fingers: Int) -> Bool {
     fingers == 1 && travel < 10 && seconds < 0.5
