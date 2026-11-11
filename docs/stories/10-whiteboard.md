@@ -2949,7 +2949,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 616:
 
 - **Summary:** A finger doesn't draw while ghosts show on paper
-- **Status:** implemented in [24280a2](https://github.com/idvorkin/context-grabber/commit/24280a2) and [e3167f1](https://github.com/idvorkin/context-grabber/commit/e3167f1); verified on an iPhone simulator and an iPad simulator, where a finger draws (`WhiteboardPaperGhostsUITests`, `WhiteboardTurnOnPaperUITests`: no dot, and the next stroke draws). What a finger drag does while ghosts show, with a Pencil paired or not, isn't settled: `paper_touch`'s `touch_mode` is `selection` then. Since bead `context-grabber-y8r`, `WhiteboardPaperGhostsUITests` alone
+- **Status:** implemented in [24280a2](https://github.com/idvorkin/context-grabber/commit/24280a2) and [e3167f1](https://github.com/idvorkin/context-grabber/commit/e3167f1); verified on an iPhone simulator and an iPad simulator, where a finger draws (`WhiteboardPaperGhostsUITests`, `WhiteboardTurnOnPaperUITests`: no dot, and the next stroke draws). What a finger drag does while ghosts show, with a Pencil paired or not, isn't settled: `paper_touch`'s `touch_mode` is `selection` then. Since bead `context-grabber-y8r`, `WhiteboardPaperGhostsUITests` alone. Since [a117e38](https://github.com/idvorkin/context-grabber/commit/a117e38) a tap off them dismisses Claude's first (stories 663, 664)
 - **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
@@ -2962,7 +2962,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** A tap off them
 - **Given:** a finger draws here, and ghosts show
 - **When:** I tap away from them
-- **Then:** they're all dismissed, no dot is drawn and nothing is selected, and my finger draws again
+- **Then:** they're dismissed (Larry's only once Claude's are gone, stories 663, 664), no dot is drawn and nothing is selected, and my finger draws again
 
 ---
 
