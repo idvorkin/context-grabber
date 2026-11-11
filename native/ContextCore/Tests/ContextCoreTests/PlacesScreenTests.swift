@@ -261,10 +261,22 @@ final class PlacesScreenTests: XCTestCase {
     try read(&s)
     let stayAt = Coordinate(latitude: 47.6015, longitude: -122.3)  // ~167 m north
     let suggestion = try XCTUnwrap(KnownPlaces.suggestion(for: stayAt, among: s.knownPlaces))
+    s.selectUnnamed("Place 1", from: "tap")
     s.naming = .merge(source: "Place 1", centroid: stayAt, radius: 100, suggestion: suggestion)
     XCTAssertEqual(s.expand(suggestion, source: "Place 1"), PlacesReread(reason: "expand"))
     XCTAssertNil(s.naming)
+    XCTAssertNil(s.selectedUnnamed, "#843: the grown dot's card closes with it")
     XCTAssertEqual(try store.knownPlaces().first?.radiusMeters, suggestion.grown.radiusMeters)
+  }
+
+  /// #843: only the card of the dot being named closes; one open on another dot stays.
+  func testNamingOneDotLeavesAnotherDotsCardOpen() throws {
+    var s = try screen()
+    s.selectUnnamed("Place 2", from: "tap")
+    s.naming = .name(source: "Place 1", centroid: Coordinate(latitude: 1, longitude: 2), radius: 100)
+    XCTAssertNotNil(s.addPlace(name: "Park", latitude: 1, longitude: 2, radius: nil, from: "name_place"))
+    XCTAssertNil(s.naming)
+    XCTAssertEqual(s.selectedUnnamed, "Place 2")
   }
 
   func testAddPlaceRefusesABlankNameOrAPositionOffTheGlobeWithAPlainLine() throws {
