@@ -243,10 +243,10 @@ screen already did, not a change):
   saved name closes the card and reads the trail again. *Save* waits for a name; a failure to save keeps the card
   open with the copyable failure in it. A radius left blank, zero, negative or not a number is 100 m, on the card
   and in *Add place* alike, where a blank name or a position off the globe is refused with a plain line saying why.
-- **A grey dot's card** closes by itself when the trail is read again and that place is no longer listed (it was
-  just named, or its last visit left the seven days). Not yet true when the named place is not the last "Place N":
-  the next place's number moves into the named one's, and the card stays open on that other place (found
-  2026-11-10; to be fixed on its own).
+- **A grey dot's card** closes the moment its place is named or grown into a known place, whichever "Place N" it
+  was: the next places' numbers move down when the trail is read again, and the card never stays open on the place
+  that took its number (#843). It also closes by itself when the trail is read again and that place is no longer
+  listed (its last visit left the seven days).
 - **Two reads at once.** When the trail is read again before the last read has finished, only the newest read's
   answer is shown.
 - **The line under the map** holds one thing: a plain line (progress, success, a hint about the input) or a

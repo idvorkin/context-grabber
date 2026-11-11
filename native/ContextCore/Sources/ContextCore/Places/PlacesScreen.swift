@@ -10,6 +10,12 @@ import Foundation
 public enum NamingCard: Identifiable, Equatable, Sendable {
   case name(source: String, centroid: Coordinate, radius: Double)
   case merge(source: String, centroid: Coordinate, radius: Double, suggestion: KnownPlaces.MergeSuggestion)
+  /// The grey dot it names.
+  public var source: String {
+    switch self {
+    case .name(let s, _, _), .merge(let s, _, _, _): return s
+    }
+  }
   public var id: String {
     switch self {
     case .name(let s, _, _): return "name-\(s)"
@@ -289,6 +295,14 @@ public struct PlacesScreen {
       ])
   }
 
+  /// A name saved or a known place grown from a grey dot closes the naming card and the dot's card with it, whichever
+  /// "Place N" it was: the re-read moves the next place's number into its id, and the card would stay open on that one
+  /// (#843).
+  private mutating func closeTheNamedDot() {
+    if let naming, selectedUnnamed == naming.source { selectedUnnamed = nil }
+    naming = nil
+  }
+
   /// *Create new place* on the merge card: the name card, at the same position and radius.
   public mutating func createNew(from card: NamingCard) {
     if case .merge(let source, let centroid, let radius, _) = card {
@@ -308,7 +322,7 @@ public struct PlacesScreen {
           "radius_to": Int(suggestion.grown.radiusMeters.rounded()),
           "shift_m": Int(suggestion.shift.rounded()),
         ])
-      naming = nil
+      closeTheNamedDot()
       return PlacesReread(reason: "expand")
     } catch {
       fail("expand", error)
@@ -337,7 +351,7 @@ public struct PlacesScreen {
       try store?.addKnownPlace(name: name, latitude: latitude, longitude: longitude, radiusMeters: radius)
       log("known_place", ["action": "add", "name": name, "radius": Int(radius.rounded()), "from": source])
       note = "Added \(name)."
-      naming = nil
+      closeTheNamedDot()
       return PlacesReread(reason: "add_place")
     } catch {
       fail("add_place", error)
