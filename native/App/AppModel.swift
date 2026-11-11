@@ -80,7 +80,9 @@ final class AppModel: ObservableObject {
   /// `GRABBER_COCKPIT_URL` points it elsewhere (a URL, or a page in the app bundle) for the simulator's checks and a
   /// Mac test launch (#680). The page's ☎ and its Grabber links come back here (story 200).
   private(set) lazy var cockpit: CockpitModel = {
-    let cockpit = CockpitModel(log: log, override: LaunchHooks.current.cockpitURL)
+    let cockpit = CockpitModel(
+      log: log, override: LaunchHooks.current.cockpitURL,
+      openInBrowserWhenShown: LaunchHooks.current.cockpitOpenInBrowser)
     cockpit.onAppRoute = { [weak self] route, source in self?.open(route: route, from: source) }
     return cockpit
   }()

@@ -151,7 +151,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 326:
 
 - **Summary:** Open the Cockpit page I'm on in the browser
-- **Status:** not implemented; issue [#871](https://github.com/idvorkin/context-grabber/issues/871)
+- **Status:** implemented in [275fcfd](https://github.com/idvorkin/context-grabber/commit/275fcfd); issue [#871](https://github.com/idvorkin/context-grabber/issues/871); verified by host tests (`LaunchHooksTests`) and the Mac build; the phone with the next deploy (`GRABBER_COCKPIT=browser` drives it on a simulator)
 - **Spec:** [Cockpit tab — Open in browser](../superpowers/specs/2026-08-27-cockpit-tab-design.md)
 
 #### Use Case:

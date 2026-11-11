@@ -17,6 +17,7 @@ final class LaunchHooksTests: XCTestCase {
     XCTAssertNil(hooks.cockpitURL)
     XCTAssertNil(hooks.usageURL)
     XCTAssertNil(hooks.chatURL)
+    XCTAssertFalse(hooks.cockpitOpenInBrowser)
     XCTAssertEqual(hooks.chat, ChatViewHooks())
     XCTAssertEqual(hooks.whiteboard, WhiteboardHooks())
   }
@@ -182,6 +183,10 @@ final class LaunchHooksTests: XCTestCase {
 
   func testHooksWithOneWord() {
     XCTAssertEqual(steps(["GRABBER_COCKPIT": "open"]), [.cockpit])
+    XCTAssertFalse(LaunchHooks(["GRABBER_COCKPIT": "open"]).cockpitOpenInBrowser)
+    let browser = LaunchHooks(["GRABBER_COCKPIT": "browser"])
+    XCTAssertEqual(browser.steps, [.cockpit], "story 326: the Cockpit opens first")
+    XCTAssertTrue(browser.cockpitOpenInBrowser)
     XCTAssertEqual(steps(["GRABBER_WHITEBOARD": "open"]), [.whiteboard])
     XCTAssertEqual(steps(["GRABBER_WHATS_NEW": "open"]), [.whatsNew])
     XCTAssertEqual(steps(["GRABBER_HOME": "settings"]), [.homeSettings])

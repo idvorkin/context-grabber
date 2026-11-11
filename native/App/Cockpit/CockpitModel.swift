@@ -31,6 +31,7 @@ final class CockpitModel: NSObject, ObservableObject {
   private var callLive = false
 
   private var builtWebView: WKWebView?
+  private var openInBrowserWhenShown: Bool
 
   var webView: WKWebView {
     if let builtWebView { return builtWebView }
@@ -41,8 +42,10 @@ final class CockpitModel: NSObject, ObservableObject {
   }
 
   /// `override`: a URL, or the name of an HTML page in the app bundle (the simulator's bridge test page).
-  init(log: SessionLog, override: String? = nil) {
+  /// `openInBrowserWhenShown`: `GRABBER_COCKPIT=browser`, the browser button pressed once the first page shows.
+  init(log: SessionLog, override: String? = nil, openInBrowserWhenShown: Bool = false) {
     self.log = log
+    self.openInBrowserWhenShown = openInBrowserWhenShown
     route = AudioRouteController(log: log)
     let raw = ChatCockpit.pageAddress(override: override)
     var base: URL?
@@ -155,7 +158,13 @@ final class CockpitModel: NSObject, ObservableObject {
     }
     builtWebView?.scrollView.refreshControl?.endRefreshing()
     log.event("cockpit_load", fields)
-    if case .shown = state.page { emit(AudioBridge.readyPayload(available: true)) }
+    if case .shown = state.page {
+      emit(AudioBridge.readyPayload(available: true))
+      if openInBrowserWhenShown {
+        openInBrowserWhenShown = false
+        openInBrowser()
+      }
+    }
   }
 
   /// What Copy error puts on the clipboard: enough to debug without the session log.
@@ -266,9 +275,16 @@ extension CockpitModel {
 
   /// Story 326 (#871): the page showing, in the default browser; the Cockpit keeps its place.
   func openInBrowser() {
+    log.event("cockpit_open_in_browser", ["url": webView.url?.absoluteString ?? ""])
     guard let url = webView.url else { return }
-    log.event("cockpit_open_in_browser", ["url": url.absoluteString])
-    UIApplication.shared.open(url)
+    handToIOS(url, from: "cockpit_open_in_browser")
+  }
+
+  /// A refusal by iOS (no handler for the scheme, a file the browser can't reach) is logged, never silent.
+  private func handToIOS(_ url: URL, from event: String) {
+    UIApplication.shared.open(url) { [log] ok in
+      if !ok { log.event("error", ["where": event, "url": url.absoluteString, "message": "iOS would not open it"]) }
+    }
   }
 
   /// #234: straight to the dashboard's start page, from any depth.
@@ -304,7 +320,7 @@ extension CockpitModel: WKNavigationDelegate {
       return decisionHandler(.cancel)
     }
     log.event("cockpit_link", ["url": url.absoluteString, "kind": where_ == .appLink ? "app" : "external"])
-    UIApplication.shared.open(url)
+    handToIOS(url, from: "cockpit_link")
     decisionHandler(.cancel)
   }
 
@@ -389,7 +405,7 @@ extension CockpitModel: WKUIDelegate {
         webView.load(action.request)
       } else {
         log.event("cockpit_link", ["url": url.absoluteString, "kind": "new_window"])
-        UIApplication.shared.open(url)
+        handToIOS(url, from: "cockpit_link")
       }
     }
     return nil
