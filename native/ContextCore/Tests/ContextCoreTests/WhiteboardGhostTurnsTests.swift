@@ -290,6 +290,22 @@ final class WhiteboardGhostTurnsTests: XCTestCase {
     XCTAssertTrue(turns.pauseEnded())
   }
 
+  /// #824: with Ghosts off the mic doesn't take words it would drop, and the bar says why until Ghosts come back.
+  func testWithGhostsOffTheMicDoesNotOpenAndTheNoteSaysWhy() {
+    var turns = turns()
+    XCTAssertTrue(turns.micMayOpen())
+    XCTAssertNil(turns.note)
+    turns.setOn(false)
+    XCTAssertFalse(turns.micMayOpen())
+    XCTAssertEqual(turns.note, WhiteboardTurn.micGhostsOff)
+    turns.setOn(true)
+    XCTAssertNil(turns.note, "Ghosts on: the line goes")
+    turns.setOn(false)
+    turns.micClosedByGhostsOff()
+    XCTAssertEqual(turns.note, WhiteboardTurn.micGhostsOff)
+    XCTAssertEqual(turns.spoke("draw a square"), .ghostsOff, "the last words aren't asked")
+  }
+
   func testGhostsOffMidTurnMakesItsAnswerStaleAndForgetsTheOwedAsk() {
     var turns = turns()
     let asked = asking(&turns)

@@ -351,6 +351,46 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 ---
 
+### User Story 665:
+
+- **Summary:** Turning Ghosts off closes the board's mic
+- **Status:** implemented in [9a83d67](https://github.com/idvorkin/context-grabber/commit/9a83d67); verified on the host (`WhiteboardGhostTurnsTests`) and the Mac build. The whiteboard UI tests are blocked by [#850](https://github.com/idvorkin/context-grabber/issues/850) (Board-menu taps swallowed on the iPad simulator) and weren't run; not yet tried on an iPad
+- **Issues:** [#824](https://github.com/idvorkin/context-grabber/issues/824) (the mic heard words with Ghosts off and dropped them silently)
+- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
+
+#### Use Case:
+- **As someone** talking to the board who switches the ghosts off mid-sentence
+- **I want to** have the mic close and say why
+- **so that** I don't keep talking to a mic that reaches no one (story 367)
+
+#### Acceptance Criteria:
+- **Scenario:** Ghosts go off while I talk
+- **Given:** the board's mic is open
+- **When:** I turn Ghosts off
+- **Then:** the mic closes, the bar says Ghosts are off so the mic would reach no one, and the words aren't asked about, now or when Ghosts come back
+
+---
+
+### User Story 666:
+
+- **Summary:** A palm resting before the Pencil doesn't make the stroke a finger's
+- **Status:** implemented in [b0e8221](https://github.com/idvorkin/context-grabber/commit/b0e8221); verified on the host (`PaperProbeTests`) and the Mac build; the Pencil-and-palm line not yet seen in an iPad log
+- **Issues:** [#825](https://github.com/idvorkin/context-grabber/issues/825) (a run was typed by its first touch, so a palm made the Pencil's strokes a finger's)
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md)
+
+#### Use Case:
+- **As someone** deciding what a palm and a finger should do on paper
+- **I want to** have a touch logged as the Pencil's whenever the Pencil was in it, with what else was touching
+- **so that** the next iPad log tells a resting palm from a finger (story 600)
+
+#### Acceptance Criteria:
+- **Scenario:** A palm resting before the Pencil
+- **Given:** a board on paper
+- **When:** my palm lands first and then the Pencil draws, before both lift
+- **Then:** the line says the Pencil drew, counts how many touches of each kind it held, and gives the largest finger contact's size
+
+---
+
 ### User Story 355:
 
 - **Summary:** Keep Larry's mark
@@ -589,8 +629,8 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 367:
 
 - **Summary:** Ghosts off holds for speech too
-- **Status:** implemented in [c863d76](https://github.com/idvorkin/context-grabber/commit/c863d76); verified on the simulator by `WhiteboardTurnUITests` with the hook standing in for the microphone, and since bead `context-grabber-y8r` by the host alone (`WhiteboardGhostTurnsTests`); real dictation to try on the iPad
-- **Issues:** [#604](https://github.com/idvorkin/context-grabber/issues/604), [#605](https://github.com/idvorkin/context-grabber/issues/605)
+- **Status:** implemented in [c863d76](https://github.com/idvorkin/context-grabber/commit/c863d76); verified on the simulator by `WhiteboardTurnUITests` with the hook standing in for the microphone, and since bead `context-grabber-y8r` by the host alone (`WhiteboardGhostTurnsTests`); real dictation to try on the iPad. Since [9a83d67](https://github.com/idvorkin/context-grabber/commit/9a83d67) (#824) the mic doesn't open with Ghosts off, so the say hook no longer stands in for it here: verified on the host (`WhiteboardGhostTurnsTests`) and the Mac build. The whiteboard UI tests are blocked by [#850](https://github.com/idvorkin/context-grabber/issues/850) (Board-menu taps swallowed on the iPad simulator) and weren't run; not yet tried on an iPad
+- **Issues:** [#604](https://github.com/idvorkin/context-grabber/issues/604), [#605](https://github.com/idvorkin/context-grabber/issues/605), [#824](https://github.com/idvorkin/context-grabber/issues/824) (the mic heard words with Ghosts off and dropped them silently)
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
@@ -600,9 +640,9 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 #### Acceptance Criteria:
 - **Scenario:** Speaking with Ghosts off
-- **Given:** Ghosts are off and the board's mic is open
-- **When:** I say "draw a square"
-- **Then:** nothing is asked, no ghost appears, and the words are not sent when Ghosts come back
+- **Given:** Ghosts are off
+- **When:** I tap the board's mic
+- **Then:** it doesn't open, and the bar says Ghosts are off so the mic would reach no one; nothing is asked, no ghost appears, and nothing is sent when Ghosts come back
 
 ---
 
@@ -2629,8 +2669,8 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 600:
 
 - **Summary:** The log tells the Pencil from a finger
-- **Status:** implemented in [a2e922f](https://github.com/idvorkin/context-grabber/commit/a2e922f); the line verified on the simulator's log for a finger (`whiteboard` action: paper_touch); the Pencil's is for the iPad. This story says only that the log tells them apart, not what a finger does
-- **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636)
+- **Status:** implemented in [a2e922f](https://github.com/idvorkin/context-grabber/commit/a2e922f); the line verified on the simulator's log for a finger (`whiteboard` action: paper_touch); the Pencil's is for the iPad. This story says only that the log tells them apart, not what a finger does. Since [b0e8221](https://github.com/idvorkin/context-grabber/commit/b0e8221) (#825) a touch is the Pencil's when any touch in it was: verified on the host (`PaperProbeTests`) and the Mac build; the Pencil's line still for the iPad
+- **Issues:** [#636](https://github.com/idvorkin/context-grabber/issues/636), [#825](https://github.com/idvorkin/context-grabber/issues/825) (a run was typed by its first touch, so a palm made the Pencil's strokes a finger's)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Use Case:

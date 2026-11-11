@@ -14,6 +14,8 @@ public protocol WhiteboardGhost {
 extension WhiteboardTurn {
   /// The board's note while Claude's turns fail.
   public static let ghostsAway = "Ghosts: the Cockpit isn't answering"
+  /// The board's note when the mic would hear words and reach no one (#824).
+  public static let micGhostsOff = "Ghosts are off, so the mic would reach no one: turn Ghosts on to talk to Claude"
 }
 
 public struct WhiteboardGhostTurns<Ghost: WhiteboardGhost> {
@@ -60,7 +62,10 @@ public struct WhiteboardGhostTurns<Ghost: WhiteboardGhost> {
   /// an answer on its way lands stale (stories 351, 367). The caller cancels its pause timer.
   public mutating func setOn(_ new: Bool) {
     on = new
-    guard !new else { return }
+    guard !new else {
+      if note == WhiteboardTurn.micGhostsOff { note = nil }
+      return
+    }
     pacer.dropped()
     unsaid = nil
     ghosts.removeAll { $0.who == .claude }
@@ -77,6 +82,16 @@ public struct WhiteboardGhostTurns<Ghost: WhiteboardGhost> {
     /// A turn is on its way; the words go with the next.
     case held
   }
+
+  /// The board's mic may open: with Ghosts off it would hear words and reach no one, so it doesn't, and the note says
+  /// why (#824).
+  public mutating func micMayOpen() -> Bool {
+    if !on { note = WhiteboardTurn.micGhostsOff }
+    return on
+  }
+
+  /// Ghosts went off with the mic open: it closes, and the note says why (#824).
+  public mutating func micClosedByGhostsOff() { note = WhiteboardTurn.micGhostsOff }
 
   /// He stopped talking (stories 345, 367).
   public mutating func spoke(_ words: String) -> Spoken {

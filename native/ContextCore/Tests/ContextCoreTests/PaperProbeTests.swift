@@ -70,3 +70,35 @@ final class PaperProbeTests: XCTestCase {
     XCTAssertEqual(PaperProbe.outcome(facts), ["drew", "erased"])
   }
 }
+
+/// #825: a touch run is typed by every touch in it, not its first.
+final class PaperTouchTallyTests: XCTestCase {
+  func testAPalmFirstThenThePencilIsThePencils() {
+    var tally = PaperProbe.TouchTally()
+    tally.down(1, "finger", radius: 40)
+    tally.down(2, "pencil", radius: 0.5)
+    XCTAssertEqual(tally.type, "pencil")
+    XCTAssertEqual(tally.types, ["finger": 1, "pencil": 1])
+    XCTAssertEqual(tally.fingerRadius, 40)
+  }
+
+  func testFingersAloneAreAFingers() {
+    var tally = PaperProbe.TouchTally()
+    tally.down(1, "finger", radius: 8)
+    tally.down(2, "finger", radius: 9)
+    XCTAssertEqual(tally.type, "finger")
+    XCTAssertEqual(tally.types, ["finger": 2])
+    XCTAssertEqual(tally.fingerRadius, 9)
+  }
+
+  func testATouchCountsOnceAndANewRunStartsClean() {
+    var tally = PaperProbe.TouchTally()
+    tally.down(1, "pencil", radius: 0.5)
+    tally.down(1, "pencil", radius: 0.5)
+    XCTAssertEqual(tally.types, ["pencil": 1], "the same touch reported twice")
+    tally = PaperProbe.TouchTally()
+    tally.down(3, "finger", radius: 7)
+    XCTAssertEqual(tally.type, "finger")
+    XCTAssertNil(PaperProbe.TouchTally().type, "nothing touched")
+  }
+}

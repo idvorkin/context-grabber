@@ -180,7 +180,9 @@ A picture of a tall board shrinks the handwriting to a few pixels; the strokes d
 - It works on an empty board: "draw a circle" shows ghosts in the part of the board on screen.
 - If he speaks while Claude is answering, those words go with the next turn. Words whose turn didn't get through
   (skipped, refused or the Cockpit away) go with the next one.
-- With Ghosts off nothing is asked: the mic still hears him, the words go nowhere and aren't kept for later.
+- With Ghosts off nothing is asked, and the mic never takes words it would drop (#824): it doesn't open, and the bar
+  says Ghosts are off so the mic would reach no one. Turning Ghosts off with the mic open closes it with the same line.
+  Words aren't kept for later. Turning Ghosts on clears the line.
 - Words that only revise what was already sent don't start a turn.
 - The bar shows the last words heard. The answerer is Claude's fast model; Larry is too slow for back-and-forth, so
   he stays on his own button.

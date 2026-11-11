@@ -266,6 +266,10 @@ final class WhiteboardModel: ObservableObject {
     if !on {
       cancelPause()
       larry.dropped()
+      if micOn || micStarting {
+        turns.micClosedByGhostsOff()
+        stopMic(why: "ghosts_off")
+      }
     }
   }
 
@@ -560,6 +564,11 @@ final class WhiteboardModel: ObservableObject {
 
   /// Opens the board's mic, or closes it and sends what's still unsent.
   func tapMic() {
+    // #824: with Ghosts off the words would reach no one, so the mic (and its hook) doesn't take them.
+    if !micOn, !turns.micMayOpen() {
+      log.event("whiteboard", ["action": "mic_refused", "board": board.id, "why": "ghosts_off"])
+      return
+    }
     if let words = LaunchHooks.current.whiteboard.say {
       speech.heard(words)
       spoke()
