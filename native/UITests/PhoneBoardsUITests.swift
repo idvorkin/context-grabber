@@ -24,7 +24,9 @@ final class PhoneBoardsUITests: XCTestCase {
     let note = app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS %@", "Look only on iPhone: draw on the iPad"))
     XCTAssertTrue(note.firstMatch.appears(within: 10), app.debugDescription)
-    XCTAssertTrue(app.buttons["whiteboard-send"].exists, "Send to Larry stays: the phone can talk about a board")
+    // Send to Larry stays: the phone can talk about a board. Waited for, not looked at once: late in a long run the
+    // toolbar can be laid out after the note (#868); a miss keeps the screen and the tree.
+    waitUntil(NSPredicate(format: "exists == true"), app.buttons["whiteboard-send"], timeout: 5)
     XCTAssertFalse(app.buttons["whiteboard-board"].exists, "no Board menu")
     XCTAssertFalse(app.buttons["whiteboard-ghosts"].exists, "no ghosts")
   }
