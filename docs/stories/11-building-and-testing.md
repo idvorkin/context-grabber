@@ -307,3 +307,21 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** any UI test but the whiteboard's, launched the way every UI test launches the app
 - **When:** it pushes a screen, opens a sheet or a menu
 - **Then:** the screen, sheet or menu is there at once rather than after its animation, and the app the phone runs is unchanged
+
+---
+
+### User Story 755:
+
+- **Summary:** One climb of the ladder runs the touched UI tests and the smoke on one build and one boot
+- **Status:** implemented on branch `native/755-ladder-smoke`; verified by the ladder's map self-test (host: the smoke runs on the rung's build and simulator; a Gym Timer file maps to the timer section, a UI test file to none, shared code to all) and one real climb (iPhone 17, 2026-11-10: `--rung 2 --changed` a Gym Timer file built once, ran its two classes in 62 s, then the timer smoke on the same boot in 60 s, 145 s in all)
+
+#### Use Case:
+- **As Igor,** waiting on a change's simulator check
+- **I want to** have the ladder run the smoke's touched sections right after the touched UI test classes, on the build and the simulator it already has
+- **so that** a change pays for one simulator build, one boot and one wait for the build lock, not two
+
+#### Acceptance Criteria:
+- **Scenario:** A change to one feature
+- **Given:** a branch that changes the Gym Timer's screen
+- **When:** I run `just test-ladder`
+- **Then:** rung 2 builds once, runs the timer's UI test classes, then the smoke's timer section on the same booted simulator, times each step, and stops at the first failure; `--dry-run` names the smoke's sections; `LADDER_SMOKE=0` leaves the smoke out

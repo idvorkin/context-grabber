@@ -5,7 +5,8 @@
 #   0 Lint        swift-format over the touched Swift files, SwiftLint over the tree
 #   1 Host        ContextCore's tests and the script checks
 #   1.5 Mac       the Catalyst build, when the change touches what it compiles (host tests can't compile Mac-only code)
-#   2 Simulator   the build with its UI tests, then the UI test classes the change touches; --full: the area's suites
+#   2 Simulator   the build with its UI tests, then the UI test classes the change touches, then the smoke's touched
+#                 sections on the same build and boot (LADDER_SMOKE=0: not the smoke); --full: the area's suites
 # Usage: test-ladder.sh [--dry-run] [--full] [--all] [--base <ref>] [--changed <path>]... [--rung 0|1|1.5|2]
 #   --dry-run     print the rungs and classes, run nothing
 #   --full        run the suite script of each area touched, in place of that area's classes
@@ -201,6 +202,9 @@ plan() {
     if [ "$n_chat" -eq 0 ] && [ "$n_whiteboard" -eq 0 ] && [ "$n_places" -eq 0 ] && [ "$n_other" -eq 0 ] && [ "${#unknown[@]}" -eq 0 ]; then
       echo "rung 2 UI tests: none, no app UI change"
     fi
+    if [ "$sim_build" -eq 1 ] && [ "${LADDER_SMOKE:-1}" = 1 ]; then
+      echo "rung 2 smoke, on the same build and boot: ${SMOKE_ONLY-$(smoke_sections)}"
+    fi
     if [ "$full" -eq 1 ]; then
       [ "$n_chat" -gt 0 ] && echo "rung 2 full: scripts/native/test-chat-ui.sh"
       [ "$n_whiteboard" -gt 0 ] && echo "rung 2 full: scripts/native/test-whiteboard-ui.sh"
@@ -275,8 +279,11 @@ xcodebuild_sim() {  # <log name> <done line> <xcodebuild arguments...>
   scripts/native/xcodebuild-log.sh "ladder-$name" "$done" \
     xcodebuild -project native/GrabberNative.xcodeproj -scheme GrabberNative -derivedDataPath native/Build \
     -destination "platform=iOS Simulator,id=$udid" CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual \
-    GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" ${packages[@]+"${packages[@]}"} "$@"
+    GIT_SHA="$(git rev-parse --short HEAD)" GIT_BRANCH="$(git branch --show-current)" \
+    BUGKIT_COMMIT="$(git describe --always --dirty --exclude='*')" ${packages[@]+"${packages[@]}"} "$@"
 }
+# The smoke's sections for the paths this climb takes as changed (--changed's, or git's since the base).
+smoke_sections() { scripts/native/smoke-features.sh "$base" ${changed[@]+"${changed[@]}"}; }
 only_testing() { for c in "$@"; do printf -- '-only-testing:GrabberNativeUITests/%s\n' "$c"; done; }
 step() {  # <label> <command...>: times one step of rung 2
   local label=$1 start=$SECONDS status
@@ -364,6 +371,13 @@ simulator_steps() {
   if [ "$run_whiteboard_classes" -gt 0 ]; then step "whiteboard classes" whiteboard_classes || return; fi
   if [ "$n_places" -gt 0 ]; then step "places classes" places_classes || return; fi
   if [ "$n_other" -gt 0 ]; then step "other classes" other_classes || return; fi
+  # Story 755: the smoke's touched sections on this build and this boot, rather than a second build and boot from
+  # `just native-test-sim` (the same build: native-build-sim's flags). LADDER_SMOKE=0 leaves it out.
+  if [ "${LADDER_SMOKE:-1}" = 1 ]; then
+    step smoke env SMOKE_ONLY="${SMOKE_ONLY-$(smoke_sections)}" \
+      bash "${SIM_SMOKE:-scripts/native/sim-smoke.sh}" "$udid" com.idvorkin.grabbernative \
+      native/Build/Build/Products/Debug-iphonesimulator/GrabberNative.app || return
+  fi
   [ "$full" -eq 1 ] || return 0
   # The build above is the suites' too (SUITE_PREBUILT; the whiteboard's script doesn't read it yet).
   if [ "$n_chat" -gt 0 ]; then step "chat suite" env SUITE_PREBUILT=1 scripts/native/test-chat-ui.sh "$udid" || return; fi

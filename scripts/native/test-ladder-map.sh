@@ -66,6 +66,12 @@ shift 4
 exec "$@"
 F
 # macOS's caffeinate -i <command>: here it only runs the command, so the self-test also runs on the Linux rung.
+# The smoke (story 755): only what it was asked to run, on what.
+cat >"$fakes/sim-smoke" <<'F'
+#!/usr/bin/env bash
+echo "smoke ${SMOKE_ONLY:-} $1 $3" >>"$MARKS/smoke"
+F
+export SIM_SMOKE="$fakes/sim-smoke"
 cat >"$fakes/caffeinate" <<'F'
 #!/usr/bin/env bash
 [ "$1" = -i ] && shift
@@ -280,6 +286,17 @@ if grep -qF "build.lock" "$MARKS/lockf"; then ok "the simulator rung takes the b
 if head -1 "$MARKS/xcodebuild" | grep -q " build-for-testing"; then ok "the build comes first"; else bad "the build comes first"; fi
 if grep -q "only-testing:GrabberNativeUITests/CardUITests test-without-building" "$MARKS/xcodebuild"; then ok "then its class alone"; else bad "then its class alone"; fi
 if grep -q "simctl shutdown" "$MARKS/xcrun"; then ok "the simulator is shut down after"; else bad "the simulator is shut down after"; fi
+if grep -q "^smoke none 00000000-0000-0000-0000-000000000000 native/Build/Build/Products/Debug-iphonesimulator/GrabberNative.app$" "$MARKS/smoke" 2>/dev/null; then
+  ok "then the smoke's sections on that build and simulator (story 755)"
+else bad "then the smoke's sections on that build and simulator (story 755): $(cat "$MARKS/smoke" 2>/dev/null)"; fi
+says_smoke() {  # <label> <expected sections> <path...>
+  local got
+  got=$(scripts/native/smoke-features.sh main "${@:3}")
+  if [ "$got" = "$2" ]; then ok "$1"; else bad "$1: $got"; fi
+}
+says_smoke "the smoke: a Gym Timer file runs the timer section" timer native/App/Gym/GymTimerView.swift
+says_smoke "the smoke: a UI test file runs none of it" none native/UITests/CardUITests.swift
+says_smoke "the smoke: shared code runs all of it" all native/App/AppModel.swift
 
 run -- --changed native/UITests/WhiteboardPasteUITests.swift
 status=$?
