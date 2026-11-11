@@ -1080,7 +1080,8 @@ private struct BubbleTable: View {
 
   /// Row by row, each cell after its heading: "Air: Weight 1.2 kg, Battery 18 h".
   private var spoken: String {
-    table.rows.map { row in
+    if table.rows.isEmpty { return table.heading.filter { !$0.isEmpty }.joined(separator: ", ") }
+    return table.rows.map { row in
       let pairs = zip(table.heading.dropFirst(), row.dropFirst()).map { "\($0) \($1)" }
       return ([row.first ?? ""] + pairs).filter { !$0.isEmpty }.joined(separator: ", ")
     }
