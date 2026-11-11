@@ -18,7 +18,13 @@ final class ChatArchiveUITests: XCTestCase {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
     let app = SharedApp.open(
-      ["GRABBER_CHAT_URL": cockpit, "GRABBER_INBOX": "open", "GRABBER_SILENT": "1"], route: "chat", for: self)
+      ["GRABBER_CHAT_URL": cockpit, "GRABBER_INBOX": "open", "GRABBER_SILENT": "1"], for: self
+    ) { app in
+      // Back out of a thread to the list, as the launch hook lands.
+      for _ in 0..<3 where !app.buttons["inbox-add"].exists {
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+      }
+    }
     let row = app.buttons["chat-thread-\(key)"]
     XCTAssertTrue(row.appears(within: 20), app.debugDescription)
     return app
