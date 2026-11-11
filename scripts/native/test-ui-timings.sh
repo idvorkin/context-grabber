@@ -42,8 +42,14 @@ grep -q "15.0 s  Step F" <<<"$out" || fail "the sixth gap kind counts toward the
   echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' failed (3.000 seconds)."
   echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' started."
   echo "Test Case '-[GrabberNativeUITests.SynthUITests testFlaky]' passed (2.000 seconds)."; } >"$dir/retry.log"
-out=$("$here/ui-timings.py" "$dir/retry.log")
+out=$("$here/ui-timings.py" "$dir/retry.log" --jsonl "$dir/retry.jsonl")
 grep -q "passed only on retry (1): SynthUITests.testFlaky" <<<"$out" || fail "a retried case is named: $out"
+grep -q "^ui timings: 1 cases" <<<"$out" || fail "a retried case counts once: $out"
+grep -qE "^ +5.0 s +1 +launch" <<<"$out" || fail "and once in its class: $out"
+python3 - "$dir/retry.jsonl" <<'PY' || fail "the retry's JSON line is tagged"
+import json, sys
+assert [json.loads(l)["retry"] for l in open(sys.argv[1])] == [False, True]
+PY
 
 : >"$dir/empty.log"
 "$here/ui-timings.py" "$dir/empty.log" --jsonl "$dir/none.jsonl" | grep -q "no test cases" || fail "an empty log"

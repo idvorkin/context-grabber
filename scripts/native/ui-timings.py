@@ -34,7 +34,7 @@ def kind(line):
 
 
 def parse(lines):
-    cases, current = [], None
+    cases, current, seen = [], None, set()
     for line in lines:
         m = CASE.search(line)
         if m:
@@ -43,6 +43,8 @@ def parse(lines):
                 current = {"class": cls, "test": test, "steps": [], "secs": None, "state": None}
             elif current and current["test"] == test:
                 current["state"], current["secs"] = state, float(secs or 0)
+                current["retry"] = (cls, test) in seen
+                seen.add((cls, test))
                 cases.append(current)
                 current = None
             continue
@@ -78,8 +80,9 @@ def report(cases, top):
         return "ui timings: no test cases in the log"
     total = sum(c["secs"] for c in cases)
     launch = sum(c["launch_s"] for c in cases)
+    distinct = {(c["class"], c["test"]) for c in cases}
     out = [
-        f"ui timings: {len(cases)} cases, {total:.0f} s in tests; launching the app {launch:.0f} s"
+        f"ui timings: {len(distinct)} cases, {total:.0f} s in tests; launching the app {launch:.0f} s"
         f" ({100 * launch / total if total else 0:.0f}%), {sum(c['retries'] for c in cases)} retried steps,"
         f" {sum(c['attachments'] for c in cases)} attachments"
     ]
@@ -92,7 +95,7 @@ def report(cases, top):
     per_class = defaultdict(lambda: [0, 0.0, 0.0])
     for c in cases:
         p = per_class[c["class"]]
-        p[0] += 1
+        p[0] += not c["retry"]
         p[1] += c["secs"]
         p[2] += c["launch_s"]
     out.append("  by class (cases, seconds, of which launch):")

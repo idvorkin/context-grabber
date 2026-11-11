@@ -257,7 +257,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 689:
 
 - **Summary:** A stuck or flaky UI test costs a minute or two, not a whole rerun
-- **Status:** verified on the host by `scripts/native/test-xcodebuild-log.sh` (a fake xcodebuild: the time limit, the retry, the stopped hang) and `scripts/native/test-ui-timings.sh` (a retried case named)
+- **Status:** implemented in 4337f19; verified on the host by `scripts/native/test-xcodebuild-log.sh` (a fake xcodebuild: the time limit, the retry, the stopped hang, a retry printing past the idle limit) and `scripts/native/test-ui-timings.sh` (a retried case named)
 - **Issues:** the pipeline timing study of 2026-11-10 (Igor: "I don't want to be spending 20 minutes in the simulator"; "fix all the issues")
 
 #### Use Case:
