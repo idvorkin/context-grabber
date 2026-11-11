@@ -28,6 +28,15 @@ extension XCTestCase {
       guard Date() < deadline else {
         // What it was, so a miss says where it went (7 Nov: two misses showed only what was wanted).
         let seen = element.map { $0.exists ? "label is \"\($0.label)\"" : "element not found" } ?? "no element"
+        // #850: and the screen and its tree as they were, kept in the result, so a flaky miss shows what covered it.
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "waitUntil miss"
+        shot.lifetime = .keepAlways
+        add(shot)
+        let tree = XCTAttachment(string: XCUIApplication().debugDescription)
+        tree.name = "waitUntil miss: the app's tree"
+        tree.lifetime = .keepAlways
+        add(tree)
         XCTFail("not within \(timeout) s: \(predicate.predicateFormat); \(seen)", file: file, line: line)
         return
       }
