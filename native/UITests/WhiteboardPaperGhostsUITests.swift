@@ -86,15 +86,12 @@ struct PaperScreen {
 extension PaperScreen {
   /// Story 673: what `look` finds once it has stopped changing, two looks a quarter second apart finding the same box,
   /// in place of a fixed wait before reading the screen. Nil when nothing settles within `timeout`.
-  static func settled(
-    _ app: XCUIApplication, top: CGFloat = 0.2, right: CGFloat = 1, within timeout: TimeInterval = 6,
-    _ look: (PaperScreen) -> Box?
-  ) -> Box? {
+  static func settled(_ app: XCUIApplication, within timeout: TimeInterval = 6, _ look: (PaperScreen) -> Box?) -> Box? {
     let deadline = Date().addingTimeInterval(timeout)
-    var last = look(PaperScreen(app, top: top, right: right))
+    var last = look(PaperScreen(app))
     while Date() < deadline {
       RunLoop.current.run(until: Date().addingTimeInterval(0.25))
-      let now = look(PaperScreen(app, top: top, right: right))
+      let now = look(PaperScreen(app))
       if let now, now == last { return now }
       last = now
     }
