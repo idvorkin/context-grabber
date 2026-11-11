@@ -15,11 +15,14 @@ final class ChatSkillThreadUITests: XCTestCase {
       throw XCTSkip("needs the fake Cockpit: run scripts/native/test-chat-ui.sh")
     }
     try addSkillThread(on: cockpit)
-    let app = XCUIApplication.forTests()
-    app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit
-    app.launchEnvironment["GRABBER_INBOX"] = "open"
-    app.launchEnvironment["GRABBER_SILENT"] = "1"
-    app.launch()
+    // Story 672: one app for the class; a later test backs out of a thread to the list, as the launch hook lands.
+    let app = SharedApp.open(
+      ["GRABBER_CHAT_URL": cockpit, "GRABBER_INBOX": "open", "GRABBER_SILENT": "1"], for: self
+    ) { app in
+      for _ in 0..<3 where !app.buttons["inbox-add"].exists {
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+      }
+    }
     XCTAssertTrue(app.buttons["chat-thread-\(skill)"].appears(within: 20), app.debugDescription)
     return app
   }
