@@ -276,7 +276,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 753:
 
 - **Summary:** A change to one whiteboard rule runs only the whiteboard tests that show it
-- **Status:** verified on the host by `scripts/native/test-ladder-map.sh` (the paste, ghost and board-list rules, and the hooks running every class)
+- **Status:** implemented in 1107aad; verified on the host by `scripts/native/test-ladder-map.sh` (the paste, ghost and board-list rules, and the hooks running every class)
 - **Issues:** the pipeline timing study of 2026-11-10 (any whiteboard file ran all 8 classes, 9–11 min)
 
 #### Use Case:

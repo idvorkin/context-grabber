@@ -102,7 +102,6 @@ for f in ${changed[@]+"${changed[@]}"}; do
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardStream.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardMarks.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardStrokes.swift | \
-      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardFrame.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardResponder.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardLarryTurn.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardSpeech.swift)
