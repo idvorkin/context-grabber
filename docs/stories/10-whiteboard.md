@@ -590,7 +590,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 - **Summary:** Ghosts off holds for speech too
 - **Status:** implemented in [c863d76](https://github.com/idvorkin/context-grabber/commit/c863d76); verified on the simulator by `WhiteboardTurnUITests` with the hook standing in for the microphone, and since bead `context-grabber-y8r` by the host alone (`WhiteboardGhostTurnsTests`); real dictation to try on the iPad
-- **Issues:** [#604](https://github.com/idvorkin/context-grabber/issues/604), [#605](https://github.com/idvorkin/context-grabber/issues/605)
+- **Issues:** [#604](https://github.com/idvorkin/context-grabber/issues/604), [#605](https://github.com/idvorkin/context-grabber/issues/605), [#824](https://github.com/idvorkin/context-grabber/issues/824) (the mic heard words with Ghosts off and dropped them silently)
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
@@ -600,9 +600,14 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 #### Acceptance Criteria:
 - **Scenario:** Speaking with Ghosts off
-- **Given:** Ghosts are off and the board's mic is open
-- **When:** I say "draw a square"
-- **Then:** nothing is asked, no ghost appears, and the words are not sent when Ghosts come back
+- **Given:** Ghosts are off
+- **When:** I tap the board's mic
+- **Then:** it doesn't open, and the bar says Ghosts are off so the mic would reach no one; nothing is asked, no ghost appears, and nothing is sent when Ghosts come back
+
+- **Scenario:** Ghosts go off while I talk (#824)
+- **Given:** the board's mic is open
+- **When:** I turn Ghosts off
+- **Then:** the mic closes, the bar says the same, and the words aren't asked about, now or when Ghosts come back
 
 ---
 
