@@ -23,7 +23,8 @@ the longest wait.
 
 - Changing what gets sent or when. The one-picture-at-a-time rule (story 662) stays as it is.
 - A cancel button. A picture that has gone can't be called back.
-- A clock for the fast responders (Haiku, Sonnet). They answer in about two seconds.
+- A clock for the fast responders (Haiku, Sonnet). They answer in about two seconds. Larry's clock shows whenever a
+  turn of his is out, which on a Haiku or Sonnet board means after *Larry's turn* or *Send to Larry*.
 
 ## Larry's clock (built first)
 
@@ -70,4 +71,6 @@ the longest wait.
   Cockpit is back.
 - Leave the app for twenty seconds mid-wait and come back: the clock is twenty seconds further on.
 - A long reply of Larry's and a long *Heard:* line are both showing: the state is still fully visible at the start.
-- A Haiku or Sonnet board shows no clock.
+- A pause on a Haiku or Sonnet board starts no clock; *Larry's turn* on one does.
+- The board shows one problem at a time: a later failure takes the place of *Larry didn't answer*.
+- *Dismiss* beside *Larry didn't answer* removes it.
