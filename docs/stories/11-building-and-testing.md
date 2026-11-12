@@ -290,6 +290,11 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** the test ladder climbs
 - **Then:** the simulator runs the two paste test classes and no other whiteboard class, while a change to the board's own views or its launch hooks still runs every whiteboard class
 
+- **Scenario:** A change to the picture's frame
+- **Given:** a branch that changes only where Larry's picture is framed on the board
+- **When:** the test ladder climbs
+- **Then:** the simulator runs the turn and the ghosts-on-paper classes and no other whiteboard class (it ran all 8)
+
 ---
 
 ### User Story 754:
