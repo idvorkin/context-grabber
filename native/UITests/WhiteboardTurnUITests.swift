@@ -144,15 +144,14 @@ final class WhiteboardTurnUITests: XCTestCase {
         .appears(within: 15), app.debugDescription)
     let chevron = app.buttons["whiteboard-note-chevron"]
     XCTAssertTrue(chevron.appears(within: 5), app.debugDescription)
-    let panel = app.otherElements["whiteboard-conversation"]
+    // The panel's own identifier isn't an element XCUITest finds; its thread text is, and is there only while open.
+    let panel = app.textViews["whiteboard-conversation-text"]
     if !panel.exists { chevron.tap() }
     // Open or closed outlives the launch: the next test starts with it closed.
     addTeardownBlock {
       if panel.exists { chevron.tap() }
     }
     XCTAssertTrue(panel.appears(within: 5), app.debugDescription)
-    let reply = app.textViews["whiteboard-conversation-text"]
-    XCTAssertTrue(reply.appears(within: 5), app.debugDescription)
-    waitUntil(NSPredicate(format: "value CONTAINS %@", "Larry: this is where it goes"), reply, timeout: 8)
+    waitUntil(NSPredicate(format: "value CONTAINS %@", "Larry: this is where it goes"), panel, timeout: 8)
   }
 }
