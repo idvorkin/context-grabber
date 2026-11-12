@@ -3973,3 +3973,35 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **When:** I open either board
 - **Then:** it opens to pan and pinch with no tool picker, no Board menu and no ghosts, *Send to Larry* still there to talk about it, and the bar says *Look only on iPhone: draw on the iPad*
 
+### User Story 756:
+
+- **Summary:** See how long Larry has been looking
+- **Status:** not yet implemented
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** see that he is working and for how long
+- **so that** I can tell a slow answer from a broken one without stopping to wonder
+
+#### Acceptance Criteria:
+- **Scenario:** The clock counts while he looks
+- **Given:** a Larry board and a picture just sent
+- **When:** I keep drawing for forty-two seconds
+- **Then:** the bar's note begins *Larry · 0:42*, and it goes when his answer arrives
+
+- **Scenario:** A newer picture
+- **Given:** Larry has been looking for twenty seconds
+- **When:** I tap *Larry's turn* with new ink
+- **Then:** the clock goes back to 0:00
+
+- **Scenario:** He doesn't answer
+- **Given:** a picture sent and no answer
+- **When:** three minutes pass
+- **Then:** the bar shows *Larry didn't answer* as a problem I can copy, naming when the picture went, how long the board waited, what was waiting and whether the Cockpit was answering
+
+- **Scenario:** The Cockpit can't be reached
+- **Given:** Larry is looking
+- **When:** the board's looks at his thread keep failing
+- **Then:** the state adds *Cockpit not answering*, keeps counting, and clears itself when the Cockpit answers
