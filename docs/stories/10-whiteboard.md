@@ -4142,7 +4142,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 765:
 
 - **Summary:** A repeat tap doesn't send Larry the same picture again
-- **Status:** not yet implemented
+- **Status:** implemented in [fcbd000](https://github.com/idvorkin/context-grabber/commit/fcbd000); verified by host tests (`WhiteboardLarryTurnTests`: a repeat tap with nothing new sends nothing, a pause that sent counts too, a stroke or waiting words send, with no turn out a tap always sends, a failed picture lets the same board go again; `WhiteboardLarryClockTests.testARepeatTapIsAnsweredForTwoSeconds`; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
 - **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) (seven identical pictures in twelve seconds)
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *A repeat tap sends nothing*
 
@@ -4167,7 +4167,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 766:
 
 - **Summary:** The board's note is one line that opens into the conversation
-- **Status:** not yet implemented
+- **Status:** implemented in [c92a4f4](https://github.com/idvorkin/context-grabber/commit/c92a4f4); verified by host tests (`WhiteboardNoteTests`: the line's state with *next:*, the middle and which end it keeps, a notice giving the middle back after five seconds, *3 to keep*, the tap on an iPad and an iPhone, the panel's last ten messages with their marks and what is live; `just native-test`) and the Mac build (`just native-build-mac`). `WhiteboardTurnUITests.testTheNoteOpensOnLarrysReply` is written and not yet run. Not yet seen on the simulator or the iPad: the Pencil on and below the panel is the iPad's check
 - **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation")
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
 

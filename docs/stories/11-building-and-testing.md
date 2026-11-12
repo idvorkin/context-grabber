@@ -276,7 +276,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 753:
 
 - **Summary:** A change to one whiteboard rule runs only the whiteboard tests that show it
-- **Status:** implemented in 1107aad; verified on the host by `scripts/native/test-ladder-map.sh` (the paste, ghost and board-list rules, and the hooks running every class)
+- **Status:** implemented in 1107aad; verified on the host by `scripts/native/test-ladder-map.sh` (the paste, ghost and board-list rules, and the hooks running every class); the picture's frame, Larry's clock and the note's rules running only the turn and ghosts classes in [280ab02](https://github.com/idvorkin/context-grabber/commit/280ab02), verified the same way
 - **Issues:** the pipeline timing study of 2026-11-10 (any whiteboard file ran all 8 classes, 9–11 min)
 
 #### Use Case:
