@@ -3,7 +3,7 @@ import XCTest
 
 @testable import ContextCore
 
-/// Story 756: how long Larry has been looking, and his silence said as a copyable problem.
+/// Stories 667–669 and 760: how long Larry has been looking, and his silence said as a copyable problem.
 final class WhiteboardLarryClockTests: XCTestCase {
   private let t0 = ContinuousClock.now
 
@@ -76,9 +76,7 @@ final class WhiteboardLarryClockTests: XCTestCase {
       "Larry has been looking for 48 seconds, and the Cockpit isn't answering")
   }
 
-  func testNoProblemWhileStillInTime() {
-    XCTAssertNil(
-      WhiteboardLarryClock.didntAnswer(sent(), now: at(179), wallNow: Date(), cockpitAnswering: true))
+  func testNoProblemWithNoTurnOut() {
     XCTAssertNil(
       WhiteboardLarryClock.didntAnswer(
         WhiteboardLarryTurn(), now: at(400), wallNow: Date(), cockpitAnswering: true), "no turn out")

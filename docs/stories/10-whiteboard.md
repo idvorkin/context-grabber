@@ -200,7 +200,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 349:
 
 - **Summary:** Larry takes a turn on the board
-- **Status:** first implemented as a call that waited for him in [66343f7](https://github.com/idvorkin/context-grabber/commit/66343f7); changed to the chat path, no waiting, in [b1e1b1b](https://github.com/idvorkin/context-grabber/commit/b1e1b1b) (Igor, 2026-11-02); verified by host tests (`WhiteboardMarksTests`) and the simulator (`WhiteboardTurnUITests`: Larry's turn brings his marks with no further tap) against the fake Cockpit; the real Larry's answer on the iPad not yet tried
+- **Status:** first implemented as a call that waited for him in [66343f7](https://github.com/idvorkin/context-grabber/commit/66343f7); changed to the chat path, no waiting, in [b1e1b1b](https://github.com/idvorkin/context-grabber/commit/b1e1b1b) (Igor, 2026-11-02); verified by host tests (`WhiteboardMarksTests`) and the simulator (`WhiteboardTurnUITests`: Larry's turn brings his marks with no further tap) against the fake Cockpit; the real Larry's answer on the iPad not yet tried; the bar's note beginning with Larry's clock where it said *Larry is looking…* in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205) (story 667), verified by host tests (`WhiteboardLarryClockTests`)
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
@@ -212,7 +212,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** Larry answers on the board
 - **Given:** the board has a drawing
 - **When:** I tap *Larry's turn* and carry on
-- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 756) until he answers (story 662), with no spinner, and the Pencil keeps drawing. When he answers, faint blue shapes and a line from him appear with no tap, nothing on the board changes until I keep one, Chat has a thread named after the board with the picture and his words, and the board's next turn goes to it
+- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) until he answers (story 662), with no spinner, and the Pencil keeps drawing. When he answers, faint blue shapes and a line from him appear with no tap, nothing on the board changes until I keep one, Chat has a thread named after the board with the picture and his words, and the board's next turn goes to it
 
 ---
 
@@ -879,7 +879,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 380:
 
 - **Summary:** Larry's turn doesn't hold up the drawing
-- **Status:** implemented in [b1e1b1b](https://github.com/idvorkin/context-grabber/commit/b1e1b1b); the turn's message and the bar verified by host tests (`WhiteboardMarksTests`) and the simulator (`WhiteboardTurnUITests`) against the fake Cockpit; drawing with the Pencil while he has the board to try on the iPad
+- **Status:** implemented in [b1e1b1b](https://github.com/idvorkin/context-grabber/commit/b1e1b1b); the turn's message and the bar verified by host tests (`WhiteboardMarksTests`) and the simulator (`WhiteboardTurnUITests`) against the fake Cockpit; drawing with the Pencil while he has the board to try on the iPad; the bar's note beginning with Larry's clock where it said *Larry is looking…* in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205) (story 667), verified by host tests (`WhiteboardLarryClockTests`)
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
 
 #### Use Case:
@@ -891,7 +891,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** Hand him the board
 - **Given:** I have drawn on the board
 - **When:** I tap *Larry's turn*
-- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 756) as soon as the picture is taken (story 662), with no spinner, and I can keep drawing and, once that picture has gone, tap it again for a newer one
+- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) as soon as the picture is taken (story 662), with no spinner, and I can keep drawing and, once that picture has gone, tap it again for a newer one
 
 ---
 
@@ -3856,7 +3856,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 659:
 
 - **Summary:** I pick who answers a board's pause: Haiku, Sonnet or the real Larry
-- **Status:** implemented in [10ee878](https://github.com/idvorkin/context-grabber/commit/10ee878); verified on the host (`WhiteboardResponderTests`: the read and the write on the wire, the tick while they are on their way, a failed write taking it back, who answered from a stream or a whole answer, when a Larry board's pause goes to his thread) and the Linux cross-builds of ContextCore. [0a91f6e](https://github.com/idvorkin/context-grabber/commit/0a91f6e) moved the choice into a *Responder: Sonnet*-style submenu of the Board menu (#848); verified on the iPad simulator (`WhiteboardPaperLinesUITests` 6/6: the Board menu closes on a pick of colour or lines). The Cockpit's live knob and a Larry board's hand-off not yet seen on the Mac or the iPad
+- **Status:** implemented in [10ee878](https://github.com/idvorkin/context-grabber/commit/10ee878); verified on the host (`WhiteboardResponderTests`: the read and the write on the wire, the tick while they are on their way, a failed write taking it back, who answered from a stream or a whole answer, when a Larry board's pause goes to his thread) and the Linux cross-builds of ContextCore. [0a91f6e](https://github.com/idvorkin/context-grabber/commit/0a91f6e) moved the choice into a *Responder: Sonnet*-style submenu of the Board menu (#848); verified on the iPad simulator (`WhiteboardPaperLinesUITests` 6/6: the Board menu closes on a pick of colour or lines). The Cockpit's live knob and a Larry board's hand-off not yet seen on the Mac or the iPad; the bar's note beginning with Larry's clock where it said *Larry is looking…* in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205) (story 667), verified by host tests (`WhiteboardLarryClockTests`)
 - **Issues:** [#848](https://github.com/idvorkin/context-grabber/issues/848) (the section made the iPad's Board menu too tall to close on a pick; now a submenu)
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Who answers the pause*
 
@@ -3874,7 +3874,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** A Larry board
 - **Given:** a board whose responder is Larry, with Ghosts on
 - **When:** I draw and pause
-- **Then:** no orange ghosts come; the bar's note begins with Larry's clock (*Larry · 0:00*, story 756), the picture is in the board's chat thread, and his blue marks show when he answers
+- **Then:** no orange ghosts come; the bar's note begins with Larry's clock (*Larry · 0:00*, story 667), the picture is in the board's chat thread, and his blue marks show when he answers
 
 - **Scenario:** The Cockpit can't take the choice
 - **Given:** the Cockpit can't be reached
@@ -3924,7 +3924,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 662:
 
 - **Summary:** A Larry board sends him one picture at a time, the newest
-- **Status:** implemented in [41b83fb](https://github.com/idvorkin/context-grabber/commit/41b83fb); verified on the host (`WhiteboardLarryTurnTests`: a pause while idle sends, a pause while he is looking doesn't, his answer with the board moved on sends once and with nothing new sends nothing, the 3-minute timeout, a tap taking over, words carried, a failed picture freeing the turn). Not yet seen on the iPad or against the real Larry
+- **Status:** implemented in [41b83fb](https://github.com/idvorkin/context-grabber/commit/41b83fb); verified on the host (`WhiteboardLarryTurnTests`: a pause while idle sends, a pause while he is looking doesn't, his answer with the board moved on sends once and with nothing new sends nothing, the 3-minute timeout, a tap taking over, words carried, a failed picture freeing the turn). Not yet seen on the iPad or against the real Larry; the bar's note beginning with Larry's clock where it said *Larry is looking…* in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205) (story 667), verified by host tests (`WhiteboardLarryClockTests`)
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Who answers the pause*
 
 #### Use Case:
@@ -3936,7 +3936,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** Pauses while he is looking
 - **Given:** a Larry board, a picture sent and no answer from him yet
 - **When:** I draw and pause several times, and say "and label it"
-- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 756) and no new picture goes; when he answers, exactly one picture of the board as it is then goes, with "and label it" as its message
+- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) and no new picture goes; when he answers, exactly one picture of the board as it is then goes, with "and label it" as its message
 
 - **Scenario:** Nothing new since
 - **Given:** a Larry board, a picture sent, and no pause since
@@ -3973,10 +3973,10 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **When:** I open either board
 - **Then:** it opens to pan and pinch with no tool picker, no Board menu and no ghosts, *Send to Larry* still there to talk about it, and the bar says *Look only on iPhone: draw on the iPad*
 
-### User Story 756:
+### User Story 667:
 
 - **Summary:** See how long Larry has been looking
-- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`, `WhiteboardLarryTurnTests`, `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`: the clock counts from the picture, shows the true time after the app was away, stops at his answer, and VoiceOver's words) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
 - **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
 
@@ -3991,17 +3991,143 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **When:** I keep drawing for forty-two seconds
 - **Then:** the bar's note begins *Larry · 0:42*, and it goes when his answer arrives
 
+---
+
+### User Story 668:
+
+- **Summary:** Larry's clock times the picture he is looking at now
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`: a newer picture restarts the clock) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** have the clock start again when a newer picture goes
+- **so that** it never counts a picture he is no longer answering
+
+#### Acceptance Criteria:
 - **Scenario:** A newer picture
 - **Given:** Larry has been looking for twenty seconds
 - **When:** I tap *Larry's turn* with new ink
 - **Then:** the clock goes back to 0:00
 
+---
+
+### User Story 669:
+
+- **Summary:** A wait that ended without an answer says so
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`: his silence carries when the picture went, the wait, what was waiting and whether the Cockpit was answering; `WhiteboardLarryTurnTests`: the 3-minute timeout) and the Mac build (`just native-build-mac`); the problem on the bar not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** be told when the board has stopped waiting for him, with the state that explains it
+- **so that** I can hand the evidence over instead of guessing whether he was slow or gone
+
+#### Acceptance Criteria:
 - **Scenario:** He doesn't answer
 - **Given:** a picture sent and no answer
 - **When:** three minutes pass
 - **Then:** the bar shows *Larry didn't answer* as a problem I can copy, naming when the picture went, how long the board waited, what was waiting and whether the Cockpit was answering
 
+---
+
+### User Story 760:
+
+- **Summary:** Slow and unreachable never look the same
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`: the Cockpit not answering is said and the clock keeps counting) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** see when the board can't reach the Cockpit while he is looking
+- **so that** I know the wait is the connection's and not his
+
+#### Acceptance Criteria:
 - **Scenario:** The Cockpit can't be reached
 - **Given:** Larry is looking
 - **When:** the board's looks at his thread keep failing
-- **Then:** the state adds *Cockpit not answering*, keeps counting, and clears itself when the Cockpit answers
+- **Then:** the state adds *Cockpit not answering* and keeps counting, the bar's separate *Larry's marks: the Cockpit isn't answering* note stays away while the clock says it, and the state clears itself when the Cockpit answers
+
+---
+
+### User Story 761:
+
+- **Summary:** Dismiss *Larry didn't answer*
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by the Mac build (`just native-build-mac`) and, for the launch hook that shortens the wait and dismisses it (`GRABBER_WHITEBOARD_LARRY_TIMEOUT`), host tests (`LaunchHooksTests`, `WhiteboardLarryTurnTests`: a shorter timeout); the button not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** put his silence away once I have read it
+- **so that** the bar goes back to the board
+
+#### Acceptance Criteria:
+- **Scenario:** I dismiss it
+- **Given:** the bar shows *Larry didn't answer*
+- **When:** I tap *Dismiss* beside it
+- **Then:** the problem goes, and the session log says it was dismissed
+
+---
+
+### User Story 762:
+
+- **Summary:** *Larry didn't answer* stays until he next answers
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** keep seeing that he went quiet, even once the board has moved on to the next picture
+- **so that** a silence I didn't notice at the time is still there when I look up
+
+#### Acceptance Criteria:
+- **Scenario:** The waiting ink goes and the problem stays
+- **Given:** the bar shows *Larry didn't answer*
+- **and Given:** ink was waiting, so a fresh picture went and a new clock started
+- **When:** his answer to that picture arrives
+- **Then:** the problem was there for the whole of that wait, and goes only now, with his clock
+
+---
+
+### User Story 763:
+
+- **Summary:** The board shows one problem at a time
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board the real Larry answers
+- **I want to** see only the newest thing that went wrong
+- **so that** the bar never stacks problems over the drawing
+
+#### Acceptance Criteria:
+- **Scenario:** A later failure
+- **Given:** the bar shows *Larry didn't answer*
+- **When:** a later picture can't be handed to him
+- **Then:** that failure's problem takes the place of *Larry didn't answer*, with no *Dismiss* beside it
+
+---
+
+### User Story 764:
+
+- **Summary:** Larry's clock shows on any board his turn is out
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`: the clock runs from a tapped turn, whoever answers the board's pauses) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
+
+#### Use Case:
+- **As someone** drawing on a board Haiku or Sonnet answers
+- **I want to** see Larry's clock after I hand him a turn myself
+- **so that** his slow answer is timed there too, while the fast responders' pauses start no clock
+
+#### Acceptance Criteria:
+- **Scenario:** A manual turn on a Haiku or Sonnet board
+- **Given:** a board whose pauses Haiku or Sonnet answers, and a pause that started no clock
+- **When:** I tap *Larry's turn*
+- **Then:** the bar's note begins *Larry · 0:00* and counts until he answers

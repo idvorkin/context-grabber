@@ -32,7 +32,7 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
 
   public init() {}
 
-  /// A turn is out: the bar shows how long he has been looking (`WhiteboardLarryClock`, story 756).
+  /// A turn is out: the bar shows how long he has been looking (`WhiteboardLarryClock`, story 667).
   public var looking: Bool { state != .idle }
 
   /// A pause on a Larry board, the board at `version`, `words` spoken with it.
@@ -52,8 +52,8 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
 
   /// The clock: once a turn has been out `timeout`, the board stops waiting, as if he had answered. Nil while it's
   /// still in time, or with no turn out.
-  public mutating func tick(version: Int, now: ContinuousClock.Instant) -> Next? {
-    guard case .awaiting(let since, let sent) = state, now - since >= Self.timeout else { return nil }
+  public mutating func tick(version: Int, now: ContinuousClock.Instant, timeout: Duration = Self.timeout) -> Next? {
+    guard case .awaiting(let since, let sent) = state, now - since >= timeout else { return nil }
     return followUp(sent: sent, version: version, now: now)
   }
 

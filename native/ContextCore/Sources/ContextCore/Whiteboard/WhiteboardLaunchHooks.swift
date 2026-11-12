@@ -26,6 +26,13 @@ public struct WhiteboardHooks: Equatable, Sendable {
     public var presses: [String]
   }
 
+  /// `GRABBER_WHITEBOARD_LARRY_TIMEOUT=<seconds>[,dismiss]`: how long a turn of Larry's is out before the board stops
+  /// waiting, and whether *Larry didn't answer* then dismisses itself (stories 669, 761).
+  public struct LarryTimeout: Equatable, Sendable {
+    public var seconds: Double
+    public var dismiss: Bool
+  }
+
   /// `GRABBER_WHITEBOARD_SAVE_FAILS`, set to anything: the disk is full (stories 599, 612).
   public var saveFails: Bool
   /// `GRABBER_WHITEBOARD_GHOST_SECONDS=<seconds>`: how long Claude's ghosts stay.
@@ -43,6 +50,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
   /// `GRABBER_WHITEBOARD_PAGE_AFTER_INK=<page>`.
   public var pageAfterInk: Int?
   public var afterKeep: AfterKeep?
+  public var larryTimeout: LarryTimeout?
 
   public init(_ env: [String: String] = [:]) {
     saveFails = env["GRABBER_WHITEBOARD_SAVE_FAILS"] != nil
@@ -56,6 +64,10 @@ public struct WhiteboardHooks: Equatable, Sendable {
     if let hook = env["GRABBER_WHITEBOARD_AFTER_KEEP"] {
       let parts = hook.split(separator: ",").map(String.init)
       afterKeep = AfterKeep(delay: Double(parts.first ?? "") ?? 3, presses: Array(parts.dropFirst()))
+    }
+    let timeout = (env["GRABBER_WHITEBOARD_LARRY_TIMEOUT"] ?? "").split(separator: ",").map(String.init)
+    if let seconds = timeout.first.flatMap({ Double($0) }) {
+      larryTimeout = LarryTimeout(seconds: seconds, dismiss: timeout.dropFirst().contains("dismiss"))
     }
   }
 }

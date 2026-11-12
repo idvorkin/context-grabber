@@ -1,4 +1,4 @@
-//  Larry's clock on a board (spec 2026-11-12-whiteboard-conversation-design.md, *Larry's clock*, story 756; #879: "This
+//  Larry's clock on a board (spec 2026-11-12-whiteboard-conversation-design.md, *Larry's clock*, story 667; #879: "This
 //  seems very slow, are we crashing/hung?"). While a turn is out the bar's note begins with how long he has been looking
 //  at the picture, counted from when it went, so the app being away costs nothing; at the timeout his silence is a
 //  copyable problem. The board's model hands in the turn, the clock and whether the Cockpit is answering its looks.
@@ -30,14 +30,13 @@ public enum WhiteboardLarryClock {
     return cockpitAnswering ? looking : "\(looking), and the Cockpit isn't answering"
   }
 
-  /// The turn has been out `WhiteboardLarryTurn.timeout`: what the bar shows, and copies, before the board stops
-  /// waiting. `turn` as it was before the timeout, so what was waiting behind the picture is still in it.
+  /// His silence once `WhiteboardLarryTurn.tick` has stopped the board waiting (story 669): what the bar shows, and
+  /// copies. `turn` as it was before that tick, so what was waiting behind the picture is still in it. Nil with no
+  /// turn out.
   public static func didntAnswer(
     _ turn: WhiteboardLarryTurn, now: ContinuousClock.Instant, wallNow: Date, cockpitAnswering: Bool
   ) -> DidntAnswer? {
-    guard case .awaiting(let since, let sent) = turn.state, now - since >= WhiteboardLarryTurn.timeout,
-      let waited = seconds(turn, now: now)
-    else { return nil }
+    guard case .awaiting(_, let sent) = turn.state, let waited = seconds(turn, now: now) else { return nil }
     return DidntAnswer(
       sentAt: wallNow - TimeInterval(waited), waitedSeconds: waited, inkWaiting: (turn.latest ?? sent) > sent,
       wordsWaiting: turn.queued != nil, cockpitAnswering: cockpitAnswering)

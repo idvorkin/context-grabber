@@ -109,6 +109,9 @@ final class WhiteboardModel: ObservableObject {
   static let pasteLetters: CGFloat = 24
   /// How long Claude's ghosts stay when nothing replaces them.
   static let ghostSeconds = LaunchHooks.current.whiteboard.ghostSeconds ?? 30
+  /// How long a turn of Larry's is out before the board stops waiting.
+  static let larryTimeout: Duration =
+    LaunchHooks.current.whiteboard.larryTimeout.map { .seconds($0.seconds) } ?? WhiteboardLarryTurn.timeout
   /// How often an open board looks at its thread, how long one look waits, and how many failed looks before the bar
   /// says so.
   static let lookEvery: Duration = .seconds(3)
@@ -490,7 +493,7 @@ final class WhiteboardModel: ObservableObject {
       log.event("whiteboard_marks", ["action": "unplaced", "board": board.id, "row": row])
     }
     turns.larrySaid(update.say, marks: update.marks != nil)
-    // Story 756: his silence is said until he next answers.
+    // Story 762: his silence is said until he next answers.
     if update.replied, problem?.context == WhiteboardLarryClock.DidntAnswer.context { problem = nil }
     // A row landing while a picture is still going up answers an earlier one: the turn on its way stays out.
     if update.replied, !larrySending { larryFollowUp(larry.replied(version: boardVersion, now: .now), why: "reply") }
@@ -506,14 +509,16 @@ final class WhiteboardModel: ObservableObject {
       ])
   }
 
-  /// Story 662: his turn has been out too long; the board stops waiting, as if he had answered. Story 756: and says so,
+  /// Story 662: his turn has been out too long; the board stops waiting, as if he had answered. Story 669: and says so,
   /// as a copyable problem that stays until he next answers or Igor dismisses it, whatever picture goes next.
   private func larryTimedOut() {
     let now = ContinuousClock.now
-    let silence = WhiteboardLarryClock.didntAnswer(larry, now: now, wallNow: Date(), cockpitAnswering: !larryAway)
-    guard let next = larry.tick(version: boardVersion, now: now) else { return }
+    let waiting = larry
+    guard let next = larry.tick(version: boardVersion, now: now, timeout: Self.larryTimeout) else { return }
     var facts: [String: Any] = [:]
-    if let silence {
+    if let silence = WhiteboardLarryClock.didntAnswer(
+      waiting, now: now, wallNow: Date(), cockpitAnswering: !larryAway)
+    {
       let sentAt = silence.sentAt.formatted(.iso8601)
       facts = [
         "problem": silence.context, "sent_at": sentAt, "waited_s": silence.waitedSeconds,
@@ -529,9 +534,21 @@ final class WhiteboardModel: ObservableObject {
         ])
     }
     larryFollowUp(next, why: "timeout", facts: facts)
+    dismissSoonForTests()
   }
 
-  /// Igor dismissed *Larry didn't answer*.
+  /// `GRABBER_WHITEBOARD_LARRY_TIMEOUT=<seconds>,dismiss`: *Larry didn't answer* goes 3 s after it shows, as a tap on
+  /// *Dismiss* would take it, for the simulator.
+  private func dismissSoonForTests() {
+    guard LaunchHooks.current.whiteboard.larryTimeout?.dismiss == true else { return }
+    Task { [weak self] in
+      try? await Task.sleep(for: .seconds(3))
+      guard let self, self.problem?.context == WhiteboardLarryClock.DidntAnswer.context else { return }
+      self.dismissProblem()
+    }
+  }
+
+  /// Igor dismissed *Larry didn't answer* (story 761).
   func dismissProblem() {
     log.event("whiteboard", ["action": "problem_dismissed", "board": board.id, "context": problem?.context ?? ""])
     problem = nil
@@ -1210,7 +1227,7 @@ struct WhiteboardView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      // Story 756: while Larry is looking the note begins with his clock, so it ticks once a second; else it's still.
+      // Story 667: while Larry is looking the note begins with his clock, so it ticks once a second; else it's still.
       if model.larry.looking {
         TimelineView(.periodic(from: .now, by: 1)) { _ in noteText(now: .now) }
       } else {
@@ -1219,7 +1236,7 @@ struct WhiteboardView: View {
       if let problem = model.problem {
         HStack(alignment: .firstTextBaseline) {
           BugProblemView(problem: problem, logger: logger)
-          // Story 756: his silence stays until he next answers or this.
+          // Stories 761, 762: his silence stays until he next answers or this.
           if problem.context == WhiteboardLarryClock.DidntAnswer.context {
             Spacer()
             Button("Dismiss") { model.dismissProblem() }.font(.footnote).buttonStyle(.borderless)
@@ -1383,7 +1400,7 @@ struct WhiteboardView: View {
     .onReceive(reportOpen) { open in if open { model.stopMic(why: "report") } }
   }
 
-  /// The bar's note, Larry's state first so it is never what gets cut off (story 756). VoiceOver reads his state in
+  /// The bar's note, Larry's state first so it is never what gets cut off (story 667). VoiceOver reads his state in
   /// words when it reaches the note, not on every tick.
   @ViewBuilder private func noteText(now: ContinuousClock.Instant) -> some View {
     let answering = !model.larryAway
@@ -1409,7 +1426,7 @@ struct WhiteboardView: View {
     return [
       model.turnNote,
       model.pasteNote,
-      // While he is looking his state says it (story 756).
+      // While he is looking his state says it (story 760).
       model.larryAway && !model.larry.looking ? "Larry's marks: the Cockpit isn't answering" : nil,
       model.micOn ? model.heardNote.map { "Heard: \($0)" } ?? "Listening…" : nil,
       count == 0 ? nil : "\(count) suggestion\(count == 1 ? "" : "s"): tap one to keep it",

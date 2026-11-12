@@ -61,6 +61,14 @@ final class WhiteboardLarryTurnTests: XCTestCase {
     XCTAssertNil(turn.tick(version: 1, now: at(400)), "no turn out")
   }
 
+  func testAShorterTimeoutEndsTheTurnSooner() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.paused(version: 1, words: nil, now: at(0))
+    XCTAssertNil(turn.tick(version: 1, now: at(4), timeout: .seconds(5)), "still in time")
+    XCTAssertEqual(turn.tick(version: 1, now: at(5), timeout: .seconds(5)), .done)
+    XCTAssertFalse(turn.looking)
+  }
+
   func testATimeoutWithTheBoardMovedOnSendsTheLatest() {
     var turn = WhiteboardLarryTurn()
     _ = turn.paused(version: 1, words: nil, now: at(0))
