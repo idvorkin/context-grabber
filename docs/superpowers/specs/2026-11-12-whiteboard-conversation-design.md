@@ -47,15 +47,64 @@ the longest wait.
 - **VoiceOver** reads the state as *Larry has been looking for 42 seconds*, when asked, not on every tick.
 - **The Pencil keeps drawing** throughout; the clock never takes a touch.
 
+## A repeat tap sends nothing (Igor, 2026-11-12; changes story 662)
+
+Six taps on *Larry's turn* and one on *Send to Larry* in twelve seconds each sent Larry the same picture. He had to
+say so himself.
+
+- **While Larry is looking at a picture and nothing has changed since it went** (no new ink, no words waiting),
+  *Larry's turn* and *Send to Larry* send nothing.
+- **The tap is answered.** For two seconds the note's state reads **Larry already has this · 0:12**, then goes back to
+  the clock.
+- **Anything new and the tap sends as before**: new ink or waiting words go at once as a fresh picture and the clock
+  restarts.
+- **With no turn out, *Larry's turn* always sends**, new ink or not: asking him to look again is a real request.
+  *Send to Larry* keeps its own rule (off until the next stroke).
+- **Every tap changes something on screen within a quarter of a second**: the clock appears or restarts, or the note
+  says why nothing went.
+
+## One line that opens (Igor, 2026-11-12: "some kind of collapse expand conversation")
+
+### Closed: one line
+
+The note is one line and never two. It doesn't change height, so it never moves the paper.
+
+- **First: Larry's state**, when a turn is out: the clock, then what is waiting to go when he answers, as
+  **next: ink**, **next: words** or **next: ink + words**.
+- **Then the newest thing said, by whoever said it last**: Larry's line, or what the mic last heard (*You: …*), or
+  *Listening…* with the mic open and nothing heard. When Igor's words don't fit, the end is kept and the start is
+  cut, because the newest words are the ones he is checking. Larry's line keeps its start.
+- **Last: how many suggestions are showing** (*3 to keep*) and a chevron.
+- The note's other messages (a paste cut short, *Sent to Larry*, a look-only reason) take the middle for a few
+  seconds and give it back.
+- With nothing to say, there is no line, as today.
+
+### Open: the conversation
+
+A finger tap on the line opens a panel under it, over the top of the board.
+
+- **It lies over the board and doesn't move it.** At most a third of the screen tall; more scrolls inside it.
+- **It shows the recent end of the board's thread as it stands**: Larry's words in full, and for each picture of
+  Igor's the words that went with it and its mark from the Cockpit (received, seen, done). Newest at the bottom, where
+  it opens. Up to the last ten messages. *Open in Chat* opens the whole thread.
+- **Under them, what is live**: the turn that's out with its clock, what is waiting to go next with the waiting words
+  in full, and what the mic is hearing.
+- **A board with no thread yet** shows only what is live.
+- **Text can be selected and copied.**
+- **The Pencil never acts on the panel**: it neither draws through it nor scrolls it. A stroke that starts on the
+  board below draws as usual and the panel stays open. Fingers scroll and tap it.
+- **It closes on a tap on the line.** It doesn't close when Larry answers or when Igor draws. Open or closed is
+  remembered for the next board.
+- **Suggestions under the panel can't be tapped** while it is open; the line's *3 to keep* is the hint to close it.
+- **On an iPhone** there is no panel: a tap on the line opens the board's thread in Chat, when it has one.
+- **Not here:** how each picture was sent, how much ink was new, how long each answer took. That is for a page on
+  the Cockpit.
+
 ## Under discussion (not built; on #879)
 
-- **Where the picture is.** The Cockpit already marks each message received, seen and done. The state could say
-  *Sent* until Larry has picked the picture up and *Larry has it* after, with *Larry hasn't picked this up* as the
-  honest slow signal. Waiting on Larry's answer about when those marks are made.
-- **A repeat tap with nothing new sends nothing** and says *Larry already has this*. Changes story 662; waiting on
-  Igor.
-- **One line that opens.** The note becomes a single line (state, newest words, what is waiting to go next) and a tap
-  opens the recent end of the board's thread over the top of the board. Waiting on Igor.
+- **Where the picture is.** The state could say *Sent* until Larry has picked the picture up and *Larry has it*
+  after, with *Larry hasn't picked this up* as the honest slow signal. Waiting on Larry's answer about when the
+  Cockpit's marks are made.
 - **Larry's side:** a progress note while he works, words before marks, and timings on the Cockpit's thread page.
   Asked of Larry.
 
@@ -74,3 +123,12 @@ the longest wait.
 - A pause on a Haiku or Sonnet board starts no clock; *Larry's turn* on one does.
 - The board shows one problem at a time: a later failure takes the place of *Larry didn't answer*.
 - *Dismiss* beside *Larry didn't answer* removes it.
+- Tap *Larry's turn* twice with nothing drawn between: one picture is on his thread, and the second tap's answer is
+  *Larry already has this*.
+- Tap *Larry's turn* while he is looking, after drawing a stroke: a second picture goes and the clock restarts.
+- Larry's long reply and a long *Heard:* are showing: the note is one line, the clock whole at its start.
+- Draw while he is looking: the state gains *next: ink*.
+- Tap the line: the panel opens over the board, the ink below hasn't moved, and Larry's whole reply can be read.
+- Draw with the Pencil below the open panel: the stroke lands and the panel stays open.
+- Close the board with the panel open and open another: the panel is open there.
+- On an iPhone, tap the line on a board with a thread: Chat opens on that thread.

@@ -4131,3 +4131,64 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Given:** a board whose pauses Haiku or Sonnet answers, and a pause that started no clock
 - **When:** I tap *Larry's turn*
 - **Then:** the bar's note begins *Larry · 0:00* and counts until he answers
+
+---
+
+### User Story 765:
+
+- **Summary:** A repeat tap doesn't send Larry the same picture again
+- **Status:** not yet implemented
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) (seven identical pictures in twelve seconds)
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *A repeat tap sends nothing*
+
+#### Use Case:
+- **As someone** waiting on Larry and not sure my tap took
+- **I want to** be told he already has the picture
+- **so that** his thread isn't filled with copies and I know the tap was heard
+
+#### Acceptance Criteria:
+- **Scenario:** Nothing new since the picture
+- **Given:** Larry is looking at a picture and I have drawn and said nothing since
+- **When:** I tap *Larry's turn* or *Send to Larry*
+- **Then:** no picture goes, and the note says *Larry already has this* with the clock for two seconds
+
+- **Scenario:** Something new
+- **Given:** Larry is looking and I have drawn a stroke since
+- **When:** I tap *Larry's turn*
+- **Then:** a fresh picture goes at once and the clock restarts
+
+---
+
+### User Story 766:
+
+- **Summary:** The board's note is one line that opens into the conversation
+- **Status:** not yet implemented
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
+
+#### Use Case:
+- **As someone** drawing and talking with Larry on a board
+- **I want to** glance at one line for where things stand and open it to read what was said
+- **so that** his reply and my own words aren't cut off, and reading them doesn't take me off the board
+
+#### Acceptance Criteria:
+- **Scenario:** One line
+- **Given:** Larry's long reply and a long line from the mic
+- **When:** I look at the note
+- **Then:** it is one line: his state first, the newest words after it, and the paper hasn't moved
+
+- **Scenario:** What is waiting
+- **Given:** Larry is looking
+- **When:** I draw and speak
+- **Then:** the state says *next: ink + words*
+
+- **Scenario:** Open it
+- **Given:** a board with a thread
+- **When:** I tap the line with a finger
+- **Then:** a panel over the top of the board shows the last messages of the thread in full and what is live, the ink below hasn't moved, and the Pencil still draws below it
+
+- **Scenario:** On a phone
+- **Given:** a board with a thread, on an iPhone
+- **When:** I tap the line
+- **Then:** Chat opens on the board's thread
+
