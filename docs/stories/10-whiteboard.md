@@ -212,7 +212,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** Larry answers on the board
 - **Given:** the board has a drawing
 - **When:** I tap *Larry's turn* and carry on
-- **Then:** the bar says *Larry is looking…* until he answers (story 662), with no spinner, and the Pencil keeps drawing. When he answers, faint blue shapes and a line from him appear with no tap, nothing on the board changes until I keep one, Chat has a thread named after the board with the picture and his words, and the board's next turn goes to it
+- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 756) until he answers (story 662), with no spinner, and the Pencil keeps drawing. When he answers, faint blue shapes and a line from him appear with no tap, nothing on the board changes until I keep one, Chat has a thread named after the board with the picture and his words, and the board's next turn goes to it
 
 ---
 
@@ -891,7 +891,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** Hand him the board
 - **Given:** I have drawn on the board
 - **When:** I tap *Larry's turn*
-- **Then:** the bar says *Larry is looking…* as soon as the picture is taken (story 662), with no spinner, and I can keep drawing and, once that picture has gone, tap it again for a newer one
+- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 756) as soon as the picture is taken (story 662), with no spinner, and I can keep drawing and, once that picture has gone, tap it again for a newer one
 
 ---
 
@@ -3874,7 +3874,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** A Larry board
 - **Given:** a board whose responder is Larry, with Ghosts on
 - **When:** I draw and pause
-- **Then:** no orange ghosts come; the bar says *Larry is looking…*, the picture is in the board's chat thread, and his blue marks show when he answers
+- **Then:** no orange ghosts come; the bar's note begins with Larry's clock (*Larry · 0:00*, story 756), the picture is in the board's chat thread, and his blue marks show when he answers
 
 - **Scenario:** The Cockpit can't take the choice
 - **Given:** the Cockpit can't be reached
@@ -3936,7 +3936,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** Pauses while he is looking
 - **Given:** a Larry board, a picture sent and no answer from him yet
 - **When:** I draw and pause several times, and say "and label it"
-- **Then:** the bar says *Larry is looking…* and no new picture goes; when he answers, exactly one picture of the board as it is then goes, with "and label it" as its message
+- **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 756) and no new picture goes; when he answers, exactly one picture of the board as it is then goes, with "and label it" as its message
 
 - **Scenario:** Nothing new since
 - **Given:** a Larry board, a picture sent, and no pause since
@@ -3976,7 +3976,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 756:
 
 - **Summary:** See how long Larry has been looking
-- **Status:** not yet implemented
+- **Status:** implemented in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205); verified by host tests (`WhiteboardLarryClockTests`, `WhiteboardLarryTurnTests`, `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
 - **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("This seems very slow, are we crashing/hung?")
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md)
 
