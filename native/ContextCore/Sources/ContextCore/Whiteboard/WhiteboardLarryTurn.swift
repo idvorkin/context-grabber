@@ -8,8 +8,6 @@
 public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// How long a turn is out before the board stops waiting for his answer. His turns took 67 s and 78 s (2026-11).
   public static let timeout: Duration = .seconds(180)
-  /// The bar's words while a turn is out.
-  public static let lookingNote = "Larry is looking…"
 
   public enum State: Equatable, Sendable {
     case idle
@@ -34,7 +32,7 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
 
   public init() {}
 
-  /// A turn is out: the bar says he is looking.
+  /// A turn is out: the bar shows how long he has been looking (`WhiteboardLarryClock`, story 756).
   public var looking: Bool { state != .idle }
 
   /// A pause on a Larry board, the board at `version`, `words` spoken with it.
