@@ -242,7 +242,7 @@ final class LaunchHooksTests: XCTestCase {
       "GRABBER_WHITEBOARD_SAVE_FAILS": "1", "GRABBER_WHITEBOARD_GHOST_SECONDS": "2.5", "GRABBER_WHITEBOARD_GRID": "on",
       "GRABBER_WHITEBOARD_SAY": "draw a cat", "GRABBER_WHITEBOARD_KEEP": "first", "GRABBER_WHITEBOARD_PASTE": "hello",
       "GRABBER_WHITEBOARD_AFTER_INK": "copy,paste", "GRABBER_WHITEBOARD_PAGE_AFTER_INK": "2",
-      "GRABBER_WHITEBOARD_AFTER_KEEP": "1.5,undo,redo",
+      "GRABBER_WHITEBOARD_AFTER_KEEP": "1.5,undo,redo", "GRABBER_WHITEBOARD_LARRY_TIMEOUT": "5,dismiss",
     ])
     XCTAssertTrue(board.saveFails)
     XCTAssertEqual(board.ghostSeconds, 2.5)
@@ -253,6 +253,10 @@ final class LaunchHooksTests: XCTestCase {
     XCTAssertEqual(board.afterInk, ["copy", "paste"])
     XCTAssertEqual(board.pageAfterInk, 2)
     XCTAssertEqual(board.afterKeep, WhiteboardHooks.AfterKeep(delay: 1.5, presses: ["undo", "redo"]))
+    XCTAssertEqual(board.larryTimeout, WhiteboardHooks.LarryTimeout(seconds: 5, dismiss: true))
+    XCTAssertEqual(
+      WhiteboardHooks(["GRABBER_WHITEBOARD_LARRY_TIMEOUT": "2.5"]).larryTimeout,
+      WhiteboardHooks.LarryTimeout(seconds: 2.5, dismiss: false), "the problem stays unless the hook says dismiss")
     XCTAssertEqual(LaunchHooks(["GRABBER_WHITEBOARD_GRID": "on"]).whiteboard.grid, true)
   }
 
@@ -267,13 +271,15 @@ final class LaunchHooksTests: XCTestCase {
     XCTAssertNil(none.afterInk)
     XCTAssertNil(none.pageAfterInk)
     XCTAssertNil(none.afterKeep)
+    XCTAssertNil(none.larryTimeout)
 
     let odd = WhiteboardHooks([
       "GRABBER_WHITEBOARD_SAVE_FAILS": "", "GRABBER_WHITEBOARD_GHOST_SECONDS": "long", "GRABBER_WHITEBOARD_GRID": "1",
       "GRABBER_WHITEBOARD_SAY": "", "GRABBER_WHITEBOARD_KEEP": "all", "GRABBER_WHITEBOARD_PASTE": "",
       "GRABBER_WHITEBOARD_AFTER_INK": "", "GRABBER_WHITEBOARD_PAGE_AFTER_INK": "two",
-      "GRABBER_WHITEBOARD_AFTER_KEEP": "undo,redo",
+      "GRABBER_WHITEBOARD_AFTER_KEEP": "undo,redo", "GRABBER_WHITEBOARD_LARRY_TIMEOUT": "dismiss",
     ])
+    XCTAssertNil(odd.larryTimeout, "no seconds, no hook: the turn waits its 3 minutes")
     XCTAssertTrue(odd.saveFails, "set to anything, even nothing")
     XCTAssertNil(odd.ghostSeconds)
     XCTAssertFalse(odd.grid)
