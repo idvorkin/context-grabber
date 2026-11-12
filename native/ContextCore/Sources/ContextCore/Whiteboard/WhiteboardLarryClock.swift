@@ -7,11 +7,13 @@ import Foundation
 
 public enum WhiteboardLarryClock {
   /// His state at the start of the bar's note, *Larry · 0:42*, with *Cockpit not answering* when the board's looks at
-  /// his thread have been failing. Nil with no turn out.
+  /// his thread have been failing. For two seconds after a tap that sent nothing it reads *Larry already has this · 0:12*
+  /// (story 765). Nil with no turn out.
   public static func state(_ turn: WhiteboardLarryTurn, now: ContinuousClock.Instant, cockpitAnswering: Bool) -> String?
   {
     guard let seconds = seconds(turn, now: now) else { return nil }
-    let clock = "Larry · \(seconds / 60):\(String(format: "%02d", seconds % 60))"
+    let who = alreadyHas(turn, now: now) ? "Larry already has this" : "Larry"
+    let clock = "\(who) · \(seconds / 60):\(String(format: "%02d", seconds % 60))"
     return cockpitAnswering ? clock : "\(clock) · Cockpit not answering"
   }
 
@@ -26,7 +28,9 @@ public enum WhiteboardLarryClock {
       minutes == 0 ? nil : count(minutes, "minute"),
       minutes > 0 && rest == 0 ? nil : count(rest, "second"),
     ].compactMap { $0 }.joined(separator: " ")
-    let looking = "Larry has been looking for \(words)"
+    let looking =
+      alreadyHas(turn, now: now)
+      ? "Larry already has this, and has been looking for \(words)" : "Larry has been looking for \(words)"
     return cockpitAnswering ? looking : "\(looking), and the Cockpit isn't answering"
   }
 
@@ -64,6 +68,12 @@ public enum WhiteboardLarryClock {
   private static func seconds(_ turn: WhiteboardLarryTurn, now: ContinuousClock.Instant) -> Int? {
     guard case .awaiting(let since, _) = turn.state else { return nil }
     return max(0, Int((now - since).components.seconds))
+  }
+
+  /// A tap sent nothing within the last two seconds.
+  private static func alreadyHas(_ turn: WhiteboardLarryTurn, now: ContinuousClock.Instant) -> Bool {
+    guard let at = turn.alreadyHasAt else { return false }
+    return now - at < WhiteboardLarryTurn.alreadyHasFor
   }
 
   private static func count(_ n: Int, _ unit: String) -> String { "\(n) \(unit)\(n == 1 ? "" : "s")" }

@@ -3953,6 +3953,11 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **When:** I tap *Larry's turn*
 - **Then:** a picture of the board goes at once with any words that waited, and his answer to the earlier one sends nothing more
 
+- **Scenario:** Nothing new to show him (story 765)
+- **Given:** he is looking at a picture and I have drawn and said nothing since it went
+- **When:** I tap *Larry's turn* or *Send to Larry*
+- **Then:** no picture goes and the note says *Larry already has this*
+
 ---
 
 ### User Story 746:

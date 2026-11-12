@@ -60,6 +60,23 @@ final class WhiteboardLarryClockTests: XCTestCase {
     XCTAssertEqual(WhiteboardLarryClock.state(turn, now: at(50), cockpitAnswering: true), "Larry · 0:50")
   }
 
+  /// Story 765: a tap that sent nothing is answered in the state for two seconds.
+  func testARepeatTapIsAnsweredForTwoSeconds() {
+    var turn = sent()
+    _ = turn.tapped(version: 1, now: at(12))
+    XCTAssertEqual(WhiteboardLarryClock.state(turn, now: at(12), cockpitAnswering: true), "Larry already has this · 0:12")
+    XCTAssertEqual(
+      WhiteboardLarryClock.state(turn, now: at(13) + .milliseconds(900), cockpitAnswering: true),
+      "Larry already has this · 0:13")
+    XCTAssertEqual(WhiteboardLarryClock.state(turn, now: at(14), cockpitAnswering: true), "Larry · 0:14")
+    XCTAssertEqual(
+      WhiteboardLarryClock.spoken(turn, now: at(12), cockpitAnswering: true),
+      "Larry already has this, and has been looking for 12 seconds")
+    _ = turn.tapped(version: 2, now: at(13))
+    XCTAssertEqual(
+      WhiteboardLarryClock.state(turn, now: at(13), cockpitAnswering: true), "Larry · 0:00", "a new picture went")
+  }
+
   func testVoiceOverSaysItInWords() {
     let turn = sent()
     XCTAssertEqual(

@@ -299,12 +299,25 @@ final class WhiteboardModel: ObservableObject {
   }
 
   /// Story 380: the picture goes to the board's thread and Igor keeps drawing; Larry's marks come when they come. It
-  /// goes now, whatever a Larry board was holding for his answer, and takes the words that waited (story 662).
+  /// goes now, whatever a Larry board was holding for his answer, and takes the words that waited (story 662), unless
+  /// he is already looking at this very board (story 765).
   func larryTurn() {
     guard !larrySending else { return }
-    let words = larry.tapped(version: boardVersion, now: .now)
+    guard case .send(let words) = larry.tapped(version: boardVersion, now: .now) else {
+      return alreadyHas(from: "button")
+    }
     let turn = larry.state
     Task { await handToLarry(turn, said: words) }
+  }
+
+  /// Story 765: a tap that sent nothing, because Larry is looking at the board as it is and no words wait. The note says
+  /// *Larry already has this* for two seconds (`WhiteboardLarryClock`).
+  private func alreadyHas(from: String) {
+    var event: [String: Any] = ["action": "larry_already_has", "board": board.id, "from": from]
+    if case .awaiting(let since, _) = larry.state {
+      event["looking_s"] = Int((ContinuousClock.now - since).components.seconds)
+    }
+    log.event("whiteboard", event)
   }
 
   /// The turn `larry` has already counted as out: `said`, words spoken to a Larry board, go as the picture's message
@@ -1042,14 +1055,17 @@ final class WhiteboardModel: ObservableObject {
   /// on the board's thread with Larry, titled with the board's name; the first one starts it (story 381).
   func send() {
     guard sent == nil, !larrySending, let (rect, scale) = pictureFrame() else { return }
+    // Story 662: a Send is Larry's turn too, out now whatever was held; words that waited go with it. Story 765: not
+    // while he is looking at the board as it is.
+    guard case .send(let words) = larry.tapped(version: boardVersion, now: .now) else {
+      return alreadyHas(from: "send")
+    }
+    let turn = larry.state
     let ink = picture(rect: rect, scale: scale)
     let jpeg = ink.jpegData(compressionQuality: 0.85) ?? Data()
     var draft = InboxDraft()
     draft.image = jpeg
     let title = store.index.board(board.id)?.title ?? board.title
-    // Story 662: a Send is Larry's turn too, out now whatever was held; words that waited go with it.
-    let words = larry.tapped(version: boardVersion, now: .now)
-    let turn = larry.state
     draft.text = words.map { "\(title): \($0)" } ?? title
     draft.whiteboard = WhiteboardPicture(board: board.id, title: title, rect: rect, scale: scale)
     // Story 424: the strokes wait beside the picture and go first when it goes.

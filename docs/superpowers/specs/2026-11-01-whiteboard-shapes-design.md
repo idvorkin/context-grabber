@@ -209,8 +209,8 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
   thread, and his blue marks arrive when he answers.
 - On a Larry board, draw and pause five times while he is looking: his thread gets no new picture until he answers,
   then exactly one, of the board as it is then. Pause again with nothing drawn since his answer: nothing more goes.
-  Speak while he is looking: the words arrive with that next picture. Tap *Larry's turn* while he is looking: a picture
-  goes at once. Leave him unanswering for 3 minutes: the bar stops saying he is looking.
+  Speak while he is looking: the words arrive with that next picture. Tap *Larry's turn* while he is looking, after a stroke: a picture
+  goes at once (with nothing drawn or said since the last one, nothing goes: [story 765](2026-11-12-whiteboard-conversation-design.md)). Leave him unanswering for 3 minutes: the bar stops saying he is looking.
 - With the Cockpit unreachable, pick another responder: the tick goes back and a copyable problem says why.
 - Every ghost turn's log line has the pause, render, encode and upload times in milliseconds, and the Cockpit's own log
   of that turn has the first three.
