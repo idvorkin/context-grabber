@@ -50,6 +50,15 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// A turn is out: the bar shows how long he has been looking (`WhiteboardLarryClock`, story 667).
   public var looking: Bool { state != .idle }
 
+  /// A pause saw the board move on since the picture he is looking at: a fresh one goes when he answers.
+  public var inkWaiting: Bool {
+    guard case .awaiting(_, let sent) = state, let latest else { return false }
+    return latest > sent
+  }
+
+  /// Words wait for the next picture.
+  public var wordsWaiting: Bool { queued != nil }
+
   /// A pause on a Larry board, the board at `version`, `words` spoken with it.
   public mutating func paused(version: Int, words: String?, now: ContinuousClock.Instant) -> Next {
     queue(words)

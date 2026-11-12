@@ -56,11 +56,18 @@ final class WhiteboardModel: ObservableObject {
   @Published private(set) var larryAway = false
   /// What the last paste left off or couldn't draw, shown until the board next changes (stories 392, 393).
   @Published private(set) var pasteNote: String?
-  /// The board's mic (story 345): open, on its way up, finishing its last words, and the last words it heard.
+  /// The board's mic (story 345): open, on its way up and finishing its last words.
   @Published private(set) var micOn = false
   @Published private(set) var micStarting = false
   @Published private(set) var micFinishing = false
-  @Published private(set) var heardNote: String?
+  /// The newest thing said, by Larry or the mic: the middle of the note's line (story 766).
+  @Published private(set) var lastSaid = WhiteboardSaid()
+  /// The note's other messages and when they appeared: they take the line's middle for a few seconds (story 766).
+  @Published private(set) var notice: WhiteboardNote.Notice?
+  /// The recent end of the board's thread, from the looks that bring Larry's marks: the open note's panel (story 766).
+  @Published private(set) var thread: [ChatMessage] = []
+  /// The note's panel is open, remembered for the next board (story 766).
+  @Published private(set) var conversationOpen = UserDefaults.standard.bool(forKey: WhiteboardModel.conversationKey)
   let board: BoardEntry
   /// Drawn on here, or only looked at: a board from another device (story 347) or from the old canvas (story 658).
   let editable: Bool
@@ -87,6 +94,7 @@ final class WhiteboardModel: ObservableObject {
   private let callLive: @MainActor () -> Bool
   private lazy var dictation = makeDictation()
   private var dictationWatches: Set<AnyCancellable> = []
+  private var noticeWatch: AnyCancellable?
   private var speech = WhiteboardSpeech()
   private var silenceTask: Task<Void, Never>?
   private var pauseTask: Task<Void, Never>?
@@ -105,6 +113,7 @@ final class WhiteboardModel: ObservableObject {
   private var lookFailures = 0
 
   static let ghostsKey = "whiteboard_ghosts"
+  static let conversationKey = "whiteboard_conversation_open"
   /// A pasted letter's height on screen, in points, at 100% and zoomed out.
   static let pasteLetters: CGFloat = 24
   /// How long Claude's ghosts stay when nothing replaces them.
@@ -155,6 +164,42 @@ final class WhiteboardModel: ObservableObject {
         "old_canvas": oldCanvas,
       ])
     if LaunchHooks.current.whiteboard.grid { setGrid(true) }
+    watchNotices()
+  }
+
+  /// Story 766: when the note's other messages change, so a new one takes the line's middle for a few seconds.
+  private func watchNotices() {
+    let lookOnly = lookOnlyNote
+    noticeWatch = $pasteNote.combineLatest($sent, $turns.map(\.note), $larryAway.combineLatest($larry.map(\.looking)))
+      .map { paste, sent, turnNote, away in
+        WhiteboardNote.notice(
+          paste: paste, sent: sent, turnNote: turnNote, marksAway: away.0, looking: away.1, lookOnly: lookOnly)
+      }
+      .removeDuplicates()
+      .sink { [weak self] text in
+        MainActor.assumeIsolated { self?.notice = text.map { WhiteboardNote.Notice(text: $0, since: .now) } }
+      }
+  }
+
+  /// The board has a thread with Larry on this device.
+  var threadKey: String? { threads.thread(board: board.id) }
+
+  /// Story 766: a tap on the note's line opens or closes the panel over the board, remembered for the next board; an
+  /// iPhone has no panel, so it opens the board's thread in Chat.
+  func tapNote(onPhone: Bool, openChat: (String) -> Void) {
+    switch WhiteboardNote.tap(onPhone: onPhone, thread: threadKey) {
+    case .toggle:
+      conversationOpen.toggle()
+      UserDefaults.standard.set(conversationOpen, forKey: Self.conversationKey)
+      log.event(
+        "whiteboard",
+        ["action": "conversation", "board": board.id, "open": conversationOpen, "messages": thread.count])
+    case .openChat(let key):
+      log.event("whiteboard", ["action": "conversation_chat", "board": board.id, "thread": key])
+      openChat(key)
+    case .nothing:
+      log.event("whiteboard", ["action": "conversation_chat", "board": board.id, "thread": ""])
+    }
   }
 
   func changed(_ new: PKDrawing) {
@@ -469,6 +514,8 @@ final class WhiteboardModel: ObservableObject {
       if Task.isCancelled { return }
       let status = (response as? HTTPURLResponse)?.statusCode
       if status == 200, let rows = WhiteboardMarks.rows(body) {
+        let recent = Array((ChatWire.messages(body) ?? []).suffix(WhiteboardNote.panelMessages))
+        if recent != self.thread { self.thread = recent }
         lookWorked(rows)
         return
       }
@@ -492,6 +539,7 @@ final class WhiteboardModel: ObservableObject {
   /// The Cockpit answered and no longer has the thread: the next picture starts a new one.
   private func threadGone(_ thread: String) {
     threads.forget(thread, board: board.id)
+    self.thread = []
     lookFailures = 0
     larryAway = false
     log.event("whiteboard_marks", ["action": "thread_gone", "board": board.id, "thread": thread])
@@ -506,6 +554,7 @@ final class WhiteboardModel: ObservableObject {
       log.event("whiteboard_marks", ["action": "unplaced", "board": board.id, "row": row])
     }
     turns.larrySaid(update.say, marks: update.marks != nil)
+    lastSaid.larrySaid(update.say, marks: update.marks != nil)
     // Story 762: his silence is said until he next answers.
     if update.replied, problem?.context == WhiteboardLarryClock.DidntAnswer.context { problem = nil }
     // A row landing while a picture is still going up answers an earlier one: the turn on its way stays out.
@@ -646,7 +695,7 @@ final class WhiteboardModel: ObservableObject {
     }
     if problem?.context == "WhiteboardView.mic" { problem = nil }
     speech = WhiteboardSpeech()
-    heardNote = nil
+    lastSaid.micOpened()
     log.event("whiteboard", ["action": "mic_on", "board": board.id])
     dictation.toggle(note: "") { [weak self] text in self?.heard(text) }
   }
@@ -664,7 +713,7 @@ final class WhiteboardModel: ObservableObject {
 
   private func heard(_ text: String) {
     speech.heard(text)
-    heardNote = String(text.suffix(80))
+    lastSaid.heard(text)
     silenceTask?.cancel()
     silenceTask = Task { [weak self] in
       try? await Task.sleep(for: .seconds(1))
@@ -1228,6 +1277,9 @@ struct WhiteboardView: View {
   private let log: SessionLog
   private let callLive: AnyPublisher<Bool, Never>
   private let reportOpen: AnyPublisher<Bool, Never>
+  /// Story 766: an iPhone has no conversation panel; a tap on the note opens the board's thread in Chat.
+  private let onPhone: Bool
+  private let openChat: (String) -> Void
 
   init(board: BoardEntry, store: WhiteboardStore, app: AppModel) {
     _model = StateObject(
@@ -1239,15 +1291,18 @@ struct WhiteboardView: View {
     reportOpen = app.reporter.$flow.map(\.isPresented).removeDuplicates().eraseToAnyPublisher()
     logger = app.bugLogger
     log = app.log
+    onPhone = store.onPhone
+    openChat = { [weak app] key in app?.open(route: .chat(thread: key), from: "whiteboard") }
   }
 
   var body: some View {
     VStack(spacing: 0) {
-      // Story 667: while Larry is looking the note begins with his clock, so it ticks once a second; else it's still.
-      if model.larry.looking {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in noteText(now: .now) }
+      // Story 667: while Larry is looking the note begins with his clock, so it ticks once a second, as it does while a
+      // message holds the middle (story 766); else it's still.
+      if WhiteboardNote.ticks(larry: model.larry, notice: model.notice) {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in noteLine(now: .now) }
       } else {
-        noteText(now: .now)
+        noteLine(now: .now)
       }
       if let problem = model.problem {
         HStack(alignment: .firstTextBaseline) {
@@ -1263,6 +1318,14 @@ struct WhiteboardView: View {
       }
       Group {
         PaperBoardCanvas(model: model, log: log)
+      }
+      // Story 766: the conversation lies over the top of the board and never moves or resizes the paper.
+      .overlay(alignment: .top) {
+        if model.conversationOpen, !onPhone {
+          GeometryReader { space in
+            conversation.frame(maxHeight: space.size.height / 3, alignment: .top)
+          }
+        }
       }
       .ignoresSafeArea(edges: .bottom)
     }
@@ -1416,37 +1479,154 @@ struct WhiteboardView: View {
     .onReceive(reportOpen) { open in if open { model.stopMic(why: "report") } }
   }
 
-  /// The bar's note, Larry's state first so it is never what gets cut off (story 667). VoiceOver reads his state in
-  /// words when it reaches the note, not on every tick.
-  @ViewBuilder private func noteText(now: ContinuousClock.Instant) -> some View {
-    let answering = !model.larryAway
-    let rest = noteParts
-    if let state = WhiteboardLarryClock.state(model.larry, now: now, cockpitAnswering: answering),
-      let spoken = WhiteboardLarryClock.spoken(model.larry, now: now, cockpitAnswering: answering)
+  /// The bar's note, one line (story 766): Larry's state first so it is never what gets cut off (story 667), the newest
+  /// thing said, how many suggestions show, and a chevron. A finger tap opens the conversation over the board. VoiceOver
+  /// reads his state in words when it reaches the note, not on every tick.
+  @ViewBuilder private func noteLine(now: ContinuousClock.Instant) -> some View {
+    if let line = WhiteboardNote.line(
+      larry: model.larry, now: now, cockpitAnswering: !model.larryAway, said: model.lastSaid, micOn: model.micOn,
+      notice: model.notice, ghosts: model.ghosts.count)
     {
-      note(([state] + rest).joined(separator: " · "))
-        .accessibilityLabel(([spoken] + rest).joined(separator: ", "))
-    } else if !rest.isEmpty {
-      note(rest.joined(separator: " · "))
+      let tap = WhiteboardNote.tap(onPhone: onPhone, thread: model.threadKey)
+      HStack(spacing: 6) {
+        if let state = line.state {
+          Text(state).lineLimit(1).layoutPriority(1)
+            .accessibilityLabel(line.spokenState ?? state)
+            .accessibilityIdentifier("whiteboard-note-state")
+          if line.middle != nil { Text("·") }
+        }
+        if let middle = line.middle {
+          Text(middle).lineLimit(1).truncationMode(line.keepsEnd ? .head : .tail)
+            .accessibilityIdentifier("whiteboard-note-said")
+        }
+        Spacer(minLength: 0)
+        if let keep = line.keep { Text(keep).lineLimit(1).fixedSize() }
+        if tap != .nothing {
+          Button {
+            model.tapNote(onPhone: onPhone, openChat: openChat)
+          } label: {
+            Image(systemName: onPhone ? "chevron.right" : model.conversationOpen ? "chevron.up" : "chevron.down")
+          }
+          .buttonStyle(.borderless)
+          .accessibilityLabel(
+            onPhone ? "Open in Chat" : model.conversationOpen ? "Hide the conversation" : "Show the conversation"
+          )
+          .accessibilityIdentifier("whiteboard-note-chevron")
+        }
+      }
+      .font(.footnote).foregroundStyle(.secondary)
+      .padding(.vertical, 4).padding(.horizontal)
+      .contentShape(Rectangle())
+      .onTapGesture { model.tapNote(onPhone: onPhone, openChat: openChat) }
+      .accessibilityElement(children: .contain)
+      .accessibilityIdentifier("whiteboard-note")
     }
   }
 
-  private func note(_ text: String) -> some View {
-    Text(text).font(.footnote).foregroundStyle(.secondary).lineLimit(2).minimumScaleFactor(0.8)
-      .padding(.vertical, 4).padding(.horizontal)
+  /// Story 766: the open note, over the top of the board: the recent end of the board's thread, selectable, then what is
+  /// live, and *Open in Chat*. The Pencil never acts on it: the thread's text takes finger touches only, and the rest
+  /// holds nothing to scroll or draw on.
+  private var conversation: some View {
+    let tick = WhiteboardNote.ticks(larry: model.larry, notice: nil)
+    return VStack(alignment: .leading, spacing: 4) {
+      let rows = WhiteboardNote.panel(
+        thread: model.thread, larry: model.larry, now: .now, cockpitAnswering: !model.larryAway, said: model.lastSaid,
+        micOn: model.micOn)
+      WhiteboardConversationText(rows: rows.filter { $0.kind != .live })
+      if tick {
+        TimelineView(.periodic(from: .now, by: 1)) { _ in liveRows(now: .now) }
+      } else {
+        liveRows(now: .now)
+      }
+      if let key = model.threadKey {
+        Button("Open in Chat") { openChat(key) }
+          .font(.footnote).buttonStyle(.borderless)
+          .accessibilityIdentifier("whiteboard-conversation-chat")
+      }
+    }
+    .padding(.horizontal).padding(.vertical, 6)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.regularMaterial)
+    .contentShape(Rectangle())
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("whiteboard-conversation")
   }
 
-  /// Everything the note carries after Larry's state.
-  private var noteParts: [String] {
-    let count = model.ghosts.count
-    return [
-      model.turnNote,
-      model.pasteNote,
-      // While he is looking his state says it (story 760).
-      model.larryAway && !model.larry.looking ? "Larry's marks: the Cockpit isn't answering" : nil,
-      model.micOn ? model.heardNote.map { "Heard: \($0)" } ?? "Listening…" : nil,
-      count == 0 ? nil : "\(count) suggestion\(count == 1 ? "" : "s"): tap one to keep it",
-      model.sent ?? model.lookOnlyNote,
-    ].compactMap { $0 }
+  /// What is live under the thread: the turn that's out, what waits to go next, what the mic is hearing.
+  private func liveRows(now: ContinuousClock.Instant) -> some View {
+    let live = WhiteboardNote.panel(
+      thread: [], larry: model.larry, now: now, cockpitAnswering: !model.larryAway, said: model.lastSaid,
+      micOn: model.micOn)
+    return ForEach(live) { row in
+      HStack(alignment: .firstTextBaseline, spacing: 4) {
+        Text("\(row.who):").bold()
+        Text(row.text)
+      }
+      .font(.footnote).foregroundStyle(.secondary)
+      .textSelection(.enabled)
+      .accessibilityElement(children: .combine)
+      .accessibilityIdentifier("whiteboard-conversation-\(row.id)")
+    }
+  }
+}
+
+/// Story 766: the board's thread in the open note, one text that can be selected and copied across rows and scrolls
+/// inside the panel, newest at the bottom. A UITextView rather than SwiftUI text: its gestures can be told to take
+/// fingers only, so the Pencil neither scrolls nor selects it, and a ticking clock beside it doesn't reset a selection.
+private struct WhiteboardConversationText: UIViewRepresentable {
+  let rows: [WhiteboardNote.Row]
+
+  func makeUIView(context: Context) -> UITextView {
+    let view = UITextView()
+    view.isEditable = false
+    view.isSelectable = true
+    view.backgroundColor = .clear
+    view.textContainerInset = .zero
+    view.textContainer.lineFragmentPadding = 0
+    view.adjustsFontForContentSizeCategory = true
+    view.accessibilityIdentifier = "whiteboard-conversation-text"
+    return view
+  }
+
+  func updateUIView(_ view: UITextView, context: Context) {
+    let text = Self.text(rows)
+    fingersOnly(view)
+    guard view.attributedText != text else { return }
+    view.attributedText = text
+    view.scrollRangeToVisible(NSRange(location: text.length, length: 0))
+  }
+
+  func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
+    let width = proposal.width ?? 320
+    let fit = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+    return CGSize(width: width, height: min(fit.height, proposal.height ?? fit.height))
+  }
+
+  /// ponytail: every gesture the text view has now, set again on each update since UIKit adds some lazily; a Pencil
+  /// touch on it then does nothing at all. If one ever slips through, subclass UITextView and filter in its
+  /// `gestureRecognizerShouldBegin`.
+  private func fingersOnly(_ view: UITextView) {
+    let fingers = [NSNumber(value: UITouch.TouchType.direct.rawValue)]
+    for gesture in view.gestureRecognizers ?? [] where gesture.allowedTouchTypes != fingers {
+      gesture.allowedTouchTypes = fingers
+    }
+  }
+
+  private static func text(_ rows: [WhiteboardNote.Row]) -> NSAttributedString {
+    let body = UIFont.preferredFont(forTextStyle: .footnote)
+    let bold = UIFont(
+      descriptor: body.fontDescriptor.withSymbolicTraits(.traitBold) ?? body.fontDescriptor, size: body.pointSize)
+    let text = NSMutableAttributedString()
+    for (index, row) in rows.enumerated() {
+      if index > 0 { text.append(NSAttributedString(string: "\n")) }
+      let color: UIColor = row.kind == .larry ? .label : .secondaryLabel
+      text.append(NSAttributedString(string: "\(row.who): ", attributes: [.font: bold, .foregroundColor: color]))
+      text.append(NSAttributedString(string: row.text, attributes: [.font: body, .foregroundColor: color]))
+      if let mark = row.mark {
+        text.append(
+          NSAttributedString(string: " · \(mark)", attributes: [.font: body, .foregroundColor: UIColor.tertiaryLabel]))
+      }
+    }
+    return text
   }
 }

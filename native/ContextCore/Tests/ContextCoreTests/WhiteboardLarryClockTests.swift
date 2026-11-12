@@ -64,7 +64,8 @@ final class WhiteboardLarryClockTests: XCTestCase {
   func testARepeatTapIsAnsweredForTwoSeconds() {
     var turn = sent()
     _ = turn.tapped(version: 1, now: at(12))
-    XCTAssertEqual(WhiteboardLarryClock.state(turn, now: at(12), cockpitAnswering: true), "Larry already has this · 0:12")
+    XCTAssertEqual(
+      WhiteboardLarryClock.state(turn, now: at(12), cockpitAnswering: true), "Larry already has this · 0:12")
     XCTAssertEqual(
       WhiteboardLarryClock.state(turn, now: at(13) + .milliseconds(900), cockpitAnswering: true),
       "Larry already has this · 0:13")

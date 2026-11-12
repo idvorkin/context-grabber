@@ -40,10 +40,10 @@ public enum WhiteboardLarryClock {
   public static func didntAnswer(
     _ turn: WhiteboardLarryTurn, now: ContinuousClock.Instant, wallNow: Date, cockpitAnswering: Bool
   ) -> DidntAnswer? {
-    guard case .awaiting(_, let sent) = turn.state, let waited = seconds(turn, now: now) else { return nil }
+    guard case .awaiting = turn.state, let waited = seconds(turn, now: now) else { return nil }
     return DidntAnswer(
-      sentAt: wallNow - TimeInterval(waited), waitedSeconds: waited, inkWaiting: (turn.latest ?? sent) > sent,
-      wordsWaiting: turn.queued != nil, cockpitAnswering: cockpitAnswering)
+      sentAt: wallNow - TimeInterval(waited), waitedSeconds: waited, inkWaiting: turn.inkWaiting,
+      wordsWaiting: turn.wordsWaiting, cockpitAnswering: cockpitAnswering)
   }
 
   /// His silence: the message and the state that explains it.
