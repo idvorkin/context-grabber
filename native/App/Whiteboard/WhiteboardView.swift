@@ -1557,15 +1557,18 @@ struct WhiteboardView: View {
     let live = WhiteboardNote.panel(
       thread: [], larry: model.larry, now: now, cockpitAnswering: !model.larryAway, said: model.lastSaid,
       micOn: model.micOn)
-    return ForEach(live) { row in
-      HStack(alignment: .firstTextBaseline, spacing: 4) {
-        Text("\(row.who):").bold()
-        Text(row.text)
+    // One column of its own: a TimelineView lays several children over each other (#882).
+    return VStack(alignment: .leading, spacing: 4) {
+      ForEach(live) { row in
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+          Text("\(row.who):").bold()
+          Text(row.text)
+        }
+        .font(.footnote).foregroundStyle(.secondary)
+        .textSelection(.enabled)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("whiteboard-conversation-\(row.id)")
       }
-      .font(.footnote).foregroundStyle(.secondary)
-      .textSelection(.enabled)
-      .accessibilityElement(children: .combine)
-      .accessibilityIdentifier("whiteboard-conversation-\(row.id)")
     }
   }
 }

@@ -4168,7 +4168,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 - **Summary:** The board's note is one line that opens into the conversation
 - **Status:** implemented in [eafb6ea](https://github.com/idvorkin/context-grabber/commit/eafb6ea); verified by host tests (`WhiteboardNoteTests`: the line's state with *next:*, the middle and which end it keeps, a notice giving the middle back after five seconds, *3 to keep*, the tap on an iPad and an iPhone, the panel's last ten messages with their marks and what is live; `just native-test`) and the Mac build (`just native-build-mac`). `WhiteboardTurnUITests.testTheNoteOpensOnLarrysReply` is written and not yet run. Not yet seen on the simulator or the iPad: the Pencil on and below the panel is the iPad's check
-- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation")
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation"); [#882](https://github.com/idvorkin/context-grabber/issues/882) (the panel's live rows were drawn over each other)
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
 
 #### Use Case:
