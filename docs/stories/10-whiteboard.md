@@ -3833,6 +3833,31 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 ---
 
+### User Story 770:
+
+- **Summary:** A kept label of small letters stays on the board
+- **Status:** implemented in COMMIT; verified on the Linux rung (`just test-linux`: `WhiteboardTurnTests`, the thinnest pen for a small label, a thin asked-for pen and a ghost's pen alike). Not yet seen on the simulator or the iPad
+- **Issues:** [#883](https://github.com/idvorkin/context-grabber/issues/883)
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *How a mark looks*
+
+#### Use Case:
+- **As someone** keeping a label Larry wrote on my board
+- **I want to** see it stay as ink where its ghost was
+- **so that** a tap that keeps his words never looks like a tap that threw them away
+
+#### Acceptance Criteria:
+- **Scenario:** Small letters
+- **Given:** a board on paper, and a label of Larry's with 12-point letters and no pen of its own
+- **When:** I tap it to keep it
+- **Then:** it stays on the board as blue ink, as thick as its ghost was, and the next picture Larry gets shows it
+
+- **Scenario:** A pen too thin to draw
+- **Given:** a mark that asks for a pen thinner than the iPad draws
+- **When:** it arrives and I keep it
+- **Then:** its ghost and its ink are both drawn at the thinnest pen the iPad shows, never vanishing once kept
+
+---
+
 ### User Story 658:
 
 - **Summary:** A board drawn on the old canvas opens to look at, on paper
