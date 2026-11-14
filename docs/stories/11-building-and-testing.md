@@ -292,6 +292,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 756:
+
+- **Summary:** A change to the picture's frame, Larry's clock or the note runs only the turn and ghosts tests
+- **Status:** implemented in [2b6dade](https://github.com/idvorkin/context-grabber/commit/2b6dade); verified on the host by `scripts/native/test-ladder-map.sh` (each of the three rules alone selecting the turn and the ghosts-on-paper classes)
+- **Issues:** the pipeline timing study of 2026-11-10 (any whiteboard file ran all 8 classes, 9–11 min)
+
+#### Use Case:
+- **As Igor,** waiting on a fix to Larry's turn to reach the iPad
+- **I want to** have the simulator run only the classes that show the picture's frame, Larry's clock and the note
+- **so that** such a change doesn't cost a pass of every board test (story 753)
+
+#### Acceptance Criteria:
+- **Scenario:** A change to the picture's frame
+- **Given:** a branch that changes only where Larry's picture is framed on the board
+- **When:** the test ladder climbs
+- **Then:** the simulator runs the turn and the ghosts-on-paper classes and no other whiteboard class (it ran all 8)
+
+---
+
 ### User Story 754:
 
 - **Summary:** UI tests don't wait for screens to slide

@@ -1,7 +1,7 @@
 //  Stories 344, 345, 349, 357, 360, 371, 380–389 on the simulator, against the fake Cockpit (scripts/native/test-whiteboard-ui.sh
 //  starts it), on a board on paper (the only canvas since 2026-11-07): a stroke and a pause bring Claude's ghost through a
 //  streamed answer, words spoken on an empty board bring one with no stroke, and Larry's turn hands him the board and his
-//  marks arrive by themselves beside Claude's. A finger draws on the simulator; the Pencil is the iPad's check. What paper
+//  marks arrive by themselves beside Claude's, and the note opens on his reply (story 768). A finger draws on the simulator; the Pencil is the iPad's check. What paper
 //  shows (its ghosts, taps, lines and colours, by pixels) is `WhiteboardPaperGhostsUITests`' and
 //  `WhiteboardPaperLinesUITests`'. The turn's rules (Claude's fade, the count climbing, a Cockpit that doesn't stream, Ghosts
 //  off for strokes and for words, stale answers, spoken words held, a tap's keep or dismiss) are `WhiteboardGhostTurnsTests`,
@@ -107,7 +107,7 @@ final class WhiteboardTurnUITests: XCTestCase {
     wait(app, strokes: 1)
     app.buttons["whiteboard-larry"].tap()
     let marks = { (count: Int) -> NSPredicate in
-      NSPredicate(format: "label CONTAINS %@", "\(count) suggestion\(count == 1 ? "" : "s"): tap one to keep it")
+      NSPredicate(format: "label == %@", "\(count) to keep")
     }
     XCTAssertTrue(
       app.staticTexts.matching(marks(2)).firstMatch.appears(within: 15), app.debugDescription)
@@ -121,7 +121,7 @@ final class WhiteboardTurnUITests: XCTestCase {
       app.staticTexts.matching(marks(3)).firstMatch.appears(within: 10), app.debugDescription)
 
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.8)).tap()
-    let none = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "tap one to keep it")).firstMatch
+    let none = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH %@", " to keep")).firstMatch
     expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: none)
     waitForExpectations(timeout: 3)
     sleep(4)  // A look at the thread has come and gone.
@@ -129,5 +129,29 @@ final class WhiteboardTurnUITests: XCTestCase {
     reopenBoard(app)
     sleep(4)
     XCTAssertFalse(none.exists, app.debugDescription)
+  }
+
+  /// Story 768: a tap on the note's chevron opens the conversation over the board, holding Larry's whole reply. What the
+  /// line and the panel say is `WhiteboardNoteTests`, on the host.
+  func testTheNoteOpensOnLarrysReply() throws {
+    let (app, ghosts) = try openBoard()
+    ghosts.tap()
+    stroke(app)
+    wait(app, strokes: 1)
+    app.buttons["whiteboard-larry"].tap()
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Larry: this is where it goes")).firstMatch
+        .appears(within: 15), app.debugDescription)
+    let chevron = app.buttons["whiteboard-note-chevron"]
+    XCTAssertTrue(chevron.appears(within: 5), app.debugDescription)
+    // The panel's own identifier isn't an element XCUITest finds; its thread text is, and is there only while open.
+    let panel = app.textViews["whiteboard-conversation-text"]
+    if !panel.exists { chevron.tap() }
+    // Open or closed outlives the launch: the next test starts with it closed.
+    addTeardownBlock {
+      if panel.exists { chevron.tap() }
+    }
+    XCTAssertTrue(panel.appears(within: 5), app.debugDescription)
+    waitUntil(NSPredicate(format: "value CONTAINS %@", "Larry: this is where it goes"), panel, timeout: 8)
   }
 }

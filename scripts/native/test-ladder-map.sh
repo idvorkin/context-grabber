@@ -126,6 +126,14 @@ says "a paste rule: the two paste classes" "rung 2 UI tests (whiteboard, fake Co
 dry --changed native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardGhostTurns.swift
 says "a ghost rule: the turn and ghosts classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardPaperGhostsUITests WhiteboardTurnUITests"
 never "a ghost rule: not the lines" "WhiteboardPaperLinesUITests"
+dry --changed native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardFrame.swift
+says "the picture's frame: the turn and ghosts classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardPaperGhostsUITests WhiteboardTurnUITests"
+never "the picture's frame: not the lines" "WhiteboardPaperLinesUITests"
+never "the picture's frame: not the iPhone's class" "PhoneBoardsUITests"
+for f in WhiteboardLarryClock WhiteboardNote; do
+  dry --changed "native/ContextCore/Sources/ContextCore/Whiteboard/$f.swift"
+  says "$f: the turn and ghosts classes" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardPaperGhostsUITests WhiteboardTurnUITests"
+done
 dry --changed native/App/Whiteboard/WhiteboardStore.swift
 says "the board list: row delete and on paper" "rung 2 UI tests (whiteboard, fake Cockpit, fresh boot): WhiteboardOnPaperUITests WhiteboardRowDeleteUITests"
 says "the board list: the iPhone's look-only class too" "rung 2 UI tests: PhoneBoardsUITests"

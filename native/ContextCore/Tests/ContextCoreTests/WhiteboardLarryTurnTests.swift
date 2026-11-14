@@ -81,7 +81,8 @@ final class WhiteboardLarryTurnTests: XCTestCase {
     var turn = WhiteboardLarryTurn()
     _ = turn.paused(version: 1, words: nil, now: at(0))
     _ = turn.paused(version: 2, words: "circle the middle", now: at(5))
-    XCTAssertEqual(turn.tapped(version: 3, now: at(10)), "circle the middle", "the waiting words go with it")
+    XCTAssertEqual(
+      turn.tapped(version: 3, now: at(10)), .send(words: "circle the middle"), "the waiting words go with it")
     XCTAssertEqual(turn.state, .awaiting(since: at(10), sent: 3))
     XCTAssertNil(turn.latest)
     XCTAssertEqual(turn.replied(version: 3, now: at(70)), .done, "what waited went with the tap")
@@ -89,8 +90,65 @@ final class WhiteboardLarryTurnTests: XCTestCase {
 
   func testATapWhileIdleSendsAtOnce() {
     var turn = WhiteboardLarryTurn()
-    XCTAssertNil(turn.tapped(version: 1, now: at(0)))
+    XCTAssertEqual(turn.tapped(version: 1, now: at(0)), .send(words: nil))
     XCTAssertTrue(turn.looking)
+  }
+
+  // Story 765: a repeat tap sends nothing.
+
+  func testARepeatTapWithNothingNewSendsNothing() {
+    var turn = WhiteboardLarryTurn()
+    XCTAssertEqual(turn.tapped(version: 1, now: at(0)), .send(words: nil))
+    XCTAssertEqual(turn.tapped(version: 1, now: at(12)), .alreadyHas)
+    XCTAssertEqual(turn.state, .awaiting(since: at(0), sent: 1), "the clock keeps timing the first picture")
+    XCTAssertEqual(turn.alreadyHasAt, at(12))
+    XCTAssertEqual(turn.tapped(version: 1, now: at(13)), .alreadyHas, "and again")
+  }
+
+  func testAPauseThatSentCountsToo() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.paused(version: 4, words: nil, now: at(0))
+    XCTAssertEqual(turn.tapped(version: 4, now: at(3)), .alreadyHas)
+  }
+
+  func testARepeatTapAfterAStrokeSends() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.tapped(version: 1, now: at(0))
+    _ = turn.tapped(version: 1, now: at(5))
+    XCTAssertEqual(turn.tapped(version: 2, now: at(12)), .send(words: nil))
+    XCTAssertEqual(turn.state, .awaiting(since: at(12), sent: 2), "the clock restarts")
+    XCTAssertNil(turn.alreadyHasAt, "a picture that went clears the note")
+  }
+
+  // Spec, *A repeat tap sends nothing*: another part of the board on screen is something new (story 433's pages).
+  func testARepeatTapWithAnotherPartOfTheBoardOnScreenSends() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.tapped(version: 1, now: at(0))
+    XCTAssertEqual(turn.tapped(version: 1, moved: true, now: at(12)), .send(words: nil))
+    XCTAssertEqual(turn.state, .awaiting(since: at(12), sent: 1), "the clock restarts")
+    XCTAssertEqual(turn.tapped(version: 1, moved: false, now: at(14)), .alreadyHas, "he has that part now")
+  }
+
+  func testARepeatTapWithWordsWaitingSends() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.tapped(version: 1, now: at(0))
+    XCTAssertEqual(turn.paused(version: 1, words: "label it", now: at(4)), .held)
+    XCTAssertEqual(turn.tapped(version: 1, now: at(12)), .send(words: "label it"))
+    XCTAssertEqual(turn.state, .awaiting(since: at(12), sent: 1))
+  }
+
+  func testWithNoTurnOutATapAlwaysSends() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.tapped(version: 1, now: at(0))
+    XCTAssertEqual(turn.replied(version: 1, now: at(40)), .done)
+    XCTAssertEqual(turn.tapped(version: 1, now: at(41)), .send(words: nil), "asking him to look again is a request")
+  }
+
+  func testAFailedPictureLetsTheSameBoardGoAgain() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.tapped(version: 1, now: at(0))
+    turn.failed(turn.state, words: nil)
+    XCTAssertEqual(turn.tapped(version: 1, now: at(2)), .send(words: nil))
   }
 
   func testWordsWaitForTheNextPicture() {
@@ -121,7 +179,7 @@ final class WhiteboardLarryTurnTests: XCTestCase {
     var turn = WhiteboardLarryTurn()
     _ = turn.paused(version: 1, words: nil, now: at(0))
     let first = turn.state
-    XCTAssertNil(turn.tapped(version: 2, now: at(4)))
+    XCTAssertEqual(turn.tapped(version: 2, now: at(4)), .send(words: nil))
     turn.failed(first, words: "draw a box")
     XCTAssertTrue(turn.looking, "the tapped picture's answer is still out")
     XCTAssertEqual(turn.state, .awaiting(since: at(4), sent: 2))
