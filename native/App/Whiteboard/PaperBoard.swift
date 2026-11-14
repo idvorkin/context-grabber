@@ -847,12 +847,19 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
     let back = PKDrawing(strokes: Array(whole.strokes.suffix(strokes.count)))
     let idsMade = WhiteboardModel.strokesForLarry(made).map(\.id)
     let idsBack = WhiteboardModel.strokesForLarry(back).map(\.id)
+    // #883: the pen PaperKit holds the kept mark at, beside the keep's own `width`.
+    let widthBack: Double =
+      back.strokes.first.map {
+        Double(WhiteboardStrokes.width(sizes: $0.path.map(\.size.width), transform: $0.transform))
+      } ?? 0
     log.event(
       "whiteboard",
       [
         "action": "paper_keep", "board": model.board.id, "strokes": strokes.count, "total": whole.strokes.count,
         "pages_before": pagesBefore, "pages": wanted, "same_ids": idsMade == idsBack, "ids_made": idsMade.count,
         "ids_back": idsBack.count, "ink": rect(made.bounds), "visible": rect(paper.contentVisibleFrame),
+        "in_view": paper.contentVisibleFrame.intersects(made.bounds), "screen_scale": Double(screenScale),
+        "width_back": widthBack,
         "sheet": rect(lines.bounds), "markup": rect(held.bounds),
         "drift": round(hypot(made.bounds.minX - back.bounds.minX, made.bounds.minY - back.bounds.minY)),
         "could_undo": couldUndo, "could_redo": couldRedo, "can_undo": undo?.canUndo ?? false,

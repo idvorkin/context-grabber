@@ -443,16 +443,8 @@ final class WhiteboardModel: ObservableObject {
   private func strokesForLarry() -> [WhiteboardStrokes.Stroke] { Self.strokesForLarry(drawing) }
 
   static func strokesForLarry(_ drawing: PKDrawing) -> [WhiteboardStrokes.Stroke] {
-    let light = UITraitCollection(userInterfaceStyle: .light)
-    return drawing.strokes.flatMap { stroke -> [WhiteboardStrokes.Stroke] in
-      var red: CGFloat = 0
-      var green: CGFloat = 0
-      var blue: CGFloat = 0
-      var alpha: CGFloat = 0
-      if !stroke.ink.color.resolvedColor(with: light).getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
-        (red, green, blue) = (0, 0, 0)
-      }
-      let color = WhiteboardStrokes.hex(red: red, green: green, blue: blue)
+    drawing.strokes.flatMap { stroke -> [WhiteboardStrokes.Stroke] in
+      let color = lightHex(stroke.ink.color)
       let width = WhiteboardStrokes.width(sizes: stroke.path.map(\.size.width), transform: stroke.transform)
       let t = Int64(stroke.path.creationDate.timeIntervalSince1970 * 1000)
       let tool = WhiteboardStrokes.tool(rawValue: stroke.ink.inkType.rawValue)
@@ -919,8 +911,32 @@ final class WhiteboardModel: ObservableObject {
   private func keep(_ ghost: Ghost) {
     let strokes = Self.strokes(ghost.lines, color: ghost.color, width: ghost.width, spacing: 4)
     if turns.keep(ghost) { settleLarrysRow() }
-    log.event("whiteboard", ["action": "keep", "board": board.id, "who": ghost.who.rawValue, "strokes": strokes.count])
+    // #883: what a kept mark that doesn't show needs said: its pen, letters and colour, the zoom, and whether the ink
+    // landed on screen. `paper_keep` and `paper_ink_look` follow with where it went and whether the view drew it.
+    let ink = PKDrawing(strokes: strokes).bounds
+    var event: [String: Any] = [
+      "action": "keep", "board": board.id, "who": ghost.who.rawValue, "strokes": strokes.count,
+      "kind": ghost.kind.rawValue, "width": Double(ghost.width),
+      "color": Self.lightHex(ghost.color), "zoom": Double(zoom?() ?? 1),
+    ]
+    if let letters = ghost.letters { event["letters"] = Double(letters) }
+    if let visible = visibleRect?(), !visible.isNull, !ink.isNull { event["in_view"] = visible.intersects(ink) }
+    log.event("whiteboard", event)
     add(strokes)
+  }
+
+  /// A colour as `#rrggbb`, as it looks in light mode: the colour the Cockpit's strokes carry.
+  static func lightHex(_ color: UIColor) -> String {
+    var red: CGFloat = 0
+    var green: CGFloat = 0
+    var blue: CGFloat = 0
+    var alpha: CGFloat = 0
+    if !color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light)).getRed(
+      &red, green: &green, blue: &blue, alpha: &alpha)
+    {
+      (red, green, blue) = (0, 0, 0)
+    }
+    return WhiteboardStrokes.hex(red: red, green: green, blue: blue)
   }
 
   private static func strokes(_ lines: [[CGPoint]], color: UIColor, width: CGFloat, spacing: CGFloat) -> [PKStroke] {
@@ -1157,6 +1173,9 @@ struct Ghost: Identifiable, WhiteboardGhost {
   /// The colour and pen it asked for, or its author's colour and the default pen (#698).
   let color: UIColor
   let width: CGFloat
+  /// What it is and, for a label, its letters' height in board points: for the keep's log line (#883).
+  let kind: WhiteboardTurn.Shape.Kind
+  let letters: CGFloat?
 
   init(_ shape: WhiteboardTurn.Shape, who: WhiteboardTurn.Who, frame: CGRect, scale: CGFloat) {
     id = UUID().uuidString
@@ -1164,6 +1183,8 @@ struct Ghost: Identifiable, WhiteboardGhost {
     lines = WhiteboardTurn.lines(shape, frame: frame, scale: scale)
     color = shape.color.map { UIColor(rgb: $0) } ?? who.color
     width = WhiteboardTurn.width(shape, scale: scale)
+    kind = shape.kind
+    letters = WhiteboardTurn.letters(shape, scale: scale)
   }
 }
 
