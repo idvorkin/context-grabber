@@ -400,6 +400,7 @@ final class WhiteboardModel: ObservableObject {
     // Story 419: the strokes first, under this picture's id; the picture goes whatever they answered.
     event.merge(WhiteboardStrokes.logFields(await sendStrokes(strokes, picture: picture))) { $1 }
     let outcome = await deliver(jpeg, picture: picture, thread: thread, note: said ?? "Your turn on the board")
+    shipLog(why: "larry_turn")
     switch outcome {
     case .sent(let key, _):
       event["ok"] = true
@@ -422,6 +423,51 @@ final class WhiteboardModel: ObservableObject {
       event["reason"] = reason
       larry.failed(turn, words: said)
       failed(.larry, "Larry couldn't be reached: \(reason)", status: nil, first: turns.failed(.larry, stale: false))
+    }
+  }
+
+  /// #883: the whiteboard's log lines since the last the archive took, to the Cockpit's archive (`whiteboard.log`), each
+  /// time a picture goes to Larry, so he reads what the board did without Igor pulling the log. One try; lines not
+  /// taken go with the next picture. Nothing goes from a simulator or a Mac without GRABBER_ARCHIVE_URL.
+  private func shipLog(why: String) {
+    let lines = log.whiteboardUnsent()
+    guard let last = lines.last else { return }
+    var event: [String: Any] = ["why": why, "board": board.id, "records": lines.count, "launch": log.launch]
+    guard let archive = ArchiveModel.destination(ProcessInfo.processInfo.environment) else {
+      event["ok"] = false
+      event["reason"] = "no archive URL"
+      log.event("whiteboard_log", event)
+      return
+    }
+    let device = UIDevice.current.identifierForVendor?.uuidString.lowercased() ?? "unknown-device"
+    let batch = ArchiveBatch(
+      stream: WhiteboardLogArchive.stream, deviceId: device,
+      records: WhiteboardLogArchive.records(lines, launch: log.launch))
+    let log = log
+    Task { [event] in
+      var event = event
+      let outcome: ArchiveSend.Outcome
+      do {
+        let (body, response) = try await URLSession.shared.data(for: try ArchiveSend.request(batch, cockpit: archive))
+        outcome = ArchiveSend.outcome(status: (response as? HTTPURLResponse)?.statusCode, body: body)
+      } catch {
+        outcome = .retry(reason: error.localizedDescription)
+      }
+      switch outcome {
+      case .taken(let inserted, let duplicate):
+        log.whiteboardSent(through: last.seq)
+        event["ok"] = true
+        event["inserted"] = inserted
+        event["duplicate"] = duplicate
+      case .refused(let status, let reason):
+        event["ok"] = false
+        event["status"] = status
+        event["reason"] = reason
+      case .retry(let reason):
+        event["ok"] = false
+        event["reason"] = reason
+      }
+      log.event("whiteboard_log", event)
     }
   }
 
@@ -1148,6 +1194,7 @@ final class WhiteboardModel: ObservableObject {
       if problem?.context == "WhiteboardView.send" { problem = nil }
       sent = "Sent to Larry: his reply shows in Chat"
       sentFrame = rect
+      shipLog(why: "send")
       log.event(
         "whiteboard",
         [
