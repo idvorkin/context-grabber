@@ -59,13 +59,24 @@ public enum WhiteboardTurn {
   public static let defaultPen: CGFloat = 3.7
   /// The widest pen a mark can ask for, in board points: no wider than a Pencil stroke gets.
   public static let widestPen: CGFloat = 24
+  /// The thinnest pen a mark draws with, in board points: PencilKit draws nothing for a stroke much thinner, on the
+  /// canvas and in the picture alike (#883). Measured in the pictures Igor's iPad sent: kept marks at 1.2–1.9 points
+  /// drew none of their ink, and every stroke from 2.87 points up drew all of it. ponytail: 3 is the nearest round
+  /// width proven on the device; lower it once a kept mark between 1.9 and 2.87 is seen to draw.
+  public static let thinnestPen: CGFloat = 3
 
   /// The pen `shape` draws with, in board points. A label with no pen of its own gets one in proportion to its letters,
-  /// about a ninth of their height, so it reads as writing rather than a marker (#698's bold fix).
+  /// about a ninth of their height, so it reads as writing rather than a marker (#698's bold fix); no pen is thinner
+  /// than `thinnestPen`, so a kept mark is ink as its ghost showed it, never ink too thin to draw (#883).
   public static func width(_ shape: Shape, scale: CGFloat) -> CGFloat {
     let pen =
       shape.pen.map { $0 / scale } ?? (shape.kind == .text ? textHeight(shape, scale: scale) * 0.11 : defaultPen)
-    return min(widestPen, max(0.5, pen))
+    return min(widestPen, max(thinnestPen, pen))
+  }
+
+  /// A label's letter height on the board, in points; nil for any other mark. For the log.
+  public static func letters(_ shape: Shape, scale: CGFloat) -> CGFloat? {
+    shape.kind == .text ? textHeight(shape, scale: scale) : nil
   }
 
   /// `#RRGGBB` as a colour; nil for anything else.

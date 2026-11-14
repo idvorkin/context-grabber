@@ -61,6 +61,11 @@ that labels are no longer bold.
 - **Labels are no longer bold.** A label with no pen of its own is drawn at a pen about a ninth of its letter height,
   so its letters read as handwriting, not a marker. A label kept as ink is kept at that pen too. Ink kept before this
   change stays as it was saved.
+- **Never too thin to see (#883).** No mark, asked-for pen or label's own, is drawn thinner than the thinnest pen the
+  iPad shows as ink, about 3 points on the board. A kept label of small letters came out as ink too thin to draw:
+  saved, counted and sent, but invisible on the board and in the picture. Below that pen the ghost would look fine
+  and the kept ink would not, so the ghost is held to the same pen and a kept mark still looks as its ghost did.
+  Ink kept too thin before this stays as it was saved.
 - **Colour.** A mark can name its colour. One without a colour is in its author's: Claude's orange, Larry's blue.
   A ghost in a named colour is as faint as any other ghost, and a kept mark is ink in that colour.
 - **Lettering.** A label can ask for *print* (the default) or *hand*, a handwriting face. The hand face is the app's

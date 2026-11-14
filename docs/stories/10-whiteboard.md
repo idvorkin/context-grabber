@@ -3833,6 +3833,56 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 ---
 
+### User Story 770:
+
+- **Summary:** A kept label of small letters stays on the board
+- **Status:** implemented in [b54599d](https://github.com/idvorkin/context-grabber/commit/b54599d); verified on the Linux rung (`just test-linux`: `WhiteboardTurnTests`, the thinnest pen for a small label, a thin asked-for pen and a ghost's pen alike). Not yet seen on the simulator or the iPad
+- **Issues:** [#883](https://github.com/idvorkin/context-grabber/issues/883)
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *How a mark looks*
+
+#### Use Case:
+- **As someone** keeping a label Larry wrote on my board
+- **I want to** see it stay as ink where its ghost was
+- **so that** a tap that keeps his words never looks like a tap that threw them away
+
+#### Acceptance Criteria:
+- **Scenario:** Small letters
+- **Given:** a board on paper, and a label of Larry's with 12-point letters and no pen of its own
+- **When:** I tap it to keep it
+- **Then:** it stays on the board as blue ink, as thick as its ghost was, and the next picture Larry gets shows it
+
+- **Scenario:** A pen too thin to draw
+- **Given:** a mark that asks for a pen thinner than the iPad draws
+- **When:** it arrives and I keep it
+- **Then:** its ghost and its ink are both drawn at the thinnest pen the iPad shows, never vanishing once kept
+
+---
+
+### User Story 771:
+
+- **Summary:** Larry can read the board's log without my exporting it
+- **Status:** implemented in [dfc284d](https://github.com/idvorkin/context-grabber/commit/dfc284d); verified on the Linux rung (`just test-linux`: `WhiteboardLogArchiveTests`, which lines are the board's, batches oldest first, the newest kept when full, a record the archive takes once). Not yet seen on the simulator or the iPad
+- **Issues:** [#883](https://github.com/idvorkin/context-grabber/issues/883)
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Larry can read what the board did*
+
+#### Use Case:
+- **As someone** telling Larry that something on the board went wrong
+- **I want to** have him already hold what the board did
+- **so that** he can find the cause without my pulling logs off the iPad
+
+#### Acceptance Criteria:
+- **Scenario:** A turn carries the log
+- **Given:** a board on the iPad, and I tapped a ghost to keep it
+- **When:** I give Larry his turn
+- **Then:** the board's log lines since the last turn, the keep among them, are in the Cockpit's archive, and the board behaves as before
+
+- **Scenario:** The Cockpit misses one
+- **Given:** a turn whose log didn't reach the Cockpit
+- **When:** the next picture goes to Larry
+- **Then:** the lines that missed go with it, none lost and none twice
+
+---
+
 ### User Story 658:
 
 - **Summary:** A board drawn on the old canvas opens to look at, on paper

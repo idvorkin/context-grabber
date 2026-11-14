@@ -292,6 +292,20 @@ only where a page needs saying.)
 
 The log says what each ⌘V found on the clipboard and who took it, so the iPad can show what the simulator can't.
 
+### Larry can read what the board did (#883)
+
+Igor, 2026-11-14, after kept marks vanished: *make sure you have the logging to debug, and be able to request [logs]*.
+The board's log stayed on the iPad until it was pulled to the Mac, so Larry couldn't see what a tap or a turn did.
+
+- **Each picture that goes to Larry takes the board's log with it**: his turn, a pause on a Larry board, the picture
+  after his answer, and *Send to Larry*. What goes is everything the boards logged since the last that reached the
+  Cockpit (taps, keeps, ghosts, turns, errors), never the words said or written, only counts and places.
+- **It goes to the Cockpit's archive**, beside the call logs, where Larry reads it on his own machine. Igor exports
+  nothing and nothing changes on the board.
+- **A log that doesn't arrive goes with the next picture.** Sending it never holds up or fails the picture.
+- **A simulator or the Mac sends no log** unless it's pointed at an archive on purpose, as with every other archive
+  stream.
+
 ## Trial on paper (removed 2026-11-07)
 
 The trial (#635, #636) settled what it was for: Igor made paper the default on 2026-11-03 and the only canvas on 2026-11-07.
