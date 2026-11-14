@@ -3861,7 +3861,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 771:
 
 - **Summary:** Larry can read the board's log without my exporting it
-- **Status:** implemented in COMMIT; verified on the Linux rung (`just test-linux`: `WhiteboardLogArchiveTests`, which lines are the board's, batches oldest first, the newest kept when full, a record the archive takes once). Not yet seen on the simulator or the iPad
+- **Status:** implemented in [dfc284d](https://github.com/idvorkin/context-grabber/commit/dfc284d); verified on the Linux rung (`just test-linux`: `WhiteboardLogArchiveTests`, which lines are the board's, batches oldest first, the newest kept when full, a record the archive takes once). Not yet seen on the simulator or the iPad
 - **Issues:** [#883](https://github.com/idvorkin/context-grabber/issues/883)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Larry can read what the board did*
 
