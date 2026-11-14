@@ -2634,7 +2634,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 765:
 
 - **Summary:** A pasted blog-review batch reads as one card of chips
-- **Status:** native app: implemented on branch `native/d23-review-chips` (bead context-grabber-d23); verified by `ChatReviewBatchTests` on the Linux rung (1L) and the app's sources compiled for iOS there; not yet built on the Mac, run on the simulator or seen on the phone
+- **Status:** native app: implemented in e305103e, PR [#886](https://github.com/idvorkin/context-grabber/pull/886) (bead context-grabber-d23); verified by `ChatReviewBatchTests` on the Linux rung (1L) and the app's sources compiled for iOS there; not yet built on the Mac, run on the simulator or seen on the phone
 - **Spec:** [Chat with Larry in Grabber Native — A blog-review batch in a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
