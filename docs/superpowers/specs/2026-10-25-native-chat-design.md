@@ -123,11 +123,12 @@ paragraph says the same thing twice"), the comment on one line and, past 60 char
 other than the seven reads *note*; a note with an empty comment reads its quote in curly quotes instead. Tapping a
 note's chip opens it in place: the quoted passage with up to 30 characters of the words before and after it dimmed,
 "…" on a side that has words, then the whole comment with its line breaks; tapping again folds it. The header chip
-only ever opens a web page: an address that is not one leaves the title as plain words. Under the chips a *raw*
-toggle shows the JSON as it was pasted. *Copy* and *Quote in reply* still take the message as written. It is a card
+only ever opens a web page: an address that is not an http or https one with a host leaves the title as plain words,
+and so does a batch with no address. *Copy* and *Quote in reply* still take the message as written, which is how the
+JSON is had back. It is a card
 only when the message is that and nothing else: one JSON object with a permalink or an address and at least one note,
 every note with a quote and a comment. Anything else, a batch with a sentence before it, a batch inside a code fence,
-broken JSON, other JSON, reads exactly as it always has. The Cockpit's web chat reads the same batch the same way,
+broken JSON, other JSON, reads exactly as it always has. The Cockpit's web chat reads the same batch as a card too,
 with the same labels.
 
 **Press and hold a message** (Igor, 2026-11-03, #629: *"Maybe let me do press-and-hold reactions for yes, no, quote in
@@ -572,7 +573,7 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
 - The share card's field is headed *Message*. A Safari link shared with or without words, to a new chat or a picked
   one, arrives with the whole link first and his words after it.
 - A pasted blog-review batch reads as one card: the page's title and note count, one chip per note (intent and
-  comment) that opens to the quote in its context and the full comment, and a *raw* toggle; any other JSON, or a
+  comment) that opens to the quote in its context and the full comment; any other JSON, or a
   batch with words around it, reads as written.
 - 👀 appears under Igor's message once the Cockpit has it, 🫡 once it is with Larry, 🏆 once Larry marks it done.
 - With the app closed, a reply from Larry eventually raises one notification for its thread; tapping it opens the

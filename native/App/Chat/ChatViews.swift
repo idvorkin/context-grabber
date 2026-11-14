@@ -1045,7 +1045,7 @@ private struct BubbleText: View {
 
   var body: some View {
     if let batch = ChatReviewBatch.parse(text) {
-      ReviewBatchCard(batch: batch, raw: text, chat: chat, thread: thread)
+      ReviewBatchCard(batch: batch, chat: chat, thread: thread)
     } else {
       VStack(alignment: .leading, spacing: 4) {
         ForEach(Array(ChatTables.blocks(in: text).enumerated()), id: \.offset) { _, block in
@@ -1060,14 +1060,14 @@ private struct BubbleText: View {
 }
 
 /// A pasted blog-review batch (story 748, `ChatReviewBatch`): the page's chip and its count, a chip per note that
-/// opens to the quote in its context and the whole comment, and the JSON as pasted behind *raw*.
+/// opens to the quote in its context and the whole comment.
 private struct ReviewBatchCard: View {
   let batch: ChatReviewBatch
-  let raw: String
   let chat: ChatModel
   let thread: String
   @State private var open: Set<Int> = []
-  @State private var showRaw = false
+  /// GRABBER_CHAT_REVIEW=open: the card's first note opens by itself, for the simulator.
+  @State private var openHook = LaunchHooks.current.chat.reviewOpen
   @Environment(\.openURL) private var openURL
 
   var body: some View {
@@ -1087,7 +1087,7 @@ private struct ReviewBatchCard: View {
       ForEach(Array(batch.notes.enumerated()), id: \.offset) { index, note in
         VStack(alignment: .leading, spacing: 4) {
           Button {
-            if open.contains(index) { open.remove(index) } else { open.insert(index) }
+            toggle(index, from: "tap")
           } label: {
             HStack(spacing: 4) {
               Image(systemName: open.contains(index) ? "chevron.down" : "chevron.right")
@@ -1105,15 +1105,22 @@ private struct ReviewBatchCard: View {
           }
         }
       }
-      Button(showRaw ? "hide raw" : "raw") { showRaw.toggle() }
-        .font(.caption2).buttonStyle(.borderless).accessibilityIdentifier("chat-review-raw")
-      if showRaw {
-        ScrollView(.horizontal, showsIndicators: false) {
-          Text(raw).font(.caption2.monospaced())
-        }
-      }
     }
     .accessibilityIdentifier("chat-review-card")
+    .task { runOpenHook() }
+  }
+
+  /// The note's place in the batch goes to the log, never its words.
+  private func toggle(_ index: Int, from place: String) {
+    let opening = !open.contains(index)
+    if opening { open.insert(index) } else { open.remove(index) }
+    chat.logAction("review_note", ["thread": thread, "note": index, "open": opening, "from": place])
+  }
+
+  private func runOpenHook() {
+    guard openHook else { return }
+    openHook = false
+    toggle(0, from: "hook")
   }
 
   /// "…the words before *the quote* the words after…", the context dimmed.
@@ -1296,6 +1303,8 @@ private struct ComposeBar: View {
   @State private var field = 0
   /// Two quick Returns at the end of the words send (story 749).
   @State private var enters = ChatDoubleEnter()
+  /// GRABBER_CHAT_ENTER=<words>: the words and two new lines land in the bar as typing would, for the simulator.
+  @State private var enterHook = LaunchHooks.current.chat.enter
   @FocusState private var focused: Bool
 
   var body: some View {
@@ -1401,6 +1410,10 @@ private struct ComposeBar: View {
       }
       // A new chat opens with the keyboard up (spec "A new chat", story 262), unless he is talking.
       if ChatNewThread.focusesOnOpen(target, recording: voice.recording) { focused = true }
+      if let words = enterHook {
+        enterHook = nil
+        draft.text = words + "\n\n"
+      }
     }
     .onDisappear { voice.cancel(thread: thread, why: "left_thread") }
     .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in

@@ -39,11 +39,17 @@ public struct ChatViewHooks: Equatable, Sendable {
   public var hold: String?
   /// `GRABBER_CHAT_IMAGE=open`: the thread's picture full size.
   public var imageOpen: Bool
+  /// `GRABBER_CHAT_REVIEW=open`: a blog-review card's first note.
+  public var reviewOpen: Bool
+  /// `GRABBER_CHAT_ENTER=<words>`: those words and two new lines, written in the open thread's bar as a keyboard would.
+  public var enter: String?
 
   public init(_ env: [String: String] = [:]) {
     selectArchive = env["GRABBER_CHAT_SELECT"] == "archive"
     links = env["GRABBER_CHAT_LINKS"]
     hold = env["GRABBER_CHAT_HOLD"]
     imageOpen = env["GRABBER_CHAT_IMAGE"] == "open"
+    reviewOpen = env["GRABBER_CHAT_REVIEW"] == "open"
+    enter = env["GRABBER_CHAT_ENTER"].flatMap { $0.isEmpty ? nil : $0 }
   }
 }

@@ -1,5 +1,5 @@
-//  Story 748: a pasted blog-review batch reads as one card; anything else stays as written. The cases mirror the
-//  Cockpit web chat's `reviewBatch` tests (cockpit-3uc) so both read a batch the same way.
+//  Story 748: a pasted blog-review batch reads as one card; anything else stays as written. The cases began as the
+//  Cockpit web chat's `reviewBatch` tests (cockpit-3uc); the page link here is the batch's `url` alone.
 
 import XCTest
 
@@ -138,18 +138,25 @@ final class ChatReviewBatchTests: XCTestCase {
 
   func testEitherPermalinkOrURLIsEnoughAndTheLinkIsOnlyHTTP() throws {
     let noURL = try XCTUnwrap(B.parse(try pasted { $0["url"] = nil }))
-    XCTAssertEqual(noURL.page, URL(string: "https://idvork.in/time-allocation"))
+    XCTAssertEqual(noURL.title, "Where the time goes")
+    XCTAssertNil(noURL.page)
     let onlyURL = try XCTUnwrap(
       B.parse(#"{"url": "https://idvork.in/a", "annotations": [{"quote": "q", "comment": "c"}]}"#))
     XCTAssertEqual(onlyURL.title, "https://idvork.in/a")
     XCTAssertEqual(onlyURL.page, URL(string: "https://idvork.in/a"))
     let script = try XCTUnwrap(
       B.parse(
-        #"{"permalink": "/x", "url": "javascript:alert(1)", "origin": "javascript:x", "title": "T", "annotations": [{"quote": "q", "comment": "c"}]}"#
+        #"{"permalink": "/x", "url": "javascript:alert(1)", "title": "T", "annotations": [{"quote": "q", "comment": "c"}]}"#
       ))
     XCTAssertNil(script.page)
-    let relative = try XCTUnwrap(
-      B.parse(#"{"permalink": "x", "origin": "https://idvork.in", "annotations": [{"quote": "q", "comment": "c"}]}"#))
+    // An http(s) address with no host is not a page: Foundation reads "https://:80/x" with an empty host, not none.
+    for hostless in ["https://:80/x", "https:///x", "http://", "https:x"] {
+      let card = try XCTUnwrap(B.parse(try pasted { $0["url"] = hostless }), hostless)
+      XCTAssertNil(card.page, hostless)
+    }
+    let upper = try XCTUnwrap(B.parse(try pasted { $0["url"] = " HTTPS://idvork.in/a " }))
+    XCTAssertEqual(upper.page, URL(string: "HTTPS://idvork.in/a"))
+    let relative = try XCTUnwrap(B.parse(#"{"permalink": "x", "annotations": [{"quote": "q", "comment": "c"}]}"#))
     XCTAssertEqual(relative.title, "x")
     XCTAssertNil(relative.page)
   }

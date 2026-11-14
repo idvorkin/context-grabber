@@ -1,15 +1,15 @@
 //  A blog-review batch in a message (spec 2026-10-25-native-chat-design.md, A blog-review batch in a message; story
 //  748). The blog's annotate tool exports a page's notes as one JSON object; a message that is exactly that object
-//  reads as one card, a header chip and a chip per note, instead of the JSON. The Cockpit's web chat reads it by the
-//  same rule with the same labels (`reviewBatch` in the Cockpit's cockpit_core.js, rule on bead cockpit-3uc); change
-//  it in both.
+//  reads as one card, a header chip and a chip per note, instead of the JSON. The Cockpit's web chat reads it as a
+//  card with the same labels (`reviewBatch` in the Cockpit's cockpit_core.js, rule on bead cockpit-3uc); a change to
+//  what is a batch or to a label goes in both. The page link here is the batch's `url` alone.
 
 import Foundation
 
 public struct ChatReviewBatch: Equatable, Sendable {
   /// The header chip's words: the page's title, else its permalink, else its address; one line, cut at 60.
   public let title: String
-  /// The page the header chip opens, only ever http(s); nil when the batch names none.
+  /// The page the header chip opens: the batch's `url` when it is http(s) with a host, else nil.
   public let page: URL?
   /// "1 note", "3 notes".
   public let count: String
@@ -53,13 +53,9 @@ public struct ChatReviewBatch: Equatable, Sendable {
     let url = wire.url.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
     guard permalink != nil || url != nil, !wire.annotations.isEmpty else { return nil }
     let title = [wire.title, permalink, url].lazy.compactMap { $0.map(squash) }.first { !$0.isEmpty } ?? ""
-    var page = httpURL(url)
-    if page == nil, let permalink, permalink.hasPrefix("/"), let origin = wire.origin, httpURL(origin) != nil {
-      page = httpURL(String(origin.trimmingCharacters(in: .whitespacesAndNewlines).trimmingSuffix("/")) + permalink)
-    }
     let count = wire.annotations.count
     return ChatReviewBatch(
-      title: clip(title, titleLimit), page: page, count: count == 1 ? "1 note" : "\(count) notes",
+      title: clip(title, titleLimit), page: httpURL(url), count: count == 1 ? "1 note" : "\(count) notes",
       notes: wire.annotations.map(note))
   }
 
@@ -106,7 +102,7 @@ public struct ChatReviewBatch: Equatable, Sendable {
 
   private static func httpURL(_ text: String?) -> URL? {
     guard let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: trimmed),
-      let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http", url.host != nil
+      let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http", url.host?.isEmpty == false
     else { return nil }
     return url
   }
@@ -117,17 +113,15 @@ public struct ChatReviewBatch: Equatable, Sendable {
     let permalink: String?
     let url: String?
     let title: String?
-    let origin: String?
     let annotations: [WireNote]
 
-    enum CodingKeys: String, CodingKey { case permalink, url, title, origin, annotations }
+    enum CodingKeys: String, CodingKey { case permalink, url, title, annotations }
 
     init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       permalink = Wire.optional(container, .permalink)
       url = Wire.optional(container, .url)
       title = Wire.optional(container, .title)
-      origin = Wire.optional(container, .origin)
       annotations = try container.decode([WireNote].self, forKey: .annotations)
     }
 
