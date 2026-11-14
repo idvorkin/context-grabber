@@ -62,7 +62,8 @@ final class WhiteboardModel: ObservableObject {
   @Published private(set) var micFinishing = false
   /// The newest thing said, by Larry or the mic: the middle of the note's line (story 766).
   @Published private(set) var lastSaid = WhiteboardSaid()
-  /// The note's other messages and when they appeared: they take the line's middle for a few seconds (story 766).
+  /// The note's other messages and when they appeared: they take the line's middle for a few seconds, or for as long
+  /// as the Cockpit isn't answering (story 766).
   @Published private(set) var notice: WhiteboardNote.Notice?
   /// The recent end of the board's thread, from the looks that bring Larry's marks: the open note's panel (story 768).
   @Published private(set) var thread: [ChatMessage] = []
@@ -169,7 +170,7 @@ final class WhiteboardModel: ObservableObject {
     watchNotices()
   }
 
-  /// Story 766: when the note's other messages change, so a new one takes the line's middle for a few seconds.
+  /// Story 766: when the note's other messages change, so a new one takes the line's middle for its few seconds.
   private func watchNotices() {
     let lookOnly = lookOnlyNote
     noticeWatch = $pasteNote.combineLatest($sent, $turns.map(\.note), $larryAway.combineLatest($larry.map(\.looking)))
