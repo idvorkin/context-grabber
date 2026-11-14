@@ -1,4 +1,4 @@
-//  Story 765: a pasted blog-review batch reads as one card; anything else stays as written. The cases mirror the
+//  Story 748: a pasted blog-review batch reads as one card; anything else stays as written. The cases mirror the
 //  Cockpit web chat's `reviewBatch` tests (cockpit-3uc) so both read a batch the same way.
 
 import XCTest

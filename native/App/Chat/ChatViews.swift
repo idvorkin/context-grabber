@@ -1059,7 +1059,7 @@ private struct BubbleText: View {
   }
 }
 
-/// A pasted blog-review batch (story 765, `ChatReviewBatch`): the page's chip and its count, a chip per note that
+/// A pasted blog-review batch (story 748, `ChatReviewBatch`): the page's chip and its count, a chip per note that
 /// opens to the quote in its context and the whole comment, and the JSON as pasted behind *raw*.
 private struct ReviewBatchCard: View {
   let batch: ChatReviewBatch

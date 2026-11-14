@@ -2651,7 +2651,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ---
 
-### User Story 765:
+### User Story 748:
 
 - **Summary:** A pasted blog-review batch reads as one card of chips
 - **Status:** native app: implemented in e305103e, PR [#886](https://github.com/idvorkin/context-grabber/pull/886) (bead context-grabber-d23); verified by `ChatReviewBatchTests` on the Linux rung (1L) and the app's sources compiled for iOS there; not yet built on the Mac, run on the simulator or seen on the phone

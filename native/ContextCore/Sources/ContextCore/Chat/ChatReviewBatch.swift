@@ -1,5 +1,5 @@
 //  A blog-review batch in a message (spec 2026-10-25-native-chat-design.md, A blog-review batch in a message; story
-//  765). The blog's annotate tool exports a page's notes as one JSON object; a message that is exactly that object
+//  748). The blog's annotate tool exports a page's notes as one JSON object; a message that is exactly that object
 //  reads as one card, a header chip and a chip per note, instead of the JSON. The Cockpit's web chat reads it by the
 //  same rule with the same labels (`reviewBatch` in the Cockpit's cockpit_core.js, rule on bead cockpit-3uc); change
 //  it in both.
