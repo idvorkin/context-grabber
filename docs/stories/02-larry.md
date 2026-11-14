@@ -2628,3 +2628,22 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** Larry's message "Here's how they compare:", then a table with the heading `| | Weight | Battery | Price |`, its dashes row, and three rows, then "Want the cheapest?"
 - **When:** I open the thread on the iPhone
 - **Then:** the bubble reads the first line, then a grid with the heading in bold and one row per laptop, then the last line; the grid scrolls sideways inside the bubble if it is wider than it, and *Copy* copies the message with its pipes
+
+---
+
+### User Story 749:
+
+- **Summary:** Two quick Returns at the end of a message send it, the blank lines taken off
+- **Status:** native app only: implemented in [e4f9de0d](https://github.com/idvorkin/context-grabber/commit/e4f9de0d), bead context-grabber-94m; verified on rung 1L only (`just test-linux` on Linux: `ChatDoubleEnterTests`, 13 cases, pass among 1,414 host tests; the app's sources compile for iOS, not linked or run); SwiftLint, the Mac build, the simulator and the phone not yet, so the keyboard's, a hardware keyboard's and Wispr Flow's Returns are not yet seen sending
+- **Spec:** [Chat with Larry in Grabber Native — Two quick Returns send](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, dictating into a chat thread by voice with the phone out of reach
+- **I want to** end what I said with two quick Returns and have it sent
+- **so that** I send hands-free, without a blank line at the end of the message, and still get a blank line when I pause between Returns
+
+#### Acceptance Criteria:
+- **Scenario:** Dictated, then two quick Returns
+- **Given:** an open thread whose bar reads "see you at noon"
+- **When:** I press Return twice within 400 milliseconds, on the keyboard or by the dictation tool's two new lines at once
+- **Then:** "see you at noon" is sent as Send would send it, with nothing after "noon", and the bar is empty; two Returns further apart leave a blank line and send nothing, two quick Returns between two lines or in an empty bar send nothing, and *Quote in reply* still sends nothing
