@@ -120,6 +120,15 @@ final class WhiteboardLarryTurnTests: XCTestCase {
     XCTAssertNil(turn.alreadyHasAt, "a picture that went clears the note")
   }
 
+  // Spec, *A repeat tap sends nothing*: another part of the board on screen is something new (story 433's pages).
+  func testARepeatTapWithAnotherPartOfTheBoardOnScreenSends() {
+    var turn = WhiteboardLarryTurn()
+    _ = turn.tapped(version: 1, now: at(0))
+    XCTAssertEqual(turn.tapped(version: 1, moved: true, now: at(12)), .send(words: nil))
+    XCTAssertEqual(turn.state, .awaiting(since: at(12), sent: 1), "the clock restarts")
+    XCTAssertEqual(turn.tapped(version: 1, moved: false, now: at(14)), .alreadyHas, "he has that part now")
+  }
+
   func testARepeatTapWithWordsWaitingSends() {
     var turn = WhiteboardLarryTurn()
     _ = turn.tapped(version: 1, now: at(0))

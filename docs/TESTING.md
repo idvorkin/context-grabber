@@ -86,7 +86,7 @@ script's dry run:
 |---|---|
 | A test file | the classes it declares, and any that inherit them |
 | Chat or the Inbox, in the app or `ContextCore`; the chat suite's script; the fake bridge | chat's |
-| The whiteboard, in the app or `ContextCore`; the whiteboard suite's script | a rule in `ContextCore` runs only the classes that show it (paste, lines and pages, the board list, the turn and ghosts — the picture's frame, Larry's clock and the note among them; story 753), the board's views, hooks and script run every class: the whiteboard's, on an iPad simulator (`WHITEBOARD_SIM`, default *iPad Pro 11-inch (M5)*; the iPhone's is shut first), and `PhoneBoardsUITests` on the iPhone: an iPhone only looks at boards (story 746) |
+| The whiteboard, in the app or `ContextCore`; the whiteboard suite's script | a rule in `ContextCore` runs only the classes that show it (paste, lines and pages, the board list, the turn and ghosts — the picture's frame, Larry's clock and the note among them; stories 753, 756), the board's views, hooks and script run every class: the whiteboard's, on an iPad simulator (`WHITEBOARD_SIM`, default *iPad Pro 11-inch (M5)*; the iPhone's is shut first), and `PhoneBoardsUITests` on the iPhone: an iPhone only looks at boards (story 746) |
 | The fake Cockpit | chat's and the whiteboard's |
 | The Gym Timer, in the app or `ContextCore` | `GymTimerDialsUITests`, `GymTimerUITests` |
 | Breathing, in the app or `ContextCore` | `BreatheMindfulUITests`, `BreathePresetsUITests`, `BreatheStyleUITests` |

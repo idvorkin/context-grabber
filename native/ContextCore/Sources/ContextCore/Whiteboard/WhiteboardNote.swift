@@ -1,8 +1,9 @@
 //  The board's note: one line that opens into the conversation (spec 2026-11-12-whiteboard-conversation-design.md, *One
-//  line that opens*, story 766; #879: "some kind of collapse expand conversation"). Closed, the line is Larry's state
-//  first, then the newest thing said, then how many suggestions show; open, a panel over the top of the board holds the
-//  recent end of the board's thread and what is live. The board's model hands in the turn, the clock, what was said, the
-//  thread it already reads every few seconds and the note's other messages; the view draws what comes back.
+//  line that opens*, stories 766–769; #879: "some kind of collapse expand conversation"). Closed, the line is Larry's
+//  state first, then the newest thing said, then how many suggestions show; open, a panel over the top of the board
+//  holds the recent end of the board's thread and what is live. The board's model hands in the turn, the clock, what
+//  was said, the thread it already reads every few seconds and the note's other messages; the view draws what comes
+//  back.
 
 import Foundation
 
@@ -42,14 +43,17 @@ public enum WhiteboardNote {
   /// How long one of the note's other messages takes the middle before giving it back to what was said.
   public static let noticeFor: Duration = .seconds(5)
 
-  /// One of the note's other messages (a paste cut short, *Sent to Larry*, a look-only reason, a Cockpit not
-  /// answering), and when it appeared.
+  /// The note's other messages (a paste cut short, *Sent to Larry*, a look-only reason, a Cockpit not answering), and
+  /// when they appeared.
   public struct Notice: Equatable, Sendable {
     public let text: String
+    /// The part of `text` about something still wrong (a Cockpit not answering): it keeps the middle until it's over.
+    public let held: String?
     public let since: ContinuousClock.Instant
 
-    public init(text: String, since: ContinuousClock.Instant) {
+    public init(text: String, held: String? = nil, since: ContinuousClock.Instant) {
       self.text = text
+      self.held = held
       self.since = since
     }
   }
@@ -84,8 +88,10 @@ public enum WhiteboardNote {
         next.map { "\(spoken), next: \($0.replacingOccurrences(of: " + ", with: " and "))" } ?? spoken
     }
     let words = middle(said, micOn: micOn)
-    if let notice, now - notice.since < noticeFor || words == nil {
+    if let notice, now - notice.since < noticeFor || (words == nil && notice.held == nil) {
       line.middle = notice.text
+    } else if let held = notice?.held {
+      line.middle = held
     } else if let words {
       line.middle = words.text
       line.keepsEnd = words.keepsEnd
@@ -95,23 +101,26 @@ public enum WhiteboardNote {
   }
 
   /// The note's other messages, in one: nil when there are none. `turnNote` counts only when it isn't Larry's line,
-  /// which is said, not a notice; `marksAway` only with no turn out, as his state says it while he is looking.
+  /// which is said, not a notice; `marksAway` only with no turn out, as his state says it while he is looking. `held`
+  /// is the part that stays while it is true: the Cockpit not answering, for ghosts or for Larry's marks.
   public static func notice(
     paste: String?, sent: String?, turnNote: String?, marksAway: Bool, looking: Bool, lookOnly: String?
-  ) -> String? {
-    let ours = [WhiteboardTurn.ghostsAway, WhiteboardTurn.micGhostsOff]
-    let parts = [
-      turnNote.flatMap { ours.contains($0) ? $0 : nil },
-      paste,
+  ) -> (text: String, held: String?)? {
+    let held = [
+      turnNote == WhiteboardTurn.ghostsAway ? turnNote : nil,
       // While he is looking his state says it (story 760).
       marksAway && !looking ? "Larry's marks: the Cockpit isn't answering" : nil,
-      sent ?? lookOnly,
     ].compactMap { $0 }
-    return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    let passing = [turnNote == WhiteboardTurn.micGhostsOff ? turnNote : nil, paste, sent ?? lookOnly].compactMap { $0 }
+    guard !held.isEmpty || !passing.isEmpty else { return nil }
+    let separator = " · "
+    return ((held + passing).joined(separator: separator), held.isEmpty ? nil : held.joined(separator: separator))
   }
 
-  /// Whether the line changes with the clock alone: a turn out ticks, and a notice gives the middle back.
-  public static func ticks(larry: WhiteboardLarryTurn, notice: Notice?) -> Bool { larry.looking || notice != nil }
+  /// Whether the line changes with the clock alone: a turn out ticks, and a passing notice gives the middle back.
+  public static func ticks(larry: WhiteboardLarryTurn, notice: Notice?) -> Bool {
+    larry.looking || notice.map { $0.text != $0.held } ?? false
+  }
 
   /// What a tap on the line does.
   public enum Tap: Equatable, Sendable {
@@ -157,13 +166,10 @@ public enum WhiteboardNote {
   /// The most messages of the thread the panel holds; *Open in Chat* has the rest.
   public static let panelMessages = 10
 
-  /// The panel: the recent end of the board's thread (`thread`, oldest first, as the Cockpit sends it), newest at the
-  /// bottom, then what is live.
-  public static func panel(
-    thread: [ChatMessage], larry: WhiteboardLarryTurn, now: ContinuousClock.Instant, cockpitAnswering: Bool,
-    said: WhiteboardSaid, micOn: Bool
-  ) -> [Row] {
-    var rows = thread.suffix(panelMessages).map { message in
+  /// The panel's thread: the recent end of the board's thread (`thread`, oldest first, as the Cockpit sends it), newest
+  /// at the bottom.
+  public static func recent(_ thread: [ChatMessage]) -> [Row] {
+    thread.suffix(panelMessages).map { message in
       message.fromIgor
         ? Row(
           id: message.id, kind: .you, who: "You",
@@ -173,6 +179,13 @@ public enum WhiteboardNote {
           id: message.id, kind: .larry, who: message.author ?? "Larry",
           text: message.text.isEmpty ? "drew on the board" : message.text, mark: nil)
     }
+  }
+
+  /// The panel's live rows, under its thread: the turn that's out, what waits to go next, what the mic is hearing.
+  public static func live(
+    larry: WhiteboardLarryTurn, now: ContinuousClock.Instant, cockpitAnswering: Bool, said: WhiteboardSaid, micOn: Bool
+  ) -> [Row] {
+    var rows: [Row] = []
     if let clock = WhiteboardLarryClock.state(larry, now: now, cockpitAnswering: cockpitAnswering) {
       rows.append(Row(id: "live-turn", kind: .live, who: "Now", text: clock, mark: nil))
     }

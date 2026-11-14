@@ -1,7 +1,7 @@
 //  Stories 344, 345, 349, 357, 360, 371, 380–389 on the simulator, against the fake Cockpit (scripts/native/test-whiteboard-ui.sh
 //  starts it), on a board on paper (the only canvas since 2026-11-07): a stroke and a pause bring Claude's ghost through a
 //  streamed answer, words spoken on an empty board bring one with no stroke, and Larry's turn hands him the board and his
-//  marks arrive by themselves beside Claude's, and the note opens on his reply (story 766). A finger draws on the simulator; the Pencil is the iPad's check. What paper
+//  marks arrive by themselves beside Claude's, and the note opens on his reply (story 768). A finger draws on the simulator; the Pencil is the iPad's check. What paper
 //  shows (its ghosts, taps, lines and colours, by pixels) is `WhiteboardPaperGhostsUITests`' and
 //  `WhiteboardPaperLinesUITests`'. The turn's rules (Claude's fade, the count climbing, a Cockpit that doesn't stream, Ghosts
 //  off for strokes and for words, stale answers, spoken words held, a tap's keep or dismiss) are `WhiteboardGhostTurnsTests`,
@@ -131,7 +131,7 @@ final class WhiteboardTurnUITests: XCTestCase {
     XCTAssertFalse(none.exists, app.debugDescription)
   }
 
-  /// Story 766: a tap on the note's chevron opens the conversation over the board, holding Larry's whole reply. What the
+  /// Story 768: a tap on the note's chevron opens the conversation over the board, holding Larry's whole reply. What the
   /// line and the panel say is `WhiteboardNoteTests`, on the host.
   func testTheNoteOpensOnLarrysReply() throws {
     let (app, ghosts) = try openBoard()

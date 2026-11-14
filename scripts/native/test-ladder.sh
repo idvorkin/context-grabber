@@ -107,10 +107,8 @@ for f in ${changed[@]+"${changed[@]}"}; do
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardLarryTurn.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardLarryClock.swift | \
       native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardNote.swift | \
-      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardSpeech.swift)
-      add_classes WhiteboardTurnUITests WhiteboardPaperGhostsUITests ;;
-    # The picture's frame on the board: where a turn's picture is taken and its marks land.
-    native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardFrame.swift)
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardSpeech.swift | \
+      native/ContextCore/Sources/ContextCore/Whiteboard/WhiteboardFrame.swift)
       add_classes WhiteboardTurnUITests WhiteboardPaperGhostsUITests ;;
     native/App/Whiteboard/* | native/ContextCore/Sources/ContextCore/Whiteboard/* | scripts/native/test-whiteboard-ui.sh)
       add_classes $whiteboard_area ;;

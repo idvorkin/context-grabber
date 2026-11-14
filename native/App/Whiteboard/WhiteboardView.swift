@@ -64,9 +64,9 @@ final class WhiteboardModel: ObservableObject {
   @Published private(set) var lastSaid = WhiteboardSaid()
   /// The note's other messages and when they appeared: they take the line's middle for a few seconds (story 766).
   @Published private(set) var notice: WhiteboardNote.Notice?
-  /// The recent end of the board's thread, from the looks that bring Larry's marks: the open note's panel (story 766).
+  /// The recent end of the board's thread, from the looks that bring Larry's marks: the open note's panel (story 768).
   @Published private(set) var thread: [ChatMessage] = []
-  /// The note's panel is open, remembered for the next board (story 766).
+  /// The note's panel is open, remembered for the next board (story 768).
   @Published private(set) var conversationOpen = UserDefaults.standard.bool(forKey: WhiteboardModel.conversationKey)
   let board: BoardEntry
   /// Drawn on here, or only looked at: a board from another device (story 347) or from the old canvas (story 658).
@@ -107,6 +107,8 @@ final class WhiteboardModel: ObservableObject {
   /// On paper: each stroke's box, for what's on screen (story 433), and the frame the last Send showed.
   private var inkBoxes: [CGRect] = []
   private var sentFrame: CGRect?
+  /// The part of the board in the picture Larry's turn last took: a tap with another part on screen sends (story 765).
+  private var larryFrame: CGRect?
   /// The row his showing marks came from.
   private var shownRow: String?
   private var watchTask: Task<Void, Never>?
@@ -175,16 +177,18 @@ final class WhiteboardModel: ObservableObject {
         WhiteboardNote.notice(
           paste: paste, sent: sent, turnNote: turnNote, marksAway: away.0, looking: away.1, lookOnly: lookOnly)
       }
-      .removeDuplicates()
-      .sink { [weak self] text in
-        MainActor.assumeIsolated { self?.notice = text.map { WhiteboardNote.Notice(text: $0, since: .now) } }
+      .removeDuplicates { $0?.text == $1?.text }
+      .sink { [weak self] words in
+        MainActor.assumeIsolated {
+          self?.notice = words.map { WhiteboardNote.Notice(text: $0.text, held: $0.held, since: .now) }
+        }
       }
   }
 
   /// The board has a thread with Larry on this device.
   var threadKey: String? { threads.thread(board: board.id) }
 
-  /// Story 766: a tap on the note's line opens or closes the panel over the board, remembered for the next board; an
+  /// Story 768: a tap on the note's line opens or closes the panel over the board, remembered for the next board; an
   /// iPhone has no panel, so it opens the board's thread in Chat.
   func tapNote(onPhone: Bool, openChat: (String) -> Void) {
     switch WhiteboardNote.tap(onPhone: onPhone, thread: threadKey) {
@@ -348,15 +352,16 @@ final class WhiteboardModel: ObservableObject {
   /// he is already looking at this very board (story 765).
   func larryTurn() {
     guard !larrySending else { return }
-    guard case .send(let words) = larry.tapped(version: boardVersion, now: .now) else {
+    let moved = pictureFrame().map { $0.rect != larryFrame } ?? false
+    guard case .send(let words) = larry.tapped(version: boardVersion, moved: moved, now: .now) else {
       return alreadyHas(from: "button")
     }
     let turn = larry.state
     Task { await handToLarry(turn, said: words) }
   }
 
-  /// Story 765: a tap that sent nothing, because Larry is looking at the board as it is and no words wait. The note says
-  /// *Larry already has this* for two seconds (`WhiteboardLarryClock`).
+  /// Story 765: a tap that sent nothing, because Larry is looking at this part of the board as it is and no words wait.
+  /// The note says *Larry already has this* for two seconds (`WhiteboardLarryClock`).
   private func alreadyHas(from: String) {
     var event: [String: Any] = ["action": "larry_already_has", "board": board.id, "from": from]
     if case .awaiting(let since, _) = larry.state {
@@ -373,6 +378,7 @@ final class WhiteboardModel: ObservableObject {
       larry.failed(turn, words: said)
       return
     }
+    larryFrame = rect
     larrySending = true
     defer { larrySending = false }
     // ponytail: rendered and encoded on the main thread, as the ghost turn is.
@@ -1106,9 +1112,10 @@ final class WhiteboardModel: ObservableObject {
     guard sent == nil, !larrySending, let (rect, scale) = pictureFrame() else { return }
     // Story 662: a Send is Larry's turn too, out now whatever was held; words that waited go with it. Story 765: not
     // while he is looking at the board as it is.
-    guard case .send(let words) = larry.tapped(version: boardVersion, now: .now) else {
+    guard case .send(let words) = larry.tapped(version: boardVersion, moved: rect != larryFrame, now: .now) else {
       return alreadyHas(from: "send")
     }
+    larryFrame = rect
     let turn = larry.state
     let ink = picture(rect: rect, scale: scale)
     let jpeg = ink.jpegData(compressionQuality: 0.85) ?? Data()
@@ -1277,7 +1284,7 @@ struct WhiteboardView: View {
   private let log: SessionLog
   private let callLive: AnyPublisher<Bool, Never>
   private let reportOpen: AnyPublisher<Bool, Never>
-  /// Story 766: an iPhone has no conversation panel; a tap on the note opens the board's thread in Chat.
+  /// Story 769: an iPhone has no conversation panel; a tap on the note opens the board's thread in Chat.
   private let onPhone: Bool
   private let openChat: (String) -> Void
 
@@ -1319,7 +1326,7 @@ struct WhiteboardView: View {
       Group {
         PaperBoardCanvas(model: model, log: log)
       }
-      // Story 766: the conversation lies over the top of the board and never moves or resizes the paper.
+      // Story 768: the conversation lies over the top of the board and never moves or resizes the paper.
       .overlay(alignment: .top) {
         if model.conversationOpen, !onPhone {
           GeometryReader { space in
@@ -1523,16 +1530,13 @@ struct WhiteboardView: View {
     }
   }
 
-  /// Story 766: the open note, over the top of the board: the recent end of the board's thread, selectable, then what is
+  /// Story 768: the open note, over the top of the board: the recent end of the board's thread, selectable, then what is
   /// live, and *Open in Chat*. The Pencil never acts on it: the thread's text takes finger touches only, and the rest
   /// holds nothing to scroll or draw on.
   private var conversation: some View {
     let tick = WhiteboardNote.ticks(larry: model.larry, notice: nil)
     return VStack(alignment: .leading, spacing: 4) {
-      let rows = WhiteboardNote.panel(
-        thread: model.thread, larry: model.larry, now: .now, cockpitAnswering: !model.larryAway, said: model.lastSaid,
-        micOn: model.micOn)
-      WhiteboardConversationText(rows: rows.filter { $0.kind != .live })
+      WhiteboardConversationText(rows: WhiteboardNote.recent(model.thread))
       if tick {
         TimelineView(.periodic(from: .now, by: 1)) { _ in liveRows(now: .now) }
       } else {
@@ -1554,9 +1558,8 @@ struct WhiteboardView: View {
 
   /// What is live under the thread: the turn that's out, what waits to go next, what the mic is hearing.
   private func liveRows(now: ContinuousClock.Instant) -> some View {
-    let live = WhiteboardNote.panel(
-      thread: [], larry: model.larry, now: now, cockpitAnswering: !model.larryAway, said: model.lastSaid,
-      micOn: model.micOn)
+    let live = WhiteboardNote.live(
+      larry: model.larry, now: now, cockpitAnswering: !model.larryAway, said: model.lastSaid, micOn: model.micOn)
     // One column of its own: a TimelineView lays several children over each other (#882).
     return VStack(alignment: .leading, spacing: 4) {
       ForEach(live) { row in
@@ -1573,7 +1576,7 @@ struct WhiteboardView: View {
   }
 }
 
-/// Story 766: the board's thread in the open note, one text that can be selected and copied across rows and scrolls
+/// Story 768: the board's thread in the open note, one text that can be selected and copied across rows and scrolls
 /// inside the panel, newest at the bottom. A UITextView rather than SwiftUI text: its gestures can be told to take
 /// fingers only, so the Pencil neither scrolls nor selects it, and a ticking clock beside it doesn't reset a selection.
 private struct WhiteboardConversationText: UIViewRepresentable {

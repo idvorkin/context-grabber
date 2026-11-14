@@ -3924,7 +3924,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 662:
 
 - **Summary:** A Larry board sends him one picture at a time, the newest
-- **Status:** implemented in [41b83fb](https://github.com/idvorkin/context-grabber/commit/41b83fb); verified on the host (`WhiteboardLarryTurnTests`: a pause while idle sends, a pause while he is looking doesn't, his answer with the board moved on sends once and with nothing new sends nothing, the 3-minute timeout, a tap taking over, words carried, a failed picture freeing the turn). Not yet seen on the iPad or against the real Larry; the bar's note beginning with Larry's clock where it said *Larry is looking…* in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205) (story 667), verified by host tests (`WhiteboardLarryClockTests`)
+- **Status:** implemented in [41b83fb](https://github.com/idvorkin/context-grabber/commit/41b83fb); verified on the host (`WhiteboardLarryTurnTests`: a pause while idle sends, a pause while he is looking doesn't, his answer with the board moved on sends once and with nothing new sends nothing, the 3-minute timeout, a tap taking over what was waiting, words carried, a failed picture freeing the turn). Not yet seen on the iPad or against the real Larry; a tap while he is looking with nothing new sending nothing (story 765) in [61761b8](https://github.com/idvorkin/context-grabber/commit/61761b8), verified by host tests (`WhiteboardLarryTurnTests`); the bar's note beginning with Larry's clock where it said *Larry is looking…* in [4f92205](https://github.com/idvorkin/context-grabber/commit/4f92205) (story 667), verified by host tests (`WhiteboardLarryClockTests`)
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Who answers the pause*
 
 #### Use Case:
@@ -3951,12 +3951,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **Scenario:** I don't wait
 - **Given:** he is looking and the board has moved on
 - **When:** I tap *Larry's turn*
-- **Then:** a picture of the board goes at once with any words that waited, and his answer to the earlier one sends nothing more
-
-- **Scenario:** Nothing new to show him (story 765)
-- **Given:** he is looking at a picture and I have drawn and said nothing since it went
-- **When:** I tap *Larry's turn* or *Send to Larry*
-- **Then:** no picture goes and the note says *Larry already has this*
+- **Then:** a picture of the board goes at once with any words that waited, and his answer to the earlier one sends nothing more; with nothing new since his picture went, the tap sends nothing (story 765)
 
 ---
 
@@ -4142,7 +4137,7 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 ### User Story 765:
 
 - **Summary:** A repeat tap doesn't send Larry the same picture again
-- **Status:** implemented in [61761b8](https://github.com/idvorkin/context-grabber/commit/61761b8); verified by host tests (`WhiteboardLarryTurnTests`: a repeat tap with nothing new sends nothing, a pause that sent counts too, a stroke or waiting words send, with no turn out a tap always sends, a failed picture lets the same board go again; `WhiteboardLarryClockTests.testARepeatTapIsAnsweredForTwoSeconds`; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Status:** implemented in [61761b8](https://github.com/idvorkin/context-grabber/commit/61761b8); verified by host tests (`WhiteboardLarryTurnTests`: a repeat tap with nothing new sends nothing, a pause that sent counts too, a stroke, waiting words or another part of the board on screen send, with no turn out a tap always sends, a failed picture lets the same board go again; `WhiteboardLarryClockTests.testARepeatTapIsAnsweredForTwoSeconds`; `just native-test`) and the Mac build (`just native-build-mac`). The whiteboard's UI classes passed on the iPad simulator with it in (`just test-ladder`, at 98878ae), though none of them makes a repeat tap. Another part of the board on screen sending was added after that run and is verified on the host only. Not yet seen on the iPad
 - **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) (seven identical pictures in twelve seconds)
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *A repeat tap sends nothing*
 
@@ -4153,21 +4148,16 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 
 #### Acceptance Criteria:
 - **Scenario:** Nothing new since the picture
-- **Given:** Larry is looking at a picture and I have drawn and said nothing since
+- **Given:** Larry is looking at a picture, I have drawn and said nothing since, and the same part of the board is on screen
 - **When:** I tap *Larry's turn* or *Send to Larry*
-- **Then:** no picture goes, and the note says *Larry already has this* with the clock for two seconds
-
-- **Scenario:** Something new
-- **Given:** Larry is looking and I have drawn a stroke since
-- **When:** I tap *Larry's turn*
-- **Then:** a fresh picture goes at once and the clock restarts
+- **Then:** no picture goes, and the note says *Larry already has this* with the clock for two seconds; had I drawn a stroke, said something or scrolled to another page, a fresh picture would go at once and the clock restart
 
 ---
 
 ### User Story 766:
 
 - **Summary:** The board's note is one line that opens into the conversation
-- **Status:** implemented in [eafb6ea](https://github.com/idvorkin/context-grabber/commit/eafb6ea); verified by host tests (`WhiteboardNoteTests`: the line's state with *next:*, the middle and which end it keeps, a notice giving the middle back after five seconds, *3 to keep*, the tap on an iPad and an iPhone, the panel's last ten messages with their marks and what is live; `just native-test`) and the Mac build (`just native-build-mac`). `WhiteboardTurnUITests.testTheNoteOpensOnLarrysReply` is written and not yet run. Not yet seen on the simulator or the iPad: the Pencil on and below the panel is the iPad's check
+- **Status:** implemented in [eafb6ea](https://github.com/idvorkin/context-grabber/commit/eafb6ea); verified by host tests (`WhiteboardNoteTests`: the line's state with *next:*, the middle and which end it keeps, a message giving the middle back after five seconds and one about the Cockpit not answering keeping it, *3 to keep*; `just native-test`), the Mac build (`just native-build-mac`) and on the iPad simulator (`just test-ladder` at 98878ae: `WhiteboardTurnUITests.testTheNoteOpensOnLarrysReply` with the whiteboard's other UI classes). The Cockpit-not-answering messages keeping the middle was added after that run and is verified on the host only. Not yet seen on the iPad
 - **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation"); [#882](https://github.com/idvorkin/context-grabber/issues/882) (the panel's live rows were drawn over each other)
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
 
@@ -4182,18 +4172,63 @@ Drawing on the iPad with the Pencil, Larry seeing the board, and Claude and Larr
 - **When:** I look at the note
 - **Then:** it is one line: his state first, the newest words after it, and the paper hasn't moved
 
+---
+
+### User Story 767:
+
+- **Summary:** The note says what goes to Larry next
+- **Status:** implemented in [eafb6ea](https://github.com/idvorkin/context-grabber/commit/eafb6ea); verified by host tests (`WhiteboardNoteTests`: *next: ink*, *next: words* and *next: ink + words*, and the panel's *Next* row with the waiting words; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPad
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
+
+#### Use Case:
+- **As someone** drawing and talking while Larry is still looking
+- **I want to** see what is waiting to go to him when he answers
+- **so that** I know my new ink and words weren't lost and needn't tap to send them
+
+#### Acceptance Criteria:
 - **Scenario:** What is waiting
 - **Given:** Larry is looking
 - **When:** I draw and speak
-- **Then:** the state says *next: ink + words*
+- **Then:** the note's state says *next: ink + words*
 
+---
+
+### User Story 768:
+
+- **Summary:** A tap on the note opens the conversation over the board
+- **Status:** implemented in [eafb6ea](https://github.com/idvorkin/context-grabber/commit/eafb6ea), [128a18c](https://github.com/idvorkin/context-grabber/commit/128a18c); the live rows one under another (#882) in [98878ae](https://github.com/idvorkin/context-grabber/commit/98878ae); verified by host tests (`WhiteboardNoteTests`: the tap on an iPad, the last ten messages with their marks, what is live, a board with no thread; `just native-test`), the Mac build (`just native-build-mac`) and on the iPad simulator (`just test-ladder` at 98878ae: `WhiteboardTurnUITests.testTheNoteOpensOnLarrysReply` with the whiteboard's other UI classes). Not yet seen on the iPad: the Pencil on and below the panel is the iPad's check
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation"); [#882](https://github.com/idvorkin/context-grabber/issues/882) (the panel's live rows were drawn over each other)
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
+
+#### Use Case:
+- **As someone** drawing and talking with Larry on a board
+- **I want to** open the note and read what was said in full
+- **so that** his reply and my own words aren't cut off, and reading them doesn't take me off the board
+
+#### Acceptance Criteria:
 - **Scenario:** Open it
-- **Given:** a board with a thread
+- **Given:** a board with a thread, on an iPad
 - **When:** I tap the line with a finger
-- **Then:** a panel over the top of the board shows the last messages of the thread in full and what is live, the ink below hasn't moved, and the Pencil still draws below it
+- **Then:** a panel over the top of the board shows the last messages of the thread in full and, one under another, what is live; the ink below hasn't moved and the Pencil still draws below it
 
+---
+
+### User Story 769:
+
+- **Summary:** On an iPhone a tap on the note opens the board's thread in Chat
+- **Status:** implemented in [eafb6ea](https://github.com/idvorkin/context-grabber/commit/eafb6ea); verified by host tests (`WhiteboardNoteTests`: the tap on an iPhone with a thread and with none; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the iPhone
+- **Issues:** [#879](https://github.com/idvorkin/context-grabber/issues/879) ("some kind of collapse expand conversation")
+- **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *One line that opens*
+
+#### Use Case:
+- **As someone** looking at a board on the iPhone
+- **I want to** get from the note to the board's conversation
+- **so that** I can read what Larry said where there is room for it
+
+#### Acceptance Criteria:
 - **Scenario:** On a phone
 - **Given:** a board with a thread, on an iPhone
-- **When:** I tap the line
+- **When:** I tap the note's line
 - **Then:** Chat opens on the board's thread
 

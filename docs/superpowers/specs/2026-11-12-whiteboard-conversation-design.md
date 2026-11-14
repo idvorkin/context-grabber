@@ -52,12 +52,12 @@ the longest wait.
 Six taps on *Larry's turn* and one on *Send to Larry* in twelve seconds each sent Larry the same picture. He had to
 say so himself.
 
-- **While Larry is looking at a picture and nothing has changed since it went** (no new ink, no words waiting),
-  *Larry's turn* and *Send to Larry* send nothing.
+- **While Larry is looking at a picture and nothing has changed since it went** (no new ink, no words waiting, the
+  same part of the board on screen), *Larry's turn* and *Send to Larry* send nothing.
 - **The tap is answered.** For two seconds the note's state reads **Larry already has this · 0:12**, then goes back to
   the clock.
-- **Anything new and the tap sends as before**: new ink or waiting words go at once as a fresh picture and the clock
-  restarts.
+- **Anything new and the tap sends as before**: new ink, waiting words or another part of the board on screen go at
+  once as a fresh picture and the clock restarts.
 - **With no turn out, *Larry's turn* always sends**, new ink or not: asking him to look again is a real request.
   *Send to Larry* keeps its own rule (off until the next stroke).
 - **Every tap changes something on screen within a quarter of a second**: the clock appears or restarts, or the note
@@ -75,8 +75,10 @@ The note is one line and never two. It doesn't change height, so it never moves 
   *Listening…* with the mic open and nothing heard. When Igor's words don't fit, the end is kept and the start is
   cut, because the newest words are the ones he is checking. Larry's line keeps its start.
 - **Last: how many suggestions are showing** (*3 to keep*) and a chevron.
-- The note's other messages (a paste cut short, *Sent to Larry*, a look-only reason) take the middle for a few
-  seconds and give it back.
+- The note's other messages (a paste cut short, *Sent to Larry*, a look-only reason, Ghosts being off when the mic is
+  tapped) take the middle for a few seconds and give it back.
+- **A message about something still wrong stays**: *Ghosts: the Cockpit isn't answering* and *Larry's marks: the
+  Cockpit isn't answering* hold the middle until the Cockpit answers again, however long that is.
 - With nothing to say, there is no line, as today.
 
 ### Open: the conversation
@@ -126,6 +128,8 @@ A finger tap on the line opens a panel under it, over the top of the board.
 - Tap *Larry's turn* twice with nothing drawn between: one picture is on his thread, and the second tap's answer is
   *Larry already has this*.
 - Tap *Larry's turn* while he is looking, after drawing a stroke: a second picture goes and the clock restarts.
+- Tap *Larry's turn* while he is looking, after scrolling to another page: a picture of that page goes.
+- The Cockpit stops answering after Larry has spoken: the note says so for as long as it lasts, not for five seconds.
 - Larry's long reply and a long *Heard:* are showing: the note is one line, the clock whole at its start.
 - Draw while he is looking: the state gains *next: ink*.
 - Tap the line: the panel opens over the board, the ink below hasn't moved, and Larry's whole reply can be read.
