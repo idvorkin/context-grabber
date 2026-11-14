@@ -2634,7 +2634,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 749:
 
 - **Summary:** Two quick Returns at the end of a message send it, the blank lines taken off
-- **Status:** native app only: implemented in [e4f9de0d](https://github.com/idvorkin/context-grabber/commit/e4f9de0d), bead context-grabber-94m; verified on rung 1L only (`just test-linux` on Linux: `ChatDoubleEnterTests`, 13 cases, pass among 1,414 host tests; the app's sources compile for iOS, not linked or run); SwiftLint, the Mac build, the simulator and the phone not yet, so the keyboard's, a hardware keyboard's and Wispr Flow's Returns are not yet seen sending
+- **Status:** native app only: implemented in [e4f9de0d](https://github.com/idvorkin/context-grabber/commit/e4f9de0d) (PR [#885](https://github.com/idvorkin/context-grabber/pull/885), bead context-grabber-94m); a deletion never counting as a Return in [9b744756](https://github.com/idvorkin/context-grabber/commit/9b744756); verified on the Mac 2026-11-14: `just native-test` (SwiftLint, swift-format, `ChatDoubleEnterTests` 14 cases among 1,484 host tests) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the phone, so the on-screen keyboard's, a hardware keyboard's and Wispr Flow's Returns are not yet seen sending
 - **Spec:** [Chat with Larry in Grabber Native — Two quick Returns send](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -2654,7 +2654,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 748:
 
 - **Summary:** A pasted blog-review batch reads as one card of chips
-- **Status:** native app: implemented in e305103e, PR [#886](https://github.com/idvorkin/context-grabber/pull/886) (bead context-grabber-d23); verified by `ChatReviewBatchTests` on the Linux rung (1L) and the app's sources compiled for iOS there; not yet built on the Mac, run on the simulator or seen on the phone
+- **Status:** native app: implemented in [e305103e](https://github.com/idvorkin/context-grabber/commit/e305103e), PR [#886](https://github.com/idvorkin/context-grabber/pull/886) (bead context-grabber-d23), numbered 765 there and renumbered 748 in [64c6708b](https://github.com/idvorkin/context-grabber/commit/64c6708b) (765 is the whiteboard's); verified on the Mac 2026-11-14: `just native-test` (`ChatReviewBatchTests` 7 cases among 1,484 host tests) and the Mac build (`just native-build-mac`); not yet seen on the simulator or the phone
 - **Spec:** [Chat with Larry in Grabber Native — A blog-review batch in a message](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
