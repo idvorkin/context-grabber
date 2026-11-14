@@ -1044,14 +1044,83 @@ private struct BubbleText: View {
   let thread: String
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      ForEach(Array(ChatTables.blocks(in: text).enumerated()), id: \.offset) { _, block in
-        switch block {
-        case .text(let words): BubbleWords(text: words, chat: chat, thread: thread)
-        case .table(let table): BubbleTable(table: table, chat: chat, thread: thread)
+    if let batch = ChatReviewBatch.parse(text) {
+      ReviewBatchCard(batch: batch, raw: text, chat: chat, thread: thread)
+    } else {
+      VStack(alignment: .leading, spacing: 4) {
+        ForEach(Array(ChatTables.blocks(in: text).enumerated()), id: \.offset) { _, block in
+          switch block {
+          case .text(let words): BubbleWords(text: words, chat: chat, thread: thread)
+          case .table(let table): BubbleTable(table: table, chat: chat, thread: thread)
+          }
         }
       }
     }
+  }
+}
+
+/// A pasted blog-review batch (story 765, `ChatReviewBatch`): the page's chip and its count, a chip per note that
+/// opens to the quote in its context and the whole comment, and the JSON as pasted behind *raw*.
+private struct ReviewBatchCard: View {
+  let batch: ChatReviewBatch
+  let raw: String
+  let chat: ChatModel
+  let thread: String
+  @State private var open: Set<Int> = []
+  @State private var showRaw = false
+  @Environment(\.openURL) private var openURL
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 6) {
+        if let url = batch.page {
+          let link = ChatLink(url: url, kind: .web, label: batch.title, id: url.absoluteString)
+          LinkChip(link: link) {
+            chat.logLinkOpened(link, thread: thread, from: "review")
+            openURL(url)
+          }
+        } else {
+          Text(batch.title).font(.caption.weight(.medium))
+        }
+        Text(batch.count).font(.caption).foregroundStyle(.secondary)
+      }
+      ForEach(Array(batch.notes.enumerated()), id: \.offset) { index, note in
+        VStack(alignment: .leading, spacing: 4) {
+          Button {
+            if open.contains(index) { open.remove(index) } else { open.insert(index) }
+          } label: {
+            HStack(spacing: 4) {
+              Image(systemName: open.contains(index) ? "chevron.down" : "chevron.right")
+              Text(note.label).lineLimit(1)
+            }
+            .font(.caption.weight(.medium))
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Color(.tertiarySystemFill), in: Capsule())
+          }
+          .buttonStyle(.borderless)
+          .accessibilityIdentifier("chat-review-note")
+          if open.contains(index) {
+            context(note).font(.callout)
+            if !note.comment.isEmpty { Text(note.comment) }
+          }
+        }
+      }
+      Button(showRaw ? "hide raw" : "raw") { showRaw.toggle() }
+        .font(.caption2).buttonStyle(.borderless).accessibilityIdentifier("chat-review-raw")
+      if showRaw {
+        ScrollView(.horizontal, showsIndicators: false) {
+          Text(raw).font(.caption2.monospaced())
+        }
+      }
+    }
+    .accessibilityIdentifier("chat-review-card")
+  }
+
+  /// "…the words before *the quote* the words after…", the context dimmed.
+  private func context(_ note: ChatReviewBatch.Note) -> Text {
+    let before = Text(note.before).foregroundStyle(.secondary)
+    let after = Text(note.after).foregroundStyle(.secondary)
+    return Text("\(before)\(Text(note.quote).italic())\(after)")
   }
 }
 
