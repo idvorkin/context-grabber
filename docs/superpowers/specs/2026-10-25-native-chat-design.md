@@ -111,6 +111,26 @@ VoiceOver reads the table row by row, each cell after its heading ("Pro 14, Weig
 *Quote in reply* take the message as written, pipes and all. Other Markdown (bold, lists, headings) is
 still shown as written, in a cell too.
 
+**A blog-review batch in a message** (Igor, 2026-11-14: *"this is a special format I get from blog review. Can I
+figure out a simple way to make expandable chips to understand this better?"*). The blog's annotate tool exports a
+page's notes as one block of JSON: the page's permalink, address and title, and a list of notes, each a quoted
+passage with a few words either side of it, Igor's comment and its intent (fix, cut, rewrite, expand, check,
+question, note). Pasted into a chat, that used to read as a wall of braces. When the whole message, give or take
+blank space around it, is one such batch, the bubble shows one card instead: a header chip with the page's title (its
+permalink, else its address, when it has none; on one line, at most 60 characters) that opens the page, beside the
+count ("1 note", "3 notes"); then one chip per note, in order, reading its intent and its comment ("fix · this
+paragraph says the same thing twice"), the comment on one line and, past 60 characters, cut to 59 and "…". An intent
+other than the seven reads *note*; a note with an empty comment reads its quote in curly quotes instead. Tapping a
+note's chip opens it in place: the quoted passage with up to 30 characters of the words before and after it dimmed,
+"…" on a side that has words, then the whole comment with its line breaks; tapping again folds it. The header chip
+only ever opens a web page: an address that is not an http or https one with a host leaves the title as plain words,
+and so does a batch with no address. *Copy* and *Quote in reply* still take the message as written, which is how the
+JSON is had back. It is a card
+only when the message is that and nothing else: one JSON object with a permalink or an address and at least one note,
+every note with a quote and a comment. Anything else, a batch with a sentence before it, a batch inside a code fence,
+broken JSON, other JSON, reads exactly as it always has. The Cockpit's web chat reads the same batch as a card too,
+with the same labels.
+
 **Press and hold a message** (Igor, 2026-11-03, #629: *"Maybe let me do press-and-hold reactions for yes, no, quote in
 reply"*). Holding one of Larry's messages opens a menu: *Yes*, *No*, *Quote in reply*, *Copy*. Holding one of Igor's own
 offers *Quote in reply* and *Copy*, since answering himself means nothing. A message that is only a picture has nothing
@@ -216,7 +236,24 @@ still up for the next message — typed or dictated alike (#449).
 **Sending from a Mac's keyboard** (Igor, 2026-11-05, #683: *"Either Command+Enter or Enter should work in all the dialogues
 to hit send."*). On the Mac, Enter sends and Command+Enter sends. Shift+Enter starts a new line, for a longer message. Both
 send only what Send itself would: with nothing to send, or with the thread still waiting to exist, a key does nothing and
-the words stay. A phone and an iPad keep the keyboard they have, where Return starts a new line.
+the words stay. A phone and an iPad keep the keyboard they have, where Return starts a new line, except for the double
+Return below.
+
+**Two quick Returns send** (Igor, 2026-11-14: *"two enters is an auto-send. Trim the two enters before doing the
+auto-send"*, then *"Make it two enters and two enters very quickly"*). He dictates into the bar by voice and wants to
+send without touching the phone by ending with a double Return. At the end of a message with words in it, two Returns
+at most 400 milliseconds apart send it, exactly as Send would, with the blank lines and any spaces at its end
+taken off. It holds for every way a Return arrives: the on-screen keyboard, a hardware keyboard (Shift+Enter on the
+Mac), or a dictation tool. A tool that types both new lines at once, in one go, counts as two quick Returns, and so does
+a paste that ends in a blank line. Everything else is an ordinary new line:
+- two Returns further apart than that, which leave a blank line for a new paragraph;
+- Returns in the middle of the words, wherever the cursor stands;
+- a deletion, even one that leaves blank lines at the end (cutting the last paragraph, or the last letter of a line
+  under a blank one), which never sends and never counts as the first of two Returns;
+- a bar with no words, or only spaces and new lines, which never sends (an attachment alone still needs Send);
+- a quote put into the bar by *Quote in reply*, and the words the chat's own mic writes in, which already end in a
+  blank line or arrive whole and are never taken for Returns;
+- a thread still waiting to exist, or anything else Send itself would refuse: the Returns stay as new lines.
 
 **Bigger and smaller text on a Mac** (Igor, 2026-11-07, #781: *"Chat window should support font bigger smaller"*). On
 the Mac, the View menu has *Bigger Text* (Command+=), *Smaller Text* (Command+Minus) and *Actual Size*
@@ -512,6 +549,8 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   `dictation_stop` and `dictation_error` lines (the problem report's) carry the recognizer's side. Never the words.
 - `chat` no_address, once at each launch of a simulator with no address, says why chat reaches nothing; `inbox` no_address
   (how many wait, what asked) at each send it held back; a refresh that could not run says the same in its reason.
+- `chat` double_enter_sent (thread, how the Returns came: two changes or one, and for two the gap in milliseconds) at
+  each send the two Returns made. Never the words.
 - `chat` image_pasted says how a picture came in (the button or the Mac's paste) and its bytes; a clipboard picture that
   could not be read logs the same line with what the clipboard held instead.
 - `chat` events for the press-and-hold menu: reaction (yes or no, thread, message id, whether it was the newest), quote
@@ -533,6 +572,9 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   mode too, each delivered once.
 - The share card's field is headed *Message*. A Safari link shared with or without words, to a new chat or a picked
   one, arrives with the whole link first and his words after it.
+- A pasted blog-review batch reads as one card: the page's title and note count, one chip per note (intent and
+  comment) that opens to the quote in its context and the full comment; any other JSON, or a
+  batch with words around it, reads as written.
 - 👀 appears under Igor's message once the Cockpit has it, 🫡 once it is with Larry, 🏆 once Larry marks it done.
 - With the app closed, a reply from Larry eventually raises one notification for its thread; tapping it opens the
   thread; a reply already read elsewhere, or in a Done thread, raises none; the first check after install raises
@@ -558,6 +600,10 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
 - A sent message its thread never lists stops showing as pending five minutes after the send, so *Yes* on Larry's
   newest message there goes as the bare word; seven days after the send it is gone from the phone, thread opened or
   not. A message the thread lists is gone at that read. Messages an older build stored still load, in one state each.
+- Dictating "see you at noon" and ending with two quick Returns sends "see you at noon" with no blank line after it and
+  empties the bar; two slow Returns leave a blank line and send nothing; two quick Returns between two lines of words,
+  or in an empty bar, send nothing; deleting the last paragraph under a blank line sends nothing; a dictation tool's two new lines in one go send as two quick Returns do; *Quote in
+  reply* still sends nothing.
 - On the Mac, Command+= makes chat's text one size bigger and Command+Minus one smaller, Command+0 puts it back, the
   size is the same after a relaunch, and nothing outside chat changes size.
 - On the Mac, a picture copied in another app makes *Paste image* live on coming back to the window, and Command+V or

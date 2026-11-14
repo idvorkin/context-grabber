@@ -1044,14 +1044,90 @@ private struct BubbleText: View {
   let thread: String
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      ForEach(Array(ChatTables.blocks(in: text).enumerated()), id: \.offset) { _, block in
-        switch block {
-        case .text(let words): BubbleWords(text: words, chat: chat, thread: thread)
-        case .table(let table): BubbleTable(table: table, chat: chat, thread: thread)
+    if let batch = ChatReviewBatch.parse(text) {
+      ReviewBatchCard(batch: batch, chat: chat, thread: thread)
+    } else {
+      VStack(alignment: .leading, spacing: 4) {
+        ForEach(Array(ChatTables.blocks(in: text).enumerated()), id: \.offset) { _, block in
+          switch block {
+          case .text(let words): BubbleWords(text: words, chat: chat, thread: thread)
+          case .table(let table): BubbleTable(table: table, chat: chat, thread: thread)
+          }
         }
       }
     }
+  }
+}
+
+/// A pasted blog-review batch (story 748, `ChatReviewBatch`): the page's chip and its count, a chip per note that
+/// opens to the quote in its context and the whole comment.
+private struct ReviewBatchCard: View {
+  let batch: ChatReviewBatch
+  let chat: ChatModel
+  let thread: String
+  @State private var open: Set<Int> = []
+  /// GRABBER_CHAT_REVIEW=open: the card's first note opens by itself, for the simulator.
+  @State private var openHook = LaunchHooks.current.chat.reviewOpen
+  @Environment(\.openURL) private var openURL
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 6) {
+        if let url = batch.page {
+          let link = ChatLink(url: url, kind: .web, label: batch.title, id: url.absoluteString)
+          LinkChip(link: link) {
+            chat.logLinkOpened(link, thread: thread, from: "review")
+            openURL(url)
+          }
+        } else {
+          Text(batch.title).font(.caption.weight(.medium))
+        }
+        Text(batch.count).font(.caption).foregroundStyle(.secondary)
+      }
+      ForEach(Array(batch.notes.enumerated()), id: \.offset) { index, note in
+        VStack(alignment: .leading, spacing: 4) {
+          Button {
+            toggle(index, from: "tap")
+          } label: {
+            HStack(spacing: 4) {
+              Image(systemName: open.contains(index) ? "chevron.down" : "chevron.right")
+              Text(note.label).lineLimit(1)
+            }
+            .font(.caption.weight(.medium))
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(Color(.tertiarySystemFill), in: Capsule())
+          }
+          .buttonStyle(.borderless)
+          .accessibilityIdentifier("chat-review-note")
+          if open.contains(index) {
+            context(note).font(.callout)
+            if !note.comment.isEmpty { Text(note.comment) }
+          }
+        }
+      }
+    }
+    .accessibilityIdentifier("chat-review-card")
+    .task { runOpenHook() }
+  }
+
+  /// The note's place in the batch goes to the log, never its words.
+  private func toggle(_ index: Int, from place: String) {
+    let opening = !open.contains(index)
+    if opening { open.insert(index) } else { open.remove(index) }
+    chat.logAction("review_note", ["thread": thread, "note": index, "open": opening, "from": place])
+  }
+
+  private func runOpenHook() {
+    guard openHook else { return }
+    openHook = false
+    toggle(0, from: "hook")
+  }
+
+  /// "…the words before *the quote* the words after…", the context dimmed.
+  private func context(_ note: ChatReviewBatch.Note) -> Text {
+    let before = Text(note.before).foregroundStyle(.secondary)
+    let after = Text(note.after).foregroundStyle(.secondary)
+    return Text("\(before)\(Text(note.quote).italic())\(after)")
   }
 }
 
@@ -1225,6 +1301,10 @@ private struct ComposeBar: View {
   @State private var pickProblem: BugProblem?
   /// A new field after each send (#449): clearing the text alone could leave the old words in a field still editing.
   @State private var field = 0
+  /// Two quick Returns at the end of the words send (story 749).
+  @State private var enters = ChatDoubleEnter()
+  /// GRABBER_CHAT_ENTER=<words>: the words and two new lines land in the bar as typing would, for the simulator.
+  @State private var enterHook = LaunchHooks.current.chat.enter
   @FocusState private var focused: Bool
 
   var body: some View {
@@ -1318,6 +1398,7 @@ private struct ComposeBar: View {
     .fileImporter(isPresented: $picking, allowedContentTypes: [.data]) { attach($0) }
     // The words stream into the draft as Igor speaks, after what was typed, for him to read before he sends (#448).
     .onChange(of: voice.words) { _, _ in takeWords() }
+    .onChange(of: draft.text) { old, new in sendOnDoubleEnter(from: old, to: new) }
     .onChange(of: quoting) { _, message in
       if let message { take(quote: message) }
     }
@@ -1329,6 +1410,10 @@ private struct ComposeBar: View {
       }
       // A new chat opens with the keyboard up (spec "A new chat", story 262), unless he is talking.
       if ChatNewThread.focusesOnOpen(target, recording: voice.recording) { focused = true }
+      if let words = enterHook {
+        enterHook = nil
+        draft.text = words + "\n\n"
+      }
     }
     .onDisappear { voice.cancel(thread: thread, why: "left_thread") }
     .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
@@ -1341,6 +1426,7 @@ private struct ComposeBar: View {
 
   private func takeWords() {
     guard let words = voice.take(thread: thread) else { return }
+    enters.willWrite(words)
     draft.text = words
   }
 
@@ -1348,7 +1434,9 @@ private struct ComposeBar: View {
   private func take(quote message: ChatMessage) {
     takeWords()
     voice.sent(thread: thread, why: "quoted")
-    draft.text = ChatQuote.appended(message, to: draft.text)
+    let quoted = ChatQuote.appended(message, to: draft.text)
+    enters.willWrite(quoted)
+    draft.text = quoted
     focused = true
     quoting = nil
   }
@@ -1402,6 +1490,20 @@ private struct ComposeBar: View {
   private func clearProblems() {
     failure = nil
     pickProblem = nil
+  }
+
+  /// Story 749: the words, their blank lines off, go as Send would send them; what Send would refuse stays as typed.
+  private func sendOnDoubleEnter(from old: String, to new: String) {
+    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+    guard let asked = enters.change(from: old, to: new, at: nowMs),
+      ChatNewThread.canSend(target, draftReady: draft.canAdd)
+    else { return }
+    var fields: [String: Any] = ["thread": thread, "how": asked.gapMs == nil ? "one_change" : "two_changes"]
+    if let gap = asked.gapMs { fields["gap_ms"] = Int(gap) }
+    chat.logAction("double_enter_sent", fields)
+    enters.willWrite(asked.text)
+    draft.text = asked.text
+    send()
   }
 
   private func send() {

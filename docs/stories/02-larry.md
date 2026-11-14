@@ -2628,3 +2628,41 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** Larry's message "Here's how they compare:", then a table with the heading `| | Weight | Battery | Price |`, its dashes row, and three rows, then "Want the cheapest?"
 - **When:** I open the thread on the iPhone
 - **Then:** the bubble reads the first line, then a grid with the heading in bold and one row per laptop, then the last line; the grid scrolls sideways inside the bubble if it is wider than it, and *Copy* copies the message with its pipes
+
+---
+
+### User Story 749:
+
+- **Summary:** Two quick Returns at the end of a message send it, the blank lines taken off
+- **Status:** native app only: implemented in [e4f9de0d](https://github.com/idvorkin/context-grabber/commit/e4f9de0d) (PR [#885](https://github.com/idvorkin/context-grabber/pull/885), bead context-grabber-94m); a deletion never counting as a Return in [9b744756](https://github.com/idvorkin/context-grabber/commit/9b744756); verified on the Mac 2026-11-14: `just native-test` (SwiftLint, swift-format, `ChatDoubleEnterTests` 14 cases among 1,484 host tests) and the Mac build (`just native-build-mac`); one simulator ladder passed with it in (the seven chat UI classes and the chat smoke), none of which presses a Return, so the send itself is not yet seen on the simulator or the phone: the on-screen keyboard's, a hardware keyboard's and Wispr Flow's Returns are not yet seen sending; `GRABBER_CHAT_ENTER` drives it on the simulator, not yet run
+- **Spec:** [Chat with Larry in Grabber Native — Two quick Returns send](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, dictating into a chat thread by voice with the phone out of reach
+- **I want to** end what I said with two quick Returns and have it sent
+- **so that** I send hands-free, without a blank line at the end of the message, and still get a blank line when I pause between Returns
+
+#### Acceptance Criteria:
+- **Scenario:** Dictated, then two quick Returns
+- **Given:** an open thread whose bar reads "see you at noon"
+- **When:** I press Return twice within 400 milliseconds, on the keyboard or by the dictation tool's two new lines at once
+- **Then:** "see you at noon" is sent as Send would send it, with nothing after "noon", and the bar is empty; two Returns further apart leave a blank line and send nothing, two quick Returns between two lines or in an empty bar send nothing, deleting the last paragraph so a blank line ends the bar sends nothing, and *Quote in reply* still sends nothing
+
+---
+
+### User Story 748:
+
+- **Summary:** A pasted blog-review batch reads as one card of chips
+- **Status:** native app: implemented in [e305103e](https://github.com/idvorkin/context-grabber/commit/e305103e), PR [#886](https://github.com/idvorkin/context-grabber/pull/886) (bead context-grabber-d23), numbered 765 there and renumbered 748 in [64c6708b](https://github.com/idvorkin/context-grabber/commit/64c6708b) (765 is the whiteboard's); verified on the Mac 2026-11-14: `just native-test` (`ChatReviewBatchTests` 7 cases among 1,484 host tests) and the Mac build (`just native-build-mac`); one simulator ladder passed with it in (the seven chat UI classes and the chat smoke), none of which shows a batch, so the card itself is not yet seen on the simulator or the phone; `GRABBER_CHAT_REVIEW` opens a note on the simulator, not yet run
+- **Spec:** [Chat with Larry in Grabber Native — A blog-review batch in a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, pasting the notes the blog's annotate tool exported for a post into a chat
+- **I want to** see them as the page's title and one chip per note that I can open
+- **so that** I can read what I flagged at a glance instead of a wall of JSON
+
+#### Acceptance Criteria:
+- **Scenario:** A batch of two notes
+- **Given:** a message that is exactly the annotate tool's export for "An example post", with a *fix* note "Say it once." and a *question* note "Does this belong here?"
+- **When:** I open the thread on the iPhone
+- **Then:** the bubble shows a chip "An example post" that opens the post, beside "2 notes"; then the chips "fix · Say it once." and "question · Does this belong here?"; tapping the first shows the quoted passage with the words around it dimmed and the whole comment, and tapping it again folds it; *Copy* copies the message as pasted; a note with the quote "passion or addiction:" and an empty comment reads "note · “passion or addiction:”"; and the same JSON after the words "Here are my notes:", inside a code fence, broken, or other JSON reads exactly as written, with no card

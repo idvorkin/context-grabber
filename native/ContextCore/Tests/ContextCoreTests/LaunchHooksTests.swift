@@ -328,27 +328,34 @@ final class LaunchHooksTests: XCTestCase {
   func testWhatChatTapsByItself() {
     let chat = LaunchHooks([
       "GRABBER_CHAT_SELECT": "archive", "GRABBER_CHAT_LINKS": "fold", "GRABBER_CHAT_HOLD": "quote",
-      "GRABBER_CHAT_IMAGE": "open",
+      "GRABBER_CHAT_IMAGE": "open", "GRABBER_CHAT_REVIEW": "open", "GRABBER_CHAT_ENTER": "see you at noon",
     ]).chat
     XCTAssertTrue(chat.selectArchive)
     XCTAssertEqual(chat.links, "fold")
     XCTAssertEqual(chat.hold, "quote")
     XCTAssertTrue(chat.imageOpen)
+    XCTAssertTrue(chat.reviewOpen)
+    XCTAssertEqual(chat.enter, "see you at noon")
 
     // The words are the screens' to read: anything goes through.
     let odd = ChatViewHooks([
       "GRABBER_CHAT_SELECT": "all", "GRABBER_CHAT_LINKS": "", "GRABBER_CHAT_HOLD": "shrug", "GRABBER_CHAT_IMAGE": "1",
+      "GRABBER_CHAT_REVIEW": "1", "GRABBER_CHAT_ENTER": "",
     ])
     XCTAssertFalse(odd.selectArchive)
     XCTAssertEqual(odd.links, "")
     XCTAssertEqual(odd.hold, "shrug")
     XCTAssertFalse(odd.imageOpen)
+    XCTAssertFalse(odd.reviewOpen)
+    XCTAssertNil(odd.enter, "no words: nothing to send")
 
     let none = ChatViewHooks()
     XCTAssertFalse(none.selectArchive)
     XCTAssertNil(none.links)
     XCTAssertNil(none.hold)
     XCTAssertFalse(none.imageOpen)
+    XCTAssertFalse(none.reviewOpen)
+    XCTAssertNil(none.enter)
   }
 
   // MARK: Call, mirror, link
