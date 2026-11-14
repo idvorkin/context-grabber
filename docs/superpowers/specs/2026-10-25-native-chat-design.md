@@ -216,7 +216,22 @@ still up for the next message — typed or dictated alike (#449).
 **Sending from a Mac's keyboard** (Igor, 2026-11-05, #683: *"Either Command+Enter or Enter should work in all the dialogues
 to hit send."*). On the Mac, Enter sends and Command+Enter sends. Shift+Enter starts a new line, for a longer message. Both
 send only what Send itself would: with nothing to send, or with the thread still waiting to exist, a key does nothing and
-the words stay. A phone and an iPad keep the keyboard they have, where Return starts a new line.
+the words stay. A phone and an iPad keep the keyboard they have, where Return starts a new line, except for the double
+Return below.
+
+**Two quick Returns send** (Igor, 2026-11-14: *"two enters is an auto-send. Trim the two enters before doing the
+auto-send"*, then *"Make it two enters and two enters very quickly"*). He dictates into the bar by voice and wants to
+send without touching the phone by ending with a double Return. At the end of a message with words in it, two Returns
+at most 400 milliseconds apart send it, exactly as Send would, with the blank lines and any spaces at its end
+taken off. It holds for every way a Return arrives: the on-screen keyboard, a hardware keyboard (Shift+Enter on the
+Mac), or a dictation tool. A tool that types both new lines at once, in one go, counts as two quick Returns, and so does
+a paste that ends in a blank line. Everything else is an ordinary new line:
+- two Returns further apart than that, which leave a blank line for a new paragraph;
+- Returns in the middle of the words, wherever the cursor stands;
+- a bar with no words, or only spaces and new lines, which never sends (an attachment alone still needs Send);
+- a quote put into the bar by *Quote in reply*, and the words the chat's own mic writes in, which already end in a
+  blank line or arrive whole and are never taken for Returns;
+- a thread still waiting to exist, or anything else Send itself would refuse: the Returns stay as new lines.
 
 **Bigger and smaller text on a Mac** (Igor, 2026-11-07, #781: *"Chat window should support font bigger smaller"*). On
 the Mac, the View menu has *Bigger Text* (Command+=), *Smaller Text* (Command+Minus) and *Actual Size*
@@ -512,6 +527,8 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   `dictation_stop` and `dictation_error` lines (the problem report's) carry the recognizer's side. Never the words.
 - `chat` no_address, once at each launch of a simulator with no address, says why chat reaches nothing; `inbox` no_address
   (how many wait, what asked) at each send it held back; a refresh that could not run says the same in its reason.
+- `chat` double_enter_sent (thread, how the Returns came: two changes or one, and for two the gap in milliseconds) at
+  each send the two Returns made. Never the words.
 - `chat` image_pasted says how a picture came in (the button or the Mac's paste) and its bytes; a clipboard picture that
   could not be read logs the same line with what the clipboard held instead.
 - `chat` events for the press-and-hold menu: reaction (yes or no, thread, message id, whether it was the newest), quote
@@ -558,6 +575,10 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
 - A sent message its thread never lists stops showing as pending five minutes after the send, so *Yes* on Larry's
   newest message there goes as the bare word; seven days after the send it is gone from the phone, thread opened or
   not. A message the thread lists is gone at that read. Messages an older build stored still load, in one state each.
+- Dictating "see you at noon" and ending with two quick Returns sends "see you at noon" with no blank line after it and
+  empties the bar; two slow Returns leave a blank line and send nothing; two quick Returns between two lines of words,
+  or in an empty bar, send nothing; a dictation tool's two new lines in one go send as two quick Returns do; *Quote in
+  reply* still sends nothing.
 - On the Mac, Command+= makes chat's text one size bigger and Command+Minus one smaller, Command+0 puts it back, the
   size is the same after a relaunch, and nothing outside chat changes size.
 - On the Mac, a picture copied in another app makes *Paste image* live on coming back to the window, and Command+V or

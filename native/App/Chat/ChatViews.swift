@@ -1225,6 +1225,8 @@ private struct ComposeBar: View {
   @State private var pickProblem: BugProblem?
   /// A new field after each send (#449): clearing the text alone could leave the old words in a field still editing.
   @State private var field = 0
+  /// Two quick Returns at the end of the words send (story 749).
+  @State private var enters = ChatDoubleEnter()
   @FocusState private var focused: Bool
 
   var body: some View {
@@ -1318,6 +1320,7 @@ private struct ComposeBar: View {
     .fileImporter(isPresented: $picking, allowedContentTypes: [.data]) { attach($0) }
     // The words stream into the draft as Igor speaks, after what was typed, for him to read before he sends (#448).
     .onChange(of: voice.words) { _, _ in takeWords() }
+    .onChange(of: draft.text) { old, new in sendOnDoubleEnter(from: old, to: new) }
     .onChange(of: quoting) { _, message in
       if let message { take(quote: message) }
     }
@@ -1341,6 +1344,7 @@ private struct ComposeBar: View {
 
   private func takeWords() {
     guard let words = voice.take(thread: thread) else { return }
+    enters.willWrite(words)
     draft.text = words
   }
 
@@ -1348,7 +1352,9 @@ private struct ComposeBar: View {
   private func take(quote message: ChatMessage) {
     takeWords()
     voice.sent(thread: thread, why: "quoted")
-    draft.text = ChatQuote.appended(message, to: draft.text)
+    let quoted = ChatQuote.appended(message, to: draft.text)
+    enters.willWrite(quoted)
+    draft.text = quoted
     focused = true
     quoting = nil
   }
@@ -1402,6 +1408,20 @@ private struct ComposeBar: View {
   private func clearProblems() {
     failure = nil
     pickProblem = nil
+  }
+
+  /// Story 749: the words, their blank lines off, go as Send would send them; what Send would refuse stays as typed.
+  private func sendOnDoubleEnter(from old: String, to new: String) {
+    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+    guard let asked = enters.change(from: old, to: new, at: nowMs),
+      ChatNewThread.canSend(target, draftReady: draft.canAdd)
+    else { return }
+    var fields: [String: Any] = ["thread": thread, "how": asked.gapMs == nil ? "one_change" : "two_changes"]
+    if let gap = asked.gapMs { fields["gap_ms"] = Int(gap) }
+    chat.logAction("double_enter_sent", fields)
+    enters.willWrite(asked.text)
+    draft.text = asked.text
+    send()
   }
 
   private func send() {
