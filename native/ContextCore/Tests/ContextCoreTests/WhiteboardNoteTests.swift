@@ -101,7 +101,8 @@ final class WhiteboardNoteTests: XCTestCase {
     XCTAssertEqual(line(now: 15, said: said, notice: notice)?.middle, "Larry: this is where it goes")
     XCTAssertEqual(
       line(now: 60, notice: notice)?.middle, "Sent to Larry: his reply shows in Chat", "with nothing said it stays")
-    XCTAssertTrue(WhiteboardNote.ticks(larry: WhiteboardLarryTurn(), notice: notice), "the line changes at five seconds")
+    XCTAssertTrue(
+      WhiteboardNote.ticks(larry: WhiteboardLarryTurn(), notice: notice), "the line changes at five seconds")
   }
 
   // The ghost stories' "until a turn gets through": Larry spoke earlier, then the Cockpit stops answering.
