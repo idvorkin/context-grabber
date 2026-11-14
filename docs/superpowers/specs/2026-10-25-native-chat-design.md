@@ -111,6 +111,25 @@ VoiceOver reads the table row by row, each cell after its heading ("Pro 14, Weig
 *Quote in reply* take the message as written, pipes and all. Other Markdown (bold, lists, headings) is
 still shown as written, in a cell too.
 
+**A blog-review batch in a message** (Igor, 2026-11-14: *"this is a special format I get from blog review. Can I
+figure out a simple way to make expandable chips to understand this better?"*). The blog's annotate tool exports a
+page's notes as one block of JSON: the page's permalink, address and title, and a list of notes, each a quoted
+passage with a few words either side of it, Igor's comment and its intent (fix, cut, rewrite, expand, check,
+question, note). Pasted into a chat, that used to read as a wall of braces. When the whole message, give or take
+blank space around it, is one such batch, the bubble shows one card instead: a header chip with the page's title (its
+permalink, else its address, when it has none; on one line, at most 60 characters) that opens the page, beside the
+count ("1 note", "3 notes"); then one chip per note, in order, reading its intent and its comment ("fix · this
+paragraph says the same thing twice"), the comment on one line and, past 60 characters, cut to 59 and "…". An intent
+other than the seven reads *note*; a note with an empty comment reads its quote in curly quotes instead. Tapping a
+note's chip opens it in place: the quoted passage with up to 30 characters of the words before and after it dimmed,
+"…" on a side that has words, then the whole comment with its line breaks; tapping again folds it. The header chip
+only ever opens a web page: an address that is not one leaves the title as plain words. Under the chips a *raw*
+toggle shows the JSON as it was pasted. *Copy* and *Quote in reply* still take the message as written. It is a card
+only when the message is that and nothing else: one JSON object with a permalink or an address and at least one note,
+every note with a quote and a comment. Anything else, a batch with a sentence before it, a batch inside a code fence,
+broken JSON, other JSON, reads exactly as it always has. The Cockpit's web chat reads the same batch the same way,
+with the same labels.
+
 **Press and hold a message** (Igor, 2026-11-03, #629: *"Maybe let me do press-and-hold reactions for yes, no, quote in
 reply"*). Holding one of Larry's messages opens a menu: *Yes*, *No*, *Quote in reply*, *Copy*. Holding one of Igor's own
 offers *Quote in reply* and *Copy*, since answering himself means nothing. A message that is only a picture has nothing
@@ -550,6 +569,9 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   mode too, each delivered once.
 - The share card's field is headed *Message*. A Safari link shared with or without words, to a new chat or a picked
   one, arrives with the whole link first and his words after it.
+- A pasted blog-review batch reads as one card: the page's title and note count, one chip per note (intent and
+  comment) that opens to the quote in its context and the full comment, and a *raw* toggle; any other JSON, or a
+  batch with words around it, reads as written.
 - 👀 appears under Igor's message once the Cockpit has it, 🫡 once it is with Larry, 🏆 once Larry marks it done.
 - With the app closed, a reply from Larry eventually raises one notification for its thread; tapping it opens the
   thread; a reply already read elsewhere, or in a Done thread, raises none; the first check after install raises

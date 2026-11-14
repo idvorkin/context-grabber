@@ -2647,3 +2647,33 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** an open thread whose bar reads "see you at noon"
 - **When:** I press Return twice within 400 milliseconds, on the keyboard or by the dictation tool's two new lines at once
 - **Then:** "see you at noon" is sent as Send would send it, with nothing after "noon", and the bar is empty; two Returns further apart leave a blank line and send nothing, two quick Returns between two lines or in an empty bar send nothing, and *Quote in reply* still sends nothing
+||||||| 13e74567
+
+---
+
+### User Story 765:
+
+- **Summary:** A pasted blog-review batch reads as one card of chips
+- **Status:** native app: implemented in e305103e, PR [#886](https://github.com/idvorkin/context-grabber/pull/886) (bead context-grabber-d23); verified by `ChatReviewBatchTests` on the Linux rung (1L) and the app's sources compiled for iOS there; not yet built on the Mac, run on the simulator or seen on the phone
+- **Spec:** [Chat with Larry in Grabber Native — A blog-review batch in a message](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor, pasting the notes the blog's annotate tool exported for a post into a chat
+- **I want to** see them as the page's title and one chip per note that I can open
+- **so that** I can read what I flagged at a glance instead of a wall of JSON
+
+#### Acceptance Criteria:
+- **Scenario:** A batch of two notes
+- **Given:** a message that is exactly the annotate tool's export for "An example post", with a *fix* note "Say it once." and a *question* note "Does this belong here?"
+- **When:** I open the thread on the iPhone
+- **Then:** the bubble shows a chip "An example post" that opens the post, beside "2 notes"; then the chips "fix · Say it once." and "question · Does this belong here?"; tapping the first shows the quoted passage with the words around it dimmed and the whole comment, and tapping it again folds it; *raw* shows the JSON as pasted; *Copy* copies the message as pasted
+
+- **Scenario:** Not a batch
+- **Given:** a message with the same JSON after the words "Here are my notes:", or inside a code fence, or broken JSON, or other JSON
+- **When:** I open the thread
+- **Then:** it reads exactly as written, with no card
+
+- **Scenario:** A note with no comment
+- **Given:** a batch whose one note has the quote "passion or addiction:" and an empty comment
+- **When:** I open the thread
+- **Then:** its chip reads "note · “passion or addiction:”"
