@@ -247,6 +247,8 @@ Mac), or a dictation tool. A tool that types both new lines at once, in one go, 
 a paste that ends in a blank line. Everything else is an ordinary new line:
 - two Returns further apart than that, which leave a blank line for a new paragraph;
 - Returns in the middle of the words, wherever the cursor stands;
+- a deletion, even one that leaves blank lines at the end (cutting the last paragraph, or the last letter of a line
+  under a blank one), which never sends and never counts as the first of two Returns;
 - a bar with no words, or only spaces and new lines, which never sends (an attachment alone still needs Send);
 - a quote put into the bar by *Quote in reply*, and the words the chat's own mic writes in, which already end in a
   blank line or arrive whole and are never taken for Returns;
@@ -599,7 +601,7 @@ leaves waiting never goes to Larry ([#680](2026-11-03-native-mac-app-design.md))
   not. A message the thread lists is gone at that read. Messages an older build stored still load, in one state each.
 - Dictating "see you at noon" and ending with two quick Returns sends "see you at noon" with no blank line after it and
   empties the bar; two slow Returns leave a blank line and send nothing; two quick Returns between two lines of words,
-  or in an empty bar, send nothing; a dictation tool's two new lines in one go send as two quick Returns do; *Quote in
+  or in an empty bar, send nothing; deleting the last paragraph under a blank line sends nothing; a dictation tool's two new lines in one go send as two quick Returns do; *Quote in
   reply* still sends nothing.
 - On the Mac, Command+= makes chat's text one size bigger and Command+Minus one smaller, Command+0 puts it back, the
   size is the same after a relaunch, and nothing outside chat changes size.

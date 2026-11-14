@@ -39,7 +39,9 @@ public struct ChatDoubleEnter: Sendable {
       }
     }
     let (words, newlines) = Self.split(new)
-    guard !words.isEmpty else {
+    // A change that shortens the text is a deletion, never a Return: cutting the last line of words can leave the
+    // blank lines above it at the end, and that must not send the paragraph before it.
+    guard !words.isEmpty, new.count >= old.count else {
       armed = nil
       return nil
     }

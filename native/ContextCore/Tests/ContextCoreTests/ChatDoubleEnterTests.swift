@@ -77,8 +77,10 @@ final class ChatDoubleEnterTests: XCTestCase {
   }
 
   func testTypingBetweenTheReturnsDisarms() {
-    let (send, sends) = type([("hi", 0), ("hi\n", 1_000), ("hi\nx", 1_050), ("hi\n", 1_100), ("hi\n\n", 1_150)])
-    XCTAssertEqual(send, .init(text: "hi", gapMs: 50), "the deleted x re-armed at 1100, from the end's one new line")
+    let (send, sends) = type([
+      ("hi", 0), ("hi\n", 1_000), ("hi\nx", 1_050), ("hi\n", 1_100), ("hi\n\n", 1_150), ("hi\n\n\n", 1_200),
+    ])
+    XCTAssertEqual(send, .init(text: "hi", gapMs: 50), "the deleted x is no Return; the next two quick ones send")
     XCTAssertEqual(sends.count, 1)
     let (afterDelete, _) = type([("hi", 0), ("hi\n", 1_000), ("hi", 1_050), ("hi", 1_060)])
     XCTAssertNil(afterDelete)
@@ -100,6 +102,15 @@ final class ChatDoubleEnterTests: XCTestCase {
     var rule = ChatDoubleEnter()
     rule.willWrite("hi")
     XCTAssertEqual(rule.change(from: "hi", to: "hi\n\n", at: 0), .init(text: "hi", gapMs: nil))
+  }
+
+  func testDeletingTheLastLineIsNotReturns() {
+    XCTAssertTrue(
+      type([("para one\n\npara two", 0), ("para one\n\n", 1_000)]).1.isEmpty, "the last paragraph cut in one go")
+    XCTAssertTrue(type([("hi\n\nt", 0), ("hi\n\n", 1_000)]).1.isEmpty, "a backspace on the last line's one letter")
+    XCTAssertTrue(
+      type([("hi\nx", 0), ("hi\n", 1_000), ("hi\n\n", 1_100)]).1.isEmpty,
+      "a backspace that leaves one new line at the end does not arm, so one Return after it is a new line")
   }
 
   func testAClockThatGoesBackDoesNotSend() {

@@ -2646,7 +2646,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Scenario:** Dictated, then two quick Returns
 - **Given:** an open thread whose bar reads "see you at noon"
 - **When:** I press Return twice within 400 milliseconds, on the keyboard or by the dictation tool's two new lines at once
-- **Then:** "see you at noon" is sent as Send would send it, with nothing after "noon", and the bar is empty; two Returns further apart leave a blank line and send nothing, two quick Returns between two lines or in an empty bar send nothing, and *Quote in reply* still sends nothing
+- **Then:** "see you at noon" is sent as Send would send it, with nothing after "noon", and the bar is empty; two Returns further apart leave a blank line and send nothing, two quick Returns between two lines or in an empty bar send nothing, deleting the last paragraph so a blank line ends the bar sends nothing, and *Quote in reply* still sends nothing
 ||||||| 13e74567
 
 ---
