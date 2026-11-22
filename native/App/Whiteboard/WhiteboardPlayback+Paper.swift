@@ -1,5 +1,5 @@
 //  Playback on the board's own paper (#1169; spec 2026-11-01-whiteboard-design.md, *Playing a board back*; stories 958,
-//  956, 955): the paper's colour, its grid or ruled lines and page ends, the whole board faint from the first moment, a
+//  956, 948): the paper's colour, its grid or ruled lines and page ends, the whole board faint from the first moment, a
 //  tap on that faint ink jumping on to it, and a label when the stroke being drawn is above or below the screen.
 
 import ContextCore
@@ -48,7 +48,7 @@ extension WhiteboardPlaybackPlayer {
       height: canvas.bounds.height / zoom)
   }
 
-  /// Story 955: the label follows the stroke being drawn (or drawn last) and the screen; it's logged as it appears or
+  /// Story 948: the label follows the stroke being drawn (or drawn last) and the screen; it's logged as it appears or
   /// changes edge, page, or goes.
   func lookOffScreen() {
     guard let visible = visibleBoardRect else { return }
@@ -73,7 +73,7 @@ extension WhiteboardPlaybackPlayer {
     setOffScreen(next)
   }
 
-  /// Story 955: the label tapped moves the board to the stroke, its middle in the middle of the screen.
+  /// Story 948: the label tapped moves the board to the stroke, its middle in the middle of the screen.
   func goToLatest() {
     guard let canvas, let index = timeline.latest(at: clockPosition), strokes.indices.contains(index) else { return }
     let box = strokes[index].renderBounds
@@ -127,7 +127,7 @@ extension PlaybackCanvasView {
   }
 }
 
-/// Story 955: *Writing above, page 1* at the top edge, *Writing below, page 3* at the bottom; a tap goes there.
+/// Story 948: *Writing above, page 1* at the top edge, *Writing below, page 3* at the bottom; a tap goes there.
 struct WhiteboardPlaybackOffScreenLabel: View {
   @ObservedObject var player: WhiteboardPlaybackPlayer
   let edge: VerticalEdge

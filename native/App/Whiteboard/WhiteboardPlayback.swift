@@ -58,9 +58,9 @@ final class WhiteboardPlaybackPlayer: ObservableObject {
   let pageCount: Int
   /// The whole board, faint, under the ink drawn again (#1169); nil for a board too big to draw.
   let ghost: UIImage?
-  /// Story 955: the stroke being drawn, or drawn last, when it's wholly above or below the screen.
+  /// Story 948: the stroke being drawn, or drawn last, when it's wholly above or below the screen.
   @Published private(set) var offScreen: BoardPlayback.OffScreen?
-  /// Story 955 for the log: how many times the label showed.
+  /// Story 948 for the log: how many times the label showed.
   var offScreenShown = 0
   weak var canvas: PKCanvasView? {
     didSet { draw(force: true) }

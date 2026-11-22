@@ -1,6 +1,6 @@
 //
 //  BoardThreadLookup.swift
-//  #1163, stories 1097, 1101: the board's chat thread from a device that never sent it, for the boards list's chat
+//  #1163, stories 1097, 949: the board's chat thread from a device that never sent it, for the boards list's chat
 //  bubble and the note's tap on an iPhone. The rules are `BoardThreadFind`'s; this reads the Cockpit and logs.
 //
 

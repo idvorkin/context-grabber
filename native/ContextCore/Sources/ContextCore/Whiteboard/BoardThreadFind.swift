@@ -1,6 +1,6 @@
 //
 //  BoardThreadFind.swift
-//  #1163, stories 1097, 1101: the chat thread of a board this device never sent. Only the device that sent a board's
+//  #1163, stories 1097, 949: the chat thread of a board this device never sent. Only the device that sent a board's
 //  picture records its thread, so an iPhone looks among Larry's chats: those titled with the board's name, and opens
 //  one only when a message on it came from this very board.
 //

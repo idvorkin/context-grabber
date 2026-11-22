@@ -2,7 +2,7 @@ import XCTest
 
 @testable import ContextCore
 
-/// #1163, stories 1097, 1101: which chats may be a board's, and which one is.
+/// #1163, stories 1097, 949: which chats may be a board's, and which one is.
 final class BoardThreadFindTests: XCTestCase {
   private func thread(_ key: String, _ title: String, at ts: String) -> ChatSummary {
     ChatSummary(key: key, title: title, lastTs: ts, lastWho: "larry", lastText: "")

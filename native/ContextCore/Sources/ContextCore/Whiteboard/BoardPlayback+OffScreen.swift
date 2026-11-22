@@ -1,4 +1,4 @@
-//  Story 955 (#1169): in playback, where the stroke being drawn is when it is off the screen, above or below, and on
+//  Story 948 (#1169): in playback, where the stroke being drawn is when it is off the screen, above or below, and on
 //  which page, so a label can say *Writing above, page 1*. Platform-free and host-tested.
 
 import Foundation

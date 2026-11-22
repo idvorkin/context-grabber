@@ -35,7 +35,7 @@ extension WhiteboardModel {
 
   /// Story 768: a tap on the note's line opens or closes the panel over the board, remembered for the next board; an
   /// iPhone has no panel, so it opens the board's thread in Chat, found among the chats when another device sent the
-  /// board (story 1101, #1163), or says where the conversation is when none is found (story 769, #1161).
+  /// board (story 949, #1163), or says where the conversation is when none is found (story 769, #1161).
   func tapNote(onPhone: Bool, openChat: @escaping (String) -> Void) {
     let tap = WhiteboardNote.tap(onPhone: onPhone, thread: threadKey)
     switch tap {

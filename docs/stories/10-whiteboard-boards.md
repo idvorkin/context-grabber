@@ -1230,7 +1230,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
-### User Story 955:
+### User Story 948:
 
 - **Summary:** In playback, a label says when the stroke being drawn is above or below the screen, and on which page
 - **Issues:** [#1169](https://github.com/idvorkin/context-grabber/issues/1169) (Igor, 2026-11-22: "maybe some indicator that I'm writing above or below on a separate page")

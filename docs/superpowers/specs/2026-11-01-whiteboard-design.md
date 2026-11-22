@@ -627,7 +627,7 @@ stroke can be judged again on the Mac.
   tests holds each case to its expected verdict, so a gesture bug is fixed against Igor's real stroke on the Mac.
 - Nothing Igor sees changes.
 
-## Playing a board back, as Notability does (bead context-grabber-3tdv; stories 954–959; the ink alone decided and built, the words and the sound still to choose)
+## Playing a board back, as Notability does (bead context-grabber-3tdv; stories 948, 954, 956–959; the ink alone decided and built, the words and the sound still to choose)
 
 Igor, 2026-11-22 (#1139, on the iPad): *"where is my replay button so I can rewatch it the way you do in Notability?
 Go do some research on Notability to see this."* Called **playback** here, so it isn't confused with the replays that
