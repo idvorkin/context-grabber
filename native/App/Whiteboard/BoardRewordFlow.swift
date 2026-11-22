@@ -93,7 +93,9 @@ extension PaperBoardController {
       // #950: redrawn in the lettering it was made in.
       let lettering = editing.text.lettering ?? .single
       let rows = BoardReword.rows(words, width: editing.width, size: size, face: face, lettering: lettering)
-      let made = BoardText.time(Date())
+      let source = paper.markup?.subelements.strokes.first { editing.keys.contains(Self.key($0.elementID)) }
+      let reply = source.flatMap { model.reply(at: $0.path.creationDate, seed: $0.randomSeed) }
+      let made = reply == nil ? BoardText.time(Date()) : model.replyTimes(1)[0]
       let strokes = BoardReword.lines(
         rows, topLeft: editing.topLeft, size: size, face: face, lettering: lettering
       ).flatMap { shape in
@@ -111,6 +113,10 @@ extension PaperBoardController {
       text.text = words
       text.glyphs = strokes.count
       model.keep(text: text)
+      if let reply {
+        model.rememberReply(strokes, reply: reply)
+        model.rememberLabel(made.date)
+      }
       replaceInk(removing: editing.keys, adding: strokes, named: BoardReword.undoName, reworded: [text.id])
       event.merge(["outcome": "reworded", "chars": words.count, "rows": rows.count, "glyphs": strokes.count]) { $1 }
     }

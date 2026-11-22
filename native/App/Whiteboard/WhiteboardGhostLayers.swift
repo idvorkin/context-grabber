@@ -23,6 +23,7 @@ struct Ghost: Identifiable, WhiteboardGhost {
   let letters: CGFloat?
   /// A text of Larry's from a batch of his changes (story 817): kept, it becomes one text under its id.
   let text: BoardOps.Text?
+  let replyLabel: BoardOps.Text?
   /// A connector mark (story 917): kept, it becomes a connector joining its ends.
   let connector: BoardOps.NewConnector?
   /// When the picture this mark answers was taken, unix ms, when this device knows (#894): what Igor made after it
@@ -63,7 +64,17 @@ struct Ghost: Identifiable, WhiteboardGhost {
     color = shape.color.map { UIColor(rgb: $0) } ?? who.color
     width = WhiteboardTurn.width(shape, scale: scale, hand: hand)
     kind = shape.kind
-    letters = WhiteboardTurn.letters(shape, scale: scale)
+    let letterHeight = WhiteboardTurn.letters(shape, scale: scale)
+    letters = letterHeight
+    if who == .larry, WhiteboardMarks.reply(of: id) != nil, let words = shape.text, let height = letterHeight {
+      let spot = lines.first?.first ?? .zero
+      replyLabel = BoardOps.Text(
+        id: "text-" + UUID().uuidString.lowercased(), x: spot.x, y: spot.y, text: words,
+        font: shape.face == .hand ? .hand : .plain, size: height, color: shape.color,
+        lettering: shape.lettering ?? lettering)
+    } else {
+      replyLabel = nil
+    }
   }
 }
 

@@ -397,7 +397,7 @@ extension WhiteboardModel {
         ids: stretches.map { strokeIDs.stable($0.id) },
         t: Int64(stroke.path.creationDate.timeIntervalSince1970 * 1000), bounds: stroke.renderBounds,
         hidden: stroke.ink.color.cgColor.alpha == 0, points: stretches.flatMap(\.points),
-        pen: CGFloat(stretches.first?.width ?? 0))
+        pen: CGFloat(stretches.first?.width ?? 0), seed: Int(stroke.randomSeed))
     }
     return (strokes, hashes)
   }

@@ -2,7 +2,7 @@
 //  three circles kept with Keep all, each its own thing; a finger tap on the first selects that circle alone (its Delete
 //  takes it and leaves the other two), and one Undo puts it back. A finger drag of a selection is story 947's test. Where the circles sit is read from the screen's pixels (`PaperScreen`,
 //  in WhiteboardPaperGhostsUITests.swift); what is selected, from To text, which shows beside the selected ink. Which
-//  strokes a tap reaches is `BoardOutlineTests.testAFingerTapOnOneThingOfLarrysTakesItAlone`. Stories 1143, 1145 (bead
+//  strokes a tap reaches is `BoardOutlineTests.testAFingerTapOnOneThingOfLarrysTakesItAlone`. Stories 1145, 1148 (bead
 //  context-grabber-hm7n): Keep on one circle keeps the whole reply, and a tap on one picks up all three
 //  (`testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`, `testKeepOnOneMarkOfAReplyTakesTheWholeReply`).
 
@@ -66,11 +66,20 @@ final class WhiteboardTheirsTapUITests: XCTestCase {
     return (app, send)
   }
 
-  /// Stories 1143, 1145: Keep on the first circle keeps all three, one reply of his; a finger tap on the first then
+  /// Stories 1145, 1148: Keep on the first circle keeps all three, one reply of his; a finger tap on the first then
   /// selects all three: its Delete takes them, and one Undo brings them back.
   func testKeepOnOneMarkKeepsTheWholeReplyAndATapPicksItAllUp() throws {
     let (app, send) = try threeCircles()
     let marks = try XCTUnwrap(PaperScreen.settled(app) { $0.larryGhost }, "his three circles, faint")
+    let before = send.label
+    let regions = (0..<3).map { index in
+      let center = marks.minX + marks.width * (CGFloat(index) + 0.5) / 3
+      return PaperScreen.Box(
+        minX: center - marks.width / 12, minY: marks.minY - 0.02,
+        maxX: center + marks.width / 12, maxY: marks.maxY + 0.02)
+    }
+    let ghostScreen = PaperScreen(app)
+    let circles = try regions.map { try XCTUnwrap(ghostScreen.larryGhost(in: $0)) }
     // The first circle's left side.
     PaperScreen.tap(app, CGPoint(x: marks.minX + 0.003, y: marks.center.y))
     let keep = app.buttons["whiteboard-mark-keep"]
@@ -78,11 +87,27 @@ final class WhiteboardTheirsTapUITests: XCTestCase {
     keep.tap()
     XCTAssertTrue(toKeep(app, 2).waitForNonExistence(timeout: 5), "none of his reply left to keep")
     XCTAssertFalse(toKeep(app, 3).exists)
-    let kept = try XCTUnwrap(
-      PaperScreen.showing(app, { $0.larryKept }) { abs($0.width - marks.width) < marks.width / 6 },
-      "all three kept, in his purple")
-    XCTAssertEqual(kept.width, marks.width, accuracy: marks.width / 6, "all three kept where they showed")
-    let label = send.label
+    let label = "Send to Larry, 4 strokes"
+    let keptCount = NSPredicate(format: "label == %@", label)
+    waitUntil(keptCount, send, timeout: 10)
+    let kept = try XCTUnwrap(PaperScreen.settled(app) { $0.larryKept }, "all three kept, in his purple")
+    XCTAssertEqual(kept.minX, marks.minX, accuracy: 0.005)
+    XCTAssertEqual(kept.maxX, marks.maxX, accuracy: 0.005)
+    let keptScreen = PaperScreen(app)
+    for (region, circle) in zip(regions, circles) {
+      let ink = try XCTUnwrap(keptScreen.larryKept(in: region))
+      XCTAssertEqual(ink.minY, circle.minY, accuracy: 0.005)
+      XCTAssertEqual(ink.maxY, circle.maxY, accuracy: 0.005)
+    }
+    let undo = app.buttons["whiteboard-undo"]
+    waitUntil(NSPredicate(format: "isEnabled == true"), undo, timeout: 5)
+    undo.tap()
+    waitUntil(NSPredicate(format: "label == %@", before), send, timeout: 5)
+    XCTAssertTrue(PaperScreen.clears(app, within: 5) { $0.larryKept }, "one Undo took back the three-circle Keep")
+    let redo = app.buttons["whiteboard-redo"]
+    waitUntil(NSPredicate(format: "isEnabled == true"), redo, timeout: 5)
+    redo.tap()
+    waitUntil(keptCount, send, timeout: 5)
     let toText = app.buttons["whiteboard-to-text"]
     XCTAssertFalse(toText.exists, "nothing selected yet")
     shot(app, "Keep on one circle kept his whole reply")
@@ -99,7 +124,6 @@ final class WhiteboardTheirsTapUITests: XCTestCase {
     delete.tap()
     XCTAssertTrue(PaperScreen.clears(app, within: 5) { $0.larryKept }, "all three went with one Delete")
     shot(app, "the selected reply deleted")
-    let undo = app.buttons["whiteboard-undo"]
     waitUntil(NSPredicate(format: "isEnabled == true"), undo, timeout: 5)
     undo.tap()
     sleep(1)

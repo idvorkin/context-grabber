@@ -86,8 +86,9 @@ suggest changes the board until Igor keeps it.
       - Every piece kept so is one thing to a finger: a tap on any of them selects all the pieces of that reply still
         on the board, and nothing else (not his own ink, not Larry's marks from another reply, not a mark of
         Claude's). The label beside it reads as for what it holds: two texts read *2 things · move together*, marks
-        alone *Ink · To text*. A drag moves them together, and one Undo puts them back. A text in such a reply opens
-        its words at a second tap while the reply is selected, as a text alone does.
+        alone *Ink · To text*. A text in such a reply opens its words at a second tap while the reply is selected.
+        Rewording a label or rerouting a connector leaves it in the reply, including after Undo. The iPad drag after
+        selection is tracked in bead context-grabber-4nnh.
       - Keep on one of Claude's marks, or on Larry's text from a change of his, keeps that one mark, as before.
         **Dismiss** still dismisses only the mark chosen.
       - A reply kept with Keep group was already one group and stays so.

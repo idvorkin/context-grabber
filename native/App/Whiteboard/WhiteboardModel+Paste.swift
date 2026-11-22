@@ -24,18 +24,18 @@ extension WhiteboardModel {
 
   /// `made`: one moment for every stroke of one mark or paste, which is how a kept label is known again (story 896).
   static func strokes(
-    _ lines: [[CGPoint]], color: UIColor, width: CGFloat, spacing: CGFloat, made: Date = Date()
+    _ lines: [[CGPoint]], color: UIColor, width: CGFloat, spacing: CGFloat, made: Date = Date(), seed: UInt32? = nil
   ) -> [PKStroke] {
     let ink = PKInk(.pen, color: color)
     return lines.map { line in
-      PKStroke(
-        ink: ink,
-        path: PKStrokePath(
-          controlPoints: WhiteboardTurn.inkPoints(line, spacing: spacing).enumerated().map { i, p in
-            PKStrokePoint(
-              location: p, timeOffset: Double(i) * 0.01, size: CGSize(width: width, height: width), opacity: 1,
-              force: 1, azimuth: 0, altitude: .pi / 2)
-          }, creationDate: made))
+      let path = PKStrokePath(
+        controlPoints: WhiteboardTurn.inkPoints(line, spacing: spacing).enumerated().map { i, p in
+          PKStrokePoint(
+            location: p, timeOffset: Double(i) * 0.01, size: CGSize(width: width, height: width), opacity: 1,
+            force: 1, azimuth: 0, altitude: .pi / 2)
+        }, creationDate: made)
+      if let seed { return PKStroke(ink: ink, path: path, transform: .identity, mask: nil, randomSeed: seed) }
+      return PKStroke(ink: ink, path: path)
     }
   }
 

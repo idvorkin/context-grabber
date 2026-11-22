@@ -44,14 +44,14 @@ extension WhiteboardModel {
   /// Story 918: a kept connector mark's ink, routed on the board as it is now, its notes and its name taken in before it
   /// lands so the follow and Larry know it; nil for any other mark, or one whose end names nothing now (it keeps as
   /// nothing then).
-  func connectorInk(_ ghost: Ghost) -> [PKStroke]? {
+  func connectorInk(_ ghost: Ghost, made: Date = Date()) -> [PKStroke]? {
     guard let kept = connectorKept(ghost) else { return nil }
     guard let stroke = kept.stroke, let connector = ghost.connector else {
       sessionLog.event(
         "board_connectors", ["action": "kept_nothing", "board": board.id, "mark": ghost.id, "missing": kept.missing])
       return []
     }
-    let ink = Self.strokes([stroke.points], color: ghost.color, width: stroke.width, spacing: 4)
+    let ink = Self.strokes([stroke.points], color: ghost.color, width: stroke.width, spacing: 4, made: made)
     var plan = BoardOps.Plan(pagesBefore: 1, pagesAfter: 1)
     plan.metas = kept.metas
     planPut(plan, drawn: ink.map { (Self.strokesForLarry(PKDrawing(strokes: [$0])).map(\.id), connector.id) })

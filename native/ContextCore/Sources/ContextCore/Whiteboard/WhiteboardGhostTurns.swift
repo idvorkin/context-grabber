@@ -327,7 +327,8 @@ public struct WhiteboardGhostTurns<Ghost: WhiteboardGhost> {
   /// mark of that reply still showing, in the order they came; the caller turns them into ink. Empty with nothing
   /// chosen.
   public mutating func keepChosenWithItsReply() -> [Ghost] {
-    if chosenReply().count > 1 { return keepChosenReply() }
+    let kept = keepChosenReply()
+    if !kept.isEmpty { return kept }
     return keepChosen().map { [$0] } ?? []
   }
 

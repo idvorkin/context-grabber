@@ -848,7 +848,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** Keep a connector mark
 - **Given:** Larry's connector mark between two things, showing as a ghost
 - **When:** I tap Keep, or Keep all
-- **Then:** it becomes a connector joining them (with Keep all, in the one Undo), and a push between them redraws it to where they are
+- **Then:** it becomes a connector joining them (with Keep all, in the one Undo), and a push between them redraws it to where they are. If kept with plain Keep, the redrawn connector still selects its reply with a tap (story 1148, bead context-grabber-hm7n)
 
 ---
 
@@ -1185,30 +1185,30 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
-### User Story 1143:
+### User Story 1148:
 
 - **Summary:** A finger tap on one piece of a reply of Larry's I kept with Keep picks up the whole reply
-- **Status:** implemented in [adc68d2f](https://github.com/idvorkin/context-grabber/commit/adc68d2f) and [b506cdb2](https://github.com/idvorkin/context-grabber/commit/b506cdb2); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: both pieces of one reply, another reply's mark, a piece with no reply known, his own ink; `BoardMeaningTests`: the reply remembered by moment and pruned with the oldest; `just native-test`), the Mac build (`just native-build-mac`), and on the iPad simulator against the fake Cockpit (`WhiteboardTheirsTapUITests.testKeepOnOneMarkKeepsTheWholeReplyAndATapPicksItAllUp`, rung 2, 2026-11-22: Keep on one of three circles of one reply keeps all three, a finger tap on the first selects all three, whose Delete takes them and one Undo brings them back; `WhiteboardPaperGhostsUITests` and `WhiteboardGroupTapUITests` still pass). The fake Cockpit draws only circles, so two texts of one reply and their label are checked only on the host. Not yet seen on the iPad, where the drag after the tap is bead context-grabber-4nnh
+- **Status:** implemented in [98a3358f](https://github.com/idvorkin/context-grabber/commit/98a3358f) and [ca32e537](https://github.com/idvorkin/context-grabber/commit/ca32e537); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: both pieces of one reply, another reply's mark, a piece with no reply known, his own ink; `BoardMeaningTests`: the reply remembered by moment and pruned with the oldest; `just native-test`), the Mac build (`just native-build-mac`), and on the iPad simulator against the fake Cockpit (`WhiteboardTheirsTapUITests.testKeepOnOneMarkKeepsTheWholeReplyAndATapPicksItAllUp`, rung 2, 2026-11-22: Keep on one of three circles of one reply keeps all three, a finger tap on the first selects all three, whose Delete takes them and one Undo brings them back; `WhiteboardPaperGhostsUITests` and `WhiteboardGroupTapUITests` still pass). The simulator fixture draws circles. Not yet seen on the iPad, where the drag after the tap is bead context-grabber-4nnh
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
 - **Issues:** bead context-grabber-hm7n: Igor, 2026-11-22 about 12:10, on the iPad, relayed by Larry in the Cockpit: "Should move as group when clicked". The iPad's log for that moment shows the two labels were kept with Keep group, and the tap did select all 93 strokes. What failed there is the drag that followed, which moved nothing (bead context-grabber-4nnh). This story covers a reply kept with plain Keep, which a tap used to pick up one piece at a time.
 
 #### Use Case:
 - **As someone** who kept Larry's two-line answer with plain Keep
 - **I want** a finger tap on either label to pick up both
-- **so that** his one reply moves as one thing, the way he wrote it
+- **so that** I can select his whole answer in one tap
 
 #### Acceptance Criteria:
 - **Scenario:** Two labels of one reply, kept with Keep
 - **Given:** a reply of Larry's with two labels, kept with plain Keep, a mark of his from another reply and my own writing beside them, on a board I can draw on, no marks showing
 - **When:** I tap one of the labels with a finger
-- **Then:** both labels are selected and nothing else, neither the other reply's mark nor my writing; a drag moves them together, and one Undo puts them back
+- **Then:** both labels are selected, leaving out the other reply's mark and my writing
 
 ---
 
 ### User Story 1144:
 
 - **Summary:** A second tap on a text of a reply picked up whole still opens its words
-- **Status:** implemented in [adc68d2f](https://github.com/idvorkin/context-grabber/commit/adc68d2f); verified by the Mac build (`just native-build-mac`); the second tap not yet seen on the iPad simulator or the iPad
+- **Status:** implemented in [98a3358f](https://github.com/idvorkin/context-grabber/commit/98a3358f); verified by the Mac build (`just native-build-mac`); the second tap not yet seen on the iPad simulator or the iPad
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
 - **Issues:** bead context-grabber-hm7n
 
@@ -1221,14 +1221,14 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** A text in the reply still opens its words
 - **Given:** a reply of Larry's selected by a finger tap on one of its labels
 - **When:** I tap that label again
-- **Then:** its words open for rewording
+- **Then:** its words open for rewording. After I save the new wording or undo the change, tapping the label still selects the reply
 
 ---
 
 ### User Story 1145:
 
 - **Summary:** Keep on one mark of a reply of Larry's keeps the whole reply, so a slip of the finger never loses the rest
-- **Status:** implemented in [b506cdb2](https://github.com/idvorkin/context-grabber/commit/b506cdb2); verified by host tests (`WhiteboardKeepGroupTests.testKeepOnOneMarkOfAReplyTakesTheWholeReply`: the whole reply, Claude's mark and his text from a change alone, Dismiss takes one; `just native-test`), the Mac build (`just native-build-mac`), and on the iPad simulator against the fake Cockpit (`WhiteboardTheirsTapUITests.testKeepOnOneMarkKeepsTheWholeReplyAndATapPicksItAllUp`, rung 2, 2026-11-22: Keep on one of three circles of one reply keeps all three, a finger tap on the first selects all three, whose Delete takes them and one Undo brings them back; `WhiteboardPaperGhostsUITests` and `WhiteboardGroupTapUITests` still pass); not yet seen on the iPad
+- **Status:** implemented in [ca32e537](https://github.com/idvorkin/context-grabber/commit/ca32e537); verified by host tests (`WhiteboardKeepGroupTests.testKeepOnOneMarkOfAReplyTakesTheWholeReply`: the whole reply; `just native-test`), the Mac build (`just native-build-mac`), and on the iPad simulator against the fake Cockpit (`WhiteboardTheirsTapUITests.testKeepOnOneMarkKeepsTheWholeReplyAndATapPicksItAllUp`, rung 2, 2026-11-22: Keep on one of three circles of one reply keeps all three, a finger tap on the first selects all three, whose Delete takes them and one Undo brings them back; `WhiteboardPaperGhostsUITests` and `WhiteboardGroupTapUITests` still pass); not yet seen on the iPad
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (Keep on any mark of a reply of Larry's keeps the whole reply)
 - **Issues:** bead context-grabber-hm7n: Igor, 2026-11-22 12:34, on the iPad (board 8f986938), relayed by Larry: "Keep group is broken when accidentally select one!" Larry's sequence diagram came as one reply of 13 marks (row d310df61e6f5). Igor's tap chose one label and Keep kept only it (`keep`, 25 strokes). The other 12 stayed as ghosts until Larry's next reply (row 40b967e4c623) replaced them 16 s later, so the rest of the diagram was never kept.
 
@@ -1243,17 +1243,12 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I tap one and press Keep
 - **Then:** all three become ink where they showed, none is left to keep, and one Undo takes all three back
 
-- **Scenario:** Only Larry's replies
-- **Given:** a mark of Claude's, or a text of Larry's from a change of his
-- **When:** I tap it and press Keep
-- **Then:** that mark alone is kept, as before, and Dismiss on any mark still dismisses only that mark
-
 ---
 
 ### User Story 1146:
 
 - **Summary:** A piece of Larry's kept before the board knew its reply is still picked up alone
-- **Status:** implemented in [adc68d2f](https://github.com/idvorkin/context-grabber/commit/adc68d2f); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: a piece with no reply known; `BoardMeaningTests.testTheReplyOfEachKeptPieceIsRememberedWithItsMoment`: a file from before has no replies; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the iPad simulator or the iPad
+- **Status:** implemented in [98a3358f](https://github.com/idvorkin/context-grabber/commit/98a3358f); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: a piece with no reply known; `BoardMeaningTests.testTheReplyOfEachKeptPieceIsRememberedWithItsMoment`: a file from before has no replies; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the iPad simulator or the iPad
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
 - **Issues:** bead context-grabber-hm7n
 
@@ -1273,7 +1268,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1147:
 
 - **Summary:** A group Larry made himself is still picked up as the group
-- **Status:** implemented in [adc68d2f](https://github.com/idvorkin/context-grabber/commit/adc68d2f); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: Larry's own group; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the iPad simulator or the iPad
+- **Status:** implemented in [98a3358f](https://github.com/idvorkin/context-grabber/commit/98a3358f); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: Larry's own group; `just native-test`) and the Mac build (`just native-build-mac`); not yet seen on the iPad simulator or the iPad
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
 - **Issues:** bead context-grabber-hm7n
 
@@ -1287,6 +1282,46 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** strokes Larry put in one group with a change of his
 - **When:** I tap one of them with a finger
 - **Then:** the whole group is selected
+
+---
+
+### User Story 1149:
+
+- **Summary:** A mark outside Larry's replies keeps by itself
+- **Status:** implemented in [ca32e537](https://github.com/idvorkin/context-grabber/commit/ca32e537), covered by the host test `WhiteboardKeepGroupTests.testKeepOnOneMarkOfAReplyTakesTheWholeReply`
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss*
+- **Issues:** bead context-grabber-hm7n
+
+#### Use Case:
+- **As someone** choosing a mark of Claude's or a text Larry offered with a change
+- **I want** Keep to take just the piece I chose
+- **so that** I can decide what to keep one piece at a time
+
+#### Acceptance Criteria:
+- **Scenario:** A single mark outside a reply
+- **Given:** several marks showing, including one from Claude or a text Larry offered with a change
+- **When:** I press Keep on that mark
+- **Then:** only the chosen mark becomes ink
+
+---
+
+### User Story 1150:
+
+- **Summary:** Dismiss takes only the chosen mark of Larry's reply
+- **Status:** implemented in [ca32e537](https://github.com/idvorkin/context-grabber/commit/ca32e537), covered by the host test `WhiteboardKeepGroupTests.testKeepOnOneMarkOfAReplyTakesTheWholeReply`
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss*
+- **Issues:** bead context-grabber-hm7n
+
+#### Use Case:
+- **As someone** looking at several marks in Larry's reply
+- **I want** to dismiss one of them
+- **so that** I can still keep the rest of the reply
+
+#### Acceptance Criteria:
+- **Scenario:** Dismiss one mark in a reply
+- **Given:** several marks of one reply showing
+- **When:** I press Dismiss on one of them
+- **Then:** the chosen mark goes away and the others stay available to keep
 
 ---
 

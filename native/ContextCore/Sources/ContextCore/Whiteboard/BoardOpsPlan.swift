@@ -15,6 +15,7 @@ extension BoardOps {
   public struct Stroke: Equatable, Sendable {
     public var ids: [String]
     public var t: Int64?
+    public var seed: Int
     public var bounds: CGRect
     /// Folded away or hidden by Larry: still on the board, but nothing lands around it or reads it as a line.
     public var hidden: Bool
@@ -24,10 +25,12 @@ extension BoardOps {
     public var pen: CGFloat
 
     public init(
-      ids: [String], t: Int64?, bounds: CGRect, hidden: Bool = false, points: [CGPoint] = [], pen: CGFloat = 0
+      ids: [String], t: Int64?, bounds: CGRect, hidden: Bool = false, points: [CGPoint] = [], pen: CGFloat = 0,
+      seed: Int = 0
     ) {
       self.ids = ids
       self.t = t
+      self.seed = seed
       self.bounds = bounds
       self.hidden = hidden
       self.points = points

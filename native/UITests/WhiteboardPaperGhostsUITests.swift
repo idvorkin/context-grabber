@@ -79,11 +79,17 @@ struct PaperScreen {
   /// Black ink.
   var ink: Box? { box { r, g, b in r < 70 && g < 70 && b < 70 } }
   /// A faint ghost of Larry's on white paper: his purple (#ba39e6) at half strength.
-  var larryGhost: Box? { box { r, g, b in r > 200 && r < 240 && g > 130 && g < 185 && b > 225 } }
+  var larryGhost: Box? { larryGhost(in: nil) }
+  func larryGhost(in region: Box?) -> Box? {
+    box(in: region) { r, g, b in r > 200 && r < 240 && g > 130 && g < 185 && b > 225 }
+  }
   /// One of Larry's controls in the tests' green (the fake Cockpit's button).
   var green: Box? { box { r, g, b in r < 60 && g > 140 && b < 60 } }
   /// A kept mark of Larry's, at full strength.
-  var larryKept: Box? { box { r, g, b in r > 150 && r < 215 && g < 110 && b > 190 } }
+  var larryKept: Box? { larryKept(in: nil) }
+  func larryKept(in region: Box?) -> Box? {
+    box(in: region) { r, g, b in r > 150 && r < 215 && g < 110 && b > 190 }
+  }
 
   static func tap(_ app: XCUIApplication, _ at: CGPoint) {
     app.coordinate(withNormalizedOffset: CGVector(dx: at.x, dy: at.y)).tap()

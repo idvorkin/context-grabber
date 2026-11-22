@@ -40,7 +40,8 @@ extension PaperBoardController {
       return
     }
     let paste = #selector(UIResponderStandardEditActions.paste(_:))
-    let took = UIApplication.shared.sendAction(paste, to: nil, from: self, for: nil)
+    let copiesReply = copied?.contains { model.reply(at: $0.path.creationDate, seed: $0.randomSeed) != nil } == true
+    let took = !copiesReply && UIApplication.shared.sendAction(paste, to: nil, from: self, for: nil)
     if took {
       event["went"] = "paperkit"
     } else if let copied {
@@ -251,10 +252,13 @@ extension PaperBoardController {
   private func moved(_ strokes: [PKStroke]) -> [PKStroke] {
     let shift = board.pasteShift(ink: PKDrawing(strokes: strokes).bounds, visible: paperOnScreen)
     let by = CGAffineTransform(translationX: shift.dx, y: shift.dy)
-    return strokes.map {
-      PKStroke(
-        ink: $0.ink, path: $0.path, transform: $0.transform.concatenating(by), mask: $0.mask,
-        randomSeed: $0.randomSeed)
+    return strokes.map { stroke in
+      let path =
+        model.reply(at: stroke.path.creationDate, seed: stroke.randomSeed) == nil
+        ? stroke.path : PKStrokePath(controlPoints: Array(stroke.path), creationDate: Date())
+      return PKStroke(
+        ink: stroke.ink, path: path, transform: stroke.transform.concatenating(by), mask: stroke.mask,
+        randomSeed: stroke.randomSeed)
     }
   }
 }

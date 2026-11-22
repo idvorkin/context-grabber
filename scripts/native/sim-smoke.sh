@@ -199,6 +199,22 @@ errors=$(jq -c 'select(.type=="error")' "$f")
 if [ "$pressed" = "false true Paste, true true Paste" ] && [ -z "$errors" ]; then
   ok "whiteboard: the bar's Undo took the paste back and its Redo brought it again, no error events"
 else bad "whiteboard: the bar's Undo and Redo pressed '$pressed', wanted 'false true Paste, true true Paste', errors: $errors"; fi
+
+reply_board="smoke-reply-keep-$(date +%s)"
+SIMCTL_CHILD_GRABBER_BOARD_FIXTURE="$reply_board" SIMCTL_CHILD_GRABBER_WHITEBOARD_REPLY_KEEP="$reply_board" \
+  SIMCTL_CHILD_GRABBER_CHAT_URL="https://no-address.invalid" \
+  SIMCTL_CHILD_GRABBER_LINK="grabbernative://whiteboard?board=$reply_board" relaunch
+wait_jq 'select(.type=="whiteboard" and .action=="group_tap_held" and .group=="theirs-reply-smoke-reply")' 30 \
+  || echo "      (timed out waiting for the reply tap)"
+f=$(newest_log)
+if jq -se --arg board "$reply_board" '
+  [.[] | select(.type == "whiteboard" and .board == $board)] as $events
+  | any($events[]; .action == "mark_choice" and .choice == "keep" and .reply_marks == 3)
+    and any($events[]; .action == "keep" and .reply == "smoke-reply" and .marks == 3 and .strokes == 3)
+    and any($events[]; .action == "group_tap_held" and .kind == "theirs" and .group == "theirs-reply-smoke-reply"
+       and .held and .selected == 3 and .strokes == 3)' "$f" >/dev/null; then
+  ok "whiteboard: Keep on one mark kept all three, and tapping one selected all three"
+else bad "whiteboard: expected the whole three-mark reply in both Keep and held-selection evidence"; fi
 fi
 # #1163, story 1097: on an iPhone the list's chat bubble looks for the board's thread, logged with how it ended. Which
 # thread is the board's is BoardThreadFindTests', on the host; Chat opening on a found one is the phone's.

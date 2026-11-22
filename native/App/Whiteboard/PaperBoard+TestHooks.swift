@@ -7,6 +7,26 @@ import UIKit
 import UniformTypeIdentifiers
 
 extension PaperBoardController {
+  func keepReplyForTests() {
+    guard model.editable, LaunchHooks.current.whiteboard.replyKeepBoard == model.board.id else { return }
+    let reply = "smoke-reply"
+    let visible = paperOnScreen
+    let tap = CGPoint(x: visible.midX - 80, y: visible.midY)
+    let ghosts = (0..<3).map { index in
+      let x = tap.x + CGFloat(index) * 80
+      let shape = WhiteboardTurn.Shape(
+        kind: .line, points: [CGPoint(x: x, y: tap.y - 20), CGPoint(x: x, y: tap.y + 20)])
+      return Ghost(shape, who: .larry, frame: .zero, scale: 1, id: WhiteboardMarks.mark(index, of: reply))
+    }
+    model.shownRow = reply
+    model.turns.larrysMarks(ghosts)
+    show(ghosts)
+    fingerTapped(at: lines.convert(lines.spot(of: tap), to: view))
+    model.keepChosen()
+    show(model.ghosts)
+    fingerTapped(at: lines.convert(lines.spot(of: tap), to: view))
+  }
+
   /// `GRABBER_WHITEBOARD_AFTER_INK=copy,paste` (or `select`, story 920): those, 2 s apart from a second after the first
   /// ink, for the simulator: it can't work the lasso, and keys reach only a run's first test. Copy selects all the ink and copies, as the lasso's does.
   func pressSoonForTests() {

@@ -292,43 +292,62 @@ final class BoardOutlineTests: XCTestCase {
     XCTAssertEqual(grouped.theirs(at: CGPoint(x: 320, y: 412), slop: 22, moments: theirs)?.names.count, 3)
   }
 
-  /// Story 1143 (bead context-grabber-hm7n): pieces of one reply of Larry's kept with plain Keep, each at its own
+  /// Story 1148 (bead context-grabber-hm7n): pieces of one reply of Larry's kept with plain Keep, each at its own
   /// moment, are picked up together by a tap on any of them; another reply's, a piece with no reply known, and his own
   /// ink stay out. A group Larry made with a change is the group's (story 947).
   func testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply() {
-    func at(_ id: String, _ y: CGFloat, _ t: Int64) -> [BoardOps.Stroke] {
+    func at(_ id: String, _ y: CGFloat, _ t: Int64, seed: Int = 0) -> [BoardOps.Stroke] {
       var strokes = word(id, x: 100, y: y)
-      for i in strokes.indices { strokes[i].t = t }
+      for i in strokes.indices {
+        strokes[i].t = t
+        strokes[i].seed = seed
+      }
       return strokes
     }
-    let first = at("p", 200, 1000)
-    let second = at("q", 300, 2000)
-    let other = at("o", 400, 3000)
+    let first = at("p", 200, 1000, seed: 1)
+    let second = at("q", 300, 2000, seed: 2)
+    let other = at("o", 400, 3000, seed: 3)
     let lone = at("k", 500, 4000)
-    let mine = at("m", 600, 5000)
+    let mine = at("m", 600, 3000)
+    let third = at("v", 900, 3000, seed: 4)
     let steps = at("s", 700, 6000)
+    let claude = at("c", 800, 7000)
+    let texts = [
+      BoardText(id: "first-label", t: 1000, text: "Hi", font: .plain, size: 18, color: "#ba39e6", glyphs: 3),
+      BoardText(id: "second-label", t: 2000, text: "Bye", font: .plain, size: 18, color: "#ba39e6", glyphs: 3),
+    ]
     var groups: [String: String] = [:]
     for s in steps { for id in s.ids { groups[id] = "larry-steps" } }
-    let o = BoardOutline(strokes: first + second + other + lone + mine + steps, headers: [], groups: groups)
-    let theirs: Set<Int64> = [1000, 2000, 3000, 4000, 6000]
-    let replies: [Int64: String] = [1000: "r1", 2000: "r1", 3000: "r2"]
-    let both = ["p0", "p1", "p2", "q0", "q1", "q2"]
+    let strokes = [first, second, other, lone, mine, steps, claude, third].flatMap { $0 }
+    let o = BoardOutline(strokes: strokes, headers: [], texts: texts, groups: groups)
+    let theirs: Set<Int64> = [1000, 2000, 3000, 4000, 6000, 7000]
+    let replies: BoardMeaning.Replies = [1000: [1: "r1"], 2000: [2: "r1"], 3000: [3: "r2", 4: "r1"]]
+    let all = ["p0", "p1", "p2", "q0", "q1", "q2", "v0", "v1", "v2"]
     let tapFirst = o.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: theirs, replies: replies)
-    XCTAssertEqual(tapFirst?.names.sorted(), both, "both pieces of the reply")
+    XCTAssertEqual(tapFirst?.names.sorted(), all, "both labels and the other piece of the reply")
     XCTAssertEqual(tapFirst?.reply, "r1")
     XCTAssertEqual(tapFirst?.moment, 1000, "the piece tapped")
     XCTAssertEqual(
-      o.theirs(at: CGPoint(x: 105, y: 312), slop: 22, moments: theirs, replies: replies)?.names.sorted(), both,
-      "the other piece takes the same")
+      o.theirs(at: CGPoint(x: 105, y: 312), slop: 22, moments: theirs, replies: replies)?.names.sorted(), all,
+      "the other label takes the same")
+    XCTAssertEqual(
+      o.theirs(at: CGPoint(x: 105, y: 912), slop: 22, moments: theirs, replies: replies)?.names.sorted(), all,
+      "the piece at the shared millisecond takes its own reply")
     XCTAssertEqual(
       o.theirs(at: CGPoint(x: 105, y: 412), slop: 22, moments: theirs, replies: replies)?.names.sorted(),
       ["o0", "o1", "o2"], "another reply's mark alone")
     let alone = o.theirs(at: CGPoint(x: 105, y: 512), slop: 22, moments: theirs, replies: replies)
     XCTAssertEqual(alone?.names.sorted(), ["k0", "k1", "k2"], "no reply known: that piece alone")
     XCTAssertNil(alone?.reply)
-    XCTAssertNil(o.theirs(at: CGPoint(x: 105, y: 612), slop: 22, moments: theirs, replies: replies), "his own ink")
+    XCTAssertNil(
+      o.theirs(at: CGPoint(x: 105, y: 612), slop: 22, moments: theirs, replies: replies),
+      "his own ink shares the millisecond but cannot select the reply")
     XCTAssertEqual(
-      o.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: theirs)?.names.sorted(), ["p0", "p1", "p2"],
+      o.theirs(at: CGPoint(x: 105, y: 812), slop: 22, moments: theirs, replies: replies)?.names.sorted(),
+      ["c0", "c1", "c2"], "Claude's ink stays separate")
+    let legacy = BoardOutline(strokes: first + second, headers: [], texts: texts)
+    XCTAssertEqual(
+      legacy.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: theirs)?.names.sorted(), ["p0", "p1", "p2"],
       "with no replies known, one piece as before")
     XCTAssertEqual(
       o.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: [1000], replies: replies)?.names.sorted(),

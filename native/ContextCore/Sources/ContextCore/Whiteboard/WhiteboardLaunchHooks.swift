@@ -60,6 +60,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
   /// `GRABBER_WHITEBOARD_PAGE_AFTER_INK=<page>`.
   public var pageAfterInk: Int?
   public var afterKeep: AfterKeep?
+  public var replyKeepBoard: String?
   public var afterOps: AfterKeep?
   /// `GRABBER_WHITEBOARD_BAR_UNDO=<seconds>,undo,redo,...`: those presses of the bar's own Undo and Redo, that long after a
   /// board drawn on here opens (#965, stories 1008, 1009).
@@ -95,6 +96,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
       return AfterKeep(delay: Double(parts.first ?? "") ?? 3, presses: Array(parts.dropFirst()))
     }
     afterKeep = env["GRABBER_WHITEBOARD_AFTER_KEEP"].map(presses)
+    replyKeepBoard = env["GRABBER_WHITEBOARD_REPLY_KEEP"]
     afterOps = env["GRABBER_WHITEBOARD_AFTER_OPS"].map(presses)
     barUndo = env["GRABBER_WHITEBOARD_BAR_UNDO"].map(presses)
     let timeout = (env["GRABBER_WHITEBOARD_LARRY_TIMEOUT"] ?? "").split(separator: ",").map(String.init)

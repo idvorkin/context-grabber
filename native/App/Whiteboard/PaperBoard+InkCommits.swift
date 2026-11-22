@@ -152,8 +152,16 @@ extension PaperBoardController {
         ])
       return nil
     }
-    for index in plan.erase where elements.indices.contains(index) {
-      _ = markup.subelements.removeElement(for: elements[index].elementID)
+    var replacedReply: [String: (date: Date, seed: UInt32)] = [:]
+    for index in plan.erase.sorted() where elements.indices.contains(index) {
+      let element = elements[index]
+      let date = element.path.creationDate
+      if model.reply(at: date, seed: element.randomSeed) != nil {
+        for hash in hashes[index] {
+          replacedReply[model.strokeIDs.stable(hash)] = (date, element.randomSeed)
+        }
+      }
+      _ = markup.subelements.removeElement(for: element.elementID)
     }
     // His ink, in his colour unless he names one, under his names.
     var drawn: [(hash: [String], name: String)] = []
@@ -161,8 +169,11 @@ extension PaperBoardController {
     for stroke in plan.added {
       let shown = stroke.color.map { UIColor(rgb: $0) } ?? WhiteboardTurn.Who.larry.color
       let color = stroke.hidden ? shown.withAlphaComponent(0) : shown
-      let made = WhiteboardModel.strokes([stroke.points], color: color, width: stroke.width, spacing: 4)
-      theirs += made
+      let replaces = replacedReply[stroke.id]
+      let made = WhiteboardModel.strokes(
+        [stroke.points], color: color, width: stroke.width, spacing: 4,
+        made: replaces?.date ?? Date(), seed: replaces?.seed)
+      if replaces == nil { theirs += made }
       for one in made {
         markup.append(contentsOf: PKDrawing(strokes: [one]))
         drawn.append((Self.hashes(one), stroke.id))
