@@ -30,7 +30,7 @@ final class WhiteboardHelpFeedbackUITests: XCTestCase {
     XCTAssertTrue(app.buttons["whiteboard-send"].exists, "Send stays in the bar")
     let feedback = app.buttons["whiteboard-feedback"]
     XCTAssertTrue(feedback.exists, "Feedback beside it")
-    // Story 955 (#1162): a ladybug alone, no wider than the ?, still named Feedback.
+    // Story 949 (#1162): a ladybug alone, no wider than the ?, still named Feedback.
     XCTAssertEqual(feedback.label, "Feedback")
     XCTAssertLessThanOrEqual(feedback.frame.width, help.frame.width + 1, "the ladybug carries no word")
     help.tap()

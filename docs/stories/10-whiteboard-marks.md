@@ -246,7 +246,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
-### User Story 1101:
+### User Story 966:
 
 - **Summary:** A tap on my selection brings up its menu while Larry's marks show
 - **Status:** implemented in [57dc58d5](https://github.com/idvorkin/context-grabber/commit/57dc58d5); verified by host tests (`WhiteboardMarkChoiceTests`: the iPad's own selection box and tap keep the selection, a tap on a mark or off the box lets it go; `just native-test`) and the Mac build (`just native-build-mac`); the simulator (rung 2) is owed, as the simulator stack was wedged on 2026-11-22, and the iPad still to do

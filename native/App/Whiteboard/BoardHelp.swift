@@ -45,7 +45,7 @@ struct BoardHelpButtons: View {
         .accessibilityIdentifier("whiteboard-help")
         .popover(isPresented: $helpOpen) { BoardHelpSheet { helpOpen = false } }
       }
-      // Story 955 (#1162): the ladybug alone, as small as the ?; VoiceOver still reads Feedback.
+      // Story 949 (#1162): the ladybug alone, as small as the ?; VoiceOver still reads Feedback.
       Button {
         log.event("whiteboard", ["action": "feedback", "board": board])
         report()

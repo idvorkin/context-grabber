@@ -630,7 +630,7 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
     guard count > 0 || !model.overlays.list.isEmpty else { return }
     ghostTap = (at, CACurrentMediaTime(), PaperProbe.tapDotSeconds)
     let selected = paper.selection.count
-    // Story 1101 (#1170): a tap on his selection that reaches no mark is his, so PaperKit's menu (Delete) shows.
+    // Story 966 (#1170): a tap on his selection that reaches no mark is his, so PaperKit's menu (Delete) shows.
     let box = paper.selection.map(Self.key).compactMap { inkFrames[$0] }.reduce(CGRect.null) { $0.union($1) }
     let onSelection = WhiteboardMarkChoice.onSelection(
       box, at: at, reach: WhiteboardTurn.tapReach / max(screenScale, 0.01),

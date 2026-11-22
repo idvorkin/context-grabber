@@ -31,7 +31,7 @@ extension WhiteboardModel {
     }
   }
 
-  /// Whether a tap at `point` (board points) reaches any mark showing (story 1101).
+  /// Whether a tap at `point` (board points) reaches any mark showing (story 966).
   func reachesMark(at point: CGPoint, zoom: CGFloat) -> Bool {
     let reach = markReach(at: point, zoom: zoom)
     return turns.ghosts.contains { reach($0) != nil }

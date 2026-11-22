@@ -23,7 +23,7 @@ final class WhiteboardMarkChoiceTests: XCTestCase {
     return (turns, claudes, larrys)
   }
 
-  // MARK: A tap on his selection (story 1101, #1170)
+  // MARK: A tap on his selection (story 966, #1170)
 
   func testATapInsideHisSelectionOffTheMarksKeepsIt() {
     // The iPad's #1170: "OK, ah 2" selected at [66, 1717, 139, 92], tapped at (124.5, 1729.5), no mark chosen.

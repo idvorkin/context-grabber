@@ -1039,7 +1039,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
-### User Story 955:
+### User Story 949:
 
 - **Summary:** The Feedback button is a ladybug with no word beside it
 - **Status:** implemented in [7c937884](https://github.com/idvorkin/context-grabber/commit/7c937884); `just native-test` and `just native-build-mac` green, and on the iPad simulator (rung 2, `WhiteboardHelpFeedbackUITests`, 2026-11-22) the ladybug was no wider than the **?** and still read *Feedback*; not yet seen on the phone
