@@ -566,18 +566,22 @@ public struct BoardOutline: Sendable {
   /// #1171 (stories 1140–1142): the one thing of Larry's (or Claude's) a finger tapped at `point`, outside any group:
   /// every stroke made at the moment of the one tapped, when `theirs` lists that moment (a mark kept with Keep or Keep
   /// all, a text of his, a stroke he drew). Nil when his own ink is nearer, on a group's (story 947) or a header's, and
-  /// off ink.
-  public func theirs(at point: CGPoint, slop: CGFloat, moments theirs: Set<Int64>) -> (moment: Int64, names: [String])?
-  {
+  /// off ink. Story 1143: where `replies` names the reply of Larry's the tapped moment's piece came in, every piece of
+  /// that reply, each by its own moment (`reply` then names it).
+  public func theirs(
+    at point: CGPoint, slop: CGFloat, moments theirs: Set<Int64>, replies: [Int64: String] = [:]
+  ) -> (moment: Int64, names: [String], reply: String?)? {
     guard !theirs.isEmpty, let hit = nearest(at: point, slop: slop), hit.header == nil else { return nil }
     if let tag = hit.tag, Set(groups.values).contains(tag) { return nil }
     let nearestStroke = hit.members.min { inkDistance(point, strokes[$0]) < inkDistance(point, strokes[$1]) }
     guard let tapped = nearestStroke, let moment = strokes[tapped].t, theirs.contains(moment) else { return nil }
-    // The whole of it: every loose stroke, or text, of that moment; none in a group, under a header or hidden.
+    let reply = replies[moment]
+    let wanted = reply.map { r in theirs.filter { replies[$0] == r } } ?? [moment]
+    // The whole of it: every loose stroke, or text, of those moments; none in a group, under a header or hidden.
     let members = units().filter { u in
       u.header == nil && !(u.tag.map(Set(groups.values).contains) ?? false)
-    }.flatMap(\.members).filter { strokes[$0].t == moment && !strokes[$0].hidden }
-    return members.isEmpty ? nil : (moment, names(members))
+    }.flatMap(\.members).filter { strokes[$0].t.map(wanted.contains) ?? false && !strokes[$0].hidden }
+    return members.isEmpty ? nil : (moment, names(members), reply)
   }
 
   /// The thing that moves whole nearest `point`, within `slop` of a stroke's line (a text's box): the later in the

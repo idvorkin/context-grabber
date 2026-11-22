@@ -292,6 +292,53 @@ final class BoardOutlineTests: XCTestCase {
     XCTAssertEqual(grouped.theirs(at: CGPoint(x: 320, y: 412), slop: 22, moments: theirs)?.names.count, 3)
   }
 
+  /// Story 1143 (bead context-grabber-hm7n): pieces of one reply of Larry's kept with plain Keep, each at its own
+  /// moment, are picked up together by a tap on any of them; another reply's, a piece with no reply known, and his own
+  /// ink stay out. A group Larry made with a change is the group's (story 947).
+  func testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply() {
+    func at(_ id: String, _ y: CGFloat, _ t: Int64) -> [BoardOps.Stroke] {
+      var strokes = word(id, x: 100, y: y)
+      for i in strokes.indices { strokes[i].t = t }
+      return strokes
+    }
+    let first = at("p", 200, 1000)
+    let second = at("q", 300, 2000)
+    let other = at("o", 400, 3000)
+    let lone = at("k", 500, 4000)
+    let mine = at("m", 600, 5000)
+    let steps = at("s", 700, 6000)
+    var groups: [String: String] = [:]
+    for s in steps { for id in s.ids { groups[id] = "larry-steps" } }
+    let o = BoardOutline(strokes: first + second + other + lone + mine + steps, headers: [], groups: groups)
+    let theirs: Set<Int64> = [1000, 2000, 3000, 4000, 6000]
+    let replies: [Int64: String] = [1000: "r1", 2000: "r1", 3000: "r2"]
+    let both = ["p0", "p1", "p2", "q0", "q1", "q2"]
+    let tapFirst = o.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: theirs, replies: replies)
+    XCTAssertEqual(tapFirst?.names.sorted(), both, "both pieces of the reply")
+    XCTAssertEqual(tapFirst?.reply, "r1")
+    XCTAssertEqual(tapFirst?.moment, 1000, "the piece tapped")
+    XCTAssertEqual(
+      o.theirs(at: CGPoint(x: 105, y: 312), slop: 22, moments: theirs, replies: replies)?.names.sorted(), both,
+      "the other piece takes the same")
+    XCTAssertEqual(
+      o.theirs(at: CGPoint(x: 105, y: 412), slop: 22, moments: theirs, replies: replies)?.names.sorted(),
+      ["o0", "o1", "o2"], "another reply's mark alone")
+    let alone = o.theirs(at: CGPoint(x: 105, y: 512), slop: 22, moments: theirs, replies: replies)
+    XCTAssertEqual(alone?.names.sorted(), ["k0", "k1", "k2"], "no reply known: that piece alone")
+    XCTAssertNil(alone?.reply)
+    XCTAssertNil(o.theirs(at: CGPoint(x: 105, y: 612), slop: 22, moments: theirs, replies: replies), "his own ink")
+    XCTAssertEqual(
+      o.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: theirs)?.names.sorted(), ["p0", "p1", "p2"],
+      "with no replies known, one piece as before")
+    XCTAssertEqual(
+      o.theirs(at: CGPoint(x: 105, y: 212), slop: 22, moments: [1000], replies: replies)?.names.sorted(),
+      ["p0", "p1", "p2"], "a moment no longer his is never taken")
+    // Larry's own group, from a change: the group's tap takes it whole, and the reply's tap leaves it.
+    XCTAssertNil(o.theirs(at: CGPoint(x: 105, y: 712), slop: 22, moments: theirs, replies: replies))
+    XCTAssertEqual(o.group(at: CGPoint(x: 105, y: 712), slop: 22)?.group, "larry-steps")
+    XCTAssertEqual(o.group(at: CGPoint(x: 105, y: 712), slop: 22)?.names.sorted(), ["s0", "s1", "s2"])
+  }
+
   func testFoldsGoBesideTheStrokesToTheCockpit() throws {
     let picture = WhiteboardPicture(board: "b1", title: "t", rect: CGRect(x: 0, y: 0, width: 10, height: 10), scale: 1)
     let fold: [String: Any] = ["header": "h-1", "header_strokes": ["a"], "lines": 2, "strokes": ["b"]]

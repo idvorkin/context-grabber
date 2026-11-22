@@ -31,6 +31,9 @@ public struct BoardMeaning: Codable, Equatable, Sendable {
   /// The creation moments (ms) of ink Larry or Claude made (a mark kept, his ink or text), so it never makes room as
   /// Igor's (#894).
   public var theirs: [Int64] = []
+  /// Story 1143: the reply of Larry's each piece kept with plain Keep came in, by its moment (ms, as text), so a tap
+  /// on one picks up every piece of that reply. Only moments still in `theirs` are kept.
+  public var replies: [String: String] = [:]
   /// The most label and Larry's-ink moments remembered per board; the oldest go first.
   public static let mostLabels = 2000
   public static let mostTheirs = 4000
@@ -41,7 +44,8 @@ public struct BoardMeaning: Codable, Equatable, Sendable {
   public init() {}
 
   enum CodingKeys: String, CodingKey {
-    case version, rev, handled, lastResult, texts, strokeIDs, strokeMeta, headers, questions, labels, theirs, inkBytes
+    case version, rev, handled, lastResult, texts, strokeIDs, strokeMeta, headers, questions, labels, theirs, replies
+    case inkBytes
   }
 
   /// Every part optional, so a file from an older or newer build still reads.
@@ -58,6 +62,7 @@ public struct BoardMeaning: Codable, Equatable, Sendable {
     questions = try c.decodeIfPresent(WhiteboardQuestions.self, forKey: .questions) ?? WhiteboardQuestions()
     labels = try c.decodeIfPresent([Int64].self, forKey: .labels) ?? []
     theirs = try c.decodeIfPresent([Int64].self, forKey: .theirs) ?? []
+    replies = try c.decodeIfPresent([String: String].self, forKey: .replies) ?? [:]
     inkBytes = try c.decodeIfPresent(Int.self, forKey: .inkBytes)
   }
 
@@ -78,7 +83,7 @@ public struct BoardMeaning: Codable, Equatable, Sendable {
   public var counts: [String: Int] {
     [
       "rev": rev, "handled": handled.count, "texts": texts.count, "headers": headers.count,
-      "cards": questions.cards.count, "labels": labels.count, "theirs": theirs.count,
+      "cards": questions.cards.count, "labels": labels.count, "theirs": theirs.count, "replies": replies.count,
     ]
   }
 }
@@ -145,7 +150,32 @@ public final class BoardMeaningLedger: @unchecked Sendable {
   public func theirs(board: String) -> Set<Int64> { Set(meaning.theirs) }
   public func rememberTheirs(_ moments: [Int64], board: String) {
     guard !moments.isEmpty else { return }
-    change(board) { $0.theirs = Array(($0.theirs + moments).suffix(BoardMeaning.mostTheirs)) }
+    change(board) {
+      $0.theirs = Array(($0.theirs + moments).suffix(BoardMeaning.mostTheirs))
+      Self.prune(&$0)
+    }
+  }
+
+  /// Story 1143: the reply of Larry's each of these moments' pieces came in, by moment.
+  public func replies(board: String) -> [Int64: String] {
+    Dictionary(meaning.replies.compactMap { key, reply in Int64(key).map { ($0, reply) } }) { a, _ in a }
+  }
+
+  /// Story 1143: `moments`, pieces of Larry's kept with plain Keep, came in `reply`. Remembered once the moments are
+  /// his (`rememberTheirs`), and forgotten with them.
+  public func rememberReply(_ moments: [Int64], reply: String, board: String) {
+    guard !moments.isEmpty else { return }
+    change(board) {
+      for moment in moments { $0.replies[String(moment)] = reply }
+      Self.prune(&$0)
+    }
+  }
+
+  /// The replies of moments no longer remembered as theirs go with them.
+  private static func prune(_ meaning: inout BoardMeaning) {
+    guard !meaning.replies.isEmpty else { return }
+    let theirs = Set(meaning.theirs.map(String.init))
+    meaning.replies = meaning.replies.filter { theirs.contains($0.key) }
   }
 
   public func questions(board: String) -> WhiteboardQuestions { meaning.questions }

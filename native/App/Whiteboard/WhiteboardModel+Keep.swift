@@ -127,6 +127,13 @@ extension WhiteboardModel {
     opLedger.rememberTheirs(moments, board: board.id)
   }
 
+  /// Story 1143: a mark of Larry's kept with plain Keep remembers the reply it came in, so a tap on any piece of that
+  /// reply picks up every piece of it kept so. Keep all's marks stay one thing each (story 1140).
+  private func rememberReply(_ ghost: Ghost, _ strokes: [PKStroke]) {
+    guard ghost.who == .larry, let reply = WhiteboardMarks.reply(of: ghost.id) else { return }
+    opLedger.rememberReply(strokes.map(Self.moment), reply: reply, board: board.id)
+  }
+
   private static func moment(_ stroke: PKStroke) -> Int64 {
     Int64(stroke.path.creationDate.timeIntervalSince1970 * 1000)
   }
@@ -214,6 +221,7 @@ extension WhiteboardModel {
       ?? Self.strokes(lines, color: ghost.color, width: ghost.width, spacing: 4, made: made.date)
     if ghost.kind == .text { rememberLabel(made.date) }
     rememberTheirs(strokes)
+    rememberReply(ghost, strokes)
     if let text = ghost.text {
       texts.append(
         BoardText(

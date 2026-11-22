@@ -74,6 +74,22 @@ suggest changes the board until Igor keeps it.
       while it is selected opens its words for rewording. A text of Igor's own (one he typed, or a To text result)
       still opens at the first tap.
     - Where his own ink is nearer the tap than Larry's, the tap is his ink's and does what it did.
+    - **One reply of Larry's, kept piece by piece, is picked up whole** (bead context-grabber-hm7n; Igor, 2026-11-22,
+      on the iPad: "Should move as group when clicked"). Every mark of one reply of Larry's that he kept with plain
+      Keep, one at a time, is one thing to a finger: a tap on any of them selects all the pieces of that reply still
+      on the board, and nothing else (not his own ink, not Larry's marks from another reply, not a mark of Claude's).
+      The label beside it reads as for what it holds: two texts read *2 things · move together*, marks alone *Ink ·
+      To text*. A drag moves them together, and one Undo puts them back. A text in such a reply opens its words at a
+      second tap while the reply is selected, as a text alone does.
+      - A reply kept with Keep group was already one group and stays so.
+      - Marks kept with Keep all stay one thing each, as above (decided 2026-11-22, Igor away, reversible: Keep all
+        always keeps one whole reply, and story 1140 picks one of those up alone). A mark of the same reply kept with
+        plain Keep before Keep all joins only the other plainly kept ones.
+      - A reply he kept before this change is still picked up one piece at a time: the board never learned which
+        reply those came from.
+      - A group Larry makes himself with a change (a group note on strokes) is a group, as above, and a tap on any of
+        its strokes takes the whole group.
+      - The session log names such a tap for the reply, apart from a tap on one thing alone.
     - Not yet (non-goal): a mark still showing, not kept, is never dragged; it is kept first, then picked up.
     - The session log says, for each such tap, that it was one thing of Larry's rather than a group, how many strokes
       it selected, and whether it was still selected a beat later.

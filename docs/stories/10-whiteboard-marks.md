@@ -1185,6 +1185,51 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
+### User Story 1143:
+
+- **Summary:** A finger tap on one piece of a reply of Larry's I kept piece by piece picks up the whole reply
+- **Status:** in progress (bead context-grabber-hm7n)
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
+- **Issues:** bead context-grabber-hm7n: Igor, 2026-11-22 about 12:10, on the iPad, relayed by Larry in the Cockpit: "Should move as group when clicked". The iPad's log for that moment shows the two labels were kept with Keep group, and the tap did select all 93 strokes. What failed there is the drag that followed, which moved nothing (bead context-grabber-4nnh). This story covers the same reply kept with plain Keep or Keep all, which a tap used to pick up one piece at a time.
+
+#### Use Case:
+- **As someone** who kept Larry's two-line answer one label at a time with plain Keep
+- **I want** a finger tap on either label to pick up both
+- **so that** his one reply moves as one thing, the way he wrote it
+
+#### Acceptance Criteria:
+- **Scenario:** Two labels of one reply, kept one at a time
+- **Given:** a reply of Larry's with two labels, each kept with plain Keep, on a board I can draw on, no marks showing
+- **When:** I tap one of the labels with a finger
+- **Then:** both labels are selected and nothing else; a drag moves them together, and one Undo puts them back
+
+- **Scenario:** Other replies and my ink stay out
+- **Given:** a mark of Larry's from another reply, and my own writing beside them
+- **When:** I tap one label of the reply
+- **Then:** neither the other reply's mark nor my writing is selected
+
+- **Scenario:** A text in the reply still opens its words
+- **Given:** the reply selected by a tap on one of its labels
+- **When:** I tap that label again
+- **Then:** its words open for rewording
+
+- **Scenario:** Keep all still keeps each one apart
+- **Given:** three marks of one reply of Larry's, two kept with plain Keep and the third with Keep all
+- **When:** I tap one of the two kept with plain Keep and delete the selection
+- **Then:** those two go and the third stays (story 1140)
+
+- **Scenario:** Kept before this change
+- **Given:** a reply's pieces kept before the board learned which reply each came from
+- **When:** I tap one
+- **Then:** that piece alone is selected, as before (story 1140)
+
+- **Scenario:** A group Larry made himself
+- **Given:** strokes Larry put in one group with a change of his
+- **When:** I tap one of them
+- **Then:** the whole group is selected (story 947)
+
+---
+
 ### User Story 1000:
 
 - **Summary:** The buttons beside a chosen mark sit clear of the board's corner and wholly on screen

@@ -384,4 +384,33 @@ final class BoardMeaningTests: XCTestCase {
     XCTAssertNotNil(defaults.object(forKey: "whiteboard_thread_b2"))
     XCTAssertNotNil(defaults.object(forKey: "other_b1"))
   }
+
+  /// Story 1143: the reply each piece kept with plain Keep came in is remembered by its moment, read back by moment,
+  /// forgotten once the moment is no longer remembered as theirs, and absent from a file written before it.
+  func testTheReplyOfEachKeptPieceIsRememberedWithItsMoment() throws {
+    let ledger = BoardMeaningLedger(board: "b", meaning: BoardMeaning())
+    var changes = 0
+    ledger.onChange = { changes += 1 }
+    ledger.rememberTheirs([1000, 2000], board: "b")
+    ledger.rememberReply([1000, 2000], reply: "r1", board: "b")
+    XCTAssertEqual(ledger.replies(board: "b"), [1000: "r1", 2000: "r1"])
+    XCTAssertEqual(changes, 2)
+    ledger.rememberReply([9000], reply: "r2", board: "b")
+    XCTAssertEqual(ledger.replies(board: "b"), [1000: "r1", 2000: "r1"], "a moment not his is not remembered")
+    let saved = try JSONEncoder().encode(ledger.meaning)
+    XCTAssertEqual(try JSONDecoder().decode(BoardMeaning.self, from: saved).replies, ["1000": "r1", "2000": "r1"])
+    let old = try JSONDecoder().decode(BoardMeaning.self, from: Data(#"{"version": 1, "theirs": [1000]}"#.utf8))
+    XCTAssertEqual(old.replies, [:], "a file from before has none")
+    XCTAssertEqual(old.theirs, [1000])
+  }
+
+  /// Story 1143: when the oldest of Larry's moments go, their replies go with them.
+  func testARepliesMomentGoesWithTheOldestOfTheirs() {
+    var meaning = BoardMeaning()
+    meaning.theirs = Array(1...Int64(BoardMeaning.mostTheirs))
+    let ledger = BoardMeaningLedger(board: "b", meaning: meaning)
+    ledger.rememberReply([1, 2], reply: "r1", board: "b")
+    ledger.rememberTheirs([999_999], board: "b")
+    XCTAssertEqual(ledger.replies(board: "b"), [2: "r1"], "1 fell off the end, 2 is still his")
+  }
 }
