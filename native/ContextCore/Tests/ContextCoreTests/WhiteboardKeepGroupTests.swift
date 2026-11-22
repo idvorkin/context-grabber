@@ -48,6 +48,31 @@ final class WhiteboardKeepGroupTests: XCTestCase {
     XCTAssertEqual(turns.ghosts.count, 5, "nothing kept")
   }
 
+  /// Story 1145 (bead context-grabber-hm7n): Keep on one mark of a reply of Larry's takes every mark of it still
+  /// showing; on Claude's mark, his text from a change, or the last of a reply, only that one; Dismiss only the one.
+  func testKeepOnOneMarkOfAReplyTakesTheWholeReply() {
+    var turns = turns()
+    _ = turns.tap(hitting: { $0.id == "r1#1" })
+    XCTAssertEqual(turns.keepChosenWithItsReply().map(\.id), ["r1#0", "r1#1", "r1#3"], "the whole reply, in order")
+    XCTAssertEqual(turns.ghosts.map(\.id), ["c0", "op-text:t"], "Claude's and his text from a change stay")
+    XCTAssertNil(turns.chosen)
+    _ = turns.tap(hitting: { $0.id == "c0" })
+    XCTAssertEqual(turns.keepChosenWithItsReply().map(\.id), ["c0"], "Claude's mark alone")
+    _ = turns.tap(hitting: { $0.id == "op-text:t" })
+    XCTAssertEqual(turns.keepChosenWithItsReply().map(\.id), ["op-text:t"], "his text from a change alone")
+    XCTAssertEqual(turns.keepChosenWithItsReply(), [], "nothing chosen, nothing kept")
+
+    var other = self.turns()
+    _ = other.tap(hitting: { $0.id == "r1#0" })
+    XCTAssertEqual(other.dismissChosen()?.id, "r1#0")
+    XCTAssertEqual(
+      other.ghosts.filter { $0.who == .larry }.map(\.id), ["r1#1", "r1#3", "op-text:t"], "Dismiss takes one")
+    _ = other.tap(hitting: { $0.id == "r1#1" })
+    _ = other.dismissChosen()
+    _ = other.tap(hitting: { $0.id == "r1#3" })
+    XCTAssertEqual(other.keepChosenWithItsReply().map(\.id), ["r1#3"], "the last of a reply, alone")
+  }
+
   func testTheGroupsNotesNameTheReply() {
     let notes = WhiteboardMarks.groupNotes(["a", "b"], reply: "r1")
     XCTAssertEqual(notes.keys.sorted(), ["a", "b"])

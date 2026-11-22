@@ -74,22 +74,31 @@ suggest changes the board until Igor keeps it.
       while it is selected opens its words for rewording. A text of Igor's own (one he typed, or a To text result)
       still opens at the first tap.
     - Where his own ink is nearer the tap than Larry's, the tap is his ink's and does what it did.
-    - **One reply of Larry's, kept piece by piece, is picked up whole** (bead context-grabber-hm7n; Igor, 2026-11-22,
-      on the iPad: "Should move as group when clicked"). Every mark of one reply of Larry's that he kept with plain
-      Keep, one at a time, is one thing to a finger: a tap on any of them selects all the pieces of that reply still
-      on the board, and nothing else (not his own ink, not Larry's marks from another reply, not a mark of Claude's).
-      The label beside it reads as for what it holds: two texts read *2 things · move together*, marks alone *Ink ·
-      To text*. A drag moves them together, and one Undo puts them back. A text in such a reply opens its words at a
-      second tap while the reply is selected, as a text alone does.
+    - **Keep on any mark of a reply of Larry's keeps the whole reply, and a tap on any of it picks it all up**
+      (bead context-grabber-hm7n; Igor, 2026-11-22, on the iPad: "Should move as group when clicked", and at 12:34,
+      after Keep on one label of Larry's 13-mark sequence diagram: "Keep group is broken when accidentally select
+      one!"; the log shows Keep took that one label, and the other 12 stayed as ghosts until his next reply replaced
+      them 16 s later). A slip of the finger onto one mark never costs the rest of the reply.
+      - **Keep** on a mark of Larry's that came in a reply keeps every mark of that reply still showing, where each
+        showed, as ink in his colours, with room made as for Keep group (below). **One undo takes them all back.**
+        Unlike Keep group they are not one named group that Larry hears: each text of his stays a text (its words
+        open at a second tap, Tidy overlaps lays it out as a label), and each mark is his ink.
+      - Every piece kept so is one thing to a finger: a tap on any of them selects all the pieces of that reply still
+        on the board, and nothing else (not his own ink, not Larry's marks from another reply, not a mark of
+        Claude's). The label beside it reads as for what it holds: two texts read *2 things · move together*, marks
+        alone *Ink · To text*. A drag moves them together, and one Undo puts them back. A text in such a reply opens
+        its words at a second tap while the reply is selected, as a text alone does.
+      - Keep on one of Claude's marks, or on Larry's text from a change of his, keeps that one mark, as before.
+        **Dismiss** still dismisses only the mark chosen.
       - A reply kept with Keep group was already one group and stays so.
       - Marks kept with Keep all stay one thing each, as above (decided 2026-11-22, Igor away, reversible: Keep all
-        always keeps one whole reply, and story 1140 picks one of those up alone). A mark of the same reply kept with
-        plain Keep before Keep all joins only the other plainly kept ones.
+        always keeps one whole reply, and story 1140 picks one of those up alone).
       - A reply he kept before this change is still picked up one piece at a time: the board never learned which
         reply those came from.
       - A group Larry makes himself with a change (a group note on strokes) is a group, as above, and a tap on any of
         its strokes takes the whole group.
-      - The session log names such a tap for the reply, apart from a tap on one thing alone.
+      - The session log says, for each Keep, how many marks of the reply it took, and names a tap that picks up a
+        reply apart from a tap on one thing alone.
     - Not yet (non-goal): a mark still showing, not kept, is never dragged; it is kept first, then picked up.
     - The session log says, for each such tap, that it was one thing of Larry's rather than a group, how many strokes
       it selected, and whether it was still selected a beat later.
@@ -100,7 +109,8 @@ suggest changes the board until Igor keeps it.
     grouped.
   - The session log says how many marks a group keep took, its strokes and its group's name.
   - **Keep** does what a tap used to: the mark becomes real ink in Claude's colour (or the one it asked for, below),
-    and his eraser and undo treat it like his own strokes. One undo takes it back.
+    and his eraser and undo treat it like his own strokes. One undo takes it back. On a mark of a reply of Larry's it
+    keeps the whole reply still showing (above).
   - **A reply of Larry's makes room for what Igor wrote after Larry looked** (#894, stories 1004–1006, 1037; Igor, 2026-11-14: push what he
     wrote since the picture down the page to make room for Larry's reply, rather than put the reply below his ink;
     2026-11-19, on a board where a kept group of Larry's landed on his writing: "group pushes purple text out of the

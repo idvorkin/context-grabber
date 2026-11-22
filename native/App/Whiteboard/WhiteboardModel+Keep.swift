@@ -147,11 +147,60 @@ extension WhiteboardModel {
   }
 
   /// Keep beside the chosen mark: the old tap's keep, one undo.
+  /// Story 1145: on a mark of Larry's from a reply, every mark of that reply still showing (`keepReply`).
   func keepChosen() {
-    guard let kept = turns.keepChosen() else { return }
-    log.event("whiteboard", ["action": "mark_choice", "board": board.id, "choice": "keep", "who": kept.who.rawValue])
-    settleLarrys(kept)
-    ink(kept)
+    let marks = turns.keepChosenWithItsReply()
+    guard let kept = marks.first else { return }
+    log.event(
+      "whiteboard",
+      [
+        "action": "mark_choice", "board": board.id, "choice": "keep", "who": kept.who.rawValue,
+        "reply_marks": marks.count,
+      ])
+    guard marks.count > 1 else {
+      settleLarrys(kept)
+      ink(kept)
+      return
+    }
+    keepReply(marks)
+  }
+
+  /// Story 1145 (bead context-grabber-hm7n): Keep on one mark of a reply of Larry's keeps all its marks still showing,
+  /// where each showed, in one keep (one undo): each a thing of his own as a single Keep makes it (a text stays a text
+  /// and a label), each remembering the reply, so a tap on any picks up all of them (story 1143). Not a named group.
+  private func keepReply(_ marks: [Ghost]) {
+    guard let reply = marks.first.flatMap({ WhiteboardMarks.reply(of: $0.id) }) else { return }
+    let started = Date()
+    var strokes: [PKStroke] = []
+    for (i, ghost) in marks.enumerated() {
+      // A moment of its own for each, a few milliseconds apart, as Keep all gives them.
+      let made = BoardText.time(started.addingTimeInterval(Double(i) * 0.005))
+      let mine =
+        connectorInk(ghost)
+        ?? Self.strokes(ghost.lines, color: ghost.color, width: ghost.width, spacing: 4, made: made.date)
+      strokes += mine
+      if ghost.kind == .text { rememberLabel(made.date) }
+      if let text = ghost.text {
+        texts.append(
+          BoardText(
+            id: text.id, t: made.t, text: text.text, font: text.font, size: Double(text.size),
+            color: Self.lightHex(ghost.color), glyphs: mine.count, lettering: text.lettering))
+      }
+      settleLarrys(ghost)
+    }
+    // #894 (story 1004): measured on the board he wrote on, before these strokes are his.
+    let late = lateRoom(marks)
+    rememberTheirs(strokes)
+    opLedger.rememberReply(strokes.map(Self.moment), reply: reply, board: board.id)
+    if marks.contains(where: { $0.text != nil }) { opLedger.setTexts(texts, board: board.id) }
+    var event: [String: Any] = [
+      "action": "keep", "board": board.id, "who": "larry", "reply": reply, "marks": marks.count,
+      "strokes": strokes.count, "zoom": Double(canvas?.zoom ?? 1),
+    ]
+    event.merge(Self.lateFields(late, marks)) { $1 }
+    log.event("whiteboard", event)
+    if let push = late?.push, canvas?.keepMakingRoom(strokes, push: push, why: "keep_reply") == true { return }
+    add(strokes, named: Self.keepUndoName)
   }
 
   /// Story 999: how many of the chosen mark's reply still show; Keep group is offered from two.

@@ -1187,19 +1187,19 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 1143:
 
-- **Summary:** A finger tap on one piece of a reply of Larry's I kept piece by piece picks up the whole reply
+- **Summary:** A finger tap on one piece of a reply of Larry's I kept with Keep picks up the whole reply
 - **Status:** implemented in [e14cf080](https://github.com/idvorkin/context-grabber/commit/e14cf080); verified by host tests (`BoardOutlineTests.testAFingerTapOnOnePieceOfAReplyTakesTheWholeReply`: both pieces of one reply, another reply's mark, a piece with no reply known, his own ink and Larry's own group; `BoardMeaningTests`: the reply remembered by moment, pruned with the oldest moments, absent from an older file; `just native-test`), the Mac build (`just native-build-mac`), and on the iPad simulator against the fake Cockpit (`WhiteboardTheirsTapUITests.testAFingerTapOnOnePieceOfAReplyKeptWithKeepSelectsTheWholeReply`, rung 2, 2026-11-22: two circles of one reply kept with Keep and the third with Keep all; a finger tap on the first selects the two, whose Delete leaves the third). The fake Cockpit draws only circles, so two texts of one reply and their label are checked only on the host. Not yet seen on the iPad, where the drag after the tap is bead context-grabber-4nnh
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
-- **Issues:** bead context-grabber-hm7n: Igor, 2026-11-22 about 12:10, on the iPad, relayed by Larry in the Cockpit: "Should move as group when clicked". The iPad's log for that moment shows the two labels were kept with Keep group, and the tap did select all 93 strokes. What failed there is the drag that followed, which moved nothing (bead context-grabber-4nnh). This story covers the same reply kept piece by piece with plain Keep, which a tap used to pick up one piece at a time.
+- **Issues:** bead context-grabber-hm7n: Igor, 2026-11-22 about 12:10, on the iPad, relayed by Larry in the Cockpit: "Should move as group when clicked". The iPad's log for that moment shows the two labels were kept with Keep group, and the tap did select all 93 strokes. What failed there is the drag that followed, which moved nothing (bead context-grabber-4nnh). This story covers a reply kept with plain Keep, which a tap used to pick up one piece at a time.
 
 #### Use Case:
-- **As someone** who kept Larry's two-line answer one label at a time with plain Keep
+- **As someone** who kept Larry's two-line answer with plain Keep
 - **I want** a finger tap on either label to pick up both
 - **so that** his one reply moves as one thing, the way he wrote it
 
 #### Acceptance Criteria:
-- **Scenario:** Two labels of one reply, kept one at a time
-- **Given:** a reply of Larry's with two labels, each kept with plain Keep, a mark of his from another reply and my own writing beside them, on a board I can draw on, no marks showing
+- **Scenario:** Two labels of one reply, kept with Keep
+- **Given:** a reply of Larry's with two labels, kept with plain Keep, a mark of his from another reply and my own writing beside them, on a board I can draw on, no marks showing
 - **When:** I tap one of the labels with a finger
 - **Then:** both labels are selected and nothing else, neither the other reply's mark nor my writing; a drag moves them together, and one Undo puts them back
 
@@ -1227,21 +1227,26 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 1145:
 
-- **Summary:** A mark of a reply kept with Keep all stays apart from the pieces kept with plain Keep
-- **Status:** implemented in [e14cf080](https://github.com/idvorkin/context-grabber/commit/e14cf080); verified by host tests (`BoardMeaningTests.testTheReplyOfEachKeptPieceIsRememberedWithItsMoment`; `just native-test`), the Mac build (`just native-build-mac`), and on the iPad simulator against the fake Cockpit (`WhiteboardTheirsTapUITests.testAFingerTapOnOnePieceOfAReplyKeptWithKeepSelectsTheWholeReply`, rung 2, 2026-11-22: two circles of one reply kept with Keep and the third with Keep all; a finger tap on the first selects the two, whose Delete leaves the third); not yet seen on the iPad
-- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (one reply of Larry's, kept piece by piece, is picked up whole)
-- **Issues:** bead context-grabber-hm7n
+- **Summary:** Keep on one mark of a reply of Larry's keeps the whole reply, so a slip of the finger never loses the rest
+- **Status:** in progress (bead context-grabber-hm7n)
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A tap on a mark offers Keep and Dismiss* (Keep on any mark of a reply of Larry's keeps the whole reply)
+- **Issues:** bead context-grabber-hm7n: Igor, 2026-11-22 12:34, on the iPad (board 8f986938), relayed by Larry: "Keep group is broken when accidentally select one!" Larry's sequence diagram came as one reply of 13 marks (row d310df61e6f5). Igor's tap chose one label and Keep kept only it (`keep`, 25 strokes). The other 12 stayed as ghosts until Larry's next reply (row 40b967e4c623) replaced them 16 s later, so the rest of the diagram was never kept.
 
 #### Use Case:
-- **As someone** who kept some of a reply of Larry's with plain Keep and the rest with Keep all
-- **I want** a tap on a piece kept with plain Keep to leave the Keep all marks out
-- **so that** what Keep all kept stays one thing each, as story 1140 says
+- **As someone** who meant to keep Larry's whole diagram and touched one label of it
+- **I want** Keep on that one mark to keep everything in his reply
+- **so that** a slip of the finger never leaves the rest to vanish when his next reply comes
 
 #### Acceptance Criteria:
-- **Scenario:** Keep all still keeps each one apart
-- **Given:** three marks of one reply of Larry's, two kept with plain Keep and the third with Keep all
-- **When:** I tap one of the two kept with plain Keep and delete the selection
-- **Then:** those two go and the third stays
+- **Scenario:** Keep on one mark of a reply
+- **Given:** a reply of Larry's of three marks showing as ghosts
+- **When:** I tap one and press Keep
+- **Then:** all three become ink where they showed, none is left to keep, and one Undo takes all three back
+
+- **Scenario:** Only Larry's replies
+- **Given:** a mark of Claude's, or a text of Larry's from a change of his
+- **When:** I tap it and press Keep
+- **Then:** that mark alone is kept, as before, and Dismiss on any mark still dismisses only that mark
 
 ---
 
