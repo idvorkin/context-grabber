@@ -22,7 +22,7 @@ final class WhiteboardLinkChipUITests: XCTestCase {
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5))
       .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.5)))
     try post(cockpit + "/fake/larry-ops", #"{"kind": "link_reply"}"#)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let chevron = app.buttons["whiteboard-note-chevron"]
     XCTAssertTrue(chevron.appears(within: 15), app.debugDescription)
     let panel = app.textViews["whiteboard-conversation-text"]

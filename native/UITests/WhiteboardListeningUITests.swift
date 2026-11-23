@@ -23,7 +23,7 @@ final class WhiteboardListeningUITests: XCTestCase {
     app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5))
       .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.5)))
     try post(cockpit + "/fake/larry-ops", #"{"kind": "hold", "label": "Larry: hmm, go on"}"#)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let ear = app.descendants(matching: .any)["whiteboard-larry-listening"]
     XCTAssertTrue(ear.appears(within: 20), app.debugDescription)
     XCTAssertEqual(ear.label, "Larry: hmm, go on")

@@ -28,9 +28,9 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Then:** the bar says the board is on its way, and Chat gets the board's thread, titled with the board's name ("Board, Nov 1", or what I renamed it to), holding a picture of the page or pages on screen, dark ink on white
 
 - **Scenario:** One send, one message
-- **Given:** I have just sent the board to Larry
+- **Given:** I have just sent the board to Larry and he is looking at it
 - **When:** I tap Send to Larry again before drawing anything more
-- **Then:** nothing is sent, because the button is disabled until my next stroke
+- **Then:** nothing is sent, and the note says *Larry already has this* (story 765); on a board I only look at, the button is disabled until other pages are on screen. Since story 1176 Send on a board I draw on is Larry's turn
 
 ---
 
@@ -161,7 +161,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** Larry answers on the board
 - **Given:** the board has a drawing
-- **When:** I tap *Larry's turn* and carry on
+- **When:** I tap *Send to Larry* (*Larry's turn* until story 1176 made them one button) and carry on
 - **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) until he answers (story 662), with no spinner, and the Pencil keeps drawing. When he answers, faint purple shapes and a line from him appear with no tap, nothing on the board changes until I keep one, Chat has a thread named after the board with the picture and his words, and the board's next turn goes to it
 
 ---
@@ -855,7 +855,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 428:
 
-- **Summary:** With no network Larry's turn says so and nothing waits
+- **Summary:** With no network Larry's turn says so and nothing waits (superseded by story 1176: Send waits in the outbox; this holds only for a picture a pause hands him)
 - **Status:** implemented in [53481a1](https://github.com/idvorkin/context-grabber/commit/53481a1); the simulator compile only: no test runs a turn with no network, so this is owed on the iPad
 - **Why:** split from story 421, whose old wording promised this case a send or a wait; a turn has no outbox
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md)
@@ -870,6 +870,41 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** no network
 - **When:** I tap *Larry's turn*
 - **Then:** a copyable error says Larry couldn't be reached, and nothing is queued
+
+---
+
+### User Story 1176:
+
+- **Summary:** One Send button that waits when offline
+- **Status:** STATUS_PENDING
+- **Issues:** bead context-grabber-rtl (Igor, design board, 2026-11-22: "one Send button that waits when offline")
+- **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *One Send*
+
+#### Use Case:
+- **As someone** handing the board to Larry, sometimes with no signal
+- **I want to** have one Send button that hands him the board and waits when it can't go yet
+- **so that** I never pick between two buttons that do nearly the same thing, and a turn taken offline isn't lost
+
+#### Acceptance Criteria:
+- **Scenario:** One button
+- **Given:** a board I draw on, on the iPad
+- **When:** I look at the bar's right group
+- **Then:** it holds Talk, Ghosts and Send to Larry, evenly spaced, and no *Larry's turn*
+
+- **Scenario:** Send is Larry's turn
+- **Given:** a drawing on the board and the network there
+- **When:** I tap *Send to Larry*
+- **Then:** the note begins with Larry's clock, and his marks arrive on the board with no further tap
+
+- **Scenario:** No network
+- **Given:** no network
+- **When:** I tap *Send to Larry*, then pause and tap it again
+- **Then:** the note reads *Waiting to send · 0:00* and counts, the button is dimmed, nothing fails and nothing more is queued; when the network is back the picture goes once, the note reads *Larry · 0:00*, and his marks arrive with no further tap
+
+- **Scenario:** It can't go after all
+- **Given:** a Send waiting in the outbox
+- **When:** I delete it from the Inbox, or the Cockpit refuses it
+- **Then:** the turn is free and the button lights again; a refusal shows as a copyable problem naming the board
 
 ---
 
@@ -1374,7 +1409,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** Nothing new since the picture
 - **Given:** Larry is looking at a picture, I have drawn and said nothing since, and the same part of the board is on screen
-- **When:** I tap *Larry's turn* or *Send to Larry*
+- **When:** I tap *Send to Larry* (one button since story 1176)
 - **Then:** no picture goes, and the note says *Larry already has this* with the clock for two seconds; had I drawn a stroke, said something or scrolled to another page, a fresh picture would go at once and the clock restart
 
 ---

@@ -155,7 +155,7 @@ struct WhiteboardView: View {
         }
       }
       if model.editable {
-        // The board's own settings, in one menu. Six items in an iPhone's top bar push Larry's turn and Send under *More*,
+        // The board's own settings, in one menu. Six items in an iPhone's top bar push Send under *More*,
         // so at that width this one goes to the bottom (story 402).
         ToolbarItem(placement: horizontalSizeClass == .compact ? .bottomBar : .topBarTrailing) {
           WhiteboardBoardMenu(model: model).equatable()
@@ -195,28 +195,22 @@ struct WhiteboardView: View {
           )
           .accessibilityIdentifier("whiteboard-ghosts")
         }
-        ToolbarItem(placement: .topBarTrailing) {
-          named(
-            "Larry", does: "Hand Larry the board", action: { model.larryTurn() },
-            label: { Label("Larry's turn", systemImage: "hand.draw") }
-          )
-          .disabled(
-            model.isEmpty || model.nothingOnScreen || model.larrySending || model.firstSendWaiting(in: inbox.items)
-          )
-          .accessibilityLabel("Larry's turn")
-          .accessibilityIdentifier("whiteboard-larry")
-        }
       }
       // An old-canvas board's ink sits where the column put it, not where it's saved: nothing to frame for Larry (story 658).
       if !model.oldCanvas {
         ToolbarItem(placement: .topBarTrailing) {
           named(
-            "Send", does: "Send the board to Larry", action: { model.send() },
+            "Send", does: "Send the board to Larry", action: { model.sendToLarry() },
             label: { Label("Send to Larry", systemImage: "paperplane") }
           )
           // How much is drawn, for VoiceOver and the UI test, in the label for the reason above.
           .accessibilityLabel("Send to Larry, \(model.drawing.strokes.count) strokes")
-          .disabled(model.isEmpty || model.nothingOnScreen || model.sent != nil || model.larrySending)
+          // Story 1176: one button. On a board drawn here it is Larry's turn, dimmed while its picture waits in the
+          // outbox; a board only looked at is dimmed after a send until other pages are on screen (story 343).
+          .disabled(
+            model.isEmpty || model.nothingOnScreen || model.larrySending || model.sendWaiting(in: inbox.items)
+              || (!model.editable && model.sent != nil)
+          )
           .accessibilityIdentifier("whiteboard-send")
         }
       }

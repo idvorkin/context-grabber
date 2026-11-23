@@ -62,7 +62,7 @@ final class WhiteboardConnectUITests: XCTestCase {
     wait(send, label: "Send to Larry, 3 strokes")
     let cockpit = try cockpit()
     let sent = try sends(cockpit).count
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let ids = try newSend(cockpit, after: sent)
     XCTAssertTrue(ids.contains { $0.hasPrefix("c-") }, "the connector goes to Larry under its name: \(ids)")
   }
@@ -89,7 +89,7 @@ final class WhiteboardConnectUITests: XCTestCase {
     let send = app.buttons["whiteboard-send"]
     wait(send, label: "Send to Larry, 2 strokes")
     try post(cockpit + "/fake/larry-ops", #"{"kind": "connector_marks"}"#)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let keepAll = app.buttons["whiteboard-keep-all"]
     XCTAssertTrue(keepAll.appears(within: 15), "his connector shows as a ghost to keep: \(app.debugDescription)")
     let picture = XCTAttachment(screenshot: app.screenshot())
@@ -99,7 +99,7 @@ final class WhiteboardConnectUITests: XCTestCase {
     keepAll.tap()
     wait(send, label: "Send to Larry, 3 strokes")
     let sent = try sends(cockpit).count
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let ids = try newSend(cockpit, after: sent)
     XCTAssertTrue(ids.contains { $0.hasPrefix("m-") }, "the connector goes back under its mark's name: \(ids)")
   }

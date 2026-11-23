@@ -388,11 +388,13 @@ first piece of the live-whiteboard plan: a knob to compare who answers, and the 
     next turn starts. A reply of his that lands after that sends nothing more of its own for the same board, and the
     session log says the turn ended this way. A mark that only says he has the picture, or has picked it up, keeps the
     turn out.
-  - *Larry's turn* and *Send to Larry* always go at once, on any board, and take over whatever was waiting: its words
-    go with them, and the turn they start is the one he is looking at.
+  - *Send to Larry* always goes at once, on any board, and takes over whatever was waiting: its words go with it, and
+    the turn it starts is the one he is looking at. With no network it waits in the outbox and goes when it can (*One
+    Send*, story 1176).
   - A picture that can't reach him frees the turn, and its words wait for the next one. Ghosts off forgets what the
     pauses kept; a turn already out stays out.
-  - A pause while the board's first *Send* waits in the outbox sends nothing, so it can't start a second thread.
+  - While the board's *Send* waits in the outbox, a pause, his answer to an earlier picture and the three-minute wait
+    send nothing, so it can't start a second thread or go twice (story 1176).
 - With Ghosts off nothing is asked after a pause, whoever the responder is. Writing with Ghosts off says so: the
   first stroke puts *Ghosts are off, so no one is watching: turn Ghosts on for a look* in the bar's note, and it stays
   there, past the note's usual few seconds, until Ghosts come back on. The session log notes that first unwatched
@@ -403,18 +405,48 @@ first piece of the live-whiteboard plan: a knob to compare who answers, and the 
   first three with the turn itself, so its own log puts the iPad's half beside the model's; the upload is known only
   once the request has gone, so it is in the session log alone.
 
+### One Send (story 1176; Igor, design board, 2026-11-22: "one Send button that waits when offline")
+
+*Larry's turn* and *Send to Larry* did nearly the same thing, two buttons side by side: with no network a Send waited
+in the outbox and a turn failed with nothing queued. They are one button now.
+
+- **One button, *Send to Larry*,** at the end of the bar's right group (Talk, Ghosts, Send). There is no *Larry's turn*
+  button. A long press names it *Send* with one row, *Send the board to Larry*.
+- **On a board drawn here it is Larry's turn.** The picture of the pages on screen goes to the board's thread with its
+  strokes, as a turn's did, saying *your turn on the board* (the conversation panel shows no row for it, as for a turn)
+  or carrying the words that waited. The bar's note begins with Larry's clock, his marks arrive with no further tap,
+  and *Interrupt* is offered on it once he has it, as for a turn.
+- **It always goes through the outbox.** With the network there it leaves at once; with none, or with the Cockpit not
+  answering, it waits there and goes when it can, by itself, once. Nothing fails and nothing is lost.
+- **While it waits, the board says so.** The note's state reads *Waiting to send · 0:12* in place of Larry's clock
+  (VoiceOver: *Waiting to send for 12 seconds*), with what is waiting to go next after it as usual. The three-minute
+  wait does not run, *Larry hasn't got the picture* is never said of it, and nothing else goes: a pause, his answer to an
+  earlier picture and the button itself send nothing more until it has gone. The button is dimmed while it waits.
+- **When it goes, his clock starts.** The note reads *Larry · 0:00* (or *Sent* until he picks it up, story 773) from the
+  moment it left the outbox, and the three minutes count from there.
+- **Closing the board while it waits loses nothing.** It goes from the outbox as any message does; a board opened again
+  while it still waits says *Waiting to send* again, and starts Larry's clock when it goes.
+- **A Send the Cockpit refuses, or one deleted from the Inbox while it waits,** frees the turn and its words wait for the
+  next picture. A refusal shows as a copyable problem naming the board and the reason.
+- **Repeat taps.** With no turn out a tap always sends, new ink or not: asking him to look again is a real request.
+  While he is looking at the board as it is, a tap says *Larry already has this* (story 765).
+- **A board only looked at** (the iPhone's, another device's) keeps its own *Send to Larry*: it takes no turn and doesn't
+  look, the bar says *Sent to Larry: his reply shows in Chat*, and the button is dimmed until other pages are on screen.
+- Retry and Dismiss (stories 775, 776) stay for the pictures the board hands him itself after a pause on a Larry board;
+  a Send is the outbox's to retry, as it always was.
+
 ### Larry's turn (stories 349, 353, 355–357, 380–389)
 
 Larry draws through his chat thread, in his own time: the real Larry answers in minutes, so nothing waits for him
 (Igor, 2026-11-02).
 
-- **Larry's turn** in the board's bar sends a picture of the board to the board's chat thread, saying *your turn on the
+- **Larry's turn** is *Send to Larry* on a board drawn here (*One Send* above): a picture of the board goes to the board's chat thread, saying *your turn on the
   board*, and the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) as soon as the picture is taken, until he answers (story 662). No spinner: Igor keeps drawing, and can
-  hand him a newer picture once that one has gone. If it can't be delivered, the line goes and the problem below shows.
-- **Each board has one thread**, named after the board. The board's first *Larry's turn* or *Send to Larry* starts it,
-  and later ones of either kind go to it, on every device (a Send from the iPhone goes to the thread the board carries through iCloud: [the conversation design](2026-11-12-whiteboard-conversation-design.md), story 1158), even when the first *Send* lands with the board closed. The
-  two don't race to start it: *Larry's turn* is off while the board's first *Send* waits in the outbox, and *Send* is
-  off while a turn is on its way. If the Cockpit says it no longer has the thread, the next picture starts a new one.
+  hand him a newer picture once that one has gone. If it can't be delivered yet, it waits in the outbox (*One Send*).
+- **Each board has one thread**, named after the board. The board's first *Send to Larry*, or the first picture a pause hands
+  him, starts it, and later ones go to it, on every device (a Send from the iPhone goes to the thread the board carries through iCloud: [the conversation design](2026-11-12-whiteboard-conversation-design.md), story 1158), even when the first *Send* lands with the board closed. The
+  two don't race to start it: a pause sends nothing while the board's *Send* waits in the outbox, and *Send* is off
+  while a picture a pause handed him is on its way. If the Cockpit says it no longer has the thread, the next picture starts a new one.
   Claude's ghost turns have no thread.
 - **Larry's marks arrive on their own.** While a board that has a thread is open, the app looks at the thread about
   every 3 s. A new row of Larry's with marks shows them as ghosts in Larry's colour (purple), kept or dismissed like Claude's.
@@ -446,15 +478,15 @@ Larry draws through his chat thread, in his own time: the real Larry answers in 
   While it can't reach the Cockpit the bar says so quietly after 10 to 15 s (*Larry's marks: the Cockpit isn't
   answering*; while a turn of his is out, his clock says it instead, *Cockpit not answering*, story 760), the log
   says so once, and the bar clears itself when the Cockpit answers. Never an error box, never a repeating one.
-- When the picture can't be handed to him, or the Cockpit refuses it, the bar shows a copyable problem with what was
-  asked. A look-only board takes no turn and doesn't look: its *Send to Larry* still sends, and his reply shows only in
+- When a picture a pause hands him can't be delivered, or the Cockpit refuses it, the bar shows a copyable problem
+  with what was asked; a *Send* waits in the outbox instead (*One Send*). A look-only board takes no turn and doesn't look: its *Send to Larry* still sends, and his reply shows only in
   Chat.
 
 ### The strokes go with the picture (stories 419, 424; Igor, 2026-11-03: "Can we send strokes instead?")
 
 A picture of a tall board shrinks the handwriting to a few pixels; the strokes do not.
 
-- **Every picture for Larry is preceded by the board's strokes.** *Larry's turn* and *Send to Larry* both first hand
+- **Every picture for Larry is preceded by the board's strokes.** *Send to Larry* and the pictures a pause hands him first hand
   the Cockpit every stroke on the board, in board points, each with when it was drawn, its colour as it looks in
   light mode, its width, its tool and a stable id, under the picture's own id. The picture then goes as before: it is
   what Chat shows, and what Larry reads when the strokes did not get through.
@@ -470,8 +502,9 @@ A picture of a tall board shrinks the handwriting to a few pixels; the strokes d
 - **Nothing waits on the strokes** (stories 421, 426). If the Cockpit answers the strokes with an error, the picture
   still goes, the session log says what became of the strokes, and the bar says nothing about them.
 - **With no network** a *Send* waits in the outbox with its strokes beside its picture, and both go when the network
-  is back (story 427). *Larry's turn* doesn't wait: a copyable error says Larry couldn't be reached, and nothing is
-  queued (story 428).
+  is back (story 427), the folded sections with them. Since *Larry's turn* became *Send* (story 1176) nothing fails
+  for want of a network; only a picture a pause hands him on a Larry board still says Larry couldn't be reached (story
+  428).
 - **A dropped connection is tried once more before anything is said** (#1136, stories 908, 909). When the iPad loses the
   connection under the picture on its way to Larry (most often because the app left the screen for a moment while it
   was going), the board sends it again by itself once the app is back on screen, and Igor sees nothing. Only a second
@@ -577,7 +610,7 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
   thread, and his purple marks arrive when he answers.
 - On a Larry board, draw and pause five times while he is looking: his thread gets no new picture until he answers,
   then exactly one, of the board as it is then. Pause again with nothing drawn since his answer: nothing more goes.
-  Speak while he is looking: the words arrive with that next picture. Tap *Larry's turn* while he is looking, after a stroke: a picture
+  Speak while he is looking: the words arrive with that next picture. Tap *Send to Larry* while he is looking, after a stroke: a picture
   goes at once (with nothing drawn or said since the last one, nothing goes: [story 765](2026-11-12-whiteboard-conversation-design.md)). Leave him unanswering for 3 minutes: the bar stops saying he is looking.
 - With the Cockpit unreachable, pick another responder: the tick goes back and a copyable problem says why.
 - With a pocket mic connected, open the board's mic: the note's line names a microphone and its bar moves as Igor
@@ -586,14 +619,14 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
   log names it.
 - Every ghost turn's log line has the pause, render, encode and upload times in milliseconds, and the Cockpit's own log
   of that turn has the first three.
-- Write a column of notes down a tall board and tap Larry's turn: the Cockpit's render of the board (any page of it)
+- Write a column of notes down a tall board and tap Send to Larry: the Cockpit's render of the board (any page of it)
   shows the handwriting as sharp as the iPad does, and its reply names the lines added since his last turn.
 - Cut the Cockpit's strokes route (a 404 or no network): the picture still arrives, and the session log says the
   strokes did not.
 - Draw two circles on the iPad and lift the Pencil: within about 5 s faint orange shapes appear, solid like ink. Tap
   one: Keep and Dismiss appear beside it and nothing else changes. Keep: it becomes orange ink, the same line only
   stronger, that the eraser removes and undo takes back. Dismiss on another: it goes, and the rest stay.
-- Tap Larry's turn, then write two lines below the last of the board's ink while he looks. When his reply lands where
+- Tap Send to Larry, then write two lines below the last of the board's ink while he looks. When his reply lands where
   those lines are, Keep group: his marks stay where they showed, the two lines and everything under them move down in
   whole lines until they sit under his lowest mark, the ink above doesn't move, and one Undo puts the lines back and
   takes his marks away. A reply that lands only on ink that was in his picture keeps with nothing moved.
@@ -611,7 +644,7 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
   marks still show; a tap on a mark still brings its Keep and Dismiss and leaves no dot.
 - With the Pencil used once: a finger drag never draws, with marks or without, and a tap off the marks doesn't change that.
 - Turn Ghosts off: lifting the Pencil asks nothing (the session log shows no turn). Larry's purple ghosts stay showing.
-- Tap Larry's turn: the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) straight away and the Pencil keeps drawing. Chat has a thread
+- Tap Send to Larry: the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) straight away and the Pencil keeps drawing. Chat has a thread
   named after the board holding the picture. Minutes later, with no tap, purple ghosts and his line appear on what he saw,
   even if the view has moved since.
 - He draws unprompted on the thread: the same, with no tap by Igor. His next marks join the unkept ones, which stay.
@@ -620,4 +653,9 @@ hands them back; his rows carry shapes in the picture's pixels, in the ghost end
 - Dismiss one of his marks: it doesn't return, not on the next look and not after closing and reopening the board. Leave them
   and reopen: his newest set shows, and any earlier set of his still showing when the board closed.
 - Cockpit unreachable: drawing works as before and the bar says ghosts aren't answering, and that his marks aren't;
-  Larry's turn shows a copyable problem; when the Cockpit is back the bar clears by itself.
+  *Send to Larry* waits in the outbox; when the Cockpit is back the bar clears by itself and the Send goes once.
+- One Send (story 1176): the bar's right group is Talk, Ghosts and Send, with no *Larry's turn*. With no network, tap
+  Send to Larry: the note reads *Waiting to send · 0:00* and counts, the button is dimmed, and a pause or a second tap
+  sends nothing. The network back: the picture goes once, the note reads *Larry · 0:00*, and his marks arrive with no
+  further tap. Close the board while it waits and open it again: it still says *Waiting to send*. Delete it from the
+  Inbox: the turn is free and the button lights.

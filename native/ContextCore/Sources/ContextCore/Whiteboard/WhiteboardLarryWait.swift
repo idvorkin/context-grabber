@@ -68,7 +68,8 @@ public enum WhiteboardLarryWait: String, Equatable, Sendable {
   }
 
   public static func of(_ turn: WhiteboardLarryTurn, mark: Mark, now: ContinuousClock.Instant) -> Self {
-    guard case .awaiting(let since, _) = turn.state, mark != .done else { return .none }
+    // Story 1176: a Send waiting in the outbox is the outbox's to retry, never stuck.
+    guard case .awaiting(let since, _) = turn.state, mark != .done, !turn.waitingToSend else { return .none }
     if now - since < after { return .waiting }
     return mark == .none ? .stuck : .working
   }

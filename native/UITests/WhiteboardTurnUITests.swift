@@ -77,7 +77,7 @@ final class WhiteboardTurnUITests: XCTestCase {
     stroke(app)
     wait(ghosts, label: "Ghosts on, 1 showing", timeout: 8)
 
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     // Larry's two marks beside Claude's one, with no further tap: each author replaces only their own.
     wait(ghosts, label: "Ghosts on, 3 showing", timeout: 15)
     XCTAssertTrue(
@@ -114,7 +114,7 @@ final class WhiteboardTurnUITests: XCTestCase {
     ghosts.tap()
     stroke(app)
     wait(app, strokes: 1)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let marks = { (count: Int) -> NSPredicate in
       NSPredicate(format: "label == %@", "\(count) to keep")
     }
@@ -140,7 +140,7 @@ final class WhiteboardTurnUITests: XCTestCase {
     ghosts.tap()
     stroke(app)
     wait(app, strokes: 1)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     XCTAssertTrue(
       app.staticTexts.matching(NSPredicate(format: "label == %@", "2 to keep")).firstMatch.appears(within: 15),
       app.debugDescription)
@@ -161,7 +161,7 @@ final class WhiteboardTurnUITests: XCTestCase {
     ghosts.tap()
     stroke(app)
     wait(app, strokes: 1)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     XCTAssertTrue(
       app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Larry: this is where it goes")).firstMatch
         .appears(within: 15), app.debugDescription)
@@ -217,10 +217,11 @@ final class WhiteboardTurnUITests: XCTestCase {
     let (app, ghosts) = try openBoard()
     XCTAssertFalse(app.buttons["whiteboard-paste"].exists, "nothing to paste: no Paste")
     let mic = app.buttons["whiteboard-mic"]
-    let larry = app.buttons["whiteboard-larry"]
     let send = app.buttons["whiteboard-send"]
-    // Even spacing: the gaps between the four on the right differ by no more than a few points.
-    let gaps = zip([mic, ghosts, larry], [ghosts, larry, send]).map { $1.frame.minX - $0.frame.maxX }
+    // Story 1176: one Send, no Larry's turn.
+    XCTAssertFalse(app.buttons["whiteboard-larry"].exists, "Larry's turn is Send now")
+    // Even spacing: the gaps between the three on the right differ by no more than a few points.
+    let gaps = zip([mic, ghosts], [ghosts, send]).map { $1.frame.minX - $0.frame.maxX }
     XCTAssertLessThan((gaps.max() ?? 0) - (gaps.min() ?? 0), 12, "\(gaps)")
     ghosts.press(forDuration: 1.2)
     let named = app.buttons["Hide Claude's suggestions"]

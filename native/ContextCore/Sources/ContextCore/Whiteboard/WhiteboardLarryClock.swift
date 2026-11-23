@@ -10,6 +10,8 @@ import Foundation
 public enum WhiteboardLarryClock {
   /// What the bar says once he closed a turn with nothing to say, until the next one starts (#913).
   public static let nothingToAdd = "Larry: nothing to add yet"
+  /// What the bar's state says while the board's *Send* waits in the outbox (story 1176).
+  public static let waitingToSend = "Waiting to send"
 
   /// His state at the start of the bar's note, *Larry · 0:42*, or *Sent · 0:03* while the Cockpit has the picture and
   /// he hasn't picked it up (*Sent · 0:21 · not picked up yet* from `WhiteboardLarryWait.after`, twenty seconds), with
@@ -21,6 +23,8 @@ public enum WhiteboardLarryClock {
     mark: WhiteboardLarryWait.Mark = .unknown
   ) -> String? {
     guard let seconds = seconds(turn, now: now) else { return turn.nothingToAdd ? nothingToAdd : nil }
+    // Story 1176: a Send still in the outbox has not reached the Cockpit, so nothing is said about him or it.
+    if turn.waitingToSend { return "\(waitingToSend) · \(seconds / 60):\(String(format: "%02d", seconds % 60))" }
     let already = alreadyHas(turn, now: now)
     let sent = !already && mark == .received
     let who = already ? "Larry already has this" : sent ? "Sent" : "Larry"
@@ -42,6 +46,7 @@ public enum WhiteboardLarryClock {
       minutes == 0 ? nil : count(minutes, "minute"),
       minutes > 0 && rest == 0 ? nil : count(rest, "second"),
     ].compactMap { $0 }.joined(separator: " ")
+    if turn.waitingToSend { return "\(waitingToSend) for \(words)" }
     let already = alreadyHas(turn, now: now)
     let looking =
       already

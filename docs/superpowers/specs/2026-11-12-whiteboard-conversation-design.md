@@ -25,7 +25,7 @@ the longest wait.
 - Calling a picture back. One that has gone can't be. The 20-second controls below (Igor, 2026-11-14) free the board's
   turn or send the same picture again; none of them unsends anything.
 - A clock for the fast responders (Haiku, Sonnet). They answer in about two seconds. Larry's clock shows whenever a
-  turn of his is out, which on a Haiku or Sonnet board means after *Larry's turn* or *Send to Larry*.
+  turn of his is out, which on a Haiku or Sonnet board means after *Send to Larry*.
 
 ## Larry's clock (built first)
 
@@ -54,13 +54,13 @@ Six taps on *Larry's turn* and one on *Send to Larry* in twelve seconds each sen
 say so himself.
 
 - **While Larry is looking at a picture and nothing has changed since it went** (no new ink, no words waiting, the
-  same part of the board on screen), *Larry's turn* and *Send to Larry* send nothing.
+  same part of the board on screen), *Send to Larry* sends nothing.
 - **The tap is answered.** For two seconds the note's state reads **Larry already has this · 0:12**, then goes back to
   the clock.
 - **Anything new and the tap sends as before**: new ink, waiting words or another part of the board on screen go at
   once as a fresh picture and the clock restarts.
-- **With no turn out, *Larry's turn* always sends**, new ink or not: asking him to look again is a real request.
-  *Send to Larry* keeps its own rule (off until the next stroke).
+- **With no turn out, *Send to Larry* always sends**, new ink or not: asking him to look again is a real request
+  (*Larry's turn* and *Send to Larry* are one button since story 1176).
 - **Every tap changes something on screen within a quarter of a second**: the clock appears or restarts, or the note
   says why nothing went.
 
@@ -126,9 +126,10 @@ doesn't say whether the picture ever reached him, or offer anything to do about 
 - **Done, or his answer: nothing is offered**, and the control goes with the clock.
 - **Small and out of the way.** Retry and Dismiss sit in the bar's problem row, Interrupt in the note's line. Neither
   covers the board, and the Pencil keeps drawing.
-- **Only *Larry's turn* and the pictures the board hands him itself.** A *Send to Larry* goes through the outbox, which
-  already keeps trying and shows its own state, so its turn is offered none of these controls. Its state still reads
-  *Sent* or *Larry* from its mark.
+- **Retry and Dismiss only for the pictures the board hands him itself.** A *Send to Larry* goes through the outbox,
+  which already keeps trying, and while it waits there the note says *Waiting to send* (story 1176), so its turn is
+  never *stuck* and is offered neither. Once the outbox has sent it, *Interrupt* is offered on it as on any picture
+  he has. Its state reads *Sent* or *Larry* from its mark.
 - **One problem at a time, the newest wins.** The 3-minute wait is unchanged: if it runs out with the picture still
   stuck, *Larry didn't answer* takes the problem row's place. A picture stuck later takes the place of *Larry didn't
   answer*. *Larry hasn't got the picture* goes on its own when the mark comes, when he answers, and on *Retry* or
@@ -319,11 +320,11 @@ nothing: that board had a thread with Larry, but only the iPad knew which one.
 - He answers: the state goes and his line shows.
 - He answers in words only, with his marks from before still showing: his words are the note's line and in the
   panel, nothing new is on the board or offered to keep, and his earlier marks are where they were.
-- Draw, pause, and tap *Larry's turn* while he is looking: the clock goes back to 0:00.
+- Draw, pause, and tap *Send to Larry* while he is looking: the clock goes back to 0:00.
 - He never answers: at three minutes the note shows *Larry didn't answer*; copying it gives the board, the time the
   picture went, the wait, what was waiting and whether the Cockpit was answering.
 - Ink was waiting at the three-minute mark: a fresh picture goes and a new clock starts; the problem is still there.
-- The picture doesn't reach the Cockpit: at twenty seconds *Larry hasn't got the picture* shows with *Retry* and
+- A picture a pause on a Larry board handed him doesn't reach the Cockpit: at twenty seconds *Larry hasn't got the picture* shows with *Retry* and
   *Dismiss*. *Retry* sends the same picture and the clock starts again; *Dismiss* frees the turn.
 - The Cockpit has the picture and Larry hasn't finished: at twenty seconds the note's line offers *Interrupt*; a tap
   frees the turn, and the next pause or tap sends a fresh picture (never *Larry already has this*).
@@ -334,13 +335,13 @@ nothing: that board had a thread with Larry, but only the iPad knew which one.
   Cockpit is back.
 - Leave the app for twenty seconds mid-wait and come back: the clock is twenty seconds further on.
 - A long reply of Larry's and a long *Heard:* line are both showing: the state is still fully visible at the start.
-- A pause on a Haiku or Sonnet board starts no clock; *Larry's turn* on one does.
+- A pause on a Haiku or Sonnet board starts no clock; *Send to Larry* on one does.
 - The board shows one problem at a time: a later failure takes the place of *Larry didn't answer*.
 - *Dismiss* beside *Larry didn't answer* removes it.
-- Tap *Larry's turn* twice with nothing drawn between: one picture is on his thread, and the second tap's answer is
+- Tap *Send to Larry* twice with nothing drawn between: one picture is on his thread, and the second tap's answer is
   *Larry already has this*.
-- Tap *Larry's turn* while he is looking, after drawing a stroke: a second picture goes and the clock restarts.
-- Tap *Larry's turn* while he is looking, after scrolling to another page: a picture of that page goes.
+- Tap *Send to Larry* while he is looking, after drawing a stroke: a second picture goes and the clock restarts.
+- Tap *Send to Larry* while he is looking, after scrolling to another page: a picture of that page goes.
 - The Cockpit stops answering after Larry has spoken: the note says so for as long as it lasts, not for five seconds.
 - Larry's long reply and a long *Heard:* are showing: the note is one line, the clock whole at its start.
 - Draw while he is looking: the state gains *next: ink*.

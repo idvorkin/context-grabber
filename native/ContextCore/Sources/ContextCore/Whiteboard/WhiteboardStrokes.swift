@@ -124,6 +124,20 @@ public enum WhiteboardStrokes {
     }
   }
 
+  /// The strokes file a board's picture waits beside in the outbox (story 424): the strokes alone, as a list, or, from a
+  /// board drawn here (story 1176), `{"strokes": [...], "folds": [...]}` with its folded sections. Nil when unreadable.
+  public static func file(_ raw: Data) -> (strokes: [[String: Any]], folds: [[String: Any]])? {
+    let json = try? JSONSerialization.jsonObject(with: raw)
+    if let strokes = json as? [[String: Any]] { return (strokes, []) }
+    guard let wrapped = json as? [String: Any], let strokes = wrapped["strokes"] as? [[String: Any]] else { return nil }
+    return (strokes, wrapped["folds"] as? [[String: Any]] ?? [])
+  }
+
+  /// The strokes file for a picture: a list when nothing is folded, as before, else with the folds beside.
+  public static func file(strokes: [[String: Any]], folds: [[String: Any]]) throws -> Data {
+    try JSONSerialization.data(withJSONObject: folds.isEmpty ? strokes as Any : ["strokes": strokes, "folds": folds])
+  }
+
   /// `POST /whiteboard/strokes`: the board's strokes under this picture's id and frame.
   /// `folds`: the folded sections (`BoardOutline.wire`), whose strokes are not in `strokes` (story 857).
   public static func request(

@@ -101,6 +101,11 @@ final class WhiteboardModel: ObservableObject {
   @Published var larryWait = WhiteboardLarryWait.none
   /// The picture out to Larry: what *Retry* sends again, and the furthest mark the Cockpit has put on its message.
   var larryOut: LarryOut?
+  /// Story 1176: the board's *Send* waiting in the outbox, by its id, and whether the Inbox has listed it yet; the watch on
+  /// the Inbox that says when it went.
+  var sendOut: String?
+  var sendListed = false
+  var sendWatch: AnyCancellable?
   /// Counts the hand-offs, so one that Retry, Dismiss or Interrupt has replaced never frees the turn or speaks for the
   /// board.
   var larryHandOffs = WhiteboardLarryHandOffs()

@@ -181,12 +181,12 @@ extension WhiteboardModel {
     log.event("board_blocked", ["action": "shown", "board": board.id, "label": label, "reason": reason])
   }
 
-  /// Retry: Larry gets the board again, as *Larry's turn* sends it, with what happened to his change in the turn.
+  /// Retry: Larry gets the board again, as *Send to Larry* sends it, with what happened to his change in the turn.
   func retryBlocked() {
     let label = blocked.label ?? ""
     guard blocked.retry() else { return }
     log.event("board_blocked", ["action": "retry", "board": board.id, "label": label])
-    larryTurn()
+    sendToLarry()
   }
 
   /// Where the chip is on screen, window points, once per place it takes: what says whether a tap on it can land.

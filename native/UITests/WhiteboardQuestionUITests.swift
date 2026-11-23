@@ -61,7 +61,7 @@ final class WhiteboardQuestionUITests: XCTestCase {
       .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.6)))
     waitUntil(
       NSPredicate(format: "label == %@", "Send to Larry, 1 strokes"), app.buttons["whiteboard-send"], timeout: 8)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     XCTAssertTrue(
       app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Larry: this is where it goes")).firstMatch
         .appears(within: 15), app.debugDescription)

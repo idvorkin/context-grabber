@@ -46,6 +46,9 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   public private(set) var alreadyHasAt: ContinuousClock.Instant?
   /// He closed the last turn with nothing to say, and no turn has started since (#913): the bar says so.
   public private(set) var nothingToAdd = false
+  /// The turn's picture is a *Send* still waiting in the outbox (story 1176): the board says *Waiting to send*, the
+  /// timeout doesn't run, and nothing else goes until it has gone.
+  public private(set) var waitingToSend = false
 
   public init() {}
 
@@ -73,6 +76,8 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// it move on since the last, or words wait.
   public mutating func replied(version: Int, now: ContinuousClock.Instant) -> Next {
     nothingToAdd = false
+    // An answer to an earlier picture while the Send waits: the Send is still the one out (story 1176).
+    if waitingToSend { return .held }
     guard case .awaiting(_, let sent) = state else { return .done }
     return followUp(sent: sent, version: version, now: now)
   }
@@ -80,6 +85,7 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// He marked the picture of the turn out done and wrote nothing after it (#913, Larry's option (a)): the turn ends as
   /// an answer with no shapes would. With nothing waiting the bar says he had nothing to add, until the next turn.
   public mutating func closed(version: Int, now: ContinuousClock.Instant) -> Next {
+    if waitingToSend { return .held }
     guard case .awaiting(_, let sent) = state else { return .done }
     let next = followUp(sent: sent, version: version, now: now)
     if next == .done { nothingToAdd = true }
@@ -89,7 +95,7 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// The clock: once a turn has been out `timeout`, the board stops waiting, as if he had answered. Nil while it's
   /// still in time, or with no turn out.
   public mutating func tick(version: Int, now: ContinuousClock.Instant, timeout: Duration = Self.timeout) -> Next? {
-    guard case .awaiting(let since, let sent) = state, now - since >= timeout else { return nil }
+    guard !waitingToSend, case .awaiting(let since, let sent) = state, now - since >= timeout else { return nil }
     return followUp(sent: sent, version: version, now: now)
   }
 
@@ -108,7 +114,10 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// The picture sent as `turn` didn't reach him: its words wait for the next one, and the turn is free unless a newer
   /// one has gone since.
   public mutating func failed(_ turn: State, words: String?) {
-    if state == turn { state = .idle }
+    if state == turn {
+      state = .idle
+      waitingToSend = false
+    }
     if let words { queued = queued.map { "\(words) \($0)" } ?? words }
   }
 
@@ -125,10 +134,33 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
   /// fresh ask. What a pause saw is dropped, as the next picture takes the board as it is then; waiting words stay for
   /// it. His answer, when it comes, finds no turn out. False with no turn out.
   public mutating func interrupted() -> Bool {
-    guard case .awaiting = state else { return false }
+    guard case .awaiting = state, !waitingToSend else { return false }
     state = .idle
     latest = nil
     alreadyHasAt = nil
+    return true
+  }
+
+  /// Story 1176: the picture a tap just sent is a *Send* waiting in the outbox. Nothing with no turn out.
+  public mutating func waitsInOutbox() {
+    guard case .awaiting = state else { return }
+    waitingToSend = true
+  }
+
+  /// Story 1176: a board opened while its *Send* still waits in the outbox, the board at `version`: the turn is out on
+  /// it, waiting. Nothing if a turn is already out.
+  public mutating func reopenedWaiting(version: Int, now: ContinuousClock.Instant) {
+    guard state == .idle else { return }
+    state = .awaiting(since: now, sent: version)
+    waitingToSend = true
+  }
+
+  /// Story 1176: the outbox sent the waiting *Send*. His clock starts now, and the timeout counts from here. False when
+  /// nothing was waiting.
+  public mutating func outboxSent(now: ContinuousClock.Instant) -> Bool {
+    guard waitingToSend, case .awaiting(_, let sent) = state else { return false }
+    waitingToSend = false
+    state = .awaiting(since: now, sent: sent)
     return true
   }
 
@@ -152,6 +184,7 @@ public struct WhiteboardLarryTurn: Equatable, Sendable {
     latest = nil
     alreadyHasAt = nil
     nothingToAdd = false
+    waitingToSend = false
     defer { queued = nil }
     return queued
   }

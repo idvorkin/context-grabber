@@ -201,11 +201,11 @@ public struct InboxSender: Sendable {
   }
 
   private func sendStrokes(_ raw: Data, picture: WhiteboardPicture) async -> WhiteboardStrokes.Answer {
-    guard let strokes = try? JSONSerialization.jsonObject(with: raw) as? [[String: Any]] else {
+    guard let (strokes, folds) = WhiteboardStrokes.file(raw) else {
       return .away(reason: "the strokes file could not be read")
     }
     do {
-      let request = try WhiteboardStrokes.request(picture: picture, strokes: strokes, cockpit: cockpit)
+      let request = try WhiteboardStrokes.request(picture: picture, strokes: strokes, folds: folds, cockpit: cockpit)
       let (data, response) = try await transport(request)
       return WhiteboardStrokes.answer(status: (response as? HTTPURLResponse)?.statusCode, body: data)
     } catch {

@@ -80,20 +80,6 @@ extension WhiteboardModel {
     }
   }
 
-  /// Story 380: the picture goes to the board's thread and Igor keeps drawing; Larry's marks come when they come. It
-  /// goes now, whatever a Larry board was holding for his answer, and takes the words that waited (story 662), unless
-  /// he is already looking at this very board (story 765).
-  func larryTurn() {
-    guard !larrySending else { return }
-    let moved = pictureFrame().map { $0.rect != larryFrame } ?? false
-    guard case .send(let words) = larry.tapped(version: ops.rev, moved: moved, now: .now) else {
-      return alreadyHas(from: "button")
-    }
-    let turn = larry.state
-    Task { await handToLarry(turn, said: words) }
-    checkLarryWait()
-  }
-
   /// Story 765: a tap that sent nothing, because Larry is looking at this part of the board as it is and no words wait.
   /// The note says *Larry already has this* for two seconds (`WhiteboardLarryClock`).
   func alreadyHas(from: String) {
@@ -475,7 +461,10 @@ extension WhiteboardModel {
     // Story 762: his silence is said until he next answers.
     if update.replied, problem?.context == WhiteboardLarryClock.DidntAnswer.context { problem = nil }
     // A row landing while a picture is still going up answers an earlier one: the turn on its way stays out.
-    if update.replied, !larrySending { larryFollowUp(larry.replied(version: ops.rev, now: .now), why: "reply") }
+    // Story 1176: while the board's Send waits in the outbox, an answer to an earlier picture sends nothing.
+    if update.replied, !larrySending, !larry.waitingToSend {
+      larryFollowUp(larry.replied(version: ops.rev, now: .now), why: "reply")
+    }
     let batches = Dictionary(grouping: opBatches(from: .rows(rows))) { $0.batch.key }
     let toShow = Set(update.marks.map(\.id))
     restoreLarrysMarks(excluding: Set(rows.map(\.id)))
@@ -697,7 +686,7 @@ extension WhiteboardModel {
   }
 
   /// The picture of the board on screen for Larry, its strokes and its id; nil with nothing on screen to show him.
-  private func larryPicture(said: String?) -> LarryOut? {
+  func larryPicture(said: String?) -> LarryOut? {
     guard let (rect, scale) = pictureFrame() else { return nil }
     larryFrame = rect
     // ponytail: rendered and encoded on the main thread, as the ghost turn is.

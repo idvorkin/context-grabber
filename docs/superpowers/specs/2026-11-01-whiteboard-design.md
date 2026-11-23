@@ -151,15 +151,16 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
 - **The top bar's groups and labels** (#1005; Igor's design critique of the iPad board, 2026-11-20: "Nothing says what
   the sparkle and hand icons do. There is a large empty gap between the palette and the mic in the right-hand group").
   - **Three groups.** The way back and *Undo*/*Redo* on the left; on the right the board's own things, the **Board**
-    menu and **Paste**, in a group of their own like *Undo* and *Redo*; then the four that talk to Claude and Larry:
-    **Talk**, **Ghosts**, **Larry** and **Send**, evenly spaced, with no hole among them.
+    menu and **Paste**, in a group of their own like *Undo* and *Redo*; then the three that talk to Claude and Larry:
+    **Talk**, **Ghosts** and **Send**, evenly spaced, with no hole among them (*Larry's turn* became *Send*, story
+    1176).
   - **Paste shows only while the clipboard holds text.** The gap was the system's paste button with nothing to paste:
     iOS dims it to near nothing, so it read as an empty space. Looking whether the clipboard holds text never asks
-    *Allow Paste?*. When it does, Paste appears beside the Board menu and the four on the far right don't move.
+    *Allow Paste?*. When it does, Paste appears beside the Board menu and the three on the far right don't move.
     It appears within about a second of text being copied, also from an app beside the board.
-  - **A long press names the button.** A long press on Talk, Ghosts, Larry or Send shows a small menu headed by the
-    button's one word (*Talk*, *Ghosts*, *Larry*, *Send*) with one row saying what a tap does (*Talk to Claude*, *Hide
-    Claude's suggestions*, *Hand Larry the board*, *Send the board to Larry*); that row does it, and a tap anywhere
+  - **A long press names the button.** A long press on Talk, Ghosts or Send shows a small menu headed by the
+    button's one word (*Talk*, *Ghosts*, *Send*) with one row saying what a tap does (*Talk to Claude*, *Hide
+    Claude's suggestions*, *Send the board to Larry*); that row does it, and a tap anywhere
     else closes the menu. A plain tap does what it always did. The Board menu already opens on a tap and is headed
     by its sections. VoiceOver reads each button's name as before. Talk's menu also picks the microphone, under its
     one row, whether the mic is open or closed ([Which microphone, and what it hears](2026-11-01-whiteboard-shapes-design.md),
@@ -225,12 +226,14 @@ Lavish page with a working board: four rounds of drawing, and Igor's answers to 
   then *saved* (the UI tests wait on it, story 673). If a saved board can't be read, it's kept aside and the screen says so; if it can't even be moved
   aside, it's left untouched, nothing drawn that time is saved over it, and the screen says that too.
 - **Send to Larry** (top bar): sends a picture of everything drawn, on white, on the board's chat thread, titled with
-  the board's name: the first send or Larry's turn on a board starts the thread, and later ones go to it, so marks he
-  draws in answer come back to the board.
-  - The bar says *Sent to Larry: his reply shows in Chat*. One send makes one message: the button stays disabled
-    until the next stroke, or on paper until other pages are on screen, so a second tap never sends the same
-    picture twice.
-  - With no network, the board waits in the Inbox outbox like any other message and goes when the network is back.
+  the board's name: the first send on a board starts the thread, and later ones go to it, so marks he
+  draws in answer come back to the board. On a board drawn here it is Larry's turn, the one button that hands him
+  the board ([One Send](2026-11-01-whiteboard-shapes-design.md), story 1176): his clock shows, his marks arrive, and a
+  repeat tap with nothing new says *Larry already has this*.
+  - On a board only looked at, the bar says *Sent to Larry: his reply shows in Chat*. One send makes one message: the
+    button stays disabled until other pages are on screen, so a second tap never sends the same picture twice.
+  - With no network, the board waits in the Inbox outbox like any other message and goes when the network is back;
+    on a board drawn here the note says *Waiting to send* until it goes, and the button is dimmed meanwhile.
   - An empty board can't be sent; the button is disabled.
   - **The picture shows the page or pages on screen** (#636; Igor, 2026-11-03), so what he's looking at is what Larry
     reads, with his writing at a size Larry can see. Scroll to another page and send again to show Larry that one. The
@@ -340,7 +343,7 @@ drawing and why.
 (#636. The board's ghosts, Larry's turn and the mic, as *Whiteboard: Claude and Larry draw back* describes them, on a board on
 paper. That description is the requirement, and this lists only where paper needs saying.)
 
-- **The same bar.** A board on paper has the Ghosts switch, the mic, *Larry's turn* and *Send to Larry*, as any board does,
+- **The same bar.** A board on paper has the Ghosts switch, the mic and *Send to Larry*, as any board does,
   and paste: see *Paste on paper*.
 - **The same turns.** A pause after a stroke asks Claude, the Pencil touching down holds that pause until it lifts, words go
   the same way, and Larry's marks arrive on their own, in his colour, where his picture was. Nothing about the Ghosts switch,

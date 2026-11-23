@@ -219,6 +219,60 @@ final class WhiteboardStrokesTests: XCTestCase {
     XCTAssertEqual(paths, ["/attachments", "/whiteboard/strokes", "/chat"])
   }
 
+  // Story 1176: a board's Send with no network waits; the network back, it goes once, its folds beside its strokes, and
+  // a second try finds nothing waiting.
+  func testABoardsSendWaitsOfflineAndGoesOnceWithItsFolds() async throws {
+    let dir = FileManager.default.temporaryDirectory.appendingPathComponent("inbox-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let store = InboxStore(directory: dir)
+    var draft = InboxDraft()
+    draft.image = TestImages.png
+    draft.text = WhiteboardNote.boardTurnNote
+    draft.whiteboard = WhiteboardPicture(board: "b1", title: "T", rect: frame, scale: 2, pictureID: "p9")
+    draft.strokes = try WhiteboardStrokes.file(
+      strokes: WhiteboardStrokes.wire([WhiteboardStrokes.Stroke(id: "s1", points: points)]),
+      folds: [["header": "h1", "strokes": ["s2"]]])
+    _ = try draft.save(to: store, at: 1, id: "p9")
+
+    let offline = InboxSender(
+      store: store, cockpit: "https://c.example", threads: freshThreads(), readyImage: TestImages.asTheyAre
+    ) { _ in
+      throw URLError(.notConnectedToInternet)
+    }
+    for _ in 0..<2 {
+      let away = await offline.sendWaiting { _, _ in }
+      XCTAssertEqual(away.sent, [])
+    }
+    XCTAssertEqual(store.item("p9")?.status, .waiting)
+
+    let calls = Calls()
+    let back = InboxSender(
+      store: store, cockpit: "https://c.example", threads: freshThreads(), readyImage: TestImages.asTheyAre
+    ) { request in
+      let url = try XCTUnwrap(request.url)
+      await calls.add(url.path, body: request.httpBody)
+      let body = url.path == "/attachments" ? #"{"ok": true, "ref": "r1"}"# : #"{"ok": true, "thread": "t1"}"#
+      return (
+        Data(body.utf8),
+        try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil))
+      )
+    }
+    let report = await back.sendWaiting { _, _ in }
+    XCTAssertEqual(report.sent, ["p9"])
+    let again = await back.sendWaiting { _, _ in }
+    XCTAssertEqual(again.sent, [], "it goes once")
+    let paths = await calls.paths
+    XCTAssertEqual(paths, ["/attachments", "/whiteboard/strokes", "/chat"])
+    XCTAssertEqual(store.item("p9")?.status, .sent)
+    let bodies = await calls.bodies
+    let sent = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: try XCTUnwrap(bodies["/whiteboard/strokes"])) as? [String: Any])
+    XCTAssertEqual((sent["strokes"] as? [[String: Any]])?.first?["id"] as? String, "s1")
+    XCTAssertEqual((sent["folds"] as? [[String: Any]])?.first?["header"] as? String, "h1")
+    let message = try XCTUnwrap(JSONSerialization.jsonObject(with: try XCTUnwrap(bodies["/chat"])) as? [String: Any])
+    XCTAssertEqual(message["id"] as? String, "p9", "the message is the picture's id")
+  }
+
   func testAPictureWithoutStrokesSendsAsBefore() async throws {
     let dir = FileManager.default.temporaryDirectory.appendingPathComponent("inbox-\(UUID().uuidString)")
     defer { try? FileManager.default.removeItem(at: dir) }

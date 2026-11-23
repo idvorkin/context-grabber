@@ -20,6 +20,7 @@ extension WhiteboardModel {
   func opened() {
     guard editable else { return }
     store.opened(board.id)
+    watchSend()
     Task { await readResponder() }
   }
 
@@ -27,6 +28,8 @@ extension WhiteboardModel {
   /// and goes up to iCloud. Safe to call twice.
   func close() {
     stopWatchingLarry()
+    sendWatch?.cancel()
+    sendWatch = nil
     saveTask?.cancel()
     heldTask?.cancel()
     ops.closed()
@@ -75,6 +78,7 @@ extension WhiteboardModel {
     threads.firstSendWaiting(board: board.id, in: items)
   }
 
+  /// A board only looked at (story 746); a board drawn here sends through `sendToLarry` (story 1176).
   /// Story 343: the whole drawing (on paper, the pages on screen: story 433), dark ink on white whatever the iPad's mode,
   /// on the board's thread with Larry, titled with the board's name; the first one starts it (story 381).
   func send() {

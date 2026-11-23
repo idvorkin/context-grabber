@@ -518,7 +518,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** Nothing to paste
 - **Given:** a board open on an iPad and no text on the clipboard
 - **When:** I look at the top bar
-- **Then:** the Board menu sits in a group of its own, Talk, Ghosts, Larry and Send are evenly spaced in theirs, and there is no empty space; once I copy some text, here or in an app beside the board, Paste appears beside the Board menu within about a second and the other four don't move
+- **Then:** the Board menu sits in a group of its own, Talk, Ghosts and Send are evenly spaced in theirs (*Larry's turn* became Send, story 1176), and there is no empty space; once I copy some text, here or in an app beside the board, Paste appears beside the Board menu within about a second and the other three don't move
 
 ---
 
@@ -538,7 +538,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** Long press the sparkle
 - **Given:** a board open with Ghosts on
 - **When:** I press and hold the sparkle
-- **Then:** a small menu headed *Ghosts* shows one row, *Hide Claude's suggestions*, which does it if I tap it; Talk, Larry and Send name themselves the same way (Talk's menu also lists the microphones under its row, story 926), and a plain tap on any of them does what it always did
+- **Then:** a small menu headed *Ghosts* shows one row, *Hide Claude's suggestions*, which does it if I tap it; Talk and Send name themselves the same way (Talk's menu also lists the microphones under its row, story 926), and a plain tap on any of them does what it always did
 
 ---
 
