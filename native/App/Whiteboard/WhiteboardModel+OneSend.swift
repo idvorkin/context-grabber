@@ -88,7 +88,7 @@ extension WhiteboardModel {
         var out = LarryOut(
           jpeg: Data(), strokes: [], picture: picture,
           rect: CGRect(x: frame.x, y: frame.y, width: frame.w, height: frame.h), scale: CGFloat(frame.scale),
-          said: waiting.text.flatMap { $0 == WhiteboardNote.boardTurnNote ? nil : $0 })
+          said: waiting.note.flatMap { $0 == WhiteboardNote.boardTurnNote ? nil : $0 })
         out.turn = larry.state
         out.attempt = larryHandOffs.begin()
         larryOut = out
@@ -98,6 +98,13 @@ extension WhiteboardModel {
     sendWatch = inbox.$items.sink { [weak self] items in
       MainActor.assumeIsolated { self?.followSend(items) }
     }
+  }
+
+  /// The waiting *Send* as the Inbox's store has it now: the outbox marks it sent the moment it goes, before the Inbox
+  /// publishes the rest of its pass.
+  func reconcileSend() {
+    guard let id = sendOut, let store = inbox.store else { return }
+    followSend(store.item(id).map { [$0] } ?? [])
   }
 
   /// What became of the waiting *Send*: sent starts his clock; refused, or deleted from the Inbox, frees the turn.
@@ -114,7 +121,9 @@ extension WhiteboardModel {
     case .sent:
       sendOut = nil
       sendListed = false
-      let started = larry.outboxSent(now: .now)
+      let now = ContinuousClock.now
+      let went = item.sentAt.map { now - .milliseconds(max(0, Self.unixMs() - $0)) } ?? now
+      let started = larry.outboxSent(now: went)
       if larryOut?.picture.pictureID == id {
         larryOut?.turn = larry.state
         larryOut?.delivered = true

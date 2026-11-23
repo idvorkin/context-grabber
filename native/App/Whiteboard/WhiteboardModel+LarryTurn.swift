@@ -374,6 +374,7 @@ extension WhiteboardModel {
     Task { [questions] in await questions.sync(reason: "open") }
     watchTask = Task { [weak self] in
       while !Task.isCancelled {
+        self?.reconcileSend()
         await self?.lookAtThread()
         self?.larryTimedOut()
         self?.checkLarryWait()

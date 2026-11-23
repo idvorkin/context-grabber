@@ -142,14 +142,14 @@ public struct InboxSender: Sendable {
       var fields: [String: Any] = ["item": item.id, "kind": item.kind.rawValue, "new_thread": item.thread == nil]
       if let thread = item.thread { fields["thread"] = thread }
       if item.kind == .link { fields["link_in_message"] = ChatSend.carriesLink(item) }
-      let outcome = await send(item, fields: &fields)
+      guard let outcome = await send(item, fields: &fields) else { continue }
       record(item, outcome, now: now, fields: &fields, report: &report, log: log)
       if case .retry = outcome { break }
     }
     return report
   }
 
-  private func send(_ item: InboxItem, fields: inout [String: Any]) async -> ChatSend.Outcome {
+  private func send(_ item: InboxItem, fields: inout [String: Any]) async -> ChatSend.Outcome? {
     var attachment: String?
     if item.kind == .file {
       guard let raw = store.file(of: item), let name = item.fileName else {
@@ -180,6 +180,8 @@ public struct InboxSender: Sendable {
         fields.merge(WhiteboardStrokes.logFields(await sendStrokes(raw, picture: whiteboard))) { $1 }
       }
     }
+    // Deleted while its picture or file went up: the message never goes.
+    guard store.item(item.id) != nil else { return nil }
     do {
       let request = try ChatSend.messageRequest(item, attachment: attachment, cockpit: cockpit)
       let (data, response) = try await transport(request)

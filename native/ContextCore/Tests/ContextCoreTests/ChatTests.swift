@@ -165,6 +165,31 @@ final class ChatTests: XCTestCase {
     XCTAssertEqual(body["text"] as? String, "look")
   }
 
+  // Story 1176: deleted from the Inbox while its picture went up, it is never posted.
+  func testAnItemDeletedDuringItsUploadIsNeverPosted() async throws {
+    let store = store
+    try store.add(
+      InboxItem(id: "photo-0001", kind: .image, sharedAt: 1, note: "look"), image: TestImages.png,
+      imageExtension: "png")
+    let seen = Requests()
+    let sender = InboxSender(store: store, cockpit: cockpit, readyImage: TestImages.asTheyAre) { request in
+      await seen.add(request)
+      if request.url?.path == "/attachments" {
+        if let item = store.item("photo-0001") { try store.delete(item) }
+        return Self.answer(request, 200, #"{"ok": true, "ref": "2026-10-25/0123456789abcdef.png"}"#)
+      }
+      return Self.answer(request, 200, #"{"ok": true, "thread": "igor2-88g.9"}"#)
+    }
+    var lines: [String] = []
+    let report = await sender.sendWaiting { kind, _ in lines.append(kind) }
+    let paths = await seen.paths
+    XCTAssertEqual(paths, ["/attachments"], "no message after the delete")
+    XCTAssertEqual(report.sent, [])
+    XCTAssertEqual(report.refused, [])
+    XCTAssertNil(store.item("photo-0001"))
+    XCTAssertEqual(lines, [])
+  }
+
   func testARefusedUploadRefusesTheMessageAndAFailedOneStopsTheRun() async throws {
     let png = TestImages.png
     try store.add(InboxItem(id: "photo-0001", kind: .image, sharedAt: 1), image: png, imageExtension: "png")
