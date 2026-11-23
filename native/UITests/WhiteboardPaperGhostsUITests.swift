@@ -748,7 +748,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let app = try openBoard(["GRABBER_WHITEBOARD_PASTE": "HI", "GRABBER_WHITEBOARD_KEPT_INK_LABEL": "1"])
     wait(send(app), label: strokes(4))
     try larrySmallLabel(cockpit, pen: 2.68)
-    app.buttons["whiteboard-larry"].tap()
+    send(app).tap()
     let ghost = try XCTUnwrap(
       PaperScreen.settled(app, within: 15) { $0.larryGhost }, "his small label, faint, in his purple")
     let pasted = send(app).label
