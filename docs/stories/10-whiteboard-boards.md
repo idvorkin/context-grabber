@@ -1452,7 +1452,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** The scratch page
 - **Given:** the iPad, Settings open on the Home screen
 - **When:** I tap *PaperKit board* under *About and diagnostics*
-- **Then:** a blank page opens with the fountain pen in hand, the tool picker offers all eight pens, and its **+** offers every shape (the speech bubble among them), a text box, and lines with and without arrowheads
+- **Then:** a blank page opens with the fountain pen in hand at 60% of its default width with the nib at 45° (the session log names its width and angle), the tool picker offers all eight pens, and its **+** offers every shape (the speech bubble among them), a text box, and lines with and without arrowheads
 
 ---
 

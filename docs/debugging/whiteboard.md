@@ -13,7 +13,7 @@ to that event's own bullet; never join two events on one line.
 
 ## The PaperKit board
 
-- `paperkit_board` with `action` set to `opened` as the scratch page is about to appear. `inks` lists the picker’s configured PencilKit ink identifiers, `shapes` and `features` count the enabled shapes and features, and `tool` holds the page’s drawing ink identifier or `other` for a non-inking tool.
+- `paperkit_board` with `action` set to `opened` as the scratch page is about to appear. `inks` lists the picker’s configured PencilKit ink identifiers, `shapes` and `features` count the enabled shapes and features, and `tool` holds the page’s drawing ink identifier or `other` for a non-inking tool. `width` is that tool's width, `default_width` PencilKit's default width for the fountain pen, and `azimuth` the nib angle in radians (the fountain pen in hand starts at 60% of its default width with the nib at 45°, π/4).
 - `paperkit_board` with `action` set to `closed` as the scratch page is about to disappear. `elements` counts the markup elements on the page at that point.
 
 ## Whiteboard playback (stories 954–958, bead context-grabber-3tdv)

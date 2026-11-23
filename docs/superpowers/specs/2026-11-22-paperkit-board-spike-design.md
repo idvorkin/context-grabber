@@ -23,7 +23,9 @@ The full inventory, taken from this Mac's iOS 27.2 SDK, is in the bead.
   iPhone, which only looks at boards, doesn't show it, and nor does the Mac, which has no Pencil.
 - It opens a blank page with everything PaperKit offers turned on:
   - **Pens:** pen, pencil, marker, monoline, fountain pen, watercolor, crayon and reed. The pen in hand when the page
-    opens is the **fountain pen**.
+    opens is the **fountain pen**, thinner than PencilKit's own: 60% of its default width, with the nib held at 45°
+    (Igor, 2026-11-22: "a bit thick"). The picker's fountain pen starts at the same width and angle; other widths are
+    still one tap away in the picker.
   - The picker also has an eraser, a lasso and a ruler.
   - **Shapes**, from the tool picker's **+**: rectangle, rounded rectangle, ellipse, line, speech bubble (the callout,
     with a tail you can aim), polygon, star and block arrow. Fill, outline and opacity can each be changed.
@@ -31,7 +33,8 @@ The full inventory, taken from this Mac's iOS 27.2 SDK, is in the bead.
   - **Text boxes**, and text typed inside a shape.
   - **Images, stickers, a magnifier (loupe) and links.**
 - Closing the scratch page discards its contents. Reopening starts with a blank page.
-- See [PaperKit board events](../../debugging/whiteboard.md#the-paperkit-board) for the session log fields.
+- See [PaperKit board events](../../debugging/whiteboard.md#the-paperkit-board) for the session log fields. The opening
+  line names the pen in hand: its ink, width, PencilKit's default width for that ink, and the nib angle.
 
 ## Non-goals
 
@@ -57,7 +60,8 @@ would stay the board's whatever PaperKit draws.
 
 ## Acceptance criteria
 
-- On the iPad, Settings → *About and diagnostics* → **PaperKit board** opens a blank page whose pen is the fountain pen.
+- On the iPad, Settings → *About and diagnostics* → **PaperKit board** opens a blank page whose pen is the fountain pen
+  at 60% of its default width with the nib at 45°, and the session log says so.
 - The tool picker offers all eight pens. Its **+** offers every shape (the speech bubble among them), a text box, and
   lines with and without arrowheads.
 - A shape or arrow drawn there can be selected, moved, resized and restyled.

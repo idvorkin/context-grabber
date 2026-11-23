@@ -48,6 +48,16 @@ final class PaperKitBoardController: UIViewController {
     return set
   }()
 
+  /// Igor, 2026-11-22 (via Larry): the fountain pen is a bit thick. The one in hand is 60% of PencilKit's default width
+  /// (kept inside the ink's valid widths), with the nib held at 45° (π/4 radians; `azimuth` is iOS 26+).
+  static let fountainWidthShare: CGFloat = 0.6
+  static let fountainAzimuth: CGFloat = .pi / 4
+  static var fountainWidth: CGFloat {
+    let ink = PKInkingTool.InkType.fountainPen
+    let range = ink.validWidthRange
+    return min(max(ink.defaultWidth * fountainWidthShare, range.lowerBound), range.upperBound)
+  }
+
   private let log: SessionLog
   private let paper: PaperMarkupViewController
   /// Held here: the tool picker disappears when nothing keeps it.
@@ -56,7 +66,11 @@ final class PaperKitBoardController: UIViewController {
   init(log: SessionLog) {
     self.log = log
     paper = PaperMarkupViewController(markup: PaperMarkup(bounds: .zero), supportedFeatureSet: Self.features)
-    var items: [PKToolPickerItem] = Self.inks.map { PKToolPickerInkingItem(type: $0) }
+    var items: [PKToolPickerItem] = Self.inks.map { ink in
+      ink == .fountainPen
+        ? PKToolPickerInkingItem(type: ink, width: Self.fountainWidth, azimuth: Self.fountainAzimuth)
+        : PKToolPickerInkingItem(type: ink)
+    }
     items.append(PKToolPickerEraserItem(type: .vector))
     items.append(PKToolPickerLassoItem())
     items.append(PKToolPickerRulerItem())
@@ -88,15 +102,19 @@ final class PaperKitBoardController: UIViewController {
     }) {
       picker.selectedToolItem = fountain
     }
-    paper.drawingTool = PKInkingTool(.fountainPen, color: .label)
+    paper.drawingTool = PKInkingTool(
+      .fountainPen, color: .label, width: Self.fountainWidth, azimuth: Self.fountainAzimuth)
     paper.pencilKitResponderState.activeToolPicker = picker
     paper.pencilKitResponderState.toolPickerVisibility = .visible
+    let tool = paper.drawingTool as? PKInkingTool
     log.event(
       "paperkit_board",
       [
         "action": "opened", "inks": Self.inks.map(\.rawValue),
         "shapes": Self.features.shapes.count, "features": Self.features.features.count,
-        "tool": (paper.drawingTool as? PKInkingTool)?.inkType.rawValue ?? "other",
+        "tool": tool?.inkType.rawValue ?? "other", "width": Double(tool?.width ?? 0),
+        "default_width": Double(PKInkingTool.InkType.fountainPen.defaultWidth),
+        "azimuth": Double(Self.fountainAzimuth),
       ])
   }
 
