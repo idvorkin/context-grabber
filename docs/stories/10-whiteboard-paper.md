@@ -792,7 +792,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** The top bar
 - **Given:** a board on paper
 - **When:** I look at its bar
-- **Then:** the Ghosts switch, the mic, *Larry's turn*, *Send to Larry* and the paste button are there
+- **Then:** the Ghosts switch, the mic, *Send to Larry* and the paste button are there
 
 ---
 
@@ -1251,7 +1251,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** His turn
 - **Given:** a board on paper with ink
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** his marks arrive by themselves in purple, kept by a tap like Claude's, and his words show in the bar
 
 ---

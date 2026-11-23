@@ -142,7 +142,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** Larry away
 - **Given:** the Cockpit can't be reached
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** the bar shows a copyable problem saying so, and the board is unchanged
 
 ---

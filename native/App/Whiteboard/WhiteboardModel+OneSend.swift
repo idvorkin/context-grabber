@@ -78,6 +78,8 @@ extension WhiteboardModel {
     {
       sendOut = waiting.id
       sendListed = true
+      // Its first Send starts the thread: whatever the first look finds is his answer (story 662).
+      if threadKey == nil { marks.threadStarted() }
       larry.reopenedWaiting(version: ops.rev, now: .now)
       log.event("whiteboard", ["action": "send_waiting", "board": board.id, "picture": waiting.id])
     }

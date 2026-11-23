@@ -495,7 +495,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** Hand him the board
 - **Given:** I have drawn on the board
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** the bar's note begins with Larry's clock (*Larry · 0:00*, story 667) as soon as the picture is taken (story 662), with no spinner, and I can keep drawing and, once that picture has gone, tap it again for a newer one
 
 ---
@@ -514,7 +514,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** Either button
 - **Given:** I have drawn away from the middle of the board
-- **When:** I tap *Larry's turn* or *Send to Larry*
+- **When:** I tap *Send to Larry*
 - **Then:** the picture reaches the board's thread with the board's id, a new picture id, and where the picture sits on the board; his marks answering either kind come back to the board
 
 ---
@@ -668,7 +668,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** Larry's turn
 - **Given:** a board with ink on it
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** before the picture, every stroke on the board reaches the Cockpit in board points with its time, colour, width, tool and a stable id, under the picture's id
 
 ---
@@ -708,7 +708,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** The Cockpit refuses the strokes on Larry's turn
 - **Given:** the strokes route answering an error
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** the picture still goes, with only the session log saying what became of the strokes
 
 ---
@@ -876,7 +876,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1176:
 
 - **Summary:** One Send button that waits when offline
-- **Status:** implemented in [65ebde40](https://github.com/idvorkin/context-grabber/commit/65ebde40); verified by host tests (`WhiteboardOneSendTests`: *Waiting to send* in place of the clock and in VoiceOver, nothing else going while it waits, no timeout and never stuck, his clock and the three minutes starting when it goes, once, a refusal or a delete freeing the turn with its words kept, a board reopened while it waits; `WhiteboardStrokesTests.testABoardsSendWaitsOfflineAndGoesOnceWithItsFolds`: offline twice then back, one message under the picture's id with its folds beside its strokes; `just native-test`), the Mac build (`just native-build-mac`) and the whiteboard UI suite on the iPad simulator (rung 2, 78 tests green: `WhiteboardTurnUITests.testTheBarNamesItsButtonsAndHasNoHole` finds no *Larry's turn* and the three evenly spaced, and every test that handed Larry the board now taps Send and gets his marks with no further tap). The network dropping and coming back is the iPad's to show (the simulator keeps its network); iPhone tests were skipped by Igor's standing instruction of 2026-11-22
+- **Status:** implemented in [65ebde40](https://github.com/idvorkin/context-grabber/commit/65ebde40); verified by host tests (`WhiteboardOneSendTests`: *Waiting to send* in place of the clock and in VoiceOver, nothing else going while it waits, no timeout and never stuck, his clock and the three minutes starting when it goes, once, a refusal or a delete freeing the turn with its words kept, a board reopened while it waits; `WhiteboardStrokesTests.testABoardsSendWaitsOfflineAndGoesOnceWithItsFolds`: offline twice then back, one message under the picture's id with its folds beside its strokes; `just native-test`), the Mac build (`just native-build-mac`) and the whiteboard UI suite on the iPad simulator (rung 2, 78 tests green: `WhiteboardTurnUITests.testTheBarNamesItsButtonsAndHasNoHole` finds no *Larry's turn* and the three evenly spaced, and every test that handed Larry the board now taps Send and gets his marks with no further tap). The network dropping and coming back is the iPad's to show (the simulator keeps its network); iPhone tests were skipped by Igor's standing instruction of 2026-11-22. On the iPad simulator's session log a first Send logged `send` (new_thread), `send_went` with clock true 39 ms later, and `larry_turn_over` why reply: his clock started when it went and his answer ended the turn. A Send through the outbox carries no post timing for the Cockpit's debug page (story 1112): bead context-grabber-tadl
 - **Issues:** bead context-grabber-rtl (Igor, design board, 2026-11-22: "one Send button that waits when offline")
 - **Spec:** [Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *One Send*
 
@@ -1168,7 +1168,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 - **Scenario:** I don't wait
 - **Given:** he is looking and the board has moved on
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** a picture of the board goes at once with any words that waited, and his answer to the earlier one sends nothing more; with nothing new since his picture went, the tap sends nothing (story 765)
 
 ---
@@ -1268,7 +1268,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** A newer picture
 - **Given:** Larry has been looking for twenty seconds
-- **When:** I tap *Larry's turn* with new ink
+- **When:** I tap *Send to Larry* with new ink
 - **Then:** the clock goes back to 0:00
 
 ---
@@ -1389,7 +1389,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** A manual turn on a Haiku or Sonnet board
 - **Given:** a board whose pauses Haiku or Sonnet answers, and a pause that started no clock
-- **When:** I tap *Larry's turn*
+- **When:** I tap *Send to Larry*
 - **Then:** the bar's note begins *Larry · 0:00* and counts until he answers
 
 ---
@@ -2141,7 +2141,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** Larry holds on my picture
-- **Given:** I tapped *Larry's turn* and the clock is counting
+- **Given:** I tapped *Send to Larry* and the clock is counting
 - **When:** the Cockpit marks my picture *waiting*, with Larry's words *Larry: waiting for more*
 - **Then:** the clock stops, a gently moving ear and *Larry: waiting for more* start the note's line, the open panel's chip reads *Your board · Larry: waiting for more*, and no *Interrupt* or *Larry didn't answer* comes however long it lasts
 
