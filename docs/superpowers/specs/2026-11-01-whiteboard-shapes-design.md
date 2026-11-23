@@ -428,6 +428,8 @@ in the outbox and a turn failed with nothing queued. They are one button now.
   while it still waits says *Waiting to send* again, and starts Larry's clock when it goes.
 - **A Send the Cockpit refuses, or one deleted from the Inbox while it waits,** frees the turn and its words wait for the
   next picture. A refusal shows as a copyable problem naming the board and the reason.
+  A Send refused or deleted while its board is closed does not yet keep its words for the next picture (bead
+  context-grabber-tetc).
 - **Repeat taps.** With no turn out a tap always sends, new ink or not: asking him to look again is a real request.
   While he is looking at the board as it is, a tap says *Larry already has this* (story 765).
 - **A board only looked at** (the iPhone's, another device's) keeps its own *Send to Larry*: it takes no turn and doesn't
