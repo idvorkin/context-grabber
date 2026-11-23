@@ -904,7 +904,12 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** It can't go after all
 - **Given:** a Send waiting in the outbox
 - **When:** I delete it from the Inbox, or the Cockpit refuses it
-- **Then:** the turn is free and the button lights again; a refusal shows as a copyable problem naming the board
+- **Then:** the turn is free and the button lights again, and what I said with it waits for the next picture; a refusal shows as a copyable problem naming the board
+
+- **Scenario:** Reopened while it waits
+- **Given:** a Send waiting in the outbox and the board closed
+- **When:** I open the board again
+- **Then:** the note reads *Waiting to send* again; when it goes Larry's clock starts and *Interrupt* is offered, and if it can't go what I said with it waits for the next picture
 
 ---
 
