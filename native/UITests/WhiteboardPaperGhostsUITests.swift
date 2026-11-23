@@ -711,7 +711,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let app = try openBoard(["GRABBER_WHITEBOARD_PASTE": "HI", "GRABBER_WHITEBOARD_KEPT_INK_LABEL": "1"])
     wait(send(app), label: strokes(4))
     try larrySmallLabel(cockpit)
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     let ghost = try XCTUnwrap(
       PaperScreen.settled(app, within: 15) { $0.larryGhost }, "his small label, faint, in his purple")
     shot(app, "a small label as a ghost")
@@ -862,7 +862,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let app = try openBoard()
     _ = try inkAboveAndBelow(app)
     try larryInkAndButton(cockpit, kind: "text_and_button")
-    app.buttons["whiteboard-larry"].tap()
+    app.buttons["whiteboard-send"].tap()
     XCTAssertTrue(toKeep(app, 1).appears(within: 15), app.debugDescription)
     let ghost = try XCTUnwrap(PaperScreen.settled(app) { $0.larryGhost }, "his text, faint, in his purple")
     PaperScreen.tap(app, ghost.center)

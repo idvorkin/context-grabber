@@ -74,13 +74,25 @@ extension WhiteboardModel {
   func watchSend() {
     guard editable, sendWatch == nil else { return }
     if sendOut == nil,
-      let waiting = inbox.items.first(where: { $0.whiteboard?.board == board.id && $0.status == .waiting })
+      let waiting = inbox.items.first(where: { $0.whiteboard?.board == board.id && $0.status == .waiting }),
+      let picture = waiting.whiteboard
     {
       sendOut = waiting.id
       sendListed = true
       // Its first Send starts the thread: whatever the first look finds is his answer (story 662).
       if threadKey == nil { marks.threadStarted() }
       larry.reopenedWaiting(version: ops.rev, now: .now)
+      // The Send as it waits: its words come back if it never goes, and Interrupt is offered once it has.
+      if larryOut == nil {
+        let frame = picture.frame
+        var out = LarryOut(
+          jpeg: Data(), strokes: [], picture: picture,
+          rect: CGRect(x: frame.x, y: frame.y, width: frame.w, height: frame.h), scale: CGFloat(frame.scale),
+          said: waiting.text.flatMap { $0 == WhiteboardNote.boardTurnNote ? nil : $0 })
+        out.turn = larry.state
+        out.attempt = larryHandOffs.begin()
+        larryOut = out
+      }
       log.event("whiteboard", ["action": "send_waiting", "board": board.id, "picture": waiting.id])
     }
     sendWatch = inbox.$items.sink { [weak self] items in
