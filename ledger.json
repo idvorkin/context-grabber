@@ -195,6 +195,20 @@
    "branch": "?",
    "at": 1795532911.620812,
    "until": "2026-11-25T15:08:31Z"
+  },
+  {
+   "id": 1307,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-mic-silence-5s",
+   "at": 1795533213.192708,
+   "until": "2026-11-25T15:13:33Z"
+  },
+  {
+   "id": 1308,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-mic-silence-5s",
+   "at": 1795533213.192708,
+   "until": "2026-11-25T15:13:33Z"
   }
  ]
 }
