@@ -1,13 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1514,
-   "journey": "11-building-and-testing.md",
-   "branch": "chore/shared-story-ledger-py4h",
-   "at": 1795530292.417362,
-   "until": "2026-11-25T14:24:52Z"
-  },
-  {
    "id": 1282,
    "journey": "?",
    "branch": "native/scratch-hull-9g1",
@@ -34,13 +27,6 @@
    "branch": "?",
    "at": 1795530616.523433,
    "until": "2026-11-25T14:30:16Z"
-  },
-  {
-   "id": 1297,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/review-pending-race-04ks",
-   "at": 1795531389.2070599,
-   "until": "2026-11-25T14:43:09Z"
   },
   {
    "id": 1299,
@@ -71,27 +57,6 @@
    "until": "2026-11-25T15:00:57Z"
   },
   {
-   "id": 1305,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-mic-silence-5s",
-   "at": 1795532656.7339141,
-   "until": "2026-11-25T15:04:16Z"
-  },
-  {
-   "id": 1307,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-mic-silence-5s",
-   "at": 1795533213.192708,
-   "until": "2026-11-25T15:13:33Z"
-  },
-  {
-   "id": 1308,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-mic-silence-5s",
-   "at": 1795533213.192708,
-   "until": "2026-11-25T15:13:33Z"
-  },
-  {
    "id": 1309,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/to-text-hold-1386",
@@ -113,25 +78,11 @@
    "until": "2026-11-25T15:28:59Z"
   },
   {
-   "id": 1519,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/release-crash-moves",
-   "at": 1795535484.709776,
-   "until": "2026-11-25T15:51:24Z"
-  },
-  {
    "id": 1074,
    "journey": "05-call.md",
    "branch": "native/call-teardown-log-1414",
    "at": 1795536012.835799,
    "until": "2026-11-25T16:00:12Z"
-  },
-  {
-   "id": 1313,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/float-card-footer-1416",
-   "at": 1795536599.626111,
-   "until": "2026-11-25T16:09:59Z"
   },
   {
    "id": 570,
@@ -174,6 +125,13 @@
    "branch": "native/review-drag-tolerance",
    "at": 1795537596.377734,
    "until": "2026-11-25T16:26:36Z"
+  },
+  {
+   "id": 1075,
+   "journey": "05-call.md",
+   "branch": "native/handoff-redials-1417",
+   "at": 1795538821.575679,
+   "until": "2026-11-25T16:47:01Z"
   }
  ]
 }
