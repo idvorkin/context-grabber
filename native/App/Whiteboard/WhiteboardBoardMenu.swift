@@ -70,6 +70,8 @@ struct WhiteboardBoardMenu: View, Equatable {
         model.canvas?.menuChose()
       }
       .accessibilityIdentifier("whiteboard-tidy")
+      // Story 1315 (#1387): the questions archived off the board, to read or reopen; only while there are some.
+      WhiteboardArchivedQuestionsRow(questions: model.questions)
       // #950 (stories 1056, 1057): how the board letters its text. One row, a switch, as the menu has room for no
       // more (#848), and a submenu's rows close before a tap reaches them while the board's bar redraws.
       Toggle(

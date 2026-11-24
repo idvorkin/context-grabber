@@ -3,7 +3,7 @@
 
   scripts/native/fake-cockpit.py PORT REPORT
 
-GET /chat, GET /chat/<key>, POST /chat (a new thread), POST /chat/<key>, POST /chat-seen, POST /attachments,
+GET /chat, GET /chat/<key>, POST /chat (a new thread; with subject_id, the ask's own thread, #1387), POST /chat/<key>, POST /chat-seen, POST /attachments,
 POST /chat/<key>/archive and /unarchive (#589; a new message brings a thread back; 415 unless application/json, as on
 the Cockpit's write boundary),
 GET /attachments/<ref>, POST /whiteboard/strokes (story 419: counted and answered, never kept), POST /whiteboard/suggest (a ghost circle at the picture's right edge, streamed as NDJSON when the request
@@ -932,7 +932,11 @@ class Handler(BaseHTTPRequestHandler):
                 if t and t["messages"]:
                     t["seen"] = max(m["ts"] for m in t["messages"])
                 return self._json(200, {"ok": True, "marked": 1})
-            if path == "/chat":
+            if path == "/chat" and data.get("subject_id"):
+                # Stories 1316, 1317 (#1387): every ask has its own thread, keyed by the ask's id.
+                key = data["subject_id"]
+                THREADS.setdefault(key, {"title": "ask " + key, "messages": [], "seen": ""})
+            elif path == "/chat":
                 key = CREATED.get(data.get("id"))
                 if not key:
                     key = "igor2-88g.%d" % (901 + len(CREATED))

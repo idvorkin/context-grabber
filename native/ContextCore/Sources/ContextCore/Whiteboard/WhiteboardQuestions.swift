@@ -44,10 +44,14 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
   public var collapsed: Bool
   /// Story 1273 (#1387): shrunk to a bare '?' at its top-left; a tap brings it back as it was.
   public var hidden: Bool
+  /// Story 1314 (#1387): when it was archived off the board, UTC ms; nil on the board.
+  public var archived: Int64?
+  /// Story 1316 (#1387): Igor is thinking it over with Larry on the ask's own thread.
+  public var thinking: Bool
 
   public init(
     id: String, ask: String, x: CGFloat, y: CGFloat, answered: Answer? = nil, collapsed: Bool = false,
-    hidden: Bool = false
+    hidden: Bool = false, archived: Int64? = nil, thinking: Bool = false
   ) {
     self.id = id
     self.ask = ask
@@ -56,11 +60,13 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
     self.answered = answered
     self.collapsed = collapsed
     self.hidden = hidden
+    self.archived = archived
+    self.thinking = thinking
   }
 
-  private enum CodingKeys: String, CodingKey { case id, ask, x, y, answered, collapsed, hidden }
+  private enum CodingKeys: String, CodingKey { case id, ask, x, y, answered, collapsed, hidden, archived, thinking }
 
-  /// A board kept before cards could hide has no `hidden`: its cards are shown.
+  /// A board kept before cards could hide, archive or think has none of those: its cards are shown, on the board.
   public init(from decoder: Decoder) throws {
     let c = try decoder.container(keyedBy: CodingKeys.self)
     id = try c.decode(String.self, forKey: .id)
@@ -70,6 +76,8 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
     answered = try c.decodeIfPresent(Answer.self, forKey: .answered)
     collapsed = try c.decodeIfPresent(Bool.self, forKey: .collapsed) ?? false
     hidden = try c.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
+    archived = try c.decodeIfPresent(Int64.self, forKey: .archived)
+    thinking = try c.decodeIfPresent(Bool.self, forKey: .thinking) ?? false
   }
 
   /// Closed, but the board doesn't hold its question and answer yet: none, no question, or the placeholder.
@@ -81,7 +89,7 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
 
 /// A board's cards, kept with the board on this device, and the question marks of Larry's already landed.
 public struct WhiteboardQuestions: Codable, Equatable, Sendable {
-  public private(set) var cards: [WhiteboardQuestion]
+  public internal(set) var cards: [WhiteboardQuestion]
   /// Larry's question marks that have landed (`WhiteboardMarks.mark`): each lands once, even once erased.
   public private(set) var handled: [String]
 
@@ -103,6 +111,9 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   public static let mark: CGFloat = 40
 
   public func card(_ id: String) -> WhiteboardQuestion? { cards.first { $0.id == id } }
+
+  /// The cards on the board: every card but the archived ones.
+  public var shown: [WhiteboardQuestion] { cards.filter { $0.archived == nil } }
 
   // MARK: Where cards land
 
@@ -247,20 +258,23 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   /// The answered cards a stroke of the eraser crosses, taken off the board; an open card is live and stays.
   public mutating func erase(crossing points: [CGPoint], reach: CGFloat = 8) -> [WhiteboardQuestion] {
     let gone = cards.filter { card in
-      card.answered != nil && points.contains { Self.box(card).insetBy(dx: -reach, dy: -reach).contains($0) }
+      card.archived == nil && card.answered != nil
+        && points.contains { Self.box(card).insetBy(dx: -reach, dy: -reach).contains($0) }
     }
     cards.removeAll { card in gone.contains { $0.id == card.id } }
     return gone
   }
 
   /// An open card's line: *? <question> ···*, *Question* until the asks are read. Cut to the card by its view.
-  public static func openLine(title: String?) -> String { "? \(title ?? "Question") ···" }
+  public static func openLine(title: String?, thinking: Bool = false) -> String {
+    "\(thinking ? "…" : "?") \(title ?? "Question") ···"
+  }
 
   /// What a card says, line by line: open, its one line; answered, *✓ <question>* over the answer (the label, then the
   /// note); folded, the question alone; one answered with no question known, its answer.
   public static func lines(_ card: WhiteboardQuestion, title: String?) -> [String] {
     if card.hidden { return ["?"] }
-    guard let a = card.answered else { return [openLine(title: title)] }
+    guard let a = card.answered else { return [openLine(title: title, thinking: card.thinking)] }
     guard let question = a.title else { return ["✓ \(a.label.isEmpty ? "answered" : a.label)"] }
     if card.collapsed { return ["✓ \(question)"] }
     return ["✓ \(question)", answerText(a)]

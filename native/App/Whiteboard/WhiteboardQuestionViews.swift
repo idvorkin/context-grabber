@@ -30,7 +30,7 @@ struct WhiteboardQuestionCards: View {
 
   var body: some View {
     ZStack(alignment: .topLeading) {
-      ForEach(questions.board.cards) { card in
+      ForEach(questions.board.shown) { card in
         let frame = place.rect(WhiteboardQuestions.box(card))
         Button {
           if card.hidden { questions.show(card) } else { questions.tap(card) }
@@ -112,6 +112,8 @@ struct WhiteboardQuestionSheet: ViewModifier {
       WhiteboardQuestionPopup(
         questions: questions, decisions: decisions, voice: voice, logger: logger, cardID: opened.id)
     }
+    // Story 1315: the board menu's archived questions.
+    .sheet(isPresented: $questions.archiveOpen) { WhiteboardQuestionArchiveList(questions: questions) }
     #if targetEnvironment(simulator)
       .task {
         guard let ask = ProcessInfo.processInfo.environment["GRABBER_WHITEBOARD_QUESTION_FOLD"] else { return }
@@ -154,10 +156,13 @@ private struct WhiteboardQuestionPopup: View {
         ToolbarItem(placement: .cancellationAction) {
           Button("Close") { dismiss() }.accessibilityIdentifier("whiteboard-question-close")
         }
-        // Story 1273: any card, open or answered, shrinks to a bare '?' on the board.
-        ToolbarItem(placement: .primaryAction) {
+        // Story 1273: any card, open or answered, collapses to a bare '?' on the board. Story 1314: or archives off it.
+        ToolbarItemGroup(placement: .primaryAction) {
           if let card = questions.board.card(cardID) {
-            Button("Hide", systemImage: "questionmark.circle") { questions.hide(card) }
+            Button("Archive", systemImage: "archivebox") { questions.archive(card) }
+              .labelStyle(.titleAndIcon)
+              .accessibilityIdentifier("whiteboard-question-archive")
+            Button("Collapse", systemImage: "questionmark.circle") { questions.hide(card) }
               .labelStyle(.titleAndIcon)
               .accessibilityIdentifier("whiteboard-question-hide")
           }
@@ -188,6 +193,15 @@ private struct WhiteboardQuestionPopup: View {
         }
       #endif
       ownWords(card, ask)
+      // Stories 1316, 1317: not an answer but a back-and-forth, on the ask's own thread.
+      if card.thinking {
+        WhiteboardQuestionTalk(questions: questions, voice: voice, logger: logger, card: card)
+      } else {
+        Button("Thinking", systemImage: "bubble.left.and.bubble.right") { questions.think(card) }
+          .buttonStyle(.bordered)
+          .disabled(!questions.reachable)
+          .accessibilityIdentifier("whiteboard-question-thinking")
+      }
     } else if questions.reading {
       ProgressView("Loading the question…")
     } else {
@@ -256,9 +270,10 @@ private struct WhiteboardQuestionPopup: View {
         .font(.headline)
       if !answer.label.isEmpty { Text(answer.label).font(.body.weight(.semibold)) }
       if let note = answer.note { Text(note).foregroundStyle(.secondary) }
-      Button("Collapse", systemImage: "rectangle.compress.vertical") { questions.collapse(card) }
+      // Called Collapse until 2026-11-24; Collapse is now the round '?' (story 1273).
+      Button("Shrink", systemImage: "rectangle.compress.vertical") { questions.collapse(card) }
         .buttonStyle(.bordered)
-        .accessibilityIdentifier("whiteboard-question-collapse")
+        .accessibilityIdentifier("whiteboard-question-shrink")
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("whiteboard-question-answered")

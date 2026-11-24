@@ -18,6 +18,11 @@ final class WhiteboardQuestionsModel: ObservableObject {
   /// The card whose popup is up.
   @Published var opened: Opened?
 
+  /// Story 1315: the board menu's *Archived questions* list is up.
+  @Published var archiveOpen = false
+  /// Stories 1316, 1317: each thought-over ask's conversation with Larry, by ask id.
+  @Published var talks: [String: Talk] = [:]
+
   struct Opened: Identifiable, Equatable {
     let id: String
   }
@@ -44,7 +49,7 @@ final class WhiteboardQuestionsModel: ObservableObject {
     self.board = ledger.questions(board: board)
   }
 
-  private var reachable: Bool { !inbox.offline && cockpit != ChatCockpit.nowhere }
+  var reachable: Bool { !inbox.offline && cockpit != ChatCockpit.nowhere }
 
   func change(_ new: WhiteboardQuestions) {
     guard new != board else { return }
