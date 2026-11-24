@@ -108,6 +108,20 @@ pick an option or answer in his own words at any time; that answers the ask as b
 its conversation kept on the Cockpit. A failed read of the conversation says so in the popup, copyably; a refused or
 lost send keeps the words in the field, with a copyable problem, for another try. Offline, *Thinking* is off.
 
+**A double tap cycles the card's looks** (Igor, 2026-11-24, #1387, settled with Larry). A double tap on a card on the
+board steps it to its next look, without opening the popup: an answered card goes full → short (its one-line chip,
+*Shrink*) → *?* (*Collapse*) → full; an open card, already one line, goes full → *?* → full. A single tap still does
+what it did.
+
+**An answered card reads as text** (Igor, 2026-11-24, #1387; Larry: still a question card). Once answered, the card is
+drawn as plain text on the board, the question small over the answer, with no card's fill or edge; it still opens,
+shrinks, collapses, archives, moves and erases as an answered card does.
+
+**The controls sit in one spot** (Igor, 2026-11-24, #1387: *"use icons all in same spot"*). A card's controls
+(*Shrink*, *Collapse*, *Archive*, *Thinking*, as the card allows) are icons in one fixed place, the same on every card
+in every look, so Igor learns one spot. Where that spot is, and how the looks above are drawn, comes from a design pass
+on the card's states (before and after pictures to Larry) before it is built; until then the controls are the popup's.
+
 **Moving a card** (#1387: *"I should be able to move it around, and move questions"*). A card, a chip or a *?* can be
 dragged anywhere on the board, with a finger or the Pencil: it follows the touch and stays where it is let go, kept
 inside the page, and it stays there when the board is opened again. A drag never opens the popup and never draws; a

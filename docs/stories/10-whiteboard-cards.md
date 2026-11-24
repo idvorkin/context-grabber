@@ -312,7 +312,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1314:
 
 - **Summary:** I archive a question card off the board
-- **Status:** in progress on branch `native/question-archive-1387`
+- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardQuestionsArchiveTests`: `testAnArchivedCardLeavesTheBoardAndAnsweresNothing`, `testAnArchivedCardNeverLandsAgainByItself`, `testTheEraserCantReachAnArchivedCard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
 
@@ -332,7 +332,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1315:
 
 - **Summary:** I reopen an archived question from the board's menu
-- **Status:** in progress on branch `native/question-archive-1387`
+- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testArchivedNewestFirstAndReopenedAsItWas`, `testABoardKeptBeforeArchivingReadsAsOnTheBoard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
 
@@ -352,7 +352,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1316:
 
 - **Summary:** I think a question over with Larry from its card
-- **Status:** in progress on branch `native/question-archive-1387`
+- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testOnlyAnOpenCardIsThoughtOverAndItsLineSaysSo`, `WhiteboardRequestsTests.testThinkingWordsPostToTheAsksOwnThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
 
@@ -372,7 +372,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1317:
 
 - **Summary:** Larry's reply to a question I'm thinking over shows on its card
-- **Status:** in progress on branch `native/question-archive-1387`
+- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardRequestsTests.testTheConversationIsReadFromTheAsksThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
 
@@ -386,4 +386,64 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a card being thought over, its popup open at *Talk it over*
 - **When:** Larry replies on the ask's conversation
 - **Then:** his reply appears under mine within a few seconds, newest last, and I can still pick an option to answer the ask
+
+---
+
+### User Story 1319:
+
+- **Summary:** A double tap steps a question card to its next look
+- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *A double tap cycles the card's looks*
+
+#### Use Case:
+- **As someone** arranging Larry's questions on a board with the Pencil in hand
+- **I want to** shrink or grow a card with a double tap, without opening it
+- **so that** making room on the board is one gesture
+
+#### Acceptance Criteria:
+- **Scenario:** I double tap an answered card
+- **Given:** an answered card shown full on the board
+- **When:** I double tap it three times, a pause between each
+- **Then:** it went to its one-line chip, then to a '?', then back to full, and no popup opened
+
+---
+
+### User Story 1320:
+
+- **Summary:** An answered question reads as plain text on the board
+- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *An answered card reads as text*
+
+#### Use Case:
+- **As someone** whose board keeps old answers beside the drawing
+- **I want to** see an answered question as text, not as a card
+- **so that** a settled decision reads like part of the board rather than a pending ask
+
+#### Acceptance Criteria:
+- **Scenario:** A question is answered
+- **Given:** an open question card on the board
+- **When:** I answer it
+- **Then:** it is drawn as the question small over the answer with no card fill or edge, and a tap still opens it read-only
+
+---
+
+### User Story 1321:
+
+- **Summary:** A question card's controls are always in the same spot
+- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *The controls sit in one spot*
+
+#### Use Case:
+- **As someone** who uses question cards often
+- **I want to** find Shrink, Collapse, Archive and Thinking in one place on every card
+- **so that** I reach for them without looking
+
+#### Acceptance Criteria:
+- **Scenario:** I look for a control on cards in different looks
+- **Given:** an open card, an answered card shown full, and an answered chip on the board
+- **When:** I look for each card's controls
+- **Then:** each card shows its controls as icons in the same place relative to the card, only those that card allows
 
