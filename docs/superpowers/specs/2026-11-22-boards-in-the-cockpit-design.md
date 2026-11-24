@@ -1,6 +1,7 @@
 # Boards live in the Cockpit, not iCloud
 
-Status: **proposed, waiting on Igor's pick** (bead context-grabber-t12b). Design only, no code. Refreshed 2026-11-24
+Status: **decided, ready to build** (bead context-grabber-t12b). Igor made every pick on 2026-11-24 (see "Decided"
+below); Larry: "Go ahead and start the build per your v2 plan." Design only so far, no code. Refreshed 2026-11-24
 against that day's board work and Larry's answer on the Cockpit side (below). Larry brings the Cockpit side; the plan
 beside this spec (`docs/superpowers/plans/2026-11-24-boards-in-the-cockpit-plan.md`) holds the store's shape for him.
 Nothing here is built.
@@ -84,9 +85,10 @@ session log.
 
 ### Drawing
 
-- **Anyone can draw on any board, whatever the device** (Igor, whiteboard vision review: "Anyone can draw on it.
-  Doesn't matter the device"). Whether the iPhone draws too is the last card of that review; until he answers it
-  stays look-only, as today (Igor, 2026-11-10), and still offers *Send to Larry*.
+- **Anyone can draw on any board from the iPad, the web board or the Mac** (Igor, whiteboard vision review: "Anyone
+  can draw on it. Doesn't matter the device"; option C, 2026-11-24).
+- **The iPhone only views boards** (Igor, 2026-11-24). It shows every board, current to the Cockpit's copy, and still
+  offers *Send to Larry*; it never draws, so it never sends a change that can clash.
 - A board drawn on offline keeps everything drawn. It goes up the moment the device is back, oldest change first.
 - A board's meaning travels with its ink as one version. A device never shows one version's ink with another
   version's meaning.
@@ -120,9 +122,11 @@ session log.
   devices' lists the next time they sync, and from their caches with it.
 - **New ink does not override a delete** (the final vision draft; today's rule is the opposite). Ink drawn on a board
   that another device has deleted is refused when it reaches the Cockpit, and the device says so as a copyable
-  problem: *Not saved: this board was deleted on the iPhone at 21:14*. The refused ink is not thrown away silently:
-  the problem offers **Keep my ink as a new board** (a question for Igor: offer that, or let it go).
-- The Cockpit keeps a deleted board for 30 days (not shown anywhere) so a mistaken delete can be fetched back by
+  problem: *Not saved: this board was deleted on the web at 21:14*. The refused ink is not thrown away silently:
+  the problem offers **Keep my ink as a new board** (Igor, 2026-11-24), which saves the refused ink as a new board
+  with the old board's name and *(kept ink)* after it.
+- **A deleted board is kept forever** (Igor, 2026-11-24): delete is a soft delete with no purge. The board leaves
+  every list but stays in the Cockpit and in its nightly backup, so a mistaken delete can always be brought back by
   asking Larry.
 
 ### Pictures and Larry
@@ -166,23 +170,19 @@ session log.
 Each step is a setting on the device that Igor never has to touch, and it can be turned back. Step 3 waits for a
 week of step 2 with no missing changes on the Cockpit's debug page.
 
-## Choices for Igor
+## Decided (Igor, 2026-11-24, in his Inbox)
 
-**Who may draw on a board**
+- **Who may draw: C.** Any drawing device (the iPad, the web board, the Mac) draws on any board. New strokes from
+  every side always land; a change to something another hand changed since is refused and named. The other options
+  were A (only the device that drew the board) and B (whole-board last write wins, keeping a copy).
+- **The iPhone only views boards.** Drawing is the iPad and the web (and the Mac).
+- **Ink refused because its board was deleted:** offer *Keep my ink as a new board*.
+- **Deleted boards are kept forever:** a soft delete, never purged, and in the nightly backup.
 
-| | A: the drawing device only (today) | B: any device, whole-board last write wins | C: any device, a clash refused out loud (recommended) |
-|---|---|---|---|
-| Conflicts | none possible | the later board wins, the other is kept as a copy (*Board (web copy)*) | new strokes both land; a change to something changed since is refused and named |
-| Draw on an iPad board from */ink* | no | yes | yes |
-| Silent loss | never | never (but a copy to tidy) | never |
-| Work | least | small | most: the clash check runs in the Cockpit's store, the same rule BoardCore checks on each device |
-| Fits the final vision draft | no ("anyone can draw") | no (merges silently) | yes |
-
-**Does the iPhone draw?** On the last card of Igor's vision review. C costs nothing either way.
-
-**Ink refused because its board was deleted:** offer *Keep my ink as a new board*, or let it go?
-
-**How long are deleted boards kept?** Recommended 30 days in the Cockpit, never shown.
+Who builds what (Larry, 2026-11-24): the clash check in BoardCore and every device's side (the cache, the queue of
+changes, the refused-change notes, the migration of iCloud boards) is this repo's. The Cockpit's store (its history,
+the batch of changes, the nightly backup, */ink* moving from names to ids) is Larry's, once the shapes in the plan
+are confirmed.
 
 ## Open questions for Larry (the Cockpit side)
 
@@ -212,7 +212,8 @@ The store's shape is in the plan. What the Cockpit has to decide:
   the other device says, copyably, that its move was refused and why, and keeps the rest of its ink.
 - Keep group on Larry's reply on the iPad (offline) after the web dismissed it is refused, copyably, and the reply
   stays dismissed.
-- A board deleted on the iPhone while the iPad, offline, draws on it stays deleted. The iPad says, copyably, that its
+- The iPhone shows every board and its latest ink, and offers no way to draw on one.
+- A board deleted on the web while the iPad, offline, draws on it stays deleted. The iPad says, copyably, that its
   ink wasn't saved and why.
 - After the migration every board in the old lists, the iPad's and the web's, is in the new one with the same name,
   ink, meaning and link, and a Pencil stroke looks the same as before.

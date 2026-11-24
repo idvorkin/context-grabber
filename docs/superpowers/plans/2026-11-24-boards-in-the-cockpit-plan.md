@@ -23,8 +23,8 @@ SQLite in cockpit-data, WAL mode. Each batch's op rows and the board's rev bump 
 memdeck ledger's pattern). A nightly JSONL dump of the op log is committed to igor2 (section 10).
 
 - **Board**: `id` (UUID; web boards get one at migration, their name becomes a field), `name`, `paper`, `ruled`,
-  `created_at`, `last_drawn_on` (`ipad` / `web` / `mac` / `iphone`), `rev` (integer, +1 per accepted batch),
-  `deleted_at` (tombstone; purged after 30 days).
+  `created_at`, `last_drawn_on` (`ipad` / `web` / `mac`; the iPhone only views), `rev` (integer, +1 per accepted
+  batch), `deleted_at` (soft delete: never purged, kept in the nightly backup; Igor, 2026-11-24).
 - **Op log** (the truth): append-only, one row per accepted op: `{rev, batch_id, device, by (igor|larry|claude), at,
   op}`. Refused ops are logged too, with the reason, for the debug page and for Larry.
 - **Snapshot**: the board's state at a `rev`, rebuilt from the log and cached every N revs (say 50) and on demand.
@@ -175,5 +175,7 @@ rollout setting, then removing iCloud board sync.
    so the devices stay thin and send only batches. The fallback, if node and the wasm prove awkward server-side, is
    the device uploading its snapshot with each batch for the Cockpit to keep.
 
-**Igor's picks** (A/B/C, does the iPhone draw, ink on a deleted board, the 30 days) are in his Inbox. Nothing is
-built until he answers.
+**Igor's picks, all made 2026-11-24:** C (any drawing device; clashes refused and named); the iPhone only views;
+ink refused for a deleted board offers *Keep my ink as a new board*; deleted boards are kept forever. The Cockpit
+refuses a change batch from an iPhone. Larry: "Go ahead and start the build per your v2 plan"; he builds the store
+once the endpoint shapes here are confirmed.
