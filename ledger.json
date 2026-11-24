@@ -78,25 +78,11 @@
    "until": "2026-11-25T14:30:16Z"
   },
   {
-   "id": 1295,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/review-pending-race-04ks",
-   "at": 1795531389.2070599,
-   "until": "2026-11-25T14:43:09Z"
-  },
-  {
    "id": 1297,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/review-pending-race-04ks",
    "at": 1795531389.2070599,
    "until": "2026-11-25T14:43:09Z"
-  },
-  {
-   "id": 1298,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "?",
-   "at": 1795532333.493429,
-   "until": "2026-11-25T14:58:53Z"
   },
   {
    "id": 1299,
@@ -181,6 +167,13 @@
    "branch": "native/pen-latency",
    "at": 1795534191.3954759,
    "until": "2026-11-25T15:29:51Z"
+  },
+  {
+   "id": 1519,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/release-crash-moves",
+   "at": 1795535484.709776,
+   "until": "2026-11-25T15:51:24Z"
   }
  ]
 }
