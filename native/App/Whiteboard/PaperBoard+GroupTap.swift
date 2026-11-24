@@ -20,7 +20,8 @@ extension PaperBoardController {
   func tappedGroup(at: CGPoint) -> TappedGroup? {
     guard model.editable, !model.strokeMeta.groups.isEmpty, let markup = paper.markup else { return nil }
     let strokes = opStrokes(markup).strokes
-    guard let hit = model.outline(of: strokes).group(at: at, slop: 22 / max(screenScale, 0.01)) else { return nil }
+    guard let hit = model.outline(of: strokes).group(at: at, slop: WhiteboardTurn.tapReach / max(screenScale, 0.01))
+    else { return nil }
     let names = Set(hit.names)
     let ids = groupElements(names, in: markup)
     guard !ids.isEmpty else { return nil }

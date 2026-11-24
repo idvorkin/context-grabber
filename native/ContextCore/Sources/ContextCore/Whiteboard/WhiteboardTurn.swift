@@ -311,7 +311,9 @@ public enum WhiteboardTurn {
     max(8, (shape.size ?? 28) / scale)
   }
 
-  /// How far from a mark a finger tap still reaches it, in screen points (the board's points at a zoom of 1).
+  /// How far from a mark a finger tap still reaches it, in screen points (the board's points at a zoom of 1): the
+  /// board's one fingertip. Every finger tap and hold on the board divides this by its zoom rather than writing 22
+  /// again (context-grabber-egdh item 2).
   public static let tapReach: CGFloat = 22
 
   /// How far a tap at `point` is from a mark, in board points, or nil when it is out of reach (#941). A label is reached

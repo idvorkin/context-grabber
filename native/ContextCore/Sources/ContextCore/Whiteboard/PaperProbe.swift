@@ -148,7 +148,7 @@ public enum PaperProbe {
     added: [CGRect], tap: CGPoint, secondsSince: Double, zoom: CGFloat, within: Double = tapDotSeconds
   ) -> Bool {
     guard added.count == 1, let dot = added.first, secondsSince < within, zoom > 0 else { return false }
-    let near = 22 / zoom
+    let near = WhiteboardTurn.tapReach / zoom
     return max(dot.width, dot.height) <= 16 / zoom && hypot(dot.midX - tap.x, dot.midY - tap.y) <= near
   }
 
