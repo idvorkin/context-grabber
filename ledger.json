@@ -92,13 +92,6 @@
    "until": "2026-11-25T15:13:33Z"
   },
   {
-   "id": 569,
-   "journey": "07-widgets-and-links.md",
-   "branch": "native/web-board-link-1354",
-   "at": 1795533913.951932,
-   "until": "2026-11-25T15:25:13Z"
-  },
-  {
    "id": 1309,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/to-text-hold-1386",
@@ -118,13 +111,6 @@
    "branch": "chore/story-ids-claimed-6p52",
    "at": 1795534139.131936,
    "until": "2026-11-25T15:28:59Z"
-  },
-  {
-   "id": 1311,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/pen-latency",
-   "at": 1795534191.3954759,
-   "until": "2026-11-25T15:29:51Z"
   },
   {
    "id": 1519,
@@ -153,6 +139,13 @@
    "branch": "native/float-card-footer-1416",
    "at": 1795536599.626111,
    "until": "2026-11-25T16:09:59Z"
+  },
+  {
+   "id": 570,
+   "journey": "07-widgets-and-links.md",
+   "branch": "native/ledger-401-hint-1371",
+   "at": 1795536872.689673,
+   "until": "2026-11-25T16:14:32Z"
   }
  ]
 }
