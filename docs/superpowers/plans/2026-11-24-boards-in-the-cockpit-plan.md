@@ -19,6 +19,9 @@ Larry (2026-11-24): build the store from the events/ops log, not from the ink JS
 
 ## 2. The store
 
+SQLite in cockpit-data, WAL mode. Each batch's op rows and the board's rev bump commit in one transaction (the
+memdeck ledger's pattern). A nightly JSONL dump of the op log is committed to igor2 (section 10).
+
 - **Board**: `id` (UUID; web boards get one at migration, their name becomes a field), `name`, `paper`, `ruled`,
   `created_at`, `last_drawn_on` (`ipad` / `web` / `mac` / `iphone`), `rev` (integer, +1 per accepted batch),
   `deleted_at` (tombstone; purged after 30 days).
@@ -151,14 +154,26 @@ saves, the wider stroke record), the web-board migration job, backups.
 the cache and queue, the list from the Cockpit, the copyable refusal notes, the iCloud-to-Cockpit migration, the
 rollout setting, then removing iCloud board sync.
 
-## 10. Questions for the Cockpit side
+## 10. The Cockpit side's answers (Larry, 2026-11-24, msg 9fadc8d25f07)
 
-1. Store medium: SQLite in cockpit-data (log + snapshots + per-id versions) or files? It needs atomic appends with the
-   rev bump.
-2. Backups and restore depth for the only server copy.
-3. Can */ink* move from names to ids (with a name redirect)?
-4. Does any Larry write to a board today skip a `base_rev` check?
-5. Biggest board today in strokes and bytes, to size the cache and the snapshot cadence.
-6. Assets: size cap per board, and are pasted images already stored somewhere the store can point at?
-7. Who runs the snapshot rebuild: Python with the wasm (BoardCore), or does the device upload its own snapshot with
-   each batch for the Cockpit to keep?
+1. **Store medium:** SQLite in cockpit-data, WAL mode. The op append and the rev bump happen in one transaction, the
+   way the memdeck ledger already works.
+2. **Backups:** none today; the web's ink JSONs in cockpit-data are untracked. Plan a nightly JSONL dump of the op
+   log committed to igor2, like memdeck-ledger-backup. Restore replays the log to any rev. This is a precondition of
+   rollout step 3: the Cockpit is about to become the only server copy.
+3. **Names to ids:** yes. */ink* moves to ids, with each old name redirecting to its board.
+4. **Writes that skip `base_rev`:** one. The web's whole-board save has no `base_rev`, so the last write wins.
+   Larry's ops path (strokes, turns, marks) already checks it. That save is replaced by batches (section 3) when
+   */ink* moves onto the store; until then it must not write to a board the store holds.
+5. **Sizes:** the biggest web board is 1.5 MB with 1,288 strokes, the biggest iPad stroke export is 1.36 MB, and the
+   biggest events log is 150 KB. Whole-board snapshots stay small enough to cache every board on every device and to
+   send on first open. A snapshot every 50 revs is plenty.
+6. **Assets:** chat attachments live at cockpit-data/attachments/<date>/<hash>.ext, capped at 100 MB as of today.
+   Board assets (pictures, pasted images, the migration's original drawing blob) use the same content-addressed scheme
+   and cap. **Still open:** where the web board's pasted images live today. Check that before migrating web boards.
+7. **Snapshot rebuild:** a lean, not settled. The Cockpit rebuilds snapshots by running BoardCore's wasm under node,
+   so the devices stay thin and send only batches. The fallback, if node and the wasm prove awkward server-side, is
+   the device uploading its snapshot with each batch for the Cockpit to keep.
+
+**Igor's picks** (A/B/C, does the iPhone draw, ink on a deleted board, the 30 days) are in his Inbox. Nothing is
+built until he answers.
