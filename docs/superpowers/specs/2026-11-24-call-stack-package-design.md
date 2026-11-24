@@ -1,6 +1,7 @@
 # The call as a shared component (design proposal, #1393)
 
-Status: proposal for Igor's choice. No code until he picks an option.
+Status: proposal. Igor decided two of its questions on 2026-11-24 (dictation during a call, the watch); where the
+component lives (A/B/C) is still his pick. No code until he picks it.
 
 ## Summary
 
@@ -25,7 +26,7 @@ mid-workout call. It ships with a tiny sample app that makes a call and nothing 
 - No change to what a call sounds or looks like today.
 - No new server: the Cockpit's voice bridge and its protocol stay as they are.
 - Not the web twin: the Cockpit's browser call stays its own; this is the Apple-platform side only.
-- Not the chat, the board or dictation (BugKit already owns dictation).
+- Not the chat, the board or dictation itself (BugKit owns dictation; the component only holds its mic for it).
 
 ## What the component owns, and what stays in each app
 
@@ -46,9 +47,27 @@ and call each assume they set it.
   "play this sound") and the call does it within its own configuration (voice chat, echo cancellation kept on).
 - Before and after a call, the host owns it. The call restores what the host had when it ends.
 - The gym timer's cues during a call: the timer asks the call to play its cue mixed into the call, instead of
-  switching the session. Dictation during a call is refused with a clear message (it would fight the call's mic).
+  switching the session.
+- Dictation during a call (Igor, 2026-11-24): the call's mic pauses while he dictates. The call holds and stays
+  connected; Tony or Larry stops hearing him, and nothing hangs up. Dictation has the mic for as long as it runs. When
+  dictation ends, the call's mic comes back on by itself, with no tap. The call screen shows that it's holding for
+  dictation, so a quiet call is never a mystery.
 - The rule lives in one place (the component) and each host follows it; today's AGENTS rules on echo cancellation
   and voice chat move into the component's own guide.
+
+## The watch (Igor, 2026-11-24: design for it now)
+
+The watch is a host from the start, not a later port. Exercise Analyzer's watch can place a call mid-workout, and the
+component's boundary is drawn so a watch host fits it:
+
+- The call's rules (wire format, hold, watchdog, hang-up drain, playback limits, metadata) are platform-free, so the
+  watch runs the same rules as the phone.
+- The audio side has a watch flavour: the watch's own mic and speaker or its connected headphones, with the same
+  ownership rule (while a call is live, the call owns the watch's audio; a workout's cues ask the call to play them).
+- The default call screen has a watch layout: who's on the call, mute, hang up, and the hold for dictation.
+- The sample app has a watch target, so a watch call is checked on the wrist before any host takes a bump.
+- What's still to find out on the device: echo cancellation and the voice bridge's audio format on the watch, and
+  whether a call survives the wrist dropping (screen off) the way a locked phone's call does.
 
 ## Where it lives: options
 
@@ -88,5 +107,9 @@ context), then the board.
 ## Open questions for Igor
 
 1. Option A (own repo), B (inside bug-kit) or C (stay here)? Recommended: A, reached through C.
-2. Should Exercise Analyzer's watch be able to place a call too, or only its phone?
-3. Is refusing dictation during a call right, or should dictation pause the call's mic instead?
+
+## Decided (Igor, 2026-11-24, in his Inbox)
+
+- Dictation during a call pauses the call's mic; the call holds, stays connected, and resumes listening by itself when
+  dictation ends (not refused, as first proposed).
+- The watch is designed in now: Exercise Analyzer's watch can place a call (see "The watch").
