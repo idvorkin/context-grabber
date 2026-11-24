@@ -8,34 +8,6 @@
    "until": "2026-11-25T14:24:52Z"
   },
   {
-   "id": 1284,
-   "journey": "?",
-   "branch": "native/pinch-no-pencil",
-   "at": 1795529858.133953,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1290,
-   "journey": "?",
-   "branch": "native/pinch-no-pencil",
-   "at": 1795529858.134182,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1291,
-   "journey": "?",
-   "branch": "native/pinch-no-pencil",
-   "at": 1795529858.134185,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1296,
-   "journey": "?",
-   "branch": "native/pinch-no-pencil",
-   "at": 1795529858.134187,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
    "id": 1282,
    "journey": "?",
    "branch": "native/scratch-hull-9g1",
@@ -47,13 +19,6 @@
    "journey": "?",
    "branch": "native/scratch-hull-9g1",
    "at": 1795529858.2216058,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1276,
-   "journey": "?",
-   "branch": "native/no-tap-menu-1385",
-   "at": 1795529858.3103738,
    "until": "2026-11-25T14:17:38Z"
   },
   {
@@ -69,13 +34,6 @@
    "branch": "native/question-hide-1387",
    "at": 1795529858.3348281,
    "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1073,
-   "journey": "05-call.md",
-   "branch": "native/call-metadata",
-   "at": 1795530112.703375,
-   "until": "2026-11-25T14:21:52Z"
   },
   {
    "id": 1169,
@@ -169,32 +127,11 @@
    "until": "2026-11-25T15:00:57Z"
   },
   {
-   "id": 1303,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "docs/story-dupes-1292-1293",
-   "at": 1795532553.8302562,
-   "until": "2026-11-25T15:02:33Z"
-  },
-  {
-   "id": 1304,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "docs/story-dupes-1292-1293",
-   "at": 1795532553.8302562,
-   "until": "2026-11-25T15:02:33Z"
-  },
-  {
    "id": 1305,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/board-mic-silence-5s",
    "at": 1795532656.7339141,
    "until": "2026-11-25T15:04:16Z"
-  },
-  {
-   "id": 1306,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "?",
-   "at": 1795532911.620812,
-   "until": "2026-11-25T15:08:31Z"
   },
   {
    "id": 1307,
@@ -209,6 +146,13 @@
    "branch": "native/board-mic-silence-5s",
    "at": 1795533213.192708,
    "until": "2026-11-25T15:13:33Z"
+  },
+  {
+   "id": 569,
+   "journey": "07-widgets-and-links.md",
+   "branch": "native/web-board-link-1354",
+   "at": 1795533913.951932,
+   "until": "2026-11-25T15:25:13Z"
   }
  ]
 }
