@@ -127,13 +127,6 @@
    "until": "2026-11-25T16:00:12Z"
   },
   {
-   "id": 1312,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/review-pending-race-04ks",
-   "at": 1795536111.467649,
-   "until": "2026-11-25T16:01:51Z"
-  },
-  {
    "id": 1313,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/float-card-footer-1416",
@@ -174,6 +167,13 @@
    "branch": "native/question-archive-1387",
    "at": 1795536935.287699,
    "until": "2026-11-25T16:15:35Z"
+  },
+  {
+   "id": 1318,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/review-drag-tolerance",
+   "at": 1795537596.377734,
+   "until": "2026-11-25T16:26:36Z"
   }
  ]
 }
