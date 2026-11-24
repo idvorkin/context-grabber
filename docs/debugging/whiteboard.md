@@ -134,9 +134,15 @@ to that event's own bullet; never join two events on one line.
   - hide (board, ask, answered: whether the card hidden to its '?' was answered, story 1273)
   - show (board, ask: a tap on a '?' brought its card back, story 1169)
   - moved (board, ask, hidden: whether it was a '?', x, y: where its top-left landed in board points, kept inside the page, story 1274)
+  - archived (board, ask, answered: whether the archived card was answered, story 1314)
+  - reopened (board, ask: an archived card put back from the archive's list, story 1315)
+  - thinking (board, ask: an open card's *Thinking*, story 1316)
+  - talk_read (board, ask, messages: how many the ask's conversation holds, larry: how many of those are Larry's; logged only when the count changes, story 1317)
+  - talk_sent (board, ask: Igor's words reached the ask's own thread, story 1316)
 - `error` with where:
   - whiteboard_questions_asks (board, why: what asked for the read, message: the HTTP status or network error — the open asks could not be read, once until a read succeeds)
   - whiteboard_questions_answers (board, message: the answers could not be read, once until a read succeeds)
+  - whiteboard_questions_talk (board, ask, message: the ask's conversation could not be read or Igor's words didn't go, once until a read or send works, stories 1316–1317)
 - the cards keep what they showed
 
 ## A board on paper (stories 590–626, 666, #636)

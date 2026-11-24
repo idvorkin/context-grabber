@@ -109,7 +109,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 885:
 
 - **Summary:** An answered card opens read-only and folds to a chip
-- **Status:** implemented in [fa5381e](https://github.com/idvorkin/context-grabber/commit/fa5381e). Verified by host tests (`WhiteboardQuestionsTests.testOnlyAnAnsweredCardFoldsToAChipAsWideAsItsWords`; `just test`); and on the simulator (`WhiteboardQuestionUITests` 1/1)
+- **Status:** implemented in [fa5381e](https://github.com/idvorkin/context-grabber/commit/fa5381e), *Collapse* renamed *Shrink* in '2dae5634'. Verified by host tests (`WhiteboardQuestionsTests.testOnlyAnAnsweredCardFoldsToAChipAsWideAsItsWords`; `just test`); and on the simulator (`WhiteboardQuestionUITests` 1/1)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Reading and folding*
 
 #### Use Case:
@@ -192,7 +192,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1273:
 
 - **Summary:** I hide a question card to a bare '?'
-- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
+- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b', *Hide* renamed *Collapse* in '2dae5634'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Hiding a card*
 
@@ -312,7 +312,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1314:
 
 - **Summary:** I archive a question card off the board
-- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardQuestionsArchiveTests`: `testAnArchivedCardLeavesTheBoardAndAnsweresNothing`, `testAnArchivedCardNeverLandsAgainByItself`, `testTheEraserCantReachAnArchivedCard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Status:** implemented in '2dae5634'. Verified by host tests (`WhiteboardQuestionsArchiveTests`: `testAnArchivedCardLeavesTheBoardAndAnsweresNothing`, `testAnArchivedCardNeverLandsAgainByItself`, `testTheEraserCantReachAnArchivedCard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
 
@@ -332,7 +332,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1315:
 
 - **Summary:** I reopen an archived question from the board's menu
-- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testArchivedNewestFirstAndReopenedAsItWas`, `testABoardKeptBeforeArchivingReadsAsOnTheBoard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Status:** implemented in '2dae5634'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testArchivedNewestFirstAndReopenedAsItWas`, `testABoardKeptBeforeArchivingReadsAsOnTheBoard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
 
@@ -352,7 +352,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1316:
 
 - **Summary:** I think a question over with Larry from its card
-- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testOnlyAnOpenCardIsThoughtOverAndItsLineSaysSo`, `WhiteboardRequestsTests.testThinkingWordsPostToTheAsksOwnThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Status:** implemented in '2dae5634'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testOnlyAnOpenCardIsThoughtOverAndItsLineSaysSo`, `WhiteboardRequestsTests.testThinkingWordsPostToTheAsksOwnThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
 
@@ -372,7 +372,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1317:
 
 - **Summary:** Larry's reply to a question I'm thinking over shows on its card
-- **Status:** implemented in 'c65386c1'. Verified by host tests (`WhiteboardRequestsTests.testTheConversationIsReadFromTheAsksThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Status:** implemented in '2dae5634'. Verified by host tests (`WhiteboardRequestsTests.testTheConversationIsReadFromTheAsksThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
 

@@ -12,6 +12,10 @@ extension WhiteboardQuestionsModel {
     var messages: [ChatMessage] = []
     var read = false
     var sending = false
+    /// The words last sent without an answer, and the id they went with: sent again unchanged, they reuse it so the
+    /// Cockpit takes them once.
+    var pendingWords: String?
+    var pendingID: String?
     /// A read or a send that failed, with the state that explains it: shown copyably in the popup.
     var problem: String?
   }
@@ -85,10 +89,12 @@ extension WhiteboardQuestionsModel {
   func say(_ words: String, on card: WhiteboardQuestion) async -> Bool {
     guard reachable, ChatDecisions.canSend(words: words) else { return false }
     var talk = talk(card.ask)
+    let id = (talk.pendingWords == words ? talk.pendingID : nil) ?? UUID().uuidString.lowercased()
     talk.sending = true
+    talk.pendingWords = words
+    talk.pendingID = id
     talks[card.ask] = talk
     defer { talks[card.ask]?.sending = false }
-    let id = UUID().uuidString.lowercased()
     do {
       let (data, response) = try await URLSession.shared.data(
         for: WhiteboardQuestions.thinkRequest(ask: card.ask, words: words, id: id, cockpit: cockpit))
@@ -97,6 +103,8 @@ extension WhiteboardQuestionsModel {
       case .sent:
         log.event("whiteboard_questions", ["action": "talk_sent", "board": boardID, "ask": card.ask])
         talks[card.ask]?.problem = nil
+        talks[card.ask]?.pendingWords = nil
+        talks[card.ask]?.pendingID = nil
         await readTalk(card.ask)
         return true
       case .refused(let status, let reason):
