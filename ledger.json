@@ -181,6 +181,13 @@
    "branch": "docs/story-dupes-1292-1293",
    "at": 1795532553.8302562,
    "until": "2026-11-25T15:02:33Z"
+  },
+  {
+   "id": 1305,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-mic-silence-5s",
+   "at": 1795532656.7339141,
+   "until": "2026-11-25T15:04:16Z"
   }
  ]
 }
