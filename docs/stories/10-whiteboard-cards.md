@@ -120,7 +120,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** I fold an answered card
 - **Given:** an answered card on the board
-- **When:** I tap it and tap *Collapse*
+- **When:** I tap it and tap *Shrink* (called *Collapse* until 2026-11-24)
 - **Then:** the popup showed the question and the answer in full, the card is now a one-line chip *✓ \<question>* as wide as its words, and a tap on the chip opens it out again
 
 ---
@@ -204,7 +204,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** I hide an open question
 - **Given:** an open question card's popup over the board
-- **When:** I tap *Hide*
+- **When:** I tap *Collapse* (first built as *Hide*)
 - **Then:** the popup closes, the card is a small round '?' in Larry's purple where the card's left end was, nothing is answered, and the log records a hide
 
 ---
@@ -306,3 +306,84 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a card on the board
 - **When:** I drag it past the page's edge
 - **Then:** it stops at the page's edge
+
+---
+
+### User Story 1314:
+
+- **Summary:** I archive a question card off the board
+- **Status:** in progress on branch `native/question-archive-1387`
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
+
+#### Use Case:
+- **As someone** with a question card on a board I'm done looking at
+- **I want to** archive it without answering or erasing it
+- **so that** the board is clear and the question and its answer are still kept
+
+#### Acceptance Criteria:
+- **Scenario:** I archive a card
+- **Given:** a question card's popup over the board, open or answered
+- **When:** I tap *Archive*
+- **Then:** the popup closes, the card is gone from the board, nothing is answered, the board's menu now has *Archived questions*, and the log records an archive
+
+---
+
+### User Story 1315:
+
+- **Summary:** I reopen an archived question from the board's menu
+- **Status:** in progress on branch `native/question-archive-1387`
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
+
+#### Use Case:
+- **As someone** who archived one of Larry's questions
+- **I want to** find it behind the board's menu and put it back
+- **so that** an archived question or answer is never lost
+
+#### Acceptance Criteria:
+- **Scenario:** I reopen an archived card
+- **Given:** an archived card on the board
+- **When:** I open the board's menu, tap *Archived questions*, and tap *Reopen* beside it
+- **Then:** the list showed its question with its answer or *open*; the card is back on the board where it was, as it was, and off the list, and the log records a reopen
+
+---
+
+### User Story 1316:
+
+- **Summary:** I think a question over with Larry from its card
+- **Status:** in progress on branch `native/question-archive-1387`
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
+
+#### Use Case:
+- **As someone** whose answer to Larry's question is "good idea, let's go back and forth"
+- **I want to** talk it over on the card without picking an option
+- **so that** the question stays open while we think it through together
+
+#### Acceptance Criteria:
+- **Scenario:** I start thinking a question over
+- **Given:** an open question card's popup over the board
+- **When:** I tap *Thinking*, write a few words under *Talk it over* and tap *Send*
+- **Then:** my words go to the ask's own conversation on the Cockpit and show under *Talk it over*, nothing is answered, and the card on the board reads *… \<question\> ···*
+
+---
+
+### User Story 1317:
+
+- **Summary:** Larry's reply to a question I'm thinking over shows on its card
+- **Status:** in progress on branch `native/question-archive-1387`
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
+
+#### Use Case:
+- **As someone** thinking one of Larry's questions over with him
+- **I want to** see his replies in the card's conversation as they come
+- **so that** the back-and-forth happens where the question is, on the board
+
+#### Acceptance Criteria:
+- **Scenario:** Larry replies while the card is open
+- **Given:** a card being thought over, its popup open at *Talk it over*
+- **When:** Larry replies on the ask's conversation
+- **Then:** his reply appears under mine within a few seconds, newest last, and I can still pick an option to answer the ask
+
