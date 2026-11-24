@@ -6,6 +6,167 @@
    "branch": "chore/shared-story-ledger-py4h",
    "at": 1795530292.417362,
    "until": "2026-11-25T14:24:52Z"
+  },
+  {
+   "id": 1284,
+   "journey": "?",
+   "branch": "native/pinch-no-pencil",
+   "at": 1795529858.133953,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1290,
+   "journey": "?",
+   "branch": "native/pinch-no-pencil",
+   "at": 1795529858.134182,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1291,
+   "journey": "?",
+   "branch": "native/pinch-no-pencil",
+   "at": 1795529858.134185,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1296,
+   "journey": "?",
+   "branch": "native/pinch-no-pencil",
+   "at": 1795529858.134187,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1282,
+   "journey": "?",
+   "branch": "native/scratch-hull-9g1",
+   "at": 1795529858.2215831,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1283,
+   "journey": "?",
+   "branch": "native/scratch-hull-9g1",
+   "at": 1795529858.2216058,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1276,
+   "journey": "?",
+   "branch": "native/no-tap-menu-1385",
+   "at": 1795529858.3103738,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1273,
+   "journey": "?",
+   "branch": "native/question-hide-1387",
+   "at": 1795529858.334804,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1274,
+   "journey": "?",
+   "branch": "native/question-hide-1387",
+   "at": 1795529858.3348281,
+   "until": "2026-11-25T14:17:38Z"
+  },
+  {
+   "id": 1073,
+   "journey": "05-call.md",
+   "branch": "native/call-metadata",
+   "at": 1795530112.703375,
+   "until": "2026-11-25T14:21:52Z"
+  },
+  {
+   "id": 1169,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795530342.958097,
+   "until": "2026-11-25T14:25:42Z"
+  },
+  {
+   "id": 1175,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795530342.958097,
+   "until": "2026-11-25T14:25:42Z"
+  },
+  {
+   "id": 1234,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795530342.958097,
+   "until": "2026-11-25T14:25:42Z"
+  },
+  {
+   "id": 1235,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795530342.958097,
+   "until": "2026-11-25T14:25:42Z"
+  },
+  {
+   "id": 1266,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795530616.523433,
+   "until": "2026-11-25T14:30:16Z"
+  },
+  {
+   "id": 1268,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795530616.523433,
+   "until": "2026-11-25T14:30:16Z"
+  },
+  {
+   "id": 1295,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/review-pending-race-04ks",
+   "at": 1795531389.2070599,
+   "until": "2026-11-25T14:43:09Z"
+  },
+  {
+   "id": 1297,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/review-pending-race-04ks",
+   "at": 1795531389.2070599,
+   "until": "2026-11-25T14:43:09Z"
+  },
+  {
+   "id": 1298,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795532333.493429,
+   "until": "2026-11-25T14:58:53Z"
+  },
+  {
+   "id": 1299,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "fix/story-ids-1384-dupes",
+   "at": 1795532388.138311,
+   "until": "2026-11-25T14:59:48Z"
+  },
+  {
+   "id": 1300,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "fix/story-ids-1384-dupes",
+   "at": 1795532388.138311,
+   "until": "2026-11-25T14:59:48Z"
+  },
+  {
+   "id": 1301,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "docs/story-dupes-1292-1293",
+   "at": 1795532457.9509299,
+   "until": "2026-11-25T15:00:57Z"
+  },
+  {
+   "id": 1302,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "docs/story-dupes-1292-1293",
+   "at": 1795532457.9509299,
+   "until": "2026-11-25T15:00:57Z"
   }
  ]
 }
