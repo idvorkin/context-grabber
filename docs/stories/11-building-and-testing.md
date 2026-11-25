@@ -1621,7 +1621,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1630:
 
 - **Summary:** A UI test that isn't about Health launches the app without asking HealthKit, so a crash inside HealthKit's own logging can't fail a whiteboard or chat test
-- **Status:** planned (branch native/keep-pen-race-8dnk)
+- **Status:** implemented in 49e6300f; verified by `just test` (host, 1083 tests) and on an iPad Pro 11-inch (M5) simulator, 2026-11-24: `WhiteboardPaperGhostsUITests.testKeepingHisMarkLeavesMyPenAsItWas` passed (8 of 8 earlier with the refresh on; the failure was the launch crash, not the test) and its session log shows `mirror_refresh_skipped` with `health_off` and no `mirror_grab`; `HomeTodayCardUITests` (`GRABBER_MIRROR=fixture`) still grabbed its fixture week (`mirror_fixture_done`)
 - **Issues:** bead `context-grabber-8dnk` (cause: `WhiteboardPaperGhostsUITests.testKeepingHisMarkLeavesMyPenAsItWas` failed its first try on 2026-11-24 22:20 because the app died 1.6 s after launch, SIGSEGV in libc `dtoa` under `HKQuery` writing its predicate to os_log during the launch Health refresh; the same crash as bead `context-grabber-2xyj`, its fifth sighting on the lane simulators)
 
 #### Use Case:
