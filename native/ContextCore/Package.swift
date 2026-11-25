@@ -34,6 +34,7 @@ let boardTests = [
   "BoardReplayTests.swift", "BoardReviewRecorderTests.swift", "BoardReviewTests.swift", "BoardRewordTests.swift",
   "BoardRoomBandTests.swift",
   "BoardRoomDropTests.swift",
+  "BoardMarkupCensusTests.swift",
   "BoardRoomLateTests.swift", "BoardRoomTests.swift", "BoardSaveTimingTests.swift", "BoardSelectionLabelTests.swift",
   "BoardSessionReplayTests.swift", "BoardShapeSnapTests.swift", "BoardStoreCacheTests.swift",
   "BoardStoreClashTests.swift",

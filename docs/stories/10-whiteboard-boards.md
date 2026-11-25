@@ -1548,6 +1548,31 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
+### User Story 1335:
+
+- **Summary:** A real board offers only what it keeps, ink, and names anything else that lands on it
+- **Status:** implemented in [6087073f](https://github.com/idvorkin/context-grabber/commit/6087073f), with `board_markup_unsaved` logged at every close in [4200a9a1](https://github.com/idvorkin/context-grabber/commit/4200a9a1); verified by lint and host tests (`just native-test`, `BoardMarkupCensusTests`), the Mac build (`just native-build-mac`) and the iPad simulator (rung 2, `IPadPaperKitBoardUITests` 2 of 2: a real board's picker has pens, eraser, lasso and ruler and no **+**; its … menu holds only Auto-Minimize, Draw with Finger and Pencil Settings; the scratch page still offers *Add Shape* and *Add Text*). A real board never had the **+**: nothing was hidden. What the four boards' extra element was awaits a `board_markup_added` line from the iPad
+- **Spec:** [The PaperKit board (a spike)](../superpowers/specs/2026-11-22-paperkit-board-spike-design.md), *Only ink is kept on a real board*
+- **Issues:** bead context-grabber-lyr4 (four boards each held one element more than their tally of strokes, never saved; `paper_not_ink`)
+
+#### Use Case:
+- **As** Igor drawing on a real board
+- **I want to** be offered only what the board keeps, and have anything else that lands on it named in the log
+- **so that** nothing I put on a board quietly vanishes when it reopens
+
+#### Acceptance Criteria:
+- **Scenario:** No shapes or text on a real board
+- **Given:** the iPad, a real board open
+- **When:** I look at its tool picker
+- **Then:** it has pens, the eraser, the lasso and the ruler, and no **+**, no shapes and no text box
+
+- **Scenario:** Something that isn't ink lands on a board
+- **Given:** a real board
+- **When:** an element that isn't a stroke appears on it, or two strokes share one id
+- **Then:** the session log names its kind as it appears (`board_markup_added`), and the board's next save names what it left behind (`board_markup_unsaved`)
+
+---
+
 ### User Story 1206:
 
 - **Summary:** *Open in Chat* on a board slides its thread in over the board, and *Back* brings back the board as he left it

@@ -36,6 +36,23 @@ The full inventory, taken from this Mac's iOS 27.2 SDK, is in the bead.
 - Closing the scratch page discards its contents. Reopening starts with a blank page.
 - See [PaperKit board events](../../debugging/whiteboard.md#the-paperkit-board) for the session log fields.
 
+## Only ink is kept on a real board (bead context-grabber-lyr4)
+
+A real board keeps Igor's ink and its meaning, nothing else. A shape, callout, text box, image, link or magnifier isn't
+saved, and would vanish when the board reopens. So a real board offers none of them:
+
+- A real board's tool picker has no **+** and no way to insert a shape, a text box or an image. The pens, eraser, lasso
+  and ruler are the whole picker. Only the scratch page above, which keeps nothing, offers the **+**.
+- If anything that isn't ink turns up on a real board anyway, by any route, the session log names it by kind (shape,
+  image, link, magnifier) as it appears, and again when the board saves without it, so a loss is never silent. The same
+  check says when two strokes share one id, which the board's tally of strokes would count once.
+- Bringing shapes and text to real boards is one switch: the set of PaperKit features a real board allows. It stays at
+  ink alone until a board keeps the other kinds when it saves (the Cockpit board store, cockpit-8kh, or the iCloud save).
+
+The iPad's logs show four boards that each held one element more than their tally of strokes, none saved
+(`paper_not_ink`). A real board never had the **+**, so what that element was isn't known yet. The census above names
+its kind the next time.
+
 ## Non-goals
 
 - The scratch page is separate from the saved whiteboard and Larry's conversation.
@@ -67,3 +84,6 @@ would stay the board's whatever PaperKit draws.
 - A shape or arrow drawn there can be selected, moved, resized and restyled.
 - Closing the page leaves no trace on any board.
 - On the iPhone and the Mac the row isn't there.
+- A real board's tool picker offers no **+**, no shapes and no text box.
+- Anything on a real board that isn't ink is logged by kind as it appears and when the board saves without it; two
+  strokes sharing one id are logged the same way.

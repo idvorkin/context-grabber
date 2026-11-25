@@ -44,6 +44,7 @@ extension WhiteboardModel {
         "whiteboard", ["action": "close", "board": board.id, "strokes": drawing.strokes.count, "saved": !dirty])
       if dirty, let problem { store.closedUnsaved(problem, board: board.id) }
     }
+    saidWhatWasNotKept(.close)
     store.closed(board.id, empty: drawing.strokes.isEmpty)
   }
 
@@ -60,6 +61,7 @@ extension WhiteboardModel {
         opLedger.wrote(written)
       }
       dirty = false
+      if trigger != .close { saidWhatWasNotKept(trigger) }
       saveFailing = false
       if problem?.context == "WhiteboardView.save" { problem = nil }
     } catch {
@@ -71,6 +73,15 @@ extension WhiteboardModel {
         "The board could not be saved: \(error.localizedDescription)", context: "WhiteboardView.save",
         extra: ["strokes": .int(drawing.strokes.count)])
     }
+  }
+
+  /// Story 1335: a save that left something on the page behind says what, by kind, when that changes and at close.
+  private func saidWhatWasNotKept(_ trigger: BoardSaveTiming.Trigger) {
+    guard markupNotKept != saidNotKept || (trigger == .close && !markupNotKept.isEmpty) else { return }
+    saidNotKept = markupNotKept
+    guard !markupNotKept.isEmpty else { return }
+    log.event(
+      "board_markup_unsaved", ["board": board.id, "kinds": markupNotKept, "trigger": trigger.rawValue])
   }
 
   /// The board's first Send is still in the outbox: a turn now would start a second thread.
