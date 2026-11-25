@@ -3,14 +3,14 @@
 # MCP tool service (`xcrun mcpbridge`, JSON-RPC over stdio), with no MCP client and no Xcode window.
 # Usage: render-preview.sh <file.swift> [out.png] [preview-index]
 #   <file.swift>  a source file under native/ (or a path relative to it) that holds a #Preview
-#   out.png       where to copy the snapshot (default: next to nothing; the path Xcode wrote is printed either way)
+#   out.png       where to copy the snapshot (default: no copy; the path of the picture is printed either way)
 #   preview-index which #Preview in the file, counting from 0 (default 0)
 # Environment: PREVIEW_DEVICE (default "iPad Pro 11-inch (M5)": no iPhone while the whiteboard rule stands),
 #   PREVIEW_TIMEOUT seconds (default 600), PREVIEW_DRY_RUN=1 prints the JSON-RPC requests and stops (the script test).
 # Needs, once per Mac (sudo, so Igor types it): headless mode on, `xcrun mcp-server allow-folder` for the checkout's
 # folder (~/gits/context-grabber, ~/.treehouse) and `xcrun mcp-server approve <id>` for the caller. The caller Xcode
 # sees is /usr/bin/timeout, which this script always puts in front of mcpbridge, so one approval covers every run.
-# A cold render builds the app (about 35 s on the M5 Pro); a warm one takes about half a second. A render runs in a
+# A cold render builds the app (35-105 s on the M5 Pro, depending on load); a warm one takes about half a second. A render runs in a
 # build lane (scripts/native/build-lane.sh), since Xcode builds and boots a preview simulator for it.
 set -euo pipefail
 
