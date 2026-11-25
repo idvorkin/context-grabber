@@ -68,6 +68,8 @@ public struct MicSound {
   private var clips = 0
   private var dropouts = 0
   private var windows: [Window] = []
+  /// The floor of the last window that had a pause in it: five seconds of talking with none are measured against it.
+  private var callFloorDB: Double?
 
   public init() {}
 
@@ -110,8 +112,13 @@ public struct MicSound {
       let loud = sorted[min(sorted.count - 1, sorted.count * 9 / 10)]
       window.floorDB = floor
       if loud - floor >= Self.speechOverFloorDB {
+        callFloorDB = floor
+      } else if let callFloorDB, loud - callFloorDB >= Self.speechOverFloorDB {
+        window.floorDB = callFloorDB
+      }
+      if let floorDB = window.floorDB, loud - floorDB >= Self.speechOverFloorDB {
         window.speechDB = loud
-        window.snrDB = loud - floor
+        window.snrDB = loud - floorDB
       }
     }
     if pieces > 0 {
@@ -143,19 +150,19 @@ public struct MicSound {
   }
 
   /// The spec's score: SNR 50 points (30 dB full, 0 dB none), floor 20 (−60 dBFS full, −30 none), clipping 15 (none
-  /// full, 10% of pieces none), dropouts 15 (none full, 20% none); each linear. No speech: the other three, scaled to 100.
-  /// No floor, every piece digital silence: 0.
+  /// full, 10% of pieces none), dropouts 15 (none full, 20% none); each linear. SNR, floor and clipping are earned only
+  /// by the pieces with sound, so a mic of digital silence scores 0. No speech: the other three, scaled to 100.
   public static func score(snrDB: Double?, floorDB: Double?, clipFraction: Double, dropoutFraction: Double) -> Int {
-    guard let floorDB else { return 0 }
     func part(_ points: Double, _ value: Double, full: Double, zero: Double) -> Double {
       let t = (value - zero) / (full - zero)
       return points * min(1, max(0, t))
     }
-    let floor = part(20, floorDB, full: -60, zero: -30)
+    let sound = 1 - min(1, max(0, dropoutFraction))
+    let floor = floorDB.map { part(20, $0, full: -60, zero: -30) } ?? 0
     let clipping = part(15, clipFraction, full: 0, zero: 0.1)
     let dropouts = part(15, dropoutFraction, full: 0, zero: 0.2)
-    guard let snrDB else { return Int(((floor + clipping + dropouts) * 2).rounded()) }
-    return Int((part(50, snrDB, full: 30, zero: 0) + floor + clipping + dropouts).rounded())
+    guard let snrDB else { return Int((((floor + clipping) * sound + dropouts) * 2).rounded()) }
+    return Int(((part(50, snrDB, full: 30, zero: 0) + floor + clipping) * sound + dropouts).rounded())
   }
 
   static func decibels(_ amplitude: Double) -> Double { amplitude > 0 ? 20 * log10(amplitude) : silenceDB }

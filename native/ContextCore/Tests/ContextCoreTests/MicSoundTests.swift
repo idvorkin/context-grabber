@@ -61,8 +61,9 @@ final class MicSoundTests: XCTestCase {
     XCTAssertEqual(window.clips, 5)
     XCTAssertEqual(window.dropouts, 10)
     XCTAssertEqual(window.peakDB, 0, accuracy: 0.1)
-    // SNR and floor full (70); 5 of 60 pieces clipped (8%) and 10 of 60 silent (17%) each leave 2.5 of 15.
-    XCTAssertEqual(window.score, 75)
+    // SNR and floor full (70) and clipping 2.5 of 15 (5 of 60 pieces, 8%), earned by the 50 of 60 pieces with sound:
+    // 72.5 × 5/6 = 60.4; dropouts (10 of 60, 17%) leave 2.5 of 15. 62.9 rounds to 63.
+    XCTAssertEqual(window.score, 63)
   }
 
   func testBuffersThatDoNotLineUpWithPiecesStillMeasure() {
@@ -128,13 +129,46 @@ final class MicSoundTests: XCTestCase {
     XCTAssertEqual(meter.callSummary().score, 0)
   }
 
+  func testMostlySilentMicEarnsNoFreeFloorPoints() {
+    var meter = MicSound()
+    for _ in 0..<49 { meter.add([Float](repeating: 0, count: 1600), sampleRate: rate) }
+    meter.add(tone(0.00004), sampleRate: rate)  // one faint piece, about -91 dBFS
+    let window = meter.closeWindow()
+    // Floor 20 and clipping 15 earned by 1 piece in 50 (0.7), dropouts 0 (98%), no speech so doubled: 1.4.
+    XCTAssertEqual(window.score, 1)
+  }
+
+  func testTalkingWithoutAPauseIsMeasuredAgainstTheCallsFloor() {
+    var meter = MicSound()
+    // 3 s of a quiet room, then 10 s of talking: the first window has the pause, the next two have none.
+    for _ in 0..<30 { meter.add(tone(0.0007), sampleRate: rate) }
+    for _ in 0..<20 { meter.add(tone(0.14), sampleRate: rate) }
+    XCTAssertTrue(meter.closeWindow().speech)
+    for pieces in [50, 30] {
+      for _ in 0..<pieces { meter.add(tone(0.14), sampleRate: rate) }
+      let window = meter.closeWindow()
+      XCTAssertTrue(window.speech)
+      XCTAssertEqual(window.floorDB!, dB(0.0007), accuracy: 1)
+      XCTAssertEqual(window.snrDB!, dB(0.14) - dB(0.0007), accuracy: 1.5)
+      XCTAssertEqual(window.score, 100)
+    }
+  }
+
+  func testTalkingWithoutAPauseBeforeAnyFloorIsNoSpeech() {
+    var meter = MicSound()
+    for _ in 0..<50 { meter.add(tone(0.14), sampleRate: rate) }
+    let window = meter.closeWindow()
+    XCTAssertFalse(window.speech)
+    XCTAssertNil(window.snrDB)
+  }
+
   func testShortClosingStretchDoesNotCountTowardTheCall() {
     var meter = MicSound()
     for _ in 0..<30 { meter.add(tone(0.0007), sampleRate: rate) }
     for _ in 0..<20 { meter.add(tone(0.14), sampleRate: rate) }
     _ = meter.closeWindow()
-    // "Bye" in the last 0.3 s: all speech, so its floor is speech level and it scores low.
-    for _ in 0..<3 { meter.add(tone(0.14), sampleRate: rate) }
+    // A shouted "bye" in the last 0.3 s: every piece clipped, so it loses its 15 clipping points.
+    for _ in 0..<3 { meter.add([Float](repeating: 1, count: 1600), sampleRate: rate) }
     XCTAssertLessThan(meter.closeWindow().score, 100)
     let summary = meter.callSummary()
     XCTAssertEqual(summary.windows, 1)

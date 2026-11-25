@@ -838,7 +838,9 @@ It is measured on exactly the audio that goes to Larry, after the phone's echo c
   is around −30.
 - **Speech level**: how loud Igor's speaking moments are, in dBFS.
 - **SNR**: the speech level minus the noise floor, in dB. It is blank when he didn't speak in those five seconds,
-  which means his speech was less than 6 dB above the floor.
+  which means his speech was less than 6 dB above the floor. Five seconds of talking with no pause in them have no
+  quiet moments of their own, so they are measured against the floor of the last five seconds that had a pause; until
+  the call has had one, they read as *no speech*. Steady wind with no lull reads the same way as steady talking.
 - **Peak** and **clips**: the loudest sample, and how many tenth-of-a-second pieces hit full scale.
 - **Dropouts**: how many tenth-of-a-second pieces were exact digital silence, the mic delivering nothing.
 - **Score**: one number from 0 to 100, defined below.
@@ -861,9 +863,10 @@ the measuring never changes the audio or the route.
 | Clipping | 15 | no clipped pieces | 10% or more of the pieces clipped |
 | Dropouts | 15 | no silent pieces | 20% or more of the pieces digital silence |
 
-Each part is linear between its ends. Five seconds with no speech has no SNR part: its score is the other three
-scaled up to 100, and the line says *no speech*. Five seconds of nothing but digital silence, a mic delivering
-nothing, score 0. A call with no speech at all still gets a score, and the summary says so. The call's summary leaves
+Each part is linear between its ends. The SNR, floor and clipping points are earned only by the pieces with sound:
+each is multiplied by the share of pieces that were not digital silence, so a mic that mostly delivers nothing scores
+near 0 and one that delivers nothing at all scores 0. Five seconds with no speech has no SNR part: its score is the
+other three scaled up to 100, and the line says *no speech*. A call with no speech at all still gets a score, and the summary says so. The call's summary leaves
 out a stretch shorter than half of five seconds, such as the last moment before hanging up, unless the call has
 nothing longer.
 
