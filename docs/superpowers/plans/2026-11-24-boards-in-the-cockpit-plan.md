@@ -84,7 +84,7 @@ POST /boards/<id>/ops
 - *B, rejected*: no per-thing check; a batch with `base_rev < rev` would replace the board wholesale and save the
   loser as a copy board. Simpler server, but it loses the named refusal, and Igor picked C.
 
-The rule is built: `BoardStoreClash` in BoardCore and `bw_store_clash` (interface 22, stories 1293, 1322, 1323). Today's
+The rule is built: `BoardStoreClash` in BoardCore and `bw_store_clash` (interface 22, stories 1293, 1322, 1323; the store's first slice in interface 23, stories 1326–1329). Today's
 */ink* can't adopt it as is (Larry, 2026-11-24): it saves whole boards, last write wins, with no per-thing revision,
 device or tombstone, and its batch contract is all-or-nothing `stale`, so a per-op `refused[]` is a contract version
 bump. It is the contract for the new store, a separate project Larry puts to Igor.
