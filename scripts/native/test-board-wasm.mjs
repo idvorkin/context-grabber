@@ -56,7 +56,7 @@ function check(ok, what) {
 
 // The interface's version and sizes.
 const info = JSON.parse(read(x.bw_info()));
-check(info.abi === 21, `bw_info abi is 21: ${JSON.stringify(info)}`);
+check(info.abi === 22, `bw_info abi is 22: ${JSON.stringify(info)}`);
 check(info.contract === 1 && info.line === 40 && info.near === 80, `bw_info contract, line, near: ${JSON.stringify(info)}`);
 check(info.cgfloat_bits === 32, `bw_info says the rules' arithmetic is 32-bit: ${info.cgfloat_bits}`);
 
@@ -707,6 +707,25 @@ check(picture && same(picture.shown, ['b1', 'b2']) && same(picture.offsets.n, [0
   same(picture.folded_marks.map((m) => m.header), ['H']), `the picture opens H: ${JSON.stringify(picture)}`);
 check(call('bw_outline_load', outline) === 5 && same(reply(x.bw_fold_picture()), { picture: null }), 'with nothing folded, no picture of its own');
 check(call('bw_outline_load', 'not json') === -1 && reply(x.bw_fold_picture()).error === 'no outline is loaded', 'a picture with no outline says so');
+
+// Interface 22: the shared-board store's clash rule (stories 1293, 1322, 1323).
+const clash = ask('bw_store_clash', {
+  board: { rev: 94, things: { 's-a': { rev: 94, device: 'web', by: 'igor', at: 't1' }, 's-b': { rev: 80, device: 'web', by: 'igor', at: 't0' } } },
+  base_rev: 92, device: 'ipad', by: 'igor', at: 't2',
+  ops: [{ op: 'move', ids: ['s-a'], dx: 4 }, { op: 'erase', ids: ['s-b'] }, { op: 'add_strokes', strokes: [{ id: 's-a' }, { id: 's-c' }] }],
+});
+check(clash.rev === 95 && same(clash.applied, [1, 2]) && clash.refused.length === 2 &&
+  clash.refused[0].id === 's-a' && clash.refused[0].reason === 'changed' && clash.refused[0].device === 'web' &&
+  clash.refused[1].reason === 'exists' && clash.board.things['s-b'].erased === true && clash.board.things['s-c'].rev === 95,
+  `bw_store_clash lands, refuses by name and once per id: ${JSON.stringify(clash)}`);
+const gone = ask('bw_store_clash', { board: { rev: 3, deleted: { rev: 3, device: 'web', by: 'igor', at: 't' } }, base_rev: 3, device: 'ipad', by: 'igor', at: 't', ops: [{ op: 'rename', name: 'x' }] });
+check(same(gone.applied, []) && gone.refused[0].reason === 'deleted' && gone.refused[0].id === '@board', `bw_store_clash refuses on a deleted board: ${JSON.stringify(gone)}`);
+check(ask('bw_store_clash', { board: { rev: 1 } }).error === 'no base_rev', 'bw_store_clash without base_rev says so');
+const restored = ask('bw_store_clash', { board: { rev: 6, things: { 's-a': { rev: 5, device: 'ipad', by: 'igor', at: 't', erased: true } } }, base_rev: 5, device: 'ipad', by: 'igor', at: 't2', ops: [{ op: 'restore', ids: ['s-a'] }, { op: 'translate', below_y: 300, dy: 40 }, { op: 'select', ids: ['s-a'] }] });
+check(same(restored.applied, [0]) && restored.board.things['s-a'].erased === undefined && restored.refused.length === 1 && restored.refused[0].reason === 'unknown' && same(restored.missing_ids, []),
+  `bw_store_clash restores erased ink, refuses an op naming nothing, skips select: ${JSON.stringify(restored)}`);
+const ahead = ask('bw_store_clash', { board: { rev: 4 }, base_rev: 9, device: 'ipad', by: 'igor', at: 't', ops: [{ op: 'add_strokes', strokes: [{ id: 's-1' }] }] });
+check(same(ahead.applied, []) && ahead.refused[0].reason === 'ahead' && ahead.rev === 4, `bw_store_clash refuses a base ahead of the board: ${JSON.stringify(ahead)}`);
 
 for (const f of failures) console.log(`FAIL ${f}`);
 console.log(`${failures.length ? 'FAIL' : 'ok  '} board wasm: ${passed} checks passed, ${failures.length} failed (${names.length} recorded sessions, ${(fs.statSync(wasmPath).size / 1e6).toFixed(1)} MB module)`);

@@ -1079,3 +1079,57 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** the two iPad sessions of 2026-11-22 and 2026-11-23, scrubbed
 - **When:** they are reviewed
 - **Then:** no bug; the 05:15 reflow *as designed* (story 1145); the 05:28 knob stretch *unclear*; the keeps clean; the selections lost to the popover *as designed*
+
+### User Story 1293:
+
+- **Summary:** New ink always lands on a shared board, once
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90, before the review fixes; their wasm run is with Larry); not yet used by a device or the Cockpit
+- **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: boards live in the Cockpit, any of iPad, web and Mac draws
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
+
+#### Use Case:
+- **As someone** drawing on a board that another device also draws on
+- **I want to** have my new ink land whatever the other device did meanwhile, and never twice
+- **so that** nothing I wrote is lost or doubled when the two meet
+
+#### Acceptance Criteria:
+- **Scenario:** Ink added on two devices apart
+- **Given:** a board the web changed after the iPad last saw it
+- **When:** the iPad's new strokes, one of them a name the board already has, reach the Cockpit
+- **Then:** the new names land as one new revision, and the name it already has is refused as already there, out loud
+
+### User Story 1322:
+
+- **Summary:** A change to something changed since is refused by name
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90, before the review fixes; their wasm run is with Larry); not yet used by a device or the Cockpit
+- **Issues:** bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
+
+#### Use Case:
+- **As someone** who moved or erased ink while another device changed it too
+- **I want to** be told which thing clashed and who changed it, while the rest of my changes land
+- **so that** no change is lost silently and I know what to look at
+
+#### Acceptance Criteria:
+- **Scenario:** A move over a stroke the web moved since
+- **Given:** a stroke the web moved after the iPad last saw the board, and another the web left alone
+- **When:** the iPad's batch moves the first and erases the second
+- **Then:** the erase lands, and the move is refused naming the stroke, the web, and when it moved it
+
+### User Story 1323:
+
+- **Summary:** Nothing lands on a deleted board
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90, before the review fixes; their wasm run is with Larry); not yet used by a device or the Cockpit
+- **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: deleted boards are kept forever, and refused ink can become a new board
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*
+
+#### Use Case:
+- **As someone** whose board was deleted on another device while I was still drawing
+- **I want to** have my late ink refused with when and where the board was deleted
+- **so that** a delete is never undone behind my back, and I can keep my ink as a new board
+
+#### Acceptance Criteria:
+- **Scenario:** Ink sent to a board deleted meanwhile
+- **Given:** a board the web deleted after the iPad last saw it
+- **When:** the iPad's new strokes and a rename reach the Cockpit
+- **Then:** none of them lands, the revision stays, and each is refused as deleted with when and where

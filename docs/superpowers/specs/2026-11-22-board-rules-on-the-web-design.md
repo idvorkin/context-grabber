@@ -532,6 +532,42 @@ the shared core's, so the web board's long-press menu gets the row the same way.
 
 `bw_info` says `"abi": 21`. Every other export's arguments and answers are as in version 20.
 
+### Interface 22: the shared-board store's clash rule (stories 1293, 1322, 1323; t12b)
+
+Igor, 2026-11-24: boards live in the Cockpit, and any of the iPad, the web board and the Mac draws on them (option C,
+spec *Boards live in the Cockpit*). A device sends a batch of changes against the last revision it saw; the Cockpit
+decides, per change, what lands. The rule is the shared core's, so the Cockpit's store and every device decide alike.
+
+- New, `bw_store_clash`, input `{"board": {"rev", "things": {name: thing}, "deleted"?: thing}, "base_rev", "device",
+  "by", "at", "ops": [op]}`, a thing being `{"rev", "device", "by", "at", "erased"?}`: who last changed it and when.
+- The answer is `{"rev", "applied": [op index], "refused": [{"op", "id", "reason", "rev"?, "device"?, "by"?, "at"?}],
+  "missing_ids": [name], "board"}`, the board after the batch in the same shape as the input's.
+- New ink always lands, once per name: an add of a name the board already has, live or erased, is refused as `exists`,
+  out loud. The pieces a partial erase leaves take new names.
+- Undo and redo bring erased ink back under its own names with `restore`: it lands when nobody changed those names
+  after the erase the device saw, and is refused as `changed` otherwise. A `restore` of something not erased is
+  refused as `unknown`, and any other change to an erased thing as `changed`, even one erased earlier in the same
+  batch. `replace` and removing an overlay take what they name off the board the way an erase does, so it comes back
+  only by `restore` and its name stays taken.
+- A change lands only when every name it touches was last changed at or before `base_rev`, or earlier in the same
+  batch. Otherwise that change is refused as `changed`, naming the thing and who changed it and when; the rest of the
+  batch still lands. One change over several things lands for all of them or none. A change to a name the board
+  doesn't have is refused as `unknown`.
+- Renaming the board and its paper are changes to the board itself, under the same rule.
+- What each change names: new ink, text, cards, overlays and connectors are new things (a connector's two ends are only
+  referred to, not changed); `replace` changes what it names and adds its new strokes; a selection is the device's own
+  and neither lands nor is refused. A change that names nothing, such as moving everything below a line, can't be
+  checked and is refused as `unknown`: the device sends the names it moves.
+- A batch based on a revision the board hasn't reached (another board's, or a broken cache) lands nothing: every
+  change is refused as `ahead`, with the board's revision, one that names nothing included.
+- The answer also lists the `unknown` names as `missing_ids`, the way the Cockpit's batches name them today.
+- Once the board is deleted, nothing lands on it, new ink included: every change is refused as `deleted`, with when and
+  where it was deleted. That holds within a batch too: the changes after its `delete_board` are refused the same way.
+- An accepted batch is one new revision; a batch where nothing landed leaves the revision as it was.
+- Missing input says so: `{"error": "no board" | "no base_rev" | "no device" | "no ops"}`.
+
+`bw_info` says `"abi": 22`. Every other export's arguments and answers are as in version 21.
+
 ## Precision: a known difference from the iPad
 
 In WebAssembly the rules' arithmetic is 32-bit (the SDK has no 64-bit target), where the iPad's is 64-bit. Boxes
