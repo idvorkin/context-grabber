@@ -1622,7 +1622,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1625:
 
 - **Summary:** A SwiftUI preview renders to a picture from the command line, with no Xcode window
-- **Status:** implemented; verified by `scripts/native/test-render-preview.sh` (host) and a real render of a temporary preview from a treehouse slot and a worktree (the same 1033x1500 picture; 35-105 s cold, about 0.5 s warm), 2026-11-24
+- **Status:** implemented in 82665bcd; verified by `scripts/native/test-render-preview.sh` (host) and a real render of a temporary preview from a treehouse slot and a worktree (the same 1033x1500 picture; 35-105 s cold, about 0.5 s warm), 2026-11-24
 - **Issues:** bead `context-grabber-7xme`
 
 #### Use Case:

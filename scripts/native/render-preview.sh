@@ -10,7 +10,8 @@
 # Needs, once per Mac (sudo, so Igor types it): headless mode on, `xcrun mcp-server allow-folder` for the checkout's
 # folder (~/gits/context-grabber, ~/.treehouse) and `xcrun mcp-server approve <id>` for the caller. The caller Xcode
 # sees is /usr/bin/timeout, which this script always puts in front of mcpbridge, so one approval covers every run.
-# A cold render builds the app (about 35 s on the M5 Pro); a warm one takes about half a second.
+# A cold render builds the app (about 35 s on the M5 Pro); a warm one takes about half a second. A render runs in a
+# build lane (scripts/native/build-lane.sh), since Xcode builds and boots a preview simulator for it.
 set -euo pipefail
 
 src=${1:?usage: render-preview.sh <file.swift> [out.png] [preview-index]}
@@ -30,9 +31,13 @@ case "$abs" in
   "$native"/*) rel=${abs#"$native"/} ;;
   *) echo "render-preview: $abs is not under $native" >&2; exit 2 ;;
 esac
-[ -d "$project" ] || [ "${PREVIEW_DRY_RUN:-}" = 1 ] || (cd "$native" && xcodegen --quiet --use-cache)
+lane=()
+if [ "${PREVIEW_DRY_RUN:-}" != 1 ]; then
+  (cd "$native" && xcodegen --quiet --use-cache)
+  [ -n "${BUILD_LANE:-}" ] || lane=("$here/scripts/native/build-lane.sh" run)
+fi
 
-exec python3 -I - "$project" "GrabberNative/$rel" "$index" "$out" "${PREVIEW_DEVICE:-iPad Pro 11-inch (M5)}" \
+exec ${lane[@]+"${lane[@]}"} python3 -I - "$project" "GrabberNative/$rel" "$index" "$out" "${PREVIEW_DEVICE:-iPad Pro 11-inch (M5)}" \
   "${PREVIEW_TIMEOUT:-600}" "${PREVIEW_DRY_RUN:-0}" <<'PY'
 import json, shutil, subprocess, sys, time
 
@@ -53,7 +58,7 @@ if dry == "1":
     sys.exit(0)
 
 # /usr/bin/timeout is the approved caller; keep it the parent of mcpbridge.
-bridge = subprocess.Popen(["timeout", str(int(timeout) + 120), "xcrun", "mcpbridge"],
+bridge = subprocess.Popen(["/usr/bin/timeout", str(int(timeout) + 120), "xcrun", "mcpbridge"],
                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
 
 def send(message):

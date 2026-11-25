@@ -712,7 +712,8 @@ the iPad simulator, the lab saves about 1.2 s a case for about 4 s more build; t
 `just render-preview App/Breathe/BreatheView.swift ~/tmp/out.png` renders the file's first `#Preview` (a third argument
 picks another, counting from 0) on the iPad Pro 11-inch (M5) simulator and copies the picture to the path. It goes
 through Xcode's own tool service, `xcrun mcpbridge` (JSON-RPC over stdio): no Xcode window, no MCP client. A cold render
-builds the app (35-105 s on the M5 Pro, depending on load); a warm one takes about half a second.
+builds the app (35-105 s on the M5 Pro, depending on load); a warm one takes about half a second. A render runs in a
+build lane, like the other simulator rungs, and waits for one when every lane is busy.
 
 Once per Mac, Igor types (it needs sudo): `xcrun mcp-server status` shows headless mode and what is pending;
 `sudo xcrun mcp-server allow-folder ~/gits/context-grabber` and `sudo xcrun mcp-server allow-folder ~/.treehouse` let it
