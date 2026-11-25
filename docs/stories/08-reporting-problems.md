@@ -486,7 +486,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 252:
 
 - **Summary:** Report a problem is a tile on the home screen
-- **Status:** native app: implemented in [dc2644f](https://github.com/idvorkin/context-grabber/commit/dc2644f); the art check (host); the simulator (HomeReportTileUITests (gone: folded into a shared launch in 105485e7, verification lost), since [105485e7](https://github.com/idvorkin/context-grabber/commit/105485e7) a step of `HomeGridUITests`' launch, #905, passing on the iPhone 17 simulator) and the phone in the next build turn
+- **Status:** native app: implemented in [dc2644f](https://github.com/idvorkin/context-grabber/commit/dc2644f); the art check (host); the simulator (first its own class; since [105485e7](https://github.com/idvorkin/context-grabber/commit/105485e7), #905, a step of `HomeGridUITests.testTilesGoThreeToALineWithSettingsLast`, which checks the tile's VoiceOver name, taps it and waits for the *Report a problem* sheet; passing on the iPhone 17 simulator; the coverage was never lost, only the citation, re-pointed in bead context-grabber-o2kz) and the phone in the next build turn
 - **Issues:** [#340](https://github.com/idvorkin/context-grabber/issues/340), [#353](https://github.com/idvorkin/context-grabber/issues/353)
 - **Spec:** [native home screen, "Three to a row"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 

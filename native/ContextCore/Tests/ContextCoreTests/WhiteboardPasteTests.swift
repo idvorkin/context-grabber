@@ -53,6 +53,21 @@ final class WhiteboardPasteTests: XCTestCase {
       XCTAssertEqual(BoardPages().pages(after: 2, inkMaxY: box.maxY, redoWaiting: false), 4)
     }
 
+    /// Story 643: Larry knows a paste by the same names. Every letter's stroke gets its own name, and lettering the
+    /// same paste again (the board closed and opened, then sent again) gives every stroke the same name.
+    func testAPastesLetterStrokesKeepTheirNamesWhenLetteredAgain() {
+      let t: Int64 = 1_795_540_000_000
+      func names() -> [String] {
+        WhiteboardPaste.layout("Hi Larry", visible: view, height: 24).lines.map {
+          WhiteboardStrokes.id(points: $0, color: "#000000", t: t)
+        }
+      }
+      let first = names()
+      XCTAssertGreaterThan(first.count, 1, "the paste is lettered as strokes")
+      XCTAssertEqual(Set(first).count, first.count, "every letter's stroke has its own name")
+      XCTAssertEqual(names(), first, "lettered again, every stroke goes under the same name")
+    }
+
     func testShortTextIsCentredInTheView() {
       let layout = WhiteboardPaste.layout("Hello", visible: view, height: 24)
       XCTAssertFalse(layout.lines.isEmpty)
