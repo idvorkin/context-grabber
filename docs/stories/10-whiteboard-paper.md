@@ -1869,7 +1869,27 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** A line left half drawn by an Undo
 - **Given:** a board on paper, a group of Larry's dropped just above my line, and the drop undone
 - **When:** a second later part of my line near the change isn't on the screen
-- **Then:** the board draws it again on its own within a few seconds; the line may blink once, and if that's not enough the view moves a screen away and back once, ending where it was
+- **Then:** the board draws it again on its own within a few seconds, by moving the view a screen away and back once, ending where it was
+
+---
+
+### User Story 1343:
+
+- **Summary:** Undo still takes back my stroke after the board redrew missing ink
+- **Status:** in progress
+- **Issues:** bead context-grabber-pmv6
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Ink an Undo or Redo leaves in place is on the screen too*
+
+#### Use Case:
+- **As someone** undoing on a board on paper
+- **I want to** have every Undo take back the step it would have, even after the board redrew ink it found missing
+- **so that** an Undo never silently does nothing and leaves my stroke behind
+
+#### Acceptance Criteria:
+- **Scenario:** A redraw between Undos
+- **Given:** a board on paper with my stroke and a kept mark of Claude's, and after each Undo or Redo the board finds ink missing and redraws it
+- **When:** I undo the keep, redo it, undo it again, and undo once more
+- **Then:** the last Undo takes my stroke away, and the board is empty
 
 ---
 

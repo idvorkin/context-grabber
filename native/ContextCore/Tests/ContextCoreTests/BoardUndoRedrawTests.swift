@@ -122,10 +122,12 @@ final class BoardUndoRedrawTests: XCTestCase {
     XCTAssertEqual(failed.fields["how"] as? String, "scroll")
   }
 
-  /// The first heal re-adds the strokes, the second scrolls, and there is no third.
-  func testTheHealsStepIsReaddThenScrollThenNone() {
-    XCTAssertEqual(BoardUndoRedraw.healStep(afterLook: 0), "readd")
-    XCTAssertEqual(BoardUndoRedraw.healStep(afterLook: 1), "scroll")
+  /// Story 1343 (bead context-grabber-pmv6): the one heal after a step moves the view a screen away and back, and there is
+  /// no second. A heal never takes the strokes out and puts them back: that left PaperKit's own Undo of a stroke taking
+  /// nothing back.
+  func testTheHealAfterAStepIsOneScrollAndNeverAReadd() {
+    XCTAssertEqual(BoardUndoRedraw.healStep(afterLook: 0), "scroll")
+    XCTAssertNil(BoardUndoRedraw.healStep(afterLook: 1))
     XCTAssertNil(BoardUndoRedraw.healStep(afterLook: 2))
   }
 }

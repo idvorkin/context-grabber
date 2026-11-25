@@ -106,10 +106,11 @@ final class WhiteboardUndoRedrawUITests: XCTestCase {
     let redo = app.buttons["whiteboard-redo"]
     waitUntil(NSPredicate(format: "isEnabled == true"), undo, timeout: 5)
     undo.tap()
-    // The forced miss, the strokes put back, and the look after them finding everything drawn.
+    // The forced miss, the view a screen away and back (never the strokes taken out and put back: story 1343), and the
+    // look after it finding everything drawn.
     let look = app.staticTexts["whiteboard-undo-look"]
     waitUntil(NSPredicate(format: "label BEGINSWITH %@", "missing,whole"), look, timeout: 10)
-    XCTAssertEqual(look.value as? String, "1", "one heal, the strokes taken out and put back")
+    XCTAssertEqual(look.value as? String, "1", "one heal, the view a screen away and back")
     let groupBack = PaperScreen.showing(app, within: 10, { $0.larryKept }, { abs($0.minY - kept.minY) < 0.01 })
     let leftBack = PaperScreen.showing(app, within: 10, half(false), { abs($0.minY - left.minY) < 0.01 })
     let rightBack = PaperScreen.showing(app, within: 10, half(true), { abs($0.maxX - right.maxX) < 0.01 })

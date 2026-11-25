@@ -386,9 +386,11 @@ paper. That description is the requirement, and this lists only where paper need
   An Undo or Redo that moves, adds or takes away ink redraws the board around what changed, and a second later the
   board checks every stroke near the change, piece by piece across the screen, for a piece that should show and
   doesn't. Ink the step never touched counts: on the iPad simulator, after a group dropped just above Igor's line was
-  undone, the line stayed drawn only up to one edge and was blank past it. A piece found missing is drawn again on its
-  own, as a kept mark is: the strokes may blink once, and if that's not enough the view moves a screen away and back
-  once, ending where it was. Undo and Redo stay one step each, and the step Redo would take is still there afterwards.
+  undone, the line stayed drawn only up to one edge and was blank past it. A piece found missing is drawn again by
+  moving the view a screen away and back once, ending where it was. The strokes are never taken out and put back after
+  an Undo or Redo, as a kept mark's are: doing that left the next Undo of a stroke Igor drew taking nothing back
+  (context-grabber-pmv6). Undo and Redo stay one step each, every step still takes back what it would have, and the step
+  Redo would take is still there afterwards.
 - **One undo takes a kept ghost back, whole.** A kept mark that needs a new page brings the page with it, in the same step.
 - **Every keep is a step of Undo of its own, and keeps it** (#966). *Keep*, *Keep all* and *Tidy overlaps*
   are each one step, named for what was done (with a keyboard, the menu's *Undo Keep all*). Nothing the board does on its

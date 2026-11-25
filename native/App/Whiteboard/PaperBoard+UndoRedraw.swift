@@ -18,10 +18,10 @@ extension PaperBoardController {
   }
 
   /// A second on, each stroke near `changed`, a tile at a time: a piece in view with nothing shown is missing.
-  /// `paper_ink_look` says what was found. A miss asks for a heal (`BoardUndoRedraw.healStep`): the strokes taken out and put
-  /// back on the first try (what drew a kept mark cut at a tile edge, context-grabber-ikya), the view a screen away and
-  /// back on the second; the look after it logs the heal, `paper_ink_heal`, with its tiles, strokes, step and whether it
-  /// worked. `healed`: the heal that look follows.
+  /// `paper_ink_look` says what was found. A miss asks for a heal (`BoardUndoRedraw.healStep`): the view a screen away and
+  /// back, once. Never the strokes taken out and put back as a kept mark's are: after a step that left PaperKit's own Undo
+  /// of a stroke taking nothing back (story 1343, bead context-grabber-pmv6). The look after it logs the heal,
+  /// `paper_ink_heal`, with its tiles, strokes, step and whether it worked. `healed`: the heal that look follows.
   func lookAfterStep(_ changed: CGRect, why: String, attempt: Int = 0, healed: BoardUndoRedraw.Heal? = nil) {
     Task { @MainActor [weak self] in
       try? await Task.sleep(for: .seconds(1))
@@ -65,14 +65,10 @@ extension PaperBoardController {
       let heal = BoardUndoRedraw.Heal(
         why: why, attempt: attempt + 1, how: how, tiles: BoardUndoRedraw.tiles(missing), strokes: keys.count,
         missingAfter: missing.count)
-      if how == "readd" {
-        await self.readdStrokes(keys)
-      } else {
-        let place = self.paper.contentVisibleFrame
-        self.paper.contentVisibleFrame = place.offsetBy(dx: 0, dy: place.height)
-        try? await Task.sleep(for: .seconds(0.1))
-        self.paper.contentVisibleFrame = place
-      }
+      let place = self.paper.contentVisibleFrame
+      self.paper.contentVisibleFrame = place.offsetBy(dx: 0, dy: place.height)
+      try? await Task.sleep(for: .seconds(0.1))
+      self.paper.contentVisibleFrame = place
       self.lookAfterStep(changed, why: why, attempt: attempt + 1, healed: heal)
     }
   }
@@ -82,30 +78,6 @@ extension PaperBoardController {
     let corner = lines.convert(lines.spot(of: box.origin), to: view)
     let scale = screenScale
     return CGRect(x: corner.x, y: corner.y, width: box.width * scale, height: box.height * scale)
-  }
-
-  /// The markup set without the strokes keyed `keys`, and a moment later with them again where they were, ids kept and no
-  /// step of Undo added, so Undo and Redo still take the steps they would have. An Undo or Redo in that moment wins: the
-  /// strokes stay as it left them.
-  private func readdStrokes(_ keys: Set<String>) async {
-    guard let markup = paper.markup, !keys.isEmpty else { return }
-    var without = markup
-    var removed: [(index: Int, element: MarkupOrderedSet.Element)] = []
-    for stroke in markup.subelements.strokes where keys.contains(Self.key(stroke.elementID)) {
-      guard let element = without.subelements.removeElement(for: stroke.elementID) else { continue }
-      removed.append((markup.subelements.firstIndex(of: element) ?? markup.subelements.count, element))
-    }
-    guard !removed.isEmpty else { return }
-    let steps = undoSteps
-    setMarkup(without)
-    inkFrames = without.strokeFrames
-    try? await Task.sleep(for: .seconds(0.1))
-    guard undoSteps == steps else { return }
-    var back = paper.markup ?? without
-    for (index, element) in removed.sorted(by: { $0.index < $1.index }) {
-      _ = back.subelements.insert(element, at: min(index, back.subelements.count))
-    }
-    inkFrames = setMarkup(back).held.strokeFrames
   }
 
   /// `GRABBER_WHITEBOARD_UNDO_LOOK=label` (or `miss`): every look after an Undo or Redo this launch as an element a UI
