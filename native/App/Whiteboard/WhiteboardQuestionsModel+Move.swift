@@ -6,7 +6,8 @@ import ContextCore
 import Foundation
 
 extension WhiteboardQuestionsModel {
-  /// *Hide* in a card's popup: the popup closes and the card is its '?'. Nothing is answered.
+  /// *Collapse* (first built as *Hide*) in a card's popup: the popup closes and the card is its '?'.
+  /// Nothing is answered.
   func hide(_ card: WhiteboardQuestion) {
     if opened?.id == card.id { opened = nil }
     var next = board

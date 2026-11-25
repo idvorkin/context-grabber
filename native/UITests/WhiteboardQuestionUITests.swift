@@ -158,9 +158,9 @@ final class WhiteboardQuestionUITests: XCTestCase {
     XCTAssertEqual(posted.map { $0["response"] as? String }, ["DECISION: Month to month"], "\(posted)")
   }
 
-  /// Stories 1273, 1274 (#1387): *Hide* shrinks the open card to a bare '?' where its left end was, answering nothing;
-  /// the '?' and the card drag and stay where they're let go, a drag opening nothing; a tap on the '?' brings the card
-  /// back where the '?' is.
+  /// Stories 1273, 1274 (#1387): *Collapse* shrinks the open card to a bare '?' where its left end was, answering
+  /// nothing; the '?' and the card drag and stay where they're let go, a drag opening nothing; a tap on the '?'
+  /// brings the card back where the '?' is.
   func testAQuestionHidesToAMarkAndDrags() throws {
     guard let cockpit else { throw XCTSkip("needs the fake Cockpit: run scripts/native/test-whiteboard-ui.sh") }
     let (app, card) = try boardWithQuestion(cockpit)

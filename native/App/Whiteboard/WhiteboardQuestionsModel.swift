@@ -167,7 +167,7 @@ final class WhiteboardQuestionsModel: ObservableObject {
     }
   }
 
-  /// *Collapse* in an answered card's popup.
+  /// *Shrink* (called *Collapse* until 2026-11-24) in an answered card's popup: the card is its one-line chip.
   func collapse(_ card: WhiteboardQuestion) {
     guard opened?.id == card.id else { return }
     opened = nil
