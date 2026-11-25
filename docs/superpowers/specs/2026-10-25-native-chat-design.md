@@ -669,7 +669,8 @@ at most five chats, and it is listed even when it is not among the five most rec
 and after a failed send's network change, oldest first, never while offline. A message resent after a lost answer
 appears once on the thread, and a share resent after a lost answer makes one thread, not two. A message the Cockpit
 refuses (too big, an unreadable image) reads *Larry refused it* with the reason, copyable, and is not resent on its own
-(only a file offers *Send again*, above); a swipe deletes it. Unreachable keeps it **Not sent yet**.
+(only a file offers *Send again*, above); a swipe deletes it. Unreachable keeps it **Not sent yet**, and so does a
+Cockpit that timed out reading the upload or asked it to wait: it goes again on its own, never reads *refused* (#1452).
 
 **When the Cockpit isn't answering** (#565, 2026-10-27: the Cockpit's host was off the tailnet and Igor read the
 timeout as *"Context grabber inbox broke"*). A request that times out or cannot connect while the phone itself is

@@ -144,7 +144,7 @@ public struct InboxSender: Sendable {
       if item.kind == .link { fields["link_in_message"] = ChatSend.carriesLink(item) }
       guard let outcome = await send(item, fields: &fields) else { continue }
       record(item, outcome, now: now, fields: &fields, report: &report, log: log)
-      if case .retry = outcome { break }
+      if case .retry = outcome, fields["status"] as? Int != 408 { break }
     }
     return report
   }
@@ -185,8 +185,11 @@ public struct InboxSender: Sendable {
     do {
       let request = try ChatSend.messageRequest(item, attachment: attachment, cockpit: cockpit)
       let (data, response) = try await transport(request)
-      return ChatSend.outcome(status: (response as? HTTPURLResponse)?.statusCode, body: data)
+      let status = (response as? HTTPURLResponse)?.statusCode
+      fields["status"] = status
+      return ChatSend.outcome(status: status, body: data)
     } catch {
+      fields["status"] = nil
       if CockpitReach.isAway(error) { fields["unreachable"] = true }
       return ChatSend.outcome(status: nil, body: nil, error: error.localizedDescription)
     }
@@ -195,7 +198,9 @@ public struct InboxSender: Sendable {
   private func upload(_ request: () throws -> URLRequest, fields: inout [String: Any]) async -> ChatSend.Upload {
     do {
       let (data, response) = try await transport(try request())
-      return ChatSend.upload(status: (response as? HTTPURLResponse)?.statusCode, body: data)
+      let status = (response as? HTTPURLResponse)?.statusCode
+      fields["status"] = status
+      return ChatSend.upload(status: status, body: data)
     } catch {
       if CockpitReach.isAway(error) { fields["unreachable"] = true }
       return ChatSend.upload(status: nil, body: nil, error: error.localizedDescription)

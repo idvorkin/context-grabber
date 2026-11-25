@@ -64,7 +64,11 @@ How it goes (the Cockpit's side shipped 2026-10-18, cockpit#63):
   needed so each fits the Cockpit's 100 MB (10 MB until 2026-11-24, #1426).
 - **Refused**: when the Cockpit says an item itself is wrong (too big, an unreadable image), it is not retried. It
   reads *Larry's inbox refused it* with the Cockpit's reason, which can be copied. A swipe deletes it as usual.
-- **Unreachable or failing** (no tailnet, the Cockpit down): it stays **Not sent yet**, and the log says why.
+- **Unreachable or failing** (no tailnet, the Cockpit down): it stays **Not sent yet**, and the log says why. So
+  does an item the Cockpit gave up reading partway (it timed out waiting for the upload, as a 2.2 MB photo on a slow
+  link did on 2026-11-25, #1452) or asked to wait (too many at once): those say nothing is wrong with the item, so it
+  goes again on the next send, never reads as refused (#1452). After a timeout the items behind it still go, so a
+  photo that keeps timing out never holds up the rest; after *too many at once* the rest waits, as when unreachable.
 - **One state each** (#809): an item is waiting, sent or refused, never two at once; a file stored as both sent and
   refused by an older build reads as sent. How long a sent item stays on the phone, and what wins when its thread and
   its age disagree, is *What the phone keeps* in the [chat spec](2026-10-25-native-chat-design.md).
