@@ -1617,7 +1617,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1633:
 
 - **Summary:** With no Exercise Analyzer build on this Mac, the ladder leaves out the test that opens it and says why
-- **Status:** implemented in 6632349e; verified by `scripts/native/test-install-exercise-analyzer.sh` (host: with no build it exits naming the path it looked for, and the ladder drops the class)
+- **Status:** implemented in 6632349e; verified by `scripts/native/test-install-exercise-analyzer.sh` (host: with no build it installs nothing and exits 3, naming the path it looked for and how to build it); the ladder leaving the class out on exit 3 is not checked yet
 - **Issues:** bead context-grabber-89sb (split from story 1632)
 
 #### Use Case:
