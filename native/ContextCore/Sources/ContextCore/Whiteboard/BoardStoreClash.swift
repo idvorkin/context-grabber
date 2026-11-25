@@ -114,7 +114,8 @@ public enum BoardStoreClash {
       }
       switch kind {
       case "add_strokes": self.init(kind: kind, adds: named("strokes"), changes: [])
-      case "add_text", "add_card", "overlay", "connector": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: [])
+      case "add_text", "add_card", "overlay", "connector":
+        self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: [])
       case "replace": self.init(kind: kind, adds: named("strokes"), changes: ids)
       case "select": self.init(kind: kind, adds: [], changes: [], local: true)
       case "group": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: ids)

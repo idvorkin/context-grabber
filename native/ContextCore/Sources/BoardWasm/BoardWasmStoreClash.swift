@@ -18,7 +18,7 @@ enum WebStoreClash {
   }
 
   static func thing(_ json: Any?) -> BoardStoreClash.Thing? {
-    guard let json = json as? [String: Any], let rev = (json["rev"] as? NSNumber)?.intValue,
+    guard let json = json as? [String: Any], let rev = JSONNumber(json["rev"])?.intValue,
       let author = author(json)
     else { return nil }
     return .init(rev: rev, author: author, erased: json["erased"] as? Bool ?? false)
@@ -36,9 +36,9 @@ enum WebStoreClash {
   /// a thing being `{"rev", "device", "by", "at", "erased"?}`: the answer `{rev, applied, refused, board}`.
   static func answer(_ json: Any?) -> [String: Any] {
     guard let json = json as? [String: Any], let boardJSON = json["board"] as? [String: Any],
-      let rev = (boardJSON["rev"] as? NSNumber)?.intValue
+      let rev = JSONNumber(boardJSON["rev"])?.intValue
     else { return ["error": "no board"] }
-    guard let base = (json["base_rev"] as? NSNumber)?.intValue else { return ["error": "no base_rev"] }
+    guard let base = JSONNumber(json["base_rev"])?.intValue else { return ["error": "no base_rev"] }
     guard let author = author(json) else { return ["error": "no device"] }
     guard let ops = json["ops"] as? [Any] else { return ["error": "no ops"] }
     var board = BoardStoreClash.Board(rev: rev, deleted: thing(boardJSON["deleted"]))

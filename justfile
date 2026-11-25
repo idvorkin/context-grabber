@@ -93,6 +93,9 @@ native-test-host:
     scripts/native/test-lane-env.sh
     # Story 1519 (context-grabber-6ocd): pre-merge's Release build of ContextCore runs when the branch changes it, and fails loudly.
     scripts/native/test-release-check.sh
+    # The board wasm's sources use no Foundation-only types (NSNumber broke the VM's wasm build, 2026-11-24).
+    scripts/native/wasm-essentials-check.sh
+    scripts/native/test-wasm-essentials-check.sh
     # Where a UI test run's time went, from a real run's log.
     scripts/native/test-ui-timings.sh
     # #1038 (story 1016): the ladder report keeps a retry, a wrong-device skip and a missing deploy apart, on a fixture.
