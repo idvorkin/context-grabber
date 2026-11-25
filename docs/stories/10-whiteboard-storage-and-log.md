@@ -1137,7 +1137,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1326:
 
 - **Summary:** A header on a shared board is a thing of its own
-- **Status:** planned (interface 23, the board store's first slice)
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point Q2
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1155,7 +1155,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1327:
 
 - **Summary:** A board is deleted however the store records it
-- **Status:** planned (interface 23, the board store's first slice)
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, points 1 and 7
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1173,7 +1173,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1328:
 
 - **Summary:** A change that also adds says which of its names landed
-- **Status:** planned (interface 23, the board store's first slice)
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point 3
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1191,7 +1191,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1329:
 
 - **Summary:** A broken record on a shared board is refused out loud
-- **Status:** planned (interface 23, the board store's first slice)
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, gap "the wasm silently drops a thing row"
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
