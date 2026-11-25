@@ -20,6 +20,11 @@ to that event's own bullet; never join two events on one line.
 
 - `board_store` action: listed with reason (open / pull / switched_on) and boards: how many live boards the Cockpit store's list gave, each time the *From the Cockpit* section reads it with the switch on
 - `error` with where: cockpit_boards, reason (open / pull / switched_on), message (the HTTP status or the network error) and cockpit (the address asked): the store's boards list didn't load, once per spell until a list loads again; the section shows the copyable problem, context WhiteboardListView.cockpitBoards
+- `board_store` action: queued with board, ops (how many the change made) and waiting (saves in the queue): a stroke drawn or erased on the trial canvas became saves (stories 1344-1346)
+- `board_store` action: synced with board, sent (saves answered), rev, waiting, notes (refusals held), set_aside (ink refused because the board was deleted) and problem (empty on a clean pass): one per sync pass of an open Cockpit board
+- `board_store` action: kept_ink with board (the deleted one), new_board and ops: *Keep my ink as a new board* made the new board and queued the ink on it
+- `board_store` action: let_ink_go with board: *Let it go* dropped the set-aside ink
+- `error` with where: CockpitBoardModel.open / encode / sync / keep_ink / save_copy, board and error (copyable, the address and request in it): the trial canvas couldn't load, encode, sync, make the kept-ink board or write its copy, once per spell until a pass goes clean or the error changes; the copyable problem under the canvas, context CockpitBoardView.<operation>
 
 ## The PaperKit board
 

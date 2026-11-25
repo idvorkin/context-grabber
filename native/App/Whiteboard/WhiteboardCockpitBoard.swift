@@ -23,6 +23,11 @@ final class CockpitBoardModel: ObservableObject {
   private var cache: BoardStoreCache?
   private var syncing = false
   private var again = false
+  /// The device's own changes made while a pass is out, put back on the copy the pass brings home.
+  private var madeDuringPass: [(inout BoardStoreCache) -> Void] = []
+  private var loggedError: String?
+  /// The strokes the canvas was last given or last took, in draw order.
+  private var showing: [CockpitBoardEdit.Stroke] = []
   /// The id each stroke on the canvas was drawn under, by its creation moment, and how it looked when last shown.
   private var shown: [Double: (id: String, bounds: CGRect, record: BoardStoreJSON)] = [:]
   private let reads: String
@@ -69,7 +74,7 @@ final class CockpitBoardModel: ObservableObject {
 
   /// The canvas's own change: what it now holds, as the store's ops, queued and sent.
   func canvasChanged(_ new: PKDrawing) {
-    guard var cache else { return }
+    guard let cache else { return }
     var used = Set<String>()
     var after: [BoardStoreJSON] = []
     for stroke in new.strokes {
@@ -91,11 +96,13 @@ final class CockpitBoardModel: ObservableObject {
       fail("this change couldn't be saved (\(failure))", operation: "encode")
     case .success(let ops):
       guard !ops.isEmpty else { return }
-      cache.enqueue(ops)
-      self.cache = cache
+      edit { $0.enqueue(ops) }
       drawing = new
+      if let cache = self.cache { showing = CockpitBoardEdit.strokes(cache) }
       persist()
-      log.event("board_store", ["action": "queued", "board": boardID, "ops": ops.count, "waiting": cache.queue.count])
+      log.event(
+        "board_store",
+        ["action": "queued", "board": boardID, "ops": ops.count, "waiting": self.cache?.queue.count ?? 0])
       status = writes == nil ? "Saves wait: the Cockpit doesn't take them yet" : "Saving…"
       Task { await sync() }
     }
@@ -114,8 +121,18 @@ final class CockpitBoardModel: ObservableObject {
     } while again
   }
 
+  /// A change of the device's own to the copy, kept through a pass that is out.
+  private func edit(_ change: @escaping (inout BoardStoreCache) -> Void) {
+    guard var cache else { return }
+    change(&cache)
+    self.cache = cache
+    if syncing { madeDuringPass.append(change) }
+  }
+
   private func pass() async {
     guard var cache else { return }
+    let board = boardID
+    madeDuringPass = []
     let device = device
     var sync = CockpitBoardSync(
       cockpit: writes ?? reads, device: device, by: "igor",
@@ -128,11 +145,17 @@ final class CockpitBoardModel: ObservableObject {
     if writes == nil { sync.limit = 0 }  // reads only until the Cockpit takes the iPad's saves
     let disk = disk
     let report = await sync.run(&cache) { copy in try disk.save(copy) }
+    let made = madeDuringPass
+    madeDuringPass = []
+    guard board == boardID else { return }
+    for change in made { change(&cache) }
     self.cache = cache
+    if !made.isEmpty { persist() }
     if let failure = report.problem {
       fail(failure, operation: "sync")
     } else {
       problem = nil
+      loggedError = nil
     }
     log.event(
       "board_store",
@@ -146,6 +169,7 @@ final class CockpitBoardModel: ObservableObject {
   /// *Keep my ink as a new board*: a new Cockpit board named for this one plus *(kept ink)*, with the set-aside ink.
   func keepInk() async {
     guard var cache, let target = writes else { return }
+    let board = boardID
     let newID = "b-" + UUID().uuidString.lowercased()
     guard let kept = cache.keptInk(newID: newID) else { return }
     var create = kept.create
@@ -162,7 +186,8 @@ final class CockpitBoardModel: ObservableObject {
       fail("the new board wasn't made (\(error.localizedDescription))", operation: "keep_ink")
       return
     }
-    self.cache = cache
+    guard board == boardID else { return }
+    edit { $0.dismissSetAside() }
     persist()
     let newName = create["name"]?.string ?? "Board (kept ink)"
     var fresh = CockpitBoardEdit.emptyBoard(id: newID, name: newName)
@@ -172,43 +197,43 @@ final class CockpitBoardModel: ObservableObject {
     name = newName
     self.cache = fresh
     shown = [:]
+    showing = []
     persist()
     show()
     await sync()
   }
 
   func letInkGo() {
-    guard var cache else { return }
-    cache.dismissSetAside()
-    self.cache = cache
+    edit { $0.dismissSetAside() }
     persist()
     log.event("board_store", ["action": "let_ink_go", "board": boardID])
-    show()
-  }
-
-  func clearNotes() {
-    guard var cache else { return }
-    cache.notes = []
-    self.cache = cache
-    persist()
     show()
   }
 
   /// The canvas shows the copy as it opens: the Cockpit's ink with this device's waiting saves on top.
   private func show() {
     guard let cache else { return }
+    let live = CockpitBoardEdit.strokes(cache)
+    let ids = Set(live.map(\.id))
+    var taken = Set(shown.filter { ids.contains($0.value.id) }.keys)
     var strokes: [PKStroke] = []
     var next: [Double: (id: String, bounds: CGRect, record: BoardStoreJSON)] = [:]
-    for (index, stroke) in CockpitBoardEdit.strokes(cache).enumerated() {
+    for (index, stroke) in live.enumerated() {
       let previous = shown.first { $0.value.id == stroke.id }
-      let made = CockpitStrokeRecord.stroke(stroke.record, id: stroke.id, index: index, at: previous?.key)
+      var made = CockpitStrokeRecord.stroke(stroke.record, id: stroke.id, index: index, at: previous?.key)
+      while previous == nil, taken.contains(made.path.creationDate.timeIntervalSince1970) {
+        let bumped = made.path.creationDate.timeIntervalSince1970 + 1e-4
+        made = CockpitStrokeRecord.stroke(stroke.record, id: stroke.id, index: index, at: bumped)
+      }
+      let key = made.path.creationDate.timeIntervalSince1970
+      taken.insert(key)
       strokes.append(made)
-      next[made.path.creationDate.timeIntervalSince1970] = (stroke.id, made.renderBounds, stroke.record)
+      next[key] = (stroke.id, made.renderBounds, stroke.record)
     }
     shown = next
-    let fresh = PKDrawing(strokes: strokes)
-    if fresh.strokes.count != drawing.strokes.count || fresh.bounds != drawing.bounds {
-      drawing = fresh
+    if live != showing {
+      showing = live
+      drawing = PKDrawing(strokes: strokes)
       redraws += 1
     }
     notes = cache.notes
@@ -235,7 +260,10 @@ final class CockpitBoardModel: ObservableObject {
   }
 
   private func fail(_ what: String, operation: String) {
-    log.event("error", ["where": "CockpitBoardModel.\(operation)", "board": boardID, "error": what])
+    if loggedError != what {
+      log.event("error", ["where": "CockpitBoardModel.\(operation)", "board": boardID, "error": what])
+      loggedError = what
+    }
     status = "Cockpit not answering"
     problem = BugProblem(
       message: what.hasPrefix("Cockpit not answering") ? what : "Cockpit not answering: \(what)",
@@ -381,9 +409,6 @@ struct CockpitBoardView: View {
         ForEach(Array(model.notes.enumerated()), id: \.offset) { _, note in
           BugProblemView(problem: noteProblem(note), logger: logger)
             .accessibilityIdentifier("cockpit-board-note")
-        }
-        if !model.notes.isEmpty {
-          Button("Clear notes") { model.clearNotes() }.font(.footnote)
         }
         if model.inkSetAside {
           HStack {

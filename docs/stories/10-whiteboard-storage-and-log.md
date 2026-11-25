@@ -1489,7 +1489,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1344:
 
 - **Summary:** A stroke drawn on a Cockpit board is saved to the Cockpit
-- **Status:** in [8ea01f21](https://github.com/idvorkin/context-grabber/commit/8ea01f21); verified by host tests (`CockpitBoardEditTests`) and on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testADrawnStrokeIsSavedAndARefusedOneGoesBack`); against the real Cockpit, writes follow in the next PR
+- **Status:** implemented in [8ea01f21](https://github.com/idvorkin/context-grabber/commit/8ea01f21); verified by host tests (`CockpitBoardEditTests`) and on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testADrawnStrokeIsSavedAndARefusedOneGoesBack`); against the real Cockpit, writes follow in the next PR
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
 
@@ -1507,7 +1507,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1345:
 
 - **Summary:** A refused stroke is taken back off a Cockpit board, with a note saying why
-- **Status:** in [8ea01f21](https://github.com/idvorkin/context-grabber/commit/8ea01f21); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testADrawnStrokeIsSavedAndARefusedOneGoesBack`)
+- **Status:** implemented in [8ea01f21](https://github.com/idvorkin/context-grabber/commit/8ea01f21); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testADrawnStrokeIsSavedAndARefusedOneGoesBack`)
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
 
@@ -1525,7 +1525,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1346:
 
 - **Summary:** Ink drawn on a deleted Cockpit board can be kept as a new board
-- **Status:** in [8ea01f21](https://github.com/idvorkin/context-grabber/commit/8ea01f21); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testInkOnADeletedBoardIsKeptAsANewBoard`); *Let it go* is not exercised by a test
+- **Status:** implemented in [8ea01f21](https://github.com/idvorkin/context-grabber/commit/8ea01f21); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testInkOnADeletedBoardIsKeptAsANewBoard`); *Let it go* is not exercised by a test
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
 
