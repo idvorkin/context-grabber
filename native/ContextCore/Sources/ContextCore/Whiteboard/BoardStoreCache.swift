@@ -282,12 +282,10 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     switch kind {
     case "add_strokes": return named("strokes").map { Landing(id: $0.id, effect: $0.effect, kind: "stroke") }
     case "add_text", "add_card", "overlay", "connector":
-      return id.map {
-        [Landing(id: $0, effect: .put(body), kind: String(kind.dropFirst(kind.hasPrefix("add_") ? 4 : 0)))]
-      } ?? []
+      return id.map { [Landing(id: $0, effect: .put(body), kind: addedKind(kind))] } ?? []
     case "reply": return (id.map { [Landing(id: $0, effect: .put(body), kind: "reply")] } ?? []) + named("marks")
     case "group", "header":
-      return (id.map { [Landing(id: $0, effect: .put(body), kind: kind)] } ?? [])
+      return (id.map { [Landing(id: $0, effect: .put(body), kind: addedKind(kind))] } ?? [])
         + ids.map { Landing(id: $0, effect: .touch) }
     case "set":
       return ids.map { Landing(id: $0, effect: op["bodies"]?[$0].map(Effect.put) ?? .touch) }
@@ -319,11 +317,13 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     }
   }
 
+  /// The kind the Cockpit's store gives what an op adds (cockpit board-store-s1, `ADDS_OWN_ID` and `GROUPING`), so a
+  /// copy built from ops matches one downloaded.
   static func addedKind(_ name: String) -> String? {
     switch name {
     case "add_strokes", "replace": return "stroke"
-    case "add_text", "add_card", "overlay", "connector", "group", "header", "reply":
-      return String(name.dropFirst(name.hasPrefix("add_") ? 4 : 0))
+    case "add_text", "add_card", "overlay", "group": return "object"
+    case "connector", "header", "reply": return name
     case "rename", "paper": return "board"
     default: return nil
     }
