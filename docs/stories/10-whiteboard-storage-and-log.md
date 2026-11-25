@@ -1245,8 +1245,8 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1331:
 
 - **Summary:** A save whose answer was lost lands once
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [ecab77a9](https://github.com/idvorkin/context-grabber/commit/ecab77a9); verified by host tests (`BoardStoreCacheTests`); not yet used by the app; the fake Cockpit's store routes it is built against in [a085de7d](https://github.com/idvorkin/context-grabber/commit/a085de7d), checked by `test-fake-cockpit-store.py`; a late answer after a catch-up folds nothing in [658d758d](https://github.com/idvorkin/context-grabber/commit/658d758d) (`testAResentAnswerAfterAPullKeepsThePulledBody`)
-- **Issues:** bead context-grabber-t12b; cockpit-8kh; bead context-grabber-2m5r (a late answer wrote older ink back)
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [ecab77a9](https://github.com/idvorkin/context-grabber/commit/ecab77a9); verified by host tests (`BoardStoreCacheTests`); not yet used by the app; the fake Cockpit's store routes it is built against in [a085de7d](https://github.com/idvorkin/context-grabber/commit/a085de7d), checked by `test-fake-cockpit-store.py`
+- **Issues:** bead context-grabber-t12b; cockpit-8kh
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
 #### Use Case:
@@ -1260,6 +1260,19 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** the iPad tries again
 - **Then:** it sends the same save under the same name at the same version, the newer ink stays waiting, and a Cockpit that answers "couldn't look at it" leaves the save queued
 
+### User Story 1336:
+
+- **Summary:** A lost save's answer that comes back after the iPad caught up leaves the newer ink alone
+- **Status:** a late answer after a catch-up folds nothing, in BoardCore (`BoardStoreCache`) in [658d758d](https://github.com/idvorkin/context-grabber/commit/658d758d); verified by host tests (`BoardStoreCacheTests`, `testAResentAnswerAfterAPullKeepsThePulledBody`); not yet used by the app
+- **Issues:** bead context-grabber-2m5r (a late answer wrote older ink back)
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** whose iPad lost a save's answer and then caught up with the web's newer change
+- **I want to** have the save's late answer leave what I caught up to alone
+- **so that** my older ink never comes back over the web's newer stroke
+
+#### Acceptance Criteria:
 - **Scenario:** The lost answer comes back after the iPad caught up
 - **Given:** a save whose answer was lost, and the web changed the same stroke after it landed
 - **When:** the iPad catches up and then gets the save's answer on a resend

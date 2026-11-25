@@ -437,7 +437,7 @@ final class BoardStoreCacheTests: XCTestCase {
     XCTAssertEqual(markTaken.queue.first?.ops, [["op": "reply", "marks": [readd]]], "r1 landed: not sent again")
   }
 
-  // Bead context-grabber-2m5r: a resent batch's stored answer, arriving after a pull already brought that batch and a
+  // Story 1336, bead context-grabber-2m5r: a resent batch's stored answer, arriving after a pull already brought that batch and a
   // newer change over it, never writes the device's older body back.
   func testAResentAnswerAfterAPullKeepsThePulledBody() {
     var cache = board()
