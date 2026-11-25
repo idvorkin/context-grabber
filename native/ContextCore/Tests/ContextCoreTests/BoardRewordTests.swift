@@ -123,4 +123,12 @@ final class BoardRewordTests: XCTestCase {
     XCTAssertNil(BoardReword.typedReturn(before: "hello", after: "hell"), "a letter taken away")
     XCTAssertNil(BoardReword.typedReturn(before: "hello", after: "hello"))
   }
+
+  func testAPasteWithALineInsideKeepsItAndOnlyAnEndingLineIsDone() {
+    XCTAssertNil(
+      BoardReword.typedReturn(before: "note: ", after: "note: buy milk\ncall mom"), "a line inside a paste: still editing")
+    XCTAssertEqual(
+      BoardReword.typedReturn(before: "note: ", after: "note: buy milk\ncall mom\n"), "note: buy milk\ncall mom")
+    XCTAssertEqual(BoardReword.typedReturn(before: "one\ntwo", after: "on\nwo"), "onwo", "Return over a selection")
+  }
 }
