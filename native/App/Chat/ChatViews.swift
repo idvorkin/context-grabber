@@ -2122,7 +2122,7 @@ extension InboxItem {
       VStack(spacing: 8) {
         ForEach(PreviewFixtures.messages) { message in
           MessageBubble(
-            message: message, thread: "igor2-88g.1801", answerFailed: false, chat: PreviewFixtures.chat,
+            message: message, thread: "igor2-88g.1801", answerFailed: false, group: false, chat: PreviewFixtures.chat,
             logger: PreviewFixtures.logger, react: { _ in }, quote: {}, copy: {}, sendToNewChat: {}, openMoved: { _ in }
           )
         }
