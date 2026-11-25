@@ -447,7 +447,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1077:
 
 - **Summary:** Larry's own caption lines are in his purple
-- **Status:** native app only: implemented in [782085fa](https://github.com/idvorkin/context-grabber/commit/782085fa); verified by `just test` (host: `ChatSpeakerTests.testLarrysOwnCaptionLines`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls); the purple on a real call not yet
+- **Status:** native app only: implemented in [ec2bb8e3](https://github.com/idvorkin/context-grabber/commit/ec2bb8e3); verified by `just test` (host: `ChatSpeakerTests.testLarrysOwnCaptionLines`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls); the purple on a real call not yet
 - **Spec:** [Native call — Direct Larry](../superpowers/specs/2026-08-28-native-call-screen-design.md#direct-larry)
 
 #### Use Case:
