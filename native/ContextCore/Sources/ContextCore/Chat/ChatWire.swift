@@ -35,7 +35,10 @@ public struct ChatSummary: Decodable, Equatable, Sendable, Identifiable {
   /// Who a message on this thread goes to.
   public var answeredBy: String { skill ?? "Larry" }
   /// Who spoke last, for the row and the notification.
-  public var lastSpeaker: String { !lastAuthor.isEmpty ? lastAuthor : larryHasLastWord ? "Larry" : "You" }
+  /// Story 1614: an author of Larry's own name is Larry, *tony* is Tony.
+  public var lastSpeaker: String {
+    !lastAuthor.isEmpty ? ChatSpeaker.byAuthor(lastAuthor).label : larryHasLastWord ? "Larry" : "You"
+  }
   /// The row's second line.
   public var lastLine: String {
     count > 0 ? "\(lastSpeaker): \(lastText)" : skill.map { "Ask \($0)" } ?? "Drop anything here"
@@ -263,7 +266,8 @@ public enum ChatWire {
   public static func answerFailed(_ messages: [ChatMessage]) -> Set<String> {
     var failed: Set<String> = []
     var sawFailure = false
-    for message in messages.reversed() where !message.isSystem {
+    // Story 1615: a call's thread rows and openers are news, not a reply.
+    for message in messages.reversed() where !message.isSystem && !ChatSpeaker.answersNobody(message) {
       if message.isError {
         sawFailure = true
       } else if !message.fromIgor {

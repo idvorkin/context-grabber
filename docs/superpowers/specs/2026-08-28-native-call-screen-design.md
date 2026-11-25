@@ -99,6 +99,10 @@ Larry as text and Larry's answer comes back read aloud in Larry's own voice, wit
 He can talk over Larry to cut him off, as on the other backends. On a Direct call:
 
 - Larry's lines are captioned **Larry**, not *Tony* — the thing speaking is Larry.
+- Whatever is Larry's own on the screen is in Larry's purple, the colour the Cockpit gives him (a deeper purple in light
+  mode, a softer one in dark): his lines on a Direct call, and on every call the tool lines and notes he puts in
+  himself. Tony's lines and Igor's stay as they were, so the three voices — Igor, Tony, Larry — read apart at a glance
+  (the Cockpit's story 322).
 - There is no *Voice* row: Larry speaks as Larry. The Tony/Igor pick is kept for ElevenLabs and Drill.
 - Larry's model is the bridge's default; the app offers no model picker, like every other backend.
 - With five backends the row names ElevenLabs *Eleven* so every name fits a phone; the status line still says

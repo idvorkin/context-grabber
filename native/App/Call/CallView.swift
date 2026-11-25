@@ -254,8 +254,10 @@ struct CallView: View {
   private func captionRow(_ row: CaptionRow) -> some View {
     let isTool = row.who == .tool
     return HStack(alignment: .firstTextBaseline, spacing: 8) {
-      Text(label(row.who)).font(.caption.weight(.semibold)).foregroundStyle(.secondary).frame(
-        width: 40, alignment: .leading)
+      // Story 1077: what is Larry's own is in his purple, as on the Cockpit (its story 322).
+      Text(label(row.who)).font(.caption.weight(.semibold))
+        .foregroundStyle(row.who.isLarrysOwn(on: call.snapshot.backend ?? call.backend) ? Color.larry : Color.secondary)
+        .frame(width: 40, alignment: .leading)
       Text(row.text)
         .foregroundStyle(row.who == .note || isTool ? .secondary : .primary)
         .lineLimit(isTool && !expanded.contains(row.id) ? 2 : nil)

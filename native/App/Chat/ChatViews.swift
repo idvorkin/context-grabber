@@ -754,9 +754,11 @@ struct ChatThreadView: View {
             .onAppear { logger("chat", ["action": "thread_loading_shown", "thread": .string(key)]) }
           }
           let answerFailed = ChatWire.answerFailed(messages)
+          let group = ChatSpeaker.isGroup(messages)
           ForEach(messages) { message in
             MessageBubble(
-              message: message, thread: key ?? "", answerFailed: answerFailed.contains(message.id), chat: chat,
+              message: message, thread: key ?? "", answerFailed: answerFailed.contains(message.id), group: group,
+              chat: chat,
               logger: logger, react: { react($0, to: message) }, quote: { quote(message) }, copy: { copy(message) },
               sendToNewChat: { sendToNewChat(message) }, openMoved: openMoved)
           }
@@ -1037,6 +1039,8 @@ private struct MessageBubble: View {
   let thread: String
   /// A failure is all that followed it (#632): its receipt doesn't say done.
   let answerFailed: Bool
+  /// Story 1614: more than one speaker besides Igor, so every reply says who wrote it.
+  let group: Bool
   let chat: ChatModel
   let logger: BugLogger
   let react: (ChatReaction) -> Void
@@ -1077,16 +1081,20 @@ private struct MessageBubble: View {
     .padding(.vertical, 2)
   }
 
-  /// The skill's name and its letter, over what it wrote (#632).
+  /// The speaker's name and letter over what they wrote: always for a skill (#632), and for every reply in a group
+  /// chat (story 1614), Larry's in his purple. A two-party thread with Larry shows none.
   @ViewBuilder private var byline: some View {
-    if let author = message.author, let initial = message.authorInitial {
+    let speaker = ChatSpeaker.of(message)
+    if !message.fromIgor, speaker.tone == .skill || group {
       HStack(spacing: 6) {
-        Text(initial).font(.caption.weight(.semibold)).foregroundStyle(.white)
+        Text(speaker.initial).font(.caption.weight(.semibold)).foregroundStyle(.white)
           .frame(width: 22, height: 22)
-          .background(Color.indigo, in: Circle())
+          .background(Color.speaker(speaker.tone), in: Circle())
           .accessibilityHidden(true)
-        Text(author).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+        Text(speaker.label).font(.caption.weight(.semibold))
+          .foregroundStyle(speaker.tone == .agent ? Color.larry : Color.secondary)
       }
+      .accessibilityIdentifier("chat-byline-\(speaker.tone.rawValue)")
     }
   }
 
@@ -1139,7 +1147,8 @@ private struct MessageBubble: View {
       if !message.fromIgor { Spacer(minLength: 48) }
     }
     .accessibilityElement(children: .combine)
-    .accessibilityIdentifier(message.fromIgor ? "chat-mine" : message.author == nil ? "chat-larry" : "chat-skill")
+    .accessibilityIdentifier(
+      message.fromIgor ? "chat-mine" : ChatSpeaker.skillAuthor(message) == nil ? "chat-larry" : "chat-skill")
   }
 
   /// `ChatHold.choices`: answering himself means nothing, and a picture alone has no words to quote or copy (518).

@@ -3559,6 +3559,44 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Then:** the thread says *Loading this chat…* with a spinner at once, and when the read lands the messages replace it; a new chat from the +, a thread whose messages are already on screen, or the device offline never shows the line
 ---
 
+### User Story 1614:
+
+- **Summary:** In a group chat every reply says who wrote it; Larry's own replies are never a skill
+- **Status:** native app only: not yet implemented
+- **Spec:** [Chat with Larry in Grabber Native — Three voices, and a group chat](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor reading a thread that Larry, Tony or a skill all write in
+- **I want to** see each reply's speaker by name and avatar, and Larry's own replies as Larry's
+- **so that** I never mistake Tony's or a skill's words for Larry's, nor see Larry labelled as a skill
+
+#### Acceptance Criteria:
+- **Scenario:** Two speakers besides me make a group
+- **Given:** a thread with a reply written under Larry's own name and another under *tony*, and a page or call opener at the top
+- **When:** I open it
+- **Then:** every reply carries its speaker's name and lettered avatar, Larry's in purple and Tony's as *Tony*; the opener alone never makes a thread a group, so a thread with Larry and the opener reads as before, and a reply under Larry's name there has no skill byline
+
+---
+
+### User Story 1615:
+
+- **Summary:** A call's thread rows are news, never an answer to me
+- **Status:** native app only: not yet implemented
+- **Spec:** [Chat with Larry in Grabber Native — A call's thread](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor writing on a voice call's own thread
+- **I want to** have the call's own rows (a consult's answer, a note, the summary) not count as Larry answering me
+- **so that** a message of mine that only a failure followed still shows it was not answered
+
+#### Acceptance Criteria:
+- **Scenario:** A failure, then only the call's rows
+- **Given:** my message on a call's thread, a failure after it, and then rows the call's bridge wrote
+- **When:** I read the thread
+- **Then:** my message still shows 👀, not 🏆, until a real reply of Larry's follows
+
+---
+
 ### User Story 1607:
 
 - **Summary:** The + opens a new chat again after the last one landed

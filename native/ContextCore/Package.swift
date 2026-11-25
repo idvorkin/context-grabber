@@ -6,7 +6,7 @@ let chatWireSources = [
   "Chat/ChatWire.swift", "Chat/ChatDecisions.swift", "Chat/ChatMove.swift", "Chat/ChatLinks.swift",
   "Chat/ChatSiteNames.swift", "Chat/ChatBubbleLinks.swift", "Chat/ChatCockpitLink.swift",
   "Cockpit/CockpitAddress.swift", "Archive/ArchiveRecord.swift", "Chat/AppBuild.swift", "Platform/FoundationLite.swift",
-  "Platform/FoundationLiteShims.swift",
+  "Platform/FoundationLiteShims.swift", "Chat/ChatSpeaker.swift",
 ]
 
 // BoardCore's: the whole Whiteboard directory, new files included, and the CoreGraphics stand-ins it needs on Linux.
