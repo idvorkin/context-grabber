@@ -163,6 +163,14 @@ try:
     listed = {b["id"]: b for b in call("/boards?deleted=1")[1]["boards"]}
     check("b-1" not in [b["id"] for b in call("/boards")[1]["boards"]] and listed["b-1"]["deleted"] == deleted
           and "deleted" not in listed["b-2"], "a deleted board leaves the list; ?deleted=1 shows it with its delete")
+
+    two = call("/boards/b-2")[1]["rev"]
+    call("/boards/b-2/ops", batch("r1", two, [{"op": "add_strokes", "strokes": [stroke("d1")]}]))
+    call("/boards/b-2/ops", batch("r2", two + 1, [{"op": "add_strokes", "strokes": [stroke("d1", 5)]}]))
+    again = call("/boards/b-2")[1]
+    check([t["id"] for t in again["things"]].count("d1") == 1, "an id added twice is on the board once")
+    call("/boards/b-2/ops", batch("r3", two + 2, [{"op": "erase", "ids": ["d1"]}]))
+    check(call("/boards/b-2")[1]["erased"].count("d1") == 1, "an id added twice is erased once")
 finally:
     fake.terminate()
 

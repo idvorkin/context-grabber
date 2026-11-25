@@ -187,8 +187,10 @@ def land(board, op, ids, rev, who):
         new = added(op, tid)
         old = things.get(tid)
         if new:
-            board["order"].append(tid)
-            things[tid] = {"kind": new[0], "body": new[1], "erased": False, **stamp(rev, who)}
+            if old is None:
+                board["order"].append(tid)
+            things[tid] = {"kind": (old or {}).get("kind") or new[0], "body": new[1], "erased": False,
+                           **stamp(rev, who)}
         elif old is None:
             continue
         elif op["op"] in ERASING:
