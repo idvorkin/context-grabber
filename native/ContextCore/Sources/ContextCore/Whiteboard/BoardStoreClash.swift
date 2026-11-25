@@ -14,6 +14,9 @@ public enum BoardStoreClash {
   /// The name a board-level op (rename, paper, delete_board) changes.
   public static let boardID = "@board"
 
+  /// The ops that take what they change off the board, leaving its id taken.
+  static let erasing: Set<String> = ["erase", "delete", "replace", "remove_overlay"]
+
   /// Where and by whom a change was made.
   public struct Author: Equatable, Sendable {
     public var device: String
@@ -165,7 +168,8 @@ public enum BoardStoreClash {
 
     for (index, op) in ops.enumerated() where !op.local {
       if base > board.rev {
-        for id in op.adds + op.changes {
+        let ids = op.adds + op.changes
+        for id in ids.isEmpty ? [""] : ids {
           refused.append(Refusal(op: index, id: id, reason: .ahead, rev: board.rev, author: nil))
         }
         continue
@@ -174,21 +178,22 @@ public enum BoardStoreClash {
         refused.append(Refusal(op: index, id: "", reason: .unknown, rev: nil, author: nil))
         continue
       }
-      if let deleted = board.deleted {
+      if let deleted = next.deleted {
         for id in op.adds + op.changes {
           refused.append(Refusal(op: index, id: id, reason: .deleted, rev: deleted.rev, author: deleted.author))
         }
         continue
       }
       var blocked: Refusal?
-      for id in op.changes where !mine.contains(id) {
+      for id in op.changes {
         guard let thing = next.things[id] ?? (id == boardID ? Thing(rev: 0, author: author) : nil) else {
           blocked = Refusal(op: index, id: id, reason: .unknown, rev: nil, author: nil)
           break
         }
         // An erased name changes only by `restore`, and `restore` only an erased one.
-        if thing.rev > base || thing.erased != (op.kind == "restore") {
-          if !thing.erased, thing.rev <= base {
+        let stale = thing.rev > base && !mine.contains(id)
+        if stale || thing.erased != (op.kind == "restore") {
+          if !thing.erased, !stale {
             blocked = Refusal(op: index, id: id, reason: .unknown, rev: nil, author: nil)
             break
           }
@@ -211,7 +216,7 @@ public enum BoardStoreClash {
         landed = true
       }
       for id in op.changes {
-        next.things[id] = Thing(rev: rev, author: author, erased: op.kind == "erase" || op.kind == "delete")
+        next.things[id] = Thing(rev: rev, author: author, erased: erasing.contains(op.kind))
         mine.insert(id)
       }
       if op.kind == "delete_board" { next.deleted = Thing(rev: rev, author: author) }

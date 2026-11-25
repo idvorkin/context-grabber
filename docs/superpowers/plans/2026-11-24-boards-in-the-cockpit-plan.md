@@ -56,8 +56,8 @@ POST /boards/<id>/ops
   real collision stays visible. Re-added ink takes new ids: the pieces a partial erase leaves are `s-<ms>-n`.
 - **Undo and redo restore** erased ink under its own ids with `restore`: it lands when the id is erased and nobody
   changed it after the erase the device saw (`changed_at_rev <= base_rev`), else `changed`. A `restore` of a live id
-  is `unknown`, and any other change to an erased id is `changed`. Erase and delete leave a tombstone (the id stays
-  taken), which the store must keep. Keep reusing a group id after an erase is a `restore` (or a new id).
+  is `unknown`, and any other change to an erased id is `changed`, in the same batch too. Erase, delete, `replace`
+  (its `ids`) and `remove_overlay` leave a tombstone (the id stays taken), which the store must keep. Keep reusing a group id after an erase is a `restore` (or a new id).
 - **A change to an existing thing lands only if `changed_at_rev(id) <= base_rev`**. Otherwise that one op is refused
   with who changed it and when; the rest of the batch still applies (the spec's "everything else still goes up").
 - **Ops on a deleted board are refused** (`reason: "deleted"`, with `deleted_at` and device): new ink does not

@@ -161,6 +161,64 @@ final class BoardStoreClashTests: XCTestCase {
     XCTAssertEqual(answer.board.things["s-b2"]?.rev, 4)
   }
 
+  // Plan section 3: replace and remove_overlay take their ids off the board as erase does, so undo restores them and
+  // nothing else changes them.
+  func testReplaceAndRemoveOverlayLeaveATombstone() throws {
+    var board = BoardStoreClash.Board(rev: 3)
+    board.things["s-b"] = .init(rev: 1, author: web)
+    board.things["o-old"] = .init(rev: 1, author: web)
+    let first = BoardStoreClash.apply(
+      try ops(#"[{"op":"replace","ids":["s-b"],"strokes":[{"id":"s-b2"}]},{"op":"remove_overlay","id":"o-old"}]"#),
+      to: board, base: 3, author: igorIPad)
+    XCTAssertEqual(first.board.things["s-b"]?.erased, true)
+    XCTAssertEqual(first.board.things["o-old"]?.erased, true)
+    XCTAssertEqual(first.board.things["s-b2"]?.erased, false)
+    let undo = BoardStoreClash.apply(
+      try ops(#"[{"op":"restore","ids":["s-b"]},{"op":"move","ids":["o-old"],"dx":1,"dy":0}]"#),
+      to: first.board, base: 4, author: igorIPad)
+    XCTAssertEqual(undo.applied, [0])
+    XCTAssertEqual(undo.refused, [.init(op: 1, id: "o-old", reason: .changed, rev: 4, author: igorIPad)])
+    XCTAssertEqual(undo.board.things["s-b"]?.erased, false)
+  }
+
+  // Plan section 3: within one batch, an erased name still changes only by restore, and restore only an erased one.
+  func testABatchCantChangeWhatItErased() throws {
+    var board = BoardStoreClash.Board(rev: 2)
+    board.things["s-a"] = .init(rev: 1, author: web)
+    board.things["s-c"] = .init(rev: 1, author: web)
+    let answer = BoardStoreClash.apply(
+      try ops(
+        #"[{"op":"erase","ids":["s-a"]},{"op":"move","ids":["s-a"],"dx":4,"dy":0},{"op":"restore","ids":["s-a"]},"#
+          + #"{"op":"move","ids":["s-c"],"dx":1,"dy":0},{"op":"restore","ids":["s-c"]}]"#),
+      to: board, base: 2, author: igorIPad)
+    XCTAssertEqual(answer.applied, [0, 2, 3])
+    XCTAssertEqual(
+      answer.refused,
+      [
+        .init(op: 1, id: "s-a", reason: .changed, rev: 3, author: igorIPad),
+        .init(op: 4, id: "s-c", reason: .unknown, rev: nil, author: nil),
+      ])
+    XCTAssertEqual(answer.board.things["s-a"]?.erased, false)
+  }
+
+  // Story 1323: once a batch deletes the board, its later ops land nothing.
+  func testNothingLandsAfterABatchDeletesTheBoard() throws {
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"delete_board"},{"op":"add_strokes","strokes":[{"id":"s-1"}]}]"#),
+      to: .init(rev: 1), base: 1, author: igorIPad)
+    XCTAssertEqual(answer.applied, [0])
+    XCTAssertEqual(answer.refused, [.init(op: 1, id: "s-1", reason: .deleted, rev: 2, author: igorIPad)])
+    XCTAssertNil(answer.board.things["s-1"])
+  }
+
+  // Larry's question 5: an op that names nothing is refused as `ahead` too, not dropped.
+  func testABaseAheadRefusesAnOpThatNamesNothing() throws {
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"translate","below_y":300,"dy":40}]"#), to: .init(rev: 4), base: 9, author: igorIPad)
+    XCTAssertEqual(answer.applied, [])
+    XCTAssertEqual(answer.refused, [.init(op: 0, id: "", reason: .ahead, rev: 4, author: nil)])
+  }
+
   // Larry's question 5: a batch based on a revision the board hasn't reached is from another board or a broken cache:
   // nothing lands, each op refused as `ahead`.
   func testABaseAheadOfTheBoardLandsNothing() throws {
