@@ -83,7 +83,14 @@ final class WhiteboardQuestionsLooksTests: XCTestCase {
     let full = WhiteboardQuestions.strip(board.card(answered)!)
     board.collapseStep(answered)
     XCTAssertEqual(WhiteboardQuestions.strip(board.card(answered)!), full, "short: the strip doesn't move")
-    XCTAssertEqual(full.x, 100 + WhiteboardQuestions.width + 8, "just past a full card's right end")
-    XCTAssertEqual(full.y, 400, "top-aligned")
+    XCTAssertLessThanOrEqual(
+      full.x + WhiteboardQuestions.stripWidth, 100 + WhiteboardQuestions.width, "inside a full card's right end")
+    XCTAssertGreaterThan(full.x, 100 + WhiteboardQuestions.width / 2, "at its right end")
+    XCTAssertEqual(full.y + WhiteboardQuestions.control / 2, 400 + WhiteboardQuestions.height / 2, "on its line")
+    var far = WhiteboardQuestions()
+    far.add(ask: "edge", x: 5_000, y: 0)
+    let edge = WhiteboardQuestions.strip(far.cards[0])
+    XCTAssertLessThanOrEqual(
+      edge.x + WhiteboardQuestions.stripWidth, BoardPages.pageWidth, "a card at the page's edge keeps its strip on it")
   }
 }

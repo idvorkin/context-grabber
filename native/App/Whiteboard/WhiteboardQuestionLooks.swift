@@ -50,13 +50,15 @@ struct WhiteboardQuestionAnsweredFace: View {
       }
     }
     .padding(.vertical, 2 * scale)
+    // Story 1321: a full card's words stop short of its strip; a short one is only as wide as its words.
+    .padding(.trailing, card.look == .full ? (WhiteboardQuestions.stripWidth + 16) * scale : 0)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     .contentShape(Rectangle())
   }
 }
 
-/// Story 1321: a card's controls as icons, just past a full card's right end, top-aligned, in one order; only those its
-/// look allows, and none on a round.
+/// Story 1321: a card's controls as icons inside a full card's right end, each in its own slot; only those its look
+/// allows, and none on a round.
 struct WhiteboardQuestionStrip: View {
   @ObservedObject var questions: WhiteboardQuestionsModel
   @ObservedObject var place: WhiteboardBoardPlace
@@ -65,7 +67,7 @@ struct WhiteboardQuestionStrip: View {
   var body: some View {
     let controls = WhiteboardQuestions.controls(card)
     let at = WhiteboardQuestions.strip(card)
-    let size = max(24, WhiteboardQuestions.control * place.scale)
+    let size = WhiteboardQuestions.control * place.scale
     let gap = WhiteboardQuestions.controlGap * place.scale
     let corner = place.rect(CGRect(origin: at, size: .zero)).origin
     if !controls.isEmpty, !place.erasing {

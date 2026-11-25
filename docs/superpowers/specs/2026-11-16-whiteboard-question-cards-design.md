@@ -122,7 +122,7 @@ card's fill or edge; short, it is the question alone the same way. It still open
 moves and erases as an answered card does. A card being thought over is edged dashed.
 
 **The controls sit in one spot** (Igor, 2026-11-24, #1387: *"use icons all in same spot"*). A card's controls are a
-strip of round icons just past a full card's right end, top-aligned: *Collapse*, *Open out*, *Archive*, *Thinking*,
+strip of round icons inside a full card's right end, on its line (inside, so it stays on the page with the card; the card's words stop short of it): *Collapse*, *Open out*, *Archive*, *Thinking*,
 each always in its own slot in that order, so an icon never moves between looks or cards. A slot the look doesn't
 allow is left empty: *Collapse* while the card can get smaller, *Open out* once it isn't full, *Archive* always,
 *Thinking* on an open card (lit in Larry's purple while it is being thought over). A round carries no strip; a tap or a

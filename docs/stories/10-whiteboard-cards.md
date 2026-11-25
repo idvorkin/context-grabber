@@ -445,7 +445,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** I look for a control on cards in different looks
 - **Given:** an open card, an answered card shown full, and an answered card collapsed to its short line on the board
 - **When:** I look for each card's controls
-- **Then:** each card has a strip of icons just past a full card's right end, Collapse, Open out, Archive and Thinking each in its own slot, showing only those that card's look allows, the others' slots empty, so no icon moves between looks
+- **Then:** each card has a strip of icons at a full card's right end, inside it, Collapse, Open out, Archive and Thinking each in its own slot, showing only those that card's look allows, the others' slots empty, so no icon moves between looks
 
 ---
 

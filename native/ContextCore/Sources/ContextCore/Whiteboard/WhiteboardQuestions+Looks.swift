@@ -78,9 +78,16 @@ extension WhiteboardQuestions {
     return out
   }
 
-  /// Where the strip's first icon's top-left is, in board points: just past a full card's right end, top-aligned, the
-  /// same in every look so the icons never move.
+  /// The strip's width, every slot counted, in board points.
+  public static var stripWidth: CGFloat {
+    let n = CGFloat(WhiteboardQuestion.Control.allCases.count)
+    return n * control + (n - 1) * controlGap
+  }
+
+  /// Where the strip's first icon's top-left is, in board points: inside a full card's right end, centred on its
+  /// line, the same in every look so the icons never move. Inside, so a card kept inside the page keeps its strip
+  /// on screen too; a full card's words stop short of it.
   public static func strip(_ card: WhiteboardQuestion) -> CGPoint {
-    CGPoint(x: card.x + width + 8, y: card.y)
+    CGPoint(x: card.x + width - stripWidth - 6, y: card.y + (height - control) / 2)
   }
 }

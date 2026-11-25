@@ -89,7 +89,9 @@ struct WhiteboardQuestionCardFace: View {
           .truncationMode(.tail)
       }
     }
-    .padding(.horizontal, 16 * scale)
+    .padding(.leading, 16 * scale)
+    // Story 1321: the words stop short of the card's strip.
+    .padding(.trailing, (WhiteboardQuestions.stripWidth + 16) * scale)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     .background(shape.fill(done ? Color(white: 0.953) : Color(red: 0.984, green: 0.957, blue: 1)))
     .overlay(

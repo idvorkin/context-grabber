@@ -30,17 +30,20 @@ import SwiftUI
         ForEach(Array(Self.looks.enumerated()), id: \.offset) { _, look in
           VStack(alignment: .leading, spacing: 6) {
             Text(look.0).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-            HStack(alignment: .top, spacing: 0) {
+            ZStack(alignment: .topLeading) {
               face(look.1).frame(
                 width: WhiteboardQuestions.box(look.1).width, height: WhiteboardQuestions.box(look.1).height)
-              Spacer().frame(width: WhiteboardQuestions.strip(look.1).x - WhiteboardQuestions.box(look.1).maxX)
-              strip(look.1)
+              if look.1.look != .round {
+                strip(look.1).offset(
+                  x: WhiteboardQuestions.strip(look.1).x - look.1.x, y: WhiteboardQuestions.strip(look.1).y - look.1.y)
+              }
             }
+            .frame(width: WhiteboardQuestions.width, alignment: .leading)
           }
         }
       }
       .padding(28)
-      .frame(width: 860, alignment: .leading)
+      .frame(width: 700, alignment: .leading)
       .background(Color(red: 0.99, green: 0.99, blue: 0.97))
     }
 
