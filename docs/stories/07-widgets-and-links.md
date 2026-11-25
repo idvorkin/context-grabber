@@ -137,7 +137,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 127:
 
 - **Summary:** Always a playing card on the big widget, and a fresh one when I want it
-- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by `just check-deal` (the deal's promises under plain `swiftc`) and on the phone
+- **Status:** implemented in [c81b9b1](https://github.com/idvorkin/context-grabber/commit/c81b9b1); verified by the check-deal recipe (the deal's promises under plain `swiftc`) and on the phone; that recipe went with the React Native app in [4f13fdde](https://github.com/idvorkin/context-grabber/commit/4f13fdde), and the deal's promises are verified now by `CardDealTests` on the host rung
 
 #### Use Case:
 - **As a** memdeck student who keeps the large widget on two home-screen pages
