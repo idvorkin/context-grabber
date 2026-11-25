@@ -63,10 +63,21 @@ final class EulogyUITests: XCTestCase {
     suno.tap()
     XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "Open on Suno opened the browser")
     // Safari's address bar, not the page: the post itself embeds a Suno player, so only the address can tell.
-    let address = safari.textFields["TabBarItemTitle"]
+    let address = safariAddress()
     XCTAssertTrue(address.appears(within: 20), safari.debugDescription)
     XCTAssertTrue(waitFor(address, "value CONTAINS[c] 'suno.com'", 20), "Safari is on \(address.value ?? "?")")
     safari.terminate()
+  }
+
+  /// The active tab's address field. An iPhone's Safari names it `TabBarItemTitle`; an iPad's shows a tab bar where
+  /// every tab has a `TabBarItemTitleContainer` field, so it's the one inside the active search field (bead
+  /// context-grabber-3hj9.2: the store walk ran on the iPad and found no `TabBarItemTitle` at all). An old tab on
+  /// suno.com from an earlier run can't pass the check.
+  private func safariAddress() -> XCUIElement {
+    let phone = safari.textFields["TabBarItemTitle"]
+    if phone.waitForExistence(timeout: 3) { return phone }
+    let active = NSPredicate(format: "identifier BEGINSWITH 'SearchFieldItemView?isActive=true'")
+    return safari.buttons.matching(active).firstMatch.textFields.firstMatch
   }
 
   /// #692: when the system's player refuses, the app says so on the sheet (a copyable problem) and logs
