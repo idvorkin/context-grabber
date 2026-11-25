@@ -208,7 +208,8 @@ final class WhiteboardQuestionsTests: XCTestCase {
       XCTAssertEqual(box.origin, CGPoint(x: card.x, y: card.y), "the '?' sits where the card's left end was")
       XCTAssertEqual(box.width, WhiteboardQuestions.mark)
       XCTAssertEqual(box.height, WhiteboardQuestions.mark)
-      XCTAssertEqual(WhiteboardQuestions.lines(card, title: "Renew?"), ["?"])
+      // #1387 part 3: an open round is a '?', an answered one a '✓', as on the web board.
+      XCTAssertEqual(WhiteboardQuestions.lines(card, title: "Renew?"), [card.answered == nil ? "?" : "✓"])
     }
     XCTAssertNil(board.card(open)?.answered, "hiding answers nothing")
 

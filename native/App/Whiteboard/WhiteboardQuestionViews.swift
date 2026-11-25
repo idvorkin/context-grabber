@@ -32,24 +32,25 @@ struct WhiteboardQuestionCards: View {
     ZStack(alignment: .topLeading) {
       ForEach(questions.board.shown) { card in
         let frame = place.rect(WhiteboardQuestions.box(card))
-        Button {
-          if card.hidden { questions.show(card) } else { questions.tap(card) }
-        } label: {
-          Group {
-            if card.hidden {
-              WhiteboardQuestionMarkFace(card: card, scale: place.scale)
-            } else {
-              WhiteboardQuestionCardFace(card: card, title: questions.title(of: card), scale: place.scale)
-            }
+        Group {
+          if card.hidden {
+            WhiteboardQuestionMarkFace(card: card, scale: place.scale)
+          } else {
+            WhiteboardQuestionCardFace(card: card, title: questions.title(of: card), scale: place.scale)
           }
-          .frame(width: frame.width, height: frame.height)
         }
-        .buttonStyle(.plain)
+        .frame(width: frame.width, height: frame.height)
+        // Story 1319: a double tap steps the look; a single tap opens the popup, or a round out to full.
+        .modifier(WhiteboardQuestionTaps(questions: questions, card: card))
         .modifier(WhiteboardQuestionDrag(questions: questions, card: card, scale: place.scale, erasing: place.erasing))
         .allowsHitTesting(!(place.erasing && card.answered != nil))
         .accessibilityLabel(WhiteboardQuestions.lines(card, title: questions.title(of: card)).joined(separator: ", "))
         .accessibilityIdentifier("whiteboard-question-\(card.ask)")
         .position(x: frame.midX, y: frame.midY)
+      }
+      // Story 1321: each card's controls, in one strip at one place whatever its look.
+      ForEach(questions.board.shown) { card in
+        WhiteboardQuestionStrip(questions: questions, place: place, card: card)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -59,7 +60,7 @@ struct WhiteboardQuestionCards: View {
 
 /// One card as the web board draws it: open, a pale purple line edged in Larry's purple; answered, grey, the question
 /// over the answer; folded, the question alone.
-private struct WhiteboardQuestionCardFace: View {
+struct WhiteboardQuestionCardFace: View {
   let card: WhiteboardQuestion
   let title: String?
   let scale: CGFloat
@@ -67,10 +68,19 @@ private struct WhiteboardQuestionCardFace: View {
   private static let larry = Color(uiColor: UIColor(rgb: WhiteboardTurn.larryColor))
 
   var body: some View {
+    // Story 1320: an answered card reads as text, not a card.
+    if card.answered != nil {
+      WhiteboardQuestionAnsweredFace(card: card, scale: scale)
+    } else {
+      open
+    }
+  }
+
+  private var open: some View {
     let lines = WhiteboardQuestions.lines(card, title: title)
     let done = card.answered != nil
     let shape = RoundedRectangle(cornerRadius: 18 * scale)
-    VStack(alignment: .leading, spacing: 1 * scale) {
+    return VStack(alignment: .leading, spacing: 1 * scale) {
       ForEach(Array(lines.enumerated()), id: \.offset) { i, line in
         Text(line)
           .font(.system(size: max(6, size(line: i, of: lines.count) * scale)))
@@ -79,10 +89,17 @@ private struct WhiteboardQuestionCardFace: View {
           .truncationMode(.tail)
       }
     }
-    .padding(.horizontal, 16 * scale)
+    .padding(.leading, 16 * scale)
+    // Story 1321: the words stop short of the card's strip.
+    .padding(.trailing, (WhiteboardQuestions.stripWidth + 16) * scale)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     .background(shape.fill(done ? Color(white: 0.953) : Color(red: 0.984, green: 0.957, blue: 1)))
-    .overlay(shape.stroke(done ? Color(white: 0.78) : Self.larry, lineWidth: max(1, 2 * scale)))
+    .overlay(
+      shape.stroke(
+        done ? Color(white: 0.78) : Self.larry,
+        // Story 1316: a card being thought over is edged dashed.
+        style: StrokeStyle(lineWidth: max(1, 2 * scale), dash: card.thinking ? [6 * scale, 4 * scale] : []))
+    )
     .contentShape(shape)
   }
 
@@ -156,17 +173,7 @@ private struct WhiteboardQuestionPopup: View {
         ToolbarItem(placement: .cancellationAction) {
           Button("Close") { dismiss() }.accessibilityIdentifier("whiteboard-question-close")
         }
-        // Story 1273: any card, open or answered, collapses to a bare '?' on the board. Story 1314: or archives off it.
-        ToolbarItemGroup(placement: .primaryAction) {
-          if let card = questions.board.card(cardID) {
-            Button("Archive", systemImage: "archivebox") { questions.archive(card) }
-              .labelStyle(.titleAndIcon)
-              .accessibilityIdentifier("whiteboard-question-archive")
-            Button("Collapse", systemImage: "questionmark.circle") { questions.hide(card) }
-              .labelStyle(.titleAndIcon)
-              .accessibilityIdentifier("whiteboard-question-hide")
-          }
-        }
+        // Collapse, Open out and Archive are on the card's strip (story 1321), not here.
       }
     }
     .presentationDetents([.medium, .large])
@@ -263,17 +270,13 @@ private struct WhiteboardQuestionPopup: View {
   /// The mic's key for this card's field: its own, so a chat bar never takes these words, nor this field a chat's.
   static func voiceThread(_ ask: ChatAsk) -> String { "board-question:\(ask.id)" }
 
-  /// Story 885: the question and the answer in full, and the card folded from here.
+  /// Story 885: the question and the answer in full; the card's strip collapses it (story 1321).
   private func answered(_ card: WhiteboardQuestion, _ answer: WhiteboardQuestion.Answer) -> some View {
     VStack(alignment: .leading, spacing: 8) {
       Label(answer.title ?? "Answered", systemImage: "checkmark.circle")
         .font(.headline)
       if !answer.label.isEmpty { Text(answer.label).font(.body.weight(.semibold)) }
       if let note = answer.note { Text(note).foregroundStyle(.secondary) }
-      // Called Collapse until 2026-11-24; Collapse is now the round '?' (story 1273).
-      Button("Shrink", systemImage: "rectangle.compress.vertical") { questions.collapse(card) }
-        .buttonStyle(.bordered)
-        .accessibilityIdentifier("whiteboard-question-shrink")
     }
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("whiteboard-question-answered")

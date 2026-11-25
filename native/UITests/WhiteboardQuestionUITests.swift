@@ -117,19 +117,34 @@ final class WhiteboardQuestionUITests: XCTestCase {
     XCTAssertEqual(posted?["path"] as? String, "/act")
     XCTAssertEqual(posted?["response"] as? String, "DECISION: Renew")
 
-    // Story 885: read-only on a tap, folded to a chip, opened out by a tap.
+    // Story 885: read-only on a tap.
     card.tap()
-    let collapse = app.buttons["whiteboard-question-shrink"]
-    XCTAssertTrue(collapse.appears(within: 5), app.debugDescription)
-    XCTAssertTrue(app.staticTexts["Renew"].exists, app.debugDescription)
-    collapse.tap()
-    waitUntil(NSPredicate(format: "label == %@", "✓ Renew the gym for a year?"), card, timeout: 5)
-    card.tap()
-    waitUntil(NSPredicate(format: "label == %@", "✓ Renew the gym for a year?, Renew"), card, timeout: 5)
+    XCTAssertTrue(app.staticTexts["Renew"].appears(within: 5), app.debugDescription)
+    app.buttons["whiteboard-question-close"].tap()
     let picture = XCTAttachment(screenshot: app.screenshot())
     picture.name = "question-card-answered"
     picture.lifetime = .keepAlways
     add(picture)
+
+    // Stories 885, 1321 (#1387 part 3): the strip's Collapse steps it full → short → round, the strip not moving;
+    // a tap on the short opens it out.
+    let collapse = app.buttons["whiteboard-question-collapse-igor2-88g.879"]
+    XCTAssertTrue(collapse.appears(within: 5), app.debugDescription)
+    let strip = collapse.frame
+    collapse.tap()
+    waitUntil(NSPredicate(format: "label == %@", "✓ Renew the gym for a year?"), card, timeout: 5)
+    XCTAssertEqual(collapse.frame.minX, strip.minX, accuracy: 1, "the strip stays put between looks")
+    XCTAssertEqual(collapse.frame.minY, strip.minY, accuracy: 1)
+    XCTAssertTrue(app.buttons["whiteboard-question-openOut-igor2-88g.879"].exists, "Open out once it's not full")
+    card.tap()
+    waitUntil(NSPredicate(format: "label == %@", "✓ Renew the gym for a year?, Renew"), card, timeout: 5)
+
+    // Story 1319: a double tap steps it full → short → round → full, and opens nothing.
+    for label in ["✓ Renew the gym for a year?", "✓", "✓ Renew the gym for a year?, Renew"] {
+      card.doubleTap()
+      waitUntil(NSPredicate(format: "label == %@", label), card, timeout: 5)
+    }
+    XCTAssertFalse(app.buttons["whiteboard-question-close"].exists, "no popup")
   }
 
   /// Story 1130 (Igor, 2026-11-22): Larry's own-answer option, keyed other and labelled *Something else*, is in the
@@ -167,12 +182,12 @@ final class WhiteboardQuestionUITests: XCTestCase {
     let line = "? Renew the gym for a year? ···"
     let whole = card.frame
 
-    card.tap()
-    let hide = app.buttons["whiteboard-question-hide"]
+    // #1387 part 3: Collapse is on the card's strip; an open card goes straight to its round.
+    let hide = app.buttons["whiteboard-question-collapse-igor2-88g.879"]
     XCTAssertTrue(hide.appears(within: 10), app.debugDescription)
     hide.tap()
-    XCTAssertTrue(hide.waitForNonExistence(timeout: 5), "the popup closed: \(app.debugDescription)")
     waitUntil(NSPredicate(format: "label == %@", "?"), card, timeout: 5)
+    XCTAssertFalse(hide.exists, "a round carries no strip")
     let mark = card.frame
     XCTAssertLessThan(mark.width, whole.width / 4, "a bare '?', not the card")
     XCTAssertEqual(mark.minX, whole.minX, accuracy: 2, "where the card's left end was")
@@ -220,8 +235,8 @@ final class WhiteboardQuestionUITests: XCTestCase {
     let (app, card) = try boardWithQuestion(cockpit)
     let was = card.frame
 
-    card.tap()
-    let archive = app.buttons["whiteboard-question-archive"]
+    // #1387 part 3: Archive is on the card's strip.
+    let archive = app.buttons["whiteboard-question-archive-igor2-88g.879"]
     XCTAssertTrue(archive.appears(within: 10), app.debugDescription)
     archive.tap()
     XCTAssertTrue(card.waitForNonExistence(timeout: 5), "the card left the board: \(app.debugDescription)")

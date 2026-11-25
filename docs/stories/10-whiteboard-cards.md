@@ -108,9 +108,9 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 885:
 
-- **Summary:** An answered card opens read-only and folds to a chip
-- **Status:** implemented in [fa5381e](https://github.com/idvorkin/context-grabber/commit/fa5381e), *Collapse* renamed *Shrink* in 'd3986c48'. Verified by host tests (`WhiteboardQuestionsTests.testOnlyAnAnsweredCardFoldsToAChipAsWideAsItsWords`; `just test`); and on the simulator (`WhiteboardQuestionUITests` 1/1)
-- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Reading and folding*
+- **Summary:** An answered card opens read-only and collapses to a short line
+- **Status:** implemented in [fa5381e](https://github.com/idvorkin/context-grabber/commit/fa5381e), *Collapse* renamed *Shrink* in 'd3986c48', and back to *Collapse* on the card's strip in #1387 part 3 (on branch `native/question-looks-1387`). Verified by host tests (`WhiteboardQuestionsTests.testOnlyAnAnsweredCardFoldsToAChipAsWideAsItsWords`; `just test`); and on the simulator (`WhiteboardQuestionUITests` 1/1)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Reading* and *The card's looks*
 
 #### Use Case:
 - **As someone** with answered questions on a board
@@ -118,10 +118,10 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **so that** old decisions stay on the board without crowding the drawing
 
 #### Acceptance Criteria:
-- **Scenario:** I fold an answered card
-- **Given:** an answered card on the board
-- **When:** I tap it and tap *Shrink* (called *Collapse* until 2026-11-24)
-- **Then:** the popup showed the question and the answer in full, the card is now a one-line chip *✓ \<question>* as wide as its words, and a tap on the chip opens it out again
+- **Scenario:** I collapse an answered card to its short line
+- **Given:** an answered card on the board, shown full
+- **When:** I tap it, close the popup, and tap *Collapse* on the card's strip
+- **Then:** the popup showed the question and the answer in full, the card is now one line *✓ \<question>* as wide as its words, and a tap on it opens it out again
 
 ---
 
@@ -203,16 +203,16 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** I hide an open question
-- **Given:** an open question card's popup over the board
-- **When:** I tap *Collapse* (first built as *Hide*)
-- **Then:** the popup closes, the card is a small round '?' in Larry's purple where the card's left end was, nothing is answered, and the log records a hide
+- **Given:** an open question card on the board
+- **When:** I tap *Collapse* on the card's strip (first built as *Hide* in the popup)
+- **Then:** the card is a small round '?' in Larry's purple where the card's left end was, with no strip, nothing is answered, and the log records the look
 
 ---
 
 ### User Story 1169:
 
-- **Summary:** A tap on a hidden card's '?' brings the card back as it was
-- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
+- **Summary:** A tap on a hidden card's '?' brings the card back full
+- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b', back full (no longer as it was) in '99ab9be0'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Hiding a card*
 
@@ -225,7 +225,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** I bring a hidden card back
 - **Given:** a hidden card's '?' on the board, open or answered
 - **When:** I tap the '?'
-- **Then:** the card is back as it was (open, answered, or a folded chip) where the '?' was, and no popup opens
+- **Then:** the card is back full (open or answered, a short line too, #1387 part 3) where the '?' was, and no popup opens
 
 ---
 
@@ -323,9 +323,9 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** I archive a card
-- **Given:** a question card's popup over the board, open or answered
-- **When:** I tap *Archive*
-- **Then:** the popup closes, the card is gone from the board, nothing is answered, the board's menu now has *Archived questions*, and the log records an archive
+- **Given:** a question card on the board, open or answered
+- **When:** I tap *Archive* on the card's strip
+- **Then:** the card is gone from the board, nothing is answered, the board's menu now has *Archived questions*, and the log records an archive
 
 ---
 
@@ -392,7 +392,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1319:
 
 - **Summary:** A double tap steps a question card to its next look
-- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests`: `testCollapseStepsAnAnsweredCardFullThenShortThenRound`, `testCollapseTakesAnOpenCardStraightToRound`, `testADoubleTapCyclesAndWrapsFromRoundToFull`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *A double tap cycles the card's looks*
 
@@ -412,7 +412,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1320:
 
 - **Summary:** An answered question reads as plain text on the board
-- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testAnAnsweredRoundIsATickAndAnOpenOneAQuestionMark`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *An answered card reads as text*
 
@@ -432,18 +432,43 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1321:
 
 - **Summary:** A question card's controls are always in the same spot
-- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testEachLookOffersItsControlsInOneOrder`, `testTheStripSitsAtTheSamePlaceInEveryLook`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *The controls sit in one spot*
 
 #### Use Case:
 - **As someone** who uses question cards often
-- **I want to** find Shrink, Collapse, Archive and Thinking in one place on every card
+- **I want to** find Collapse, Open out, Archive and Thinking in one place on every card
 - **so that** I reach for them without looking
 
 #### Acceptance Criteria:
 - **Scenario:** I look for a control on cards in different looks
-- **Given:** an open card, an answered card shown full, and an answered chip on the board
+- **Given:** an open card, an answered card shown full, and an answered card collapsed to its short line on the board
 - **When:** I look for each card's controls
-- **Then:** each card shows its controls as icons in the same place relative to the card, only those that card allows
+- **Then:** each card has a strip of icons at a full card's right end, inside it, Collapse, Open out, Archive and Thinking each in its own slot, showing only those that card's look allows, the others' slots empty, so no icon moves between looks
+
+- **Scenario:** A short card dragged to the page's edge
+- **Given:** an answered card collapsed to its short line
+- **When:** I drag it past the page's right edge
+- **Then:** it stops where its strip still fits on the page, so its controls never leave the page
+
+---
+
+### User Story 1325:
+
+- **Summary:** One set of words and marks for a question card's looks, as on the web board
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testOpenOutGoesBackToFullFromAnyLook`, `testAnAnsweredRoundIsATickAndAnOpenOneAQuestionMark`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *The card's looks*
+
+#### Use Case:
+- **As someone** who uses question cards on the iPad and on Larry's web board
+- **I want to** see the same looks and the same words on both
+- **so that** a card I collapse means the same thing wherever I look at it
+
+#### Acceptance Criteria:
+- **Scenario:** I collapse an answered card all the way
+- **Given:** an answered card on the board, shown full
+- **When:** I tap *Collapse* on its strip twice
+- **Then:** it went to its short line, then to a grey round *✓* (an open card's round is a purple *?*), *Open out* showed on the strip once it wasn't full, and a tap on the round opened it out to full
 
