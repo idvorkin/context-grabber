@@ -1,34 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1282,
-   "journey": "?",
-   "branch": "native/scratch-hull-9g1",
-   "at": 1795529858.2215831,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1283,
-   "journey": "?",
-   "branch": "native/scratch-hull-9g1",
-   "at": 1795529858.2216058,
-   "until": "2026-11-25T14:17:38Z"
-  },
-  {
-   "id": 1266,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "?",
-   "at": 1795530616.523433,
-   "until": "2026-11-25T14:30:16Z"
-  },
-  {
-   "id": 1268,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "?",
-   "at": 1795530616.523433,
-   "until": "2026-11-25T14:30:16Z"
-  },
-  {
    "id": 1299,
    "journey": "10-whiteboard-boards.md",
    "branch": "fix/story-ids-1384-dupes",
@@ -55,13 +27,6 @@
    "branch": "docs/story-dupes-1292-1293",
    "at": 1795532457.9509299,
    "until": "2026-11-25T15:00:57Z"
-  },
-  {
-   "id": 1515,
-   "journey": "11-building-and-testing.md",
-   "branch": "chore/story-ids-claimed-6p52",
-   "at": 1795534139.131936,
-   "until": "2026-11-25T15:28:59Z"
   },
   {
    "id": 570,
@@ -97,27 +62,6 @@
    "branch": "native/question-archive-1387",
    "at": 1795536935.287699,
    "until": "2026-11-25T16:15:35Z"
-  },
-  {
-   "id": 1075,
-   "journey": "05-call.md",
-   "branch": "native/handoff-redials-1417",
-   "at": 1795538821.575679,
-   "until": "2026-11-25T16:47:01Z"
-  },
-  {
-   "id": 1076,
-   "journey": "05-call.md",
-   "branch": "?",
-   "at": 1795539490.740802,
-   "until": "2026-11-25T16:58:10Z"
-  },
-  {
-   "id": 571,
-   "journey": "07-widgets-and-links.md",
-   "branch": "native/pair-code-hint-1356",
-   "at": 1795540025.18379,
-   "until": "2026-11-25T17:07:05Z"
   },
   {
    "id": 1611,
@@ -160,6 +104,13 @@
    "branch": "native/question-archive-1387",
    "at": 1795540417.3340359,
    "until": "2026-11-25T17:13:37Z"
+  },
+  {
+   "id": 1292,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/header-one-line-gvv",
+   "at": 1795582303.178323,
+   "until": "2026-11-26T04:51:43Z"
   }
  ]
 }
