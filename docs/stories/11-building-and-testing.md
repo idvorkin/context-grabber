@@ -2150,3 +2150,108 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** one PR changed a view's parameters and merged, and another PR that calls the old way passed its pipeline before that merge
 - **When:** the agent runs `just pre-merge` on the second PR immediately before `gh pr merge`
 - **Then:** pre-merge ends with a FAIL line naming the compile error and a nonzero exit, and the PR doesn't merge
+
+---
+
+### User Story 1634:
+
+- **Summary:** Every build installed on a device is also on the Cockpit's /builds page, so the page is never behind the devices
+- **Status:** implemented in 8db79dfa with BugKit's `ota-upload.sh` (bug-kit bead `bug-a5y`, its PR not merged yet; the hook does nothing until it is in `~/gits/bug-kit`); verified on the host by bug-kit's tests of the uploader and of `deploy-all.sh` with fake Xcode tools, a slow copy and a `tee` pipe; the uploader itself published `audio-debugger-89c1cabb.ipa` and `magic-monitor-2c84beaf.ipa` to /builds on 2026-11-25. The cable hook in `native-run-device` is unverified until the bug-kit PR lands: nothing here ran it, not even a dry run of the uploader against the Debug bundle, and no install was run (an install restarts the app on Igor's devices)
+- **Why:** Igor, 2026-11-25 (via Larry): "Why new builds not uploaded", and "And any other updated apps": /builds had only the 06:40 build while newer ones went straight to his devices.
+- **Issues:** bead `context-grabber-59m0` (bug-kit `bug-a5y`)
+- **Spec:** [Development builds over the air](../superpowers/specs/2026-11-22-ota-builds-design.md), *Every install lands on /builds*
+
+#### Use Case:
+- **As Igor,** installing from the Cockpit's /builds page when the Mac can't reach the iPad
+- **I want to** find there the build the devices last got
+- **so that** the page is never behind what is installed, without anyone remembering to run `just ota`
+
+#### Acceptance Criteria:
+- **Scenario:** A network install
+- **Given:** BugKit's `ota-upload.sh` is in `~/gits/bug-kit` and BugKit's config names the builds folder
+- **When:** `just deploy` installs a commit on one device or more
+- **Then:** that installed bundle is copied to /builds as `grabber-<first 8 of the commit>.ipa` in the background, the deploy goes on to its build check without waiting, and its outcome is a line in `~/tmp/agent/notes/ota-uploads.log`
+
+---
+
+### User Story 1635:
+
+- **Summary:** A cable install lands on /builds too
+- **Status:** implemented in 8db79dfa with BugKit's `ota-upload.sh` (bug-kit bead `bug-a5y`, its PR not merged yet); unverified here until that PR lands
+- **Why:** see story 1634
+- **Issues:** bead `context-grabber-59m0` (bug-kit `bug-a5y`)
+- **Spec:** [Development builds over the air](../superpowers/specs/2026-11-22-ota-builds-design.md), *Every install lands on /builds*
+
+#### Use Case:
+- **As Igor,** installing from the Cockpit's /builds page when the Mac can't reach the iPad
+- **I want to** find there the build I just installed over the cable
+- **so that** the cable install, which doesn't go through `just deploy`, keeps the page current as well
+
+#### Acceptance Criteria:
+- **Scenario:** A cable install
+- **Given:** BugKit's `ota-upload.sh` is in `~/gits/bug-kit` and BugKit's config names the builds folder
+- **When:** `just native-run-device` installs on the phone or the iPad
+- **Then:** the installed bundle is copied to /builds as `grabber-<first 8 of the commit>.ipa` in the background, before the launch, which doesn't wait for it
+
+---
+
+### User Story 1636:
+
+- **Summary:** A commit already on /builds is touched, not copied again
+- **Status:** implemented in 8db79dfa with BugKit's `ota-upload.sh` (bug-kit bead `bug-a5y`, its PR not merged yet); unverified here until that PR lands
+- **Why:** see story 1634
+- **Issues:** bead `context-grabber-59m0` (bug-kit `bug-a5y`)
+- **Spec:** [Development builds over the air](../superpowers/specs/2026-11-22-ota-builds-design.md), *Every install lands on /builds*
+
+#### Use Case:
+- **As Igor,** installing from the Cockpit's /builds page when the Mac can't reach the iPad
+- **I want to** see a reinstalled build as the newest on the page
+- **so that** the page shows what the devices last got without a second copy of the same ipa
+
+#### Acceptance Criteria:
+- **Scenario:** Already on the page
+- **Given:** /builds already has the installed commit's ipa
+- **When:** an install finishes
+- **Then:** that ipa is touched rather than copied, so it shows as the newest
+
+---
+
+### User Story 1637:
+
+- **Summary:** An uncommitted build goes up under a -dirty name
+- **Status:** implemented in 8db79dfa with BugKit's `ota-upload.sh` (bug-kit bead `bug-a5y`, its PR not merged yet); unverified here until that PR lands
+- **Why:** see story 1634
+- **Issues:** bead `context-grabber-59m0` (bug-kit `bug-a5y`)
+- **Spec:** [Development builds over the air](../superpowers/specs/2026-11-22-ota-builds-design.md), *Every install lands on /builds*
+
+#### Use Case:
+- **As Igor,** installing from the Cockpit's /builds page when the Mac can't reach the iPad
+- **I want to** tell a build made from uncommitted changes from the commit it started at
+- **so that** a clean commit's ipa on the page is never replaced by a different build
+
+#### Acceptance Criteria:
+- **Scenario:** Uncommitted
+- **Given:** the installed build was made from uncommitted changes
+- **When:** an install finishes
+- **Then:** it goes up as `grabber-<commit>-dirty.ipa`, never under the clean name
+
+---
+
+### User Story 1639:
+
+- **Summary:** An unreachable Cockpit never fails an install
+- **Status:** implemented in 8db79dfa with BugKit's `ota-upload.sh` (bug-kit bead `bug-a5y`, its PR not merged yet); unverified here until that PR lands
+- **Why:** see story 1634
+- **Issues:** bead `context-grabber-59m0` (bug-kit `bug-a5y`)
+- **Spec:** [Development builds over the air](../superpowers/specs/2026-11-22-ota-builds-design.md), *Every install lands on /builds*
+
+#### Use Case:
+- **As Igor,** installing from the Cockpit's /builds page when the Mac can't reach the iPad
+- **I want to** have the install and launch succeed even when /builds can't be reached
+- **so that** a copy that fails costs nothing but a line in the log
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit is unreachable
+- **Given:** the copy to /builds fails
+- **When:** an install finishes
+- **Then:** the install and the launch still succeed, nothing on the page is replaced, and `~/tmp/agent/notes/ota-uploads.log` says the copy failed

@@ -106,6 +106,18 @@ that the Mac stayed locked.
 On the iPad: open the Cockpit's /builds page and install the newest `grabber-<sha>.ipa`. How the page offers the
 install is the Cockpit's side (igor2), not this repo's. *Unverified here: the install from the page.*
 
+## Every install lands on /builds
+
+Stories 1634–1637 and 1639 ([spec](superpowers/specs/2026-11-22-ota-builds-design.md), "Every install lands on /builds"). After
+`just deploy` (BugKit's `deploy-all.sh`) or `just native-run-device` installs a build, BugKit's `ota-upload.sh` copies
+that very bundle to the Cockpit's builds folder as `grabber-<sha8>.ipa`, in the background: the install and the launch
+don't wait, and a failed copy never fails them. It reads the commit from the bundle (`-dirty` when built from
+uncommitted changes), touches rather than copies a commit already there, and logs each outcome to
+`~/tmp/agent/notes/ota-uploads.log`. The destination is `"ota"` in `~/.config/bug-kit/apps.json` (the app's
+`ota_name`, `grabber`, names the file); `OTA_UPLOAD=0` turns it off. It is BugKit's (bug-kit bead `bug-a5y`, docs/ops/deploying.md
+"Over the air"), so it does nothing until `~/gits/bug-kit` has the script. This copy is the Debug build the devices
+run; `just ota`'s is Release.
+
 ## After each merge batch: `just ota-watch`
 
 `just ota-watch` (story 1029) polls origin/main every minute. When main has merges since the last build and then ten
