@@ -169,6 +169,42 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   the refused `add_strokes` and the meaning ops on those strokes; dismissing the problem discards them.
 - Undo works on the local history only; an undo after sync is a new change and can itself be refused.
 
+### 7a. The cache and queue as built (lane 70, 2026-11-25, to Larry's store spec 2bf00b04 sections 3 and 6)
+
+`BoardStoreCache` in BoardCore, a value type the app persists (Codable) and drives; no network, no UI. Stories
+1330-1334 and 1301.
+
+- **State**: `rev` (the base: the last revision whose ops the cache has all seen), `things` (id → body, kind, rev,
+  author, erased; an erased thing keeps its body so a local `restore` can bring it back), `deleted`, `queue` (batches,
+  oldest first; only `queue[0]` may be frozen), `setAside` (ops refused `deleted`), `notes` (refusals to show),
+  `needsPull`, `needsReload`.
+- **Per id**: one function turns a storage op into the ids it lands with their bodies after (`add_strokes`' strokes,
+  an add's or group's or header's own id with the op as its body, `set`'s `bodies`, `erase`/`remove_overlay`/`replace`'s
+  ids to an erased tombstone, `restore` to the kept body, `rename`/`paper` to `@board`, `delete_board` to deleted).
+  The same function shows the queue on top of the snapshot (`view`), folds in the device's own answered batch per id
+  minus what `refused` names (spec 3: never per applied index), and the pulled `ops?since` batches use their own
+  `{ids, bodies}` directly.
+- **Freeze**: `freeze(batchID:)` gives `queue[0]` its id and `base_rev = rev` once; the app writes the cache to disk
+  before the request leaves, so a kill mid-send retries the same body and id. A later batch's base is set only when it
+  is frozen, after the earlier answer.
+- **Answer**: `ok: false` keeps the batch frozen and queued. A 409 `batch_id_reused` is a copyable error, the batch
+  stays. `ahead` sets `needsReload`. Otherwise the batch leaves the queue; refusals become notes; `deleted` ones go to
+  `setAside`; `exists` on an add is re-added under `<id>-<slug>` as a new queued add (for a partly refused reply, only
+  the refused parts, never an own id that already landed; its landed marks stay in the folded op). Caught up (applied
+  non-empty and rev == base+1, or applied empty and rev == base): the batch folds in and `rev` moves; otherwise
+  `needsPull`, and the batch's own landed ids come back in the pull, recognised by `batch_id`.
+- **Pull**: `pull(rev:batches:)` applies each batch's bodies (an id new to the copy takes its kind from the op); an
+  `admin` batch sets `needsReload` and the check below waits for the reload, so a delete Larry undid in the same pull
+  refuses nothing. Otherwise the unsent queue runs through `BoardStoreClash.apply` as one batch at the **old** base,
+  against things whose rev is the pulled rev when a foreign batch changed them and the old base otherwise (the
+  device's own batches, the frozen one in flight included, don't clash with its own queue). The batch in flight goes
+  first so later saves build on it, but its refusals are ignored and it is never rebuilt. Each refused op leaves the
+  queue with a note, so the view shows the pulled body; then `rev` moves (never backwards).
+- **Reload**: `reload(snapshot)` replaces things and rev, keeps the queue and set-aside ink, and runs the same rebase
+  check at the reloaded rev against nothing changed, so only `deleted` and `exists` can refuse.
+- **Keep my ink as a new board**: `keptInk(newID:)` gives the create body (old name + " (kept ink)", old paper) and the
+  set-aside adds as one batch at base 0.
+
 ## 8. Migration
 
 - **iPad (and any device with boards it drew)**: per board, decode the drawing, write the board as one `POST /boards`
