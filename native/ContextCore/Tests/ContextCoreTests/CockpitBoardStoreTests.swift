@@ -232,6 +232,35 @@ final class CockpitBoardStoreTests: XCTestCase {
     XCTAssertTrue(problem?.contains(cockpit) == true)
     XCTAssertTrue(problem?.contains("ops?since=5") == true)
   }
+
+  // Story 1341: a save leaves only once its frozen copy is on disk; a copy that can't be written stops the pass first.
+  func testAnUnwrittenCopySendsNothing() async {
+    let store = FakeStore()
+    var cache = board()
+    cache.enqueue([["op": "add_strokes", "strokes": [stroke("s1")]]])
+    var writes = 0
+    let report = await sync(store).run(&cache) { _ in
+      writes += 1
+      if writes > 1 { throw CocoaError(.fileWriteOutOfSpace) }
+    }
+    let asked = await store.asked
+    XCTAssertEqual(asked, ["GET /boards/b-1/ops?since=5"], "no POST without the frozen copy on disk")
+    XCTAssertNotNil(report.problem)
+    XCTAssertEqual(report.sent, 0)
+  }
+
+  // An ops answer with no rev is a problem, not a clean pass.
+  func testAnAnswerWithoutRevIsAProblem() async {
+    var cache = board()
+    cache.enqueue([["op": "add_strokes", "strokes": [stroke("s1")]]])
+    let sync = CockpitBoardSync(
+      cockpit: cockpit, device: "ipad-7c2e", by: "igor",
+      send: { _ in (200, CockpitBoardStore.data(["batches": []])) }, newBatchID: { "x" }, now: { "t" })
+    let report = await sync.run(&cache) { _ in }
+    XCTAssertTrue(report.problem?.contains("ops?since=5") == true)
+    XCTAssertFalse(report.pulled)
+    XCTAssertEqual(cache.queue.count, 1)
+  }
 }
 
 private final class IDs: @unchecked Sendable {

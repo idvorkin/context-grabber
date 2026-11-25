@@ -157,26 +157,29 @@ public struct CockpitBoardSync: Sendable {
         cache.reload(snapshot: snapshot, slug: device)
         report.pulled = true
         fetched = true
-        try? save(cache)
+        guard stored(cache, save, &report) else { return report }
         continue
       }
       if cache.needsPull || !fetched {
         guard
           let answer = await ask(
-            try CockpitBoardStore.opsRequest(board: board, since: cache.rev, cockpit: cockpit), &report),
-          let rev = answer["rev"]?.int
+            try CockpitBoardStore.opsRequest(board: board, since: cache.rev, cockpit: cockpit), &report)
         else { return report }
+        guard let rev = answer["rev"]?.int else {
+          report.problem = problem("GET /boards/\(board)/ops?since=\(cache.rev)", error: "answer without rev")
+          return report
+        }
         cache.pull(rev: rev, batches: answer["batches"]?.array ?? [], slug: device)
         report.pulled = true
         fetched = true
-        try? save(cache)
+        guard stored(cache, save, &report) else { return report }
         continue
       }
       // The save in flight keeps its name; only a fresh one gets a new one.
       guard report.sent < limit, let first = cache.queue.first,
         let batch = cache.freeze(batchID: first.batchID ?? newBatchID(), deviceAt: now())
       else { break }
-      try? save(cache)
+      guard stored(cache, save, &report) else { return report }
       let request: URLRequest
       do {
         request = try CockpitBoardStore.postRequest(
@@ -195,7 +198,7 @@ public struct CockpitBoardSync: Sendable {
       }
       let outcome = cache.receive(
         status: status, answer: CockpitBoardStore.json(data) ?? [:], me: me, slug: device)
-      try? save(cache)
+      guard stored(cache, save, &report) else { return report }
       switch outcome {
       case .done:
         report.sent += 1
@@ -208,6 +211,18 @@ public struct CockpitBoardSync: Sendable {
       }
     }
     return report
+  }
+
+  private func stored(
+    _ cache: BoardStoreCache, _ save: (BoardStoreCache) throws -> Void, _ report: inout Report
+  ) -> Bool {
+    do {
+      try save(cache)
+      return true
+    } catch {
+      report.problem = "The board's copy on disk couldn't be written, so the pass stopped: \(error)"
+      return false
+    }
   }
 
   private func ask(_ make: @autoclosure () throws -> URLRequest, _ report: inout Report) async -> BoardStoreJSON? {

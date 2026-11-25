@@ -49,7 +49,9 @@ final class CockpitBoardsModel: ObservableObject {
 
   private func fail(_ error: String, reason: String, body: String) {
     loaded = true
-    log.event("board_store", ["action": "list_failed", "reason": reason, "error": error, "cockpit": cockpit])
+    if problem == nil {
+      log.event("error", ["where": "cockpit_boards", "reason": reason, "message": error, "cockpit": cockpit])
+    }
     problem = BugProblem(
       message: "Cockpit not answering: the boards list didn't load (\(error))",
       context: "WhiteboardListView.cockpitBoards",
