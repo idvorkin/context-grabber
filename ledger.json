@@ -1,13 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1335,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/plus-no-markup-dataloss",
-   "at": 1795617130.547202,
-   "until": "2026-11-26T14:32:10Z"
-  },
-  {
    "id": 1299,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/board-store-encode",
@@ -22,25 +15,18 @@
    "until": "2026-11-26T15:19:11Z"
   },
   {
-   "id": 572,
-   "journey": "07-widgets-and-links.md",
-   "branch": "native/counter-week-graph-1493",
-   "at": 1795621199.99909,
-   "until": "2026-11-26T15:39:59Z"
-  },
-  {
-   "id": 573,
-   "journey": "07-widgets-and-links.md",
-   "branch": "native/counter-week-graph-1493",
-   "at": 1795622703.0136478,
-   "until": "2026-11-26T16:05:03Z"
-  },
-  {
    "id": 1302,
    "journey": "10-whiteboard-boards.md",
    "branch": "?",
    "at": 1795623507.572017,
    "until": "2026-11-26T16:18:27Z"
+  },
+  {
+   "id": 1336,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/store-cache-resent-answer-2m5r",
+   "at": 1795623787.335386,
+   "until": "2026-11-26T16:23:07Z"
   }
  ]
 }
