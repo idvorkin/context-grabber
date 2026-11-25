@@ -1071,7 +1071,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** Archive a chat from inside it
 - **Status:** native app only: implemented in [61e7f30](https://github.com/idvorkin/context-grabber/commit/61e7f30); verified by the simulator (`ChatArchiveUITests` against the fake Cockpit); not re-run since the request gained its `Content-Type` in [9ff3ded](https://github.com/idvorkin/context-grabber/commit/9ff3ded); against the real Cockpit on the iPad not yet; bead `context-grabber-t8i`: the menu's rules are `ChatArchiverTests` (host), and the menu archiving and going back stays in `ChatArchiveUITests`; since the Inbox's All / New row put *Done* below the screen, the test scrolls down to it (bead context-grabber-zlfl), passing on the simulator 2026-11-21
-- **Issues:** [#589](https://github.com/idvorkin/context-grabber/issues/589), [#591](https://github.com/idvorkin/context-grabber/issues/591), bead context-grabber-zlfl
+- **Issues:** [#589](https://github.com/idvorkin/context-grabber/issues/589), [#591](https://github.com/idvorkin/context-grabber/issues/591), bead context-grabber-zlfl, bead context-grabber-eu7u (the menu-row tap racing the menu animation)
 - **Spec:** [Chat with Larry in Grabber Native — Archiving](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
