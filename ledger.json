@@ -43,46 +43,18 @@
    "until": "2026-11-26T06:02:32Z"
   },
   {
-   "id": 1078,
-   "journey": "05-call.md",
-   "branch": "native/call-thread-link-lsue",
-   "at": 1795591473.920227,
-   "until": "2026-11-26T07:24:33Z"
-  },
-  {
-   "id": 1630,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/keep-pen-race-8dnk",
-   "at": 1795592265.079803,
-   "until": "2026-11-26T07:37:45Z"
-  },
-  {
-   "id": 1079,
-   "journey": "05-call.md",
-   "branch": "?",
-   "at": 1795592567.829747,
-   "until": "2026-11-26T07:42:47Z"
-  },
-  {
-   "id": 1080,
-   "journey": "05-call.md",
-   "branch": "?",
-   "at": 1795592567.829747,
-   "until": "2026-11-26T07:42:47Z"
-  },
-  {
-   "id": 1081,
-   "journey": "05-call.md",
-   "branch": "?",
-   "at": 1795592567.829747,
-   "until": "2026-11-26T07:42:47Z"
-  },
-  {
    "id": 1631,
    "journey": "11-building-and-testing.md",
    "branch": "native/walk-reds-links-3hj9",
    "at": 1795592971.715688,
    "until": "2026-11-26T07:49:31Z"
+  },
+  {
+   "id": 1632,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/ea-link-sim-install-3hj9",
+   "at": 1795594552.6021261,
+   "until": "2026-11-26T08:15:52Z"
   }
  ]
 }
