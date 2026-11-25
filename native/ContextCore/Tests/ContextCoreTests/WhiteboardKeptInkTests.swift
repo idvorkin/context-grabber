@@ -135,6 +135,7 @@ final class WhiteboardKeptInkTests: XCTestCase {
     let paper = [255, 255, 255]
     let bytes: [UInt8] = [186, 57, 230, 255, 190, 60, 225, 255, 10, 10, 10, 255, 120, 200, 120, 255]
     let sorted = WhiteboardKeptInk.sort(rgba: bytes, width: 2, height: 2, paper: paper, ink: purple)
-    XCTAssertEqual(sorted, KeptInkColours(ink: 2, dark: 1, other: 1, inkWidth: 2, inkHeight: 1, allWidth: 2, allHeight: 2))
+    XCTAssertEqual(
+      sorted, KeptInkColours(ink: 2, dark: 1, other: 1, inkWidth: 2, inkHeight: 1, allWidth: 2, allHeight: 2))
   }
 }
