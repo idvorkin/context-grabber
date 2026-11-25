@@ -148,7 +148,8 @@ sections 3 and 6). This section is what Igor sees of it on a drawing device.
   thing it hadn't seen, so no clash slips past.
 - **Knowing it's caught up.** After an answer, the device takes its own change in without asking again only when
   nothing else landed in between: one new version if its change landed, none if nothing did. Otherwise it first
-  fetches what it missed.
+  fetches what it missed. A late answer to a save the device has meanwhile fetched, with whatever landed over it, changes
+  nothing: the device never puts its older ink back over a newer change.
 - **A refused change is undone on the device**, and its copyable note names the thing, who changed it and when. New
   ink that collides with a name already on the board is never dropped. It is added back under a new name, and the note
   says so.
