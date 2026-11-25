@@ -41,6 +41,25 @@ final class ChatThreadSearchUITests: XCTestCase {
     field.typeText(words)
   }
 
+  /// Every thread row on screen. The fake Cockpit's list grows as other chat tests start threads, so a fixed row can sit
+  /// out of view (bead context-grabber-bsvc, like 6d1b): the list is judged by its rows, never by one id's position.
+  private func rows(_ app: XCUIApplication, except id: String? = nil) -> XCUIElementQuery {
+    let thread = NSPredicate(format: "identifier BEGINSWITH %@", "chat-thread-")
+    guard let id else { return app.buttons.matching(thread) }
+    return app.buttons.matching(
+      NSCompoundPredicate(andPredicateWithSubpredicates: [thread, NSPredicate(format: "identifier != %@", id)]))
+  }
+
+  /// True once `query` has `test(count)` true, looking every 0.1 s.
+  private func count(_ query: XCUIElementQuery, within seconds: TimeInterval = 10, _ test: (Int) -> Bool) -> Bool {
+    let deadline = Date().addingTimeInterval(seconds)
+    repeat {
+      if test(query.count) { return true }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+    } while Date() < deadline
+    return test(query.count)
+  }
+
   private func gone(_ element: XCUIElement, within seconds: TimeInterval = 10) -> Bool {
     let done = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
     return XCTWaiter().wait(for: [done], timeout: seconds) == .completed
@@ -55,10 +74,10 @@ final class ChatThreadSearchUITests: XCTestCase {
     app.launchEnvironment["GRABBER_INBOX"] = "open"
     app.launch()
 
-    let laptops = app.buttons["chat-thread-igor2-88g.817"]
-    let poll = app.buttons["chat-thread-igor2-88g.900"]
+    let laptopsID = "chat-thread-igor2-88g.817"
+    let laptops = app.buttons[laptopsID]
     let travel = app.buttons["chat-thread-igor2-88g.1443"]
-    XCTAssertTrue(poll.appears(within: 20), app.debugDescription)
+    XCTAssertTrue(rows(app).firstMatch.appears(within: 20), "the list loaded: \(app.debugDescription)")
     // The box sits under the title and shows once the list is pulled down a little.
     let field = app.searchFields.firstMatch
     if !field.exists { app.collectionViews.firstMatch.swipeDown() }
@@ -67,7 +86,8 @@ final class ChatThreadSearchUITests: XCTestCase {
     // Story 1616: a title's word, any case: only that thread.
     search(field, "LAPTOPS")
     XCTAssertTrue(laptops.appears(within: 10), app.debugDescription)
-    XCTAssertTrue(gone(poll), "only the matching thread: \(app.debugDescription)")
+    XCTAssertTrue(
+      count(rows(app, except: laptopsID)) { $0 == 0 }, "only the matching thread: \(app.debugDescription)")
     let shot = XCTAttachment(screenshot: app.screenshot())
     shot.name = "chat-search-laptops"
     shot.lifetime = .keepAlways
@@ -94,7 +114,7 @@ final class ChatThreadSearchUITests: XCTestCase {
 
     // An emptied box brings the list back; a tap on a result opens the thread.
     search(field, "")
-    XCTAssertTrue(poll.appears(within: 10), "the list is back: \(app.debugDescription)")
+    XCTAssertTrue(count(rows(app)) { $0 > 1 }, "the list is back: \(app.debugDescription)")
     search(field, "laptops")
     XCTAssertTrue(laptops.appears(within: 10), app.debugDescription)
     laptops.tap()
