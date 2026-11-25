@@ -27,7 +27,8 @@ updates by itself; while it is not, the phone checks now and then and notifies I
 - Instant alerts like Telegram's. That needs real push and a paid developer account; a later spec (option C) if
   wanted. Telegram stays available for anything that must arrive at once.
 - Larry starting a conversation that only Telegram carries. Threads Larry starts on the Cockpit do appear here.
-- Searching, renaming or deleting threads from the phone. Archiving is the phone's way to close one (#589).
+- Renaming or deleting threads from the phone. Archiving is the phone's way to close one (#589). Searching them is in
+  (Igor, 2026-11-24, #1443), below.
 - A voice conversation inside a thread (the Call screen is that). Speaking a message is in (#448): it becomes text
   Igor reads before he sends.
 - Sharing a file in from another app (#633). A file reaches a thread through the paperclip; the share card takes no files.
@@ -46,6 +47,19 @@ around them, and the end of the list scrolls up clear of them, so no row is ever
 button itself, only on the rest of the row. The **+** starts a new thread. Pull to refresh. With no network, the quiet offline line from the Inbox stays.
 
 **Decision cards** (Igor, 2026-11-14, #878). Larry's asks — the Cockpit's Inbox of decisions — show in Chat: the card at the top of the chat the ask continues, *Decision waiting* on that thread's row, and *Decisions (N)* under Larry's pinned thread with every open ask as a card. A tap on an option answers it; the card's **⋯** snoozes, closes or abandons it. *Decisions* has a search box that finds asks, open or answered, by words anywhere in them, as the Cockpit's Inbox search does (Igor, 2026-11-22, bead context-grabber-4dme). The whole behaviour is its own spec: [Decision cards in Chat](2026-11-14-chat-decision-cards-design.md).
+
+**Searching the threads** (Igor, 2026-11-24, #1443: "Didn't we add search from thread list" → "Yes"; the Cockpit's
+Stream has the same box). The list has a search box above its rows, as *Decisions* does. Words typed there, once typing
+rests, show only the chats that say every one of them, case ignored and in any order: in the thread's title, its newest
+message, or the bead it belongs to (its description and its ask's options and answer), the same words the Stream's search
+reads. Done and archived chats count too, so an old thread can be found; they show after the live ones. Each result is the
+thread's usual row, with the words marked in its title and message line, and a tap opens the thread. While a search shows,
+the *All* / *New* picker, *Decisions*, and *Done* step aside; emptying the box, or Cancel, brings the list back exactly as
+it was. With no match the list says *No chats match.* The rows the phone already has answer at once; the Cockpit's part
+follows, and when the Cockpit can't be reached the phone's own matches still show, with a copyable problem saying the
+Cockpit's part is missing. The session log records each search's word and character counts and how many it found, never
+the words. Words that appear only deep inside an older message, not the newest one, wait on the Cockpit searching message
+text (asked of Larry, 2026-11-24).
 
 **Archiving** (Igor, 2026-11-01: "Let me archive threads both via swipe and via buttons in chat overflow"; #589, the
 Cockpit's archive shipped first). Swiping a thread left in the list offers *Archive*; it folds under *Done* at once,
@@ -908,6 +922,12 @@ asked him to confirm the build and he couldn't tell; only board pictures said).
 - A jump, or *Board*, to a board that isn't here waits on iCloud no more than about five seconds: when iCloud is slow to
   answer, the copyable problem shows by then and says iCloud hadn't answered, and the session log's find says so
   (context-grabber-4qel).
+
+- Searching the threads (#1443): words in the list's box show only the chats whose title, newest message or bead says
+  every word, case ignored; Done and archived ones count and show after the live ones; the words are marked; a tap opens
+  the thread; an emptied box brings the list back as it was; no match says *No chats match.*
+- When the Cockpit's search fails, the phone's own matches still show, under a copyable problem naming the search and
+  the Cockpit's answer.
 
 ## Depends on the Cockpit
 

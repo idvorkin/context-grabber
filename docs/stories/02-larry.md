@@ -3656,3 +3656,59 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** Health has mindful minutes for Monday and for today, and I neither tapped meditation nor ran Box breathing on either day
 - **When:** the week is sent on Tuesday
 - **Then:** today's meditation is done by Health, Monday's is not done, and both days still carry their mindful minutes
+||||||| parent of 10f31831 (Spec and stories 1616-1618: search the chat thread list (#1443))
+---
+
+### User Story 1616:
+
+- **Summary:** Search the chat list for a thread by its words
+- **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
+- **Status:** planned
+- **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor looking for a chat I remember a few words of
+- **I want to** type them into a search box on the chat list and see only the threads that say them
+- **so that** I can find a thread on the phone as I do on the Cockpit's Stream, without scrolling the whole list
+
+#### Acceptance Criteria:
+- **Scenario:** Words in a thread's title or newest message
+- **Given:** a chat titled "Ramen in Ashland" and others that never say ramen
+- **When:** I type "ashland ramen" in the list's search box and pause
+- **Then:** the list is that chat's row with the words marked, and a tap opens the thread
+
+### User Story 1617:
+
+- **Summary:** A chat list search reaches the bead the chat belongs to
+- **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
+- **Status:** planned
+- **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor whose words are in the bead a chat belongs to, not in its title or newest message
+- **I want to** the search to find the chat anyway, as the Cockpit's Stream search does
+- **so that** the phone and the laptop find the same threads
+
+#### Acceptance Criteria:
+- **Scenario:** A word only in the chat's bead
+- **Given:** a chat whose bead description says "passport" and whose title and newest message do not
+- **When:** I search "passport"
+- **Then:** once the Cockpit answers, that chat's row shows; a done or archived chat that matches shows after the live ones
+
+### User Story 1618:
+
+- **Summary:** The chat list search survives the Cockpit being down and leaves the list as it was
+- **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
+- **Status:** planned
+- **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor searching while the Cockpit is unreachable
+- **I want to** still see the chats the phone itself can match, with a plain note of what is missing
+- **so that** a down Cockpit never leaves me with nothing, and clearing the box puts my list back
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit's search fails
+- **Given:** the Cockpit answers the search with a 502
+- **When:** I search words a chat's title says
+- **Then:** that chat's row shows under a copyable problem naming the search and the 502; with no match at all the list says *No chats match.*; emptying the box brings back the list, its *All*/*New* choice and *Decisions* as they were
