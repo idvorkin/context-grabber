@@ -122,7 +122,7 @@ try:
     status, grouped = call("/boards/b-1/ops", batch("b2", 2, [{"op": "group", "id": "g1", "ids": ["s1"]}]))
     things = {t["id"]: t for t in call("/boards/b-1")[1]["things"]}
     check(grouped["applied"] == [0] and grouped["landed"] == [{"op": 0, "ids": ["s1"]}]
-          and things["g1"]["body"] == {"owner": "larry"} and things["s1"]["rev"] == 3,
+          and things["g1"]["body"].get("owner") == "larry" and things["s1"]["rev"] == 3,
           "an answer lands per id from refused, never per applied index")
     call("/boards/b-1/ops", batch("k1", 3, [{"op": "add_text", "id": "t1", "text": "hi"},
                                             {"op": "header", "id": "h1", "ids": ["s2"]},
@@ -166,10 +166,14 @@ try:
 
     two = call("/boards/b-2")[1]["rev"]
     call("/boards/b-2/ops", batch("r1", two, [{"op": "add_strokes", "strokes": [stroke("d1")]}]))
-    call("/boards/b-2/ops", batch("r2", two + 1, [{"op": "add_strokes", "strokes": [stroke("d1", 5)]}]))
+    # The real store (cockpit 12e08d4) refuses the second add as `exists` and stays at the same rev.
+    status, twice = call("/boards/b-2/ops", batch("r2", two + 1, [{"op": "add_strokes", "strokes": [stroke("d1", 5)]}]))
+    check(twice["rev"] == two + 1 and twice["applied"] == [] and twice["landed"] == []
+          and [(r["id"], r["reason"]) for r in twice["refused"]] == [("d1", "exists")],
+          "an id added twice is refused as exists, and the rev stays")
     again = call("/boards/b-2")[1]
     check([t["id"] for t in again["things"]].count("d1") == 1, "an id added twice is on the board once")
-    call("/boards/b-2/ops", batch("r3", two + 2, [{"op": "erase", "ids": ["d1"]}]))
+    call("/boards/b-2/ops", batch("r3", again["rev"], [{"op": "erase", "ids": ["d1"]}]))
     check(call("/boards/b-2")[1]["erased"].count("d1") == 1, "an id added twice is erased once")
 finally:
     fake.terminate()

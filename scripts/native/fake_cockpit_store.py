@@ -176,6 +176,20 @@ def added(op, tid):
     return None
 
 
+def already(board, ops, refused):
+    """Adds of ids the board already holds, refused `exists` as the real store does (cockpit 12e08d4): the clash rule
+    is the device's, but an id is added once, so a second add lands nothing and the rev stays. Skips what `refused`
+    already names."""
+    named_already = {(r.get("op"), r.get("id")) for r in refused}
+    out = []
+    for index, op in enumerate(ops):
+        for tid in named(op)[0]:
+            if tid in board["things"] and (index, tid) not in named_already:
+                thing = board["things"][tid]
+                out.append({"op": index, "id": tid, "reason": "exists", **stamp(thing["rev"], thing)})
+    return out
+
+
 def stamp(rev, who):
     return {"rev": rev, "device": who["device"], "by": who["by"], "at": who["at"]}
 
@@ -372,6 +386,7 @@ def post(path, data):
             rev, applied, landed = board["rev"], [], []
         else:
             refused = (armed or {}).get("refused") or []
+            refused = refused + already(board, ops, refused)
             rev, applied, landed = commit(board, ops, refused, who, data["batch_id"])
         answer = {"ok": True, "contract": 2, "batch_id": data["batch_id"], "rev": rev, "applied": applied,
                   "refused": refused, "landed": landed, "replay": False,
