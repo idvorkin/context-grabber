@@ -224,7 +224,7 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   public mutating func hide(_ id: String, _ on: Bool) -> Bool {
     guard let i = cards.firstIndex(where: { $0.id == id }) else { return false }
     cards[i].hidden = on
-    if !on { cards[i].x = Self.inPage(x: cards[i].x, width: Self.box(cards[i]).width) }
+    if !on { cards[i].x = Self.inPage(x: cards[i].x, width: Self.room(cards[i])) }
     return true
   }
 
@@ -233,9 +233,14 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   @discardableResult
   public mutating func move(_ id: String, to: CGPoint) -> CGPoint? {
     guard let i = cards.firstIndex(where: { $0.id == id }) else { return nil }
-    cards[i].x = Self.inPage(x: to.x, width: Self.box(cards[i]).width)
+    cards[i].x = Self.inPage(x: to.x, width: Self.room(cards[i]))
     cards[i].y = max(0, to.y)
     return CGPoint(x: cards[i].x, y: cards[i].y)
+  }
+
+  /// The width a card keeps inside the page: a '?' its own, a card with a strip a full card's, so the strip stays on it.
+  private static func room(_ card: WhiteboardQuestion) -> CGFloat {
+    card.hidden ? mark : width
   }
 
   private static func inPage(x: CGFloat, width: CGFloat) -> CGFloat {

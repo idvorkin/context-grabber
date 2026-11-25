@@ -392,7 +392,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1319:
 
 - **Summary:** A double tap steps a question card to its next look
-- **Status:** implemented in 'beda7f13' and '3df0c091', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests`: `testCollapseStepsAnAnsweredCardFullThenShortThenRound`, `testCollapseTakesAnOpenCardStraightToRound`, `testADoubleTapCyclesAndWrapsFromRoundToFull`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests`: `testCollapseStepsAnAnsweredCardFullThenShortThenRound`, `testCollapseTakesAnOpenCardStraightToRound`, `testADoubleTapCyclesAndWrapsFromRoundToFull`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *A double tap cycles the card's looks*
 
@@ -412,7 +412,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1320:
 
 - **Summary:** An answered question reads as plain text on the board
-- **Status:** implemented in 'beda7f13' and '3df0c091', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testAnAnsweredRoundIsATickAndAnOpenOneAQuestionMark`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testAnAnsweredRoundIsATickAndAnOpenOneAQuestionMark`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *An answered card reads as text*
 
@@ -432,7 +432,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1321:
 
 - **Summary:** A question card's controls are always in the same spot
-- **Status:** implemented in 'beda7f13' and '3df0c091', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testEachLookOffersItsControlsInOneOrder`, `testTheStripSitsAtTheSamePlaceInEveryLook`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testEachLookOffersItsControlsInOneOrder`, `testTheStripSitsAtTheSamePlaceInEveryLook`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *The controls sit in one spot*
 
@@ -447,12 +447,17 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I look for each card's controls
 - **Then:** each card has a strip of icons at a full card's right end, inside it, Collapse, Open out, Archive and Thinking each in its own slot, showing only those that card's look allows, the others' slots empty, so no icon moves between looks
 
+- **Scenario:** A short card dragged to the page's edge
+- **Given:** an answered card collapsed to its short line
+- **When:** I drag it past the page's right edge
+- **Then:** it stops where its strip still fits on the page, so its controls never leave the page
+
 ---
 
 ### User Story 1325:
 
 - **Summary:** One set of words and marks for a question card's looks, as on the web board
-- **Status:** implemented in 'beda7f13' and '3df0c091', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testOpenOutGoesBackToFullFromAnyLook`, `testAnAnsweredRoundIsATickAndAnOpenOneAQuestionMark`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
+- **Status:** implemented in '99ab9be0' and '4bd1a6ed', held for Igor's design call on the before and after pictures (the board's preview of every look, `just render-preview App/Whiteboard/WhiteboardQuestionLooks+Preview.swift`). Verified by host tests (`WhiteboardQuestionsLooksTests.testOpenOutGoesBackToFullFromAnyLook`, `testAnAnsweredRoundIsATickAndAnOpenOneAQuestionMark`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests` 5/5: the strip's Collapse, Open out and Archive, the double tap's cycle, the strip staying put between looks); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *The card's looks*
 

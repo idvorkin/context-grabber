@@ -131,7 +131,7 @@ and the strip were drawn before and after (the board's preview of every look) fo
 
 **Moving a card** (#1387: *"I should be able to move it around, and move questions"*). A card, a chip or a *?* can be
 dragged anywhere on the board, with a finger or the Pencil: it follows the touch and stays where it is let go, kept
-inside the page, and it stays there when the board is opened again. A drag never opens the popup and never draws; a
+inside the page (a card that carries a strip, a short one too, by a full card's width, so its strip stays on the page), and it stays there when the board is opened again. A drag never opens the popup and never draws; a
 tap without moving still opens it. With the eraser in hand nothing moves: a stroke that starts on a card erases or
 leaves it, as below.
 

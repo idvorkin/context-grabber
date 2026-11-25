@@ -144,7 +144,7 @@ final class WhiteboardQuestionUITests: XCTestCase {
       card.doubleTap()
       waitUntil(NSPredicate(format: "label == %@", label), card, timeout: 5)
     }
-    XCTAssertFalse(app.staticTexts["Renew"].exists && app.buttons["whiteboard-question-close"].exists, "no popup")
+    XCTAssertFalse(app.buttons["whiteboard-question-close"].exists, "no popup")
   }
 
   /// Story 1130 (Igor, 2026-11-22): Larry's own-answer option, keyed other and labelled *Something else*, is in the
