@@ -191,7 +191,6 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     add(picture)
   }
 
-  /// A stroke and the ghost that answers it, settled.
   /// How many pause turns the fake Cockpit has been asked so far, by any board (story 1171).
   private func turnsAsked(_ cockpit: String) throws -> Int {
     let url = try XCTUnwrap(URL(string: cockpit + "/fake/turns"))
@@ -220,6 +219,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTFail("the pause after the second stroke never asked: \(app.debugDescription)")
   }
 
+  /// A stroke and the ghost that answers it, settled.
   private func strokeBringsAGhost(_ app: XCUIApplication) -> PaperScreen.Box? {
     stroke(app)
     wait(ghosts(app), label: "Ask at my pauses: on, 1 showing", timeout: 10)
