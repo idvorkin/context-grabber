@@ -34,4 +34,21 @@ final class BoardOutlineHeaderLineTests: XCTestCase {
     let hidden = Set(o.strokes.filter(\.hidden).flatMap(\.ids))
     XCTAssertEqual(hidden, ["a0", "a1", "a2"], "the indented line under it folds; the line at the margin doesn't")
   }
+
+  func testATapBesideTheTouchedLineIsThatLinesNotTheHeaderAbove() {
+    var o = BoardOutline(strokes: board, headers: [BoardHeader(id: "h", ids: ["h0", "h1", "h2", "hg"])])
+    XCTAssertNil(o.header(at: 148), "the tap is beside the indented line, not the header whose tail touches it")
+    XCTAssertEqual(o.row(at: 148)?.names.sorted(), ["a0", "a1", "a2"])
+    XCTAssertTrue(o.markHeader(at: 148, id: "a"))
+    XCTAssertEqual(o.header(at: 148)?.id, "a")
+    XCTAssertEqual(o.header(at: 112)?.id, "h", "beside the first line is still its header")
+  }
+
+  func testTheLineAboveATouchedHeaderStaysItsOwn() {
+    var o = BoardOutline(strokes: board, headers: [BoardHeader(id: "a", ids: ["a0", "a1", "a2"])])
+    XCTAssertEqual(o.row(at: 125)?.header, nil, "beside the line with the tail, not the header it touches")
+    XCTAssertTrue(o.markHeader(at: 112, id: "h"))
+    XCTAssertEqual(o.headers.first { $0.id == "h" }?.ids.sorted(), ["h0", "h1", "h2", "hg"])
+    XCTAssertEqual(o.header(at: 125)?.id, "h")
+  }
 }

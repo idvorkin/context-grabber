@@ -236,19 +236,20 @@ public struct BoardOutline: Sendable {
       })
     else { return nil }
     let inside = us.filter { $0.bounds.minY >= r.lowerBound && $0.bounds.maxY <= r.upperBound }
-    if let header = inside.compactMap(\.header).first {
-      return Row(header: header, names: [], top: r.lowerBound, bottom: r.upperBound)
-    }
-    // cockpit-gvv: one line of his writing, the one at y. A descender grazing the line below chains the two into one
-    // room row (BoardRoom.rows), but a header is the line he tapped beside, not the paragraph.
-    let mine = inside.filter(his)
+    // cockpit-gvv: one line of his writing or a header, the one at y. A descender grazing the line below chains the two
+    // into one room row (BoardRoom.rows), but a header is the line he tapped beside, not the paragraph.
+    let mine = inside.filter { his($0) || $0.header != nil }
     guard let line = Self.line(of: mine, at: y) else {
       return Row(header: nil, names: [], top: r.lowerBound, bottom: r.upperBound)
     }
+    let lineBox = line.reduce(CGRect.null) { $0.union($1.bounds) }
+    if let header = line.compactMap(\.header).first {
+      return Row(header: header, names: [], top: lineBox.minY, bottom: lineBox.maxY)
+    }
     // its underline stays part of it, as the row's always was
     let unders = mine.filter { u in
-      !line.contains { $0.members == u.members } && u.members.count == 1 && Self.isUnderline(strokes[u.members[0]])
-        && Self.underlineOf(u.bounds, line.reduce(CGRect.null) { $0.union($1.bounds) })
+      u.header == nil && !line.contains { $0.members == u.members } && u.members.count == 1
+        && Self.isUnderline(strokes[u.members[0]]) && Self.underlineOf(u.bounds, lineBox)
     }
     let chosen = line + unders
     let box = chosen.reduce(CGRect.null) { $0.union($1.bounds) }
@@ -308,10 +309,14 @@ public struct BoardOutline: Sendable {
   }
 
   /// The header showing whose row a margin tap at `y` is on, or whose ▾ it is within reach of (#1004).
+  /// A tap on a line of ink is that line's: a header's descender reaching into the line below doesn't claim it.
   public func header(at y: CGFloat) -> BoardHeader? {
-    headers.first { header in
+    let on = row(at: y).flatMap { y >= $0.top && y <= $0.bottom && ($0.header != nil || !$0.names.isEmpty) ? $0 : nil }
+    return headers.first { header in
       guard shows(header), let box = box(header) else { return false }
-      return (y >= box.minY - Self.tapReach && y <= box.maxY + Self.tapReach) || onMark(header, y: y)
+      if onMark(header, y: y) { return true }
+      if let on { return on.header == header.id }
+      return y >= box.minY - Self.tapReach && y <= box.maxY + Self.tapReach
     }
   }
 

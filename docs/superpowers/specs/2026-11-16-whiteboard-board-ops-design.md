@@ -573,7 +573,7 @@ whiteboard skill and here, so a change to the wire on one side shows as a failur
 - Rubbing out one stroke of Larry's group leaves the rest as plain ink; his next turn says the group dissolved.
 - A margin tap beside a line makes it a header; a tap beside it folds its indented lines and the ink below closes up;
   another tap brings them back where they were. The header is only the line tapped beside: a descender on it that
-  touches the next line doesn't pull that line in, and the touched line is the first line of its section. Folding a section holding a folded header and unfolding it leaves the
+  touches the next line doesn't pull that line in, and the touched line is the first line of its section, and a tap beside the touched line is that line's (it can be made a header of its own) rather than the header's above it. Folding a section holding a folded header and unfolding it leaves the
   inner one folded. Larry's next turn lists the folded strokes under their header, and none of them as erased.
 - Fold all, 1, 2 and Unfold all on a two-level outline show what the outline would.
 - A folded header shows "▸ N lines folded" beside it. Larry's next picture shows the folded lines under the header,
