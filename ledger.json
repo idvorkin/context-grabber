@@ -134,13 +134,6 @@
    "until": "2026-11-26T04:53:16Z"
   },
   {
-   "id": 1625,
-   "journey": "11-building-and-testing.md",
-   "branch": "tools/render-preview-7xme",
-   "at": 1795583270.371326,
-   "until": "2026-11-26T05:07:50Z"
-  },
-  {
    "id": 1293,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/board-store-clash-t12b",
@@ -174,6 +167,13 @@
    "branch": "native/ink-sbs-pen-latency",
    "at": 1795584947.760082,
    "until": "2026-11-26T05:35:47Z"
+  },
+  {
+   "id": 1627,
+   "journey": "11-building-and-testing.md",
+   "branch": "chore/simslim-lanes",
+   "at": 1795585687.1865852,
+   "until": "2026-11-26T05:48:07Z"
   }
  ]
 }
