@@ -1,0 +1,79 @@
+{
+  "expect" : {
+    "ignored" : [
+
+    ],
+    "ops" : [
+
+    ]
+  },
+  "input" : {
+    "after" : {
+      "name" : "x",
+      "objects" : [
+        {
+          "id" : "t-1",
+          "kind" : "text",
+          "text" : "hi",
+          "x" : 1,
+          "y" : 2
+        }
+      ],
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-a",
+          "pts" : [
+            [
+              0,
+              0,
+              0.5
+            ],
+            [
+              10,
+              4,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        }
+      ],
+      "v" : 1
+    },
+    "before" : {
+      "name" : "x",
+      "objects" : [
+        {
+          "id" : "t-1",
+          "kind" : "text",
+          "text" : "hi",
+          "x" : 1,
+          "y" : 2
+        }
+      ],
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-a",
+          "pts" : [
+            [
+              0,
+              0,
+              0.5
+            ],
+            [
+              10,
+              4,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        }
+      ],
+      "v" : 1
+    }
+  },
+  "name" : "nothing-changed",
+  "story" : "1299",
+  "why" : "A commit that changed nothing sends nothing."
+}

@@ -80,6 +80,8 @@ POST /boards/<id>/ops
 - A board is deleted by `board.deleted` or by `@board` erased. The store keeps `deleted` as the truth and never erases
   `@board`; `delete_board` sets `deleted` only. An undelete is a Cockpit admin action outside the rule (points 1, 7).
 - A thing row without `rev` or `device` is an error, not dropped, so its id can't be added twice.
+- Every device encodes through `bw_store_encode` (BoardCore, interface 23): the web board before and after a commit
+  into storage ops, records carried whole, unknown fields included. No JavaScript or Python copy (points 9, 10).
 - Each accepted batch is one new `rev`. The answer always carries the new `rev` so the device rebases its cache.
 - *B, rejected*: no per-thing check; a batch with `base_rev < rev` would replace the board wholesale and save the
   loser as a copy board. Simpler server, but it loses the named refusal, and Igor picked C.

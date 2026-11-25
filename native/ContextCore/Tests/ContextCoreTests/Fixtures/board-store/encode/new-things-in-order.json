@@ -1,0 +1,203 @@
+{
+  "expect" : {
+    "ignored" : [
+
+    ],
+    "ops" : [
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "c" : "#1a1a1a",
+            "id" : "s-n",
+            "pts" : [
+              [
+                0,
+                80,
+                0.5
+              ],
+              [
+                10,
+                84,
+                0.59999999999999998
+              ]
+            ],
+            "w" : 2.5
+          }
+        ]
+      },
+      {
+        "ask" : "why?",
+        "id" : "c-1",
+        "kind" : "question",
+        "op" : "add_card",
+        "x" : 0,
+        "y" : 0
+      },
+      {
+        "font" : "mono",
+        "id" : "t-2",
+        "kind" : "text",
+        "op" : "add_text",
+        "text" : "note",
+        "x" : 0,
+        "y" : 120
+      },
+      {
+        "id" : "i-1",
+        "kind" : "image",
+        "op" : "overlay",
+        "sha" : "abc"
+      },
+      {
+        "id" : "g-2",
+        "ids" : [
+          "s-n"
+        ],
+        "kind" : "group",
+        "op" : "group"
+      },
+      {
+        "id" : "h-1",
+        "ids" : [
+          "s-n"
+        ],
+        "mark" : [
+          "s-a"
+        ],
+        "op" : "header"
+      },
+      {
+        "from" : {
+          "obj" : "t-2",
+          "side" : "right"
+        },
+        "id" : "k-1",
+        "op" : "connector",
+        "to" : {
+          "obj" : "g-2",
+          "side" : "left"
+        }
+      }
+    ]
+  },
+  "input" : {
+    "after" : {
+      "connectors" : [
+        {
+          "from" : {
+            "obj" : "t-2",
+            "side" : "right"
+          },
+          "id" : "k-1",
+          "to" : {
+            "obj" : "g-2",
+            "side" : "left"
+          }
+        }
+      ],
+      "headers" : [
+        {
+          "id" : "h-1",
+          "ids" : [
+            "s-n"
+          ],
+          "mark" : [
+            "s-a"
+          ]
+        }
+      ],
+      "objects" : [
+        {
+          "ask" : "why?",
+          "id" : "c-1",
+          "kind" : "question",
+          "x" : 0,
+          "y" : 0
+        },
+        {
+          "id" : "g-2",
+          "ids" : [
+            "s-n"
+          ],
+          "kind" : "group"
+        },
+        {
+          "font" : "mono",
+          "id" : "t-2",
+          "kind" : "text",
+          "text" : "note",
+          "x" : 0,
+          "y" : 120
+        },
+        {
+          "id" : "i-1",
+          "kind" : "image",
+          "sha" : "abc"
+        }
+      ],
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-a",
+          "pts" : [
+            [
+              0,
+              0,
+              0.5
+            ],
+            [
+              10,
+              4,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        },
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-n",
+          "pts" : [
+            [
+              0,
+              80,
+              0.5
+            ],
+            [
+              10,
+              84,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        }
+      ],
+      "v" : 1
+    },
+    "before" : {
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-a",
+          "pts" : [
+            [
+              0,
+              0,
+              0.5
+            ],
+            [
+              10,
+              4,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        }
+      ],
+      "v" : 1
+    }
+  },
+  "name" : "new-things-in-order",
+  "story" : "1299",
+  "why" : "New things go up after the strokes they refer to: text, card and other objects, then groups, headers and connectors."
+}

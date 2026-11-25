@@ -1,0 +1,13 @@
+{
+  "expect" : {
+    "error" : "no before"
+  },
+  "input" : {
+    "after" : {
+      "v" : 1
+    }
+  },
+  "name" : "no-before",
+  "story" : "1299",
+  "why" : "Missing input says so."
+}

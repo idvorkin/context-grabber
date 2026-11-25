@@ -590,6 +590,27 @@ version 22 and every point accepted; this version settles the rule's side of tho
   that changed it, or whose `erased` is neither true/false nor 1/0, answers `{"error": "malformed thing <name>"}`
   instead of being dropped, so an add of that name can't land a second time. A `deleted` of `null` is no delete.
 
+- **One encoder for every device** (stories 1299, 1300): new, `bw_store_encode`, input `{"before": board, "after":
+  board, "erased"?: {name: thing}}`, a board in the web board's own shape (`strokes`, `objects`, `headers`,
+  `connectors`, and the board's `name`, `paper`, `lines`, `ruled`), `erased` the erased things the device still holds
+  for undo. The answer is `{"ops": [op]}`, the storage ops that take the store from before to after, in an order the
+  rule accepts within one batch:
+  - brought back: `restore` of every erased name the after has again, then `set` for any of them that differs from
+    what was erased;
+  - taken off: one `erase` of every name the after lacks;
+  - changed: one `set {ids, bodies}` of every name whose record differs, so a change of several things lands for all
+    or none;
+  - new: one `add_strokes` of the new strokes in draw order, then each new text (`add_text`), question card
+    (`add_card`), other object (`overlay`), group (`group`), header (`header`) and connector (`connector`), its record
+    as the op's fields;
+  - the board: `rename` when the name changed, `paper` (with `lines` and `ruled`) when any of those did.
+  A record goes up as the device holds it, every field included, the ones this build doesn't know too: a stroke the
+  web drew keeps its pen data after an iPad move, and an iPad stroke keeps its texture seed after a web move. Fields
+  of the board that the store doesn't keep (the pen, Larry's bookkeeping) are listed as `"ignored": [field]` rather
+  than dropped silently. Missing input says so: `{"error": "no before" | "no after"}`.
+- **One stroke record** both sides read: the shared fixture holds strokes with every field the web and the iPad
+  write, and one this build doesn't know, and the encoder carries each through a move unchanged.
+
 `bw_info` says `"abi": 23`. Every other export's arguments and answers are as in version 22.
 
 ## Precision: a known difference from the iPad
