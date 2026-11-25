@@ -50,6 +50,9 @@ ELSEWHERE = {
     "--list": "just's own listing, not a check",
 }
 OUTCOME = {"passed": "pass", "failed": "fail", "skipped": "skip"}
+# Script checks that are simulator suites: their classes run once in the simulator rung, and the script reads as that
+# step's result rather than a second run of every class.
+SIM_SUITES = {"test-whiteboard-ui.sh": "whiteboard classes", "test-chat-ui.sh": "chat classes"}
 
 
 def sh(argv, log: Path, timeout: int, cwd=ROOT, env=None) -> int:
@@ -268,6 +271,8 @@ def main() -> int:
                 if not found:
                     scripts[ref] = {"outcome": "missing", "detail": f"no script {base} at {sha}"}
                     continue
+                if base in SIM_SUITES:
+                    continue  # a simulator suite: judged from the simulator rung's step below, not run twice
                 if found[0].name not in runnable:
                     scripts[ref] = {"outcome": "skip", "detail": f"{base} is not a script check `just test` runs"}
                     continue
@@ -292,6 +297,13 @@ def main() -> int:
             for log in sorted(LOGS.glob("ladder-*.log")):
                 if log.stat().st_mtime >= datetime.datetime.fromisoformat(started).timestamp():
                     sim.update(cases(log))
+        for ref in s:
+            base = ref.split(":", 1)[1]
+            if base in SIM_SUITES and ref not in scripts:
+                label = SIM_SUITES[base]
+                scripts[ref] = ({"outcome": "skip", "detail": "the simulator rung was not run this walk"} if not steps
+                                else {"outcome": "pass" if steps.get(label, False) else "fail",
+                                      "detail": f"the simulator rung's {label} step (the same classes)"})
         results = {**host, **sim}
         sim_rc = rc["sim"] if rc["sim"] and (not steps.get("compile", True) or not sim) else (rc["sim"] and 0)
         checks = xctest_checks(x, results, source_index(), {"host": rc["host"], "sim": sim_rc}, sha)
