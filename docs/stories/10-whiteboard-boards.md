@@ -1551,7 +1551,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1335:
 
 - **Summary:** A real board offers only what it keeps, ink, and names anything else that lands on it
-- **Status:** in progress on branch native/plus-no-markup-dataloss
+- **Status:** implemented in [863e71c1](https://github.com/idvorkin/context-grabber/commit/863e71c1); verified by lint and host tests (`just native-test`, `BoardMarkupCensusTests`), the Mac build (`just native-build-mac`) and the iPad simulator (rung 2, `IPadPaperKitBoardUITests` 2 of 2: a real board's picker has pens, eraser, lasso and ruler and no **+**; its … menu holds only Auto-Minimize, Draw with Finger and Pencil Settings; the scratch page still offers *Add Shape* and *Add Text*). A real board never had the **+**: nothing was hidden. What the four boards' extra element was awaits a `board_markup_added` line from the iPad
 - **Spec:** [The PaperKit board (a spike)](../superpowers/specs/2026-11-22-paperkit-board-spike-design.md), *Only ink is kept on a real board*
 - **Issues:** bead context-grabber-lyr4 (four boards each held one element more than their tally of strokes, never saved; `paper_not_ink`)
 
