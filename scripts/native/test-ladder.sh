@@ -55,7 +55,7 @@ json_list() { printf '%s\n' "$@" | jq -R . | jq -cs 'map(select(length > 0))'; }
 
 # The areas' classes. The suite scripts hold what each area runs in full. What an iPhone does with boards (story 746) is
 # the smoke's whiteboard section, on the phone's simulator (story 770): no class of its own, no second session.
-chat_area="ChatArchiveUITests ChatAskSearchUITests ChatCockpitDownUITests ChatDecisionUITests ChatFileUITests ChatImageUITests ChatMoveUITests ChatNewChatAgainUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests"
+chat_area="ChatArchiveUITests ChatAskSearchUITests ChatCockpitDownUITests ChatDecisionUITests ChatFileUITests ChatImageUITests ChatMoveUITests ChatNewChatAgainUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests ChatThreadSearchUITests"
 # The whiteboard's are its suite's, one a line there (story 1502): a new class is added in one place.
 whiteboard_area=$(grep -oE 'only-testing:[A-Za-z0-9]+UITests/[A-Za-z0-9]+' scripts/native/test-whiteboard-ui.sh | sed 's|.*/||' | LC_ALL=C sort | tr '\n' ' ')
 # #795: the other features' own classes, by directory. Only classes that run on the ladder's simulator and open that

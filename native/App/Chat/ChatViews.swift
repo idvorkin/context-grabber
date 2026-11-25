@@ -18,6 +18,8 @@ struct ChatListView: View {
   @State private var doneOpen = false
   /// #736: an iPad at full width and the Mac show each row's newest links; an iPhone's list is unchanged.
   @Environment(\.horizontalSizeClass) private var widthClass
+  /// #1443, stories 1616-1618: the words in the list's search box and the Cockpit's part of the answer.
+  @StateObject private var search: ChatThreadSearchModel
 
   init(chat: ChatModel, voice: ChatVoiceModel, logger: @escaping BugLogger) {
     self.chat = chat
@@ -25,6 +27,22 @@ struct ChatListView: View {
     self.decisions = chat.decisions
     self.voice = voice
     self.logger = logger
+    _search = StateObject(
+      wrappedValue: ChatThreadSearchModel(log: chat.decisions.log, inbox: chat.inbox, cockpit: chat.cockpit))
+  }
+
+  /// #1443: while words are in the box, the matching threads stand in for the list's picker, rows and Done.
+  @ViewBuilder private var searchResults: some View {
+    if let problem = search.problem {
+      BugProblemView(problem: problem, logger: logger)
+    }
+    Section {
+      let rows = search.rows(chat.threads)
+      ForEach(rows) { thread in threadLink(thread, terms: search.terms) }
+      if rows.isEmpty && !search.searching {
+        Text(ChatThreadSearch.noMatch).foregroundStyle(.secondary).accessibilityIdentifier("chat-search-empty")
+      }
+    }
   }
 
   /// The chats whose bead is an open ask (#878).
@@ -118,37 +136,41 @@ struct ChatListView: View {
           }
         }
       }
-      if !selection.selecting && !chat.threads.isEmpty {
-        Picker("Show", selection: Binding(get: { inboxFilter }, set: { showInbox($0) })) {
-          ForEach(ChatInboxFilter.allCases, id: \.self) { Text($0.title).tag($0) }
+      if search.active && !selection.selecting {
+        searchResults
+      } else {
+        if !selection.selecting && !chat.threads.isEmpty {
+          Picker("Show", selection: Binding(get: { inboxFilter }, set: { showInbox($0) })) {
+            ForEach(ChatInboxFilter.allCases, id: \.self) { Text($0.title).tag($0) }
+          }
+          .pickerStyle(.segmented)
+          .accessibilityIdentifier("chat-inbox-filter")
         }
-        .pickerStyle(.segmented)
-        .accessibilityIdentifier("chat-inbox-filter")
-      }
-      if selection.selecting {
-        // Bead context-grabber-szom: Review opens on what looks done, Select on every live thread; ticks stay put.
-        Picker("Show", selection: Binding(get: { selection.filter }, set: { showFilter($0) })) {
-          ForEach(ChatListSelection.Filter.allCases, id: \.self) { Text($0.title).tag($0) }
+        if selection.selecting {
+          // Bead context-grabber-szom: Review opens on what looks done, Select on every live thread; ticks stay put.
+          Picker("Show", selection: Binding(get: { selection.filter }, set: { showFilter($0) })) {
+            ForEach(ChatListSelection.Filter.allCases, id: \.self) { Text($0.title).tag($0) }
+          }
+          .pickerStyle(.segmented)
+          .accessibilityIdentifier("chat-select-filter")
         }
-        .pickerStyle(.segmented)
-        .accessibilityIdentifier("chat-select-filter")
-      }
-      Section {
-        let rows = selection.rows(chat.threads, inbox: inboxFilter, keeping: openKey)
-        let decisionsAfter = ChatDecisions.rowAfter(rows)
-        if decisionsAfter == nil { decisionsRow }
-        ForEach(rows) { thread in
-          if selection.selecting { tickRow(thread) } else { threadLink(thread) }
-          if thread.key == decisionsAfter { decisionsRow }
-        }
-        if let line = selection.emptyLine(chat.threads, inbox: inboxFilter, keeping: openKey) {
-          Text(line).foregroundStyle(.secondary).accessibilityIdentifier("chat-select-empty")
-        }
-      }
-      if selection.showsDone(chat.threads, inbox: inboxFilter) {
         Section {
-          DisclosureGroup("Done (\(done.count))", isExpanded: $doneOpen) {
-            ForEach(done) { thread in threadLink(thread) }
+          let rows = selection.rows(chat.threads, inbox: inboxFilter, keeping: openKey)
+          let decisionsAfter = ChatDecisions.rowAfter(rows)
+          if decisionsAfter == nil { decisionsRow }
+          ForEach(rows) { thread in
+            if selection.selecting { tickRow(thread) } else { threadLink(thread) }
+            if thread.key == decisionsAfter { decisionsRow }
+          }
+          if let line = selection.emptyLine(chat.threads, inbox: inboxFilter, keeping: openKey) {
+            Text(line).foregroundStyle(.secondary).accessibilityIdentifier("chat-select-empty")
+          }
+        }
+        if selection.showsDone(chat.threads, inbox: inboxFilter) {
+          Section {
+            DisclosureGroup("Done (\(done.count))", isExpanded: $doneOpen) {
+              ForEach(done) { thread in threadLink(thread) }
+            }
           }
         }
       }
@@ -169,6 +191,8 @@ struct ChatListView: View {
     // Inline: the large title drew over the first row once the list had a problem row above it (simulator).
     .navigationBarTitleDisplayMode(.inline)
     .accessibilityIdentifier("chat-list")
+    .searchable(text: $search.query, prompt: ChatThreadSearch.prompt)
+    .onChange(of: search.query) { search.changed(chat.threads) }
     .refreshable { await chat.refreshList(reason: "pull") }
     .task {
       await chat.refreshList(reason: "open")
@@ -322,13 +346,16 @@ struct ChatListView: View {
     chat.logAction("select_open_chat", ["thread": thread.key, "from": from, "ticked": selection.ticked(thread.key)])
   }
 
-  private func threadLink(_ thread: ChatSummary) -> some View {
+  private func threadLink(_ thread: ChatSummary, terms: [String] = []) -> some View {
     NavigationLink {
       ChatThreadView(chat: chat, voice: voice, key: thread.key, title: thread.title, logger: logger)
-        .onAppear { openKey = thread.key }
+        .onAppear {
+          openKey = thread.key
+          if !terms.isEmpty { search.opened(thread.key) }
+        }
     } label: {
       VStack(alignment: .leading, spacing: 6) {
-        ThreadRow(thread: thread, decisionWaiting: waiting.contains(thread.key))
+        ThreadRow(thread: thread, decisionWaiting: waiting.contains(thread.key), terms: terms)
         // Borderless chips take their own taps; the rest of the row still opens the thread.
         if widthClass == .regular, let links = chat.rowLinks[thread.key], !links.isEmpty {
           RowLinks(chat: chat, thread: thread.key, links: chat.withStates(links)).padding(.leading, 19)
@@ -394,6 +421,12 @@ private struct ThreadRow: View {
   let thread: ChatSummary
   /// #878: the thread's bead is an open ask.
   var decisionWaiting = false
+  /// #1443: a search's words, marked in the title and the message line; none outside a search.
+  var terms: [String] = []
+
+  private func text(_ s: String) -> Text {
+    terms.isEmpty ? Text(s) : Text(ChatAskHitRow.marked(s, terms))
+  }
 
   var body: some View {
     HStack(alignment: .top, spacing: 10) {
@@ -403,14 +436,14 @@ private struct ThreadRow: View {
           if thread.pinned {
             Image(systemName: "pin.fill").font(.caption).foregroundStyle(.secondary).accessibilityLabel("Pinned")
           }
-          Text(thread.title).font(.body.weight(thread.unread > 0 ? .semibold : .regular)).lineLimit(2)
+          text(thread.title).font(.body.weight(thread.unread > 0 ? .semibold : .regular)).lineLimit(2)
           Spacer(minLength: 8)
           if let at = thread.lastAt {
             Text(at, format: .relative(presentation: .numeric, unitsStyle: .abbreviated)).font(.caption)
               .foregroundStyle(.secondary)
           }
         }
-        Text(thread.lastLine)
+        text(thread.lastLine)
           .font(.subheadline)
           .foregroundStyle(.secondary).lineLimit(2)
         if decisionWaiting {

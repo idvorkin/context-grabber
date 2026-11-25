@@ -61,6 +61,12 @@ Searching the asks (story 1132): GET /asks/search?q=<words>[&all=1] answers as t
 the open asks /fake/asks made and one answered ask, igor2-88g.882 "Renew the passport?" (answered "Go to the downtown
 agency"), found only with all=1 but always counted: a /threads row each with matches; an empty q is a 400, and a q with
 the word "bdfail" the 502 of bd failing.
+Searching the chat list (stories 1616-1618, #1443): GET /chat?q=<words> answers as the Cockpit's does (cockpit story
+335): GET /chat's rows, kept when every lowercased word is in the title or any message's text; a blank q is the plain
+list. Thread igor2-88g.1443 "Travel docs", added by POST /fake/search-thread {"on": true} (and taken away with false,
+since an extra row moves the list under the archive tests), says "passport" only in its first message. POST
+/fake/search-down {"status": 502} makes a GET /chat with a q answer that status (0 brings it back); the plain list stays
+up.
 Question cards on a board (stories 880-886): GET /asks?snoozed=1 is GET /asks; POST /fake/larry-asks {"ask": id} opens
 the asks as /fake/asks does (with "other" as there) and has Larry put a question card for that ask on the newest board thread ({kind: question,
 ask, x, y} in the picture's pixels, with its frame); GET /ink/answers?ids=a,b answers with the question and answer of the
@@ -231,6 +237,10 @@ THREADS["igor2-88g.817"] = {"title": "Laptops", "seen": "", "messages": [  # sto
     row("igor2-88g.817", "larry", "Here's how they compare:\n| | Weight | Battery | Price |\n|---|:---:|---:|---|\n"
         "| Air | 1.2 kg | 18 h | $1,099 |\n| Pro 14 | 1.6 kg | 22 h | $1,999 |\n| XPS | 1.4 kg | 12 h | $1,299 |\n"
         "Want the cheapest?"),
+]}
+SEARCH_THREAD = {"title": "Travel docs", "seen": "", "messages": [  # story 1617: a word only in an older message
+    row("igor2-88g.1443", "igor", "Renew the passport before the trip"),
+    row("igor2-88g.1443", "larry", "Booked; see you there."),
 ]}
 
 
@@ -414,6 +424,23 @@ def summary(key, t):
             "unread": unread, "done": t.get("archived", False), "archived": t.get("archived", False),
             "looks_done": t.get("looks_done", False), "pinned": t.get("pinned", False), "skill": t.get("skill"),
             "last_author": last.get("author", "")}
+
+
+SEARCH_DOWN = 0  # story 1618: the status a GET /chat with a q answers while a test has the search down; 0 is up
+
+
+def chat_search(query):
+    """GET /chat?q=<words> as the Cockpit's answers it (cockpit story 335): GET /chat's rows, in its order, kept when
+    every lowercased word is a substring of the title or of any message's text; a blank q is the plain list."""
+    terms = ((query.get("q") or [""])[0]).lower().split()
+    rows = []
+    for k, t in THREADS.items():
+        if not (t["messages"] or t.get("pinned")):
+            continue
+        hay = "\n".join([t["title"]] + [m.get("text") or "" for m in t["messages"]]).lower()
+        if all(w in hay for w in terms):
+            rows.append(summary(k, t))
+    return 200, {"ok": True, "threads": rows}
 
 
 def skill_reply_later(key, text):
@@ -722,6 +749,11 @@ class Handler(BaseHTTPRequestHandler):
             if DOWN and (path == "/chat" or path.startswith("/chat/")):
                 return self._json(DOWN, {"ok": False, "error": "Bad Gateway"})
             if path == "/chat":
+                query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+                if (query.get("q") or [""])[0].strip():
+                    if SEARCH_DOWN:
+                        return self._json(SEARCH_DOWN, {"ok": False, "error": "bd: database is locked"})
+                    return self._json(*chat_search(query))
                 rows = [summary(k, t) for k, t in THREADS.items() if t["messages"] or t.get("pinned")]
                 return self._json(200, {"ok": True, "threads": rows})
             if path.startswith("/chat/"):
@@ -753,6 +785,18 @@ class Handler(BaseHTTPRequestHandler):
         data = json.loads(raw or b"{}")
         if path == "/ink/to-text":
             return self._to_text(data)
+        if path == "/fake/search-thread":
+            with LOCK:
+                if data.get("on"):
+                    THREADS["igor2-88g.1443"] = SEARCH_THREAD
+                else:
+                    THREADS.pop("igor2-88g.1443", None)
+            return self._json(200, {"ok": True, "on": "igor2-88g.1443" in THREADS})
+        if path == "/fake/search-down":
+            global SEARCH_DOWN
+            with LOCK:
+                SEARCH_DOWN = int(data.get("status") or 0)
+            return self._json(200, {"ok": True, "status": SEARCH_DOWN})
         if path == "/fake/slow":
             global SLOW
             with LOCK:

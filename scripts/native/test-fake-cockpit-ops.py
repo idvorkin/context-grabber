@@ -176,6 +176,24 @@ try:
         except urllib.error.HTTPError as e:
             check(e.code == code, "q=%s is a %d" % (q, code))
     call("/fake/asks", {"open": False})
+    # Stories 1616-1618: GET /chat?q, which ChatThreadSearchUITests relies on.
+    check(call("/chat?q=passport")["threads"] == [], "no search thread until a test asks for it")
+    call("/fake/search-thread", {"on": True})
+    check([t["key"] for t in call("/chat?q=PASSPORT")["threads"]] == ["igor2-88g.1443"],
+          "the chat search finds a word in an older message")
+    check([t["key"] for t in call("/chat?q=travel%20booked")["threads"]] == ["igor2-88g.1443"],
+          "every word, title or message")
+    check(len(call("/chat?q=%20")["threads"]) == len(call("/chat")["threads"]), "a blank q is the plain list")
+    call("/fake/search-down", {"status": 502})
+    try:
+        call("/chat?q=laptops")
+        check(False, "a down search is a 502")
+    except urllib.error.HTTPError as e:
+        check(e.code == 502, "a down search is a 502")
+    check("threads" in call("/chat"), "the list stays up while the search is down")
+    call("/fake/search-down", {})
+    call("/fake/search-thread", {"on": False})
+    check("igor2-88g.1443" not in [t["key"] for t in call("/chat")["threads"]], "the search thread goes away again")
     # Stories 777, 805: a slow answer is armed for one picture only.
     call("/fake/larry-ops", {"kind": "slow", "seconds": 1.5})
     before = len(larry_rows(key))

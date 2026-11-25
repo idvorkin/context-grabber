@@ -3699,3 +3699,58 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** Health has mindful minutes for Monday and for today, and I neither tapped meditation nor ran Box breathing on either day
 - **When:** the week is sent on Tuesday
 - **Then:** today's meditation is done by Health, Monday's is not done, and both days still carry their mindful minutes
+---
+
+### User Story 1616:
+
+- **Summary:** Search the chat list for a thread by its words
+- **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor looking for a chat I remember a few words of
+- **I want to** type them into a search box on the chat list and see only the threads that say them
+- **so that** I can find a thread on the phone as I do on the Cockpit's Stream, without scrolling the whole list
+
+#### Acceptance Criteria:
+- **Scenario:** Words in a thread's title or newest message
+- **Given:** a chat titled "Ramen in Ashland" and others that never say ramen
+- **When:** I type "ashland ramen" in the list's search box and pause
+- **Then:** the list is that chat's row with the words marked, and a tap opens the thread
+
+### User Story 1617:
+
+- **Summary:** A chat list search reaches words deep in a thread's older messages
+- **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor who remembers words from somewhere in a conversation, not from its title or newest message
+- **I want to** the search to find that chat anyway, as the Cockpit's own chat search does
+- **so that** the phone and the laptop find the same threads
+
+#### Acceptance Criteria:
+- **Scenario:** A word only in an older message
+- **Given:** a chat whose first message says "passport" and whose title and newest message do not
+- **When:** I search "passport"
+- **Then:** once the Cockpit answers, that chat's row shows; a done or archived chat that matches shows after the live ones
+
+### User Story 1618:
+
+- **Summary:** The chat list search survives the Cockpit being down and leaves the list as it was
+- **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor searching while the Cockpit is unreachable
+- **I want to** still see the chats the phone itself can match, with a plain note of what is missing
+- **so that** a down Cockpit never leaves me with nothing, and clearing the box puts my list back
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit's search fails
+- **Given:** the Cockpit answers the search with a 502
+- **When:** I search words a chat's title says
+- **Then:** that chat's row shows under a copyable problem naming the search and the 502; with no match at all the list says *No chats match.*; emptying the box brings back the list, its *All*/*New* choice and *Decisions* as they were
