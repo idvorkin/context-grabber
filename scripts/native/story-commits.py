@@ -11,8 +11,10 @@ commit, which `just pre-merge` does on the branch before it merges, so a
 pipeline rebase no longer costs a review round. A link with no such commit, or
 more than one, still fails.
 
-Usage: story-commits.py [--rev REV] [--repo DIR] [--fix] [stories-dir]
+Usage: story-commits.py [--rev REV] [--base REF] [--repo DIR] [--fix] [stories-dir]
   --rev REV  judge against REV's history (default HEAD)
+  --base REF the branch's base, whose commits are never a replacement (default origin/main); when it
+             doesn't resolve, no link is matched as replaced
   --repo DIR the repository to read history from (default: the one holding stories-dir)
   --fix      rewrite each replaced commit's links in place, printing each rewrite
   stories-dir defaults to docs/stories
@@ -56,14 +58,15 @@ def patch_id(sha, repo):
 class Replacements:
     """Finds, for a sha not in the history, the one branch commit with the same patch-id."""
 
-    def __init__(self, repo, rev):
-        self.repo, self.rev, self.ids = repo, rev, None
+    def __init__(self, repo, rev, base):
+        self.repo, self.rev, self.base, self.ids = repo, rev, commit(base, repo), None
 
     def _branch_ids(self):
         if self.ids is None:
             self.ids = {}
-            base = ["--not", "origin/main"] if commit("origin/main", self.repo) else []
-            for sha in git("rev-list", "--no-merges", self.rev, *base, cwd=self.repo).split():
+            if self.base is None:
+                return self.ids
+            for sha in git("rev-list", "--no-merges", self.rev, "--not", self.base, cwd=self.repo).split():
                 pid = patch_id(sha, self.repo)
                 if pid:
                     self.ids.setdefault(pid, []).append(sha)
@@ -81,6 +84,7 @@ def main(argv):
     p.add_argument("--rev", default="HEAD")
     p.add_argument("--fix", action="store_true")
     p.add_argument("--repo")
+    p.add_argument("--base", default="origin/main")
     p.add_argument("root", nargs="?", default="docs/stories")
     a = p.parse_args(argv)
     root = a.root
@@ -94,7 +98,7 @@ def main(argv):
     by_prefix = {}
     for sha in git("rev-list", a.rev, cwd=repo).split():
         by_prefix.setdefault(sha[:7], []).append(sha)
-    repl = Replacements(repo, a.rev)
+    repl = Replacements(repo, a.rev, a.base)
     problems, notes = [], []
     links = 0
     for name in sorted(os.listdir(root)):

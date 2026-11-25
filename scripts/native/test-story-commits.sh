@@ -79,6 +79,7 @@ echo feature >>"$r/code.txt" && rg commit -qam feature
 old=$(rg rev-parse HEAD)
 printf -- '- **Status:** implemented in [%s](%s/%s)\n' "${old:0:8}" "$U" "${old:0:8}" >>"$r/docs/stories/01-a.md"
 rg commit -qam status
+prerebase=$(rg rev-parse HEAD)
 rg checkout -q main && echo other >"$r/other.txt" && rg add -A && rg commit -qm "main moves" && rg push -q origin main
 rg checkout -q feature && rg rebase -q main && rg push -q -f origin feature
 new=$(rg rev-parse HEAD~1)
@@ -86,17 +87,20 @@ out=$("$here/scripts/native/story-commits.py" "$r/docs/stories")
 status=$?
 expect "a link to a commit the rebase replaced passes with a note" 0 "note 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
 story-commits: 1 commit links, every one in this branch's history; 1 name a commit a rebase replaced (just pre-merge renames them, or story-commits.py --fix)"
-rg checkout -q --detach
-out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" feature 2>&1)
-status=$?
-expect "pre-merge off the branch fails, naming the rename" 1 "fixed 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
-FAIL story-commits: origin/feature names 1 commit(s) a rebase replaced; on the branch at origin/feature (git switch feature && git pull --ff-only), rerun this to rename them"
-rg checkout -q feature
+rg reset -q --hard "$prerebase"
+echo staged >"$r/staged.txt" && rg add staged.txt
 out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" 2>&1)
 status=$?
 pushed=$(git -C "$tmp/rb-origin.git" rev-parse feature)
-expect "pre-merge on the branch renames the link and pushes it" 0 "fixed 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
+expect "pre-merge behind a force-pushed branch renames the link and pushes it" 0 "fixed 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
 ok   story-commits: renamed 1 link(s) to the rebased commits, pushed ${pushed:0:7} to origin/feature"
+if [ "$(git -C "$tmp/rb-origin.git" diff --name-only feature~1 feature)" = "docs/stories/01-a.md" ] &&
+  [ "$(rg rev-parse HEAD)" = "$prerebase" ] && [ "$(rg diff --cached --name-only)" = "staged.txt" ]; then
+  echo "ok   the pushed commit changes only the story, and the checkout is left as it was"
+else
+  echo "FAIL the pushed commit or the checkout changed beyond the story"
+  fail=1
+fi
 if git -C "$tmp/rb-origin.git" show feature:docs/stories/01-a.md | grep -q "commit/${new:0:8})"; then
   echo "ok   the pushed story links the rebased commit"
 else
