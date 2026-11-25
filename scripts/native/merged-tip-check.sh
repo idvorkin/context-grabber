@@ -29,9 +29,9 @@ if [ "${MERGED_TIP_CHECK:-}" != 1 ] && git diff --quiet "$remote/main...$ref" --
   exit 0
 fi
 dir=${MERGED_TIP_DIR:-$PWD/native/Build/merged-tip}
-mkdir -p "$dir" && dir=$(cd "$dir" && pwd)
+mkdir -p "$dir" && dir=$(cd "$dir" && pwd -P)
 wt=$dir/src
-if ! git -C "$wt" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+if [ "$(git -C "$wt" rev-parse --show-toplevel 2>/dev/null)" != "$wt" ]; then
   git worktree prune
   rm -rf "$wt"
   git worktree add -q --detach "$wt" "$main" || { echo "FAIL merged-tip: can't make the scratch worktree at $wt"; exit 1; }

@@ -2059,7 +2059,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1629:
 
 - **Summary:** Right before merging, the app is compiled with the branch merged onto main as it is now
-- **Status:** implemented in ed858a3e; verified on the host rung by scripts/native/test-merged-tip-check.sh in `just test`, and a real run (scripts/native/merged-tip-check.sh) that caught main's MessageBubble `group:` break of 2026-11-24
+- **Status:** implemented in 3f20a7d4; verified on the host rung by scripts/native/test-merged-tip-check.sh in `just test`, and a real run (scripts/native/merged-tip-check.sh) that caught main's MessageBubble `group:` break of 2026-11-24
 - **Issues:** #1459 and #1465 broke main's Debug build together, 2026-11-24
 - **Spec:** [Story ID reservations](../superpowers/specs/2026-11-22-story-id-reservations-design.md), *The pre-merge check*
 

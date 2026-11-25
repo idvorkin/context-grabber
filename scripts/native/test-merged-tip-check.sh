@@ -3,7 +3,8 @@
 # branches that each compile alone but break the build together (one changes a signature on main, the other calls it
 # the old way: #1459 and #1465, 2026-11-24) fail the second one's check on the merged tip with a FAIL line naming the
 # compile error; a branch that compiles on main passes; a docs-only branch skips the compile unless forced; a branch
-# that doesn't merge cleanly onto main fails without compiling; and the checkout and its branch are never touched.
+# that doesn't merge cleanly onto main fails without compiling; a stale scratch folder inside the checkout is
+# remade; and the checkout and its branch are never touched.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/cg-merged-tip.XXXXXX")
@@ -48,7 +49,7 @@ check() {
   git checkout -q "$branch"
   before=$(git rev-parse HEAD)
   rm -f "$tmp/built"
-  out=$(env "$@" BUILT="$tmp/built" MERGED_TIP_DIR="$tmp/tip" MERGED_TIP_BUILD="$tmp/fakecc" \
+  out=$(env BUILT="$tmp/built" MERGED_TIP_DIR="$tmp/tip" MERGED_TIP_BUILD="$tmp/fakecc" "$@" \
     "$here/merged-tip-check.sh" 2>&1)
   status=$?
   [ -e "$tmp/built" ] && ran=1
@@ -72,4 +73,8 @@ check "a docs-only branch skips the compile" docs-only 0 0 '^ok   merged-tip: .*
 check "MERGED_TIP_CHECK=1 compiles even a docs-only branch" docs-only 0 1 '^ok   merged-tip: .*compiles' MERGED_TIP_CHECK=1
 check "a branch that doesn't merge cleanly onto main fails without compiling" clash 1 0 '^FAIL merged-tip: .*merge cleanly'
 check "the scratch copy is reused on the next run" caller 1 1 "^FAIL merged-tip: .*missing argument"
+# A leftover scratch folder inside the checkout that isn't its own worktree is remade, never mistaken for the checkout.
+mkdir -p "$tmp/repo/scratch/src" && echo stale >"$tmp/repo/scratch/src/leftover.txt"
+check "a stale scratch folder inside the checkout is remade, the checkout untouched" caller 1 1 \
+  "^FAIL merged-tip: .*missing argument" MERGED_TIP_DIR="$tmp/repo/scratch"
 exit $fail
