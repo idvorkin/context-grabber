@@ -257,6 +257,11 @@ targets:
           if /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$plist" >/dev/null 2>&1; then
             /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$plist"
           fi
+          # PlistBuddy exits 0 when it can't save, so check the key is really gone.
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$plist" >/dev/null 2>&1; then
+            echo "error: the lab's Info.plist still declares CFBundleURLTypes ($plist)" >&2
+            exit 1
+          fi
         inputFiles:
           - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
         basedOnDependencyAnalysis: false
