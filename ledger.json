@@ -64,27 +64,6 @@
    "until": "2026-11-25T16:15:35Z"
   },
   {
-   "id": 1611,
-   "journey": "02-larry.md",
-   "branch": "native/daily-push",
-   "at": 1795540282.312493,
-   "until": "2026-11-25T17:11:22Z"
-  },
-  {
-   "id": 1612,
-   "journey": "02-larry.md",
-   "branch": "native/daily-push",
-   "at": 1795540282.312493,
-   "until": "2026-11-25T17:11:22Z"
-  },
-  {
-   "id": 1613,
-   "journey": "02-larry.md",
-   "branch": "native/daily-push",
-   "at": 1795540282.312493,
-   "until": "2026-11-25T17:11:22Z"
-  },
-  {
    "id": 1319,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/question-archive-1387",
@@ -155,25 +134,11 @@
    "until": "2026-11-26T04:53:16Z"
   },
   {
-   "id": 1624,
-   "journey": "11-building-and-testing.md",
-   "branch": "docs/stale-status-tests",
-   "at": 1795582545.954056,
-   "until": "2026-11-26T04:55:45Z"
-  },
-  {
    "id": 1625,
    "journey": "11-building-and-testing.md",
    "branch": "tools/render-preview-7xme",
    "at": 1795583270.371326,
    "until": "2026-11-26T05:07:50Z"
-  },
-  {
-   "id": 1619,
-   "journey": "02-larry.md",
-   "branch": "?",
-   "at": 1795583548.856166,
-   "until": "2026-11-26T05:12:28Z"
   },
   {
    "id": 1293,
@@ -202,6 +167,13 @@
    "branch": "native/nightly-all-3rk",
    "at": 1795583606.318187,
    "until": "2026-11-26T05:13:26Z"
+  },
+  {
+   "id": 1324,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/ink-sbs-pen-latency",
+   "at": 1795584947.760082,
+   "until": "2026-11-26T05:35:47Z"
   }
  ]
 }
