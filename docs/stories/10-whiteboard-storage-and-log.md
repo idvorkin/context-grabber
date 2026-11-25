@@ -1461,7 +1461,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1341:
 
 - **Summary:** A Cockpit board's waiting saves survive a relaunch and go up one at a time
-- **Status:** the sync pass and the copy on disk (`CockpitBoardSync`, `CockpitBoardDisk`) in [40cc2110](https://github.com/idvorkin/context-grabber/commit/40cc2110); verified by host tests (`CockpitBoardStoreTests`); not yet driven by the app, which sends saves once drawing on a Cockpit board lands
+- **Status:** the sync pass and the copy on disk (`CockpitBoardSync`, `CockpitBoardDisk`) in [40cc2110](https://github.com/idvorkin/context-grabber/commit/40cc2110), stopping on a copy not kept or an answer without a version in [28502699](https://github.com/idvorkin/context-grabber/commit/28502699); verified by host tests (`CockpitBoardStoreTests`); not yet driven by the app, which sends saves once drawing on a Cockpit board lands
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
 
@@ -1475,3 +1475,13 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a Cockpit board with two waiting saves, the first sent and its answer not yet back
 - **When:** the app is relaunched and reaches the Cockpit
 - **Then:** the iPad fetches what it missed, sends the first save again with the same body and name (the Cockpit answers it once), and sends the second only after that answer
+
+- **Scenario:** The iPad can't keep its copy
+- **Given:** a Cockpit board with a waiting save, and the copy on the iPad can't be written
+- **When:** a sync pass reaches the save
+- **Then:** nothing is sent, and the pass stops with a problem saying the copy wasn't kept, so a relaunch can't send the same ink under a new name
+
+- **Scenario:** The Cockpit answers without a version
+- **Given:** a Cockpit board the iPad is catching up on
+- **When:** the Cockpit's answer to *what did I miss* carries no version
+- **Then:** the pass stops having sent nothing and reports the problem, never a clean pass
