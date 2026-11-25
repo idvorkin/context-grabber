@@ -1317,7 +1317,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1338:
 
 - **Summary:** Larry's replies come to the iPad from the Cockpit, never go up from it
-- **Status:** PENDING
+- **Status:** the queue leaves out Larry's replies in [cbbf98d1](https://github.com/idvorkin/context-grabber/commit/cbbf98d1); verified by host tests (`testAReplyIsNeverQueuedAndComesFromThePull`); not yet used by the app
 - **Issues:** bead context-grabber-3kx9 (closed as moot: Larry, msg 018324815671, a device never sends his reply adds); bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
