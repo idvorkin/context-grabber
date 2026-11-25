@@ -3562,7 +3562,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 1614:
 
 - **Summary:** In a group chat every reply says who wrote it; Larry's own replies are never a skill
-- **Status:** native app only: not yet implemented
+- **Status:** native app only: implemented in [782085fa](https://github.com/idvorkin/context-grabber/commit/782085fa); verified by `just test` (host: `ChatSpeakerTests`: Larry's own name is Larry, *tony* is Tony, openers never make a group) and the iPad Pro 11-inch (M5) simulator (the chat UI classes, `ChatSkillThreadUITests` included); a group thread on the real Cockpit not yet
 - **Spec:** [Chat with Larry in Grabber Native — Three voices, and a group chat](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3581,7 +3581,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 1615:
 
 - **Summary:** A call's thread rows are news, never an answer to me
-- **Status:** native app only: not yet implemented
+- **Status:** native app only: implemented in [782085fa](https://github.com/idvorkin/context-grabber/commit/782085fa); verified by `just test` (host: `ChatSpeakerTests.testAFailureThenOnlyCallRowsStillFails`); a call's thread on the real Cockpit not yet
 - **Spec:** [Chat with Larry in Grabber Native — A call's thread](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
