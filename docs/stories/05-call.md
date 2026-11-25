@@ -466,7 +466,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1078:
 
 - **Summary:** the call screen links the call's own chat thread
-- **Status:** native app only: implemented in [2ca69de8](https://github.com/idvorkin/context-grabber/commit/2ca69de8) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests`, `CallProtocolTests.testTranscriptsCaptionsControlAndEndings`, `LaunchHooksTests.testCall`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls: the fake bridge's `call_thread` reached the call); the smoke's `GRABBER_CALL_THREAD` tap (call screen down, Chat on the thread, the call going on) and the link on a real call not yet
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests`, `CallProtocolTests.testTranscriptsCaptionsControlAndEndings`, `LaunchHooksTests.testCall`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls: the fake bridge's `call_thread` reached the call); the smoke's `GRABBER_CALL_THREAD` tap (call screen down, Chat on the thread, the call going on) and the link on a real call not yet
 - **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
 
 #### Use Case:
@@ -485,7 +485,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1079:
 
 - **Summary:** no chat link until the Cockpit names the call's thread
-- **Status:** native app only: implemented in [2ca69de8](https://github.com/idvorkin/context-grabber/commit/2ca69de8) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testAnEmptyThreadNamesNothing` and the live call before its `call_thread`)
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testAnEmptyThreadNamesNothing` and the live call before its `call_thread`)
 - **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
 
 #### Use Case:
@@ -504,7 +504,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1080:
 
 - **Summary:** a new call starts without the last call's chat link
-- **Status:** native app only: implemented in [2ca69de8](https://github.com/idvorkin/context-grabber/commit/2ca69de8) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testTheCallsThreadIsHeldThroughTheEndingAndANewCallStartsWithoutIt`)
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testTheCallsThreadIsHeldThroughTheEndingAndANewCallStartsWithoutIt`)
 - **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
 
 #### Use Case:
@@ -523,7 +523,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1081:
 
 - **Summary:** a handoff redial keeps the call's chat link
-- **Status:** native app only: implemented in [2ca69de8](https://github.com/idvorkin/context-grabber/commit/2ca69de8) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testAHandoffRedialKeepsTheThread`)
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testAHandoffRedialKeepsTheThread`)
 - **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
 
 #### Use Case:
