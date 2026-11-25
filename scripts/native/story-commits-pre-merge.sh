@@ -7,14 +7,13 @@
 # It judges the branch as pushed (the pipeline force-pushes its rebase, so the local branch can be behind): it checks
 # the pushed head out in a scratch worktree, rewrites the links there, commits only docs/stories and pushes that
 # docs-only commit to the branch. The checkout, its index and its branch are left alone.
-# Usage: scripts/native/story-commits-pre-merge.sh [branch]   (default: the current branch). PRE_MERGE_REMOTE
+# Usage: scripts/native/story-commits-pre-merge.sh [branch]   (default: the current branch, or the one pushed branch at a detached HEAD). PRE_MERGE_REMOTE
 # overrides origin.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote=${PRE_MERGE_REMOTE:-origin}
-branch=${1:-$(git branch --show-current)}
-[ -n "$branch" ] || { echo "FAIL story-commits: not on a branch; name one"; exit 1; }
+branch=$("$here/pr-branch.sh" story-commits "${1:-}") || exit 1
 git fetch -q "$remote" main 2>/dev/null
 if git fetch -q "$remote" "$branch" 2>/dev/null; then ref=$remote/$branch; else ref=$branch; fi
 sha=$(git rev-parse -q --verify "$ref^{commit}") || { echo "FAIL story-commits: no branch $branch"; exit 1; }

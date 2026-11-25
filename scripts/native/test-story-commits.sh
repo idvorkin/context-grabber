@@ -111,6 +111,26 @@ out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" 2>&1)
 status=$?
 expect "pre-merge again has nothing to rename" 0 "ok   story-commits: origin/feature names only its own commits"
 
+rg fetch -q origin && rg reset -q --hard origin/feature
+echo feature2 >>"$r/code.txt" && rg commit -qam feature2
+old2=$(rg rev-parse HEAD)
+printf -- '- **Status:** also in [%s](%s/%s)\n' "${old2:0:8}" "$U" "${old2:0:8}" >>"$r/docs/stories/01-a.md"
+rg commit -qam status2
+rg checkout -q main && echo more >>"$r/other.txt" && rg commit -qam "main moves again" && rg push -q origin main
+rg checkout -q feature && rg rebase -q main && rg push -q -f origin feature
+new2=$(rg rev-parse HEAD~1) new1=$(rg rev-parse HEAD~4)
+rg checkout -q --detach origin/feature
+out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" 2>&1)
+status=$?
+pushed=$(git -C "$tmp/rb-origin.git" rev-parse feature)
+expect "pre-merge on a detached HEAD at the pushed head renames and pushes to that branch" 0 "note story-commits: detached HEAD at $(rg rev-parse --short=8 HEAD); judging origin/feature, the one branch there
+fixed 01-a.md:2: ${new:0:8} was rebased to ${new1:0:8}
+fixed 01-a.md:3: ${old2:0:8} was rebased to ${new2:0:8}
+ok   story-commits: renamed 2 link(s) to the rebased commits, pushed ${pushed:0:7} to origin/feature"
+out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" feature 2>&1)
+status=$?
+expect "after that push, the branch named once is still the one judged" 0 "ok   story-commits: origin/feature names only its own commits"
+
 if out=$(scripts/native/story-commits.py docs/stories); then
   echo "ok   the repo's own stories: $out"
 else
