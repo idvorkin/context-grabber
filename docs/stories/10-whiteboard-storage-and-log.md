@@ -1296,6 +1296,24 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** the iPad catches up before sending
 - **Then:** the move is refused on the iPad with a note naming the stroke, the web and when, the stroke shows where the web put it, and only the erase goes up, at the caught-up version
 
+### User Story 1337:
+
+- **Summary:** A clash still counts when Larry restored the board in the same stretch
+- **Status:** the cache's pull keeps the clash check beside Larry's restore in [669a6a67](https://github.com/idvorkin/context-grabber/commit/669a6a67); verified by host tests (`testAnAdminBatchInAPullStillChecksTheQueue`); not yet used by the app
+- **Issues:** bead context-grabber-4v8k (a pull with Larry's restore skipped the check); bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** who moved a stroke offline while the web moved it and Larry restored the board
+- **I want to** have my move refused by name all the same
+- **so that** a restore never lets my change go up over one I never saw
+
+#### Acceptance Criteria:
+- **Scenario:** Catching up over a clash when Larry also restored the board
+- **Given:** an unsent move of a stroke the web moved since, and Larry restored the board in the same stretch
+- **When:** the iPad catches up
+- **Then:** the move is still refused on the iPad with its note, and the board is downloaded fresh
+
 ### User Story 1333:
 
 - **Summary:** Ink refused for a deleted board waits for my answer

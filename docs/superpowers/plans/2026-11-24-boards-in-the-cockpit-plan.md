@@ -196,8 +196,9 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   A late answer (the copy's `rev` moved since the freeze, and the answer's rev is at or below it) folds nothing: the
   pull already brought that batch and anything over it (bead context-grabber-2m5r).
 - **Pull**: `pull(rev:batches:)` applies each batch's bodies (an id new to the copy takes its kind from the op); an
-  `admin` batch sets `needsReload` and the check below waits for the reload, so a delete Larry undid in the same pull
-  refuses nothing. Otherwise the unsent queue runs through `BoardStoreClash.apply` as one batch at the **old** base,
+  `admin` batch sets `needsReload`, and the check below then leaves the board's deleted state to the reload, so a
+  delete Larry undid in the same pull refuses nothing; the pull's other changes still refuse what was queued over them
+  (bead context-grabber-4v8k). The unsent queue runs through `BoardStoreClash.apply` as one batch at the **old** base,
   against things whose rev is the pulled rev when a foreign batch changed them and the old base otherwise (the
   device's own batches, the frozen one in flight included, don't clash with its own queue). The batch in flight goes
   first so later saves build on it, but its refusals are ignored and it is never rebuilt. Each refused op leaves the
