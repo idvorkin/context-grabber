@@ -74,8 +74,7 @@ final class EulogyUITests: XCTestCase {
   /// context-grabber-3hj9.2: the store walk ran on the iPad and found no `TabBarItemTitle` at all). An old tab on
   /// suno.com from an earlier run can't pass the check.
   private func safariAddress() -> XCUIElement {
-    let phone = safari.textFields["TabBarItemTitle"]
-    if phone.waitForExistence(timeout: 3) { return phone }
+    guard UIDevice.current.userInterfaceIdiom == .pad else { return safari.textFields["TabBarItemTitle"] }
     let active = NSPredicate(format: "identifier BEGINSWITH 'SearchFieldItemView?isActive=true'")
     return safari.buttons.matching(active).firstMatch.textFields.firstMatch
   }
