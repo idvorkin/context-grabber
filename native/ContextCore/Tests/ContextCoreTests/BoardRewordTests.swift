@@ -126,7 +126,8 @@ final class BoardRewordTests: XCTestCase {
 
   func testAPasteWithALineInsideKeepsItAndOnlyAnEndingLineIsDone() {
     XCTAssertNil(
-      BoardReword.typedReturn(before: "note: ", after: "note: buy milk\ncall mom"), "a line inside a paste: still editing")
+      BoardReword.typedReturn(before: "note: ", after: "note: buy milk\ncall mom"),
+      "a line inside a paste: still editing")
     XCTAssertEqual(
       BoardReword.typedReturn(before: "note: ", after: "note: buy milk\ncall mom\n"), "note: buy milk\ncall mom")
     XCTAssertEqual(BoardReword.typedReturn(before: "one\ntwo", after: "on\nwo"), "onwo", "Return over a selection")
