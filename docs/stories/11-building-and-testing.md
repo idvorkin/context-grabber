@@ -2021,7 +2021,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1626:
 
 - **Summary:** Every UI test runs once a day while the Mac is idle
-- **Status:** implemented on branch `native/nightly-all-3rk`; verified on the host by `scripts/native/test-nightly-ladder.sh` in `just test`, with every Mac reading stood in for. The schedule is installed by hand (`just nightly-install`).
+- **Status:** implemented in 656c5995; verified on the host by `scripts/native/test-nightly-ladder.sh` in `just test`, with every Mac reading stood in for. The schedule is installed by hand (`just nightly-install`).
 - **Issues:** bead context-grabber-3rk (Igor approved the daily run, 2026-11-12)
 
 #### Use Case:
@@ -2033,5 +2033,5 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** The Mac is idle in the night
 - **Given:** it is between 1 and 6 in the morning, the Mac is on AC power, its CPU is under 30% busy, no build lane is held, and the full ladder hasn't run today
 - **When:** the scheduled check runs
-- **Then:** the full ladder climbs on a fresh copy of main, once that day; if anything fails, the failures are written beside the day's log and the run ends with a failure; at any other time it says why it waited and starts nothing
+- **Then:** the full ladder climbs on a fresh copy of main, once that day; if anything fails, the failures are written beside the day's log and the run ends with a failure (a checkout that can't reach main writes its reason there and leaves the day to the next check); at any other time it says why it waited and starts nothing
 

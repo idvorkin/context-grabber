@@ -26,6 +26,10 @@ nightly-ladder *args:
 nightly-install:
     #!/usr/bin/env bash
     set -euo pipefail
+    if [ "$(git rev-parse --absolute-git-dir)" != "$(cd "$(git rev-parse --git-common-dir)" && pwd -P)" ]; then
+        echo "nightly: install from the primary checkout, not a worktree (a pool slot changes branch or is pruned)" >&2
+        exit 1
+    fi
     plist=~/Library/LaunchAgents/com.idvorkin.grabber.nightly-ladder.plist
     mkdir -p ~/tmp/agent/nightly
     cat >"$plist" <<PLIST

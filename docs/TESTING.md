@@ -935,11 +935,13 @@ newest walk is `~/tmp/agent/walks/context-grabber/latest`, the next walk's `--pr
 
 A change runs only the UI test classes its files touch, so a class no recent change picked can go untested for days.
 `scripts/native/nightly-ladder.sh` climbs the whole ladder with `--all` on a fresh copy of `origin/main` (a detached
-worktree in `~/tmp/agent/nightly/checkout`) once a day, and only when the Mac is idle: between 1 and 6 in the morning,
-on AC power, under 30% CPU over a minute, with no build lane held. A locked screen is fine; the wrapper skips only the
+worktree in `~/tmp/agent/nightly/checkout`) once a day, and only when the Mac is idle: it starts between 1:00 and 6:00
+in the morning, on AC power, under 30% CPU over a minute, with no build lane held. A locked screen is fine; the wrapper skips only the
 tests that open the mic. Each day's run is `~/tmp/agent/nightly/<date>.log`, and a failed one leaves its failures in
-`<date>.fail` beside it. `just nightly-ladder --dry-run` says whether it would start now and why not.
-`just nightly-install` schedules the check every half hour as a LaunchAgent, which is installed by hand once;
+`<date>.fail` beside it; a checkout that can't reach `origin/main` writes its reason there and the next check
+retries. `just nightly-ladder --dry-run` says whether it would start now and why not.
+`just nightly-install` schedules the check every half hour as a LaunchAgent, which is installed by hand once from the
+primary checkout (it refuses a worktree, such as a pool slot, that another branch or a prune would take away);
 `just nightly-uninstall` removes it. `NIGHTLY_WINDOW` and `NIGHTLY_CPU_MAX` change the window and the ceiling.
 
 ## The phone
