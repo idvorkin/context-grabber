@@ -48,7 +48,7 @@ line of its own here and in the recipe; `scripts/native/test-testing-lists.sh` f
 - `scripts/native/test-fake-cockpit-ops.py`: the fake Cockpit's board ops, which the whiteboard UI tests rely on (stories 814–818)
 - `scripts/native/test-board-sessions.py`: the Cockpit's recorded board sessions, vendored scrubbed (stories 1173, 1174)
 - `scripts/native/test-fake-cockpit-session.py`: the fake Cockpit playing those sessions back (stories 1173, 1174)
-- `scripts/native/test-fake-cockpit-store.py`: the fake Cockpit's board store routes, kept to the real store (cockpit `board-store-s1` a925f69): a batch once per batch_id on its board, the door's 400s, 403 and 404 in the store's words, `ahead` per id, armed refusals applied per id with `landed`, the store's kinds, `ops?since` with bodies after, a deleted board's `{rev, device, by, at}` (stories 1330–1334)
+- `scripts/native/test-fake-cockpit-store.py`: the fake Cockpit's board store routes, kept to the real store (cockpit `board-store-s1` a925f69): a batch once per batch_id on its board, the door's 400s, 403 and 404 in the store's words, `ahead` per id, armed refusals applied per id with `landed`, a second add of an id refused as `exists` at the same rev (cockpit 12e08d4), the store's kinds, `ops?since` with bodies after, a deleted board's `{rev, device, by, at}` (stories 1330–1334)
 - `scripts/native/test-testflight.sh`: what `just testflight` refuses before it builds, from its dry run (stories 1012, 1013)
 - `scripts/native/test-ota.sh`: `just ota`'s arguments and dry run; ota-watch's batch rule and post (stories 1027–1029)
 - `scripts/native/test-linux-imports.sh`: Apple-only imports checked against Linux branches, including `#if canImport` and `#if os` (#943, bead context-grabber-cmk)
