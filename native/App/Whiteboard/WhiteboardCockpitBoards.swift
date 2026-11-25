@@ -11,10 +11,9 @@ enum WhiteboardCockpitBoards {
   /// The switch, in UserDefaults (a UI test turns it on with `-whiteboard_boards_from_cockpit YES`).
   static let key = "whiteboard_boards_from_cockpit"
 
-  /// Where saves go: reads always come from the chat's Cockpit, but the real store takes no writes until Larry's
-  /// slice 1 (`POST /boards/<id>/ops`) lands, so until then saves go only to a fake Cockpit a launch names. Moving
-  /// writes to the real Cockpit is this one line: `{ reads in reads }`.
-  static let writeAddress: (_ reads: String) -> String? = { _ in LaunchHooks.current.chatURL }
+  /// Where saves go: the same Cockpit the board is read from, now that the store takes the iPad's writes (Larry's
+  /// slice 1, cockpit 12e08d4, COCKPIT_BOARD_STORE=shadow). Nil would hold saves on the iPad (reads only).
+  static let writeAddress: (_ reads: String) -> String? = { reads in reads }
 }
 
 @MainActor
