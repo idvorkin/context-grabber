@@ -8,7 +8,9 @@
 # Kept on, because the app or its tests use them: Siri & Intelligence (dictation and speech), Health (HealthKit), iCloud
 # (CloudKit, the board sync, BugKit), Photos (the picker, pasted images) and Widgets (with it off the widget gallery lists
 # none of the app's widgets, so the tile tests fail: bead context-grabber-3hj9.4). Pasteboard, keyboard, location and audio are
-# core daemons simslim never turns off.
+# core daemons simslim never turns off. One daemon from the "other" category stays on too: com.apple.linkd, which indexes
+# App Intents. Without it a widget's Button(intent:) finds no metadata for its intent and the tap does nothing (the large
+# widget's card never deals: bead context-grabber-505v).
 # Usage: sim-slim.sh <udid>. Run it where that lane's simulator is yours (inside its build lane; sim-boot.sh calls it).
 # Never fails the caller: no simslim, SIM_SLIM=0, or a failed slim each print one line and exit 0. A slim reboots the
 # simulator, so after one it waits for the boot again (bootstatus -b), and exits 1 only if the simulator isn't back up.
@@ -19,11 +21,12 @@ udid=${1:?simulator udid}
 bin=${SIMSLIM:-simslim}
 command -v "$bin" >/dev/null 2>&1 || exit 0
 keep=siri,health,icloud,photos,widgets
+daemons=com.apple.linkd
 # verify exits 0 when the simulator's disables already match this profile exactly.
-"$bin" verify "$udid" --except "$keep" >/dev/null 2>&1 && exit 0
+"$bin" verify "$udid" --except "$keep" --keep "$daemons" >/dev/null 2>&1 && exit 0
 start=$SECONDS
-if "$bin" on "$udid" --except "$keep" >/dev/null 2>&1; then
-  echo "sim-slim: slimmed $udid (all but $keep off) in $((SECONDS - start)) s"
+if "$bin" on "$udid" --except "$keep" --keep "$daemons" >/dev/null 2>&1; then
+  echo "sim-slim: slimmed $udid (all but $keep and $daemons off) in $((SECONDS - start)) s"
   xcrun simctl bootstatus "$udid" -b >/dev/null || { echo "the simulator $udid did not boot after its slim" >&2; exit 1; }
 else
   echo "sim-slim: simslim couldn't slim $udid; it runs stock (simslim off $udid undoes a partial slim)" >&2
