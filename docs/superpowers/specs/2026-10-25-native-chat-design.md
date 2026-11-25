@@ -79,6 +79,20 @@ failure from a reply, since the list doesn't say, so it shows the failure's own 
 A Cockpit that doesn't have skill threads yet changes nothing: no second pinned thread, and Larry's threads read as
 before.
 
+**Three voices, and a group chat** (the Cockpit's stories 321 and 322, 2026-11-24). A reply can name its author. A reply
+whose author is Larry's own name is Larry's, drawn as Larry's replies always are, never as a skill called *larry*; a reply
+whose author is *tony* is Tony, the voice that phones Larry; any other author is a skill, as above. A thread where more
+than one speaker besides Igor has written (Larry and Tony, Larry and a skill) is a group chat: there every reply wears
+its speaker's name and lettered avatar, Larry's in his purple, so who said what is plain at a glance. A thread's opener
+(the line a page or a call's thread starts with) is the Cockpit introducing the thread, not a speaker, so it never makes
+a thread a group. A two-party thread with Larry reads exactly as before; Tony, like a skill, always wears his name,
+so a thread only Tony answers on never passes his words off as Larry's. The whiteboard's panel, the list row and the
+notification name each reply's speaker the same way (*Larry*, *Tony*, never the author's lowercase spelling).
+
+**A call's thread.** Every voice call gets its own chat thread where the call's bridge writes what happened (a consult's
+answer, a note, the end-of-call summary). Those rows are news, not replies: none of them answers a message Igor typed on
+that thread, so a message of his followed only by a failure and the call's own rows still shows 👀, not 🏆.
+
 **Archiving several, and threads that look done** (Igor, 2026-11-02; #599). *Select* at the top of the list turns the
 live threads into checkboxes, and *Archive (N)* at the bottom, below the floating buttons and clear of them, archives them together, with *Undo* for five seconds for
 all of them (*Archived 3 chats*). *Cancel* leaves the list as it was. Larry marks a thread he judges finished, and a new
@@ -886,6 +900,10 @@ asked him to confirm the build and he couldn't tell; only board pictures said).
 - A skill's thread sits under Larry's pinned thread whichever is newer, can't be archived, and its replies carry the
   skill's name and avatar. A failure is a copyable error and leaves Igor's message without 🏆. An older Cockpit shows
   none of this.
+- A reply written under Larry's own name reads as Larry's, *tony*'s reads as Tony's, any other author as a skill. In a
+  thread with more than one speaker besides Igor, every reply carries its speaker's name and avatar, Larry's in purple;
+  a thread's opener never makes a group, and a two-party thread looks as before. A call's thread's rows never count as
+  an answer to Igor.
 - An open thread with links shows them as chips under its title, newest first, one chip per page: a pull request as
   *PR #N*, a gist as *gist*, anything else as its site and the last part of its path; a tap opens it. Only links
   written with `https://` (or `http://`) count, and the sentence's punctuation is not part of them.

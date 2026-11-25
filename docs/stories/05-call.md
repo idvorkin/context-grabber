@@ -444,6 +444,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1077:
+
+- **Summary:** Larry's own caption lines are in his purple
+- **Status:** native app only: implemented in [ec2bb8e3](https://github.com/idvorkin/context-grabber/commit/ec2bb8e3); verified by `just test` (host: `ChatSpeakerTests.testLarrysOwnCaptionLines`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls); the purple on a real call not yet
+- **Spec:** [Native call — Direct Larry](../superpowers/specs/2026-08-28-native-call-screen-design.md#direct-larry)
+
+#### Use Case:
+- **As a** Larry's client reading a call's captions
+- **I want to** see what is Larry's own in Larry's purple, and Tony's and my lines as they were
+- **so that** the three voices on a call, Igor, Tony and Larry, read apart at a glance, as on the Cockpit
+
+#### Acceptance Criteria:
+- **Scenario:** A call's captions name their voice by colour
+- **Given:** a call with lines from me, from the voice, and tool lines or notes Larry put in himself
+- **When:** I look at the captions
+- **Then:** the tool lines, the notes and, on a Direct call, Larry's spoken lines carry Larry's purple label; on ElevenLabs or Drill the voice's lines are labelled *Tony* as before, and my lines are unchanged
+
+---
+
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead
