@@ -695,16 +695,6 @@ just touch-fixture <log>.jsonl --out native/ContextCore/Tests/ContextCoreTests/F
 - A scratch-out's verdict here is its shape and speed; whether ink was under it needs the board's strokes, as in
   `Fixtures/scratch-out/`.
 
-## SwiftUI previews
-
-The screens agents change most have `#Preview`s, on offline fixtures that never reach the network, the Cockpit or
-HealthKit (`native/App/Previews/`; the chat list's private rows and bubbles at the end of `ChatViews.swift`). They
-cover the chat list, thread rows, message bubbles, the decision card, the Decisions row and line, and the home tiles.
-They compile into Debug builds only. Look at one in Xcode's canvas, or render it to a PNG from the command line with
-`scripts/native/render-preview.sh <file.swift> <out.png> <index>` (story 1625): about 2 minutes cold, under a second
-warm, 20 s when the file changed. The whiteboard's menus and hold menu need a live board model and PaperKit, so they
-have no preview yet.
-
 ## The Board Lab: a whiteboard UI test without the whole app (story 1501)
 
 `BoardLab` is a second app target, simulator only (`native/project.yml`, plan
@@ -730,8 +720,13 @@ Once per Mac, Igor types (it needs sudo): `xcrun mcp-server status` shows headle
 `sudo xcrun mcp-server allow-folder ~/gits/context-grabber` and `sudo xcrun mcp-server allow-folder ~/.treehouse` let it
 serve the main checkout and every slot; `sudo xcrun mcp-server approve <id>` approves the caller, which is always
 `/usr/bin/timeout` because the script puts it in front of the bridge. A project under `/private/tmp` is refused outright,
-so render from a checkout, not the scratchpad. Grabber's screens carry no `#Preview` today; add one to the file to
-render it.
+so render from a checkout, not the scratchpad.
+
+The screens agents change most have `#Preview`s on offline fixtures that never reach the network, the Cockpit or
+HealthKit (`native/App/Previews/`, Debug builds only): `AppPreviews.swift` holds the chat list (0), the decision card
+(1), the Decisions row and line (2) and the home tiles (3); the chat's private thread rows (0) and message bubbles (1)
+are at the end of `ChatViews.swift`. The whiteboard's menus and hold menu need a live board model and PaperKit, so
+they have none yet. For another screen, add a `#Preview` to its file, on `PreviewFixtures`.
 
 ## The board's rules as WebAssembly: `just wasm`, `just wasm-test` (story 1503)
 
