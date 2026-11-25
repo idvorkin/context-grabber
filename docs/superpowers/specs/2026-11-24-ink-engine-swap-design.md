@@ -20,7 +20,7 @@ The iPad board is built on PaperKit, Apple's markup board, which has PencilKit i
 | Lasso select, move, and copy and paste of strokes | PencilKit and PaperKit | Yes: lasso, move and paste in the board rules. |
 | The tool picker (tools, colours, widths) | PencilKit | Its own small toolbar. |
 | Undo and redo | PaperKit, through the system undo | Yes, its own: a 200-step snapshot stack. |
-| Scrolling, pinch zoom, and "the Pencil never zooms" | PaperKit's scroll view, with the app's own guard | Scrolling only, with no zoom (the page is locked to its width). |
+| Scrolling, pinch zoom, and "the Pencil never zooms" | PaperKit's scroll view, with the app's own guard | Yes: the web board has its own pinch zoom, written to the same stories as the iPad's. The Pencil-never-zooms numbers already match (#1390). |
 | Shapes, text boxes and arrows | PaperKit markup | Yes: texts, kept labels and connectors in the board rules. |
 | Scratch-out and hold-to-shape | the app's own rules (shared with the web) on PencilKit strokes | Yes: the same shared rules. |
 | Scribble (handwriting into a text field) and the system edit menu | UIKit and PaperKit | No. Scribble isn't needed on the board, and the edit menu was removed on purpose by #1385. |
@@ -31,7 +31,12 @@ The app also hooks into PaperKit's drawing in dozens of places: ghost replies, t
 
 ## The two ways
 
-**A. A web view.** The iPad board shows the web board's ink page, bundled in the app so it works offline. A bridge carries what the app's shell owns: the board list, the chat panel, the mic, Larry's turns, Send to Larry, and the session log.
+**A. A web view.** The iPad board shows the web board's ink page. Its page, scripts and wasm can ship inside the app. The page keeps all its state in the Cockpit, though: board load and save, the board's log, pen timings, audio and hearing, feedback, chat, attachments, suggestions and actions. So A comes in two kinds:
+
+- **A1, online:** the bundled page draws offline but still talks to the Cockpit over the tailnet for everything else. It's the least work; with no network, the board can't load or save.
+- **A2, offline:** the app answers each of those Cockpit calls itself (a local cache that syncs), as t12b's offline cache will. That's more work, but it's the same cache t12b needs anyway.
+
+In both, the app's shell keeps the board list, the chat panel, the mic, Larry's turns, Send to Larry and the session log.
 
 **B. A native port.** The web engine's drawing (its smooth outline and the board model) is rebuilt in Swift, drawn natively, with the board rules shared as today. PencilKit and PaperKit leave the board.
 
@@ -40,10 +45,10 @@ The app also hooks into PaperKit's drawing in dozens of places: ghost replies, t
 | Same engine as the web | Yes, the same code | Same rules; a second drawing renderer that must look identical (checked against reference pictures) |
 | Pencil latency | WebKit's: about one frame behind native, to be measured | Can match native: predicted and coalesced touches |
 | Pressure and tilt | Whatever Safari reports (pressure unreliable, no tilt) | Full |
-| Zoom | None unless the web adds it | Native pinch, with the Pencil-never-zooms rule |
+| Zoom | The web board's own pinch zoom | Native pinch, with the Pencil-never-zooms rule |
 | The app's native features (ghosts, Keep, mic, panels) | Bridged; much already exists in the web board (keep, turns, panel, voice) | Rewired from PaperKit onto the new canvas |
-| Offline | The page is bundled; it must not be fetched from the Cockpit | Native |
-| Work | Medium: the bridge plus bundling, then retiring the native board's PaperKit-specific code | Large: renderer, eraser, lasso, undo, zoom, toolbar, then rewiring dozens of hooks |
+| Offline | A1 draws offline, but loading and saving need the Cockpit; A2 answers the Cockpit's calls locally (the t12b cache) | Native, with the t12b cache for sync |
+| Work | A1 medium; A2 medium plus the local answers to about a dozen Cockpit routes (shared with t12b) | Large: renderer, eraser, lasso, undo, zoom, toolbar, then rewiring dozens of hooks |
 | Fits t12b (one board format in the Cockpit) | Exactly: it is the web format | Yes, after the port |
 | Risk | Pen feel on the iPad | Time; two renderers drifting apart |
 
@@ -52,7 +57,7 @@ The app also hooks into PaperKit's drawing in dozens of places: ghost replies, t
 Measure first, then pick A unless the measurement rules it out.
 
 0. **Measure (no new code).** The debug screen *Ink side by side* already puts PencilKit on the left and the Cockpit's ink page on the right, with a live latency readout on each. The board's new pen-latency log line records the native side during real use. Igor writes a few lines on each half on the iPad, and both numbers land in the session log.
-1. **If the web side is within one frame of native and feels fine to Igor, build A** behind the Settings switch, with the bundled page and the bridge. It is the shortest path to one engine everywhere, and it matches the Cockpit store the boards are moving to.
+1. **If the web side is within one frame of native and feels fine to Igor, build A** behind the Settings switch: A1 first (bundled page, online state), then A2 as t12b's offline cache lands. It is the shortest path to one engine everywhere, and it matches the Cockpit store the boards are moving to.
 2. **If the web side is clearly worse** (more than a frame behind, or pressure unusable), build B: port the outline renderer first, then the eraser, lasso, undo and zoom, retiring PaperKit last.
 
 Either way the switch defaults to today's engine until Igor says the new one is good.
@@ -62,6 +67,7 @@ Either way the switch defaults to today's engine until Igor says the new one is 
 - Settings gains **Ink engine: iPad / Web**, and the board reopens with the chosen engine.
 - On the web engine the board looks and behaves as the web board does: the same pen, eraser, lasso, folds and Keep. The board list, chat, mic and Larry stay where they are.
 - Tilt shading and the other ink types are gone on the web engine; fountain pen and pencil are iPad-engine only.
+- With A1 and no network, the board says it can't load or save rather than drawing into nothing.
 
 ## Acceptance (for whichever is built)
 
@@ -73,4 +79,4 @@ Either way the switch defaults to today's engine until Igor says the new one is 
 ## Open questions
 
 - Igor: A or B after the measurement? Is losing tilt and the extra ink types acceptable?
-- Larry: can the ink page run fully from a bundled copy (no Cockpit fetch for its scripts)? Does the web board want zoom?
+- Larry (answered 11/24): the page, modules and wasm can be bundled; state stays on the Cockpit's routes, so offline means A2. The web board already zooms.
