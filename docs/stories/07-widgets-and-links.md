@@ -451,7 +451,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Today's hand: a card, the role of the day, and three quick starts on the big widget
 - **Status:** native app only: implemented in [2a1e6e8](https://github.com/idvorkin/context-grabber/commit/2a1e6e8); verified by `CardDealTests`, `EulogyRolesTests` and `AppLinkTests` (host) and `TodaysHandUITests` on the simulator (added through SpringBoard's gallery: the card and *Today, be Father to Zach* drew, a tap turned 10♥ into Q♥ with the app in the background, *Think of a card* opened the card screen counting); the phone not yet. From the stack, in the trainer's face (#219): [cecb31f](https://github.com/idvorkin/context-grabber/commit/cecb31f); verified by `CardDealSubsetTests` (host: the deal's promises over a smaller deck) and `TodaysHandUITests` on the simulator against the pinned trainer commit (the trainer's 2♠ dealt in place); against the tag its tap check failed once (#230, open); the Supermix button opens the mix in YouTube Music since #372 ([dfc0d06](https://github.com/idvorkin/context-grabber/commit/dfc0d06)), not the shortcut
-- **Issues:** [#221](https://github.com/idvorkin/context-grabber/issues/221), [#230](https://github.com/idvorkin/context-grabber/issues/230)
+- **Issues:** [#221](https://github.com/idvorkin/context-grabber/issues/221); bead context-grabber-505v (iPad simulator: the tap never dealt, because simslim had `com.apple.linkd` off; the iPad's Think of a card tap lands on Supermix in XCUI, so it is checked on the device, bead context-grabber-4r22), [#230](https://github.com/idvorkin/context-grabber/issues/230)
 - **Spec:** [Today's hand](../superpowers/specs/2026-10-08-native-large-widget-design.md)
 
 #### Use Case:
@@ -471,7 +471,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Today's hand: a tap after a skipped redraw still deals a card that is not on screen
 - **Status:** native app only: implemented in [45c8e32](https://github.com/idvorkin/context-grabber/commit/45c8e32); verified by `CardDealTests` (host: a tap avoids both the card showing and the last tap's card; 1,639 asserts fail without the change) and `TodaysHandUITests` on the simulator (iPhone 17, two iterations, both passed: a tap changed the card with the app in the background); the skipped-redraw case itself cannot be forced on the simulator; the phone not yet; the tapped card's own count carried by its button instead of recorded at timeline build (Codex on #334): [acf722d](https://github.com/idvorkin/context-grabber/commit/acf722d), host-checked only (lint); the widget build and `TodaysHandUITests` in the next build turn; the drawn entry's slot carried too, so a tap after a five-minute boundary avoids the card still on screen (Codex on #334): [a3aef08](https://github.com/idvorkin/context-grabber/commit/a3aef08), verified by `CardDealTests` (host; 1,638 asserts fail without it); the button carries the card itself, so a changed *Skip easy cards* can't hide it either (Codex on #334): [f01506f](https://github.com/idvorkin/context-grabber/commit/f01506f), `CardDealTests` (host); the widget on the phone in the next build turn
-- **Issues:** [#230](https://github.com/idvorkin/context-grabber/issues/230)
+- **Issues:** [#230](https://github.com/idvorkin/context-grabber/issues/230); bead context-grabber-505v
 - **Spec:** [Today's hand](../superpowers/specs/2026-10-08-native-large-widget-design.md)
 
 #### Use Case:
