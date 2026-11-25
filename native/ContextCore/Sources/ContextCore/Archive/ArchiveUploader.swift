@@ -29,9 +29,16 @@ public struct ArchivePage {
 
 public protocol ArchiveSource {
   var stream: String { get }
+  /// Where this pass keeps its place: the stream's name, unless a second pass walks the same stream (story 270's
+  /// newest-first walk of a dense Health type).
+  var cursorKey: String { get }
   /// The next page after `cursor` (nil: from the beginning), at most `limit` records.
   @MainActor
   func page(after cursor: String?, limit: Int) async throws -> ArchivePage
+}
+
+extension ArchiveSource {
+  public var cursorKey: String { stream }
 }
 
 public struct ArchiveUploader {
@@ -74,9 +81,9 @@ public struct ArchiveUploader {
     var report = Report()
     var cursor: String?
     do {
-      cursor = try cursors.cursor(source.stream)
+      cursor = try cursors.cursor(source.cursorKey)
     } catch {
-      log("error", ["where": "archive_cursor", "stream": source.stream, "message": "\(error)"])
+      log("error", ["where": "archive_cursor", "stream": source.cursorKey, "message": "\(error)"])
       report.stopped = .unreadable
       return report
     }
@@ -101,22 +108,41 @@ public struct ArchiveUploader {
       }
       if page.records.isEmpty {
         // Nothing to send, but the source may still have moved (Health answers an anchor for an empty page).
-        if let next = page.cursor, next != cursor { keep(next, for: source.stream, now: now, log: log) }
+        if let next = page.cursor, next != cursor { keep(next, for: source.cursorKey, now: now, log: log) }
         break
       }
-      let batch = ArchiveBatch(stream: source.stream, deviceId: deviceId, records: page.records)
-      var fields: [String: Any] = [
-        "action": "page", "stream": source.stream, "batch": batch.batchId, "records": page.records.count,
-        "backfill": first,
-      ]
-      let outcome: ArchiveSend.Outcome
-      do {
-        let request = try ArchiveSend.request(batch, cockpit: cockpit)
-        let (data, response) = try await transport(request)
-        outcome = ArchiveSend.outcome(status: (response as? HTTPURLResponse)?.statusCode, body: data)
-      } catch {
-        outcome = ArchiveSend.outcome(status: nil, body: nil, error: error.localizedDescription)
+      // A page bigger than one batch (a workout's readings, story 270) goes as several; its place moves on only
+      // once every one is taken, and one that fails sends the whole page again next run.
+      let chunks = stride(from: 0, to: page.records.count, by: max(pageSize, 1)).map {
+        Array(page.records[$0..<min($0 + max(pageSize, 1), page.records.count)])
       }
+      var fields: [String: Any] = [:]
+      var outcome: ArchiveSend.Outcome = .taken(inserted: 0, duplicate: 0)
+      var inserted = 0
+      var duplicate = 0
+      for (index, chunk) in chunks.enumerated() {
+        let batch = ArchiveBatch(stream: source.stream, deviceId: deviceId, records: chunk)
+        fields = [
+          "action": "page", "stream": source.stream, "batch": batch.batchId, "records": chunk.count,
+          "backfill": first,
+        ]
+        if source.cursorKey != source.stream { fields["pass"] = source.cursorKey }
+        if chunks.count > 1 { fields["part"] = "\(index + 1)/\(chunks.count)" }
+        do {
+          let request = try ArchiveSend.request(batch, cockpit: cockpit)
+          let (data, response) = try await transport(request)
+          outcome = ArchiveSend.outcome(status: (response as? HTTPURLResponse)?.statusCode, body: data)
+        } catch {
+          outcome = ArchiveSend.outcome(status: nil, body: nil, error: error.localizedDescription)
+        }
+        guard case .taken(let i, let d) = outcome else { break }
+        inserted += i
+        duplicate += d
+        if index < chunks.count - 1 {
+          log("archive", fields.merging(["ok": true, "inserted": i, "duplicate": d]) { $1 })
+        }
+      }
+      if case .taken = outcome { outcome = .taken(inserted: inserted, duplicate: duplicate) }
       report.pages += 1
       report.records += page.records.count
       switch outcome {
@@ -126,7 +152,7 @@ public struct ArchiveUploader {
         fields.merge(["ok": true, "inserted": inserted, "duplicate": duplicate]) { $1 }
         log("archive", fields)
         // The one place the cursor moves: the archive has this page.
-        if let next = page.cursor { keep(next, for: source.stream, now: now, log: log) }
+        if let next = page.cursor { keep(next, for: source.cursorKey, now: now, log: log) }
         cursor = page.cursor ?? cursor
         if !page.more { return report }
       case .refused(let status, let reason):

@@ -20,13 +20,52 @@ struct HealthArchiveSource: ArchiveSource {
     let anchor = cursor.flatMap { try? Self.anchor(from: $0) }
     let descriptor = HKAnchoredObjectQueryDescriptor(predicates: [.sample(type: type)], anchor: anchor, limit: limit)
     let result = try await descriptor.result(for: store)
-    var records = result.addedSamples.map(Self.record)
+    var records = await Self.records(result.addedSamples, store: store)
     records += result.deletedObjects.map { ["guid": ArchiveGUID.deleted($0.uuid), "deleted": true] }
     let count = result.addedSamples.count + result.deletedObjects.count
     let newAnchor: HKQueryAnchor? = result.newAnchor
     return ArchivePage(
       records: records, cursor: try newAnchor.map(Self.string), more: count >= limit,
       restarted: cursor != nil && anchor == nil)
+  }
+
+  /// Each sample's record, and after a stored series (a workout's heart rate: one sample holding a reading every
+  /// few seconds) a record for each of its readings (story 270, context-grabber-kseb).
+  static func records(_ samples: [HKSample], store: HKHealthStore) async -> [[String: Any]] {
+    var records: [[String: Any]] = []
+    for sample in samples {
+      let record = Self.record(sample)
+      records.append(record)
+      guard let quantity = sample as? HKQuantitySample, quantity.count > 1,
+        let kind = QuantityKind.allCases.first(where: { HealthKitSource.type($0) == quantity.quantityType })
+      else { continue }
+      let readings = await Self.readings(of: quantity, unit: HealthKitSource.fallbackUnit(kind), store: store)
+      records += ArchiveSeries.records(parent: record, readings: readings)
+    }
+    return records
+  }
+
+  /// The readings a stored series holds; none when Health will not say (the sample's own record still goes).
+  static func readings(of sample: HKQuantitySample, unit: HKUnit, store: HKHealthStore) async
+    -> [ArchiveSeries.Reading]
+  {
+    await withCheckedContinuation { continuation in
+      var readings: [ArchiveSeries.Reading] = []
+      var resumed = false
+      let query = HKQuantitySeriesSampleQuery(
+        quantityType: sample.quantityType, predicate: HKQuery.predicateForObject(with: sample.uuid)
+      ) { _, quantity, interval, _, done, error in
+        if let quantity, let interval {
+          readings.append(
+            ArchiveSeries.Reading(start: interval.start, end: interval.end, value: quantity.doubleValue(for: unit)))
+        }
+        if (done || error != nil) && !resumed {
+          resumed = true
+          continuation.resume(returning: readings)
+        }
+      }
+      store.execute(query)
+    }
   }
 
   static func string(_ anchor: HKQueryAnchor) throws -> String {
@@ -52,6 +91,7 @@ struct HealthArchiveSource: ArchiveSource {
     if let device = sample.device?.name { record["device"] = device }
     switch sample {
     case let quantity as HKQuantitySample:
+      if quantity.count > 1 { record["count"] = quantity.count }
       if let kind = QuantityKind.allCases.first(where: { HealthKitSource.type($0) == quantity.quantityType }) {
         let unit = HealthKitSource.fallbackUnit(kind)
         record["value"] = quantity.quantity.doubleValue(for: unit)
@@ -69,4 +109,43 @@ struct HealthArchiveSource: ArchiveSource {
     }
     return record
   }
+}
+
+/// Story 270's second pass over a dense Health type (RecentSweep.denseTypes): its last 400 days newest-first, then
+/// what is new, into the same stream as the anchored history, so a phone restored from a backup has its last year
+/// archived within a few runs instead of after years of old history.
+struct HealthRecentSource: ArchiveSource {
+  let store: HKHealthStore
+  let type: HKSampleType
+  var stream: String { ArchiveStream.health(type.identifier) }
+  var cursorKey: String { stream + "#recent" }
+
+  func page(after cursor: String?, limit: Int) async throws -> ArchivePage {
+    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+    let sweep = RecentSweep(json: cursor) ?? .start(now: nowMs)
+    let query = sweep.next(now: nowMs)
+    let key = HKPredicateKeyPathStartDate
+    let predicate: NSPredicate
+    let order: SortOrder
+    switch query {
+    case .back(let from, let through):
+      predicate = NSPredicate(
+        format: "%K >= %@ AND %K <= %@", key, Self.date(from) as NSDate, key, Self.date(through) as NSDate)
+      order = .reverse
+    case .forward(let after):
+      predicate = NSPredicate(format: "%K > %@", key, Self.date(after) as NSDate)
+      order = .forward
+    }
+    let descriptor = HKSampleQueryDescriptor(
+      predicates: [.sample(type: type, predicate: predicate)],
+      sortDescriptors: [SortDescriptor(\.startDate, order: order)],
+      limit: limit)
+    let samples = try await descriptor.result(for: store)
+    let starts = samples.map { Int64(($0.startDate.timeIntervalSince1970 * 1000).rounded()) }
+    let (next, more) = sweep.after(query, starts: starts, limit: limit)
+    let records = await HealthArchiveSource.records(samples, store: store)
+    return ArchivePage(records: records, cursor: next.json, more: more)
+  }
+
+  static func date(_ ms: Int64) -> Date { Date(timeIntervalSince1970: Double(ms) / 1000) }
 }
