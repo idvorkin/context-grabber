@@ -730,9 +730,12 @@ so render from a checkout, not the scratchpad.
 
 The screens agents change most have `#Preview`s on offline fixtures that never reach the network, the Cockpit or
 HealthKit (`native/App/Previews/`, Debug builds only): `AppPreviews.swift` holds the chat list (0), the decision card
-(1), the Decisions row and line (2) and the home tiles (3); the chat's private thread rows (0) and message bubbles (1)
-are at the end of `ChatViews.swift`. The whiteboard's menus and hold menu need a live board model and PaperKit, so
-they have none yet. For another screen, add a `#Preview` to its file, on `PreviewFixtures`.
+(1), the Decisions row and line (2), the home tiles (3) and the chat list with no Cockpit address (4); the chat's
+private thread rows (0) and message bubbles (1) are at the end of `ChatViews.swift`. The healthy previews talk to
+`PreviewCockpit`, a stand-in answered in-process from the fixtures, so they show no outage; only preview 4 shows the
+"no Cockpit address" problem, on purpose, so a picture that looks broken is told apart from one that is. The
+whiteboard's menus and hold menu need a live board model and PaperKit, so they have none yet. For another screen, add
+a `#Preview` to its file, on `PreviewFixtures`.
 
 ## The board's rules as WebAssembly: `just wasm`, `just wasm-test` (story 1503)
 

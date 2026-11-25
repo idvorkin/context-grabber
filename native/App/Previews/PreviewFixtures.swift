@@ -1,6 +1,7 @@
 //  SwiftUI previews' data (bead context-grabber-m6q, Igor 2026-11-24 "Add previews too"): fixture threads, messages,
-//  an ask and the models behind them, built against ChatCockpit.nowhere so a preview never reaches the network, the
-//  Cockpit or HealthKit. Debug builds only: none of this ships.
+//  an ask and the models behind them. A preview never reaches the network, the Cockpit or HealthKit: the healthy
+//  models talk to `PreviewCockpit`, a stand-in answered in-process from these fixtures, and the `broken` models have
+//  no address at all, so a reviewer sees the error state only where a preview asks for it. Debug builds only.
 
 #if DEBUG
   import BugKit
@@ -13,9 +14,19 @@
     /// One session log for every preview; it writes only to the preview's own sandbox.
     static let log = SessionLog()
     static let database = AppDatabase(log: log)
-    /// No address: ChatModel and ChatDecisionsModel refuse every request against it, so nothing is fetched.
-    static let inbox = InboxModel(log: log, database: database, cockpit: ChatCockpit.nowhere)
+    /// The healthy models: every request goes to `PreviewCockpit`, which answers from the fixtures in-process.
+    static let inbox: InboxModel = {
+      PreviewCockpit.install()
+      return InboxModel(log: log, database: database, cockpit: PreviewCockpit.address)
+    }()
     static let chat: ChatModel = {
+      let chat = ChatModel(inbox: inbox, log: log, database: database, cockpit: PreviewCockpit.address)
+      chat.threads = threads
+      return chat
+    }()
+    /// On purpose: no Cockpit address, so the list shows its "no Cockpit address" problem (the "is broken" picture).
+    static let brokenChat: ChatModel = {
+      let inbox = InboxModel(log: log, database: database, cockpit: ChatCockpit.nowhere)
       let chat = ChatModel(inbox: inbox, log: log, database: database, cockpit: ChatCockpit.nowhere)
       chat.threads = threads
       return chat
@@ -59,5 +70,51 @@
       // swiftlint:disable:next force_try
       return try! JSONDecoder().decode(ChatAsk.self, from: Data(json.utf8))
     }()
+
+    /// The fixture threads as the Cockpit's GET /chat sends them.
+    nonisolated static let listJSON: Data = {
+      let rows: [[String: Any]] = [
+        [
+          "key": "igor2-88g.1620", "title": "Larry", "count": 42, "last_ts": "2026-11-24T21:10:00Z",
+          "last_who": "larry", "last_text": "Header patch is a branch you can fetch.", "unread": 2, "pinned": true,
+          "last_author": "larry",
+        ],
+        [
+          "key": "igor2-88g.1801", "title": "How far from deploying?", "count": 9, "last_ts": "2026-11-24T16:55:00Z",
+          "last_who": "agent", "last_text": "Installed on the iPad and iPhone.", "last_author": "agent",
+        ],
+        [
+          "key": "igor2-88g.1810", "title": "Weekend plans", "count": 3, "last_ts": "2026-11-23T18:02:00Z",
+          "last_who": "igor", "last_text": "Harry Potter tickets for Saturday", "looks_done": true,
+          "last_author": "igor",
+        ],
+      ]
+      return (try? JSONSerialization.data(withJSONObject: ["ok": true, "threads": rows])) ?? Data()
+    }()
+  }
+
+  /// A Cockpit that lives in the preview: any request to `address` is answered in-process, so a healthy preview shows
+  /// no outage and nothing leaves the machine. GET /chat gets the fixture threads; anything else gets an empty success.
+  final class PreviewCockpit: URLProtocol {
+    static let address = "https://preview.cockpit.invalid"
+    private static let host = "preview.cockpit.invalid"
+    private static let installed: Void = { URLProtocol.registerClass(PreviewCockpit.self) }()
+
+    static func install() { _ = installed }
+
+    override class func canInit(with request: URLRequest) -> Bool { request.url?.host == host }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+      guard let url = request.url else { return }
+      let body = url.path == "/chat" ? PreviewFixtures.listJSON : Data(#"{"ok": true, "threads": [], "asks": []}"#.utf8)
+      let response = HTTPURLResponse(
+        url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/json"])
+      if let response { client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed) }
+      client?.urlProtocol(self, didLoad: body)
+      client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
   }
 #endif

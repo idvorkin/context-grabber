@@ -1,5 +1,5 @@
 //  SwiftUI previews of the screens agents change most (Igor 2026-11-24 "Add previews too"), on PreviewFixtures'
-//  offline data. Render one from the command line with scripts/native/render-preview.sh. Debug builds only.
+//  offline data. Render one from the command line with `just render-preview`. Debug builds only.
 
 #if DEBUG
   import SwiftUI
@@ -37,6 +37,13 @@
         }
       }
       .padding()
+    }
+  }
+
+  /// On purpose: the list with no Cockpit address, so a reviewer can tell "looks broken" (this) from "is broken".
+  #Preview("Chat list, no Cockpit (error on purpose)") {
+    NavigationStack {
+      ChatListView(chat: PreviewFixtures.brokenChat, voice: PreviewFixtures.voice, logger: PreviewFixtures.logger)
     }
   }
 #endif
