@@ -1,7 +1,7 @@
 //  The board's open conversation resized, and floating as a card or docked (#1384, stories 1278, 1279; spec
 //  2026-11-12-whiteboard-conversation-design.md, *Resize, and float or dock*). Docked, a grip under the panel drags it
 //  taller or shorter and the page moves with it; floating, a card over the board that a finger drags by its top edge and
-//  sizes by its corner. Where and how big are `WhiteboardPanelPlace`, kept as shares of the page.
+//  sizes by its top-left corner. Where and how big are `WhiteboardPanelPlace`, kept as shares of the page.
 
 import ContextCore
 import SwiftUI
@@ -137,8 +137,8 @@ struct WhiteboardConversationCard<Panel: View>: View {
     .frame(width: CGFloat(frame.width), height: CGFloat(frame.height))
     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
     .clipShape(RoundedRectangle(cornerRadius: 14))
-    .overlay(alignment: .bottomTrailing) {
-      // The corner: a finger sizes the card by it.
+    .overlay(alignment: .topLeading) {
+      // The top-left corner (#1491): a finger sizes the card by it, the bottom right staying put.
       Image(systemName: "arrow.up.left.and.arrow.down.right")
         .font(.caption).foregroundStyle(.secondary)
         .frame(width: WhiteboardPanelGrip.side, height: WhiteboardPanelGrip.side)

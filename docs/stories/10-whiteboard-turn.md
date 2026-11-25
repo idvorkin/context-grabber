@@ -1893,7 +1893,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 - **Summary:** The conversation floats over the board as a card I move and size, or docks above it
 - **Status:** implemented in [b2da55db](https://github.com/idvorkin/context-grabber/commit/b2da55db); verified by host tests (`WhiteboardPanelPlaceTests`; `just native-test`), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`just test-ladder --rung 2` at b2da55db: `WhiteboardConversationPlaceUITests`, and `WhiteboardBubblesUITests`, `WhiteboardPanelScrollUITests`, `WhiteboardLinkChipUITests` beside it); the Pencil on the card is the iPad's check; the real iPad not yet; no iPhone run (Igor's no-iPhone rule during the whiteboard work, 2026-11-22)
-- **Issues:** [#1384](https://github.com/idvorkin/context-grabber/issues/1384) ("chat resizable like it is on the web"; "like a popover that I can move over the page, or can be docked like it is right now")
+- **Issues:** [#1384](https://github.com/idvorkin/context-grabber/issues/1384) ("chat resizable like it is on the web"; "like a popover that I can move over the page, or can be docked like it is right now"); [#1491](https://github.com/idvorkin/context-grabber/issues/1491) (Igor, 2026-11-25, board ink: "resize in top left corner"; Inbox 07:22: put the grip at the top left)
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *Resize, and float or dock*
 
 #### Use Case:
@@ -1905,7 +1905,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** Float it
 - **Given:** a board's conversation open above the board, on an iPad
 - **When:** I tap **Float**
-- **Then:** the page moves back up and the conversation is a card at the board's top left; dragging its top edge moves it, never off the board, and its corner sizes it, never smaller than a few lines
+- **Then:** the page moves back up and the conversation is a card at the board's top left; dragging its top edge moves it, never off the board, and the grip at its top-left corner sizes it, growing up and left with its bottom right staying put, never smaller than a few lines and never past the board's top or left edge
 
 ---
 
@@ -1923,7 +1923,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** A narrow card
-- **Given:** the conversation floating as a card, at its first size or the smallest its corner allows
+- **Given:** the conversation floating as a card, at its first size or the smallest its top-left grip allows
 - **When:** I look at its foot
 - **Then:** *Open in Chat*, Lines / Bubbles and **Dock** sit on one line, *Open in Chat* and **Dock** as icons when their words don't fit, nothing at the card's bottom is cut off, and each still works
 

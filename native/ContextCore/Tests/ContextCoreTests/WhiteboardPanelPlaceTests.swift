@@ -38,15 +38,29 @@ final class WhiteboardPanelPlaceTests: XCTestCase {
     XCTAssertEqual(back.y, 0, accuracy: 0.5)
   }
 
-  func testTheCardResizesByItsCornerWithinBounds() {
+  /// #1491: the grip is at the card's top left; it grows the card up and left, its bottom right staying put.
+  func testTheCardResizesByItsTopLeftCornerWithinBounds() {
     let area = (width: 1000.0, height: 800.0)
-    let card = WhiteboardPanelPlace.Card.start
-    let small = card.resized(dx: -5000, dy: -5000, in: area).frame(in: area)
+    let card = WhiteboardPanelPlace.Card(x: 0.4, y: 0.4, width: 0.3, height: 0.25)
+    let f = card.frame(in: area)
+
+    let grown = card.resized(dx: -100, dy: -80, in: area).frame(in: area)
+    XCTAssertEqual(grown.width, f.width + 100, accuracy: 0.5, "wider to the left")
+    XCTAssertEqual(grown.height, f.height + 80, accuracy: 0.5, "taller upwards")
+    XCTAssertEqual(grown.x + grown.width, f.x + f.width, accuracy: 0.5, "the right edge stays put")
+    XCTAssertEqual(grown.y + grown.height, f.y + f.height, accuracy: 0.5, "the bottom stays put")
+
+    let small = card.resized(dx: 5000, dy: 5000, in: area).frame(in: area)
     XCTAssertEqual(small.width, WhiteboardPanelPlace.Card.narrowest, accuracy: 0.5)
     XCTAssertEqual(small.height, WhiteboardPanelPlace.Card.shortest, accuracy: 0.5)
-    let big = card.resized(dx: 5000, dy: 5000, in: area).frame(in: area)
-    XCTAssertLessThanOrEqual(big.x + big.width, 1000.5, "the corner stops at the board's edge")
-    XCTAssertLessThanOrEqual(big.y + big.height, 800.5)
+    XCTAssertEqual(small.x + small.width, f.x + f.width, accuracy: 0.5, "shrinks toward its bottom right")
+    XCTAssertEqual(small.y + small.height, f.y + f.height, accuracy: 0.5)
+
+    let big = card.resized(dx: -5000, dy: -5000, in: area).frame(in: area)
+    XCTAssertEqual(big.x, 0, accuracy: 0.5, "stops at the board's left edge")
+    XCTAssertEqual(big.y, 0, accuracy: 0.5, "stops at the board's top")
+    XCTAssertEqual(big.x + big.width, f.x + f.width, accuracy: 0.5)
+    XCTAssertEqual(big.y + big.height, f.y + f.height, accuracy: 0.5)
   }
 
   func testTheCardIsKeptAsTextAndAnythingElseIsTheStart() {

@@ -53,12 +53,14 @@ public enum WhiteboardPanelPlace {
       return Self.card(x: f.x + dx, y: f.y + dy, width: f.width, height: f.height, in: area)
     }
 
-    /// The card's corner dragged `dx`, `dy` points: no smaller than the smallest card, no further than the area's edge.
+    /// The card's top-left corner dragged `dx`, `dy` points (#1491): its bottom right stays put; no smaller than the
+    /// smallest card, no further than the area's top or left edge.
     public func resized(dx: Double, dy: Double, in area: (width: Double, height: Double)) -> Card {
       let f = frame(in: area)
-      let w = min(max(f.width + dx, Self.narrowest), area.width - f.x)
-      let h = min(max(f.height + dy, Self.shortest), area.height - f.y)
-      return Self.card(x: f.x, y: f.y, width: w, height: h, in: area)
+      let (right, bottom) = (f.x + f.width, f.y + f.height)
+      let w = min(max(f.width - dx, Self.narrowest), right)
+      let h = min(max(f.height - dy, Self.shortest), bottom)
+      return Self.card(x: right - w, y: bottom - h, width: w, height: h, in: area)
     }
 
     private static func card(
