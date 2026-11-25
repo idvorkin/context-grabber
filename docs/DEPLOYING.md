@@ -108,7 +108,7 @@ install is the Cockpit's side (igor2), not this repo's. *Unverified here: the in
 
 ## Every install lands on /builds
 
-Story 1634 ([spec](superpowers/specs/2026-11-22-ota-builds-design.md), "Every install lands on /builds"). After
+Stories 1634–1637 and 1639 ([spec](superpowers/specs/2026-11-22-ota-builds-design.md), "Every install lands on /builds"). After
 `just deploy` (BugKit's `deploy-all.sh`) or `just native-run-device` installs a build, BugKit's `ota-upload.sh` copies
 that very bundle to the Cockpit's builds folder as `grabber-<sha8>.ipa`, in the background: the install and the launch
 don't wait, and a failed copy never fails them. It reads the commit from the bundle (`-dirty` when built from
