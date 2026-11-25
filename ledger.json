@@ -1,34 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1299,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "fix/story-ids-1384-dupes",
-   "at": 1795532388.138311,
-   "until": "2026-11-25T14:59:48Z"
-  },
-  {
-   "id": 1300,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "fix/story-ids-1384-dupes",
-   "at": 1795532388.138311,
-   "until": "2026-11-25T14:59:48Z"
-  },
-  {
-   "id": 1301,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "docs/story-dupes-1292-1293",
-   "at": 1795532457.9509299,
-   "until": "2026-11-25T15:00:57Z"
-  },
-  {
-   "id": 1302,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "docs/story-dupes-1292-1293",
-   "at": 1795532457.9509299,
-   "until": "2026-11-25T15:00:57Z"
-  },
-  {
    "id": 570,
    "journey": "07-widgets-and-links.md",
    "branch": "native/ledger-401-hint-1371",
@@ -104,6 +76,20 @@
    "branch": "native/plus-no-markup-dataloss",
    "at": 1795617130.547202,
    "until": "2026-11-26T14:32:10Z"
+  },
+  {
+   "id": 1299,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-encode",
+   "at": 1795619951.766162,
+   "until": "2026-11-26T15:19:11Z"
+  },
+  {
+   "id": 1300,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-encode",
+   "at": 1795619951.766162,
+   "until": "2026-11-26T15:19:11Z"
   }
  ]
 }
