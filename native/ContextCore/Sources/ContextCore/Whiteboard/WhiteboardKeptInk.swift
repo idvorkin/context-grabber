@@ -36,7 +36,8 @@ public struct KeptInkColours: Equatable, Sendable {
 
 public enum WhiteboardKeptInk {
   /// A picture's pixels unlike the paper, sorted: near `ink`, near black, the rest; and the spans. `rgba`: `width` x
-  /// `height` pixels, 4 bytes each, premultiplied. A transparent pixel is no colour at all and is skipped (pbvt: a view
+  /// `height` pixels, 4 bytes each, premultiplied; each is judged by its own colour, its alpha divided out, so a soft
+  /// edge of the ink reads as ink, not black. A transparent pixel is no colour at all and is skipped (pbvt: a view
   /// drawn alone leaves the rest of its picture transparent, and counted as black every layer read wholly dark).
   public static func sort(rgba: [UInt8], width w: Int, height h: Int, paper: [Int], ink: [Int]) -> KeptInkColours {
     var out = KeptInkColours()
@@ -48,7 +49,8 @@ public enum WhiteboardKeptInk {
       for x in 0..<w {
         let i = (y * w + x) * 4
         guard i + 3 < rgba.count, rgba[i + 3] >= 8 else { continue }
-        let px = [Int(rgba[i]), Int(rgba[i + 1]), Int(rgba[i + 2])]
+        let a = Int(rgba[i + 3])
+        let px = (0..<3).map { min(Int(rgba[i + $0]) * 255 / a, 255) }
         guard (0..<3).contains(where: { abs(px[$0] - paper[$0]) > 40 }) else { continue }
         allX = (min(allX.0, x), max(allX.1, x))
         allY = (min(allY.0, y), max(allY.1, y))

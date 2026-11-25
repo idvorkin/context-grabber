@@ -130,6 +130,17 @@ final class WhiteboardKeptInkTests: XCTestCase {
     XCTAssertEqual(sorted.inkWidth, 1)
   }
 
+  /// A layer drawn alone has soft, partly transparent edges. Purple (186, 57, 230) at alpha 64 is stored premultiplied
+  /// as (47, 14, 58), every channel under 80: read as stored it counted black. It's purple, and so is a half-alpha one.
+  func testASoftEdgeOfTheInkIsInkNotDark() {
+    let paper = [255, 255, 255]
+    let bytes: [UInt8] = [47, 14, 58, 64, 93, 29, 115, 128]
+    let sorted = WhiteboardKeptInk.sort(rgba: bytes, width: 2, height: 1, paper: paper, ink: purple)
+    XCTAssertEqual(sorted.ink, 2)
+    XCTAssertEqual(sorted.dark, 0)
+    XCTAssertEqual(sorted.other, 0)
+  }
+
   /// Opaque pixels sort as before: the whole view's picture is opaque, so its numbers don't change.
   func testOpaquePixelsSortAsBefore() {
     let paper = [255, 255, 255]
