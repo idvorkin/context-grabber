@@ -43,27 +43,6 @@
    "until": "2026-11-26T04:51:43Z"
   },
   {
-   "id": 1077,
-   "journey": "05-call.md",
-   "branch": "native/call-three-voices",
-   "at": 1795582325.167244,
-   "until": "2026-11-26T04:52:05Z"
-  },
-  {
-   "id": 1614,
-   "journey": "02-larry.md",
-   "branch": "native/call-three-voices",
-   "at": 1795582336.922643,
-   "until": "2026-11-26T04:52:16Z"
-  },
-  {
-   "id": 1615,
-   "journey": "02-larry.md",
-   "branch": "native/call-three-voices",
-   "at": 1795582336.922643,
-   "until": "2026-11-26T04:52:16Z"
-  },
-  {
    "id": 1616,
    "journey": "02-larry.md",
    "branch": "native/chat-search-1443",
@@ -85,39 +64,11 @@
    "until": "2026-11-26T04:53:16Z"
   },
   {
-   "id": 1293,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-clash-t12b",
-   "at": 1795583595.9333382,
-   "until": "2026-11-26T05:13:15Z"
-  },
-  {
-   "id": 1322,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-clash-t12b",
-   "at": 1795583595.9333382,
-   "until": "2026-11-26T05:13:15Z"
-  },
-  {
-   "id": 1323,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-clash-t12b",
-   "at": 1795583595.9333382,
-   "until": "2026-11-26T05:13:15Z"
-  },
-  {
    "id": 1626,
    "journey": "11-building-and-testing.md",
    "branch": "native/nightly-all-3rk",
    "at": 1795583606.318187,
    "until": "2026-11-26T05:13:26Z"
-  },
-  {
-   "id": 1324,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/ink-sbs-pen-latency",
-   "at": 1795584947.760082,
-   "until": "2026-11-26T05:35:47Z"
   },
   {
    "id": 1627,
@@ -127,18 +78,18 @@
    "until": "2026-11-26T05:48:07Z"
   },
   {
-   "id": 1628,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/walk-the-store",
-   "at": 1795585736.976591,
-   "until": "2026-11-26T05:48:56Z"
-  },
-  {
    "id": 1325,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/question-looks-1387",
    "at": 1795586552.87812,
    "until": "2026-11-26T06:02:32Z"
+  },
+  {
+   "id": 1629,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/pre-merge-merged-tip",
+   "at": 1795589934.6726022,
+   "until": "2026-11-26T06:58:54Z"
   }
  ]
 }
