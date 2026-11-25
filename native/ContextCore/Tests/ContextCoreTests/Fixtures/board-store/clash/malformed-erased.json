@@ -1,0 +1,34 @@
+{
+  "expect" : {
+    "error" : "malformed thing s-1"
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 1,
+    "board" : {
+      "rev" : 1,
+      "things" : {
+        "s-1" : {
+          "device" : "web-3f9a",
+          "erased" : "yes",
+          "rev" : 1
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-2"
+          }
+        ]
+      }
+    ]
+  },
+  "name" : "malformed-erased",
+  "story" : "1329",
+  "why" : "An erased that is neither a boolean nor 0\/1 is an error."
+}

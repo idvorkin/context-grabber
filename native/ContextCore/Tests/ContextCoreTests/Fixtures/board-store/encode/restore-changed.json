@@ -1,0 +1,95 @@
+{
+  "expect" : {
+    "ignored" : [
+
+    ],
+    "ops" : [
+      {
+        "ids" : [
+          "s-e"
+        ],
+        "op" : "restore"
+      },
+      {
+        "bodies" : {
+          "s-e" : {
+            "c" : "#1a1a1a",
+            "id" : "s-e",
+            "k" : "pen",
+            "pts" : [
+              [
+                150,
+                40,
+                0.5
+              ],
+              [
+                160,
+                44,
+                0.59999999999999998
+              ]
+            ],
+            "w" : 2.5
+          }
+        },
+        "ids" : [
+          "s-e"
+        ],
+        "op" : "set"
+      }
+    ]
+  },
+  "input" : {
+    "after" : {
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-e",
+          "k" : "pen",
+          "pts" : [
+            [
+              150,
+              40,
+              0.5
+            ],
+            [
+              160,
+              44,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        }
+      ],
+      "v" : 1
+    },
+    "before" : {
+      "strokes" : [
+
+      ],
+      "v" : 1
+    },
+    "erased" : {
+      "s-e" : {
+        "c" : "#1a1a1a",
+        "id" : "s-e",
+        "k" : "pen",
+        "pts" : [
+          [
+            150,
+            0,
+            0.5
+          ],
+          [
+            160,
+            4,
+            0.59999999999999998
+          ]
+        ],
+        "w" : 2.5
+      }
+    }
+  },
+  "name" : "restore-changed",
+  "story" : "1299",
+  "why" : "An undo bringing back ink that differs from what was erased: restore, then set to the record the device now holds."
+}

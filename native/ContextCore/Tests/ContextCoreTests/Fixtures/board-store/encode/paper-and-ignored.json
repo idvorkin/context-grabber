@@ -1,0 +1,46 @@
+{
+  "expect" : {
+    "ignored" : [
+      "handled",
+      "ops_done",
+      "pen"
+    ],
+    "ops" : [
+      {
+        "lines" : 40,
+        "op" : "paper",
+        "paper" : "grid",
+        "ruled" : true
+      }
+    ]
+  },
+  "input" : {
+    "after" : {
+      "handled" : [
+        "m1"
+      ],
+      "lines" : 40,
+      "ops_done" : 3,
+      "paper" : "grid",
+      "pen" : {
+        "by" : "larry"
+      },
+      "ruled" : true,
+      "strokes" : [
+
+      ],
+      "v" : 1
+    },
+    "before" : {
+      "lines" : 40,
+      "paper" : "plain",
+      "strokes" : [
+
+      ],
+      "v" : 1
+    }
+  },
+  "name" : "paper-and-ignored",
+  "story" : "1299",
+  "why" : "Paper, lines and ruled go up as one paper op; the pen and Larry's bookkeeping are named as ignored, not stored."
+}

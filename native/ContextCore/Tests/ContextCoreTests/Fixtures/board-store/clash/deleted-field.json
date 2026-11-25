@@ -1,0 +1,120 @@
+{
+  "expect" : {
+    "applied" : [
+
+    ],
+    "board" : {
+      "deleted" : {
+        "at" : "t12",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "rev" : 12
+      },
+      "rev" : 12,
+      "things" : {
+        "@board" : {
+          "at" : "t3",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 3
+        },
+        "s-a" : {
+          "at" : "t2",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 2
+        }
+      }
+    },
+    "landed" : [
+
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t12",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-new",
+        "op" : 0,
+        "reason" : "deleted",
+        "rev" : 12
+      },
+      {
+        "at" : "t12",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "@board",
+        "op" : 1,
+        "reason" : "deleted",
+        "rev" : 12
+      },
+      {
+        "at" : "t12",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-a",
+        "op" : 2,
+        "reason" : "deleted",
+        "rev" : 12
+      }
+    ],
+    "rev" : 12
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 11,
+    "board" : {
+      "deleted" : {
+        "at" : "t12",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "rev" : 12
+      },
+      "rev" : 12,
+      "things" : {
+        "@board" : {
+          "at" : "t3",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 3
+        },
+        "s-a" : {
+          "at" : "t2",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 2
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-new"
+          }
+        ]
+      },
+      {
+        "name" : "x",
+        "op" : "rename"
+      },
+      {
+        "ids" : [
+          "s-a"
+        ],
+        "op" : "restore"
+      }
+    ]
+  },
+  "name" : "deleted-field",
+  "story" : "1323",
+  "why" : "A board with deleted set refuses every op, new ink and restore included."
+}

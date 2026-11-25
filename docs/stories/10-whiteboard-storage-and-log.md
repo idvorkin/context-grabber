@@ -1083,7 +1083,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1293:
 
 - **Summary:** New ink always lands on a shared board, once
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: boards live in the Cockpit, any of iPad, web and Mac draws
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
 
@@ -1101,7 +1101,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1322:
 
 - **Summary:** A change to something changed since is refused by name
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
 
@@ -1119,7 +1119,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1323:
 
 - **Summary:** Nothing lands on a deleted board
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: deleted boards are kept forever, and refused ink can become a new board
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*
 
@@ -1137,7 +1137,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1326:
 
 - **Summary:** A header on a shared board is a thing of its own
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 23, at 70b87563; wasm sha d7535bb5; merged in #1490 as 1b720cca); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point Q2
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1155,7 +1155,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1327:
 
 - **Summary:** A board is deleted however the store records it
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 23, at 70b87563; wasm sha d7535bb5; merged in #1490 as 1b720cca); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, points 1 and 7
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1173,7 +1173,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1328:
 
 - **Summary:** A change that also adds says which of its names landed
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 23, at 70b87563; wasm sha d7535bb5; merged in #1490 as 1b720cca); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point 3
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1191,7 +1191,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1329:
 
 - **Summary:** A broken record on a shared board is refused out loud
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 23, at 70b87563; wasm sha d7535bb5; merged in #1490 as 1b720cca); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [250b95e3](https://github.com/idvorkin/context-grabber/commit/250b95e3); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, gap "the wasm silently drops a thing row"
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1367,3 +1367,57 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a save whose every change was refused, answered with a version one past the iPad's
 - **When:** the answer comes back
 - **Then:** the iPad doesn't call itself caught up: it fetches the change it missed, shows it, and only then sends the next save
+
+### User Story 1299:
+
+- **Summary:** Every device saves a board's changes the same way
+- **Status:** `bw_store_encode` and the stroke record in [8658ad93](https://github.com/idvorkin/context-grabber/commit/8658ad93), Larry's answers (a split goes up as one replace, `why` on the change, malformed records an error) in [e9a47eb4](https://github.com/idvorkin/context-grabber/commit/e9a47eb4); verified by host tests (`StoreClashGoldenTests`: the encode goldens, each landing whole under the clash rule, and the stroke record through a move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Issues:** cockpit-8kh; review of Larry's board store spec, point 10
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As someone** drawing on a shared board from the web, the iPad or the Mac
+- **I want to** have each device turn my changes into the same changes for the Cockpit
+- **so that** a move, an erase or an undo means one thing whichever device made it
+
+#### Acceptance Criteria:
+- **Scenario:** One commit of several kinds of change
+- **Given:** a board before and after a commit that moved two strokes, erased one, wrote a new one, grouped them, brought back an erased one and renamed the board
+- **When:** the device encodes the commit
+- **Then:** the changes come out as one bring-back, one erase, one change of the two moved strokes together, the new stroke, the group and the rename, in an order the Cockpit accepts as one batch
+
+### User Story 1342:
+
+- **Summary:** A partial erase never doubles ink another device moved
+- **Status:** a split encoded as one replace (Larry's answer) in [e9a47eb4](https://github.com/idvorkin/context-grabber/commit/e9a47eb4); verified by host tests (`StoreClashGoldenTests`: the `encode/split-is-replace` golden, landing whole under the clash rule, and the `clash/split-contended` golden refused naming the move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Issues:** cockpit-8kh; review of Larry's board store spec, point 10
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As someone** erasing part of a stroke on the iPad that I moved on the web
+- **I want to** have the erase refused rather than land beside the move
+- **so that** the board never shows the stroke twice
+
+#### Acceptance Criteria:
+- **Scenario:** A partial erase of a stroke another device moved
+- **Given:** a stroke the web moved after the iPad last saw it
+- **When:** the iPad erases part of it, leaving two pieces, and the commit is encoded and sent
+- **Then:** the stroke and its pieces go up as one replacement, which is refused naming the web's move, so the ink is not doubled
+
+### User Story 1300:
+
+- **Summary:** A stroke keeps what the other device knows about it
+- **Status:** `bw_store_encode` and the stroke record in [8658ad93](https://github.com/idvorkin/context-grabber/commit/8658ad93), Larry's answers (a split goes up as one replace, `why` on the change, malformed records an error) in [e9a47eb4](https://github.com/idvorkin/context-grabber/commit/e9a47eb4); verified by host tests (`StoreClashGoldenTests`: the encode goldens, each landing whole under the clash rule, and the stroke record through a move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Issues:** cockpit-8kh; review of Larry's board store spec, point 9
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As someone** who draws on the iPad and moves that ink on the web, and the other way round
+- **I want to** have every detail of each stroke survive the other device's edits
+- **so that** my pencil texture and pen data are never lost by a move
+
+#### Acceptance Criteria:
+- **Scenario:** A move of strokes from both devices
+- **Given:** strokes carrying every field the web and the iPad write, and one neither knows
+- **When:** a move of them is encoded
+- **Then:** each moved stroke goes up with its new points and every other field exactly as it was

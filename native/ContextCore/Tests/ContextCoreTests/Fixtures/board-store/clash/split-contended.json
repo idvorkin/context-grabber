@@ -1,0 +1,100 @@
+{
+  "expect" : {
+    "applied" : [
+
+    ],
+    "board" : {
+      "rev" : 6,
+      "things" : {
+        "s-100" : {
+          "at" : "t6",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 6
+        }
+      }
+    },
+    "landed" : [
+
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t6",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-100",
+        "op" : 0,
+        "reason" : "changed",
+        "rev" : 6
+      }
+    ],
+    "rev" : 6
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 5,
+    "board" : {
+      "rev" : 6,
+      "things" : {
+        "s-100" : {
+          "at" : "t6",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 6
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "ids" : [
+          "s-100"
+        ],
+        "op" : "replace",
+        "strokes" : [
+          {
+            "c" : "#1a1a1a",
+            "id" : "s-100-1",
+            "pts" : [
+              [
+                0,
+                0,
+                0.5
+              ],
+              [
+                10,
+                4,
+                0.59999999999999998
+              ]
+            ],
+            "w" : 2.5
+          },
+          {
+            "c" : "#1a1a1a",
+            "id" : "s-100-2",
+            "pts" : [
+              [
+                0,
+                0,
+                0.5
+              ],
+              [
+                10,
+                4,
+                0.59999999999999998
+              ]
+            ],
+            "w" : 2.5
+          }
+        ]
+      }
+    ]
+  },
+  "name" : "split-contended",
+  "story" : "1322",
+  "why" : "A split of a stroke the web moved since: the replace is refused changed whole, so its pieces don't land beside the moved stroke and the ink is not doubled."
+}

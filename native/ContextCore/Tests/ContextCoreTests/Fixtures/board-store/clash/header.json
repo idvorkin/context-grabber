@@ -1,0 +1,103 @@
+{
+  "expect" : {
+    "applied" : [
+      0,
+      1
+    ],
+    "board" : {
+      "rev" : 4,
+      "things" : {
+        "h-1" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 4
+        },
+        "h-old" : {
+          "at" : "t2",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 2
+        },
+        "s-1" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 4
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "h-1",
+          "s-1"
+        ],
+        "op" : 0
+      },
+      {
+        "ids" : [
+          "s-1"
+        ],
+        "op" : 1
+      }
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t2",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "h-old",
+        "op" : 1,
+        "reason" : "exists",
+        "rev" : 2
+      }
+    ],
+    "rev" : 4
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 3,
+    "board" : {
+      "rev" : 3,
+      "things" : {
+        "h-old" : {
+          "at" : "t2",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 2
+        },
+        "s-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 1
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "id" : "h-1",
+        "ids" : [
+          "s-1"
+        ],
+        "op" : "header"
+      },
+      {
+        "id" : "h-old",
+        "ids" : [
+          "s-1"
+        ],
+        "op" : "header"
+      }
+    ]
+  },
+  "name" : "header",
+  "story" : "1326",
+  "why" : "A header adds its own id and changes the strokes it heads."
+}

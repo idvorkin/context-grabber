@@ -1,0 +1,129 @@
+{
+  "about": "One stroke record both sides read (cockpit-8kh, story 1300). s-web is as the web board writes it, s-ipad as the iPad will, s-both has every field of both plus one neither knows (zz_future). Every encoder and decoder carries every field it doesn't know through unchanged.",
+  "strokes": [
+    {
+      "id": "s-1795600000000",
+      "pts": [
+        [
+          100,
+          200,
+          0.5
+        ],
+        [
+          110,
+          204,
+          0.62
+        ],
+        [
+          124,
+          209,
+          0.7
+        ]
+      ],
+      "w": 2.5,
+      "c": "#1a1a1a",
+      "t": 1795600000000,
+      "k": "pen",
+      "au": "igor",
+      "pr": 1,
+      "shape": {
+        "kind": "line",
+        "name": "line"
+      }
+    },
+    {
+      "id": "s-1795600001000",
+      "pts": [
+        [
+          300,
+          200,
+          0.4,
+          0,
+          1.2,
+          0.9,
+          2.1
+        ],
+        [
+          306,
+          205,
+          0.55,
+          16,
+          1.21,
+          0.88,
+          2.2
+        ],
+        [
+          315,
+          212,
+          0.6,
+          33,
+          1.22,
+          0.87,
+          2.3
+        ]
+      ],
+      "w": 3,
+      "c": "#2b4c7e",
+      "ink": "pencil",
+      "seed": 918273,
+      "xf": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "made_at": "2026-11-25T10:02:11.402Z"
+    },
+    {
+      "id": "s-1795600002000-1",
+      "pts": [
+        [
+          500,
+          220,
+          0.5,
+          0,
+          1.1,
+          0.8,
+          2
+        ],
+        [
+          520,
+          230,
+          0.6,
+          20,
+          1.1,
+          0.8,
+          2
+        ]
+      ],
+      "w": 2,
+      "c": "#000000",
+      "ink": "watercolor",
+      "seed": 42,
+      "xf": [
+        1,
+        0,
+        0,
+        1,
+        4,
+        -2
+      ],
+      "hid": true,
+      "made_at": "2026-11-25T10:03:00Z",
+      "t": 1795600002000,
+      "k": "marker",
+      "au": "igor",
+      "pr": 0.8,
+      "shape": null,
+      "zz_future": {
+        "keep": [
+          "me",
+          1.5,
+          true
+        ]
+      }
+    }
+  ]
+}

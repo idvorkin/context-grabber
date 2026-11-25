@@ -590,6 +590,34 @@ version 22 and every point accepted; this version settles the rule's side of tho
   that changed it, or whose `erased` is neither true/false nor 1/0, answers `{"error": "malformed thing <name>"}`
   instead of being dropped, so an add of that name can't land a second time. A `deleted` of `null` is no delete.
 
+- **One encoder for every device** (stories 1299, 1300, 1342): new, `bw_store_encode`, input `{"before": board, "after":
+  board, "erased"?: {name: thing}}`, a board in the web board's own shape (`strokes`, `objects`, `headers`,
+  `connectors`, and the board's `name`, `paper`, `lines`, `ruled`), `erased` the erased things the device still holds
+  for undo, and an optional `why` (what the gesture was, such as a move by so much) copied onto the change it makes.
+  Before and after are the board as stored, unfolded: a fold is an object of its own and folded ink stays among the
+  strokes, so folding changes one thing, not everything below it (agreed with Larry, 2026-11-25). The answer is `{"ops": [op]}`, the storage ops that take the store from before to after, in an order the
+  rule accepts within one batch:
+  - brought back: `restore` of every erased name the after has again, then `set` for any of them that differs from
+    what was erased;
+  - split: a stroke the after lacks whose pieces are new strokes named after it (`<name>-1`, `<name>-2`, …) goes up
+    as one `replace` of the stroke by its pieces, so if someone changed the stroke meanwhile the pieces are refused
+    with it rather than doubling the ink;
+  - taken off: one `erase` of every other name the after lacks;
+  - changed: one `set {ids, bodies}` of every name whose record differs, so a change of several things lands for all
+    or none;
+  - new: one `add_strokes` of the new strokes in draw order, then each new text (`add_text`), question card
+    (`add_card`), other object (`overlay`), group (`group`), header (`header`) and connector (`connector`), its record
+    as the op's fields;
+  - the board: `rename` when the name changed, `paper` (with `lines` and `ruled`) when any of those did.
+  A record goes up as the device holds it, every field included, the ones this build doesn't know too: a stroke the
+  web drew keeps its pen data after an iPad move, and an iPad stroke keeps its texture seed after a web move. Fields
+  of the board that the store doesn't keep (the pen, Larry's bookkeeping) are listed as `"ignored": [field]` rather
+  than dropped silently. Missing input says so: `{"error": "no before" | "no after"}`, and a record without a name, or
+  a name used twice, is `{"error": "malformed record <list>[<index>]"}` rather than skipped, so no ink goes unsaved
+  without a word.
+- **One stroke record** both sides read: the shared fixture holds strokes with every field the web and the iPad
+  write, and one this build doesn't know, and the encoder carries each through a move unchanged.
+
 `bw_info` says `"abi": 23`. Every other export's arguments and answers are as in version 22.
 
 ## Precision: a known difference from the iPad

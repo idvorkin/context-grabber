@@ -1,0 +1,127 @@
+{
+  "expect" : {
+    "applied" : [
+      0,
+      1
+    ],
+    "board" : {
+      "rev" : 4,
+      "things" : {
+        "o-1" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "erased" : true,
+          "rev" : 4
+        },
+        "s-1" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "erased" : true,
+          "rev" : 4
+        },
+        "s-1-1" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 4
+        },
+        "s-1-2" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 4
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "s-1-1",
+          "s-1-2",
+          "s-1"
+        ],
+        "op" : 0
+      },
+      {
+        "ids" : [
+          "o-1"
+        ],
+        "op" : 1
+      }
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t-now",
+        "by" : "igor",
+        "device" : "ipad-7c2e",
+        "id" : "s-1",
+        "op" : 2,
+        "reason" : "changed",
+        "rev" : 4
+      }
+    ],
+    "rev" : 4
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 3,
+    "board" : {
+      "rev" : 3,
+      "things" : {
+        "o-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 1
+        },
+        "s-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 1
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "ids" : [
+          "s-1"
+        ],
+        "op" : "replace",
+        "strokes" : [
+          {
+            "id" : "s-1-1"
+          },
+          {
+            "id" : "s-1-2"
+          }
+        ]
+      },
+      {
+        "id" : "o-1",
+        "op" : "remove_overlay"
+      },
+      {
+        "bodies" : {
+          "s-1" : {
+
+          }
+        },
+        "ids" : [
+          "s-1"
+        ],
+        "op" : "set"
+      }
+    ]
+  },
+  "name" : "replace-tombstones",
+  "story" : "1293",
+  "why" : "replace erases its ids and adds its strokes; remove_overlay erases; a later change to them in the batch is changed."
+}

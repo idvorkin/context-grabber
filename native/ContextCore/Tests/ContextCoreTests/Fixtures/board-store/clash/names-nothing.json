@@ -1,0 +1,55 @@
+{
+  "expect" : {
+    "applied" : [
+
+    ],
+    "board" : {
+      "rev" : 2,
+      "things" : {
+
+      }
+    },
+    "landed" : [
+
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "id" : "",
+        "op" : 0,
+        "reason" : "unknown"
+      }
+    ],
+    "rev" : 2
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 2,
+    "board" : {
+      "rev" : 2,
+      "things" : {
+
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "below_y" : 300,
+        "dy" : 40,
+        "op" : "translate"
+      },
+      {
+        "ids" : [
+          "s-1"
+        ],
+        "op" : "select"
+      }
+    ]
+  },
+  "name" : "names-nothing",
+  "story" : "1322",
+  "why" : "An op that names nothing (translate by below_y) is refused unknown; select is local."
+}
