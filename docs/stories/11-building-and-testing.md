@@ -1595,6 +1595,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1632:
+
+- **Summary:** The ladder puts Exercise Analyzer on the simulator before the test that opens it, or says why it can't
+- **Status:** planned
+- **Issues:** bead context-grabber-3hj9.3
+
+#### Use Case:
+- **As Igor,** reading a store walk or a full ladder run
+- **I want to** see `ExerciseAnalyzerLinkUITests` test the home row against a real Exercise Analyzer
+- **so that** a red there means the row is broken, not that the other app was never installed
+
+#### Acceptance Criteria:
+- **Scenario:** The other app's simulator build is on this Mac
+- **Given:** Exercise Analyzer's simulator build exists in its repo's build folder (or `EXERCISE_ANALYZER_APP` names one)
+- **When:** the ladder's chosen classes include `ExerciseAnalyzerLinkUITests`
+- **Then:** it installs that build on the lane's simulator first, and the test runs against it; with no build, the class is left out and the run says which file it looked for and how to build it
+
+---
+
 ### User Story 1502:
 
 - **Summary:** The lists every PR adds to in the testing guide are one item a line, and the host rung fails when one drifts from its script

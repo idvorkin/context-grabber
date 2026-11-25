@@ -499,7 +499,22 @@ contract_classes() {
     -only-testing:GrabberNativeUITests/PaperKitTouchContractUITests test-without-building
 }
 
-other_classes() { xcodebuild_sim ui-tests "TEST EXECUTE SUCCEEDED" $(only_testing "${other[@]}") test-without-building; }
+# Story 1632 (bead context-grabber-3hj9.3): ExerciseAnalyzerLinkUITests needs the other app on this simulator. Its
+# build goes on first; with none on this Mac the class is left out, and the run says so, rather than read as red.
+other_classes() {
+  local classes=() c status
+  for c in "${other[@]}"; do
+    if [ "$c" = ExerciseAnalyzerLinkUITests ]; then
+      scripts/native/install-exercise-analyzer.sh "$udid"
+      status=$?
+      [ "$status" -eq 3 ] && continue
+      [ "$status" -eq 0 ] || return "$status"
+    fi
+    classes+=("$c")
+  done
+  [ ${#classes[@]} -gt 0 ] || { echo "no other classes left to run"; return 0; }
+  xcodebuild_sim ui-tests "TEST EXECUTE SUCCEEDED" $(only_testing "${classes[@]}") test-without-building
+}
 
 # #1037: the iPad's own classes, on the iPad. A test of theirs that skips there skipped for its destination (they skip
 # only off an iPad), so it fails the step rather than pass as a skip; the step says how many ran, passed and skipped.
