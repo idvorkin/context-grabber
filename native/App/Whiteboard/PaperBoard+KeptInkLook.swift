@@ -262,33 +262,6 @@ extension PaperBoardController {
       return true
     }
     guard drawn else { return nil }
-    var out = KeptColours()
-    var inkX = (w, -1)
-    var inkY = (h, -1)
-    var allX = (w, -1)
-    var allY = (h, -1)
-    for y in 0..<h {
-      for x in 0..<w {
-        let i = (y * w + x) * 4
-        let px = [Int(bytes[i]), Int(bytes[i + 1]), Int(bytes[i + 2])]
-        guard (0..<3).contains(where: { abs(px[$0] - paperRGB[$0]) > 40 }) else { continue }
-        allX = (min(allX.0, x), max(allX.1, x))
-        allY = (min(allY.0, y), max(allY.1, y))
-        if (0..<3).allSatisfy({ abs(px[$0] - ink[$0]) <= 50 }) {
-          out.ink += 1
-          inkX = (min(inkX.0, x), max(inkX.1, x))
-          inkY = (min(inkY.0, y), max(inkY.1, y))
-        } else if px.allSatisfy({ $0 < 80 }) {
-          out.dark += 1
-        } else {
-          out.other += 1
-        }
-      }
-    }
-    out.inkWidth = max(inkX.1 - inkX.0 + 1, 0)
-    out.inkHeight = max(inkY.1 - inkY.0 + 1, 0)
-    out.allWidth = max(allX.1 - allX.0 + 1, 0)
-    out.allHeight = max(allY.1 - allY.0 + 1, 0)
-    return out
+    return WhiteboardKeptInk.sort(rgba: bytes, width: w, height: h, paper: paperRGB, ink: ink)
   }
 }

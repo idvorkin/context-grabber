@@ -35,6 +35,43 @@ public struct KeptInkColours: Equatable, Sendable {
 }
 
 public enum WhiteboardKeptInk {
+  /// A picture's pixels unlike the paper, sorted: near `ink`, near black, the rest; and the spans. `rgba`: `width` x
+  /// `height` pixels, 4 bytes each, premultiplied; each is judged by its own colour, its alpha divided out, so a soft
+  /// edge of the ink reads as ink, not black. A transparent pixel is no colour at all and is skipped (pbvt: a view
+  /// drawn alone leaves the rest of its picture transparent, and counted as black every layer read wholly dark).
+  public static func sort(rgba: [UInt8], width w: Int, height h: Int, paper: [Int], ink: [Int]) -> KeptInkColours {
+    var out = KeptInkColours()
+    var inkX = (w, -1)
+    var inkY = (h, -1)
+    var allX = (w, -1)
+    var allY = (h, -1)
+    for y in 0..<h {
+      for x in 0..<w {
+        let i = (y * w + x) * 4
+        guard i + 3 < rgba.count, rgba[i + 3] >= 8 else { continue }
+        let a = Int(rgba[i + 3])
+        let px = (0..<3).map { min(Int(rgba[i + $0]) * 255 / a, 255) }
+        guard (0..<3).contains(where: { abs(px[$0] - paper[$0]) > 40 }) else { continue }
+        allX = (min(allX.0, x), max(allX.1, x))
+        allY = (min(allY.0, y), max(allY.1, y))
+        if (0..<3).allSatisfy({ abs(px[$0] - ink[$0]) <= 50 }) {
+          out.ink += 1
+          inkX = (min(inkX.0, x), max(inkX.1, x))
+          inkY = (min(inkY.0, y), max(inkY.1, y))
+        } else if px.allSatisfy({ $0 < 80 }) {
+          out.dark += 1
+        } else {
+          out.other += 1
+        }
+      }
+    }
+    out.inkWidth = max(inkX.1 - inkX.0 + 1, 0)
+    out.inkHeight = max(inkY.1 - inkY.0 + 1, 0)
+    out.allWidth = max(allX.1 - allX.0 + 1, 0)
+    out.allHeight = max(allY.1 - allY.0 + 1, 0)
+    return out
+  }
+
   /// The soft edge, in view pixels, a whole mark's own colour falls short of every pixel its strokes touch: in the logs
   /// the view's colour spans 2 to 4 pixels less than the strokes drawn alone touch, each way (context-grabber-smmj).
   public static let softEdge = 4
