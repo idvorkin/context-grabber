@@ -1,20 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1299,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-encode",
-   "at": 1795619951.766162,
-   "until": "2026-11-26T15:19:11Z"
-  },
-  {
-   "id": 1300,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-encode",
-   "at": 1795619951.766162,
-   "until": "2026-11-26T15:19:11Z"
-  },
-  {
    "id": 1339,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/board-store-wire-8kh",
@@ -36,18 +22,11 @@
    "until": "2026-11-26T17:20:17Z"
   },
   {
-   "id": 1342,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "?",
-   "at": 1795628820.820575,
-   "until": "2026-11-26T17:47:00Z"
-  },
-  {
-   "id": 1343,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/uitest-flakes-dud7",
-   "at": 1795629614.148778,
-   "until": "2026-11-26T18:00:14Z"
+   "id": 1634,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/ota-on-every-install",
+   "at": 1795632740.3505018,
+   "until": "2026-11-26T18:52:20Z"
   }
  ]
 }
