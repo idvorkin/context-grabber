@@ -225,6 +225,36 @@ final class ChatTests: XCTestCase {
     XCTAssertEqual(paths, ["/attachments", "/attachments"], "a refused upload sends no message")
   }
 
+  // #1452, story 261: a photo the Cockpit timed out reading waits, and the items behind it still go; a 429 stops the
+  // rest, as an unreachable Cockpit does.
+  func testATimedOutUploadWaitsWithoutHoldingUpTheRestButTooManyStopsThem() async throws {
+    let png = TestImages.png
+    try store.add(InboxItem(id: "photo-0001", kind: .image, sharedAt: 1), image: png, imageExtension: "png")
+    try store.add(InboxItem(id: "text-0002", kind: .text, sharedAt: 2, text: "goes"))
+    let slow = InboxSender(store: store, cockpit: cockpit, readyImage: TestImages.asTheyAre) { request in
+      request.url?.path == "/attachments"
+        ? Self.answer(request, 408, #"{"ok": false, "error": "request body timeout"}"#)
+        : Self.answer(request, 200, #"{"ok": true, "thread": "igor2-88g.9"}"#)
+    }
+    var lines: [[String: Any]] = []
+    let report = await slow.sendWaiting { lines.append($1) }
+    XCTAssertEqual(report.sent, ["text-0002"], "the text behind the photo still went")
+    XCTAssertEqual(report.refused, [])
+    XCTAssertEqual(store.item("photo-0001")?.status, .waiting)
+    XCTAssertEqual(lines.first?["action"] as? String, "failed")
+    XCTAssertEqual(lines.first?["status"] as? Int, 408)
+    XCTAssertEqual(lines.first?["reason"] as? String, "image upload: request body timeout")
+
+    try store.add(InboxItem(id: "text-0003", kind: .text, sharedAt: 3, text: "waits"))
+    let busy = InboxSender(store: store, cockpit: cockpit, readyImage: TestImages.asTheyAre) {
+      Self.answer($0, 429, "busy")
+    }
+    let stopped = await busy.sendWaiting { _, _ in }
+    XCTAssertEqual(stopped.retry, "image upload: HTTP 429")
+    XCTAssertEqual(store.item("photo-0001")?.status, .waiting)
+    XCTAssertEqual(store.item("text-0003")?.status, .waiting, "nothing after a 429 is tried")
+  }
+
   // #565: a timeout or no connection is the Cockpit away; an error it answers with is not.
   func testATimeoutIsTheCockpitAwayAndAServerErrorIsNot() async throws {
     try store.add(InboxItem(id: "text-0001", kind: .text, sharedAt: 1, text: "waits"))
