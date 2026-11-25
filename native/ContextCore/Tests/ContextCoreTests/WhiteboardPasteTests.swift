@@ -53,6 +53,17 @@ final class WhiteboardPasteTests: XCTestCase {
       XCTAssertEqual(BoardPages().pages(after: 2, inkMaxY: box.maxY, redoWaiting: false), 4)
     }
 
+    /// Story 643: Larry knows a paste by its strokes' names. A paste's strokes share a colour and a moment, so only
+    /// the ink tells them apart: every letter's stroke gets its own name.
+    func testAPastesLetterStrokesEachHaveTheirOwnName() {
+      let t: Int64 = 1_795_540_000_000
+      let names = WhiteboardPaste.layout("Hi Larry", visible: view, height: 24).lines.map {
+        WhiteboardStrokes.id(points: $0, color: "#000000", t: t)
+      }
+      XCTAssertGreaterThan(names.count, 1, "the paste is lettered as strokes")
+      XCTAssertEqual(Set(names).count, names.count, "every letter's stroke has its own name")
+    }
+
     func testShortTextIsCentredInTheView() {
       let layout = WhiteboardPaste.layout("Hello", visible: view, height: 24)
       XCTAssertFalse(layout.lines.isEmpty)
