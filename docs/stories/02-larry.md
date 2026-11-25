@@ -3656,7 +3656,6 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** Health has mindful minutes for Monday and for today, and I neither tapped meditation nor ran Box breathing on either day
 - **When:** the week is sent on Tuesday
 - **Then:** today's meditation is done by Health, Monday's is not done, and both days still carry their mindful minutes
-||||||| parent of 10f31831 (Spec and stories 1616-1618: search the chat thread list (#1443))
 ---
 
 ### User Story 1616:
