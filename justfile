@@ -58,6 +58,7 @@ nightly-uninstall:
 pre-merge *branch:
     scripts/native/pre-merge.sh {{branch}}
     scripts/native/release-check.sh {{branch}}
+    scripts/native/merged-tip-check.sh {{branch}}
 
 # The pipeline's lint step (.no-mistakes.yaml commands.lint; it runs after review and document, before the push): the
 # whole tree's lint, then story 1515's check that no story ID this branch adds is added by another open PR too.
@@ -136,6 +137,8 @@ native-test-host:
     scripts/native/test-lane-env.sh
     # Story 1519 (context-grabber-6ocd): pre-merge's Release build of ContextCore runs when the branch changes it, and fails loudly.
     scripts/native/test-release-check.sh
+    # Story 1629: pre-merge compiles the app on the branch merged onto main, catching two PRs that break the build together.
+    scripts/native/test-merged-tip-check.sh
     # The board wasm's sources use no Foundation-only types (NSNumber broke the VM's wasm build, 2026-11-24).
     scripts/native/wasm-essentials-check.sh
     scripts/native/test-wasm-essentials-check.sh
