@@ -109,7 +109,7 @@ simulator, without booting one, the build every lane and device install depends 
 pre-merge check with a line naming the first compile error; a branch that doesn't merge cleanly onto main fails too.
 A branch that leaves the app's code as main has it (docs and scripts only) skips the compile; it can be forced. The
 scratch copy and its build folder stay in the checkout's build folder between runs, so a slot's next run builds only
-what changed: about half a minute warm, a few minutes the first time in a slot.
+what changed.
 
 ## The pipeline's own check, before it pushes
 
