@@ -1,41 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1634,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/ota-on-every-install",
-   "at": 1795632740.3505018,
-   "until": "2026-11-26T18:52:20Z"
-  },
-  {
-   "id": 1635,
-   "journey": "11-building-and-testing.md",
-   "branch": "?",
-   "at": 1795632982.990061,
-   "until": "2026-11-26T18:56:22Z"
-  },
-  {
-   "id": 1636,
-   "journey": "11-building-and-testing.md",
-   "branch": "?",
-   "at": 1795632982.990061,
-   "until": "2026-11-26T18:56:22Z"
-  },
-  {
-   "id": 1637,
-   "journey": "11-building-and-testing.md",
-   "branch": "?",
-   "at": 1795632982.990061,
-   "until": "2026-11-26T18:56:22Z"
-  },
-  {
-   "id": 1639,
-   "journey": "11-building-and-testing.md",
-   "branch": "?",
-   "at": 1795633007.890164,
-   "until": "2026-11-26T18:56:47Z"
-  },
-  {
    "id": 1344,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/board-store-draw-8kh",
@@ -55,6 +20,13 @@
    "branch": "native/board-store-draw-8kh",
    "at": 1795633523.4604318,
    "until": "2026-11-26T19:05:23Z"
+  },
+  {
+   "id": 1638,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/story-status-patch-id-zisx",
+   "at": 1795636200.23957,
+   "until": "2026-11-26T19:50:00Z"
   }
  ]
 }
