@@ -381,7 +381,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 260:
 
 - **Summary:** An item Larry's inbox refuses says why and is never resent
-- **Status:** native app only: implemented in [99b308e](https://github.com/idvorkin/context-grabber/commit/99b308e); verified by `InboxTests` (host: a 4xx answer recorded as refused with the Cockpit's reason and not sent again, an unreadable image refused without asking); the copyable reason on the phone still for Igor
+- **Status:** native app only: implemented in [99b308e](https://github.com/idvorkin/context-grabber/commit/99b308e); verified by `InboxTests` (host: a 4xx answer recorded as refused with the Cockpit's reason and not sent again, an unreadable image refused without asking); the copyable reason on the phone still for Igor; a 408 or 429 no longer counts as refused in [8bdd0381](https://github.com/idvorkin/context-grabber/commit/8bdd0381) (#1452, story 261): host `ChatTests`
 - **Issues:** [#305](https://github.com/idvorkin/context-grabber/issues/305)
 - **Spec:** [Share into Grabber Native, and Larry's inbox — phase 2](../superpowers/specs/2026-10-17-native-share-inbox-design.md)
 
@@ -402,7 +402,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 261:
 
 - **Summary:** With the Cockpit out of reach, the Inbox waits for the next open
-- **Status:** native app only: implemented in [99b308e](https://github.com/idvorkin/context-grabber/commit/99b308e); #406's wording and the failed-send regression in [7efc955](https://github.com/idvorkin/context-grabber/commit/7efc955); verified by `InboxTests` (host: no answer or a 5xx leaves the item waiting and stops the send, oldest first; a transport failure retains the item and a later success sends it once); off the tailnet on the phone still for Igor
+- **Status:** native app only: implemented in [99b308e](https://github.com/idvorkin/context-grabber/commit/99b308e); #406's wording and the failed-send regression in [7efc955](https://github.com/idvorkin/context-grabber/commit/7efc955); verified by `InboxTests` (host: no answer or a 5xx leaves the item waiting and stops the send, oldest first; a transport failure retains the item and a later success sends it once); off the tailnet on the phone still for Igor; a 408 or 429 on a send waits rather than reads refused (#1452) in [8bdd0381](https://github.com/idvorkin/context-grabber/commit/8bdd0381): host `ChatTests` testATimeoutOrBusyAnswerWaitsRatherThanRefuses (rung 1); a slow upload on the phone not yet
 - **Issues:** [#305](https://github.com/idvorkin/context-grabber/issues/305), [#406](https://github.com/idvorkin/context-grabber/issues/406), [#1452](https://github.com/idvorkin/context-grabber/issues/1452) and [#1453](https://github.com/idvorkin/context-grabber/issues/1453) (a 408 on a photo's upload read as refused, and the photo was lost)
 - **Spec:** [Share into Grabber Native, and Larry's inbox — phase 2](../superpowers/specs/2026-10-17-native-share-inbox-design.md)
 
