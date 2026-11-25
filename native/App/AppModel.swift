@@ -209,7 +209,7 @@ final class AppModel: ObservableObject {
     LinkLauncher.handler = { [weak self] route in self?.open(route: route, from: "shortcut") }
     chat.findBoard = { [weak self] board, context in await self?.findBoard(board, context: context) }
     chat.openBoard = { [weak self] board in self?.open(route: .whiteboard(board: board), from: "chat") }
-    chat.openWebBoard = { [weak self] web, from in self?.openWebBoard(web, from: from) }
+    chat.openWebBoard = { [weak self] web, from in await self?.openWebBoard(web, from: from) }
     chat.boardScreen = { [weak self] board, thread, under in
       guard let self, let entry = self.whiteboards.index.board(board) else { return nil }
       return AnyView(
@@ -373,7 +373,9 @@ final class AppModel: ObservableObject {
   private func go(to route: AppRoute, from source: String) {
     // Story 569 (#1354): a web ink board's link opens its page; the app can't draw it, so no screen changes.
     if case .whiteboard(let board?) = route, let web = WebInkBoard(board: board) {
-      return openWebBoard(web, from: source)
+      homeProblem = nil
+      Task { homeProblem = await openWebBoard(web, from: source) }
+      return
     }
     let ownWindow = WindowScreen(route: route).map { windowHolding($0) } ?? false
     apply(screens.open(route, from: source, ownWindow: ownWindow))
@@ -480,17 +482,16 @@ final class AppModel: ObservableObject {
     }
   }
 
-  /// Story 569 (#1354): a board of the Cockpit's web ink page, in the browser, rather than looked for among the boards.
-  func openWebBoard(_ web: WebInkBoard, from source: String) {
-    homeProblem = nil
+  /// Story 569 (#1354): a board of the Cockpit's web ink page, in the browser, rather than looked for among the boards;
+  /// the problem when it can't open, for the screen it was opened from to show.
+  func openWebBoard(_ web: WebInkBoard, from source: String) async -> BugProblem? {
     guard let url = web.url(cockpit: chat.cockpit) else {
       log.event("ui", ["action": "open_web_board", "board": web.name, "from": source, "ok": false])
       log.event("error", ["where": "open_web_board", "board": web.name, "reason": "no_cockpit_url"])
-      homeProblem = .grabber(
+      return .grabber(
         "The web board \(web.name) has no address: the Cockpit's address (\(chat.cockpit)) isn't a URL.",
         context: "AppModel.open_web_board",
         extra: ["board": .string(web.name), "cockpit": .string(chat.cockpit), "from": .string(source)])
-      return
     }
     let state = UIApplication.shared.applicationState
     log.event(
@@ -501,18 +502,16 @@ final class AppModel: ObservableObject {
       ])
     // A link that launches or wakes the app can arrive before it is active; the open waits until it is.
     let active = NotificationCenter.default.notifications(named: UIApplication.didBecomeActiveNotification)
-    Task { @MainActor [log] in
-      if UIApplication.shared.applicationState != .active {
-        for await _ in active { break }
-      }
-      let ok = await UIApplication.shared.open(url)
-      log.event("ui", ["action": "opened_web_board", "board": web.name, "ok": ok])
-      guard !ok else { return }
-      log.event("error", ["where": "open_web_board", "board": web.name, "reason": "not_opened"])
-      self.homeProblem = .grabber(
-        "The web board \(web.name) would not open in the browser.", context: "AppModel.open_web_board",
-        extra: ["board": .string(web.name), "link": .string(url.absoluteString), "from": .string(source)])
+    if UIApplication.shared.applicationState != .active {
+      for await _ in active { break }
     }
+    let ok = await UIApplication.shared.open(url)
+    log.event("ui", ["action": "opened_web_board", "board": web.name, "ok": ok])
+    guard !ok else { return nil }
+    log.event("error", ["where": "open_web_board", "board": web.name, "reason": "not_opened"])
+    return .grabber(
+      "The web board \(web.name) would not open in the browser.", context: "AppModel.open_web_board",
+      extra: ["board": .string(web.name), "link": .string(url.absoluteString), "from": .string(source)])
   }
 
   /// Nothing covers home, not even a sheet or a pushed screen: what is presented from it can show.

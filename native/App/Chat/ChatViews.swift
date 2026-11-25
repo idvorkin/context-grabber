@@ -940,7 +940,8 @@ struct ChatThreadView: View {
     // Story 569 (#1454): a web ink board's page opens in the browser; iCloud never has it.
     if let web = WebInkBoard(board: found.board) {
       boardProblem = nil
-      return chat.openWebBoard(web, "thread_board")
+      Task { boardProblem = await chat.openWebBoard(web, "thread_board") }
+      return
     }
     lookingForBoard = true
     boardProblem = nil
@@ -1387,7 +1388,8 @@ private struct ChatImage: View {
     // Story 569 (#1454): a picture from a web ink board opens the board's page; the picture stays.
     if let web = WebInkBoard(board: board) {
       jumpProblem = nil
-      return chat.openWebBoard(web, "picture")
+      Task { jumpProblem = await chat.openWebBoard(web, "picture") }
+      return
     }
     looking = true
     jumpProblem = nil

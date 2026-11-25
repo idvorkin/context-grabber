@@ -1032,17 +1032,13 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 - **so that** I land on the board, not on a problem saying it isn't here
 
 #### Acceptance Criteria:
-- **Scenario:** A link to a web ink board
-- **Given:** a `grabbernative://whiteboard?board=ink-<name>` link, a board of the Cockpit's web ink page
+- **Scenario:** A web ink board, from its link, its thread or a picture from it
+- **Given:** a board of the Cockpit's web ink page (`ink-<name>`), in a `grabbernative://whiteboard?board=ink-<name>`
+  link, in a chat thread whose messages carry it (*Board* in the bar, #1454), or on a picture from it (*Jump to board*)
 - **When:** I open it
-- **Then:** the browser opens that board's page on the Cockpit (`/ink?b=<name>`); the app doesn't look for it among
-  its boards or show a problem; the session log says the web board was opened and from where
-
-- **Scenario:** A web board's thread, or a picture from it (#1454)
-- **Given:** a chat thread whose messages carry a web ink board (`ink-<name>`), as the Cockpit's turns on the web board do
-- **When:** I tap *Board* in the thread's bar, or *Jump to board* on a picture from that board
-- **Then:** the browser opens that board's page on the Cockpit (`/ink?b=<name>`), at once; the app doesn't ask iCloud
-  for it, shows no problem saying it isn't on this device, and files no report
+- **Then:** the browser opens that board's page on the Cockpit (`/ink?b=<name>`), at once; the app doesn't look for it
+  among its boards or ask iCloud, shows no problem saying it isn't on this device and files no report; the session log
+  says the web board was opened and from where, and a page that can't open says why where I opened it
 
 ---
 
