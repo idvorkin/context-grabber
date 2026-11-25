@@ -75,6 +75,9 @@ public struct CallSnapshot: Equatable, Sendable {
   public var problems = CallProblems()
   /// #582, story 829: the scheduler's clock when the call began waiting for the app to start its mic; nil when not.
   public var heldSince: Double?
+  /// Story 1078: the chat thread the Cockpit made for this call, once it says so; kept through the ending and a
+  /// handoff redial, cleared by a call Igor places.
+  public var thread: String?
 
   public init() {}
 
@@ -310,9 +313,10 @@ public final class CallSession {
       log("call_ignored", ["action": "start", "backend": backend.rawValue, "state": snapshot.state.rawValue])
       return
     }
-    if !redialStart { handoffRedialTimes = [] }  // a call Igor placed may redial on its first handoff
+    let redial = redialStart
+    if !redial { handoffRedialTimes = [] }  // a call Igor placed may redial on its first handoff
     redialStart = false
-    resetForCall(backend: backend, voice: voice, stt: stt)
+    resetForCall(backend: backend, voice: voice, stt: stt, redial: redial)
     let fields = deps.callSettings().fields(for: backend, voice: voice)
     let sttField = stt.frameField(for: backend)
     log(
@@ -584,6 +588,9 @@ public final class CallSession {
       log("call_bridge", ["kind": "tool_result", "ok": ok, "answer": answer])
       setTool(ok ? (answer.isEmpty ? "answered" : answer) : "no answer")
       toolRowId = nil
+    case .callThread(let key):
+      log("call_bridge", ["kind": "call_thread", "thread": key])
+      if !key.isEmpty { update { $0.thread = key } }
     case .injected(let text):
       closeLarryRow()
       log("call_bridge", ["kind": "injected", "text": text])
@@ -1106,7 +1113,7 @@ public final class CallSession {
 
   // MARK: - lifecycle
 
-  private func resetForCall(backend: CallBackend, voice: CallVoice, stt: CallSTT) {
+  private func resetForCall(backend: CallBackend, voice: CallVoice, stt: CallSTT, redial: Bool) {
     generation += 1
     var next = CallSnapshot()
     next.state = .connecting
@@ -1115,6 +1122,8 @@ public final class CallSession {
     // A voice-model call does not record a leftover Direct pick (#556).
     next.stt = CallSTT.hasPick(backend) ? stt : .default
     next.muted = snapshot.muted
+    // Story 1078: a handoff redial is the same call to Igor, so it keeps the call's thread.
+    if redial { next.thread = snapshot.thread }
     snapshot = next
     igorFinal = ""
     igorPartial = ""

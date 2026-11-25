@@ -463,6 +463,82 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1078:
+
+- **Summary:** the call screen links the call's own chat thread
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests`, `CallProtocolTests.testTranscriptsCaptionsControlAndEndings`, `LaunchHooksTests.testCall`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls: the fake bridge's `call_thread` reached the call); the smoke's `GRABBER_CALL_THREAD` tap (call screen down, Chat on the thread, the call going on) and the link on a real call not yet
+- **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
+
+#### Use Case:
+- **As a** Larry's client on a call that files things as we go
+- **I want to** open the call's own chat thread from the call screen, during the call or after it
+- **so that** I can read Larry's answers, what he filed and the summary without hunting for the thread
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit names the call's thread
+- **Given:** a call, and the Cockpit has said which chat thread is this call's
+- **When:** I tap *This call's chat →* under the call line, while the call is live or after it ended
+- **Then:** the call screen closes (a live call goes on) and Chat opens on that thread
+
+---
+
+### User Story 1079:
+
+- **Summary:** no chat link until the Cockpit names the call's thread
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testAnEmptyThreadNamesNothing` and the live call before its `call_thread`)
+- **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
+
+#### Use Case:
+- **As a** Larry's client on a call that files things as we go
+- **I want to** see the call's chat link only once the call has a thread
+- **so that** the link never opens a thread that isn't there
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit has named no thread for this call
+- **Given:** a call nobody has spoken on yet, the drill, or a Cockpit that makes no threads
+- **When:** I look under the call line
+- **Then:** there is no *This call's chat →* link
+
+---
+
+### User Story 1080:
+
+- **Summary:** a new call starts without the last call's chat link
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testTheCallsThreadIsHeldThroughTheEndingAndANewCallStartsWithoutIt`)
+- **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
+
+#### Use Case:
+- **As a** Larry's client on a call that files things as we go
+- **I want to** have the chat link always lead to this call's own thread
+- **so that** I never land in the last call's thread by mistake
+
+#### Acceptance Criteria:
+- **Scenario:** A new call after one that had a thread
+- **Given:** a call that ended with its chat link showing
+- **When:** I place a new call
+- **Then:** the new call shows no link until the Cockpit names that call's own thread
+
+---
+
+### User Story 1081:
+
+- **Summary:** a handoff redial keeps the call's chat link
+- **Status:** native app only: implemented in [6270813c](https://github.com/idvorkin/context-grabber/commit/6270813c) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests.testAHandoffRedialKeepsTheThread`)
+- **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
+
+#### Use Case:
+- **As a** Larry's client on a call that files things as we go
+- **I want to** keep the call's chat link when the call redials across a network change
+- **so that** the same call still leads to the same thread
+
+#### Acceptance Criteria:
+- **Scenario:** The call redials on a network handoff
+- **Given:** a live call whose chat link is showing
+- **When:** the network changes and the call redials
+- **Then:** the link stays and still opens the same thread
+
+---
+
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead

@@ -209,6 +209,10 @@ final class CallProtocolTests: XCTestCase {
         .consultProgress(stage: "note", text: "reading…")
       ),
       ("{\"type\":\"injected\",\"text\":\"fact\"}", .injected(text: "fact")),
+      (
+        "{\"seq\":3,\"type\":\"call_thread\",\"session\":\"s1\",\"thread\":\"igor2-88g.1801\"}",
+        .callThread(key: "igor2-88g.1801")
+      ),
       ("{\"type\":\"warning\",\"message\":\"goAway\"}", .warning(message: "goAway")),
       ("{\"type\":\"error\",\"message\":\"boom\"}", .error(message: "boom")),
       (

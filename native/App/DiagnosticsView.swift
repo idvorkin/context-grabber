@@ -143,7 +143,7 @@ struct DiagnosticsView: View {
         isPresented: Binding(get: { model.callOpen }, set: { if !$0 { model.closeCall() } }),
         onDismiss: gone(.call)
       ) {
-        CallView(call: model.call, onDone: model.closeCall)
+        CallView(call: model.call, onDone: model.closeCall, onOpenThread: model.openCallThread)
           .bugReporting(model.reporter)
       }
       .navigationDestination(

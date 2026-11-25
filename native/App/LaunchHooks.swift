@@ -45,6 +45,7 @@ extension AppModel {
       // Story 270: an archive run now, to GRABBER_ARCHIVE_URL (a simulator or a Mac build sends nowhere else).
       case .archive: archive.run(reason: "hook")
       case .call(let seconds): runCallHook(seconds: seconds)
+      case .callThread: runCallThreadHook()
       case .mirror(let mode, let metric): runMirrorHook(mode, metric: metric)
       // As if iOS had opened the link: simctl openurl stops at a confirmation a script cannot tap.
       case .link(let url): open(url: url)
