@@ -5,7 +5,7 @@
 import ContextCore
 import SwiftUI
 
-/// A hidden card: a round '?', Larry's purple for an open question, grey for an answered one.
+/// A round card: a '?' in Larry's purple for an open question, a grey '✓' for an answered one.
 struct WhiteboardQuestionMarkFace: View {
   let card: WhiteboardQuestion
   let scale: CGFloat
@@ -14,7 +14,8 @@ struct WhiteboardQuestionMarkFace: View {
 
   var body: some View {
     let done = card.answered != nil
-    Text("?")
+    // #1387 part 3: an open round is a '?', an answered one a '✓', as on the web board.
+    Text(WhiteboardQuestions.lines(card, title: nil).first ?? "?")
       .font(.system(size: max(8, 22 * scale), weight: .bold, design: .rounded))
       .foregroundStyle(done ? Color(white: 0.45) : Color(red: 0.29, green: 0.12, blue: 0.36))
       .frame(maxWidth: .infinity, maxHeight: .infinity)

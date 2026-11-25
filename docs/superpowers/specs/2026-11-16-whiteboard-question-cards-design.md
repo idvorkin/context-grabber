@@ -73,24 +73,27 @@ the note). It stays on the board, saved with it, and shows with no network.
 closed by Larry), the card asks the Cockpit for that ask's question and answer and shows them. If the Cockpit has none
 yet, the card says *✓ answered* and asks again the next time the board opens.
 
-**Reading and folding.** A tap on an answered card opens it read-only: *✓ \<question>*, the answer in full, the note,
-with *Shrink* and *Close*. *Shrink* folds the card to a one-line chip, *✓ \<question>*, only as wide as its words.
-A tap on a chip opens it out again. (It was called *Collapse* until 2026-11-24, when Collapse became the round *?*
-below; not *Fold*, which on the board means ink folded away.)
+**Reading.** A tap on an answered card opens it read-only: *✓ \<question>*, the answer in full, the note, and *Close*.
+A tap on a short card opens it out to full. Making it smaller is the card's *Collapse* (below).
 
-**Collapsing a card** (Igor, 2026-11-24, #1387: *"as well as collapse there should be just sort of Hide, and if I press
-hide there should be a '?', that's just a '?'"*, then 07:51: *"Collapse question: this makes a little round"*). Every
-card's popup, open or answered, has *Collapse* (first built as *Hide*). It closes the popup
-and shrinks the card to a bare *?* on the board: a small round mark, Larry's purple for an open question, grey for an
-answered one, a finger's size at the board's normal zoom. The *?* sits where the card's left end was, at the place
-Larry put it beside the ink it is about (Larry agreed 2026-11-24; Igor is unsure, and drags it where he wants; the
-margin was the other choice). A tap on the *?* brings the card back as it was, open or answered, folded or not; it opens no popup.
-A hidden card stays hidden when the board is closed and opened again. The eraser takes an answered card's *?* as it
-takes the card; an open question's *?* stays.
+**The card's looks** (Igor, 2026-11-24, #1387; one set of words and marks for this board and the web board's, agreed
+with Larry that night, the web's own words: *Open out / Collapse*). A card has three looks: *full*; *short*, an answered
+card's one line, *✓ \<question>*, only as wide as its words; and *round*, a small round mark a finger's size at the
+board's normal zoom, a *?* in Larry's purple for an open question, a grey *✓* for an answered one. *Collapse* steps a
+card one look smaller (answered: full → short → round; open, already one line: full → round), *Open out* takes it back
+to full. (Built first, 2026-11-24, as *Hide* for the round and *Shrink*, then *Collapse*, for the short; *Fold* was
+never used, since on the board it means ink folded away.)
+
+**Collapsing to a round** (Igor, 2026-11-24, #1387: *"as well as collapse there should be just sort of Hide, and if I
+press hide there should be a '?', that's just a '?'"*, then 07:51: *"Collapse question: this makes a little round"*). A round sits where the card's left end was, at the place Larry
+put it beside the ink it is about (Larry agreed 2026-11-24; Igor is unsure, and drags it where he wants; the margin
+was the other choice). A tap on a round opens it out to full, open or answered; it opens no popup. A round stays round
+when the board is closed and opened again. The eraser takes an answered card's *✓* as it takes the card; an open
+question's *?* stays.
 
 **Archiving a card** (Igor, 2026-11-24 07:51, #1387: *"Archive: it goes away, and maybe I have archived answers
-somewhere that I can open behind some menu"*). Every card's popup, open or answered, has *Archive*. It closes the popup
-and the card leaves the board; nothing is answered, and an open ask stays open in the Cockpit (answered there, the
+somewhere that I can open behind some menu"*). Every card's strip has *Archive*, open or answered: the card leaves the
+board; nothing is answered, and an open ask stays open in the Cockpit (answered there, the
 archived card shows that answer when the board next reads the answers). The board's menu then has *Archived questions*,
 only while the board has some: it lists each archived question, newest archived first, with its answer under it or
 *open*, and *Reopen* beside it. *Reopen* puts the card back on the board where it was, as it was (open or answered, a
@@ -98,7 +101,7 @@ chip, a *?*), and takes it off the list. An archived card never lands on the boa
 Larry's reply nor from an open ask, and the eraser can't reach it. It stays archived across a reopen of the board.
 
 **Thinking it over** (Igor, 2026-11-24 07:51, #1387: *"Thinking: that's a great idea that should go back-and-forth"*).
-An open card's popup has *Thinking*. It answers nothing: it opens *Talk it over* in the popup, under Larry's question,
+An open card's strip and its popup have *Thinking*. It answers nothing: it opens *Talk it over* in the popup, under Larry's question,
 with the ask's own conversation (every ask has its own chat thread on the Cockpit), Igor's messages and Larry's
 replies in order, the newest last, and a field with Chat's mic and *Send*. *Send* posts Igor's words to that
 conversation; the ask stays open, and Larry replies there. While the popup is open, Larry's replies appear in it as
@@ -109,18 +112,22 @@ its conversation kept on the Cockpit. A failed read of the conversation says so 
 lost send keeps the words in the field, with a copyable problem, for another try. Offline, *Thinking* is off.
 
 **A double tap cycles the card's looks** (Igor, 2026-11-24, #1387, settled with Larry). A double tap on a card on the
-board steps it to its next look, without opening the popup: an answered card goes full → short (its one-line chip,
-*Shrink*) → *?* (*Collapse*) → full; an open card, already one line, goes full → *?* → full. A single tap still does
-what it did.
+board is *Collapse*, and on a round it opens out: an answered card goes full → short → round → full, an open card
+full → round → full, and no popup opens. A single tap still does what it did: it opens the popup, or a short or round
+card out to full.
 
 **An answered card reads as text** (Igor, 2026-11-24, #1387; Larry: still a question card). Once answered, the card is
-drawn as plain text on the board, the question small over the answer, with no card's fill or edge; it still opens,
-shrinks, collapses, archives, moves and erases as an answered card does.
+drawn as plain text on the board, the question small and grey over the answer, a thin grey rule on its left, with no
+card's fill or edge; short, it is the question alone the same way. It still opens, collapses, opens out, archives,
+moves and erases as an answered card does. A card being thought over is edged dashed.
 
-**The controls sit in one spot** (Igor, 2026-11-24, #1387: *"use icons all in same spot"*). A card's controls
-(*Shrink*, *Collapse*, *Archive*, *Thinking*, as the card allows) are icons in one fixed place, the same on every card
-in every look, so Igor learns one spot. Where that spot is, and how the looks above are drawn, comes from a design pass
-on the card's states (before and after pictures to Larry) before it is built; until then the controls are the popup's.
+**The controls sit in one spot** (Igor, 2026-11-24, #1387: *"use icons all in same spot"*). A card's controls are a
+strip of round icons just past a full card's right end, top-aligned: *Collapse*, *Open out*, *Archive*, *Thinking*,
+each always in its own slot in that order, so an icon never moves between looks or cards. A slot the look doesn't
+allow is left empty: *Collapse* while the card can get smaller, *Open out* once it isn't full, *Archive* always,
+*Thinking* on an open card (lit in Larry's purple while it is being thought over). A round carries no strip; a tap or a
+double tap brings it back. The strip hides while the eraser is in hand. The popup no longer carries them. The looks
+and the strip were drawn before and after (the board's preview of every look) for Igor to choose.
 
 **Moving a card** (#1387: *"I should be able to move it around, and move questions"*). A card, a chip or a *?* can be
 dragged anywhere on the board, with a finger or the Pencil: it follows the touch and stays where it is let go, kept
@@ -154,9 +161,9 @@ works. Never the answer's words.
 - Larry's own-answer option (keyed *other*, or labelled *Something else*, *Other* and the like) shows in the popup's
   card; a tap on it sends nothing and puts the cursor in *Your own answer*; only Igor's words are ever sent from it.
 - A card whose ask was answered elsewhere shows that answer once the Cockpit gives it.
-- An answered card opens read-only, folds to a one-line chip, and a tap opens the chip out.
+- An answered card opens read-only, collapses to a one-line short card and to a round *✓*, and a tap opens it out.
 - An opened card not yet answered folds back to its one line from the fold control, answering nothing.
-- An answered card's popup says *Shrink* (to its chip); every card's popup says *Collapse* (to its *?*).
+- Every card's strip says *Collapse* (one look smaller) and *Open out* (back to full), in one place on every card.
 - Any card archives off the board; *Archived questions* in the board's menu lists it with its answer or *open*, and
   *Reopen* puts it back where it was, as it was. An archived card never lands again by itself.
 - *Thinking* on an open card opens its conversation with Larry in the popup; Igor's words go there and Larry's replies

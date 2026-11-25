@@ -273,7 +273,7 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   /// What a card says, line by line: open, its one line; answered, *✓ <question>* over the answer (the label, then the
   /// note); folded, the question alone; one answered with no question known, its answer.
   public static func lines(_ card: WhiteboardQuestion, title: String?) -> [String] {
-    if card.hidden { return ["?"] }
+    if card.hidden { return [card.answered == nil ? "?" : "✓"] }
     guard let a = card.answered else { return [openLine(title: title, thinking: card.thinking)] }
     guard let question = a.title else { return ["✓ \(a.label.isEmpty ? "answered" : a.label)"] }
     if card.collapsed { return ["✓ \(question)"] }
