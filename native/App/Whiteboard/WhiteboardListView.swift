@@ -51,7 +51,7 @@ struct WhiteboardListView: View {
         if let chatProblem { BugProblemView(problem: chatProblem, logger: app.bugLogger) }
         if let note = store.syncNote { Text(note).font(.footnote).foregroundStyle(.secondary) }
         // Story 1340: first, so a long list of the iPad's own boards never hides it.
-        if cockpitBoardsOn { CockpitBoardsSection(model: cockpitBoards, logger: app.bugLogger) }
+        if cockpitBoardsOn { CockpitBoardsSection(model: cockpitBoards, app: app) }
         // Bead context-grabber-1jb4: a board whose first drawing hasn't come down isn't a row yet.
         if store.index.shown.isEmpty {
           ContentUnavailableView(

@@ -1,7 +1,7 @@
 //  Boards from the Cockpit (beta) (spec 2026-11-22-boards-in-the-cockpit-design.md, Trying it before the rollout;
 //  stories 1339-1341; cockpit-8kh): a switch in Settings, off by default, and with it on, a *From the Cockpit* section
 //  above the iPad's own boards listing the Cockpit store's boards. Off, nothing here asks the Cockpit for anything.
-//  Drawing on a Cockpit board (the encoder and `CockpitBoardSync` wired to the canvas) is the next step.
+//  A row opens the board on the store's trial canvas (`CockpitBoardView`, stories 1344-1346).
 
 import BugKit
 import ContextCore
@@ -67,7 +67,8 @@ final class CockpitBoardsModel: ObservableObject {
 /// Story 1340: the list's *From the Cockpit* section.
 struct CockpitBoardsSection: View {
   @ObservedObject var model: CockpitBoardsModel
-  let logger: BugLogger
+  let app: AppModel
+  private var logger: BugLogger { app.bugLogger }
 
   var body: some View {
     Section {
@@ -80,10 +81,15 @@ struct CockpitBoardsSection: View {
         ProgressView()
       }
       ForEach(model.rows) { row in
-        HStack {
-          Text(row.name.isEmpty ? "Untitled" : row.name)
-          Spacer()
-          Text(row.rev == 1 ? "1 version" : "\(row.rev) versions").font(.footnote).foregroundStyle(.secondary)
+        // Story 1344: a Cockpit board opens on the store's trial canvas.
+        NavigationLink {
+          CockpitBoardView(boardID: row.id, name: row.name, app: app)
+        } label: {
+          HStack {
+            Text(row.name.isEmpty ? "Untitled" : row.name)
+            Spacer()
+            Text(row.rev == 1 ? "1 version" : "\(row.rev) versions").font(.footnote).foregroundStyle(.secondary)
+          }
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("cockpit-board-\(row.id)")
