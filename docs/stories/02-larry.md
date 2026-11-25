@@ -922,7 +922,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Scenario:** Interrupted mid-recording
 - **Given:** I am recording a message
-- **When:** a phone call, Siri or a microphone change interrupts
+- **When:** a phone call or Siri taking the audio interrupts
 - **Then:** the clock stops, what I said so far stays in the field for me to read (never sent), and a copyable line says the microphone was interrupted
 
 - **Scenario:** The screen stays awake while I speak (#1165)
