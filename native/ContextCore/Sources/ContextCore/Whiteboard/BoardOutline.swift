@@ -278,7 +278,8 @@ public struct BoardOutline: Sendable {
     var lines = out.filter { !flat($0) }
     for f in out.filter(flat) {
       let gap = { (b: CGRect) in max(0, max(b.minY - f.box.maxY, f.box.minY - b.maxY)) }
-      if let i = lines.indices.min(by: { gap(lines[$0].box) < gap(lines[$1].box) }), gap(lines[i].box) <= Self.line / 4 {
+      if let i = lines.indices.min(by: { gap(lines[$0].box) < gap(lines[$1].box) }), gap(lines[i].box) <= Self.line / 4
+      {
         lines[i].box = lines[i].box.union(f.box)
         lines[i].us += f.us
       } else {
