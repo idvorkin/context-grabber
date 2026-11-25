@@ -191,7 +191,11 @@ struct ChatListView: View {
     // Inline: the large title drew over the first row once the list had a problem row above it (simulator).
     .navigationBarTitleDisplayMode(.inline)
     .accessibilityIdentifier("chat-list")
-    .searchable(text: $search.query, prompt: ChatThreadSearch.prompt)
+    // Above the rows, as the spec says (#1443), on the iPhone too: there iOS's default puts the box in a bottom toolbar,
+    // and two quick Backs to Home left that toolbar's empty container over Home's Chat tile (bead context-grabber-6d1b).
+    .searchable(
+      text: $search.query, placement: .navigationBarDrawer(displayMode: .always), prompt: ChatThreadSearch.prompt
+    )
     .onChange(of: search.query) { search.changed(chat.threads) }
     .refreshable { await chat.refreshList(reason: "pull") }
     .task {

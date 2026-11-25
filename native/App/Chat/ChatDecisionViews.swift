@@ -270,7 +270,10 @@ struct ChatDecisionsView: View {
     .navigationTitle("Decisions")
     .navigationBarTitleDisplayMode(.inline)
     .accessibilityIdentifier("chat-decisions-list")
-    .searchable(text: $search.query, prompt: ChatAskSearch.prompt)
+    // Above the rows, as the thread list's box is: not iOS's bottom toolbar on the iPhone (bead context-grabber-6d1b).
+    .searchable(
+      text: $search.query, placement: .navigationBarDrawer(displayMode: .always), prompt: ChatAskSearch.prompt
+    )
     .onChange(of: search.query) { search.changed() }
     .onChange(of: search.answeredToo) { search.changed() }
     .refreshable { await decisions.refresh(reason: "pull") }
