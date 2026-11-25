@@ -195,6 +195,28 @@ the same ladder as the Cockpit's web page (Igor, 2026-11-03, #630: *"Look at how
 everyone."*). A state this build doesn't know reads as 👀. Opening a thread marks it read here and on the laptop. The thread updates by itself every few seconds while it is open, and the list on each return to
 it.
 
+**Chats open at once and stay fresh without the wait** (Igor, 2026-11-25: *"Chats load slow."*; the Cockpit's side
+is its story 346, *The wire: polling a thread and the list*). The time went into bytes, not the server: every poll
+fetched the whole thread again (744 KB for the lead thread) and the whole list (415 KB), even when nothing had changed.
+Now:
+
+- **A thread opened before shows at once** from what this device last read of it, kept on the device, and then
+  catches up. A thread never read here shows its first read as before.
+- **A poll with nothing new costs nothing**: the app asks *anything since what I hold?* and the Cockpit answers *no
+  change* with no body. Nothing on screen moves.
+- **A poll with something new brings only that**: new messages land at the bottom, and a message that changed (a
+  receipt moving on, Larry adding words, a hold starting or ending) changes in place. What the thread shows is
+  exactly what a full read would show.
+- **When the Cockpit says the thread was rewritten** (a message moved to a new chat, an id it doesn't know), the app
+  replaces the whole thread with the Cockpit's.
+- **Opening a thread, or any failed read, starts over from a full read**, so a stale copy never lingers: an error
+  keeps what is on screen, and the next read is a whole one.
+- **The list asks for its slim form** (each row's preview cut to 160 characters), and also answers *no change* when
+  nothing in it changed.
+- An older Cockpit that knows none of this answers as before, and the app treats each answer as the whole thread.
+- The session log says, for each read, whether it was whole, a change or *no change*, and how many bytes came, so the
+  phone's log shows the saving.
+
 **A board's thread opens its board** (#1091; Igor, 2026-11-21, on the iPad in the thread *Board, Nov 21*: *"I should
 be able to go back to the notebook from the board and access any things on the boards"*). *Open in Chat* on a board
 leaves the board for its thread, and the only way back was a picture's *Jump to board*, behind a tap on a picture.

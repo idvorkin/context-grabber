@@ -75,6 +75,13 @@ final class ChatModel: ObservableObject {
   /// Bead context-grabber-exg6: the list's reads, and each thread's, in order; only the newest finished one shows.
   private var listOrder = ChatReadOrder()
   private var threadOrder: [String: ChatReadOrder] = [:]
+  /// "Chats load slow" (2026-11-25, cockpit story 346): each thread's cursor, ETag and raw rows, so a poll asks only
+  /// for what changed; the list's ETag and its last rows, so an unchanged list is a 304.
+  private var threadPolls: [String: ChatThreadPoll] = [:]
+  private var listPoll = ChatListPoll()
+  private var listRows: [ChatSummary]?
+  /// Polls answered "no change" since the thread opened, and the bytes all its reads brought: logged when it closes.
+  private var quietPolls: [String: (count: Int, bytes: Int)] = [:]
 
   static let backgroundTask = "com.idvorkin.grabbernative.chat"
   static let notifiedKey = "chat_notified"
@@ -344,9 +351,21 @@ final class ChatModel: ObservableObject {
   /// it with no await in between.
   private func readList() async throws -> (rows: [ChatSummary]?, status: Int) {
     let epoch = archiver.epoch
-    let (data, response) = try await URLSession.shared.data(for: try ChatWire.listRequest(cockpit: cockpit))
-    let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-    guard status == 200, let rows = ChatWire.summaries(data) else { return (nil, status) }
+    let (data, response) = try await URLSession.shared.data(for: try listPoll.request(cockpit: cockpit))
+    let http = response as? HTTPURLResponse
+    let status = http?.statusCode ?? 0
+    // A 304 is the list held, unchanged: the rows last read, with this phone's archive changes over them.
+    if status == 304, let held = listRows {
+      listPoll.answered(status: 304, etag: http?.value(forHTTPHeaderField: "ETag"))
+      if !archiver.isCurrent(epoch) { return try await readList() }
+      return (archiver.overlaid(held), 200)
+    }
+    guard status == 200, let rows = ChatWire.summaries(data) else {
+      listPoll.answered(status: status == 304 ? 0 : status, etag: nil)
+      return (nil, status)
+    }
+    listPoll.answered(status: 200, etag: http?.value(forHTTPHeaderField: "ETag"))
+    listRows = rows
     // Started before an archive change or its answer, it would put the thread back where it was: read again.
     if !archiver.isCurrent(epoch) { return try await readList() }
     return (archiver.overlaid(rows), status)
@@ -481,6 +500,7 @@ final class ChatModel: ObservableObject {
     decisions.threadOpened(key)
     Task { await decisions.refresh(reason: "thread") }
     Task { await readSiteNames() }
+    showCopy(key)
     poll?.cancel()
     poll = Task { [weak self] in
       var seenOnce = false
@@ -498,6 +518,9 @@ final class ChatModel: ObservableObject {
     openThread = nil
     poll?.cancel()
     poll = nil
+    if let quiet = quietPolls.removeValue(forKey: key), quiet.count > 0 {
+      log.event("chat", ["action": "thread_polls", "thread": key, "unchanged": quiet.count, "bytes": quiet.bytes])
+    }
     Task { await refreshList(reason: "thread_closed") }
   }
 
@@ -505,6 +528,66 @@ final class ChatModel: ObservableObject {
   func readAgain(_ key: String) async {
     guard openThread == key else { return }
     await load(key, markSeen: false)
+  }
+
+  // MARK: The device's copy of each thread ("Chats load slow", 2026-11-25)
+
+  private static var copiesFolder: URL? {
+    FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+      .appendingPathComponent("chat-threads", isDirectory: true)
+  }
+
+  private static func copyFile(_ key: String) -> URL? {
+    copiesFolder?.appendingPathComponent(ChatWire.encode(key) + ".json")
+  }
+
+  /// A thread opened before shows at once from the device's copy; the open's first read then catches it up.
+  private func showCopy(_ key: String) {
+    guard threadPolls[key] == nil, let file = Self.copyFile(key), let data = try? Data(contentsOf: file),
+      let copy = ChatThreadPoll(saved: data)
+    else { return }
+    threadPolls[key] = copy
+    if messages[key] == nil, let rows = copy.messages {
+      messages[key] = rows
+      log.event("chat", ["action": "thread_copy_shown", "thread": key, "messages": rows.count, "bytes": data.count])
+    }
+  }
+
+  /// Written off the main thread after a read that changed the thread; a failed write only logs.
+  private func saveCopy(_ key: String, _ poll: ChatThreadPoll) {
+    guard let data = poll.saved, let folder = Self.copiesFolder, let file = Self.copyFile(key) else { return }
+    let log = log
+    Task.detached(priority: .utility) {
+      do {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try data.write(to: file, options: .atomic)
+      } catch {
+        log.event("chat", ["action": "thread_copy_failed", "thread": key, "reason": error.localizedDescription])
+      }
+    }
+  }
+
+  /// Every whole or changed read is logged with its bytes; "no change" polls are counted and logged when it closes.
+  private func logRead(_ key: String, _ outcome: ChatThreadPoll.Outcome, bytes: Int, opening: Bool) {
+    switch outcome {
+    case .unchanged:
+      quietPolls[key, default: (0, 0)].count += 1
+    case .whole(let count):
+      quietPolls[key, default: (0, 0)].bytes += bytes
+      log.event(
+        "chat",
+        ["action": "thread_read", "thread": key, "read": "whole", "messages": count, "bytes": bytes, "open": opening])
+    case .changed(let new, let changed):
+      quietPolls[key, default: (0, 0)].bytes += bytes
+      log.event(
+        "chat",
+        [
+          "action": "thread_read", "thread": key, "read": "changed", "new": new, "changed": changed, "bytes": bytes,
+          "open": opening,
+        ])
+    case .failed:
+      break  // the failure paths below log it
+    }
   }
 
   /// True once the thread was read and, when asked, marked seen.
@@ -517,14 +600,29 @@ final class ChatModel: ObservableObject {
     }
     let ticket = threadOrder[key, default: ChatReadOrder()].start()
     do {
-      let (data, response) = try await URLSession.shared.data(for: try ChatWire.threadRequest(key, cockpit: cockpit))
+      // The first read of an open is whole (markSeen is true until it lands); later polls ask only for changes.
+      let request = try (threadPolls[key] ?? ChatThreadPoll()).request(key, cockpit: cockpit, opening: markSeen)
+      let (data, response) = try await URLSession.shared.data(for: request)
       // A poll, a send and an answered card can read at once: only the newest finished read shows (exg6).
       guard threadOrder[key, default: ChatReadOrder()].mayShow(ticket) else {
         log.event("chat", ["action": "thread_read_dropped", "thread": key, "reason": "stale"])
         return false
       }
-      let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-      guard status == 200, let rows = ChatWire.messages(data) else {
+      let http = response as? HTTPURLResponse
+      let status = http?.statusCode ?? 0
+      var poll = threadPolls[key] ?? ChatThreadPoll()
+      let outcome = poll.apply(status: status, etag: http?.value(forHTTPHeaderField: "ETag"), body: data)
+      threadPolls[key] = poll
+      logRead(key, outcome, bytes: data.count, opening: markSeen)
+      let rows: [ChatMessage]?
+      switch outcome {
+      case .failed: rows = nil
+      case .unchanged: rows = messages[key] ?? poll.messages
+      case .whole, .changed:
+        rows = poll.messages
+        saveCopy(key, poll)
+      }
+      guard let rows else {
         if CockpitDown.isDown(status: status) {
           threadDownFailed(key, CockpitDown.how(status: status), why: "HTTP \(status)")
           return false
@@ -566,6 +664,8 @@ final class ChatModel: ObservableObject {
       log.event("chat", ["action": "thread_read_dropped", "thread": key, "reason": "cancelled"])
       return false
     } catch {
+      // After any error the next read is a whole one (cockpit story 346); what is on screen stays.
+      threadPolls[key]?.forget()
       guard threadOrder[key, default: ChatReadOrder()].mayShow(ticket) else {
         log.event("chat", ["action": "thread_read_dropped", "thread": key, "reason": "stale"])
         return false

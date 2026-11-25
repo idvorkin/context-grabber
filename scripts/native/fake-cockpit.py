@@ -62,6 +62,10 @@ Searching the asks (story 1132): GET /asks/search?q=<words>[&all=1] answers as t
 the open asks /fake/asks made and one answered ask, igor2-88g.882 "Renew the passport?" (answered "Go to the downtown
 agency"), found only with all=1 but always counted: a /threads row each with matches; an empty q is a 400, and a q with
 the word "bdfail" the 502 of bd failing.
+The delta wire (cockpit story 346, "Chats load slow"): GET /chat and GET /chat/<key> send a weak ETag and answer 304
+with no body to a matching If-None-Match; GET /chat/<key>?after=<id it holds> answers full: false with every row (a
+merge by id gives the thread exactly), an unknown after answers full: true; both carry cursor, the newest id.
+
 Searching the chat list (stories 1616-1618, #1443): GET /chat?q=<words> answers as the Cockpit's does (cockpit story
 335): GET /chat's rows, kept when every lowercased word is in the title or any message's text; a blank q is the plain
 list. Thread igor2-88g.1443 "Travel docs", added by POST /fake/search-thread {"on": true} (and taken away with false,
@@ -97,6 +101,7 @@ hint the Cockpit would wake Larry with for each message, the strokes answers, an
 
 import base64
 import binascii
+import hashlib
 import json
 import os
 import re
@@ -695,6 +700,19 @@ def answer_board_later(key):
     threading.Thread(target=go, daemon=True).start()
 
 
+def thread_answer(t, query):
+    """GET /chat/<key> on the delta wire (cockpit story 346, docs/chat-parity.md). The ETag names the thread's state,
+    whatever the cursor. With `after` a message it holds, the answer is `full: false` with every row from the start: a
+    client merging by id ends with exactly the thread, which is all the contract promises, and an older row whose
+    receipt moved on is always among them. An unknown `after`, or none, is the whole thread, `full: true`."""
+    messages = t["messages"] if t else []
+    tag = "W/\"" + hashlib.sha1(json.dumps(messages, sort_keys=True).encode()).hexdigest()[:16] + "\""
+    after = (query.get("after") or [""])[0]
+    full = not after or after not in {m.get("id") for m in messages}
+    cursor = messages[-1]["id"] if messages else ""
+    return tag, {"ok": True, "full": full, "cursor": cursor, "messages": messages}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -703,6 +721,22 @@ class Handler(BaseHTTPRequestHandler):
         body = json.dumps(obj).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _tagged(self, etag, obj):
+        """A 200 carrying a weak ETag, or a 304 with no body when the client already holds it (cockpit story 346)."""
+        if self.headers.get("If-None-Match") == etag:
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        body = json.dumps(obj).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("ETag", etag)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -768,10 +802,13 @@ class Handler(BaseHTTPRequestHandler):
                         return self._json(SEARCH_DOWN, {"ok": False, "error": "bd: database is locked"})
                     return self._json(*chat_search(query))
                 rows = [summary(k, t) for k, t in THREADS.items() if t["messages"] or t.get("pinned")]
-                return self._json(200, {"ok": True, "threads": rows})
+                answer = {"ok": True, "threads": rows}
+                # The list's ETag hashes the answer, one per query (`?fields=summary` answers the same rows here).
+                tag = "W/\"" + hashlib.sha1(json.dumps([sorted(query.items()), answer]).encode()).hexdigest()[:16] + "\""
+                return self._tagged(tag, answer)
             if path.startswith("/chat/"):
-                t = THREADS.get(path[len("/chat/"):])
-                return self._json(200, {"ok": True, "messages": t["messages"] if t else []})
+                return self._tagged(*thread_answer(THREADS.get(path[len("/chat/"):]),
+                                                   urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)))
             if path.startswith("/attachments/") and path[len("/attachments/"):] in IMAGES:
                 data = IMAGES[path[len("/attachments/"):]]
                 self.send_response(200)
