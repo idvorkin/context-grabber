@@ -306,7 +306,7 @@ native-run-device: native-build-device
     @# The deploy ledger, once the app is installed: a locked device then fails the launch below, and that still counts.
     @# #1038: the repo's own recorder; the mac-driver one it used was never checked out, so no install was ever recorded.
     @scripts/native/record-deploy.sh "$([ "{{native_device}}" = "$(tr -d '[:space:]' 2>/dev/null <scripts/native/ipad-udid.local)" ] && echo ipad || echo phone)" "$(git rev-parse HEAD)" cable || true
-    @# Story 1634: the installed bundle to the Cockpit's /builds too, in the background, so the page is never behind the
+    @# Story 1635: the installed bundle to the Cockpit's /builds too, in the background, so the page is never behind the
     @# devices (BugKit's ota-upload.sh; nothing when ~/gits/bug-kit has none). Its outcome: ~/tmp/agent/notes/ota-uploads.log.
     @up="${BUG_KIT:-$HOME/gits/bug-kit}/scripts/ota-upload.sh"; mkdir -p "$HOME/tmp/agent/notes"; \
       if [ -x "$up" ]; then "$up" "$PWD/{{native_device_app}}" --name grabber --repo "$PWD" </dev/null >/dev/null 2>>"$HOME/tmp/agent/notes/ota-uploads.log" & \
