@@ -21,7 +21,7 @@ struct WhiteboardListView: View {
   @State private var chatProblem: BugProblem?
   /// Bead context-grabber-dbku: a row's thread, slid in over the list by its chat bubble; Back comes back to the list.
   @State private var listChat: ChatJump?
-  /// Stories 1339-1340: Boards from the Cockpit (beta), off by default; on, the store's boards are listed below.
+  /// Stories 1339-1340: Boards from the Cockpit (beta), off by default; on, the store's boards come first.
   @AppStorage(WhiteboardCockpitBoards.key) private var cockpitBoardsOn = false
   @StateObject private var cockpitBoards: CockpitBoardsModel
   private let app: AppModel

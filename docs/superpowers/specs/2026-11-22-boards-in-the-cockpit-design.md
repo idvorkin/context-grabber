@@ -218,7 +218,7 @@ default. It is for trying the store while Larry and the app build it, not for Ig
   the iPad never asks the Cockpit for boards.
 - **On**: the boards list gets a section, *From the Cockpit*, above the iPad's own boards (first, so a long list of the iPad's boards never hides it). It lists the
   Cockpit's boards (name, and how many versions each has), fetched when the list opens and on a pull. The iPad's own
-  boards above it are untouched and still sync over iCloud.
+  boards below it are untouched and still sync over iCloud.
   - With no Cockpit boards yet, the section says *No boards in the Cockpit yet*.
   - When the Cockpit can't be reached, the section shows the copyable *Cockpit not answering* problem (the address it
     tried and what failed), and the iPad's own boards still open.
