@@ -44,6 +44,7 @@ extension WhiteboardModel {
         "whiteboard", ["action": "close", "board": board.id, "strokes": drawing.strokes.count, "saved": !dirty])
       if dirty, let problem { store.closedUnsaved(problem, board: board.id) }
     }
+    saidWhatWasNotKept(.close)
     store.closed(board.id, empty: drawing.strokes.isEmpty)
   }
 
@@ -60,7 +61,7 @@ extension WhiteboardModel {
         opLedger.wrote(written)
       }
       dirty = false
-      saidWhatWasNotKept(trigger)
+      if trigger != .close { saidWhatWasNotKept(trigger) }
       saveFailing = false
       if problem?.context == "WhiteboardView.save" { problem = nil }
     } catch {
