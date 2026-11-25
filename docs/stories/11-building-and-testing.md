@@ -1618,6 +1618,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1630:
+
+- **Summary:** A UI test that isn't about Health launches the app without asking HealthKit, so a crash inside HealthKit's own logging can't fail a whiteboard or chat test
+- **Status:** planned (branch native/keep-pen-race-8dnk)
+- **Issues:** bead `context-grabber-8dnk` (cause: `WhiteboardPaperGhostsUITests.testKeepingHisMarkLeavesMyPenAsItWas` failed its first try on 2026-11-24 22:20 because the app died 1.6 s after launch, SIGSEGV in libc `dtoa` under `HKQuery` writing its predicate to os_log during the launch Health refresh; the same crash as bead `context-grabber-2xyj`, its fifth sighting on the lane simulators)
+
+#### Use Case:
+- **As Igor,** relying on the simulator's UI tests to tell me whether the whiteboard and chat work
+- **I want to** have the tests that don't touch Health launch the app with its Health refresh switched off
+- **so that** a crash inside Apple's HealthKit on the simulator fails only the tests about Health, not every class that happens to launch at that moment
+
+#### Acceptance Criteria:
+- **Scenario:** A UI test launches the app with `GRABBER_HEALTH=off`
+- **Given:** every UI test launches through `XCUIApplication.forTests`, which sets `GRABBER_HEALTH=off`
+- **When:** the app comes to the front at launch or later
+- **Then:** it asks HealthKit nothing for its Today refresh and logs `mirror_refresh_skipped` with reason `health_off`; a test that sets `GRABBER_MIRROR` still grabs its fixture week (fixture or HealthKit) as before, and the launch smoke, which doesn't use `forTests`, still runs the real Health refresh
+
+---
+
 ### User Story 1627:
 
 - **Summary:** A build lane's simulator runs slim: simslim turns off the background daemons a test run never needs, once per simulator

@@ -74,6 +74,9 @@ extension XCUIApplication {
     if !animated { app.launchEnvironment["GRABBER_NO_ANIMATIONS"] = "1" }
     app.launchEnvironment["GRABBER_WHITEBOARD_GRID"] = "off"
     app.launchEnvironment["GRABBER_CALL_BRIDGE"] = "ws://192.0.2.1:8780"
+    // Story 1630 (bead context-grabber-8dnk): no Health refresh at launch, so HealthKit's own simulator crash
+    // (bead context-grabber-2xyj) fails only the tests about Health. `GRABBER_MIRROR` still grabs its fixture week.
+    app.launchEnvironment["GRABBER_HEALTH"] = "off"
     return app
   }
 }

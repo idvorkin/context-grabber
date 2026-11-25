@@ -100,6 +100,12 @@ final class MirrorModel: ObservableObject {
   func refresh(reason: String) {
     guard let hk = source as? HealthKitSource else { return }
     let log = app.log
+    // Story 1630 (bead context-grabber-8dnk): a UI test that isn't about Health asks HealthKit nothing, so a crash
+    // inside HealthKit's own logging on the simulator (bead context-grabber-2xyj) can't fail it.
+    if ProcessInfo.processInfo.environment["GRABBER_HEALTH"] == "off" {
+      log.event("mirror_refresh_skipped", ["reason": reason, "health_request_status": "health_off"])
+      return
+    }
     Task { [weak self] in
       let status: String
       do {
