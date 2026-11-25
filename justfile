@@ -54,8 +54,10 @@ nightly-uninstall:
 
 # New story IDs come from `scripts/native/story-ids.py reserve <journey> [n]` (story 791). This, story 793, runs
 # right before `gh pr merge`: the story IDs on the branch as pushed, merged with origin/main as it is now. Story 1519:
-# then ContextCore compiled in Release, as an archive compiles it, when the branch changes it (release-check.sh).
+# then ContextCore compiled in Release, as an archive compiles it, when the branch changes it (release-check.sh). Story
+# 1638 runs first: links to commits a pipeline rebase replaced are renamed and pushed (story-commits-pre-merge.sh).
 pre-merge *branch:
+    scripts/native/story-commits-pre-merge.sh {{branch}}
     scripts/native/pre-merge.sh {{branch}}
     scripts/native/release-check.sh {{branch}}
     scripts/native/merged-tip-check.sh {{branch}}

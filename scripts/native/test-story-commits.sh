@@ -63,6 +63,50 @@ expect "a shallow clone fails if it cannot verify a link" 1 "FAIL 01-a.md:1: lin
 FAIL 01-a.md:1: links commit $gone, which is not in this checkout's available history
 story-commits: this clone is shallow. Fetch the full history (git fetch --unshallow) and rerun."
 
+# --- Story 1638 (bead context-grabber-zisx): a link to a commit a rebase replaced. A branch's story links its own
+# commit; main moves; the branch is rebased, which gives that commit a new sha with the same change (patch-id).
+r=$tmp/rb
+export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@example.com GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@example.com
+rg() { git -C "$r" -c user.name=t -c user.email=t@example.com "$@"; }
+git init -q --bare "$tmp/rb-origin.git"
+git clone -q "$tmp/rb-origin.git" "$r" 2>/dev/null
+mkdir -p "$r/docs/stories"
+echo base >"$r/code.txt"
+printf '### User Story 1:\n' >"$r/docs/stories/01-a.md"
+rg checkout -q -b main && rg add -A && rg commit -qm base && rg push -q origin main
+rg checkout -q -b feature
+echo feature >>"$r/code.txt" && rg commit -qam feature
+old=$(rg rev-parse HEAD)
+printf -- '- **Status:** implemented in [%s](%s/%s)\n' "${old:0:8}" "$U" "${old:0:8}" >>"$r/docs/stories/01-a.md"
+rg commit -qam status
+rg checkout -q main && echo other >"$r/other.txt" && rg add -A && rg commit -qm "main moves" && rg push -q origin main
+rg checkout -q feature && rg rebase -q main && rg push -q -f origin feature
+new=$(rg rev-parse HEAD~1)
+out=$("$here/scripts/native/story-commits.py" "$r/docs/stories")
+status=$?
+expect "a link to a commit the rebase replaced passes with a note" 0 "note 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
+story-commits: 1 commit links, every one in this branch's history; 1 name a commit a rebase replaced (just pre-merge renames them, or story-commits.py --fix)"
+rg checkout -q --detach
+out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" feature 2>&1)
+status=$?
+expect "pre-merge off the branch fails, naming the rename" 1 "fixed 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
+FAIL story-commits: origin/feature names 1 commit(s) a rebase replaced; on the branch at origin/feature (git switch feature && git pull --ff-only), rerun this to rename them"
+rg checkout -q feature
+out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" 2>&1)
+status=$?
+pushed=$(git -C "$tmp/rb-origin.git" rev-parse feature)
+expect "pre-merge on the branch renames the link and pushes it" 0 "fixed 01-a.md:2: ${old:0:8} was rebased to ${new:0:8}
+ok   story-commits: renamed 1 link(s) to the rebased commits, pushed ${pushed:0:7} to origin/feature"
+if git -C "$tmp/rb-origin.git" show feature:docs/stories/01-a.md | grep -q "commit/${new:0:8})"; then
+  echo "ok   the pushed story links the rebased commit"
+else
+  echo "FAIL the pushed story doesn't link ${new:0:8}"
+  fail=1
+fi
+out=$(cd "$r" && "$here/scripts/native/story-commits-pre-merge.sh" 2>&1)
+status=$?
+expect "pre-merge again has nothing to rename" 0 "ok   story-commits: origin/feature names only its own commits"
+
 if out=$(scripts/native/story-commits.py docs/stories); then
   echo "ok   the repo's own stories: $out"
 else
