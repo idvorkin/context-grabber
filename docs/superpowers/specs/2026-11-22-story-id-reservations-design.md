@@ -84,7 +84,9 @@ A recipe, run in the branch's checkout immediately before merging its PR: it fet
 (the pipeline adds its own commits to the PR, so the local branch can be behind it), merges the two without touching
 the checkout, and runs the story ID check on the stories of the merged result. When the checkout is behind the pushed
 branch it says so and checks the pushed one, since that is what merges; a branch not pushed yet is checked as it is
-locally. It fails when the merge conflicts or when the merged stories fail the check, naming each problem the way the
+locally. Run from a detached HEAD (a temporary checkout, the pipeline's head), it judges the one pushed branch whose
+tip is that commit and says so; when no pushed branch is there, or several are, it fails naming the branch to pass
+(`just pre-merge <branch>`), so the chained merge never goes ahead. It fails when the merge conflicts or when the merged stories fail the check, naming each problem the way the
 host rung does. It passes, and says so, otherwise. Its last line is always `ok   pre-merge: …` or `FAIL pre-merge: …`,
 and its exit status is the verdict: the merge runs only when it succeeds (`just pre-merge && gh pr merge …`), never
 after its output went through a pipe, which hides a failure (on 2026-11-24 `just pre-merge | tail -2` let #1400 merge
@@ -143,6 +145,8 @@ branches holding one ID. Like reserving, it fails rather than guess when it can'
   outside its journey's IDs fails the check whatever its number.
 - Two branches that each pass the story ID check alone, but add the same ID, fail the pre-merge check; one that
   doesn't collide passes; one whose pushed commits add the colliding ID fails even when the checkout is behind them.
+- From a detached HEAD the one pushed branch points at, the pre-merge check judges that branch; from one no pushed
+  branch (or more than one) points at, it fails naming `just pre-merge <branch>`.
 - The agent instructions say: new stories take their IDs from the reserve command, and the pre-merge check runs
   right before every merge, chained so the merge runs only when it passes.
 - A branch that changes the shared core is compiled with the optimizer on before it merges; a failing optimized
