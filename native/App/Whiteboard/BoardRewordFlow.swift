@@ -146,7 +146,7 @@ extension PaperBoardController {
         found[text.t] = (text, [key], stroke.renderBounds, pen, stroke.ink.color)
       }
     }
-    let tolerance = 22 / screenScale
+    let tolerance = WhiteboardTurn.tapReach / screenScale
     let distance = { (box: CGRect) -> CGFloat in
       hypot(max(box.minX - point.x, 0, point.x - box.maxX), max(box.minY - point.y, 0, point.y - box.maxY))
     }

@@ -67,6 +67,7 @@ enum WebHit {
     return reply(
       json: WebHit.holdMenu(
         loaded, x: x, y: y, inMargin: inMargin,
-        slop: JSONNumber(json["slop"])?.doubleValue ?? 22, selected: WebApplier.strings(json["selected"])))
+        slop: JSONNumber(json["slop"])?.doubleValue ?? Double(WhiteboardTurn.tapReach),
+        selected: WebApplier.strings(json["selected"])))
   }
 #endif

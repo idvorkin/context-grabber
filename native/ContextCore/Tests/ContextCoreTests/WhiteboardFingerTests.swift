@@ -6,6 +6,12 @@ import XCTest
 final class WhiteboardFingerTests: XCTestCase {
   private typealias Verdict = WhiteboardFinger.Verdict
 
+  /// context-grabber-egdh item 2: the board's one fingertip. Every finger tap and hold (a group, Larry's ink, the hold
+  /// menu, a reword, a tap's dot) reaches this far, in screen points, divided by the zoom.
+  func testTheBoardsFingertipIs22ScreenPoints() {
+    XCTAssertEqual(WhiteboardTurn.tapReach, 22)
+  }
+
   func testWithNothingShowingAFingerDoesWhatItUsuallyDoes() {
     XCTAssertEqual(WhiteboardFinger().verdict, Verdict(usual: true, why: .noMarks))
   }

@@ -6,7 +6,7 @@ import PaperKit
 import UIKit
 
 extension PaperBoardController {
-  /// Stories 1140–1142: the thing of Larry's (or Claude's) whose stroke is within a fingertip (22 screen points) of
+  /// Stories 1140–1142: the thing of Larry's (or Claude's) whose stroke is within a fingertip (`WhiteboardTurn.tapReach`) of
   /// `at`, in board points, on a board he can draw on: every stroke made at its moment. Nil where his own ink is
   /// nearer, on a group's stroke (story 947), and on a board with nothing of theirs.
   func tappedTheirs(at: CGPoint) -> TappedGroup? {
@@ -14,7 +14,7 @@ extension PaperBoardController {
     let moments = model.opLedger.theirs(board: model.board.id)
     guard !moments.isEmpty else { return nil }
     let strokes = opStrokes(markup).strokes
-    let slop = 22 / max(screenScale, 0.01)
+    let slop = WhiteboardTurn.tapReach / max(screenScale, 0.01)
     guard let hit = model.outline(of: strokes).theirs(at: at, slop: slop, moments: moments) else { return nil }
     let names = Set(hit.names)
     let ids = groupElements(names, in: markup)
