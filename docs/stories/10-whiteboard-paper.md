@@ -2093,7 +2093,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1213:
 
 - **Summary:** Ink side by side: a stroke on either half updates its corner and the log
-- **Status:** implemented in e8090678; verified by InkLatencyTests (host) and the Mac build
+- **Status:** implemented in e8090678; verified by InkLatencyTests (host) and the Mac build; the stroke's frame lag in 8ec45dd3 (story 1324), verified by InkStrokeLagTests (host) and the Mac build
 - **Spec:** [Ink side by side](../superpowers/specs/2026-11-22-ink-side-by-side-design.md)
 
 #### Use Case:
@@ -2127,7 +2127,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1215:
 
 - **Summary:** Ink side by side: each visit starts afresh
-- **Status:** implemented in e8090678; verified by InkLatencyTests (host) and the Mac build
+- **Status:** implemented in e8090678; verified by InkLatencyTests (host) and the Mac build; Clear starting both counts again in 8ec45dd3 (story 1324), verified by the Mac build
 - **Spec:** [Ink side by side](../superpowers/specs/2026-11-22-ink-side-by-side-design.md)
 
 #### Use Case:
@@ -2140,6 +2140,11 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** strokes measured on both halves
 - **When:** I leave the screen and open it again
 - **Then:** both corners read *Draw to measure* again
+
+- **Scenario:** Clear starts both counts again
+- **Given:** strokes measured on both halves
+- **When:** I press **Clear**
+- **Then:** the left half empties and both corners, the web half's included, read *Draw to measure* again
 
 ### User Story 1216:
 
