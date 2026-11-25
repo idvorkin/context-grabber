@@ -2229,7 +2229,7 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 
 - **Summary:** The counter's week as a little graph by day
 - **Issues:** [#1493](https://github.com/idvorkin/context-grabber/issues/1493)
-- **Status:** in progress
+- **Status:** implemented in [fa6a0a6](https://github.com/idvorkin/context-grabber/commit/fa6a0a6); verified by `CounterWeekTests` (host: the seven bars oldest to today with each weekday's initial, today marked, other devices' counts included, and − and + before Confirm moving the bars) and `DailyStripUITests` on the iPhone 17 and iPad Pro 11-inch (M5) simulators (the graph above the rows, all seven rows still on screen, today's bar following − before Confirm; 2026-11-25); its look in light and dark from the previews by eye; the phone in the next build turn
 - **Spec:** [native home screen, "The week at a glance"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
