@@ -2,10 +2,10 @@
 //  a debug screen, the app's own PencilKit ink on the left and the Cockpit's /ink web board on the right, each with
 //  how long a pen-down takes to reach the next frame. An A/B tool only: the board's own drawing is untouched.
 //
-//  Both halves measure the same span on their own clock: the pen's own timestamp, to the start of the first frame
-//  after it. Native: UITouch.timestamp to CACurrentMediaTime() at the first CADisplayLink tick (both are seconds of
-//  system uptime). Web: the pointer event's timeStamp to performance.now() in the first requestAnimationFrame after
-//  it (both on the page's performance clock). Neither sees the pixels; the spec says what that misses.
+//  Story 1324: both halves measure the web board's own way (its live ink): per frame while the pen is down, the oldest
+//  undrawn touch to the start of the frame that draws it; per stroke, the median and the worst. Native: UITouch
+//  timestamps to CADisplayLink.timestamp (seconds of system uptime). Web: the board's own per-stroke numbers, passed
+//  along by the probe. Leaving the screen or Clear writes one `board_pen_latency` line per half that drew.
 
 import BugKit
 import ContextCore
@@ -30,15 +30,15 @@ final class InkSideBySideModel: ObservableObject {
     webURL = InkLatency.webBoardURL(cockpit: ChatCockpit.pageAddress(override: nil))
   }
 
-  func record(_ side: InkLatency.Side, ms: Double) {
+  func record(_ side: InkLatency.Side, stroke: InkStrokeLag.Summary) {
     let fields: [String: Any]
     switch side {
     case .native:
-      let outcome = native.add(ms)
-      fields = native.logFields(ms: ms, outcome: outcome)
+      let outcome = native.add(stroke)
+      fields = native.logFields(stroke: stroke, outcome: outcome)
     case .web:
-      let outcome = web.add(ms)
-      fields = web.logFields(ms: ms, outcome: outcome)
+      let outcome = web.add(stroke)
+      fields = web.logFields(stroke: stroke, outcome: outcome)
     }
     log.event("ink_side_by_side", fields)
   }
@@ -46,6 +46,16 @@ final class InkSideBySideModel: ObservableObject {
   func clear() {
     clears += 1
     log.event("ink_side_by_side", ["action": "clear", "side": InkLatency.Side.native.rawValue])
+    writeLines()
+  }
+
+  /// One `board_pen_latency` line per half that drew since the last one (story 1324), then both start afresh.
+  func writeLines() {
+    for half in [native, web] {
+      if let line = half.penLatencyFields() { log.event("ink_side_by_side", line) }
+    }
+    native = InkLatency(side: .native)
+    web = InkLatency(side: .web)
   }
 
   func webFailed(_ error: Error, url: URL?) {
@@ -98,6 +108,7 @@ struct InkSideBySideView: View {
     .onAppear {
       model.log.event("ink_side_by_side", ["action": "open", "web": model.webURL?.absoluteString ?? "none"])
     }
+    .onDisappear { model.writeLines() }
   }
 
   private func half<Content: View>(
@@ -131,8 +142,11 @@ private struct NativeInkCanvas: UIViewRepresentable {
     canvas.backgroundColor = .white
     canvas.isOpaque = true
     canvas.accessibilityIdentifier = "ink-native-canvas"
-    let watcher = PenDownWatcher(target: nil, action: nil)
-    watcher.onDown = { [weak coordinator = context.coordinator] stamp in coordinator?.penDown(at: stamp) }
+    let watcher = StrokeWatcher(target: nil, action: nil)
+    watcher.onDown = { [weak coordinator = context.coordinator] stamp in coordinator?.down(at: stamp) }
+    watcher.onMove = { [weak coordinator = context.coordinator] stamp in coordinator?.moved(at: stamp) }
+    watcher.onUp = { [weak coordinator = context.coordinator] in coordinator?.up() }
+    watcher.delegate = context.coordinator
     canvas.addGestureRecognizer(watcher)
     context.coordinator.clears = model.clears
     return canvas
@@ -145,21 +159,49 @@ private struct NativeInkCanvas: UIViewRepresentable {
   }
 
   @MainActor
-  final class Coordinator {
+  final class Coordinator: NSObject, UIGestureRecognizerDelegate {
     let model: InkSideBySideModel
     var clears = 0
+    private var stroke: InkStrokeLag?
+    private var link: CADisplayLink?
+
     init(model: InkSideBySideModel) { self.model = model }
 
-    /// `stamp` is the touch's own timestamp; the first display-link tick after it is the next frame.
-    func penDown(at stamp: TimeInterval) {
-      NextFrame.after { [weak self] now in self?.model.record(.native, ms: (now - stamp) * 1000) }
+    // Seconds of system uptime to the stroke's milliseconds.
+    func down(at stamp: TimeInterval) {
+      stroke = InkStrokeLag(down: stamp * 1000)
+      if link == nil {
+        let link = CADisplayLink(target: self, selector: #selector(tick(_:)))
+        link.add(to: .main, forMode: .common)
+        self.link = link
+      }
     }
+
+    func moved(at stamp: TimeInterval) { stroke?.touched(at: stamp * 1000) }
+
+    /// The frame that starts now draws whatever touch is waiting, as the web board's live ink counts it.
+    @objc private func tick(_ link: CADisplayLink) { stroke?.frame(at: link.timestamp * 1000) }
+
+    func up() {
+      link?.invalidate()
+      link = nil
+      if let summary = stroke?.summary { model.record(.native, stroke: summary) }
+      stroke = nil
+    }
+
+    // PencilKit's own drawing recognizer must never make the watcher fail mid-stroke.
+    func gestureRecognizer(
+      _ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer
+    ) -> Bool { true }
   }
 }
 
-/// Sees every touch go down on the canvas, then steps aside at once, so PencilKit's own drawing never waits on it.
-private final class PenDownWatcher: UIGestureRecognizer {
+/// Sees a stroke's touches go by and never takes them: it stays undecided from pen-down to lift, so PencilKit's own
+/// drawing never waits on it, and steps aside at the end.
+private final class StrokeWatcher: UIGestureRecognizer {
   var onDown: ((TimeInterval) -> Void)?
+  var onMove: ((TimeInterval) -> Void)?
+  var onUp: (() -> Void)?
 
   override init(target: Any?, action: Selector?) {
     super.init(target: target, action: action)
@@ -170,33 +212,20 @@ private final class PenDownWatcher: UIGestureRecognizer {
 
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
     if let first = touches.min(by: { $0.timestamp < $1.timestamp }) { onDown?(first.timestamp) }
+  }
+
+  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+    // The earliest touch since the last call, coalesced ones included, is the oldest one not yet drawn.
+    let all = touches.flatMap { event.coalescedTouches(for: $0) ?? [$0] }
+    if let first = all.min(by: { $0.timestamp < $1.timestamp }) { onMove?(first.timestamp) }
+  }
+
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) { finish() }
+  override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) { finish() }
+
+  private func finish() {
+    onUp?()
     state = .failed
-  }
-}
-
-/// One CADisplayLink tick, then gone: calls back with CACurrentMediaTime() at the start of the next frame.
-@MainActor
-private final class NextFrame {
-  private var link: CADisplayLink?
-  private let done: (TimeInterval) -> Void
-  private static var live: [ObjectIdentifier: NextFrame] = [:]
-
-  private init(done: @escaping (TimeInterval) -> Void) { self.done = done }
-
-  static func after(_ done: @escaping (TimeInterval) -> Void) {
-    let frame = NextFrame(done: done)
-    live[ObjectIdentifier(frame)] = frame
-    let link = CADisplayLink(target: frame, selector: #selector(tick))
-    frame.link = link
-    link.add(to: .main, forMode: .common)
-  }
-
-  @objc private func tick() {
-    let now = CACurrentMediaTime()
-    link?.invalidate()
-    link = nil
-    Self.live[ObjectIdentifier(self)] = nil
-    done(now)
   }
 }
 
@@ -239,8 +268,8 @@ private struct WebInkBoard: UIViewRepresentable {
     init(model: InkSideBySideModel) { self.model = model }
 
     func received(_ body: Any) {
-      guard let dict = body as? [String: Any], let ms = (dict["ms"] as? NSNumber)?.doubleValue else { return }
-      model.record(.web, ms: ms)
+      guard let stroke = InkLatency.webStroke(from: body) else { return }
+      model.record(.web, stroke: stroke)
     }
 
     // WebKit's own signature.
