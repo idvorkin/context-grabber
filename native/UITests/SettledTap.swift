@@ -22,4 +22,19 @@ extension XCUIElement {
     settle(timeout: timeout)
     tap()
   }
+
+  /// Bead context-grabber-xnvx: a long press's actions-only menu can take a settled, hittable row's tap and do nothing
+  /// (the session log shows the touch on the row and no action after it), leaving the menu up over the bar. Tap the
+  /// row, and tap again only while the row is still there and `took` says the action hasn't happened, at most `tries`
+  /// times: a slow fade is never tapped twice.
+  func tapUntilGone(tries: Int = 3, timeout: TimeInterval = 1.5, took: () -> Bool) {
+    for _ in 0..<tries {
+      tapWhenSettled()
+      let deadline = Date().addingTimeInterval(timeout)
+      while Date() < deadline {
+        if took() || !exists { return }
+        Thread.sleep(forTimeInterval: 0.1)
+      }
+    }
+  }
 }
