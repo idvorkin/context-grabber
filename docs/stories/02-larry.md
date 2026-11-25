@@ -3249,7 +3249,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 1132:
 
 - **Summary:** Search the asks on *Decisions* by title and content, the answered ones too
-- **Status:** native app: implemented in '2158881f' and '6a963e19', with its docs and screenshot in '446b4547', on branch `native/inbox-search-4dme`; verified on the host (`just native-test`: `ChatAskSearchTests`, the answer with empty and missing matches, the counts and the count line, the 400 and the 502, the request's escaping, the highlights, a row's tap; `test-fake-cockpit-ops.py`, the fake's `/asks/search`), the Mac build (`just native-build-mac`), and on the iPad Pro 11-inch (M5) simulator (`ChatAskSearchUITests`: an option's word finds the ask with its *option* line and *1 open · 0 answered*, an answered-only match says *No asks match.* and *0 open · 1 answered (tick to show)* and shows once *Answered too* is ticked, a 502 is a copyable problem, a tap opens the chat with the ask's card, and its kept screenshot shows the words marked in the option and context lines; `ChatDecisionUITests` 6/6 there too); not on the iPhone simulator (Igor's no-iPhone rule during the whiteboard work, 2026-11-22), nor on a device; Escape from a hardware keyboard is the system's search Cancel, not tested
+- **Status:** native app: implemented in '2158881f' and '6a963e19', with its docs and screenshot in '446b4547', on branch `native/inbox-search-4dme`; verified on the host (`just native-test`: `ChatAskSearchTests`, the answer with empty and missing matches, the counts and the count line, the 400 and the 502, the request's escaping, the highlights, a row's tap; `test-fake-cockpit-ops.py`, the fake's `/asks/search`), the Mac build (`just native-build-mac`), and on the iPad Pro 11-inch (M5) simulator (`ChatAskSearchUITests`: an option's word finds the ask with its *option* line and *1 open · 0 answered*, an answered-only match says *No asks match.* and *0 open · 1 answered (tick to show)* and shows once *Answered too* is ticked, a 502 is a copyable problem, a tap opens the chat with the ask's card, and its kept screenshot shows the words marked in the option and context lines; `ChatDecisionUITests` 6/6 there too); the box moved above the rows on the iPhone in [43929f0b](https://github.com/idvorkin/context-grabber/commit/43929f0b) (it was in iOS's bottom toolbar there); `ChatAskSearchUITests` not yet run on the iPhone simulator, nor on a device; Escape from a hardware keyboard is the system's search Cancel, not tested
 - **Issues:** bead context-grabber-4dme
 - **Spec:** [Decision cards in Chat](../superpowers/specs/2026-11-14-chat-decision-cards-design.md), *Searching the asks*
 
@@ -3616,7 +3616,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** The + opens a new chat again after the last one landed
 - **Issues:** [#1365](https://github.com/idvorkin/context-grabber/issues/1365); bead context-grabber-6d1b (on the iPhone, two quick Backs to Home left the list's bottom search toolbar over the Chat tile)
-- **Status:** the + logs what it found, and new_chat_shown, new_chat_gone or new_chat_not_shown, in [3b090f81](https://github.com/idvorkin/context-grabber/commit/3b090f81); verified by `ChatNewChatAgainUITests` on the iPad simulator against the fake Cockpit (the + opened a new chat again after each of four ways out) and that run's session log (new_chat_shown after every +, no new_chat_not_shown); the Mac's dead + is not reproduced yet
+- **Status:** the + logs what it found, and new_chat_shown, new_chat_gone or new_chat_not_shown, in [3b090f81](https://github.com/idvorkin/context-grabber/commit/3b090f81); verified by `ChatNewChatAgainUITests` on the iPad simulator against the fake Cockpit (the + opened a new chat again after each of four ways out) and that run's session log (new_chat_shown after every +, no new_chat_not_shown); the Mac's dead + is not reproduced yet; step E's dead Chat tile on the iPhone (bead context-grabber-6d1b: the chat list's bottom search toolbar left over Home) fixed in [43929f0b](https://github.com/idvorkin/context-grabber/commit/43929f0b), the search box above the rows, and verified by `ChatNewChatAgainUITests` 3/3 on the iPhone 17 simulator (3/3 failed at step E before)
 - **Spec:** [Chat with Larry in Grabber Native — A new chat](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3715,7 +3715,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** Search the chat list for a thread by its words
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
-- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); the box sits above the rows on the iPhone too in [43929f0b](https://github.com/idvorkin/context-grabber/commit/43929f0b), verified by `ChatThreadSearchUITests` 3/3 on the iPhone 17 simulator; not yet on a device
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3733,7 +3733,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** A chat list search reaches words deep in a thread's older messages
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
-- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); the box sits above the rows on the iPhone too in [43929f0b](https://github.com/idvorkin/context-grabber/commit/43929f0b), verified by `ChatThreadSearchUITests` 3/3 on the iPhone 17 simulator; not yet on a device
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3751,7 +3751,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** The chat list search survives the Cockpit being down and leaves the list as it was
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
-- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); the box sits above the rows on the iPhone too in [43929f0b](https://github.com/idvorkin/context-grabber/commit/43929f0b), verified by `ChatThreadSearchUITests` 3/3 on the iPhone 17 simulator; not yet on a device
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
