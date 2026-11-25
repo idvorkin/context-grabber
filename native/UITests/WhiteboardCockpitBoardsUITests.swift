@@ -155,4 +155,28 @@ final class WhiteboardCockpitBoardsUITests: XCTestCase {
     waitFor("Gone trial (kept ink)", on: app.navigationBars.staticTexts.element(boundBy: 0), app)
     waitFor("Saved · version 1", on: app.staticTexts["cockpit-board-status"], app)
   }
+
+  /// The real Cockpit, once, on its scratch board only (cockpit-8kh): skipped unless
+  /// `GRABBER_REAL_COCKPIT_SMOKE=<scratch board id>` is given, so a suite run never writes to the real store. One stroke,
+  /// then the board's next version; `ops?since` on the Cockpit shows the op.
+  func testOneStrokeOnTheRealCockpitsScratchBoard() throws {
+    guard let id = ProcessInfo.processInfo.environment["GRABBER_REAL_COCKPIT_SMOKE"], id.hasPrefix("scratch-") else {
+      throw XCTSkip("writes to the real Cockpit: set GRABBER_REAL_COCKPIT_SMOKE=<a scratch board's id>")
+    }
+    let app = XCUIApplication.forTests()
+    app.launchEnvironment["GRABBER_WHITEBOARD"] = "open"
+    app.launchEnvironment["GRABBER_SILENT"] = "1"
+    // A simulator has no Cockpit unless it's told one (ChatCockpit.nowhere).
+    app.launchEnvironment["GRABBER_CHAT_URL"] = "https://c-5004.squeaker-teeth.ts.net"
+    app.launchArguments += ["-whiteboard_boards_from_cockpit", "YES"]
+    app.launch()
+    let canvas = open(id, app)
+    let status = app.staticTexts["cockpit-board-status"]
+    waitUntil(NSPredicate(format: "label BEGINSWITH %@", "Saved · version"), status, timeout: 30)
+    let before = status.label
+    draw(on: canvas, at: 0.4)
+    waitUntil(
+      NSPredicate(format: "label BEGINSWITH %@ AND label != %@", "Saved · version", before), status, timeout: 30)
+    print("real cockpit smoke: \(before) -> \(status.label)")
+  }
 }

@@ -238,8 +238,8 @@ default. It is for trying the store while Larry and the app build it, not for Ig
   - When the board was deleted on another device, ink drawn on it isn't lost: the note offers **Keep my ink as a new
     board**, which makes a new Cockpit board named for the old one plus *(kept ink)* holding that ink, and opens it.
     **Let it go** drops the ink.
-  - Until the Cockpit takes saves from the iPad, the saves go only to a Cockpit a test names; on the real Cockpit the
-    board opens and shows its ink, and drawing on it waits with *Saves wait: the Cockpit doesn't take them yet*.
+  - Saves go to the Cockpit the board was read from. Igor's own boards aren't in the store yet (the web still saves
+    them to its ink files), so only trial boards like *Scratch: iPad store smoke test* are drawn on here.
 
 ## Decided (Igor, 2026-11-24, in his Inbox)
 
