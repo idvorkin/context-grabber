@@ -1205,3 +1205,93 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a board whose record for one stroke has no revision
 - **When:** a batch is checked against it
 - **Then:** the answer is an error naming that stroke, and nothing is decided
+
+### User Story 1330:
+
+- **Summary:** A board drawn on offline opens with my unsent ink and goes up oldest first
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app, which gets it behind the rollout setting (off by default)
+- **Issues:** bead context-grabber-t12b; cockpit-8kh (Larry's store spec 2bf00b04, sections 3 and 6)
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** drawing on the iPad with no network
+- **I want to** see everything I drew on the board at once, and have it reach the Cockpit in the order I drew it
+- **so that** going offline never costs me ink or scrambles it
+
+#### Acceptance Criteria:
+- **Scenario:** Two saves made offline
+- **Given:** a board the iPad last saw at one version, and two saves drawn on it offline
+- **When:** the board opens, and then the network comes back
+- **Then:** the board shows both saves' ink on the last-seen copy, the first save goes up alone at that version, and the second goes up only after the first's answer, at the version that answer left
+
+### User Story 1331:
+
+- **Summary:** A save whose answer was lost lands once
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Issues:** bead context-grabber-t12b; cockpit-8kh
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** whose iPad lost the network mid-save
+- **I want to** have that save sent again exactly as it was
+- **so that** it lands once, never twice and never as a different change
+
+#### Acceptance Criteria:
+- **Scenario:** The answer never came back
+- **Given:** a save sent once whose answer was lost, and more ink drawn since
+- **When:** the iPad tries again
+- **Then:** it sends the same save under the same name at the same version, the newer ink stays waiting, and a Cockpit that answers "couldn't look at it" leaves the save queued
+
+### User Story 1332:
+
+- **Summary:** My unsent change to something another hand changed meanwhile is refused on the device, by name
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Issues:** bead context-grabber-t12b; cockpit-8kh
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*, *Two devices, one board, apart*
+
+#### Use Case:
+- **As someone** who moved a stroke offline that the web moved meanwhile
+- **I want to** be told on the iPad which change was refused and who made the other one, and see the stroke where they left it
+- **so that** no clash slips through just because my iPad caught up first
+
+#### Acceptance Criteria:
+- **Scenario:** Catching up over a clash
+- **Given:** an unsent move of a stroke and an unsent erase of another, and the web moved the first since the iPad's version
+- **When:** the iPad catches up before sending
+- **Then:** the move is refused on the iPad with a note naming the stroke, the web and when, the stroke shows where the web put it, and only the erase goes up, at the caught-up version
+
+### User Story 1333:
+
+- **Summary:** Ink refused for a deleted board waits for my answer
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: refused ink can become a new board
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*, *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** whose board was deleted on the web while I drew on it offline
+- **I want to** keep that ink as a new board, or let it go, my choice
+- **so that** a delete stands and my ink isn't thrown away behind my back
+
+#### Acceptance Criteria:
+- **Scenario:** Keep my ink as a new board
+- **Given:** strokes refused because the board was deleted
+- **When:** I pick *Keep my ink as a new board*
+- **Then:** a new board named like the old one with "(kept ink)" after it, on the old paper, gets exactly those strokes as its first save; and dismissing instead drops them
+
+### User Story 1334:
+
+- **Summary:** The iPad knows when it has seen every change, and fetches when it hasn't
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Issues:** bead context-grabber-t12b; cockpit-8kh (Larry's store spec, section 6, from the Mac's review point 5)
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** drawing on a board that the web and Larry change too
+- **I want to** have my iPad fetch whatever it missed before taking a save's answer as the whole story
+- **so that** it never shows a board missing someone else's change
+
+#### Acceptance Criteria:
+- **Scenario:** A save that landed nothing on a board that moved on
+- **Given:** a save whose every change was refused, answered with a version one past the iPad's
+- **When:** the answer comes back
+- **Then:** the iPad doesn't call itself caught up: it fetches the change it missed, shows it, and only then sends the next save

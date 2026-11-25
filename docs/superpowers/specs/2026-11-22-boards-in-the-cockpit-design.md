@@ -129,6 +129,38 @@ session log.
   every list but stays in the Cockpit and in its nightly backup, so a mistaken delete can always be brought back by
   asking Larry.
 
+### Offline: each device's copy and its unsent changes
+
+Igor, 2026-11-25, accepting Larry's store spec (its section 11): a refused change is undone on the device with a
+copyable note, an undo that's blocked is refused and offers *Add it back as new ink*, and Larry's batches are applied
+once, by the Cockpit. The wire is in the Cockpit store's own spec (cockpit, `docs/specs/2026-11-25-board-store.md`,
+sections 3 and 6). This section is what Igor sees of it on a drawing device.
+
+- **A board opens from the device's own copy**, with every unsent change of this device on top, online or not.
+  Nothing drawn waits for the Cockpit before it shows.
+- **Unsent changes go up oldest first, one save at a time.** If a save's answer never came back, it goes up again
+  exactly as it was, so it lands once however many times it is sent. Any change made after it waits its turn.
+- **Catching up before sending.** When another device or Larry changed the board meanwhile, the device's copy is behind
+  the Cockpit's. The device takes those changes first, then checks its unsent changes against them, on the device, by
+  the rule the Cockpit uses. A change to something another hand changed meanwhile is refused right there. It shows the
+  copyable note the Cockpit's refusal would (*Not moved: the web moved this since*), and the thing shows the way the
+  other hand left it. Everything else still goes up. The device never sends a change made against a version of a
+  thing it hadn't seen, so no clash slips past.
+- **Knowing it's caught up.** After an answer, the device takes its own change in without asking again only when
+  nothing else landed in between: one new version if its change landed, none if nothing did. Otherwise it first
+  fetches what it missed.
+- **A refused change is undone on the device**, and its copyable note names the thing, who changed it and when. New
+  ink that collides with a name already on the board is never dropped. It is added back under a new name, and the note
+  says so.
+- **Ink refused because the board was deleted is kept aside**, off the queue, until Igor answers the note. *Keep my ink
+  as a new board* makes a board with the old name and *(kept ink)* after it, holding that ink; dismissing the note lets
+  it go.
+- **A copy that's ahead of the Cockpit** (a broken cache) is thrown away and the board downloaded again. Unsent changes
+  are kept and checked against the fresh copy.
+- **A save the Cockpit couldn't look at** stays queued and is tried again. A save the Cockpit says was already used for
+  a different change is a copyable problem; it is never quietly sent again under a new name.
+- All of this sits behind a rollout setting, off by default. With it off, boards save and sync as today.
+
 ### Pictures and Larry
 
 - Larry reads boards from the Cockpit's copy, not only from the pictures sent to him. *Send to Larry* still sends a
