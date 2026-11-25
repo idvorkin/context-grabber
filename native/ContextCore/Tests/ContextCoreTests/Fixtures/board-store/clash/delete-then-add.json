@@ -1,0 +1,75 @@
+{
+  "expect" : {
+    "applied" : [
+      0
+    ],
+    "board" : {
+      "deleted" : {
+        "at" : "t-now",
+        "by" : "igor",
+        "device" : "ipad-7c2e",
+        "rev" : 2
+      },
+      "rev" : 2,
+      "things" : {
+        "@board" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 2
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "@board"
+        ],
+        "op" : 0
+      }
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t-now",
+        "by" : "igor",
+        "device" : "ipad-7c2e",
+        "id" : "s-1",
+        "op" : 1,
+        "reason" : "deleted",
+        "rev" : 2
+      }
+    ],
+    "rev" : 2
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 1,
+    "board" : {
+      "rev" : 1,
+      "things" : {
+
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "op" : "delete_board"
+      },
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-1"
+          }
+        ]
+      }
+    ]
+  },
+  "name" : "delete-then-add",
+  "story" : "1323",
+  "why" : "delete_board sets deleted and leaves @board live; later ops in the batch are refused deleted."
+}

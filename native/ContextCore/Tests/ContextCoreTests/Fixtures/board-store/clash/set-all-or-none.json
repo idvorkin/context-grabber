@@ -1,0 +1,113 @@
+{
+  "expect" : {
+    "applied" : [
+      1
+    ],
+    "board" : {
+      "rev" : 10,
+      "things" : {
+        "s-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 1
+        },
+        "s-2" : {
+          "at" : "t9",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 9
+        },
+        "s-3" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 10
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "s-3"
+        ],
+        "op" : 1
+      }
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t9",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-2",
+        "op" : 0,
+        "reason" : "changed",
+        "rev" : 9
+      }
+    ],
+    "rev" : 10
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 8,
+    "board" : {
+      "rev" : 9,
+      "things" : {
+        "s-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 1
+        },
+        "s-2" : {
+          "at" : "t9",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 9
+        },
+        "s-3" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 1
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "bodies" : {
+          "s-1" : {
+
+          },
+          "s-2" : {
+
+          }
+        },
+        "ids" : [
+          "s-1",
+          "s-2"
+        ],
+        "op" : "set"
+      },
+      {
+        "bodies" : {
+          "s-3" : {
+
+          }
+        },
+        "ids" : [
+          "s-3"
+        ],
+        "op" : "set"
+      }
+    ]
+  },
+  "name" : "set-all-or-none",
+  "story" : "1322",
+  "why" : "One set over several ids lands for all of them or none."
+}

@@ -144,6 +144,8 @@ native-test-host:
     # The board wasm's sources use no Foundation-only types (NSNumber broke the VM's wasm build, 2026-11-24).
     scripts/native/wasm-essentials-check.sh
     scripts/native/test-wasm-essentials-check.sh
+    # The shared board-store goldens' sums, which the Cockpit's sha-pinned copy checks (cockpit-8kh).
+    scripts/native/board-store-goldens.py
     # Where a UI test run's time went, from a real run's log.
     scripts/native/test-ui-timings.sh
     # #1038 (story 1016): the ladder report keeps a retry, a wrong-device skip and a missing deploy apart, on a fixture.

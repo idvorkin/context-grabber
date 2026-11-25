@@ -1,0 +1,83 @@
+{
+  "expect" : {
+    "applied" : [
+      0
+    ],
+    "board" : {
+      "rev" : 2,
+      "things" : {
+        "s-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 1
+        },
+        "s-2" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 2
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "s-2"
+        ],
+        "op" : 0
+      }
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t1",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-1",
+        "op" : 0,
+        "reason" : "exists",
+        "rev" : 1
+      }
+    ],
+    "rev" : 2
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 1,
+    "board" : {
+      "deleted" : null,
+      "rev" : 1,
+      "things" : {
+        "s-1" : {
+          "at" : "t1",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : 1,
+          "rev" : 1
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-1"
+          },
+          {
+            "id" : "s-2"
+          }
+        ]
+      }
+    ]
+  },
+  "name" : "erased-as-number",
+  "story" : "1329",
+  "why" : "A SQLite store's erased: 1 reads as erased, and deleted: null as no delete."
+}

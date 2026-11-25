@@ -1,0 +1,93 @@
+{
+  "expect" : {
+    "applied" : [
+      1
+    ],
+    "board" : {
+      "rev" : 95,
+      "things" : {
+        "s-a" : {
+          "at" : "t94",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 94
+        },
+        "s-b" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "erased" : true,
+          "rev" : 95
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "s-b"
+        ],
+        "op" : 1
+      }
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t94",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-a",
+        "op" : 0,
+        "reason" : "changed",
+        "rev" : 94
+      }
+    ],
+    "rev" : 95
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 92,
+    "board" : {
+      "rev" : 94,
+      "things" : {
+        "s-a" : {
+          "at" : "t94",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 94
+        },
+        "s-b" : {
+          "at" : "t80",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 80
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "bodies" : {
+          "s-a" : {
+
+          }
+        },
+        "ids" : [
+          "s-a"
+        ],
+        "op" : "set"
+      },
+      {
+        "ids" : [
+          "s-b"
+        ],
+        "op" : "erase"
+      }
+    ]
+  },
+  "name" : "changed-since-base",
+  "story" : "1322",
+  "why" : "A change to a thing changed after base_rev is refused by name; the rest lands."
+}

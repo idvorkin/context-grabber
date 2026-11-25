@@ -1,0 +1,130 @@
+{
+  "expect" : {
+    "applied" : [
+      0
+    ],
+    "board" : {
+      "rev" : 7,
+      "things" : {
+        "s-a" : {
+          "at" : "t-now",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "rev" : 7
+        },
+        "s-b" : {
+          "at" : "t6",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 6
+        },
+        "s-c" : {
+          "at" : "t2",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 2
+        }
+      }
+    },
+    "landed" : [
+      {
+        "ids" : [
+          "s-a"
+        ],
+        "op" : 0
+      }
+    ],
+    "missing_ids" : [
+      "s-c"
+    ],
+    "refused" : [
+      {
+        "at" : "t6",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-b",
+        "op" : 1,
+        "reason" : "changed",
+        "rev" : 6
+      },
+      {
+        "id" : "s-c",
+        "op" : 2,
+        "reason" : "unknown"
+      },
+      {
+        "at" : "t-now",
+        "by" : "igor",
+        "device" : "ipad-7c2e",
+        "id" : "s-a",
+        "op" : 3,
+        "reason" : "exists",
+        "rev" : 7
+      }
+    ],
+    "rev" : 7
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 5,
+    "board" : {
+      "rev" : 6,
+      "things" : {
+        "s-a" : {
+          "at" : "t5",
+          "by" : "igor",
+          "device" : "ipad-7c2e",
+          "erased" : true,
+          "rev" : 5
+        },
+        "s-b" : {
+          "at" : "t6",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 6
+        },
+        "s-c" : {
+          "at" : "t2",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 2
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "ids" : [
+          "s-a"
+        ],
+        "op" : "restore"
+      },
+      {
+        "ids" : [
+          "s-b"
+        ],
+        "op" : "restore"
+      },
+      {
+        "ids" : [
+          "s-c"
+        ],
+        "op" : "restore"
+      },
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-a"
+          }
+        ]
+      }
+    ]
+  },
+  "name" : "restore",
+  "story" : "1293",
+  "why" : "restore lands on ink erased at or before base, is changed after, and unknown on live ink."
+}

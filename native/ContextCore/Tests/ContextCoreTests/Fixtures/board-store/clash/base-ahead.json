@@ -1,0 +1,63 @@
+{
+  "expect" : {
+    "applied" : [
+
+    ],
+    "board" : {
+      "rev" : 4,
+      "things" : {
+
+      }
+    },
+    "landed" : [
+
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "id" : "s-1",
+        "op" : 0,
+        "reason" : "ahead",
+        "rev" : 4
+      },
+      {
+        "id" : "",
+        "op" : 1,
+        "reason" : "ahead",
+        "rev" : 4
+      }
+    ],
+    "rev" : 4
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 9,
+    "board" : {
+      "rev" : 4,
+      "things" : {
+
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-1"
+          }
+        ]
+      },
+      {
+        "below_y" : 3,
+        "op" : "translate"
+      }
+    ]
+  },
+  "name" : "base-ahead",
+  "story" : "1322",
+  "why" : "A base the board hasn't reached lands nothing: each op is refused ahead."
+}

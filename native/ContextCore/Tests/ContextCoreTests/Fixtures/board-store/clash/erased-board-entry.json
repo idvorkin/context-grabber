@@ -1,0 +1,68 @@
+{
+  "expect" : {
+    "applied" : [
+
+    ],
+    "board" : {
+      "rev" : 7,
+      "things" : {
+        "@board" : {
+          "at" : "t7",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 7
+        }
+      }
+    },
+    "landed" : [
+
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t7",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "s-n",
+        "op" : 0,
+        "reason" : "deleted",
+        "rev" : 7
+      }
+    ],
+    "rev" : 7
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 7,
+    "board" : {
+      "rev" : 7,
+      "things" : {
+        "@board" : {
+          "at" : "t7",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "erased" : true,
+          "rev" : 7
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "op" : "add_strokes",
+        "strokes" : [
+          {
+            "id" : "s-n"
+          }
+        ]
+      }
+    ]
+  },
+  "name" : "erased-board-entry",
+  "story" : "1327",
+  "why" : "An erased @board means deleted too (interface 23)."
+}

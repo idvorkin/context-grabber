@@ -1,0 +1,75 @@
+{
+  "expect" : {
+    "applied" : [
+
+    ],
+    "board" : {
+      "rev" : 5,
+      "things" : {
+        "@board" : {
+          "at" : "t5",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 5
+        }
+      }
+    },
+    "landed" : [
+
+    ],
+    "missing_ids" : [
+
+    ],
+    "refused" : [
+      {
+        "at" : "t5",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "@board",
+        "op" : 0,
+        "reason" : "changed",
+        "rev" : 5
+      },
+      {
+        "at" : "t5",
+        "by" : "igor",
+        "device" : "web-3f9a",
+        "id" : "@board",
+        "op" : 1,
+        "reason" : "changed",
+        "rev" : 5
+      }
+    ],
+    "rev" : 5
+  },
+  "input" : {
+    "at" : "t-now",
+    "base_rev" : 4,
+    "board" : {
+      "rev" : 5,
+      "things" : {
+        "@board" : {
+          "at" : "t5",
+          "by" : "igor",
+          "device" : "web-3f9a",
+          "rev" : 5
+        }
+      }
+    },
+    "by" : "igor",
+    "device" : "ipad-7c2e",
+    "ops" : [
+      {
+        "name" : "New",
+        "op" : "rename"
+      },
+      {
+        "op" : "paper",
+        "paper" : "grid"
+      }
+    ]
+  },
+  "name" : "rename-same-rule",
+  "story" : "1322",
+  "why" : "Rename and paper change @board under the same rule."
+}
