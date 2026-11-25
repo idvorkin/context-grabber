@@ -727,7 +727,7 @@ check(same(restored.applied, [0]) && restored.board.things['s-a'].erased === und
 const ahead = ask('bw_store_clash', { board: { rev: 4 }, base_rev: 9, device: 'ipad', by: 'igor', at: 't', ops: [{ op: 'add_strokes', strokes: [{ id: 's-1' }] }] });
 check(same(ahead.applied, []) && ahead.refused[0].reason === 'ahead' && ahead.rev === 4, `bw_store_clash refuses a base ahead of the board: ${JSON.stringify(ahead)}`);
 
-// The shared board-store goldens (cockpit-8kh, stories 1293–1329, 1299, 1300): every one through the wasm gives the
+// The shared board-store goldens (cockpit-8kh, stories 1293–1329, 1299, 1300, 1342): every one through the wasm gives the
 // answer the host gives (StoreClashGoldenTests), as the Cockpit's vendored copy runs them.
 const goldens = path.join(root, 'native/ContextCore/Tests/ContextCoreTests/Fixtures/board-store');
 for (const [folder, exp] of [['clash', 'bw_store_clash'], ['encode', 'bw_store_encode']]) {

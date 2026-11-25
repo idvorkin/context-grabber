@@ -5,7 +5,7 @@ Shared with the Cockpit (cockpit-8kh). `clash/*.json` are `{name, story, why, in
 have the same shape for `bw_store_encode`: `input` a board before and after, `expect` its ops, which must also land
 whole as one batch under the clash rule. `stroke-record.json` is the one stroke record both sides read, every field of
 the web's and the iPad's strokes plus one neither knows, carried unchanged through a move. The Cockpit keeps a copy
-pinned by `SHA256SUMS` and runs it through the wasm; here `StoreClashGoldenTests` runs it on the host.
+pinned by `SHA256SUMS` and runs it through the wasm; here `StoreClashGoldenTests` runs it on the host and `just wasm-test` through the wasm.
 
 A deliberate rule change: `GOLDEN_WRITE=1` on `StoreClashGoldenTests` rewrites `expect`, read the diff, then
 `scripts/native/board-store-goldens.py --write` and tell Larry the new sums.
