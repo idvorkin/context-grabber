@@ -100,6 +100,17 @@ to check it out, rather than building stale code. A branch that leaves the share
 build; it can be forced. It runs in a host slot and
 reuses the checkout's build folder, so it takes about a minute in a slot (about two cold).
 
+Last, when the branch changes the app, the pre-merge check compiles the app on the merged result: main as it is on
+the remote now with the branch as pushed merged in, in a scratch copy that never touches the checkout, the branch or
+main. Two PRs can each pass every rung alone and still break main once both land: on 2026-11-24 one added a parameter
+to a chat view and the other, merged minutes later, called it the old way, and main's debug build failed for every
+lane and every device install until a fix landed. The compile is the cheap debug build for the iPhone and iPad
+simulator, without booting one, the build every lane and device install depends on. A failing compile fails the
+pre-merge check with a line naming the first compile error; a branch that doesn't merge cleanly onto main fails too.
+A branch that leaves the app's code as main has it (docs and scripts only) skips the compile; it can be forced. The
+scratch copy and its build folder stay in the checkout's build folder between runs, so a slot's next run builds only
+what changed: about half a minute warm, a few minutes the first time in a slot.
+
 ## The pipeline's own check, before it pushes
 
 Telling the pipeline's review and document steps to reserve (bead `context-grabber-1vvb`) was not enough: on
@@ -137,6 +148,9 @@ branches holding one ID. Like reserving, it fails rather than guess when it can'
 - A branch that changes the shared core is compiled with the optimizer on before it merges; a failing optimized
   build fails the pre-merge check, and a branch that leaves the shared core alone skips it. A checkout behind the
   pushed branch fails the check without building, even when only the pushed commits touch the shared core.
+- Two branches that each compile alone but break the app's build together are caught: the second one's pre-merge
+  check fails on the merged result with a line naming the compile error. A branch that changes only docs or scripts
+  skips the compile, and a branch that doesn't merge cleanly onto main fails.
 - The pipeline's lint step fails a branch that adds an ID another open PR adds, naming the ID and that PR, and passes
   when the only other PR adding it is the branch's own (found by a shared commit subject, even after a rebase); with the
   open PRs unreadable it fails.

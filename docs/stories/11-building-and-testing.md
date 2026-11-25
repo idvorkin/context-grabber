@@ -2054,3 +2054,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** the scheduled check runs
 - **Then:** the full ladder climbs on a fresh copy of main, once that day; if anything fails, the failures are written beside the day's log and the run ends with a failure (a checkout that can't reach main writes its reason there and leaves the day to the next check); at any other time it says why it waited and starts nothing
 
+---
+
+### User Story 1629:
+
+- **Summary:** Right before merging, the app is compiled with the branch merged onto main as it is now
+- **Status:** implemented; verified on the host rung by scripts/native/test-merged-tip-check.sh in `just test`, and a real run (scripts/native/merged-tip-check.sh) that caught main's MessageBubble `group:` break of 2026-11-24
+- **Issues:** #1459 and #1465 broke main's Debug build together, 2026-11-24
+- **Spec:** [Story ID reservations](../superpowers/specs/2026-11-22-story-id-reservations-design.md), *The pre-merge check*
+
+#### Use Case:
+- **As Igor,** with many agents merging into main at once
+- **I want to** have the agent compile the app on its branch merged onto main as main is right now, before it merges
+- **so that** two PRs that each pass alone can't land minutes apart and leave main unable to build for every lane and device install
+
+#### Acceptance Criteria:
+- **Scenario:** Two branches that only break the build together
+- **Given:** one PR changed a view's parameters and merged, and another PR that calls the old way passed its pipeline before that merge
+- **When:** the agent runs `just pre-merge` on the second PR immediately before `gh pr merge`
+- **Then:** pre-merge ends with a FAIL line naming the compile error and a nonzero exit, and the PR doesn't merge
