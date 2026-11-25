@@ -2250,7 +2250,7 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 
 - **Summary:** Cancel takes the week graph's bars back to what was saved
 - **Issues:** [#1493](https://github.com/idvorkin/context-grabber/issues/1493)
-- **Status:** implemented in [51defe9](https://github.com/idvorkin/context-grabber/commit/51defe9d); verified by `CounterWeekTests` (host: steps that were never confirmed leave the week, opened again, with the saved bars); not yet exercised on the simulator; the phone in the next build turn
+- **Status:** implemented in [51defe9](https://github.com/idvorkin/context-grabber/commit/51defe9d); `CounterWeekTests` checks only that steps before Confirm never reach the saved week, so a week opened again draws the saved bars (host); that *Cancel* itself saves nothing is not yet verified by a test or by eye: the phone in the next build turn
 - **Spec:** [native home screen, "The week at a glance"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
