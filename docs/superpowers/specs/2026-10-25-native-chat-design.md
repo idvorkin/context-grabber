@@ -85,7 +85,9 @@ whose author is *tony* is Tony, the voice that phones Larry; any other author is
 than one speaker besides Igor has written (Larry and Tony, Larry and a skill) is a group chat: there every reply wears
 its speaker's name and lettered avatar, Larry's in his purple, so who said what is plain at a glance. A thread's opener
 (the line a page or a call's thread starts with) is the Cockpit introducing the thread, not a speaker, so it never makes
-a thread a group. A two-party thread reads exactly as before.
+a thread a group. A two-party thread with Larry reads exactly as before; Tony, like a skill, always wears his name,
+so a thread only Tony answers on never passes his words off as Larry's. The whiteboard's panel names each reply's
+speaker the same way.
 
 **A call's thread.** Every voice call gets its own chat thread where the call's bridge writes what happened (a consult's
 answer, a note, the end-of-call summary). Those rows are news, not replies: none of them answers a message Igor typed on

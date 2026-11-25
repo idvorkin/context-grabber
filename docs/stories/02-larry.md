@@ -3574,7 +3574,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Scenario:** Two speakers besides me make a group
 - **Given:** a thread with a reply written under Larry's own name and another under *tony*, and a page or call opener at the top
 - **When:** I open it
-- **Then:** every reply carries its speaker's name and lettered avatar, Larry's in purple and Tony's as *Tony*; the opener alone never makes a thread a group, so a thread with Larry and the opener reads as before, and a reply under Larry's name there has no skill byline
+- **Then:** every reply carries its speaker's name and lettered avatar, Larry's in purple and Tony's as *Tony*; the opener alone never makes a thread a group, so a thread with Larry and the opener reads as before, and a reply under Larry's name there has no skill byline; a reply under *tony* always wears *Tony*, even when Tony is the only one answering
 
 ---
 

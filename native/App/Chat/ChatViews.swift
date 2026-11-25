@@ -1081,11 +1081,11 @@ private struct MessageBubble: View {
     .padding(.vertical, 2)
   }
 
-  /// The speaker's name and letter over what they wrote: always for a skill (#632), and for every reply in a group
-  /// chat (story 1614), Larry's in his purple. A two-party thread with Larry shows none.
+  /// The speaker's name and letter over what they wrote: always for a skill (#632) and for Tony, and for every
+  /// reply in a group chat (story 1614), Larry's in his purple. A two-party thread with Larry shows none.
   @ViewBuilder private var byline: some View {
     let speaker = ChatSpeaker.of(message)
-    if !message.fromIgor, speaker.tone == .skill || group {
+    if !message.fromIgor, speaker.tone != .agent || group {
       HStack(spacing: 6) {
         Text(speaker.initial).font(.caption.weight(.semibold)).foregroundStyle(.white)
           .frame(width: 22, height: 22)
@@ -1106,7 +1106,7 @@ private struct MessageBubble: View {
         problem: .grabber(
           message.text, context: "ChatThreadView.skillReply",
           extra: [
-            "thread": .string(thread), "message": .string(message.id), "skill": .string(message.author ?? ""),
+            "thread": .string(thread), "message": .string(message.id), "skill": .string(ChatSpeaker.skillAuthor(message) ?? ""),
             "ts": .string(message.ts),
           ]), logger: logger)
     }

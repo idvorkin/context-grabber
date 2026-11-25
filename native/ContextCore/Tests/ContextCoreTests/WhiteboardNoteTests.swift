@@ -245,6 +245,16 @@ final class WhiteboardNoteTests: XCTestCase {
       ])
   }
 
+  /// Story 1614: the panel names a reply's speaker as chat does, Larry and Tony by name, never a lowercase author.
+  func testThePanelNamesLarryAndTonyAsChatDoes() {
+    let thread = [
+      ChatMessage(id: "a", ts: "", who: "larry", text: "one", author: "larry"),
+      ChatMessage(id: "b", ts: "", who: "larry", text: "two", author: "tony"),
+      ChatMessage(id: "c", ts: "", who: "larry", text: "three", author: "Researcher"),
+    ]
+    XCTAssertEqual(WhiteboardNote.recent(thread).map(\.who), ["Larry", "Tony", "Researcher"])
+  }
+
   /// #1003 (story 1047): with no turn out the chip says where the newest picture got to, in one vocabulary.
   func testTheChipHasOneWordForEachMark() {
     let idle = WhiteboardLarryTurn()

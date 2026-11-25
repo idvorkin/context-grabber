@@ -241,7 +241,7 @@ public enum WhiteboardNote {
       if message.isSystem { return nil }
       guard message.fromIgor else {
         return Row(
-          id: message.id, kind: .larry, who: message.author ?? "Larry",
+          id: message.id, kind: .larry, who: ChatSpeaker.of(message).label,
           text: message.text.isEmpty ? drewOnTheBoard : message.text)
       }
       let words = message.text.trimmingCharacters(in: .whitespacesAndNewlines)
