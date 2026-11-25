@@ -1578,7 +1578,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1631:
 
 - **Summary:** The Board Lab never answers Grabber's links, so a link opens the app even with the lab installed
-- **Status:** planned
+- **Status:** implemented in 0e86b01e; verified on the iPad simulator (iPad Pro 11-inch (M5), rung 2): `LinksUITests.testWarmLinksOverEachKindOfScreenBringTheirScreenUp` failed with the old lab installed (every warm link opened the lab) and passed with the rebuilt lab, whose Info.plist has no `CFBundleURLTypes`
 - **Spec:** [The Board Lab](../superpowers/specs/2026-11-22-board-lab-design.md)
 - **Issues:** bead context-grabber-3hj9.1
 
