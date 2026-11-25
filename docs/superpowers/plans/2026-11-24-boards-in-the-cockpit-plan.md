@@ -184,6 +184,8 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   The same function shows the queue on top of the snapshot (`view`), folds in the device's own answered batch per id
   minus what `refused` names (spec 3: never per applied index), and the pulled `ops?since` batches use their own
   `{ids, bodies}` directly.
+- **No replies go up** (story 1338; Larry, msg 018324815671): `enqueue` leaves out `reply` ops, and an `exists`
+  re-add never builds one. Larry's replies reach the copy only from `ops?since`; the store answers a `reply` 400.
 - **Freeze**: `freeze(batchID:)` gives `queue[0]` its id and `base_rev = rev` once; the app writes the cache to disk
   before the request leaves, so a kill mid-send retries the same body and id. A later batch's base is set only when it
   is frozen, after the earlier answer.

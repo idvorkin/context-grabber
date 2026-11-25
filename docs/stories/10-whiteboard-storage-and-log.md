@@ -1314,6 +1314,24 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** the iPad catches up
 - **Then:** the move is still refused on the iPad with its note, and the board is downloaded fresh
 
+### User Story 1338:
+
+- **Summary:** Larry's replies come to the iPad from the Cockpit, never go up from it
+- **Status:** PENDING
+- **Issues:** bead context-grabber-3kx9 (closed as moot: Larry, msg 018324815671, a device never sends his reply adds); bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** whose board Larry answers on while I draw
+- **I want to** have my saves never carry his replies
+- **so that** a reply the Cockpit already applied never blocks or doubles my ink
+
+#### Acceptance Criteria:
+- **Scenario:** A reply among the iPad's changes
+- **Given:** a save on the iPad that would carry one of Larry's replies with its own ink
+- **When:** the save is queued
+- **Then:** only the ink is queued to go up, and the reply reaches the iPad when it next catches up with the Cockpit
+
 ### User Story 1333:
 
 - **Summary:** Ink refused for a deleted board waits for my answer
