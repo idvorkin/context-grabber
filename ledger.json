@@ -153,6 +153,13 @@
    "branch": "native/chat-search-1443",
    "at": 1795582396.135343,
    "until": "2026-11-26T04:53:16Z"
+  },
+  {
+   "id": 1624,
+   "journey": "11-building-and-testing.md",
+   "branch": "docs/stale-status-tests",
+   "at": 1795582545.954056,
+   "until": "2026-11-26T04:55:45Z"
   }
  ]
 }
