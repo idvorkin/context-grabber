@@ -409,32 +409,26 @@ final class BoardStoreCacheTests: XCTestCase {
     XCTAssertEqual(try XCTUnwrap(cache.freeze(batchID: "b1", deviceAt: at)).ops, queued[0].ops)
   }
 
-  // Section 6: a reply refused in part keeps the marks that landed and never sends a landed id again.
-  func testReplyRefusedInPartKeepsItsLandedMarks() throws {
-    let reply: BoardStoreJSON = ["op": "reply", "id": "r1", "marks": [stroke("m1"), stroke("m2")]]
-    func answered(_ refusedID: String) -> BoardStoreCache {
-      var cache = board()
-      cache.enqueue([reply])
-      _ = cache.freeze(batchID: "b1", deviceAt: at)
-      let refusal: BoardStoreJSON = [
-        "op": 0, "id": .string(refusedID), "reason": "exists", "rev": 3, "device": "web-3f9a", "by": "igor", "at": "t3",
-      ]
-      _ = cache.receive(status: 200, answer: answer(rev: 6, applied: [0], refused: [refusal]), me: me, slug: "7c2e")
-      return cache
-    }
-
-    let replyTaken = answered("r1")
-    XCTAssertEqual(replyTaken.things["m1"]?.rev, 6, "the marks that landed show")
-    XCTAssertEqual(replyTaken.things["m2"]?.rev, 6)
-    XCTAssertNil(replyTaken.things["r1"])
-    XCTAssertEqual(replyTaken.queue.first?.ops, [["op": "reply", "id": "r1-7c2e", "marks": []]])
-
-    let markTaken = answered("m1")
-    XCTAssertEqual(markTaken.things["r1"]?.rev, 6)
-    XCTAssertEqual(markTaken.things["m2"]?.rev, 6)
-    var readd = stroke("m1")
-    readd["id"] = "m1-7c2e"
-    XCTAssertEqual(markTaken.queue.first?.ops, [["op": "reply", "marks": [readd]]], "r1 landed: not sent again")
+  // Story 1338: Larry's replies come only from the Cockpit: a save that would carry one queues only its ink, and the
+  // reply arrives with the next catch-up.
+  func testAReplyIsNeverQueuedAndComesFromThePull() throws {
+    var cache = board()
+    let ink: BoardStoreJSON = ["op": "add_strokes", "strokes": [stroke("s3")]]
+    cache.enqueue([ink, ["op": "reply", "id": "r1", "marks": [stroke("m1")]]])
+    cache.enqueue([["op": "reply", "id": "r2", "marks": []]])
+    XCTAssertEqual(cache.queue.map(\.ops), [[ink]], "only the ink goes up; a save of replies alone is no save")
+    XCTAssertNil(cache.view["r1"])
+    cache.pull(
+      rev: 6,
+      batches: [
+        [
+          "rev": 6, "batch_id": "l1", "kind": "ops", "device": "cockpit-larry", "by": "larry", "at": "t",
+          "ops": [["op": "reply", "ids": ["r1", "m1"], "bodies": ["r1": ["text": "hi"], "m1": stroke("m1")]]],
+        ]
+      ])
+    XCTAssertEqual(cache.things["r1"]?.author.by, "larry")
+    XCTAssertEqual(cache.things["m1"]?.body, stroke("m1"))
+    XCTAssertEqual(try XCTUnwrap(cache.freeze(batchID: "b1", deviceAt: at)).ops, [ink])
   }
 
   // Story 1336, bead context-grabber-2m5r: a resent batch's stored answer, arriving after a pull already brought that batch and a

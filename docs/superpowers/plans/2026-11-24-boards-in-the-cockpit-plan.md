@@ -184,15 +184,16 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   The same function shows the queue on top of the snapshot (`view`), folds in the device's own answered batch per id
   minus what `refused` names (spec 3: never per applied index), and the pulled `ops?since` batches use their own
   `{ids, bodies}` directly.
+- **No replies go up** (story 1338; Larry, msg 018324815671): `enqueue` leaves out `reply` ops, and an `exists`
+  re-add never builds one. Larry's replies reach the copy only from `ops?since`; the store answers a `reply` 400.
 - **Freeze**: `freeze(batchID:)` gives `queue[0]` its id and `base_rev = rev` once; the app writes the cache to disk
   before the request leaves, so a kill mid-send retries the same body and id. A later batch's base is set only when it
   is frozen, after the earlier answer.
 - **Answer**: `ok: false` keeps the batch frozen and queued. A 409 `batch_id_reused` is a copyable error, the batch
   stays. `ahead` sets `needsReload`. Otherwise the batch leaves the queue; refusals become notes; `deleted` ones go to
-  `setAside`; `exists` on an add is re-added under `<id>-<slug>` as a new queued add (for a partly refused reply, only
-  the refused parts, never an own id that already landed; its landed marks stay in the folded op). Caught up (applied
-  non-empty and rev == base+1, or applied empty and rev == base): the batch folds in and `rev` moves; otherwise
-  `needsPull`, and the batch's own landed ids come back in the pull, recognised by `batch_id`.
+  `setAside`; `exists` on an add is re-added under `<id>-<slug>` as a new queued add (never a `reply`: none goes up).
+  Caught up (applied non-empty and rev == base+1, or applied empty and rev == base): the batch folds in and `rev`
+  moves; otherwise `needsPull`, and the batch's own landed ids come back in the pull, recognised by `batch_id`.
   A late answer (the copy's `rev` moved since the freeze, and the answer's rev is at or below it) folds nothing: the
   pull already brought that batch and anything over it (bead context-grabber-2m5r).
 - **Pull**: `pull(rev:batches:)` applies each batch's bodies (an id new to the copy takes its kind from the op); an

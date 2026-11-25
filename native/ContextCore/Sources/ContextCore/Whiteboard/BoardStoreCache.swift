@@ -115,7 +115,10 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
   // MARK: The queue
 
   /// A new save, made on top of what the device shows.
+  /// Larry's replies are left out (story 1338): the Cockpit applies his batches itself and a device takes them in
+  /// from the pull, and the store refuses a `reply` at the door, which would hold every later save behind it.
   public mutating func enqueue(_ ops: [BoardStoreJSON]) {
+    let ops = ops.filter { $0["op"]?.string != "reply" }
     guard !ops.isEmpty else { return }
     queue.append(Batch(ops: ops))
   }
@@ -266,7 +269,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     var kind: String?
   }
 
-  static let adding: Set<String> = ["add_strokes", "add_text", "add_card", "overlay", "connector", "reply"]
+  static let adding: Set<String> = ["add_strokes", "add_text", "add_card", "overlay", "connector"]
   static let erasing: Set<String> = ["erase", "delete", "remove_overlay"]
 
   /// What a storage op (store spec section 3) does to each id it names.

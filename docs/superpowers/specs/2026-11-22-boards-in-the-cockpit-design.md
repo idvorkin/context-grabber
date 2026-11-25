@@ -154,6 +154,9 @@ sections 3 and 6). This section is what Igor sees of it on a drawing device.
 - **A refused change is undone on the device**, and its copyable note names the thing, who changed it and when. New
   ink that collides with a name already on the board is never dropped. It is added back under a new name, and the note
   says so.
+- **Larry's replies reach a device only from the Cockpit.** The Cockpit applies his changes itself (Igor, 2026-11-25);
+  a device takes them in when it catches up and never sends a reply of his, or re-sends one under a new name, so a
+  reply can't hold up the saves behind it.
 - **Ink refused because the board was deleted is kept aside**, off the queue, until Igor answers the note. *Keep my ink
   as a new board* makes a board with the old name and *(kept ink)* after it, holding that ink; dismissing the note lets
   it go. A delete that Larry has already undone by the time the device catches up sets nothing aside: the ink goes up
