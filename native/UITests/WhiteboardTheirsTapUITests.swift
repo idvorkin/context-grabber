@@ -129,7 +129,12 @@ final class WhiteboardTheirsTapUITests: XCTestCase {
     keep.tap()
     XCTAssertTrue(keep.waitForNonExistence(timeout: 5), "kept")
     XCTAssertTrue(toKeep(app, 1).waitForNonExistence(timeout: 5), "none of his reply left to keep")
-    let kept = try XCTUnwrap(PaperScreen.settled(app) { $0.larryKept }, "his circles in his purple")
+    // Wait for the whole reply to show kept, not for any steady box: the three circles redraw in his purple one after
+    // another, and a quarter second can pass with only the first redrawn (bead context-grabber-dud7, width 0.022 of
+    // 0.077). On a timeout `showing` returns the last box, so the width assertion below still says what was there.
+    let kept = try XCTUnwrap(
+      PaperScreen.showing(app, { $0.larryKept }, { abs($0.width - marks.width) < marks.width / 6 }),
+      "his circles in his purple")
     shot(app, "one Keep kept the reply")
     XCTAssertEqual(kept.width, marks.width, accuracy: marks.width / 6, "all three kept: \(marks) to \(kept)")
     XCTAssertEqual(kept.minX, marks.minX, accuracy: 0.01, "where they showed")
