@@ -1353,7 +1353,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1299:
 
 - **Summary:** Every device saves a board's changes the same way
-- **Status:** `bw_store_encode` and the stroke record in [e2fdbe33](https://github.com/idvorkin/context-grabber/commit/e2fdbe33); verified by host tests (`StoreClashGoldenTests`: the encode goldens, each landing whole under the clash rule, and the stroke record through a move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** `bw_store_encode` and the stroke record in [e2fdbe33](https://github.com/idvorkin/context-grabber/commit/e2fdbe33), Larry's answers (a split goes up as one replace, `why` on the change, malformed records an error) in [9e30b90f](https://github.com/idvorkin/context-grabber/commit/9e30b90f); verified by host tests (`StoreClashGoldenTests`: the encode goldens, each landing whole under the clash rule, and the stroke record through a move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point 10
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1376,7 +1376,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1300:
 
 - **Summary:** A stroke keeps what the other device knows about it
-- **Status:** `bw_store_encode` and the stroke record in [e2fdbe33](https://github.com/idvorkin/context-grabber/commit/e2fdbe33); verified by host tests (`StoreClashGoldenTests`: the encode goldens, each landing whole under the clash rule, and the stroke record through a move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** `bw_store_encode` and the stroke record in [e2fdbe33](https://github.com/idvorkin/context-grabber/commit/e2fdbe33), Larry's answers (a split goes up as one replace, `why` on the change, malformed records an error) in [9e30b90f](https://github.com/idvorkin/context-grabber/commit/9e30b90f); verified by host tests (`StoreClashGoldenTests`: the encode goldens, each landing whole under the clash rule, and the stroke record through a move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point 9
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
