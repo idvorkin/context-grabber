@@ -102,4 +102,25 @@ final class BoardRewordTests: XCTestCase {
     XCTAssertEqual(event["reworded"] as? [String], ["text-1"])
     XCTAssertNil(BoardEvent.strokesChanged(added: [], erased: [], moved: [], rev: 3, t: 9).wire["reworded"])
   }
+
+  // MARK: Story 940 (bead context-grabber-4ief): Return is done, however the field's words change
+
+  func testAReturnTypedOnItsOwnIsDoneAndTheLineIsNotKept() {
+    XCTAssertEqual(BoardReword.typedReturn(before: "hello world", after: "hello world\n"), "hello world")
+    XCTAssertEqual(BoardReword.typedReturn(before: "hello world", after: "hello\n world"), "hello world")
+  }
+
+  func testAReturnArrivingWithOtherLettersAtOnceIsDoneToo() {
+    // The field read "hello" and the next change brought " world" and the Return together (fast typing, a paste or
+    // dictation ending in a line, or a busy device): still done, with the letters kept and the line not.
+    XCTAssertEqual(BoardReword.typedReturn(before: "hello", after: "hello world\n"), "hello world")
+    XCTAssertEqual(BoardReword.typedReturn(before: "hello", after: "say hello\n"), "say hello")
+  }
+
+  func testTheTextsOwnLineBreaksStayAndNoNewLineIsNotDone() {
+    XCTAssertNil(BoardReword.typedReturn(before: "one\ntwo", after: "one\ntwos"), "no new line: still editing")
+    XCTAssertEqual(BoardReword.typedReturn(before: "one\ntwo", after: "one\ntwo three\n"), "one\ntwo three")
+    XCTAssertNil(BoardReword.typedReturn(before: "hello", after: "hell"), "a letter taken away")
+    XCTAssertNil(BoardReword.typedReturn(before: "hello", after: "hello"))
+  }
 }

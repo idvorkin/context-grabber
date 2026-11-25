@@ -37,6 +37,24 @@ public enum BoardReword {
     case reword(String)
   }
 
+  /// Story 940 (bead context-grabber-4ief): a Return in the field is done, and the new line isn't kept. The field wraps, so
+  /// Return types a line into it; this finds one in what changed since `before` and gives the words without it, or nil
+  /// while the words are still being edited. Letters that arrive with the Return in one change (fast typing, a paste or
+  /// dictation ending in a line, a busy device) are kept: the field read "hello" and then "hello world\n" in one step on
+  /// the iPad simulator under load, and a check for a single typed character left the line in and the field open. The
+  /// text's own line breaks, outside what changed, stay.
+  public static func typedReturn(before: String, after: String) -> String? {
+    let a = Array(after)
+    let b = Array(before)
+    var head = 0
+    while head < a.count, head < b.count, a[head] == b[head] { head += 1 }
+    var tail = 0
+    while tail < a.count - head, tail < b.count - head, a[a.count - 1 - tail] == b[b.count - 1 - tail] { tail += 1 }
+    let added = a[head..<(a.count - tail)]
+    guard added.contains(where: \.isNewline) else { return nil }
+    return String(a[..<head]) + String(added.filter { !$0.isNewline }) + String(a[(a.count - tail)...])
+  }
+
   /// What done with `edited` in the field means for a text that read `old`.
   public static func outcome(old: String, edited: String) -> Outcome {
     let trimmed = String(edited.trimmingCharacters(in: .whitespacesAndNewlines).prefix(maxText))
