@@ -463,6 +463,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1078:
+
+- **Summary:** the call screen links the call's own chat thread
+- **Status:** planned (context-grabber-lsue)
+- **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
+
+#### Use Case:
+- **As a** Larry's client on a call that files things as we go
+- **I want to** open the call's own chat thread from the call screen, during the call or after it
+- **so that** I can read Larry's answers, what he filed and the summary without hunting for the thread
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit names the call's thread
+- **Given:** a call, and the Cockpit has said which chat thread is this call's
+- **When:** I tap *This call's chat →* under the call line, while the call is live or after it ended
+- **Then:** the call screen closes (a live call goes on) and Chat opens on that thread; a call the Cockpit named no thread for shows no link, and a new call starts without the last call's link
+
+---
+
 ### User Story 090:
 
 - **Summary:** When Tony's audio is not arriving, read him instead

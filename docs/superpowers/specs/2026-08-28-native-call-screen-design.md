@@ -824,6 +824,19 @@ reason — *a call is live in the Cockpit tab* — rather than opening a
 second microphone on the same phone. The reverse is not policed; the page
 does not know about the native call.
 
+### The call's chat thread
+
+The Cockpit gives every real call its own chat thread (Cockpit story 321): it opens when Igor first speaks, Larry's
+answers and notes land there during the call, and a summary closes it when the call ends. Once the Cockpit says the
+thread exists, the call screen shows **This call's chat →** under the call line, the same words the Cockpit's Talk
+tab uses. A tap closes the call screen (the call keeps going, as Done does) and opens that thread in Chat, on top of
+the list.
+
+- No thread yet (a call nobody has spoken on, the drill, a Cockpit that doesn't make threads): no link.
+- The link stays on the ended screen, so Igor can open the summary after hanging up.
+- A handoff redial keeps it; a new call Igor places starts without one until its own thread exists.
+- The thread is an ordinary chat thread: it shows in Chat's list like any other.
+
 ### Breathing and the Gym Timer during a call
 
 **The call keeps the microphone** (Igor, 2026-11-21, bead context-grabber-2r55). Box breathing or the Gym Timer
@@ -1168,6 +1181,11 @@ delivers is separate and unchanged: once per dead burst.
     audio session and Wi-Fi. Put AirPods in: one route change appears naming them and why iOS changed it. Pick
     the same AirPods again in the devices menu: nothing new appears. Turn Wi-Fi off: one network change appears
     naming cellular. No permission prompt at any point, and no device hardware identifier anywhere.
+
+50. **The call links its chat thread** (context-grabber-lsue). Start a call and say something: once the
+    Cockpit makes the call's thread, *This call's chat →* appears under the call line. Tap it: the call screen
+    closes, the call goes on, and Chat opens on that thread. Hang up: the ended screen still shows the link. Place
+    a new call: no link until that call's own thread exists.
 
 ## Rationale and risks
 **Why native rather than fixing the web view.** WebKit on iOS suspends

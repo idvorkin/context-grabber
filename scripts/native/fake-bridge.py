@@ -69,6 +69,8 @@ async def handle(ws, report_path: str, drop: bool) -> None:
             if kind == "start":
                 summary["start"] = m
                 await ws.send(json.dumps({"type": "ready", "out_rate": OUT_RATE, "backend": m.get("backend"), "session": "fake"}))
+                # Story 1078: the Cockpit names the call's own chat thread (Cockpit story 321's `call_thread` row).
+                await ws.send(json.dumps({"seq": 1, "type": "call_thread", "session": "fake", "thread": "fake-call-thread"}))
             elif kind == "mic_probe":
                 await ws.send(json.dumps({"type": "mic_ack", "token": m.get("token")}))
             elif kind == "diagnostics":

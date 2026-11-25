@@ -1552,6 +1552,45 @@ final class CallSessionPlaybackAndCaptionTests: XCTestCase {
   }
 }
 
+/// Story 1078 (context-grabber-lsue): the Cockpit's `call_thread` names the call's own chat thread.
+final class CallSessionThreadTests: XCTestCase {
+  func testTheCallsThreadIsHeldThroughTheEndingAndANewCallStartsWithoutIt() {
+    let t = CallHarness()
+    t.goLive()
+    XCTAssertNil(t.session.snapshot.thread)
+    t.socket.say(["type": "call_thread", "thread": "igor2-88g.1801", "seq": 4])
+    XCTAssertEqual(t.session.snapshot.thread, "igor2-88g.1801")
+    XCTAssertEqual(t.texts, [], "the thread is a link, not a caption row")
+    t.session.stop()
+    XCTAssertEqual(t.session.snapshot.state, .ended)
+    XCTAssertEqual(t.session.snapshot.thread, "igor2-88g.1801", "the ended screen still links it")
+    t.goLive()
+    XCTAssertNil(t.session.snapshot.thread, "a new call has no thread until its own")
+  }
+
+  func testAnEmptyThreadNamesNothing() {
+    let t = CallHarness()
+    t.goLive()
+    t.socket.say(["type": "call_thread", "thread": ""])
+    XCTAssertNil(t.session.snapshot.thread)
+  }
+
+  func testAHandoffRedialKeepsTheThread() {
+    let t = CallHarness()
+    t.goLive()
+    t.audio.mic()
+    t.socket.speak()
+    t.socket.say(["type": "call_thread", "thread": "igor2-88g.1801"])
+    t.clock.advance(4000)
+    t.session.networkChanged()
+    t.clock.advance(200)
+    _ = t.nextSocket()
+    t.socket.drop()
+    XCTAssertEqual(t.session.snapshot.state, .connecting, "redialing")
+    XCTAssertEqual(t.session.snapshot.thread, "igor2-88g.1801")
+  }
+}
+
 final class CallSessionEndingTests: XCTestCase {
   func testStopSendsTheDumpFirstThenSttStopAndStop() {
     let t = CallHarness(build: "b (m)", diagnostics: true)

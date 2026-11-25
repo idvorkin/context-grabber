@@ -11,6 +11,8 @@ private let hangUpRed = Color(red: 0.902, green: 0.224, blue: 0.275)
 struct CallView: View {
   @ObservedObject var call: CallModel
   let onDone: () -> Void
+  /// Story 1078: opens the call's own chat thread.
+  let onOpenThread: (String) -> Void
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var diagnosticsOpen = false
   @State private var copied = false
@@ -19,6 +21,7 @@ struct CallView: View {
   var body: some View {
     VStack(spacing: 0) {
       callLine
+      threadLink
       if call.snapshot.isActive || call.snapshot.state == .ended { Divider() }
       content
     }
@@ -57,6 +60,21 @@ struct CallView: View {
     }
     .padding(.horizontal, 12)
     .frame(minHeight: 44)
+  }
+
+  /// Story 1078: the call's own chat thread, once the Cockpit says it exists; the Cockpit's Talk tab's words.
+  @ViewBuilder private var threadLink: some View {
+    if let key = call.snapshot.thread, call.snapshot.isActive || call.snapshot.state == .ended {
+      Button {
+        onOpenThread(key)
+      } label: {
+        Text("This call's chat \u{2192}").font(.subheadline)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal, 16)
+      .padding(.bottom, 6)
+      .accessibilityIdentifier("call-thread-link")
+    }
   }
 
   /// The voice control is the mute: a disc that swells with Igor's voice; muted, it dims, freezes and is slashed.

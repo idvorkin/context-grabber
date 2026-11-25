@@ -378,7 +378,7 @@ call_check() {  # $1: label, $2: audio (synthetic or empty)
   wait_for call_ended 30 || echo "      (timed out waiting for call_ended)"
   sleep 2
   f=$(newest_log)
-  local start ready first_mic mic_frames rx sched larry igor igor_sent live_sent restated ended sent_tail failed
+  local start ready first_mic mic_frames rx sched larry igor igor_sent live_sent restated ended sent_tail failed thread
   start=$(jq -sr '[.[] | select(.type=="call_sent" and .frame=="start")] | length' "$f")
   ready=$(jq -sr '[.[] | select(.type=="call_ready")][0].out_rate // empty' "$f")
   first_mic=$(jq -sr '[.[] | select(.type=="call_mic" and .action=="first_frame")][0].rate // empty' "$f")
@@ -394,14 +394,17 @@ call_check() {  # $1: label, $2: audio (synthetic or empty)
   restated=$(jq -sr '[.[] | select(.type=="call_caption_restated")] | length' "$f")
   ended=$(jq -sr '[.[] | select(.type=="call_ended")][0] | "\(.reason) \(.badly)"' "$f")
   sent_tail=$(jq -sr '[.[] | select(.type=="call_sent") | .frame] | .[-3:] | join(",")' "$f")
+  # Story 1078: the bridge's `call_thread` reached the call.
+  thread=$(jq -sr '[.[] | select(.type=="call_bridge" and .kind=="call_thread")][0].thread // empty' "$f")
   if [ "$start" = "1" ] && [ "$ready" = "16000" ] && [ -n "$first_mic" ] && [ "$mic_frames" -gt 20 ] \
     && [ "$rx" -ge 20 ] && awk "BEGIN{exit !($sched >= 0.9)}" && [ -n "$larry" ] && [ "$igor" = "hello Larry" ] \
     && [ "$igor_sent" = "hello Larry/true,are you there/true" ] && [ "$live_sent" = "are you there" ] \
     && [ "$restated" = "1" ] \
-    && [ "$ended" = "stopped false" ] && [ "$sent_tail" = "diagnostics,stt_stop,stop" ]; then
-    ok "call ($label): start, ready, $mic_frames mic frames up, $rx frames / ${sched}s down, captions, hung up"
+    && [ "$ended" = "stopped false" ] && [ "$sent_tail" = "diagnostics,stt_stop,stop" ] \
+    && [ "$thread" = "fake-call-thread" ]; then
+    ok "call ($label): start, ready, $mic_frames mic frames up, $rx frames / ${sched}s down, captions, thread, hung up"
   else
-    bad "call ($label): start $start ready '$ready' first mic '$first_mic' mic $mic_frames rx $rx scheduled $sched larry '$larry' igor '$igor' heard '$igor_sent' live sent '$live_sent' restated $restated ended '$ended' last sent '$sent_tail'"
+    bad "call ($label): start $start ready '$ready' first mic '$first_mic' mic $mic_frames rx $rx scheduled $sched larry '$larry' igor '$igor' heard '$igor_sent' live sent '$live_sent' restated $restated ended '$ended' last sent '$sent_tail' thread '$thread'"
     # #364: the heals behind a short call, with what the mic and the playback held at each.
     jq -c 'select(.type=="call_heal")' "$f" | sed 's/^/      heal /'
   fi

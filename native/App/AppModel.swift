@@ -963,6 +963,14 @@ final class AppModel: ObservableObject {
 
   func closeCall() { close(.call) }
 
+  /// Story 1078: the call's own chat thread, from the call screen's link. The call screen closes (a live call goes
+  /// on, as with Done) and Chat opens on the thread.
+  func openCallThread(_ key: String) {
+    log.event("ui", ["action": "open_call_thread", "thread": key, "live": call.snapshot.isActive])
+    closeCall()
+    openInbox(from: "call_thread", thread: key)
+  }
+
   /// A call link or the "Call Larry" Shortcut: the call screen, and a call unless one is already up (it is brought
   /// forward).
   private func callFromLink(_ backend: CallBackend?, from source: String) {

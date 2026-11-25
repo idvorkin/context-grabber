@@ -150,6 +150,8 @@ public enum BridgeMessage: Equatable, Sendable {
   case toolResult(ok: Bool, answer: String)
   case consultProgress(stage: String, text: String)
   case injected(text: String)
+  /// Story 1078: the Cockpit made this call's own chat thread (Cockpit story 321), keyed like any chat thread.
+  case callThread(key: String)
   case warning(message: String)
   case error(message: String)
   case vendorClosed(kind: String, message: String)
@@ -261,6 +263,7 @@ public enum CallProtocol {
     case "tool_result": return .toolResult(ok: (m["ok"] as? Bool) != false, answer: str("answer"))
     case "consult_progress": return .consultProgress(stage: str("stage"), text: str("text"))
     case "injected": return .injected(text: str("text"))
+    case "call_thread": return .callThread(key: str("thread"))
     case "warning": return .warning(message: str("message"))
     case "error": return .error(message: str("message"))
     case "vendor_closed": return .vendorClosed(kind: str("kind"), message: str("message"))
