@@ -2255,3 +2255,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** the copy to /builds fails
 - **When:** an install finishes
 - **Then:** the install and the launch still succeed, nothing on the page is replaced, and `~/tmp/agent/notes/ota-uploads.log` says the copy failed
+
+---
+
+### User Story 1638:
+
+- **Summary:** A story's link to a commit the pipeline's rebase replaced is renamed before the merge, not sent to review
+- **Status:** implemented in [88bec8be](https://github.com/idvorkin/context-grabber/commit/88bec8be), [612fb481](https://github.com/idvorkin/context-grabber/commit/612fb481); verified on the host rung by `scripts/native/test-story-commits.sh` in `just test`, on a throwaway repository with a bare origin: a branch rebased onto a moved main passes with a note; with the local branch behind the force-pushed one and a file staged, pre-merge renames the link, pushes a commit that changes only the story and leaves the checkout as it was; a detached HEAD at the pushed head renames and pushes to that one branch, which the later steps still judge; and a second run has nothing to rename
+- **Issues:** bead context-grabber-zisx
+
+#### Use Case:
+- **As Igor,** with agents that write a story's Status before the pipeline rebases their branch onto a moving main
+- **I want to** have a link to a commit the rebase replaced pass the checks and be renamed to the rebased commit right before the merge
+- **so that** a rebase no longer costs a review round (#1492, #1498, #1501, #1509 and #1510 each spent one on 2026-11-25), and main still links only commits it has
+
+#### Acceptance Criteria:
+- **Scenario:** The branch was rebased after its Status was written
+- **Given:** a story links a commit the rebase replaced, and one commit on the branch carries the same change
+- **When:** the host checks run, then `just pre-merge` runs, even from a checkout still behind the rebased branch or on a detached HEAD at its pushed head
+- **Then:** the checks pass with a note naming the rebased commit, and pre-merge renames the link on the branch as pushed, pushes that docs-only commit to the branch without touching the checkout and goes on; a link no branch commit matches still fails as before

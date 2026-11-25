@@ -35,7 +35,8 @@ review:
         Never add or widen a journey's block in docs/stories/README.md's table: if reserve says the journey is
         full, raise a finding naming its message and leave the table alone. IDs are never reused. Status is
         either "implemented in <commits>; verified by <tests / simulator / the phone>" or
-        "not implemented" with the asking issue; it lives only here. A bug goes on the story's Issues line.
+        "not implemented" with the asking issue; it lives only here. A Status link to a commit this pipeline's own
+        rebase replaced is not a finding: `just pre-merge` renames it to the rebased commit (story 1638). A bug goes on the story's Issues line.
         A code change that alters visible behaviour without a story edit is incomplete ("no story, not done").
     - path: "docs/superpowers/specs/*.md"
       instructions: |

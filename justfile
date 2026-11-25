@@ -54,11 +54,17 @@ nightly-uninstall:
 
 # New story IDs come from `scripts/native/story-ids.py reserve <journey> [n]` (story 791). This, story 793, runs
 # right before `gh pr merge`: the story IDs on the branch as pushed, merged with origin/main as it is now. Story 1519:
-# then ContextCore compiled in Release, as an archive compiles it, when the branch changes it (release-check.sh).
+# then ContextCore compiled in Release, as an archive compiles it, when the branch changes it (release-check.sh). Story
+# 1638 runs first: links to commits a pipeline rebase replaced are renamed and pushed (story-commits-pre-merge.sh). The
+# branch is resolved once, before that push moves it off a detached HEAD (pr-branch.sh).
 pre-merge *branch:
-    scripts/native/pre-merge.sh {{branch}}
-    scripts/native/release-check.sh {{branch}}
-    scripts/native/merged-tip-check.sh {{branch}}
+    #!/usr/bin/env bash
+    set -uo pipefail
+    b=$(scripts/native/pr-branch.sh pre-merge {{branch}}) || exit 1
+    scripts/native/story-commits-pre-merge.sh "$b" &&
+      scripts/native/pre-merge.sh "$b" &&
+      scripts/native/release-check.sh "$b" &&
+      scripts/native/merged-tip-check.sh "$b"
 
 # The pipeline's lint step (.no-mistakes.yaml commands.lint; it runs after review and document, before the push): the
 # whole tree's lint, then story 1515's check that no story ID this branch adds is added by another open PR too.
