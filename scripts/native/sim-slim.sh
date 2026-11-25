@@ -8,7 +8,8 @@
 # (CloudKit, the board sync, BugKit) and Photos (the picker, pasted images). Pasteboard, keyboard, location and audio are
 # core daemons simslim never turns off.
 # Usage: sim-slim.sh <udid>. Run it where that lane's simulator is yours (inside its build lane; sim-boot.sh calls it).
-# Never fails the caller: no simslim, SIM_SLIM=0, or a failed slim each print one line and exit 0.
+# Never fails the caller: no simslim, SIM_SLIM=0, or a failed slim each print one line and exit 0. A slim reboots the
+# simulator, so after one it waits for the boot again (bootstatus -b), and exits 1 only if the simulator isn't back up.
 # SIMSLIM (default: simslim on PATH) is the binary, for the self-test.
 set -uo pipefail
 udid=${1:?simulator udid}
@@ -21,6 +22,7 @@ keep=siri,health,icloud,photos
 start=$SECONDS
 if "$bin" on "$udid" --except "$keep" >/dev/null 2>&1; then
   echo "sim-slim: slimmed $udid (all but $keep off) in $((SECONDS - start)) s"
+  xcrun simctl bootstatus "$udid" -b >/dev/null || { echo "the simulator $udid did not boot after its slim" >&2; exit 1; }
 else
   echo "sim-slim: simslim couldn't slim $udid; it runs stock (simslim off $udid undoes a partial slim)" >&2
 fi

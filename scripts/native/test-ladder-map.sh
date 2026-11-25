@@ -6,6 +6,9 @@ set -uo pipefail
 # The lane settings come from each run, never from this shell: ~/.zshenv may set BUILD_LANES (#1008), and a run inside a
 # lane carries BUILD_LANE and its port offset.
 unset BUILD_LANES BUILD_LANE BUILD_LANE_PORT_OFFSET
+# Story 1627: sim-boot.sh slims the simulator it boots; these are fake simulators, so the real simslim stays out.
+unset SIMSLIM
+export SIM_SLIM=0
 cd "$(dirname "$0")/../.."
 ladder=scripts/native/test-ladder.sh
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/cg-ladder-test.XXXXXX")
