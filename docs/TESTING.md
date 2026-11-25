@@ -930,7 +930,7 @@ upload alone, a censored climb, a failure on the rerun after a locked screen, an
 
 The walk-the-store skill's Mac half. `just walk [OUT]` runs each rung once: the lint, ContextCore's `swift test` (a red
 case gets one serial retry), each script check a story names, the Mac build, and the simulator rung with every UI class
-(`test-ladder --all --rung 2` with `LADDER_KEEP_GOING=1`, so a red class doesn't stop the rest). The whiteboard and
+(`test-ladder --all --rung 2` with `LADDER_KEEP_GOING=1`, so a red class doesn't stop the rest); the rung gets 240 minutes, `LADDER_SIM_MINUTES`, since every class takes longer than the usual 60. The whiteboard and
 chat suite scripts aren't run a second time: each reads as the simulator rung's whiteboard or chat classes step, and
 neither counts toward `just test`. It writes
 `OUT/checks.json` and runs the skill's `walk.py judge` (set `WALK_PY` if the skill isn't installed). Refs only the Linux

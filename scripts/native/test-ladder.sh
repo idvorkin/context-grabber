@@ -598,7 +598,7 @@ rung_simulator() {
   # shellcheck source=scripts/native/smoke-lock.sh
   . scripts/native/smoke-lock.sh
   mac_locked && echo "the Mac's screen is locked: rung 2 runs, skipping the tests that open the mic (scripts/native/mic-tests.txt)" >&2
-  [ "$in_lane" -eq 1 ] || { lane 2 $(($full == 1 ? 130 : 60)); return; }
+  [ "$in_lane" -eq 1 ] || { lane 2 "${LADDER_SIM_MINUTES:-$(($full == 1 ? 130 : 60))}"; return; }
   trap leave_simulator EXIT
   phone=$(scripts/native/sim-udid.sh "${SIM:-iPhone 17}") || return
   udid=$phone  # the build's destination

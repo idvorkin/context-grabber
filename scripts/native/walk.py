@@ -293,7 +293,7 @@ def main() -> int:
         if not a.skip_sim:
             wait_for_other_full_runs()
             rc["sim"] = sh(["scripts/native/test-ladder.sh", "--all", "--rung", "2"], out / "logs/sim.log", 4 * 3600,
-                           env={"LADDER_KEEP_GOING": "1", "SIM": os.environ.get("SIM", "iPad Pro 11-inch (M5)")})
+                           env={"LADDER_KEEP_GOING": "1", "LADDER_SIM_MINUTES": os.environ.get("LADDER_SIM_MINUTES", "240"), "SIM": os.environ.get("SIM", "iPad Pro 11-inch (M5)")})
             steps = ladder_steps(out / "logs/sim.log")
             for log in sorted(LOGS.glob("ladder-*.log")):
                 if log.stat().st_mtime >= datetime.datetime.fromisoformat(started).timestamp():
