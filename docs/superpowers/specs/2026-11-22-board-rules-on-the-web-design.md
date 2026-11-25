@@ -568,6 +568,30 @@ decides, per change, what lands. The rule is the shared core's, so the Cockpit's
 
 `bw_info` says `"abi": 22`. Every other export's arguments and answers are as in version 21.
 
+### Interface 23: the store's first slice (stories 1326–1329; cockpit-8kh)
+
+Igor, 2026-11-25: build the Cockpit's board store. Larry's spec for it (cockpit `board-store-spec`) was reviewed against
+version 22 and every point accepted; this version settles the rule's side of those points before any store code.
+
+- A **header** is a new thing with its own name that changes the strokes it heads, the way a group does: if its name
+  is already on the board it is refused as `exists`, and its strokes are checked like any change.
+- **A board is deleted however the store records it**: by the board's `deleted` field, or by the board's own entry
+  (`@board`) being erased; either one refuses every later change as `deleted`, with when and where. The store keeps
+  `deleted` as the truth and never erases `@board` (agreed with Larry, 2026-11-25), and `delete_board` still only
+  marks the board deleted, so its name and paper stay for the list. Bringing a deleted board back is not a change any
+  device makes: every change to a deleted board, `restore` included, is refused as `deleted`; undeleting is the
+  Cockpit's own admin action.
+- **A change over several things** names them all in one change (`set` with its names and their new contents, like a
+  move), so it lands for all of them or none; a change naming one thing names it alone.
+- **A change that also adds** (a group, a header, `replace`) lands what it can, and the answer now says, per change,
+  exactly which names landed: `"landed": [{"op", "ids"}]`. The store applies name by name from that list, never from
+  `applied` alone, so a group whose own name is refused as `exists` adds nothing new.
+- **A malformed record is refused out loud**: a thing (or the board's `deleted`) without its revision or the device
+  that changed it, or whose `erased` is neither true/false nor 1/0, answers `{"error": "malformed thing <name>"}`
+  instead of being dropped, so an add of that name can't land a second time. A `deleted` of `null` is no delete.
+
+`bw_info` says `"abi": 23`. Every other export's arguments and answers are as in version 22.
+
 ## Precision: a known difference from the iPad
 
 In WebAssembly the rules' arithmetic is 32-bit (the SDK has no 64-bit target), where the iPad's is 64-bit. Boxes

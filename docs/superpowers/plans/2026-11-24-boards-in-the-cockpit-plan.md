@@ -73,12 +73,18 @@ POST /boards/<id>/ops
   the Cockpit's batch contract does today (question 3).
 - **A base ahead of the board** (`base_rev > rev`: another board's batch, or a broken cache) lands nothing: every op
   is refused as `ahead`, with the board's `rev` (question 5).
-- One op over several ids lands for all of them or none.
+- One op over several ids lands for all of them or none. A whole-body write is `set {ids, bodies}`, never one `set`
+  per id, so a move of three strokes is one op (interface 23, from the review of Larry's store spec, point 2).
+- An op that both adds and changes (`group`, `header`, `replace`) lands per id: the answer's `landed: [{op, ids}]`
+  names exactly the ids that landed, and the store applies from it, never from `applied` alone (point 3).
+- A board is deleted by `board.deleted` or by `@board` erased. The store keeps `deleted` as the truth and never erases
+  `@board`; `delete_board` sets `deleted` only. An undelete is a Cockpit admin action outside the rule (points 1, 7).
+- A thing row without `rev` or `device` is an error, not dropped, so its id can't be added twice.
 - Each accepted batch is one new `rev`. The answer always carries the new `rev` so the device rebases its cache.
 - *B, rejected*: no per-thing check; a batch with `base_rev < rev` would replace the board wholesale and save the
   loser as a copy board. Simpler server, but it loses the named refusal, and Igor picked C.
 
-The rule is built: `BoardStoreClash` in BoardCore and `bw_store_clash` (interface 22, stories 1293, 1322, 1323). Today's
+The rule is built: `BoardStoreClash` in BoardCore and `bw_store_clash` (interface 22, stories 1293, 1322, 1323; the store's first slice in interface 23, stories 1326–1329). Today's
 */ink* can't adopt it as is (Larry, 2026-11-24): it saves whole boards, last write wins, with no per-thing revision,
 device or tombstone, and its batch contract is all-or-nothing `stale`, so a per-op `refused[]` is a contract version
 bump. It is the contract for the new store, a separate project Larry puts to Igor.
@@ -104,11 +110,12 @@ Igor's own hand does, which today exists only as a whole-drawing save on the iPa
 | `reply` | reply id + its marks (ghosts) | one reply of 2+ marks is one ghost group (#1383/#1395); each mark carries its anchor (abi 19 mark holds: what it answers, its place) |
 | `keep` / `dismiss` | reply id, optional mark index | Keep group keeps the whole reply; a kept reply becomes Larry's kept ink with `theirs` set |
 | `mark_wrote` | mark id | Igor wrote over it, so it fades (abi 19 `bw_mark_wrote`) |
-| `header` / `not_header` | stroke ids | headers and Igor's "not a header" |
+| `header` / `not_header` | header id + stroke ids | a header is a new thing with its own id that changes the strokes it heads, like a group (interface 23); `not_header` changes the strokes |
 | `fold` / `unfold` | header id | the folded ids and shift are derived (abi 20 `bw_fold_picture`) |
 | `add_card` / `card` | card id + `{ask, answer?, x, y, show: full|short|collapsed|archived}` | question cards (#1387: `?` and collapsed are one state; double tap cycles) |
 | `rename`, `paper` | board | |
-| `delete_board` | board | tombstone |
+| `delete_board` | board | sets `deleted`; `@board` stays live, so the list keeps its name and paper |
+| `set` | `ids` + `bodies` | a whole-body write of several things in one op (the store's v1 storage op) |
 
 What does **not** go to the store: undo steps (local), the lettering style, the Pencil tool, the device's board-review
 recording (#1379, local; its findings already go to Larry with the turn), and the session log.
