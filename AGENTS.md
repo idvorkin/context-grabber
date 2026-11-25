@@ -29,6 +29,8 @@ Mac, never by hand: watch `~/tmp/agent/bugs/inbox.jsonl` (or its Herdr notificat
 
 ## Rules
 
+- **Apple docs and Simulator/Previews: follow the `ios-codev` skill** (Igor, 2026-11-24). It covers looking up Apple APIs on Sosumi before coding, and previews first, then the Simulator, from the CLI on the Mac only. Read [`skills/ios-codev/SKILL.md`](https://github.com/idvorkin/chop-conventions/blob/main/skills/ios-codev/SKILL.md) (lands with chop-conventions #275), or `~/.claude/skills/ios-codev/SKILL.md` once the skill is symlinked.
+  This repo's own simulator and build-lane rules (test ladder, `build-lane.sh`) still apply.
 - Shared practices for all apps live in idvorkin/bug-kit (README: Shared practices for every app). A bug in BugKit's own code (the report dialog, dictation, the store, crash capture, CloudKit, the listener, What's new) or a practice that applies to every app is filed there and linked from this repo's issue, never fixed here.
 - **Test ladder**: `just test-ladder` climbs it, cheapest rung first, stopping at the first failure (`--dry-run` says
   what it would run). Rung 0 lint and 1 host are `just test` (swift-format and SwiftLint, `ContextCore`'s XCTest, the
