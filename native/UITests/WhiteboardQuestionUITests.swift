@@ -1,4 +1,4 @@
-//  Stories 880, 882, 883, 885, 889, 1119, 1273, 1274 on the simulator, against the fake Cockpit (scripts/native/test-whiteboard-ui.sh starts
+//  Stories 880, 882, 883, 885, 889, 1119, 1314–1317, 1273, 1274 on the simulator, against the fake Cockpit (scripts/native/test-whiteboard-ui.sh starts
 //  it): Larry puts a question card on the board, a tap opens it, an option answers it through the fake's /act, the card
 //  keeps the question over the answer, opens read-only and folds to a chip that a tap opens out. Where cards land, the
 //  open asks naming a board, the answers fetched for asks closed elsewhere and the eraser are `WhiteboardQuestionsTests`,
@@ -119,7 +119,7 @@ final class WhiteboardQuestionUITests: XCTestCase {
 
     // Story 885: read-only on a tap, folded to a chip, opened out by a tap.
     card.tap()
-    let collapse = app.buttons["whiteboard-question-collapse"]
+    let collapse = app.buttons["whiteboard-question-shrink"]
     XCTAssertTrue(collapse.appears(within: 5), app.debugDescription)
     XCTAssertTrue(app.staticTexts["Renew"].exists, app.debugDescription)
     collapse.tap()
@@ -158,9 +158,9 @@ final class WhiteboardQuestionUITests: XCTestCase {
     XCTAssertEqual(posted.map { $0["response"] as? String }, ["DECISION: Month to month"], "\(posted)")
   }
 
-  /// Stories 1273, 1274 (#1387): *Hide* shrinks the open card to a bare '?' where its left end was, answering nothing;
-  /// the '?' and the card drag and stay where they're let go, a drag opening nothing; a tap on the '?' brings the card
-  /// back where the '?' is.
+  /// Stories 1273, 1274 (#1387): *Collapse* shrinks the open card to a bare '?' where its left end was, answering
+  /// nothing; the '?' and the card drag and stay where they're let go, a drag opening nothing; a tap on the '?'
+  /// brings the card back where the '?' is.
   func testAQuestionHidesToAMarkAndDrags() throws {
     guard let cockpit else { throw XCTSkip("needs the fake Cockpit: run scripts/native/test-whiteboard-ui.sh") }
     let (app, card) = try boardWithQuestion(cockpit)
@@ -211,5 +211,70 @@ final class WhiteboardQuestionUITests: XCTestCase {
     picture.name = "question-card-moved"
     picture.lifetime = .keepAlways
     add(picture)
+  }
+
+  /// Stories 1314, 1315 (#1387): *Archive* takes the card off the board, answering nothing; the board menu's *Archived
+  /// questions* lists it as open, and *Reopen* puts it back where it was.
+  func testAQuestionArchivesAndReopens() throws {
+    guard let cockpit else { throw XCTSkip("needs the fake Cockpit: run scripts/native/test-whiteboard-ui.sh") }
+    let (app, card) = try boardWithQuestion(cockpit)
+    let was = card.frame
+
+    card.tap()
+    let archive = app.buttons["whiteboard-question-archive"]
+    XCTAssertTrue(archive.appears(within: 10), app.debugDescription)
+    archive.tap()
+    XCTAssertTrue(card.waitForNonExistence(timeout: 5), "the card left the board: \(app.debugDescription)")
+    XCTAssertTrue(try answers(cockpit).filter { $0["id"] as? String == "igor2-88g.879" }.isEmpty, "nothing answered")
+
+    app.buttons["whiteboard-board"].tap()
+    let row = app.buttons["whiteboard-archived-questions"]
+    XCTAssertTrue(row.appears(within: 5), app.debugDescription)
+    XCTAssertEqual(row.label, "Archived questions (1)")
+    row.tap()
+    XCTAssertTrue(app.staticTexts["open"].appears(within: 5), "its answer, or open: \(app.debugDescription)")
+    let shot = XCTAttachment(screenshot: app.screenshot())
+    shot.name = "question-archived-list"
+    shot.lifetime = .keepAlways
+    add(shot)
+    app.buttons["whiteboard-archived-reopen-igor2-88g.879"].tap()
+    XCTAssertTrue(card.appears(within: 5), "back on the board: \(app.debugDescription)")
+    XCTAssertEqual(card.frame.minX, was.minX, accuracy: 2, "where it was")
+    XCTAssertEqual(card.frame.minY, was.minY, accuracy: 2)
+    XCTAssertEqual(card.label, "? Renew the gym for a year? ···", "as it was: open")
+  }
+
+  /// Stories 1316, 1317 (#1387): *Thinking* opens *Talk it over*; Igor's words go to the ask's own thread, Larry's
+  /// reply comes into the popup, the card reads as thought over, and nothing is answered.
+  func testThinkingTalksItOverWithLarry() throws {
+    guard let cockpit else { throw XCTSkip("needs the fake Cockpit: run scripts/native/test-whiteboard-ui.sh") }
+    let (app, card) = try boardWithQuestion(cockpit)
+
+    card.tap()
+    let thinking = app.buttons["whiteboard-question-thinking"]
+    XCTAssertTrue(thinking.appears(within: 10), app.debugDescription)
+    thinking.tap()
+    let field =
+      app.textViews["whiteboard-question-talk-words"].exists
+      ? app.textViews["whiteboard-question-talk-words"] : app.textFields["whiteboard-question-talk-words"]
+    XCTAssertTrue(field.appears(within: 5), app.debugDescription)
+    field.tap()
+    field.typeText("Month to month?")
+    app.buttons["whiteboard-question-talk-send"].tap()
+
+    let mine = app.staticTexts.matching(NSPredicate(format: "label == %@", "You: Month to month?")).firstMatch
+    XCTAssertTrue(mine.appears(within: 10), app.debugDescription)
+    let larry = app.staticTexts.matching(NSPredicate(format: "label == %@", "Larry: Larry heard: Month to month?"))
+      .firstMatch
+    XCTAssertTrue(larry.appears(within: 15), "his reply comes into the card: \(app.debugDescription)")
+    XCTAssertTrue(app.buttons["decision-option-yes"].exists, "an option can still answer it")
+    let shot = XCTAttachment(screenshot: app.screenshot())
+    shot.name = "question-thinking"
+    shot.lifetime = .keepAlways
+    add(shot)
+    XCTAssertTrue(try answers(cockpit).filter { $0["id"] as? String == "igor2-88g.879" }.isEmpty, "nothing answered")
+
+    app.buttons["whiteboard-question-close"].tap()
+    waitUntil(NSPredicate(format: "label == %@", "… Renew the gym for a year? ···"), card, timeout: 5)
   }
 }

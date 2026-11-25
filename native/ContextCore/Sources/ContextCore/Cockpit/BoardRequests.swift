@@ -58,6 +58,29 @@ extension WhiteboardQuestions {
     let list = ids.map { $0.addingPercentEncoding(withAllowedCharacters: allowed) ?? $0 }.joined(separator: ",")
     return try ChatWire.get(cockpit, "/ink/answers?ids=" + list)
   }
+
+  /// Story 1316 (#1387): Igor's words on the ask's own chat thread, `POST /chat` with `subject_id` the ask's id, as a
+  /// board's chat post without a picture. `id` is the message's, so a resend lands once.
+  public static func thinkRequest(ask: String, words: String, id: String, cockpit: String) throws -> URLRequest {
+    guard let base = URL(string: cockpit), base.host != nil, !ask.isEmpty else { throw URLError(.badURL) }
+    var request = URLRequest(url: base.appendingPathComponent("chat"))
+    request.httpMethod = "POST"
+    request.timeoutInterval = 30
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.setValue(InboxSend.origin(of: base), forHTTPHeaderField: "Origin")
+    let body: [String: Any] = [
+      "id": id, "text": words.trimmingCharacters(in: .whitespacesAndNewlines), "source": ChatSend.source,
+      "subject_id": ask,
+    ]
+    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
+    return request
+  }
+
+  /// Story 1317: the ask's own conversation, `GET /chat/<ask id>`.
+  public static func talkRequest(ask: String, cockpit: String) throws -> URLRequest {
+    guard URL(string: cockpit)?.host != nil, !ask.isEmpty else { throw URLError(.badURL) }
+    return try ChatWire.threadRequest(ask, cockpit: cockpit)
+  }
 }
 
 extension WhiteboardStrokes {

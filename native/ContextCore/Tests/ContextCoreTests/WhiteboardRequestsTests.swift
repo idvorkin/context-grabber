@@ -146,4 +146,34 @@ final class WhiteboardRequestsTests: XCTestCase {
     XCTAssertEqual(body["action"] as? String, "respond")
     XCTAssertEqual(body["base_updated_at"] as? String, "2026-11-16T10:00:00Z")
   }
+
+  // MARK: Stories 1316, 1317 (#1387): Thinking talks on the ask's own chat thread
+
+  func testThinkingWordsPostToTheAsksOwnThread() throws {
+    let request = try WhiteboardQuestions.thinkRequest(
+      ask: "igor2-88g.879", words: "  Month to month?  ", id: "m-1", cockpit: "https://c.example/")
+    XCTAssertEqual(request.httpMethod, "POST")
+    XCTAssertEqual(request.url?.absoluteString, "https://c.example/chat")
+    let body = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: try XCTUnwrap(request.httpBody)) as? [String: Any])
+    XCTAssertEqual(body["subject_id"] as? String, "igor2-88g.879", "Larry: the ask's id names its thread")
+    XCTAssertEqual(body["text"] as? String, "Month to month?")
+    XCTAssertEqual(body["id"] as? String, "m-1", "a resend lands once")
+    XCTAssertEqual(body["source"] as? String, "app")
+    XCTAssertNil(body["attachments"], "no picture")
+  }
+
+  func testTheConversationIsReadFromTheAsksThread() throws {
+    let request = try WhiteboardQuestions.talkRequest(ask: "igor2-88g.879", cockpit: "https://c.example")
+    XCTAssertEqual(request.url?.absoluteString, "https://c.example/chat/igor2-88g.879")
+    let data = Data(
+      #"""
+      {"ok":true,"version":3,"messages":[
+        {"id":"a","ts":"2026-11-24T10:00:00Z","who":"igor","text":"Month to month?"},
+        {"id":"b","ts":"2026-11-24T10:01:00Z","who":"larry","text":"Cheaper by the year."}]}
+      """#.utf8)
+    let talk = try XCTUnwrap(ChatWire.messages(data))
+    XCTAssertEqual(talk.map(\.who), ["igor", "larry"])
+    XCTAssertEqual(talk.last?.text, "Cheaper by the year.")
+  }
 }

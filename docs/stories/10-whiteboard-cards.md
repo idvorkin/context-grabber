@@ -109,7 +109,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 885:
 
 - **Summary:** An answered card opens read-only and folds to a chip
-- **Status:** implemented in [fa5381e](https://github.com/idvorkin/context-grabber/commit/fa5381e). Verified by host tests (`WhiteboardQuestionsTests.testOnlyAnAnsweredCardFoldsToAChipAsWideAsItsWords`; `just test`); and on the simulator (`WhiteboardQuestionUITests` 1/1)
+- **Status:** implemented in [fa5381e](https://github.com/idvorkin/context-grabber/commit/fa5381e), *Collapse* renamed *Shrink* in 'd3986c48'. Verified by host tests (`WhiteboardQuestionsTests.testOnlyAnAnsweredCardFoldsToAChipAsWideAsItsWords`; `just test`); and on the simulator (`WhiteboardQuestionUITests` 1/1)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Reading and folding*
 
 #### Use Case:
@@ -120,7 +120,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** I fold an answered card
 - **Given:** an answered card on the board
-- **When:** I tap it and tap *Collapse*
+- **When:** I tap it and tap *Shrink* (called *Collapse* until 2026-11-24)
 - **Then:** the popup showed the question and the answer in full, the card is now a one-line chip *✓ \<question>* as wide as its words, and a tap on the chip opens it out again
 
 ---
@@ -192,7 +192,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1273:
 
 - **Summary:** I hide a question card to a bare '?'
-- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
+- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b', *Hide* renamed *Collapse* in 'd3986c48'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Hiding a card*
 
@@ -204,7 +204,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 #### Acceptance Criteria:
 - **Scenario:** I hide an open question
 - **Given:** an open question card's popup over the board
-- **When:** I tap *Hide*
+- **When:** I tap *Collapse* (first built as *Hide*)
 - **Then:** the popup closes, the card is a small round '?' in Larry's purple where the card's left end was, nothing is answered, and the log records a hide
 
 ---
@@ -306,3 +306,144 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a card on the board
 - **When:** I drag it past the page's edge
 - **Then:** it stops at the page's edge
+
+---
+
+### User Story 1314:
+
+- **Summary:** I archive a question card off the board
+- **Status:** implemented in 'd3986c48'. Verified by host tests (`WhiteboardQuestionsArchiveTests`: `testAnArchivedCardLeavesTheBoardAndAnsweresNothing`, `testAnArchivedCardNeverLandsAgainByItself`, `testTheEraserCantReachAnArchivedCard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
+
+#### Use Case:
+- **As someone** with a question card on a board I'm done looking at
+- **I want to** archive it without answering or erasing it
+- **so that** the board is clear and the question and its answer are still kept
+
+#### Acceptance Criteria:
+- **Scenario:** I archive a card
+- **Given:** a question card's popup over the board, open or answered
+- **When:** I tap *Archive*
+- **Then:** the popup closes, the card is gone from the board, nothing is answered, the board's menu now has *Archived questions*, and the log records an archive
+
+---
+
+### User Story 1315:
+
+- **Summary:** I reopen an archived question from the board's menu
+- **Status:** implemented in 'd3986c48'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testArchivedNewestFirstAndReopenedAsItWas`, `testABoardKeptBeforeArchivingReadsAsOnTheBoard`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionArchivesAndReopens`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Archiving a card*
+
+#### Use Case:
+- **As someone** who archived one of Larry's questions
+- **I want to** find it behind the board's menu and put it back
+- **so that** an archived question or answer is never lost
+
+#### Acceptance Criteria:
+- **Scenario:** I reopen an archived card
+- **Given:** an archived card on the board
+- **When:** I open the board's menu, tap *Archived questions*, and tap *Reopen* beside it
+- **Then:** the list showed its question with its answer or *open*; the card is back on the board where it was, as it was, and off the list, and the log records a reopen
+
+---
+
+### User Story 1316:
+
+- **Summary:** I think a question over with Larry from its card
+- **Status:** implemented in 'd3986c48'. Verified by host tests (`WhiteboardQuestionsArchiveTests.testOnlyAnOpenCardIsThoughtOverAndItsLineSaysSo`, `WhiteboardRequestsTests.testThinkingWordsPostToTheAsksOwnThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
+
+#### Use Case:
+- **As someone** whose answer to Larry's question is "good idea, let's go back and forth"
+- **I want to** talk it over on the card without picking an option
+- **so that** the question stays open while we think it through together
+
+#### Acceptance Criteria:
+- **Scenario:** I start thinking a question over
+- **Given:** an open question card's popup over the board
+- **When:** I tap *Thinking*, write a few words under *Talk it over* and tap *Send*
+- **Then:** my words go to the ask's own conversation on the Cockpit and show under *Talk it over*, nothing is answered, and the card on the board reads *… \<question\> ···*
+
+---
+
+### User Story 1317:
+
+- **Summary:** Larry's reply to a question I'm thinking over shows on its card
+- **Status:** implemented in 'd3986c48'. Verified by host tests (`WhiteboardRequestsTests.testTheConversationIsReadFromTheAsksThread`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testThinkingTalksItOverWithLarry`, the class 5/5, against the fake Cockpit); not yet on the iPad or against the real Larry
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Thinking it over*
+
+#### Use Case:
+- **As someone** thinking one of Larry's questions over with him
+- **I want to** see his replies in the card's conversation as they come
+- **so that** the back-and-forth happens where the question is, on the board
+
+#### Acceptance Criteria:
+- **Scenario:** Larry replies while the card is open
+- **Given:** a card being thought over, its popup open at *Talk it over*
+- **When:** Larry replies on the ask's conversation
+- **Then:** his reply appears under mine within a few seconds, newest last, and I can still pick an option to answer the ask
+
+---
+
+### User Story 1319:
+
+- **Summary:** A double tap steps a question card to its next look
+- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *A double tap cycles the card's looks*
+
+#### Use Case:
+- **As someone** arranging Larry's questions on a board with the Pencil in hand
+- **I want to** shrink or grow a card with a double tap, without opening it
+- **so that** making room on the board is one gesture
+
+#### Acceptance Criteria:
+- **Scenario:** I double tap an answered card
+- **Given:** an answered card shown full on the board
+- **When:** I double tap it three times, a pause between each
+- **Then:** it went to its one-line chip, then to a '?', then back to full, and no popup opened
+
+---
+
+### User Story 1320:
+
+- **Summary:** An answered question reads as plain text on the board
+- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *An answered card reads as text*
+
+#### Use Case:
+- **As someone** whose board keeps old answers beside the drawing
+- **I want to** see an answered question as text, not as a card
+- **so that** a settled decision reads like part of the board rather than a pending ask
+
+#### Acceptance Criteria:
+- **Scenario:** A question is answered
+- **Given:** an open question card on the board
+- **When:** I answer it
+- **Then:** it is drawn as the question small over the answer with no card fill or edge, and a tap still opens it read-only
+
+---
+
+### User Story 1321:
+
+- **Summary:** A question card's controls are always in the same spot
+- **Status:** not yet built: part 3 of #1387, after a design pass on the card's states
+- **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *The controls sit in one spot*
+
+#### Use Case:
+- **As someone** who uses question cards often
+- **I want to** find Shrink, Collapse, Archive and Thinking in one place on every card
+- **so that** I reach for them without looking
+
+#### Acceptance Criteria:
+- **Scenario:** I look for a control on cards in different looks
+- **Given:** an open card, an answered card shown full, and an answered chip on the board
+- **When:** I look for each card's controls
+- **Then:** each card shows its controls as icons in the same place relative to the card, only those that card allows
+
