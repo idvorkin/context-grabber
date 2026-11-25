@@ -8,7 +8,8 @@ final class HealthAccessUITests: XCTestCase {
   func testGrantHealthAccessAndGrabTheFixtureWeek() throws {
     let app = XCUIApplication.forTests()
     app.launchEnvironment["GRABBER_MIRROR"] = "healthkit"
-    app.launchEnvironment["GRABBER_HEALTH"] = nil  // story 1630: the one test about real Health keeps the launch refresh
+    // Story 1630: the one test about real Health keeps the launch refresh.
+    app.launchEnvironment["GRABBER_HEALTH"] = nil
     app.launch()
     let done = app.staticTexts["hook-done"]
     HealthSheet.allow(in: app) { done.exists }
