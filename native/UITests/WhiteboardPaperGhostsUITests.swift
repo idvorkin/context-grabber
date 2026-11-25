@@ -988,39 +988,14 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertNotNil(result["rebased_from"] as? Int, "applied on a newer board than he saw: \(result)")
   }
 
-  /// Story 816: a push on a revision the board no longer remembers moves nothing, and his next turn tells him it was
-  /// stale. A conflict on a stroke Igor moved is `BoardOpsTests`, on the host (story 961); the chip it brings is the
-  /// test below.
-  func testAStalePushMovesNothingAndLarryIsTold() throws {
-    let cockpit = try cockpit()
-    let app = try openBoard()
-    let before = try inkAboveAndBelow(app)
-    try larryOps(cockpit, stale: true)
-    let reported = try opReports(cockpit).count
-    app.buttons["whiteboard-send"].tap()
-    XCTAssertTrue(
-      app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Larry: made room")).firstMatch
-        .appears(within: 15), app.debugDescription)
-    sleep(2)
-    let after = try XCTUnwrap(PaperScreen.settled(app) { $0.ink })
-    shot(app, "a stale push")
-    XCTAssertEqual(after.maxY, before.maxY, accuracy: 0.01, "nothing moved")
-    XCTAssertFalse(toKeep(app, 1).exists, "nor did his text show: the whole batch was refused")
-
-    stroke(app, atHeight: 0.42)
-    wait(send(app), label: strokes(3))
-    app.buttons["whiteboard-send"].tap()
-    let result = try XCTUnwrap(opResult(cockpit, after: reported + 1), "the next turn says what came of it")
-    XCTAssertEqual(result["ok"] as? Bool, false, "\(result)")
-    XCTAssertEqual(result["reason"] as? String, "stale")
-  }
-
-  /// Stories 970–972: a refused push brings the chip; × puts it away asking nothing, and Retry hands Larry the board,
-  /// his turn saying what came of his change. The chip's rules are `BoardBlockedEditTests`, on the host.
+  /// Stories 816 and 970–972: a push on a revision the board no longer remembers moves nothing and shows none of his
+  /// text, and brings the chip; × puts it away asking nothing, and Retry hands Larry the board, his turn saying it was
+  /// stale. The rules are `BoardOpsTests` and `BoardBlockedEditTests`, on the host. (This test also carries what the
+  /// stale-push test checked, so the two share one launch: bead context-grabber-3rk.)
   func testARefusedPushShowsTheChipAndRetryHandsLarryTheBoard() throws {
     let cockpit = try cockpit()
     let app = try openBoard()
-    _ = try inkAboveAndBelow(app)
+    let before = try inkAboveAndBelow(app)
     let retry = app.buttons["whiteboard-blocked-retry"]
     XCTAssertFalse(retry.exists, "no chip before anything is refused")
     try larryOps(cockpit, stale: true)
@@ -1028,6 +1003,9 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertTrue(retry.waitForExistence(timeout: 15), app.debugDescription)
     XCTAssertTrue(retry.label.contains("Larry's edit blocked"), retry.label)
     shot(app, "the blocked chip")
+    let after = try XCTUnwrap(PaperScreen.settled(app) { $0.ink })
+    XCTAssertEqual(after.maxY, before.maxY, accuracy: 0.01, "a stale push moves nothing")
+    XCTAssertFalse(toKeep(app, 1).exists, "nor does his text show: the whole batch was refused")
     let dismissed = try opReports(cockpit).count
     app.buttons["whiteboard-blocked-dismiss"].tap()
     XCTAssertTrue(retry.waitForNonExistence(timeout: 5), "× puts it away")
@@ -1045,6 +1023,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertTrue(retry.waitForNonExistence(timeout: 5), "Retry puts it away")
     let result = try XCTUnwrap(opResult(cockpit, after: reported), "Retry is Larry's turn")
     XCTAssertEqual(result["ok"] as? Bool, false, "\(result)")
+    XCTAssertEqual(result["reason"] as? String, "stale", "and says why: \(result)")
   }
 
   /// Stories 433, 522 (#636): ink on page 1 and page 2 on screen is nothing to send, Send and Larry's turn both; ink on
