@@ -3662,7 +3662,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** Search the chat list for a thread by its words
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
-- **Status:** implemented in [8862ba33](https://github.com/idvorkin/context-grabber/commit/8862ba33); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3680,7 +3680,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** A chat list search reaches words deep in a thread's older messages
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
-- **Status:** implemented in [8862ba33](https://github.com/idvorkin/context-grabber/commit/8862ba33); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3698,7 +3698,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** The chat list search survives the Cockpit being down and leaves the list as it was
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
-- **Status:** implemented in [8862ba33](https://github.com/idvorkin/context-grabber/commit/8862ba33); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
+- **Status:** implemented in [01c9badc](https://github.com/idvorkin/context-grabber/commit/01c9badc); verified by the host rung (`ChatThreadSearchTests`, `test-fake-cockpit-ops.py`'s `/chat?q` checks), the Mac build (`just native-build-mac`) and the iPad Pro 11-inch (M5) simulator (`ChatThreadSearchUITests` against the fake Cockpit's `GET /chat?q`, with the other chat classes, 37/37); not yet on a device
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
