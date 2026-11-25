@@ -230,32 +230,14 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertEqual(kept.center.y, ghost.center.y, accuracy: 0.05, "where the ghost was")
   }
 
-  /// Stories 616, 808, 810: a tap off the ghosts dismisses nothing and leaves no dot (and gives the finger its pen, story 1152); Dismiss removes the mark, and then a finger
-  /// draws again.
-  func testATapOffKeepsTheGhostDismissRemovesItAndAFingerDrawsAgain() throws {
-    let app = try openBoard()
-    let ghost = try XCTUnwrap(strokeBringsAGhost(app))
-    PaperScreen.tap(app, CGPoint(x: 0.1, y: 0.72))
-    sleep(1)
-    XCTAssertEqual(ghosts(app).label, "Ask at my pauses: on, 1 showing", "a stray tap dismisses nothing")
-    XCTAssertEqual(send(app).label, strokes(1), "no dot")
-    PaperScreen.tap(app, ghost.center)
-    let dismiss = app.buttons["whiteboard-mark-dismiss"]
-    XCTAssertTrue(dismiss.appears(within: 5), app.debugDescription)
-    dismiss.tap()
-    wait(ghosts(app), label: "Ask at my pauses: on")
-    sleep(1)
-    XCTAssertEqual(send(app).label, strokes(1), "nothing kept")
-    stroke(app, atHeight: 0.4)
-    wait(send(app), label: strokes(2))
-  }
-
   /// The board's verdict on a finger (`GRABBER_WHITEBOARD_FINGER_LABEL`): XCUITest's finger draws on the simulator whatever
   /// PaperKit's touch is set to, so whether a real finger would pan is read from here, and the ink only where it draws.
   private func finger(_ app: XCUIApplication) -> XCUIElement { app.staticTexts["whiteboard-finger"] }
 
   /// Story 1152 (context-grabber-2eml): with marks showing a finger taps and pans; a tap on empty paper gives it its pen
-  /// back, the mark still showing, and a tap on the mark still brings its Keep with no dot.
+  /// back, the mark still showing, and a tap on the mark still brings its Keep with no dot. Stories 616, 808, 810, in the
+  /// same launch (bead context-grabber-3rk): the stray tap dismisses nothing and leaves no dot, Dismiss removes the mark
+  /// keeping nothing, and a finger draws again.
   func testATapOffLetsAFingerDrawWithTheMarksShowingAndATapOnOneStillChoosesIt() throws {
     let app = try openBoard(["GRABBER_WHITEBOARD_FINGER_LABEL": "1"])
     let ghost = try XCTUnwrap(strokeBringsAGhost(app))
@@ -266,6 +248,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertEqual(finger(app).value as? String, "tap_off")
     sleep(1)
     XCTAssertEqual(send(app).label, strokes(1), "the tap off leaves no dot")
+    XCTAssertEqual(ghosts(app).label, "Ask at my pauses: on, 1 showing", "and dismisses nothing")
     stroke(app, atHeight: 0.4)
     wait(send(app), label: strokes(2))
     XCTAssertEqual(ghosts(app).label, "Ask at my pauses: on, 1 showing", "the mark still shows")
@@ -275,6 +258,12 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     sleep(1)
     XCTAssertEqual(send(app).label, strokes(2), "a tap on the mark leaves no dot")
     XCTAssertEqual(finger(app).label, "draws", "choosing a mark leaves the pen")
+    app.buttons["whiteboard-mark-dismiss"].tap()
+    wait(ghosts(app), label: "Ask at my pauses: on")
+    sleep(1)
+    XCTAssertEqual(send(app).label, strokes(2), "Dismiss keeps nothing")
+    stroke(app, atHeight: 0.5)
+    wait(send(app), label: strokes(3))
   }
 
   /// Story 1153: once the Pencil has touched a board (the hook stands in, the simulator has none), a finger never draws,
@@ -988,39 +977,14 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertNotNil(result["rebased_from"] as? Int, "applied on a newer board than he saw: \(result)")
   }
 
-  /// Story 816: a push on a revision the board no longer remembers moves nothing, and his next turn tells him it was
-  /// stale. A conflict on a stroke Igor moved is `BoardOpsTests`, on the host (story 961); the chip it brings is the
-  /// test below.
-  func testAStalePushMovesNothingAndLarryIsTold() throws {
-    let cockpit = try cockpit()
-    let app = try openBoard()
-    let before = try inkAboveAndBelow(app)
-    try larryOps(cockpit, stale: true)
-    let reported = try opReports(cockpit).count
-    app.buttons["whiteboard-send"].tap()
-    XCTAssertTrue(
-      app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Larry: made room")).firstMatch
-        .appears(within: 15), app.debugDescription)
-    sleep(2)
-    let after = try XCTUnwrap(PaperScreen.settled(app) { $0.ink })
-    shot(app, "a stale push")
-    XCTAssertEqual(after.maxY, before.maxY, accuracy: 0.01, "nothing moved")
-    XCTAssertFalse(toKeep(app, 1).exists, "nor did his text show: the whole batch was refused")
-
-    stroke(app, atHeight: 0.42)
-    wait(send(app), label: strokes(3))
-    app.buttons["whiteboard-send"].tap()
-    let result = try XCTUnwrap(opResult(cockpit, after: reported + 1), "the next turn says what came of it")
-    XCTAssertEqual(result["ok"] as? Bool, false, "\(result)")
-    XCTAssertEqual(result["reason"] as? String, "stale")
-  }
-
-  /// Stories 970–972: a refused push brings the chip; × puts it away asking nothing, and Retry hands Larry the board,
-  /// his turn saying what came of his change. The chip's rules are `BoardBlockedEditTests`, on the host.
+  /// Stories 816 and 970–972: a push on a revision the board no longer remembers moves nothing and shows none of his
+  /// text, and brings the chip; × puts it away asking nothing, and Retry hands Larry the board, his turn saying it was
+  /// stale. The rules are `BoardOpsTests` and `BoardBlockedEditTests`, on the host. (This test also carries what the
+  /// stale-push test checked, so the two share one launch: bead context-grabber-3rk.)
   func testARefusedPushShowsTheChipAndRetryHandsLarryTheBoard() throws {
     let cockpit = try cockpit()
     let app = try openBoard()
-    _ = try inkAboveAndBelow(app)
+    let before = try inkAboveAndBelow(app)
     let retry = app.buttons["whiteboard-blocked-retry"]
     XCTAssertFalse(retry.exists, "no chip before anything is refused")
     try larryOps(cockpit, stale: true)
@@ -1028,6 +992,9 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertTrue(retry.waitForExistence(timeout: 15), app.debugDescription)
     XCTAssertTrue(retry.label.contains("Larry's edit blocked"), retry.label)
     shot(app, "the blocked chip")
+    let after = try XCTUnwrap(PaperScreen.settled(app) { $0.ink })
+    XCTAssertEqual(after.maxY, before.maxY, accuracy: 0.01, "a stale push moves nothing")
+    XCTAssertFalse(toKeep(app, 1).exists, "nor does his text show: the whole batch was refused")
     let dismissed = try opReports(cockpit).count
     app.buttons["whiteboard-blocked-dismiss"].tap()
     XCTAssertTrue(retry.waitForNonExistence(timeout: 5), "× puts it away")
@@ -1045,6 +1012,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     XCTAssertTrue(retry.waitForNonExistence(timeout: 5), "Retry puts it away")
     let result = try XCTUnwrap(opResult(cockpit, after: reported), "Retry is Larry's turn")
     XCTAssertEqual(result["ok"] as? Bool, false, "\(result)")
+    XCTAssertEqual(result["reason"] as? String, "stale", "and says why: \(result)")
   }
 
   /// Stories 433, 522 (#636): ink on page 1 and page 2 on screen is nothing to send, Send and Larry's turn both; ink on
