@@ -461,4 +461,24 @@ final class BoardStoreCacheTests: XCTestCase {
     XCTAssertFalse(cache.needsPull, "the pull already brought this batch")
     XCTAssertEqual(cache.queue, [])
   }
+
+  // Bead context-grabber-4v8k: an admin batch in a pull still lets the pull's foreign changes refuse a queued change
+  // over them; only a delete in that pull waits for the fresh download.
+  func testAnAdminBatchInAPullStillChecksTheQueue() throws {
+    var cache = board()
+    cache.enqueue([["op": "set", "ids": ["s2"], "bodies": ["s2": stroke("s2", x: 40)]]])
+    cache.pull(
+      rev: 7,
+      batches: [
+        webBatch(rev: 6, ops: [["op": "set", "ids": ["s2"], "bodies": ["s2": stroke("s2", x: -9)]]]),
+        ["rev": 7, "batch_id": "a1", "kind": "admin", "device": "cockpit", "by": "larry", "at": "t", "ops": []],
+      ])
+    XCTAssertTrue(cache.needsReload)
+    XCTAssertEqual(cache.queue, [], "the set over the web's change never goes up")
+    let note = try XCTUnwrap(cache.notes.first)
+    XCTAssertEqual(note.id, "s2")
+    XCTAssertEqual(note.reason, "changed")
+    XCTAssertEqual(note.author, web)
+    XCTAssertTrue(note.local)
+  }
 }

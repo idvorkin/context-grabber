@@ -145,7 +145,8 @@ sections 3 and 6). This section is what Igor sees of it on a drawing device.
   the rule the Cockpit uses. A change to something another hand changed meanwhile is refused right there. It shows the
   copyable note the Cockpit's refusal would (*Not moved: the web moved this since*), and the thing shows the way the
   other hand left it. Everything else still goes up. The device never sends a change made against a version of a
-  thing it hadn't seen, so no clash slips past.
+  thing it hadn't seen, so no clash slips past. That holds when Larry restored a deleted board in the same stretch too: the
+  restore decides only whether the board is deleted, never whether a clash counts.
 - **Knowing it's caught up.** After an answer, the device takes its own change in without asking again only when
   nothing else landed in between: one new version if its change landed, none if nothing did. Otherwise it first
   fetches what it missed. A late answer to a save the device has meanwhile fetched, with whatever landed over it, changes

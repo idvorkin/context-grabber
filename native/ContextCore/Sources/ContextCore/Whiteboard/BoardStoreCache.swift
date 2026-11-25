@@ -169,7 +169,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
   // MARK: Catching up
 
   /// `GET /boards/<id>/ops?since=<rev>`'s batches, applied in order, then the unsent queue checked against them at the
-  /// old base; after an admin batch the check waits for the fresh download. The batch in flight, if any, is never
+  /// old base; after an admin batch only a delete waits for the fresh download. The batch in flight, if any, is never
   /// rebased.
   public mutating func pull(rev newRev: Int, batches: [BoardStoreJSON], slug: String = "") {
     let oldBase = rev
@@ -201,8 +201,9 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     awaitingPull = []
     needsPull = false
     rev = max(newRev, rev)
-    guard !needsReload else { return }
-    rebase(base: oldBase, foreign: foreign, foreignDelete: foreignDelete, slug: slug)
+    // After an admin batch (an undelete), the fresh download decides whether the board is deleted; the pull's other
+    // changes still refuse what was queued over them (bead context-grabber-4v8k).
+    rebase(base: oldBase, foreign: foreign, foreignDelete: foreignDelete, slug: slug, deletedKnown: !needsReload)
   }
 
   /// A fresh `GET /boards/<id>` after an `ahead` (or an admin batch): the copy is replaced, the unsent queue kept and
@@ -458,7 +459,8 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
   /// landed ink doesn't clash with its own queue). A refused op leaves the queue with a note, so the view shows the
   /// pulled body. The batch in flight goes first, so later saves build on it, but is never rebased.
   mutating func rebase(
-    base: Int, foreign: [String: BoardStoreClash.Thing], foreignDelete: BoardStoreClash.Thing?, slug: String
+    base: Int, foreign: [String: BoardStoreClash.Thing], foreignDelete: BoardStoreClash.Thing?, slug: String,
+    deletedKnown: Bool = true
   ) {
     let start = queue.first?.batchID == nil ? 0 : 1
     guard start < queue.count else { return }
@@ -468,7 +470,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
       clash.erased = thing.erased
       board.things[id] = clash
     }
-    if let deleted {
+    if let deleted, deletedKnown {
       board.deleted = foreignDelete ?? .init(rev: min(deleted.rev, base), author: deleted.author)
     }
     var flat: [(batch: Int, op: BoardStoreJSON)] = []
