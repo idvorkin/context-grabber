@@ -10,7 +10,7 @@ extension PaperBoardController {
     log.event(
       "whiteboard",
       [
-        "action": "board_pen_latency", "board": model.board.id, "measures": "input_to_frame",
+        "action": "board_pen_latency", "surface": "board", "board": model.board.id, "measures": "input_to_frame",
         "count": line.count, "p50_ms": line.p50, "p90_ms": line.p90, "slowest_ms": line.slowest, "hz": hz,
       ])
   }

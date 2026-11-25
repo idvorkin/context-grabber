@@ -2105,7 +2105,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** A stroke on either half
 - **Given:** the Ink side by side screen open
 - **When:** I draw a stroke on one half
-- **Then:** that half's corner reads `last … ms · median … ms · n strokes`, and the log gains one `ink_side_by_side` event naming that side, the milliseconds, the median and the count; a tap on the web board's own buttons and menus is not counted
+- **Then:** that half's corner reads `last … ms · median … ms · n strokes`, and the log gains one `ink_side_by_side` event naming that side, the stroke's median and worst lag, its frame count, the running median and the count; a tap on the web board's own buttons and menus is not counted
 
 ### User Story 1214:
 
@@ -2157,3 +2157,22 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** the iPhone
 - **When:** I open Settings
 - **Then:** there is no *Ink side by side* row
+
+### User Story 1324:
+
+- **Summary:** Ink side by side: one pen-latency line per half, both measured the way the web board measures
+- **Status:** in progress (bead context-grabber-1zgr, Igor's "measure first" on 2vv, 2026-11-24)
+- **Spec:** [Ink side by side](../superpowers/specs/2026-11-22-ink-side-by-side-design.md), *What the number means*
+
+#### Use Case:
+- **As someone** deciding whether the board should move to the web board's ink
+- **I want to** write a few lines on each half and get one comparable number per half from the iPad's log
+- **so that** "is the web within a frame of native" is a number I can read, not a feel I have to argue
+
+#### Acceptance Criteria:
+- **Scenario:** Writing on both halves, then Clear
+- **Given:** the Ink side by side screen open on the iPad
+- **When:** I write a few lines on each half and press **Clear**
+- **Then:** the log gains one `board_pen_latency` line with `surface` *native* and one with `surface` *web*, each with
+  its frame count, p50, p90 and slowest in milliseconds, both measured as the oldest undrawn touch to the frame that
+  draws it, and `just pen-latency` prints both after `just pull-logs`
