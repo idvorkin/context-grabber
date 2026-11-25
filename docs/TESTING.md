@@ -33,6 +33,7 @@ line of its own here and in the recipe; `scripts/native/test-testing-lists.sh` f
 - `scripts/native/test-ui-timings.sh`: the UI test timing digest against a real run's log
 - `scripts/native/test-device-build-check.sh`: the build each device last reported against the last install in the deploys ledger (match, mismatch, no session yet, over the air, unknown), and `just deploy` recording each installed device and checking its next session, with fakes (story 1511)
 - `scripts/native/test-pen-latency.sh`: the board's Pencil-to-frame latency lines read off fake pulled logs, oldest session first (story 1311)
+- `scripts/native/test-render-preview.sh`: `render-preview.sh` names a file as Xcode's project does, asks for the iPad, and refuses a missing file, from its dry run (story 1625)
 - `scripts/native/test-ladder-report.sh`: the ladder report keeping a retry, a wrong-device skip and a missing deploy apart, on a fixture (#1038, story 1016)
 - `scripts/native/test-xcodebuild-log.sh`: the UI test run wrapper's time limit, retry, flake gate and quarantine (story 1017, after a hang too), hang stop (which waits for the result bundle to be written, story 790) start watchdog, a failure after the screen locked (story 1018), and on a locked screen the skip of the tests that open the mic and the mid-run stop while one is still to run (stories 1022, 1023, bead context-grabber-wm8y) against a fake xcodebuild
 - `scripts/native/test-own-child.sh`: the wrapper stops a watchdog at the end of a run only while it is still the wrapper's own child, so a number a watchdog left long ago, since given to another process on a busy Mac, isn't killed (bead context-grabber-tne1)
@@ -706,6 +707,21 @@ scheme runs both bundles. Today `WhiteboardEraserUITests` and `WhiteboardTitleRe
 the iPad simulator, the lab saves about 1.2 s a case for about 4 s more build; the plan has the table.
 `GRABBER_LAB_SESSION=<name>`, with `GRABBER_CHAT_URL` set to the fake Cockpit, has the fake play that recorded session
 (story 1174) on the lab's first board message.
+
+## A view's preview as a picture: `just render-preview` (story 1625)
+
+`just render-preview App/Breathe/BreatheView.swift ~/tmp/out.png` renders the file's first `#Preview` (a third argument
+picks another, counting from 0) on the iPad Pro 11-inch (M5) simulator and copies the picture to the path. It goes
+through Xcode's own tool service, `xcrun mcpbridge` (JSON-RPC over stdio): no Xcode window, no MCP client. A cold render
+builds the app (35-105 s on the M5 Pro, depending on load); a warm one takes about half a second. A render runs in a
+build lane, like the other simulator rungs, and waits for one when every lane is busy.
+
+Once per Mac, Igor types (it needs sudo): `xcrun mcp-server status` shows headless mode and what is pending;
+`sudo xcrun mcp-server allow-folder ~/gits/context-grabber` and `sudo xcrun mcp-server allow-folder ~/.treehouse` let it
+serve the main checkout and every slot; `sudo xcrun mcp-server approve <id>` approves the caller, which is always
+`/usr/bin/timeout` because the script puts it in front of the bridge. A project under `/private/tmp` is refused outright,
+so render from a checkout, not the scratchpad. Grabber's screens carry no `#Preview` today; add one to the file to
+render it.
 
 ## The board's rules as WebAssembly: `just wasm`, `just wasm-test` (story 1503)
 

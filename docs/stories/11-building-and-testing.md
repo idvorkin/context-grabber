@@ -1638,6 +1638,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1625:
+
+- **Summary:** A SwiftUI preview renders to a picture from the command line, with no Xcode window
+- **Status:** implemented in 82665bcd; verified by `scripts/native/test-render-preview.sh` (host) and a real render of a temporary preview from a treehouse slot and a worktree (the same 1033x1500 picture; 35-105 s cold, about 0.5 s warm), 2026-11-24
+- **Issues:** bead `context-grabber-7xme`
+
+#### Use Case:
+- **As** an agent working on Grabber's screens on the Mac
+- **I want to** render a view's preview to a PNG with one command
+- **so that** I can look at a screen without opening Xcode or booting the app
+
+#### Acceptance Criteria:
+- **Scenario:** One preview, one command
+- **Given:** a Swift file under the app with a preview, on a Mac where Xcode's headless tool service may serve the checkout's folder
+- **When:** `just render-preview <file> [out.png]` runs
+- **Then:** the preview renders on the iPad simulator and its picture lands at the given path, the time taken is printed, and nothing opens on the screen; a file that isn't there, or a folder Xcode hasn't been allowed to serve, stops with a message saying what to do
+
+---
+
 ### User Story 1622:
 
 - **Summary:** The web board asks the app's own rules what Larry's batch of board changes does
