@@ -466,7 +466,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1078:
 
 - **Summary:** the call screen links the call's own chat thread
-- **Status:** planned (context-grabber-lsue)
+- **Status:** native app only: implemented in [2ca69de8](https://github.com/idvorkin/context-grabber/commit/2ca69de8) (context-grabber-lsue); verified by `just test` (host: `CallSessionThreadTests`, `CallProtocolTests.testTranscriptsCaptionsControlAndEndings`), the Mac build and the iPad Pro 11-inch (M5) simulator smoke (synthetic and real-audio calls: the fake bridge's `call_thread` reached the call); the link on a real call not yet
 - **Spec:** [Native call — The call's chat thread](../superpowers/specs/2026-08-28-native-call-screen-design.md#the-calls-chat-thread)
 
 #### Use Case:
