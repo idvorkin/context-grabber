@@ -100,13 +100,17 @@ final class WhiteboardConversationPlaceUITests: XCTestCase {
     XCTAssertEqual(card.frame.minX, before.minX + 300, accuracy: 30, "moved right with the finger")
     XCTAssertEqual(card.frame.minY, before.minY + 200, accuracy: 30, "moved down with the finger")
 
-    // Its corner sizes it.
+    // #1491: the grip at its top-left corner sizes it, up and left, its bottom right staying put.
     let moved = card.frame
     let corner = app.descendants(matching: .any)["whiteboard-conversation-card-size"].firstMatch
-    drag(corner, dx: 120, dy: 100)
+    XCTAssertEqual(corner.frame.minX, moved.minX, accuracy: 8, "the grip is at the card's left: \(corner.frame)")
+    XCTAssertEqual(corner.frame.minY, moved.minY, accuracy: 8, "the grip is at the card's top: \(corner.frame)")
+    drag(corner, dx: -120, dy: -100)
     sleep(1)
     XCTAssertGreaterThan(card.frame.width, moved.width + 80, "wider")
     XCTAssertGreaterThan(card.frame.height, moved.height + 60, "taller")
+    XCTAssertEqual(card.frame.maxX, moved.maxX, accuracy: 8, "the right edge stays put")
+    XCTAssertEqual(card.frame.maxY, moved.maxY, accuracy: 8, "the bottom stays put")
     let sized = card.frame
 
     // Story 1307: another board, after a relaunch: the card is where it was left.

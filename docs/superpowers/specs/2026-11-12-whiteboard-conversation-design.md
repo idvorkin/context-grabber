@@ -263,8 +263,9 @@ migrate chat so it's like a popover that I can move over the page, or can be doc
   own size, a fifth at most, as before any drag. Docked, the page moves with it, so ink is still
   never under the panel.
 - **Float or dock.** **Float** at the panel's foot undocks it into a card floating over the board, which a finger
-  drags by its top edge anywhere on the board and resizes by its corner, never past the board's edges and never smaller
-  than a few lines and its controls. It first floats at the board's top left, a third of it wide, clear of *?* and
+  drags by its top edge anywhere on the board and resizes by its top-left corner (#1491, Igor 2026-11-25: "resize in
+  top left corner"), never past the board's edges and never smaller than a few lines and its controls. The grip at the
+  top left grows the card up and to the left and shrinks it back; its bottom right stays where it is. It first floats at the board's top left, a third of it wide, clear of *?* and
   *Feedback* at its top right. The card holds the whole panel: the thread, the chip, what the mic hears, *Open in
   Chat*, the Lines / Bubbles switch and **Dock**. Floating, the page moves back up and the card lies
   over the ink, so it is Igor's choice to cover ink, never the board's. Dock puts it back above the board. Floating or
@@ -289,10 +290,11 @@ migrate chat so it's like a popover that I can move over the page, or can be doc
   close the board and open another: the panel is that tall there. Drag it up past about four lines: it stops there.
   Double-tap the grip: it is its own size again.
 - Tap **Float**: the page moves back up and the conversation is a card at the board's top left. Drag its top edge:
-  it follows the finger and stops at the board's edges. Drag its corner: it grows and shrinks, never smaller than a
-  few lines. Close the board and open another: the card is where it was left. Tap **Dock**: it is above the board
+  it follows the finger and stops at the board's edges. Drag the grip at its top-left corner up and left: it
+  grows up and left while its bottom right stays put; down and right, it shrinks, never smaller than a few lines, and
+  at the board's top or left edge it stops growing. Close the board and open another: the card is where it was left. Tap **Dock**: it is above the board
   again, at its docked height.
-- Float the card at its first size, and at the smallest its corner allows: the foot is one line, nothing at its bottom is
+- Float the card at its first size, and at the smallest its top-left grip allows: the foot is one line, nothing at its bottom is
   cut off, and *Open in Chat* and **Dock** still work (as icons when the words don't fit).
 - With the card floating, a Pencil stroke that starts on the card draws nothing; one that starts beside it draws.
 
