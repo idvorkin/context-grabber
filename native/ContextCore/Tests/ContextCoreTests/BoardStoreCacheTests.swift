@@ -436,4 +436,25 @@ final class BoardStoreCacheTests: XCTestCase {
     readd["id"] = "m1-7c2e"
     XCTAssertEqual(markTaken.queue.first?.ops, [["op": "reply", "marks": [readd]]], "r1 landed: not sent again")
   }
+
+  // Bead context-grabber-2m5r: a resent batch's stored answer, arriving after a pull already brought that batch and a
+  // newer change over it, never writes the device's older body back.
+  func testAResentAnswerAfterAPullKeepsThePulledBody() {
+    var cache = board()
+    cache.enqueue([["op": "add_strokes", "strokes": [stroke("s3")]]])
+    _ = cache.freeze(batchID: "b1", deviceAt: at)
+    XCTAssertEqual(cache.receive(status: 502, answer: [:], me: me, slug: "7c2e"), .keepQueued, "the answer is lost")
+    cache.pull(rev: 7, batches: [
+      ["rev": 6, "batch_id": "b1", "kind": "ops", "device": .string(me.device), "by": "igor", "at": .string(me.at),
+       "ops": [["op": "add_strokes", "ids": ["s3"], "bodies": ["s3": stroke("s3")]]]],
+      webBatch(rev: 7, ops: [["op": "set", "ids": ["s3"], "bodies": ["s3": stroke("s3", x: 99)]]]),
+    ])
+    XCTAssertEqual(cache.rev, 7)
+    XCTAssertEqual(cache.receive(status: 200, answer: answer(rev: 6, applied: [0]), me: me, slug: "7c2e"), .done)
+    XCTAssertEqual(cache.things["s3"]?.body, stroke("s3", x: 99), "the web's newer body stays")
+    XCTAssertEqual(cache.things["s3"]?.rev, 7)
+    XCTAssertEqual(cache.rev, 7)
+    XCTAssertFalse(cache.needsPull, "the pull already brought this batch")
+    XCTAssertEqual(cache.queue, [])
+  }
 }

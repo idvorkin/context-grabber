@@ -193,6 +193,8 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   the refused parts, never an own id that already landed; its landed marks stay in the folded op). Caught up (applied
   non-empty and rev == base+1, or applied empty and rev == base): the batch folds in and `rev` moves; otherwise
   `needsPull`, and the batch's own landed ids come back in the pull, recognised by `batch_id`.
+  A late answer (the copy's `rev` moved since the freeze, and the answer's rev is at or below it) folds nothing: the
+  pull already brought that batch and anything over it (bead context-grabber-2m5r).
 - **Pull**: `pull(rev:batches:)` applies each batch's bodies (an id new to the copy takes its kind from the op); an
   `admin` batch sets `needsReload` and the check below waits for the reload, so a delete Larry undid in the same pull
   refuses nothing. Otherwise the unsent queue runs through `BoardStoreClash.apply` as one batch at the **old** base,

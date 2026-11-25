@@ -153,7 +153,10 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     let landed = settle(batch.ops, refused: refused, slug: slug)
     let applied = answer["applied"]?.array ?? []
     let caughtUp = applied.isEmpty ? answerRev == base : answerRev == base + 1
-    if caughtUp {
+    if rev != base, answerRev <= rev {
+      // A pull since the freeze already brought this batch and whatever landed over it (bead context-grabber-2m5r):
+      // folding it in again would write this device's older bodies back over newer ones.
+    } else if caughtUp, rev == base {
       for op in landed { apply(Self.landings(of: op, things: things), rev: answerRev, author: me) }
       rev = max(rev, answerRev)
     } else {
