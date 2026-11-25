@@ -2001,7 +2001,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1628:
 
 - **Summary:** The store is walked on the Mac: every implemented story's named check runs again
-- **Status:** implemented on branch native/walk-the-store; verified by a full walk of main on this Mac (scripts/native/walk.py, `just walk`)
+- **Status:** implemented in 92ed7fbd; verified by a full walk of main on this Mac (scripts/native/walk.py, `just walk`)
 - **Issues:** Igor 2026-11-24, "Drive build and walk store tonight"
 - **Spec:** [The store walk on the Mac](../superpowers/specs/2026-11-24-store-walk-design.md)
 

@@ -30,7 +30,6 @@ MANIFEST = STORIES / "walk.toml"
 LOGS = ROOT / "native/Build/logs"
 # macOS XCTest: Test Case '-[ContextCoreTests.FooTests testBar]' passed (0.001 seconds).
 CASE = re.compile(r"^Test Case '-\[(?:\w+\.)?(\w+) (\w+)\]' (passed|failed|skipped)")
-SWIFT_TESTING = re.compile(r"Test (\w+)\(\) (passed|failed|skipped)")
 CLASS_DEF = re.compile(r"^\s*(?:final\s+|@MainActor\s+|public\s+|private\s+)*(?:class|struct)\s+(\w+Tests)\b", re.M)
 FUNC_DEF = re.compile(r"func\s+(test\w+)\s*\(")
 TEST_DIRS = ["native/ContextCore/Tests", "native/UITests", "native/ContractTests", "native/BoardLab"]
@@ -122,7 +121,8 @@ def source_index() -> dict[str, dict]:
     return idx
 
 
-def xctest_checks(xrefs, results, idx, ran_host, ran_sim, sha):
+def xctest_checks(xrefs, results, idx, rung_rc, sha):
+    """rung_rc: "host"/"sim" -> None (not run), 0 (ran), or the exit of a rung that failed before its cases ran."""
     checks = {f"xctest:{k}": v for k, v in results.items()}
     order = ["fail", "missing", "skip", "flaky", "pass"]
     for ref in xrefs:
@@ -150,11 +150,26 @@ def xctest_checks(xrefs, results, idx, ran_host, ran_sim, sha):
                            "detail": f"{len(rows)} cases" + (f", {bad} failing: {w['detail']}" if bad else "")}
             continue
         sim_class = any(f.startswith(("native/UITests", "native/ContractTests", "native/BoardLab")) for f in e["files"])
-        ran = ran_sim if sim_class else ran_host
-        why = ("did not run this walk (a mic test on a locked Mac is skipped by the wrapper)" if ran
-               else f"the {'simulator' if sim_class else 'host'} rung was not run this walk")
+        rung = "simulator" if sim_class else "host"
+        code = rung_rc["sim" if sim_class else "host"]
+        if code:
+            checks[ref] = {"outcome": "fail", "detail": f"the {rung} rung failed (exit {code}) before {cls} ran"}
+            continue
+        why = ("did not run this walk (a mic test on a locked Mac is skipped by the wrapper)" if code == 0
+               else f"the {rung} rung was not run this walk")
         checks[ref] = {"outcome": "skip", "detail": f"{cls}: {why}"}
     return checks
+
+
+def script_checks() -> set[str]:
+    """The script checks `just test` runs (native-test-host's scripts/native lines): the only scripts a walk runs."""
+    names, inside = set(), False
+    for line in (ROOT / "justfile").read_text().splitlines():
+        if re.match(r"^[\w-]+\b[^#]*?:(?!=)", line):
+            inside = line.startswith("native-test-host:")
+        elif inside and (m := re.match(r"^\s+scripts/native/([\w.-]+)\s*$", line)):
+            names.add(m.group(1))
+    return names
 
 
 def just_recipes() -> set[str]:
@@ -246,11 +261,15 @@ def main() -> int:
                        out / f"logs/host-retry-{cls}.{test}.log", 900)
                 if r == 0:
                     host[key] = {"outcome": "flaky", "detail": "failed in the full run, passed alone"}
+            runnable = script_checks()
             for ref in s:
                 base = ref.split(":", 1)[1]
                 found = sorted(ROOT.joinpath("scripts").rglob(base))
                 if not found:
                     scripts[ref] = {"outcome": "missing", "detail": f"no script {base} at {sha}"}
+                    continue
+                if found[0].name not in runnable:
+                    scripts[ref] = {"outcome": "skip", "detail": f"{base} is not a script check `just test` runs"}
                     continue
                 f = found[0]
                 runner = ["python3", str(f)] if f.suffix == ".py" else ["bash", str(f)]
@@ -274,7 +293,8 @@ def main() -> int:
                 if log.stat().st_mtime >= datetime.datetime.fromisoformat(started).timestamp():
                     sim.update(cases(log))
         results = {**host, **sim}
-        checks = xctest_checks(x, results, source_index(), not a.skip_host, not a.skip_sim, sha)
+        sim_rc = rc["sim"] if rc["sim"] and (not steps.get("compile", True) or not sim) else (rc["sim"] and 0)
+        checks = xctest_checks(x, results, source_index(), {"host": rc["host"], "sim": sim_rc}, sha)
         checks.update(scripts)
         recipes = just_recipes()
         host_row = rc_row(rc["host"], "ContextCore's swift test")
@@ -308,7 +328,7 @@ def main() -> int:
                "stages": {k: v for k, v in rc.items() if v is not None}}
         (out / "checks.json").write_text(json.dumps(run, indent=1))
         if rc["sim"] is not None and not steps.get("compile", True):
-            print("walk: the simulator build failed, so every UI class reads as not run", file=sys.stderr)
+            print("walk: the simulator build failed, so every UI class it cites reads red", file=sys.stderr)
     argv = [sys.executable, str(WALK_PY), "judge", "--stories", str(STORIES), "--checks", str(out / "checks.json"),
             "--out", str(out)]
     if MANIFEST.exists():
