@@ -87,7 +87,7 @@ final class ChatArchiveUITests: XCTestCase {
   func testASwipeOrSelectArchivesAndUndoBringsItBack() throws {
     let app = try openList()
     app.buttons["chat-thread-\(key)"].swipeLeft()
-    app.buttons["Archive"].tap()
+    app.buttons["Archive"].tapWhenSettled()
     let undo = app.buttons["chat-archive-undo"]
     XCTAssertTrue(undo.appears(within: 5), app.debugDescription)
     undo.tap()
@@ -115,7 +115,8 @@ final class ChatArchiveUITests: XCTestCase {
     let more = app.buttons["chat-thread-more"]
     XCTAssertTrue(more.appears(within: 10), app.debugDescription)
     more.tap()
-    app.buttons["Archive chat"].tap()
+    // #686: the ⋯ menu's rows exist before they stop moving; a tap then misses and leaves the menu open.
+    app.buttons["Archive chat"].tapWhenSettled()
     let done = doneFold(app)
     XCTAssertTrue(app.buttons["inbox-add"].appears(within: 5), "back on the list: \(app.debugDescription)")
     scrollDownTo(done, app)
@@ -127,7 +128,7 @@ final class ChatArchiveUITests: XCTestCase {
     XCTAssertTrue(row.appears(within: 5), app.debugDescription)
     scrollClearOfTheBar(row, app)
     row.swipeLeft()
-    app.buttons["Unarchive"].tap()
+    app.buttons["Unarchive"].tapWhenSettled()
     assertBackInTheLiveList(app)
   }
 
