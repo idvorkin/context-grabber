@@ -36,18 +36,25 @@
    "until": "2026-11-25T16:14:32Z"
   },
   {
-   "id": 1325,
+   "id": 1326,
    "journey": "10-whiteboard-boards.md",
-   "branch": "native/question-looks-1387",
-   "at": 1795586552.87812,
-   "until": "2026-11-26T06:02:32Z"
+   "branch": "native/board-store-abi23",
+   "at": 1795616950.464832,
+   "until": "2026-11-26T14:29:10Z"
   },
   {
-   "id": 1633,
-   "journey": "11-building-and-testing.md",
-   "branch": "docs/story-1632-split-3hj9-6",
-   "at": 1795603428.142603,
-   "until": "2026-11-26T10:43:48Z"
+   "id": 1327,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-abi23",
+   "at": 1795616950.464832,
+   "until": "2026-11-26T14:29:10Z"
+  },
+  {
+   "id": 1328,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-abi23",
+   "at": 1795616950.464832,
+   "until": "2026-11-26T14:29:10Z"
   }
  ]
 }
