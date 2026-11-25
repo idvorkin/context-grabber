@@ -1581,7 +1581,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1082:
 
 - **Summary:** Every five seconds of a call, the log says how the mic sounded: the noise floor, speech level, SNR, clips, dropouts and a 0–100 score
-- **Status:** implemented in [00ec1998](https://github.com/idvorkin/context-grabber/commit/00ec1998); host-verified by `just test` (`MicSoundTests`, `CallSessionCountersTests`): a quiet room and speech score 100, wind near −30 dBFS scores under 50, a gust doesn't sink the call's median. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Status:** implemented in [183ac92c](https://github.com/idvorkin/context-grabber/commit/183ac92c); host-verified by `just test` (`MicSoundTests`, `CallSessionCountersTests`): a quiet room and speech score 100, wind near −30 dBFS scores under 50, a gust doesn't sink the call's median. A real call on AirPods, read on the Cockpit's call thread, not yet
 - **Issues:** context-grabber-ka1i (Igor, on a call 2026-11-25 via Larry d55e5d6cc81c and 21d0f99081d7: "background analysis of my voice and background noise", "if you can score it… convert down to a metric for a score")
 - **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
 
@@ -1594,12 +1594,12 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Talking in the wind on AirPods
 - **Given:** a live call on AirPods in call mode
 - **When:** I talk for five seconds with wind behind me
-- **Then:** the call's log has a line for those five seconds with a noise floor near −30 dBFS, my speech level, an SNR under 10 dB, the clips, the dropouts and a low score; five seconds when I say nothing show the floor and *no speech* with no SNR; and the call's audio and route are just as they were
+- **Then:** the call's log has a line for those five seconds with a noise floor near −30 dBFS, my speech level, an SNR under 10 dB, the clips, the dropouts and a low score, and the call's audio and route are just as they were
 
 ### User Story 1083:
 
 - **Summary:** When a call ends, one line scores the whole call's microphone, and Larry sees it on the call's thread
-- **Status:** implemented in [00ec1998](https://github.com/idvorkin/context-grabber/commit/00ec1998); host-verified by `just test` (`MicSoundTests`, `CallSessionCountersTests`): a quiet room and speech score 100, wind near −30 dBFS scores under 50, a gust doesn't sink the call's median. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Status:** implemented in [183ac92c](https://github.com/idvorkin/context-grabber/commit/183ac92c); host-verified by `just test` (`MicSoundTests`, `CallSessionCountersTests`): a quiet room and speech score 100, wind near −30 dBFS scores under 50, a gust doesn't sink the call's median. A real call on AirPods, read on the Cockpit's call thread, not yet
 - **Issues:** context-grabber-ka1i
 - **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
 

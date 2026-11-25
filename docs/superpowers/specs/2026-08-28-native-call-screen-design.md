@@ -862,8 +862,10 @@ the measuring never changes the audio or the route.
 | Dropouts | 15 | no silent pieces | 20% or more of the pieces digital silence |
 
 Each part is linear between its ends. Five seconds with no speech has no SNR part: its score is the other three
-scaled up to 100, and the line says *no speech*. A call with no speech at all still gets a score, and the summary says
-so.
+scaled up to 100, and the line says *no speech*. Five seconds of nothing but digital silence, a mic delivering
+nothing, score 0. A call with no speech at all still gets a score, and the summary says so. The call's summary leaves
+out a stretch shorter than half of five seconds, such as the last moment before hanging up, unless the call has
+nothing longer.
 
 ### The call's chat thread
 

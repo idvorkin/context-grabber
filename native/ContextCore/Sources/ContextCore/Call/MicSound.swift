@@ -58,6 +58,8 @@ public struct MicSound {
   static let clipLevel: Float = 0.999
   /// Speech less than this far over the floor is no speech.
   static let speechOverFloorDB = 6.0
+  /// Half of five seconds' pieces: a shorter window counts toward the call only when it has nothing longer.
+  static let countedPieces = 25
 
   private var partial: [Float] = []
   private var levels: [Double] = []
@@ -114,7 +116,7 @@ public struct MicSound {
     }
     if pieces > 0 {
       window.score = Self.score(
-        snrDB: window.snrDB, floorDB: window.floorDB ?? Self.silenceDB,
+        snrDB: window.snrDB, floorDB: window.floorDB,
         clipFraction: Double(clips) / Double(pieces), dropoutFraction: Double(dropouts) / Double(pieces))
       windows.append(window)
     }
@@ -128,6 +130,8 @@ public struct MicSound {
 
   /// The whole call: the median window score, so one gust doesn't sink it; the worst window; the median floor and SNR.
   public func callSummary() -> Summary {
+    let long = windows.filter { $0.pieces >= Self.countedPieces }
+    let windows = long.isEmpty ? self.windows : long
     var summary = Summary(windows: windows.count)
     guard !windows.isEmpty else { return summary }
     summary.score = Self.median(windows.map { Double($0.score) }).map { Int($0.rounded()) }
@@ -140,7 +144,9 @@ public struct MicSound {
 
   /// The spec's score: SNR 50 points (30 dB full, 0 dB none), floor 20 (−60 dBFS full, −30 none), clipping 15 (none
   /// full, 10% of pieces none), dropouts 15 (none full, 20% none); each linear. No speech: the other three, scaled to 100.
-  public static func score(snrDB: Double?, floorDB: Double, clipFraction: Double, dropoutFraction: Double) -> Int {
+  /// No floor, every piece digital silence: 0.
+  public static func score(snrDB: Double?, floorDB: Double?, clipFraction: Double, dropoutFraction: Double) -> Int {
+    guard let floorDB else { return 0 }
     func part(_ points: Double, _ value: Double, full: Double, zero: Double) -> Double {
       let t = (value - zero) / (full - zero)
       return points * min(1, max(0, t))

@@ -118,6 +118,39 @@ final class MicSoundTests: XCTestCase {
     XCTAssertEqual(summary.fields["speech"] as? Bool, false)
   }
 
+  func testDeadMicScoresZero() {
+    var meter = MicSound()
+    for _ in 0..<50 { meter.add([Float](repeating: 0, count: 1600), sampleRate: rate) }
+    let window = meter.closeWindow()
+    XCTAssertEqual(window.dropouts, 50)
+    XCTAssertNil(window.floorDB)
+    XCTAssertEqual(window.score, 0)
+    XCTAssertEqual(meter.callSummary().score, 0)
+  }
+
+  func testShortClosingStretchDoesNotCountTowardTheCall() {
+    var meter = MicSound()
+    for _ in 0..<30 { meter.add(tone(0.0007), sampleRate: rate) }
+    for _ in 0..<20 { meter.add(tone(0.14), sampleRate: rate) }
+    _ = meter.closeWindow()
+    // "Bye" in the last 0.3 s: all speech, so its floor is speech level and it scores low.
+    for _ in 0..<3 { meter.add(tone(0.14), sampleRate: rate) }
+    XCTAssertLessThan(meter.closeWindow().score, 100)
+    let summary = meter.callSummary()
+    XCTAssertEqual(summary.windows, 1)
+    XCTAssertEqual(summary.score, 100)
+    XCTAssertEqual(summary.worst, 100)
+  }
+
+  func testShortCallStillGetsAScore() {
+    var meter = MicSound()
+    for _ in 0..<3 { meter.add(tone(0.0007), sampleRate: rate) }
+    _ = meter.closeWindow()
+    let summary = meter.callSummary()
+    XCTAssertEqual(summary.windows, 1)
+    XCTAssertNotNil(summary.score)
+  }
+
   func testScoreParts() {
     // The spec's table, each part linear between its ends.
     XCTAssertEqual(MicSound.score(snrDB: 30, floorDB: -60, clipFraction: 0, dropoutFraction: 0), 100)
@@ -126,5 +159,7 @@ final class MicSoundTests: XCTestCase {
     XCTAssertEqual(MicSound.score(snrDB: 30, floorDB: -45, clipFraction: 0, dropoutFraction: 0), 90)
     // No speech: the other three parts (50 points) scaled up to 100.
     XCTAssertEqual(MicSound.score(snrDB: nil, floorDB: -45, clipFraction: 0, dropoutFraction: 0), 80)
+    // No floor at all, nothing but digital silence: 0.
+    XCTAssertEqual(MicSound.score(snrDB: nil, floorDB: nil, clipFraction: 0, dropoutFraction: 1), 0)
   }
 }
