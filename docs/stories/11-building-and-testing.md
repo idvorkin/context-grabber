@@ -2261,7 +2261,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1638:
 
 - **Summary:** A story's link to a commit the pipeline's rebase replaced is renamed before the merge, not sent to review
-- **Status:** not implemented (bead context-grabber-zisx)
+- **Status:** implemented in [d8075e37](https://github.com/idvorkin/context-grabber/commit/d8075e37); verified on the host rung by `scripts/native/test-story-commits.sh` in `just test`, on a throwaway repository with a bare origin: a branch rebased onto a moved main passes with a note, pre-merge off the branch fails naming the rename, on the branch it renames the link and pushes it, and a second run has nothing to rename
 - **Issues:** bead context-grabber-zisx
 
 #### Use Case:
