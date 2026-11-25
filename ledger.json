@@ -43,18 +43,11 @@
    "until": "2026-11-26T06:02:32Z"
   },
   {
-   "id": 1631,
+   "id": 1633,
    "journey": "11-building-and-testing.md",
-   "branch": "native/walk-reds-links-3hj9",
-   "at": 1795592971.715688,
-   "until": "2026-11-26T07:49:31Z"
-  },
-  {
-   "id": 1632,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/ea-link-sim-install-3hj9",
-   "at": 1795594552.6021261,
-   "until": "2026-11-26T08:15:52Z"
+   "branch": "docs/story-1632-split-3hj9-6",
+   "at": 1795603428.142603,
+   "until": "2026-11-26T10:43:48Z"
   }
  ]
 }
