@@ -2,6 +2,7 @@
 # Story 1627: sim-slim.sh slims a lane simulator once, with the profile that keeps what the app's tests use, and never
 # fails its caller. A fake simslim records its calls.
 set -uo pipefail
+unset SIM_SLIM SIMSLIM
 here=$(cd "$(dirname "$0")" && pwd)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
