@@ -196,6 +196,10 @@ final class WhiteboardModel: ObservableObject {
   /// Ink not saved yet; a board on paper's page number says so (story 673: what a UI test waits on, not a fixed second).
   @Published var dirty = false
   var saveFailing = false
+  /// Story 1335: what's on the page that a save won't keep, by kind (`BoardMarkupCensus.text`), empty when ink only; and
+  /// what the last `board_markup_unsaved` line said.
+  var markupNotKept = ""
+  var saidNotKept = ""
   var marks = WhiteboardMarks()
   /// On paper: each stroke's box, for what's on screen (story 433), and the frame the last Send showed.
   var inkBoxes: [CGRect] = []

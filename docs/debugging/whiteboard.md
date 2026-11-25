@@ -156,7 +156,9 @@ to that event's own bullet; never join two events on one line.
   - **paper_selection** (#945), every selection PaperKit reports: `selected`, `strokes` (of those, the ink), `box` (their box in board points), `put_back` (a tap's selection taken straight back), `in_touch`, `touch_mode`, and the watch state when no touch was heard
   - **selection_label** (story 1095, #1045), each new label on the selection: `board`, `kind` (ink, text, part_text, group, part_group, connector, arrow, things, mixed), `label` (its words), `strokes` (how many are selected)
   - **paper_open**, with board: strokes, pages, `width` (a page's, 820), `ink` (the ink's box as shown), `editable` (false on a look-only board), `ms`
-  - **paper_not_ink**, with board, `elements` and strokes: something on the board that isn't a stroke and so wouldn't be saved
+  - **paper_not_ink**, with board, `elements` and strokes: something on the board that isn't a stroke and so wouldn't be saved, and (story 1335) `kinds`, what it is (as `board_markup_unsaved` gives them); once per board opening
+- **board_markup_added** (story 1335, bead context-grabber-lyr4), with board, `kind` (`shape`, `image`, `link`, `loupe`, `other`, or `duplicate_stroke`: two strokes sharing one id, which the board's tally counts once), `count` (how many of that kind now) and `elements`: one line each time a kind first appears on a real board or there are more of it. A real board keeps only ink, so each is something a reopen would lose
+- **board_markup_unsaved** (story 1335), with board, `kinds` (as `shape:1,duplicate_stroke:1`) and `trigger` (the save's): a save that left those behind, logged when what's left behind changes and at every close while there is any
 - `paper_probe` lines are in logs from before 2026-11-07 only: the trial on paper that wrote them is gone
 
 ## Ghosts on paper (stories 613–636, #636)

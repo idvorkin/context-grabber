@@ -108,7 +108,9 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
   /// What the column's own changes shouldn't report as a person's. Set only by the edit lane (PaperBoard+EditLane.swift).
   var quiet = false
   var inkFrames: [String: CGRect] = [:]
-  private var saidNotInk = false
+  /// Story 1335: what's on the page the board won't keep, and the element count it was last taken at.
+  var markupCensus: BoardMarkupCensus?
+  var censusElements = 0
   private var remembering: Task<Void, Never>?
   var redrawing: Task<Void, Never>?
   private var responding: Task<Void, Never>?
@@ -416,16 +418,7 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
     run?.facts.inkAdded += change.added.count
     run?.facts.inkMoved += change.moved.count
     run?.facts.inkRemoved += change.removed.count
-    if !saidNotInk, markup.subelements.count != frames.count {
-      // Only strokes are saved, and the tools offered only make strokes: this says if that ever stops being true.
-      saidNotInk = true
-      log.event(
-        "whiteboard",
-        [
-          "action": "paper_not_ink", "board": model.board.id, "elements": markup.subelements.count,
-          "strokes": frames.count,
-        ])
-    }
+    takeMarkupCensus(markup, frames: frames)
     let drawing = markup.inkDrawing
     model.changed(drawing)
     laps.lap("model")
