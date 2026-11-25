@@ -1,27 +1,6 @@
 {
  "reservations": [
   {
-   "id": 1339,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-wire-8kh",
-   "at": 1795627217.924288,
-   "until": "2026-11-26T17:20:17Z"
-  },
-  {
-   "id": 1340,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-wire-8kh",
-   "at": 1795627217.924288,
-   "until": "2026-11-26T17:20:17Z"
-  },
-  {
-   "id": 1341,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-wire-8kh",
-   "at": 1795627217.924288,
-   "until": "2026-11-26T17:20:17Z"
-  },
-  {
    "id": 1634,
    "journey": "11-building-and-testing.md",
    "branch": "native/ota-on-every-install",
@@ -55,6 +34,27 @@
    "branch": "?",
    "at": 1795633007.890164,
    "until": "2026-11-26T18:56:47Z"
+  },
+  {
+   "id": 1344,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-draw-8kh",
+   "at": 1795633523.4604318,
+   "until": "2026-11-26T19:05:23Z"
+  },
+  {
+   "id": 1345,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-draw-8kh",
+   "at": 1795633523.4604318,
+   "until": "2026-11-26T19:05:23Z"
+  },
+  {
+   "id": 1346,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-store-draw-8kh",
+   "at": 1795633523.4604318,
+   "until": "2026-11-26T19:05:23Z"
   }
  ]
 }
