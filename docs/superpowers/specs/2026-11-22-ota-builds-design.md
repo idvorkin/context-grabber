@@ -21,7 +21,8 @@ development-signed package to the Cockpit's `/builds` page, from where the iPad 
 
 - Replacing the cable or network install, or TestFlight. They stay as they are.
 - A login item or a daemon: the watcher runs in the foreground, kept running by whoever started it.
-- Building branches: the over-the-air build is always main.
+- Building branches: what `just ota` builds is always main. (A build installed on a device, from whatever commit, is
+  also copied to the page as it is: see "Every install lands on /builds".)
 - Making the loop faster in this change. The document lists the options with their estimated savings; each is its own
   change.
 
@@ -61,6 +62,19 @@ development-signed package to the Cockpit's `/builds` page, from where the iPad 
   poll. Other build failures stop the watcher with diagnostics in its local output.
 - Only one watcher runs at a time.
 
+## Every install lands on /builds
+
+Igor, 2026-11-25: "Why new builds not uploaded" — the page had one build from the morning while newer ones had gone
+straight to his devices. He wants the page never behind the devices, for every app.
+
+- Every install on a device, the network install to every device and the cable install to one, also puts the very
+  build it installed on the page as `grabber-<commit>.ipa`. Nothing is built or signed a second time.
+- It happens in the background after the install. The install and the launch don't wait for it, and a copy that
+  fails never fails the install; the outcome is one line in a local log.
+- When the page already has that commit's build, nothing is copied: the file is touched, so it shows as the newest.
+- A build from uncommitted changes goes up as `grabber-<commit>-dirty.ipa`, never under the clean commit's name.
+- The installed build is the Debug build the devices run; `just ota`'s is Release. Both are development-signed.
+
 ## The deploy document
 
 One document covers: the cable and network install to named devices and what *unavailable* means; waiting for a
@@ -80,3 +94,6 @@ each with an estimated saving.
   and the merged pull requests' titles; with a merge newer than that, it waits; with nothing new, it does nothing.
 - A watcher restarted between batches neither rebuilds the last build nor misses the next batch.
 - The deploy document is linked from the agent instructions and the testing guide.
+- After `just deploy` or `just native-run-device` installs a commit, the page lists `grabber-<that commit>.ipa` within
+  the copy's time, the install having finished without waiting for it; a second install of that commit copies
+  nothing; with the Cockpit unreachable, the install still succeeds and the log says the copy failed.

@@ -2150,3 +2150,38 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** one PR changed a view's parameters and merged, and another PR that calls the old way passed its pipeline before that merge
 - **When:** the agent runs `just pre-merge` on the second PR immediately before `gh pr merge`
 - **Then:** pre-merge ends with a FAIL line naming the compile error and a nonzero exit, and the PR doesn't merge
+
+---
+
+### User Story 1634:
+
+- **Summary:** Every build installed on a device is also on the Cockpit's /builds page, so the page is never behind the devices
+- **Status:** implemented on branch `native/ota-on-every-install` with BugKit's `ota-upload.sh` (bug-kit bead `bug-a5y`, its PR not merged yet; the hook does nothing until it is in `~/gits/bug-kit`); verified on the host by bug-kit's tests of the uploader and of `deploy-all.sh` with fake Xcode tools, a slow copy and a `tee` pipe; the uploader itself published `audio-debugger-89c1cabb.ipa` and `magic-monitor-2c84beaf.ipa` to /builds on 2026-11-25. No install was run here (an install restarts the app on Igor's devices)
+- **Why:** Igor, 2026-11-25 (via Larry): "Why new builds not uploaded", and "And any other updated apps": /builds had only the 06:40 build while newer ones went straight to his devices.
+- **Issues:** bead `context-grabber-59m0` (bug-kit `bug-a5y`)
+
+#### Use Case:
+- **As Igor,** installing from the Cockpit's /builds page when the Mac can't reach the iPad
+- **I want to** find there the build the devices last got
+- **so that** the page is never behind what is installed, without anyone remembering to run `just ota`
+
+#### Acceptance Criteria:
+- **Scenario:** A network install
+- **Given:** BugKit's `ota-upload.sh` is in `~/gits/bug-kit` and BugKit's config names the builds folder
+- **When:** `just deploy` installs a commit on one device or more
+- **Then:** that installed bundle is copied to /builds as `grabber-<first 8 of the commit>.ipa` in the background, the deploy goes on to its build check without waiting, and its outcome is a line in `~/tmp/agent/notes/ota-uploads.log`
+
+- **Scenario:** A cable install
+- **Given:** the same
+- **When:** `just native-run-device` installs on the phone or the iPad
+- **Then:** the installed bundle is copied the same way, before the launch, which doesn't wait for it
+
+- **Scenario:** Already on the page, or uncommitted
+- **Given:** /builds already has that commit's ipa, or the build was made from uncommitted changes
+- **When:** an install finishes
+- **Then:** an existing ipa is touched rather than copied, so it shows as the newest; an uncommitted build goes up as `grabber-<commit>-dirty.ipa`, never under the clean name
+
+- **Scenario:** The Cockpit is unreachable
+- **Given:** the copy fails
+- **When:** the install finishes
+- **Then:** the install and the launch still succeed, nothing on the page is replaced, and the log says the copy failed
