@@ -95,6 +95,7 @@ final class WhiteboardQuestionsLooksTests: XCTestCase {
     board.move(answered, to: CGPoint(x: 5_000, y: 400))
     let short = WhiteboardQuestions.strip(board.card(answered)!)
     XCTAssertLessThanOrEqual(
-      short.x + WhiteboardQuestions.stripWidth, BoardPages.pageWidth, "a short card dragged to the edge keeps its strip on it")
+      short.x + WhiteboardQuestions.stripWidth, BoardPages.pageWidth,
+      "a short card dragged to the edge keeps its strip on it")
   }
 }
