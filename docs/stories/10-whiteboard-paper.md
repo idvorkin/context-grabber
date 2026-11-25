@@ -1876,7 +1876,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1343:
 
 - **Summary:** Undo still takes back my stroke after the board redrew missing ink
-- **Status:** in progress
+- **Status:** fixed in [823b9fbf](https://github.com/idvorkin/context-grabber/commit/823b9fbf); verified by host tests (`BoardUndoRedrawTests`) and the iPad Pro 11-inch (M5) simulator (`WhiteboardPaperGhostsUITests`' OneUndo, OneUndo after a heal and KeepAll, and `WhiteboardUndoRedrawUITests`, 3/3 each); not yet on the iPad
 - **Issues:** bead context-grabber-pmv6
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Ink an Undo or Redo leaves in place is on the screen too*
 
