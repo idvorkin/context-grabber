@@ -444,11 +444,15 @@ final class BoardStoreCacheTests: XCTestCase {
     cache.enqueue([["op": "add_strokes", "strokes": [stroke("s3")]]])
     _ = cache.freeze(batchID: "b1", deviceAt: at)
     XCTAssertEqual(cache.receive(status: 502, answer: [:], me: me, slug: "7c2e"), .keepQueued, "the answer is lost")
-    cache.pull(rev: 7, batches: [
-      ["rev": 6, "batch_id": "b1", "kind": "ops", "device": .string(me.device), "by": "igor", "at": .string(me.at),
-       "ops": [["op": "add_strokes", "ids": ["s3"], "bodies": ["s3": stroke("s3")]]]],
-      webBatch(rev: 7, ops: [["op": "set", "ids": ["s3"], "bodies": ["s3": stroke("s3", x: 99)]]]),
-    ])
+    cache.pull(
+      rev: 7,
+      batches: [
+        [
+          "rev": 6, "batch_id": "b1", "kind": "ops", "device": .string(me.device), "by": "igor", "at": .string(me.at),
+          "ops": [["op": "add_strokes", "ids": ["s3"], "bodies": ["s3": stroke("s3")]]],
+        ],
+        webBatch(rev: 7, ops: [["op": "set", "ids": ["s3"], "bodies": ["s3": stroke("s3", x: 99)]]]),
+      ])
     XCTAssertEqual(cache.rev, 7)
     XCTAssertEqual(cache.receive(status: 200, answer: answer(rev: 6, applied: [0]), me: me, slug: "7c2e"), .done)
     XCTAssertEqual(cache.things["s3"]?.body, stroke("s3", x: 99), "the web's newer body stays")
