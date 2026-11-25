@@ -211,8 +211,8 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 1169:
 
-- **Summary:** A tap on a hidden card's '?' brings the card back as it was
-- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
+- **Summary:** A tap on a hidden card's '?' brings the card back full
+- **Status:** implemented in 'c8c3adc3', the drag's cancel reset and the eraser's hold in 'ab30e78b', back full (no longer as it was) in '99ab9be0'. Verified by host tests (`WhiteboardQuestionsTests`: `testAnyCardHidesToAQuestionMarkAtItsLeftEndAndComesBackAsItWas`, `testTheEraserTakesAnAnsweredQuestionMarkAndLeavesAnOpenOne`, `testABoardKeptBeforeHidingReadsAsShown`; `just test`), the Mac build, and on the iPad simulator (`WhiteboardQuestionUITests.testAQuestionHidesToAMarkAndDrags`, 3/3 with the class, and the whiteboard smoke); not yet on the iPad
 - **Issues:** [#1387](https://github.com/idvorkin/context-grabber/issues/1387)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Hiding a card*
 
@@ -225,7 +225,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** I bring a hidden card back
 - **Given:** a hidden card's '?' on the board, open or answered
 - **When:** I tap the '?'
-- **Then:** the card is back as it was (open, answered, or a folded chip) where the '?' was, and no popup opens
+- **Then:** the card is back full (open or answered, a short line too, #1387 part 3) where the '?' was, and no popup opens
 
 ---
 

@@ -168,8 +168,8 @@ works. Never the answer's words.
   *Reopen* puts it back where it was, as it was. An archived card never lands again by itself.
 - *Thinking* on an open card opens its conversation with Larry in the popup; Igor's words go there and Larry's replies
   show, the ask stays open, and the card reads *… \<question\> ···* until an option or his words answer it.
-- Any card collapses to a bare *?* where its left end was; a tap on the *?* brings it back as it was, and it stays hidden
-  across a reopen.
+- Any card collapses to a round where its left end was (an open *?*, an answered *✓*); a tap on the round opens it out
+  to full, and it stays round across a reopen.
 - A card, a chip or a *?* drags to anywhere on the page and stays there, across a reopen; a drag opens nothing.
 - The eraser takes an answered card and leaves an open one.
 - Offline or with no address nothing is read, and the board's cards stay as they were.

@@ -39,7 +39,7 @@ extension WhiteboardQuestions {
     guard let i = cards.firstIndex(where: { $0.id == id }) else { return nil }
     cards[i].hidden = look == .round
     cards[i].collapsed = look == .short
-    // A card coming back from round is kept inside the page by its own width (`hide`).
+    // A card coming back from round is kept inside the page by a full card's width, so its strip stays on it (`hide`).
     if look != .round { hide(id, false) }
     return look
   }
