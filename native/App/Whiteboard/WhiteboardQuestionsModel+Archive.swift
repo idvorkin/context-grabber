@@ -16,8 +16,11 @@ extension WhiteboardQuestionsModel {
     /// Cockpit takes them once.
     var pendingWords: String?
     var pendingID: String?
-    /// A read or a send that failed, with the state that explains it: shown copyably in the popup.
+    /// A read that failed, with the state that explains it: shown copyably in the popup until a read works.
     var problem: String?
+    /// A send that failed, with the state that explains it: shown copyably in the popup until a send works, so a
+    /// working read doesn't clear it.
+    var sendProblem: String?
   }
 
   // MARK: Archive
@@ -64,7 +67,7 @@ extension WhiteboardQuestionsModel {
         for: WhiteboardQuestions.talkRequest(ask: ask, cockpit: cockpit))
       let status = (response as? HTTPURLResponse)?.statusCode ?? 0
       guard status == 200, let messages = ChatWire.messages(data) else {
-        return talkFailed(ask, "the conversation didn't load: HTTP \(status)")
+        return talkFailed(ask, \.problem, "the conversation didn't load: HTTP \(status)")
       }
       var talk = talk(ask)
       let was = talk.messages.count
@@ -81,7 +84,7 @@ extension WhiteboardQuestionsModel {
           ])
       }
     } catch {
-      talkFailed(ask, "the conversation didn't load: \(error.localizedDescription)")
+      talkFailed(ask, \.problem, "the conversation didn't load: \(error.localizedDescription)")
     }
   }
 
@@ -102,26 +105,26 @@ extension WhiteboardQuestionsModel {
       switch ChatSend.outcome(status: status, body: data) {
       case .sent:
         log.event("whiteboard_questions", ["action": "talk_sent", "board": boardID, "ask": card.ask])
-        talks[card.ask]?.problem = nil
+        talks[card.ask]?.sendProblem = nil
         talks[card.ask]?.pendingWords = nil
         talks[card.ask]?.pendingID = nil
         await readTalk(card.ask)
         return true
       case .refused(let status, let reason):
-        talkFailed(card.ask, "Larry's Cockpit refused the message (HTTP \(status)): \(reason)")
+        talkFailed(card.ask, \.sendProblem, "Larry's Cockpit refused the message (HTTP \(status)): \(reason)")
       case .retry(let reason):
-        talkFailed(card.ask, "the message didn't go: \(reason); try again")
+        talkFailed(card.ask, \.sendProblem, "the message didn't go: \(reason); try again")
       }
     } catch {
-      talkFailed(card.ask, "the message didn't go: \(error.localizedDescription); try again")
+      talkFailed(card.ask, \.sendProblem, "the message didn't go: \(error.localizedDescription); try again")
     }
     return false
   }
 
-  private func talkFailed(_ ask: String, _ why: String) {
+  private func talkFailed(_ ask: String, _ kind: WritableKeyPath<Talk, String?>, _ why: String) {
     var talk = talk(ask)
-    let first = talk.problem == nil
-    talk.problem = why
+    let first = talk[keyPath: kind] == nil
+    talk[keyPath: kind] = why
     talks[ask] = talk
     guard first else { return }
     log.event("error", ["where": "whiteboard_questions_talk", "board": boardID, "ask": ask, "message": why])

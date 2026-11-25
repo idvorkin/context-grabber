@@ -142,7 +142,7 @@ to that event's own bullet; never join two events on one line.
 - `error` with where:
   - whiteboard_questions_asks (board, why: what asked for the read, message: the HTTP status or network error — the open asks could not be read, once until a read succeeds)
   - whiteboard_questions_answers (board, message: the answers could not be read, once until a read succeeds)
-  - whiteboard_questions_talk (board, ask, message: the ask's conversation could not be read or Igor's words didn't go, once until a read or send works, stories 1316–1317)
+  - whiteboard_questions_talk (board, ask, message: the ask's conversation could not be read or Igor's words didn't go, a read's once until a read works and a send's once until a send works, stories 1316–1317)
 - the cards keep what they showed
 
 ## A board on paper (stories 590–626, 666, #636)

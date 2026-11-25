@@ -83,7 +83,7 @@ struct WhiteboardQuestionTalk: View {
           .accessibilityLabel("\(message.fromIgor ? "You" : "Larry"): \(message.text)")
           .accessibilityIdentifier("whiteboard-question-talk-message")
       }
-      if let problem = talk.problem {
+      ForEach([talk.problem, talk.sendProblem].compactMap { $0 }, id: \.self) { problem in
         BugProblemView(
           problem: .grabber(
             problem, context: "WhiteboardQuestionTalk",
