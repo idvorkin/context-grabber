@@ -1106,8 +1106,8 @@ private struct MessageBubble: View {
         problem: .grabber(
           message.text, context: "ChatThreadView.skillReply",
           extra: [
-            "thread": .string(thread), "message": .string(message.id), "skill": .string(ChatSpeaker.skillAuthor(message) ?? ""),
-            "ts": .string(message.ts),
+            "thread": .string(thread), "message": .string(message.id),
+            "skill": .string(ChatSpeaker.skillAuthor(message) ?? ""), "ts": .string(message.ts),
           ]), logger: logger)
     }
   }

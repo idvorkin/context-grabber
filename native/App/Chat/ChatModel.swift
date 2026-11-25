@@ -538,7 +538,12 @@ final class ChatModel: ObservableObject {
       threadQuiet.remove(key)
       threadProblem[key] = nil
       if let last = rows.last, last.isError, last.id != before {
-        log.event("chat", ["action": "reply_failed", "thread": key, "message": last.id, "skill": ChatSpeaker.skillAuthor(last) ?? ""])
+        log.event(
+          "chat",
+          [
+            "action": "reply_failed", "thread": key, "message": last.id,
+            "skill": ChatSpeaker.skillAuthor(last) ?? "",
+          ])
       }
       logOutbox(key, rows)
       // A sent message the Cockpit's thread now holds is done with the outbox.

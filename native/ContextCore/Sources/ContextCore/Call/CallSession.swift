@@ -21,8 +21,8 @@ public enum CallState: String, Sendable { case idle, connecting, live, ended }
 public enum CaptionWho: String, Sendable { case igor, larry, tool, note }
 
 extension CaptionWho {
-  /// Story 1077 (the Cockpit's story 322): what is Larry's own, drawn in his purple. The tool lines and notes he puts in
-  /// himself, and on Direct his spoken lines; on the other backends the voice speaking is Tony.
+  /// Story 1077 (the Cockpit's story 322): what is Larry's own, drawn in his purple. The tool lines and notes he puts
+  /// in himself, and on Direct his spoken lines; on the other backends the voice speaking is Tony.
   public func isLarrysOwn(on backend: CallBackend) -> Bool {
     switch self {
     case .tool, .note: return true
