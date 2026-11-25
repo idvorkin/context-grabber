@@ -195,6 +195,13 @@
    "branch": "native/board-store-clash-t12b",
    "at": 1795583595.9333382,
    "until": "2026-11-26T05:13:15Z"
+  },
+  {
+   "id": 1626,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/nightly-all-3rk",
+   "at": 1795583606.318187,
+   "until": "2026-11-26T05:13:26Z"
   }
  ]
 }
