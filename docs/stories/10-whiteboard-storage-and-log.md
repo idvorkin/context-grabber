@@ -1425,7 +1425,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1339:
 
 - **Summary:** With the beta switch off, boards are exactly as they were
-- **Status:** in progress (lane 76)
+- **Status:** the switch (off by default) in [ffe50e82](https://github.com/idvorkin/context-grabber/commit/ffe50e82); verified on the iPad Pro 11-inch (M5) simulator (`WhiteboardCockpitBoardsUITests.testOffTheListHasNoCockpitSection`)
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
 
@@ -1443,7 +1443,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1340:
 
 - **Summary:** With the beta switch on, the boards list shows the Cockpit's boards
-- **Status:** in progress (lane 76)
+- **Status:** in [ffe50e82](https://github.com/idvorkin/context-grabber/commit/ffe50e82); verified by host tests (`CockpitBoardStoreTests`) and on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testOnTheListShowsTheCockpitsBoards`); the real Cockpit's `GET /boards` (main fa759b1) read from the Mac answers `{"boards": [], "contract": 2}`, which lists as *No boards in the Cockpit yet*
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
 
@@ -1461,7 +1461,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1341:
 
 - **Summary:** A Cockpit board's waiting saves survive a relaunch and go up one at a time
-- **Status:** in progress (lane 76)
+- **Status:** the sync pass and the copy on disk (`CockpitBoardSync`, `CockpitBoardDisk`) in [ffe50e82](https://github.com/idvorkin/context-grabber/commit/ffe50e82); verified by host tests (`CockpitBoardStoreTests`); not yet driven by the app, which sends saves once drawing on a Cockpit board lands
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
 
