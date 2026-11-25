@@ -16,6 +16,11 @@ to that event's own bullet; never join two events on one line.
 
 - `board_lab` action: session with name (the recorded session asked for), status (the fake Cockpit's HTTP answer, 0 when the request failed) and error (the request's error, empty when it was sent): whether the fake Cockpit accepted the lab's request to play a recorded session on the first board message's thread, once per launch that asks for one
 
+## Boards from the Cockpit (beta) (stories 1339–1341, spec 2026-11-22-boards-in-the-cockpit-design.md, *Trying it before the rollout*)
+
+- `board_store` action: listed with reason (open / pull / switched_on) and boards: how many live boards the Cockpit store's list gave, each time the *From the Cockpit* section reads it with the switch on
+- `error` with where: cockpit_boards, reason (open / pull / switched_on), message (the HTTP status or the network error) and cockpit (the address asked): the store's boards list didn't load, once per spell until a list loads again; the section shows the copyable problem, context WhiteboardListView.cockpitBoards
+
 ## The PaperKit board
 
 - `paperkit_board` with `action` set to `opened` as the scratch page is about to appear. `inks` lists the picker’s configured PencilKit ink identifiers, `shapes` and `features` count the enabled shapes and features, and `tool` holds the page’s drawing ink identifier or `other` for a non-inking tool.
