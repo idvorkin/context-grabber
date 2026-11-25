@@ -228,8 +228,18 @@ default. It is for trying the store while Larry and the app build it, not for Ig
 - **The iPad talks to the Cockpit one save at a time**: it fetches what it missed before it sends, sends its oldest
   waiting save, waits for that answer, and only then sends the next. Refused changes become the copyable notes the
   *Offline* section describes; ink refused because the board was deleted waits for *Keep my ink as a new board*.
-- Drawing on a Cockpit board from the iPad comes in the next step of this switch; until then a Cockpit board is
-  listed, not opened.
+- **Drawing on a Cockpit board.** Tapping a board in *From the Cockpit* opens it on a plain pen canvas: the Cockpit's
+  ink as the iPad last saw it, plus any saves still waiting. This canvas is the store's own trial surface, not the
+  iPad's full board: no Larry turns, outline, folds or paper yet, just ink and the eraser.
+  - Each stroke drawn or erased is a save. A line under the canvas says where the board stands: *Saving…*, *Saved ·
+    version 4*, *2 saves waiting* while offline, or the copyable *Cockpit not answering* problem.
+  - A save the Cockpit refuses is taken back off the canvas at once (the board shows the Cockpit's ink, not the refused
+    stroke), and a copyable note under the canvas says what was refused, why, and who changed it when.
+  - When the board was deleted on another device, ink drawn on it isn't lost: the note offers **Keep my ink as a new
+    board**, which makes a new Cockpit board named for the old one plus *(kept ink)* holding that ink, and opens it.
+    **Let it go** drops the ink.
+  - Until the Cockpit takes saves from the iPad, the saves go only to a Cockpit a test names; on the real Cockpit the
+    board opens and shows its ink, and drawing on it waits with *Saves wait: the Cockpit doesn't take them yet*.
 
 ## Decided (Igor, 2026-11-24, in his Inbox)
 

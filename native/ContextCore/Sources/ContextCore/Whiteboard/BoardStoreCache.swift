@@ -242,14 +242,19 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
   // MARK: What the device shows
 
   /// The copy with the device's own landed and unsent saves on top: what a board opens to.
-  public var view: [String: Thing] {
+  public var view: [String: Thing] { shown.things }
+
+  /// `view`'s ids in draw order (erased ones included: check `erased`).
+  public var viewOrder: [String] { shown.order }
+
+  private var shown: BoardStoreCache {
     var copy = self
     for batch in awaitingPull + queue {
       for op in batch.ops {
         copy.apply(Self.landings(of: op, things: copy.things), rev: rev + 1, author: Author(device: "", by: "", at: ""))
       }
     }
-    return copy.things
+    return copy
   }
 
   // MARK: Per id

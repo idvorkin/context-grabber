@@ -1485,3 +1485,57 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a Cockpit board the iPad is catching up on
 - **When:** the Cockpit's answer to *what did I miss* carries no version
 - **Then:** the pass stops having sent nothing and reports the problem, never a clean pass
+
+### User Story 1344:
+
+- **Summary:** A stroke drawn on a Cockpit board is saved to the Cockpit
+- **Status:** in progress (lane 76)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
+
+#### Use Case:
+- **As someone** trying the Cockpit board store on the iPad
+- **I want to** draw on a Cockpit board and see it saved
+- **so that** I can tell my ink reached the store
+
+#### Acceptance Criteria:
+- **Scenario:** One stroke on an empty Cockpit board
+- **Given:** Boards from the Cockpit (beta) is on and the Cockpit holds an empty board
+- **When:** I open it from *From the Cockpit* and draw one stroke
+- **Then:** the line under the canvas says *Saving…* and then *Saved · version 1*, and the Cockpit's copy of the board holds that stroke
+
+### User Story 1345:
+
+- **Summary:** A refused stroke is taken back off a Cockpit board, with a note saying why
+- **Status:** in progress (lane 76)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
+
+#### Use Case:
+- **As someone** drawing on a Cockpit board that the web and Larry change too
+- **I want to** see at once when the Cockpit refuses what I drew
+- **so that** the board never shows ink the Cockpit doesn't hold
+
+#### Acceptance Criteria:
+- **Scenario:** The Cockpit refuses a stroke
+- **Given:** a Cockpit board open on the iPad with one saved stroke, and the Cockpit about to refuse the next save
+- **When:** I draw a second stroke
+- **Then:** the second stroke goes back off the canvas, the board shows the one saved stroke, and a copyable note under the canvas says what was refused and why
+
+### User Story 1346:
+
+- **Summary:** Ink drawn on a deleted Cockpit board can be kept as a new board
+- **Status:** in progress (lane 76)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
+
+#### Use Case:
+- **As someone** who drew on a board another device deleted meanwhile
+- **I want to** keep what I drew instead of losing it
+- **so that** a delete elsewhere never throws away my ink
+
+#### Acceptance Criteria:
+- **Scenario:** Ink refused because the board was deleted
+- **Given:** a Cockpit board deleted on another device after the iPad last saw it, and a stroke drawn on it on the iPad
+- **When:** the iPad hears the board is deleted
+- **Then:** the note offers *Keep my ink as a new board* and *Let it go*; keeping it makes a Cockpit board named for the old one plus *(kept ink)* with that stroke, and letting it go drops the stroke
