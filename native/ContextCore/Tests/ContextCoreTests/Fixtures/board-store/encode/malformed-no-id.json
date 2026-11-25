@@ -1,0 +1,43 @@
+{
+  "expect" : {
+    "error" : "malformed record strokes[1]"
+  },
+  "input" : {
+    "after" : {
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-a",
+          "pts" : [
+            [
+              0,
+              0,
+              0.5
+            ],
+            [
+              10,
+              4,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        },
+        {
+          "pts" : [
+
+          ]
+        }
+      ],
+      "v" : 1
+    },
+    "before" : {
+      "strokes" : [
+
+      ],
+      "v" : 1
+    }
+  },
+  "name" : "malformed-no-id",
+  "story" : "1299",
+  "why" : "A record without an id is an error naming it, never skipped."
+}

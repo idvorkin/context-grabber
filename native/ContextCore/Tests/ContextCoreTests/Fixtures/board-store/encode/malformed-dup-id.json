@@ -1,0 +1,45 @@
+{
+  "expect" : {
+    "error" : "malformed record objects[0]"
+  },
+  "input" : {
+    "after" : {
+      "objects" : [
+        {
+          "id" : "s-a",
+          "kind" : "text",
+          "text" : "x"
+        }
+      ],
+      "strokes" : [
+        {
+          "c" : "#1a1a1a",
+          "id" : "s-a",
+          "pts" : [
+            [
+              0,
+              0,
+              0.5
+            ],
+            [
+              10,
+              4,
+              0.59999999999999998
+            ]
+          ],
+          "w" : 2.5
+        }
+      ],
+      "v" : 1
+    },
+    "before" : {
+      "strokes" : [
+
+      ],
+      "v" : 1
+    }
+  },
+  "name" : "malformed-dup-id",
+  "story" : "1299",
+  "why" : "Two records of one id are an error naming the second."
+}

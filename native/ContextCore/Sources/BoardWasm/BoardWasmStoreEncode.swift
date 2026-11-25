@@ -12,12 +12,14 @@ import BoardCore
 #endif
 
 enum WebStoreEncode {
-  /// `{"before": board, "after": board, "erased"?: {id: record}}`: the answer `{ops, ignored}` or `{"error"}`.
+  /// `{"before": board, "after": board, "erased"?: {id: record}, "why"?: any}`: the answer `{ops, ignored}` or
+  /// `{"error"}`.
   static func answer(_ json: Any?) -> [String: Any] {
     let json = json as? [String: Any] ?? [:]
     guard let before = json["before"] as? [String: Any] else { return ["error": "no before"] }
     guard let after = json["after"] as? [String: Any] else { return ["error": "no after"] }
-    return BoardStoreEncode.encode(before: before, after: after, erased: json["erased"] as? [String: Any] ?? [:])
+    return BoardStoreEncode.encode(
+      before: before, after: after, erased: json["erased"] as? [String: Any] ?? [:], why: json["why"])
   }
 }
 

@@ -727,6 +727,17 @@ check(same(restored.applied, [0]) && restored.board.things['s-a'].erased === und
 const ahead = ask('bw_store_clash', { board: { rev: 4 }, base_rev: 9, device: 'ipad', by: 'igor', at: 't', ops: [{ op: 'add_strokes', strokes: [{ id: 's-1' }] }] });
 check(same(ahead.applied, []) && ahead.refused[0].reason === 'ahead' && ahead.rev === 4, `bw_store_clash refuses a base ahead of the board: ${JSON.stringify(ahead)}`);
 
+// The shared board-store goldens (cockpit-8kh, stories 1293–1329, 1299, 1300): every one through the wasm gives the
+// answer the host gives (StoreClashGoldenTests), as the Cockpit's vendored copy runs them.
+const goldens = path.join(root, 'native/ContextCore/Tests/ContextCoreTests/Fixtures/board-store');
+for (const [folder, exp] of [['clash', 'bw_store_clash'], ['encode', 'bw_store_encode']]) {
+  for (const name of fs.readdirSync(path.join(goldens, folder)).filter((n) => n.endsWith('.json')).sort()) {
+    const golden = JSON.parse(fs.readFileSync(path.join(goldens, folder, name), 'utf8'));
+    const got = ask(exp, golden.input);
+    check(isDeepStrictEqual(got, golden.expect), `${exp} golden ${folder}/${name}: ${JSON.stringify(got)}`);
+  }
+}
+
 for (const f of failures) console.log(`FAIL ${f}`);
 console.log(`${failures.length ? 'FAIL' : 'ok  '} board wasm: ${passed} checks passed, ${failures.length} failed (${names.length} recorded sessions, ${(fs.statSync(wasmPath).size / 1e6).toFixed(1)} MB module)`);
 process.exitCode = failures.length ? 1 : 0;

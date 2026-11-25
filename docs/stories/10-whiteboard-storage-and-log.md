@@ -1368,6 +1368,11 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** the device encodes the commit
 - **Then:** the changes come out as one bring-back, one erase, one change of the two moved strokes together, the new stroke, the group and the rename, in an order the Cockpit accepts as one batch
 
+- **Scenario:** A partial erase of a stroke another device moved
+- **Given:** a stroke the web moved after the iPad last saw it
+- **When:** the iPad erases part of it, leaving two pieces, and the commit is encoded and sent
+- **Then:** the stroke and its pieces go up as one replacement, which is refused naming the web's move, so the ink is not doubled
+
 ### User Story 1300:
 
 - **Summary:** A stroke keeps what the other device knows about it
