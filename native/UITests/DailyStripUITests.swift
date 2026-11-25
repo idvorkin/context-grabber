@@ -30,8 +30,17 @@ final class DailyStripUITests: XCTestCase {
     XCTAssertTrue(todayCount.appears(within: 5), app.debugDescription)
     XCTAssertTrue(app.staticTexts["strip-week-count-6"].exists, "seven days")
     XCTAssertEqual(todayCount.label, "\(start + 1)")
+    // #1493, story 572: the week's graph above the rows, today last, following − before Confirm; all seven rows
+    // still fit below it.
+    let graph = app.descendants(matching: .any)["strip-week-graph"]
+    XCTAssertTrue(graph.exists, app.debugDescription)
+    XCTAssertLessThan(graph.frame.maxY, todayCount.frame.minY, "above the rows")
+    XCTAssertLessThan(app.staticTexts["strip-week-count-6"].frame.maxY, app.windows.firstMatch.frame.maxY, "all fit")
+    let todayBar = { (graph.value as? String)?.split(separator: ",").last.map(String.init) ?? "" }
+    XCTAssertTrue(todayBar().hasSuffix(" \(start + 1)"), "today's bar: \(graph.value ?? "nil")")
     app.buttons["strip-week-minus-0"].tap()
     XCTAssertEqual(todayCount.label, "\(start)")
+    XCTAssertTrue(todayBar().hasSuffix(" \(start)"), "the bar follows − at once: \(graph.value ?? "nil")")
     XCTAssertEqual(balloons.value as? String, "\(start + 1)", "nothing saved before Confirm")
     app.buttons["strip-week-confirm"].tap()
     XCTAssertTrue(todayCount.waitForNonExistence(timeout: 5))
