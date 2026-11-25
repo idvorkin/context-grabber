@@ -1691,7 +1691,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** A lane boots a simulator that isn't slim
 - **Given:** simslim is installed and the simulator runs stock
 - **When:** sim-boot.sh brings it up for its lane
-- **Then:** it is slimmed once, keeping Siri and dictation, Health, iCloud, Photos and Widgets on, and the run waits for it to be booted again after the slim's reboot (a simulator that doesn't come back fails the boot); a simulator already slim, a Mac without simslim, `SIM_SLIM=0` or a failed slim all leave the run going as before
+- **Then:** it is slimmed once, keeping Siri and dictation, Health, iCloud, Photos and Widgets on, and the App Intents index a widget's tap needs, and the run waits for it to be booted again after the slim's reboot (a simulator that doesn't come back fails the boot); a simulator already slim, a Mac without simslim, `SIM_SLIM=0` or a failed slim all leave the run going as before
 
 ---
 
