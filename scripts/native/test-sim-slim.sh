@@ -27,7 +27,7 @@ run() { : >"$CALLS"; out=$(SIMSLIM=$tmp/simslim "$here/sim-slim.sh" UDID-1 2>&1)
 
 VERIFY=1 ON=0 run
 check "a stock simulator is slimmed with the kept categories" \
-  'grep -qx "on UDID-1 --except siri,health,icloud,photos" "$CALLS" && [ $status -eq 0 ] && [[ $out == *"slimmed UDID-1"* ]]'
+  'grep -qx "on UDID-1 --except siri,health,icloud,photos,widgets" "$CALLS" && [ $status -eq 0 ] && [[ $out == *"slimmed UDID-1"* ]]'
 
 check "the slim's reboot is waited for" '[ "$(tail -1 "$CALLS")" = "xcrun simctl bootstatus UDID-1 -b" ]'
 
