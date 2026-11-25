@@ -1577,3 +1577,111 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a live call
 - **When:** I hang up
 - **Then:** the session log shows the network watch stopping and the call's log being sent to the archive before the line that says how that send went; a call that never started watching the network logs no stop
+
+### User Story 1082:
+
+- **Summary:** Every five seconds of a call, the log says how the mic sounded: the noise floor, speech level, SNR, clips, dropouts and a 0–100 score
+- **Status:** implemented in [183ac92c](https://github.com/idvorkin/context-grabber/commit/183ac92c); host-verified by `just test` (`MicSoundTests`, `CallSessionCountersTests`): a quiet room and speech score 100, wind near −30 dBFS scores under 50, a gust doesn't sink the call's median. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Issues:** context-grabber-ka1i (Igor, on a call 2026-11-25 via Larry d55e5d6cc81c and 21d0f99081d7: "background analysis of my voice and background noise", "if you can score it… convert down to a metric for a score")
+- **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
+
+#### Use Case:
+- **As** Igor, talking to Larry while walking with AirPods in the wind
+- **I want to** have the call measure how my microphone sounds as it goes
+- **so that** Larry can tell me "AirPods plus wind, switch mic" instead of guessing why he can't hear me
+
+#### Acceptance Criteria:
+- **Scenario:** Talking in the wind on AirPods
+- **Given:** a live call on AirPods in call mode
+- **When:** I talk for five seconds with wind behind me
+- **Then:** the call's log has a line for those five seconds with a noise floor near −30 dBFS, my speech level, an SNR under 10 dB, the clips, the dropouts and a low score, and the call's audio and route are just as they were
+
+### User Story 1083:
+
+- **Summary:** When a call ends, one line scores the whole call's microphone, and Larry sees it on the call's thread
+- **Status:** implemented in [183ac92c](https://github.com/idvorkin/context-grabber/commit/183ac92c); host-verified by `just test` (`MicSoundTests`, `CallSessionCountersTests`): a quiet room and speech score 100, wind near −30 dBFS scores under 50, a gust doesn't sink the call's median. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Issues:** context-grabber-ka1i
+- **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
+
+#### Use Case:
+- **As** Igor, looking back at a call that went badly
+- **I want to** see one score for the call's microphone, with its worst five seconds
+- **so that** I can tell a bad mic call from a bad network call without reading the whole log
+
+#### Acceptance Criteria:
+- **Scenario:** Hanging up after a call with one gust of wind
+- **Given:** a two-minute call, quiet but for one windy five seconds
+- **When:** I hang up
+- **Then:** the call's log ends with a summary whose score is the median of its five-second scores, so the gust doesn't sink it, naming the worst five seconds' score and the floor and SNR across the call; the line goes to the Cockpit's archive with the rest of the call's log
+
+### User Story 1084:
+
+- **Summary:** Five seconds of a call when I say nothing show the floor and *no speech*
+- **Status:** implemented on branch native/call-noise-readout-ka1i; host-verified by `just test` (`MicSoundTests`): five seconds of a quiet room show the floor, no SNR, and score 100 from the other three parts. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Issues:** context-grabber-ka1i
+- **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
+
+#### Use Case:
+- **As** Igor, listening to Larry on a call
+- **I want to** have the quiet stretches say they had no speech
+- **so that** a silent five seconds isn't read as a bad mic
+
+#### Acceptance Criteria:
+- **Scenario:** Listening without speaking
+- **Given:** a live call in a quiet room
+- **When:** I say nothing for five seconds
+- **Then:** that line shows the noise floor and *no speech* with no SNR, and its score comes from the other three parts scaled to 100
+
+### User Story 1085:
+
+- **Summary:** Five seconds of talking with no pause are measured against the call's floor
+- **Status:** implemented on branch native/call-noise-readout-ka1i; host-verified by `just test` (`MicSoundTests`): a quiet room, then ten seconds of talking, closes two talking windows with the room's floor, the SNR against it, and a score of 100; talking before any pause is *no speech*. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Issues:** context-grabber-ka1i
+- **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
+
+#### Use Case:
+- **As** Igor, telling Larry something long without stopping
+- **I want to** have my speech measured even when I don't pause for five seconds
+- **so that** a long sentence doesn't read as *no speech* or cost the mic its SNR points
+
+#### Acceptance Criteria:
+- **Scenario:** Talking straight through five seconds
+- **Given:** a live call in a quiet room that has already had a pause
+- **When:** I talk for five seconds without a pause
+- **Then:** that line shows my speech level and an SNR against the floor of the last pause, and a full score
+
+### User Story 1086:
+
+- **Summary:** A mic that mostly delivers digital silence scores near 0
+- **Status:** implemented on branch native/call-noise-readout-ka1i; host-verified by `just test` (`MicSoundTests`): fifty pieces of digital silence score 0, and forty-nine of silence with one faint piece score 1. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Issues:** context-grabber-ka1i
+- **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
+
+#### Use Case:
+- **As** Igor, on a call whose mic keeps zeroing out
+- **I want to** have the score say the mic is delivering nothing
+- **so that** Larry sees a dead mic, not a quiet room
+
+#### Acceptance Criteria:
+- **Scenario:** The mic drops out
+- **Given:** a live call
+- **When:** the mic delivers digital silence for most of five seconds
+- **Then:** that line's score is near 0, since only the pieces with sound earn floor, clipping and SNR points
+
+### User Story 1087:
+
+- **Summary:** The last moment before hanging up doesn't sink the call's score
+- **Status:** implemented on branch native/call-noise-readout-ka1i; host-verified by `just test` (`MicSoundTests`): one good window and a clipped 0.3 s goodbye make a summary of one window scoring 100, and a call shorter than that still gets a score. A real call on AirPods, read on the Cockpit's call thread, not yet
+- **Issues:** context-grabber-ka1i
+- **Spec:** [Native call — How the mic sounds](../superpowers/specs/2026-08-28-native-call-screen-design.md#how-the-mic-sounds)
+
+#### Use Case:
+- **As** Igor, saying goodbye to Larry and hanging up
+- **I want to** have the call's score ignore the scrap of time after its last five seconds
+- **so that** a word in the last moment doesn't become the call's worst five seconds
+
+#### Acceptance Criteria:
+- **Scenario:** Saying bye and hanging up
+- **Given:** a call whose five-second stretches all scored 100
+- **When:** I say "bye" and hang up a moment later
+- **Then:** the call's summary leaves out that last moment, under half of five seconds, and its score and worst stay 100

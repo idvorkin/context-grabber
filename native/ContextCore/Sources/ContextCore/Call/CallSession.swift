@@ -232,6 +232,8 @@ public final class CallSession {
   private var generation = 0
 
   private var framesSent = 0
+  /// Stories 1082 and 1083: how the mic sounded, per five seconds in `call_stats` and for the call at its ending.
+  private var micSound = MicSound()
   /// Binary frames the socket delivered — not what the speaker rendered; `audio.stats()` says that.
   private var framesReceived = 0
   private var bytesReceived = 0
@@ -661,15 +663,15 @@ public final class CallSession {
     statsTimer = deps.scheduler.after(Self.statsEveryMs) { [weak self] in
       guard let self, self.snapshot.state == .live else { return }
       let stats = self.deps.audio.stats()
-      self.log(
-        "call_stats",
-        [
-          "rx_kb": (Double(self.bytesReceived) / 1024).rounded(), "rx_frames": self.framesReceived,
-          "mic_frames": self.framesSent, "played_s": stats?.playedS ?? 0, "scheduled_s": stats?.scheduledS ?? 0,
-          "pending_s": stats?.pendingS ?? 0, "clock_running": stats?.clockRunning ?? false,
-          "playback": PlaybackStats.describe(stats), "odd_frames": stats?.oddFrames ?? 0,
-          "underruns": stats?.underruns ?? 0,
-        ])
+      var fields: [String: Any] = [
+        "rx_kb": (Double(self.bytesReceived) / 1024).rounded(), "rx_frames": self.framesReceived,
+        "mic_frames": self.framesSent, "played_s": stats?.playedS ?? 0, "scheduled_s": stats?.scheduledS ?? 0,
+        "pending_s": stats?.pendingS ?? 0, "clock_running": stats?.clockRunning ?? false,
+        "playback": PlaybackStats.describe(stats), "odd_frames": stats?.oddFrames ?? 0,
+        "underruns": stats?.underruns ?? 0,
+      ]
+      fields.merge(self.micSound.closeWindow().fields) { kept, _ in kept }
+      self.log("call_stats", fields)
       let absent = CallWatchdog.audioAbsent(
         now: self.deps.scheduler.now, lastTextAt: self.lastTextAt, lastAudioAt: self.lastAudioAt)
       self.setProblems { $0.audioNotArriving = absent }
@@ -783,6 +785,7 @@ public final class CallSession {
     }
     // Heard even while muted: "is my mic working" and "am I muted" are different questions.
     onLevel?(PCM.micLevel(samples))
+    micSound.add(samples, sampleRate: sampleRate)  // muted too: the floor is still worth knowing
     let restartWasSpent = micRestarted
     watchForZeros(samples)
     // This buffer is the old graph's: the one that made the zero watch restart the mic sends no probe.
@@ -1137,6 +1140,7 @@ public final class CallSession {
     socketOpen = false
     sentRoute = nil
     framesSent = 0
+    micSound = MicSound()
     framesReceived = 0
     bytesReceived = 0
     lastAudioAt = 0
@@ -1166,6 +1170,11 @@ public final class CallSession {
     closeLarryRow()
     promoteIgor()
     clearHeard()
+    // Story 1083: the last few seconds count too, then the whole call's mic in one line, ahead of the ending.
+    _ = micSound.closeWindow()
+    let micSummary = micSound.callSummary()
+    if micSummary.windows > 0 { log("call_mic_score", micSummary.fields) }
+    micSound = MicSound()
     let stats = deps.audio.stats()
     log(
       "call_ended",
