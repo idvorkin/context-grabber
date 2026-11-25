@@ -210,6 +210,8 @@ view:
   slowly iCloud answers, as for *Jump to board*. A board that was deleted, isn't on this
   device even after asking iCloud, or whose latest drawing didn't come down, says so in a copyable problem at the top
   of the thread, and the thread stays.
+- A board drawn on the Cockpit's web ink page isn't one the app can draw: its thread's *Board*, and *Jump to board* on
+  a picture from it, open the board's page in the browser instead (#1454; see the native links spec).
 - Any other thread has no *Board*, and a new chat has none until it lands in a board's thread.
 - The session log says each tap: the thread, the board, how the thread was known to be the board's, and whether it was
   found.
