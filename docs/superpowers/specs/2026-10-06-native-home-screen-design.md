@@ -210,7 +210,18 @@ than the week are not shown here. This replaces the counters' long press for one
 the sheet. The log has one `ui` event per day changed, action daily_strip, with the item, the day, the new value and
 `backdated` when the day is not today.
 
-Non-goals: choosing other items or adding new ones from the app, streaks, reminders, history charts.
+**The week at a glance** (Igor, 2026-11-25, #1493: *"Maybe add a little graph by day."*). Above the seven rows sits a
+small bar chart of the same seven days, oldest on the left and today on the right, so the shape of the week reads
+before the numbers do. Each bar is that day's count, the same number its row shows, counting the other devices
+too. A − or + moves its bar at once, before *Confirm*, and *Cancel* takes the bars back with the counts. Today's bar
+is in the counter's colour and the other days are a quieter shade of it; under each bar is the weekday's initial,
+with today's in bold. A day at 0 has no bar but keeps its place and its letter. There are no gridlines, no axis
+numbers and no totals or averages: it is a glance, not a score. The chart is short enough that all seven rows still
+fit below it on the phone, and it reads in light and dark. VoiceOver reads it as one element naming each day and its
+count.
+
+Non-goals: choosing other items or adding new ones from the app, streaks, reminders, history charts beyond the
+week's (no month or year views, no trend lines).
 
 Order, hiding and Reset in Settings work as before.
 

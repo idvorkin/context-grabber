@@ -9,6 +9,8 @@ public struct CounterWeek: Equatable, Sendable {
     public let daysAgo: Int
     /// "today · Sun, Oct 18", "yesterday · Sat, Oct 17", "3 days ago · Thu, Oct 15".
     public let label: String
+    /// The weekday, short ("Wed"), for the week's graph (#1493).
+    public let weekday: String
     /// What the other devices counted (#376): the count never goes below it, since only this device's share moves.
     let others: Int
     let savedOwn: Int
@@ -40,6 +42,7 @@ public struct CounterWeek: Equatable, Sendable {
       let own = try strip.ownValue(item, day: day)
       return Day(
         day: day, daysAgo: ago, label: DailyStrip.backdateLabel(ago, today: today, calendar: calendar),
+        weekday: DailyStrip.weekday(day, calendar: calendar),
         others: max(0, try strip.value(item, day: day) - own), savedOwn: own, own: own)
     }
   }
@@ -54,5 +57,26 @@ public struct CounterWeek: Equatable, Sendable {
     days.filter { $0.own != $0.savedOwn }.map {
       Change(day: $0.day, daysAgo: $0.daysAgo, own: $0.own, step: $0.own - $0.savedOwn, count: $0.count)
     }
+  }
+
+  /// One bar of the week's graph (#1493, story 572).
+  public struct Bar: Equatable, Sendable {
+    public let day: String
+    /// The weekday's initial under the bar: "W".
+    public let initial: String
+    public let count: Int
+    public let isToday: Bool
+  }
+
+  /// The seven days oldest first, today last, with the sheet's counts as they are now (unconfirmed steps included).
+  public var graph: [Bar] {
+    days.reversed().map {
+      Bar(day: $0.day, initial: String($0.weekday.prefix(1)), count: $0.count, isToday: $0.daysAgo == 0)
+    }
+  }
+
+  /// What VoiceOver reads for the graph: "Thu 0, Fri 0, … Wed 0".
+  public var graphLabel: String {
+    days.reversed().map { "\($0.weekday) \($0.count)" }.joined(separator: ", ")
   }
 }

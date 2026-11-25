@@ -51,7 +51,7 @@ struct DailyStripView: View {
         CheckFortnightSheet(label: b.label, fortnight: b.fortnight, strip: strip)
       }
     )
-    .sheet(item: $editing) { e in WeekSheet(label: e.label, week: e.week) { strip.save($0) } }
+    .sheet(item: $editing) { e in WeekSheet(label: e.label, color: e.color, week: e.week) { strip.save($0) } }
   }
 
   private var gymNote: String? {
@@ -122,14 +122,14 @@ struct DailyStripView: View {
     .frame(maxWidth: .infinity, minHeight: 28)
     .contentShape(Rectangle())
     .onTapGesture { withAnimation(.snappy) { strip.change(item, by: 1) } }
-    .onLongPressGesture { openWeek(item, label: label) }
+    .onLongPressGesture { openWeek(item, label: label, color: color) }
     .sensoryFeedback(.increase, trigger: count)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(label)
     .accessibilityValue(count > 0 ? "\(count)" : Self.spoken(note(item)))
     .accessibilityAddTraits(.isButton)
     .accessibilityAction { strip.change(item, by: 1) }
-    .accessibilityAction(named: "Edit the week") { openWeek(item, label: label) }
+    .accessibilityAction(named: "Edit the week") { openWeek(item, label: label, color: color) }
     .accessibilityAdjustableAction { direction in
       strip.change(item, by: direction == .increment ? 1 : -1)
     }
@@ -141,15 +141,16 @@ struct DailyStripView: View {
     backdating = Backdate(label: label, fortnight: fortnight)
   }
 
-  private func openWeek(_ item: DailyItem, label: String) {
+  private func openWeek(_ item: DailyItem, label: String, color: Color) {
     guard let week = strip.week(item) else { return }
-    editing = WeekEdit(label: label, week: week)
+    editing = WeekEdit(label: label, color: color, week: week)
   }
 }
 
 /// #342: the counter week being edited, while its sheet is up.
 private struct WeekEdit: Identifiable {
   let label: String
+  let color: Color
   let week: CounterWeek
   var id: String { week.item.rawValue }
 }
@@ -158,41 +159,27 @@ private struct WeekEdit: Identifiable {
 /// is saved until Confirm.
 private struct WeekSheet: View {
   let label: String
+  let color: Color
   @State var week: CounterWeek
   let confirm: (CounterWeek) -> Void
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
     NavigationStack {
-      List(Array(week.days.enumerated()), id: \.element.day) { index, day in
-        HStack(spacing: 12) {
-          Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.green)
-            .opacity(day.checked ? 1 : 0)
-            .accessibilityHidden(true)
-          Text(day.label).monospacedDigit()
-          Spacer(minLength: 8)
-          Button {
-            week.step(index, by: -1)
-          } label: {
-            Image(systemName: "minus.circle")
-          }
-          .accessibilityLabel("One fewer")
-          .accessibilityIdentifier("strip-week-minus-\(day.daysAgo)")
-          Text("\(day.count)").font(.body.weight(.semibold).monospacedDigit()).frame(minWidth: 24)
-            .contentTransition(.numericText())
-            .accessibilityIdentifier("strip-week-count-\(day.daysAgo)")
-          Button {
-            week.step(index, by: 1)
-          } label: {
-            Image(systemName: "plus.circle.fill")
-          }
-          .accessibilityLabel("One more")
-          .accessibilityIdentifier("strip-week-plus-\(day.daysAgo)")
+      List {
+        // #1493, story 572: the week at a glance, following − and + before Confirm.
+        Section {
+          CounterWeekGraph(week: week, label: label, color: color)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 0, trailing: 16))
         }
-        .font(.title3)
-        .buttonStyle(.borderless)  // two buttons in one row, each its own tap
-        .sensoryFeedback(.selection, trigger: day.count)
+        Section {
+          ForEach(Array(week.days.enumerated()), id: \.element.day) { index, day in
+            row(index, day)
+          }
+        }
       }
+      .listSectionSpacing(.compact)
       .navigationTitle(label)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
@@ -209,6 +196,36 @@ private struct WeekSheet: View {
       }
     }
     .presentationDetents([.large])  // all seven days at once (spec), never a half sheet that hides the last ones
+  }
+
+  private func row(_ index: Int, _ day: CounterWeek.Day) -> some View {
+    HStack(spacing: 12) {
+      Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.green)
+        .opacity(day.checked ? 1 : 0)
+        .accessibilityHidden(true)
+      Text(day.label).monospacedDigit()
+      Spacer(minLength: 8)
+      Button {
+        week.step(index, by: -1)
+      } label: {
+        Image(systemName: "minus.circle")
+      }
+      .accessibilityLabel("One fewer")
+      .accessibilityIdentifier("strip-week-minus-\(day.daysAgo)")
+      Text("\(day.count)").font(.body.weight(.semibold).monospacedDigit()).frame(minWidth: 24)
+        .contentTransition(.numericText())
+        .accessibilityIdentifier("strip-week-count-\(day.daysAgo)")
+      Button {
+        week.step(index, by: 1)
+      } label: {
+        Image(systemName: "plus.circle.fill")
+      }
+      .accessibilityLabel("One more")
+      .accessibilityIdentifier("strip-week-plus-\(day.daysAgo)")
+    }
+    .font(.title3)
+    .buttonStyle(.borderless)  // two buttons in one row, each its own tap
+    .sensoryFeedback(.selection, trigger: day.count)
   }
 }
 

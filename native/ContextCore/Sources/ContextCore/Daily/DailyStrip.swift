@@ -282,6 +282,17 @@ public struct DailyStrip {
     return "\(words) \u{00B7} \(f.string(from: d))"
   }
 
+  /// A day's short weekday, "Wed" (#1493); empty for a malformed key.
+  public static func weekday(_ key: String, calendar: Calendar = .current) -> String {
+    guard let d = date(key, calendar) else { return "" }
+    let f = DateFormatter()
+    f.calendar = calendar
+    f.timeZone = calendar.timeZone
+    f.locale = Locale(identifier: "en_US_POSIX")
+    f.dateFormat = "EEE"
+    return f.string(from: d)
+  }
+
   private static func date(_ key: String, _ calendar: Calendar) -> Date? {
     let p = key.split(separator: "-").compactMap { Int($0) }
     guard p.count == 3 else { return nil }

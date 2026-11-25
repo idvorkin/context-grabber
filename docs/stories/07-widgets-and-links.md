@@ -2222,3 +2222,31 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 - **Given:** a rounds timer is running
 - **When:** I press *Done* and stay in the app
 - **Then:** the card stays on the lock screen and the island and keeps moving from phase to phase, until that workout is paused (story 191), reset, or finished and shown its few minutes
+
+---
+
+### User Story 572:
+
+- **Summary:** The counter's week as a little graph by day
+- **Issues:** [#1493](https://github.com/idvorkin/context-grabber/issues/1493)
+- **Status:** in progress
+- **Spec:** [native home screen, "The week at a glance"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
+
+#### Use Case:
+- **As someone** who makes balloons and does magic for others
+- **I want to** see the week's counts as a small graph when I open a counter's week
+- **so that** the shape of my week reads at a glance, before I read the seven numbers
+
+#### Acceptance Criteria:
+- **Scenario:** The week's shape, changing as I fix it
+- **Given:** Balloons was 0, 0, 0, 1, 1, 3 over the six days before today and 0 today
+- **When:** I press and hold Balloons, then tap + on today
+- **Then:** above the seven rows a bar chart shows the seven days oldest to newest with bars of 0, 0, 0, 1, 1, 3, 0
+  and today marked, and today's bar rises to 1 at once, before *Confirm*
+
+- **Scenario:** Cancel takes the bars back
+- **Given:** the week sheet with today's bar raised by a +
+- **When:** I tap *Cancel* and press and hold Balloons again
+- **Then:** today's bar is back to what was saved
+
+---

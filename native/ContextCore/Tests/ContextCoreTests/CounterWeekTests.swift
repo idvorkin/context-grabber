@@ -54,4 +54,29 @@ final class CounterWeekTests: XCTestCase {
     XCTAssertEqual(week.days[4].count, 0)
     XCTAssertEqual(week.changes, [CounterWeek.Change(day: today, daysAgo: 0, own: 0, step: -1, count: 2)])
   }
+
+  // #1493, story 572: the week as a little graph, oldest on the left, today marked, following unconfirmed steps.
+  func testTheGraphRunsOldestToTodayWithEachDaysInitialAndFollowsSteps() throws {
+    let s = try strip()
+    // Igor's week on 2026-11-25 (a Wednesday): 0, 0, 0, 1, 1, 3, 0 from Thursday.
+    try s.set(.balloons, day: "2026-11-22", value: 1)
+    try s.set(.balloons, day: "2026-11-23", value: 1)
+    try s.set(.balloons, day: "2026-11-24", value: 3)
+    var week = try CounterWeek(.balloons, today: "2026-11-25", strip: s)
+    XCTAssertEqual(week.graph.map(\.count), [0, 0, 0, 1, 1, 3, 0])
+    XCTAssertEqual(week.graph.map(\.initial), ["T", "F", "S", "S", "M", "T", "W"])
+    XCTAssertEqual(week.graph.map(\.isToday), [false, false, false, false, false, false, true])
+    XCTAssertEqual(week.graph.map(\.day).last, "2026-11-25")
+    XCTAssertEqual(week.graphLabel, "Thu 0, Fri 0, Sat 0, Sun 1, Mon 1, Tue 3, Wed 0")
+    week.step(0, by: 1)  // today, before Confirm
+    week.step(1, by: -1)  // yesterday
+    XCTAssertEqual(week.graph.map(\.count), [0, 0, 0, 1, 1, 2, 1], "the bars follow the sheet's counts at once")
+  }
+
+  func testTheGraphCountsOtherDevicesToo() throws {
+    let s = try strip()
+    try s.mergePeer("ipad", month: "2026-10", rows: [StripRow(day: today, item: .magic, value: 2, updatedAt: 5)])
+    let week = try CounterWeek(.magic, today: today, strip: s)
+    XCTAssertEqual(week.graph.last?.count, 2, "the bar is the row's number, the iPad's included")
+  }
 }
