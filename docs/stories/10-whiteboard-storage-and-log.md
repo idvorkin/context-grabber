@@ -1209,7 +1209,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1330:
 
 - **Summary:** A board drawn on offline opens with my unsent ink and goes up oldest first
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app, which gets it behind the rollout setting (off by default)
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app, which gets it behind the rollout setting (off by default)
 - **Issues:** bead context-grabber-t12b; cockpit-8kh (Larry's store spec 2bf00b04, sections 3 and 6)
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
@@ -1227,7 +1227,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1331:
 
 - **Summary:** A save whose answer was lost lands once
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app
 - **Issues:** bead context-grabber-t12b; cockpit-8kh
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
@@ -1245,7 +1245,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1332:
 
 - **Summary:** My unsent change to something another hand changed meanwhile is refused on the device, by name
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app
 - **Issues:** bead context-grabber-t12b; cockpit-8kh
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*, *Two devices, one board, apart*
 
@@ -1263,7 +1263,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1333:
 
 - **Summary:** Ink refused for a deleted board waits for my answer
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: refused ink can become a new board
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*, *Offline: each device's copy and its unsent changes*
 
@@ -1281,7 +1281,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1334:
 
 - **Summary:** The iPad knows when it has seen every change, and fetches when it hasn't
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in PENDING; verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app
 - **Issues:** bead context-grabber-t12b; cockpit-8kh (Larry's store spec, section 6, from the Mac's review point 5)
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
