@@ -1083,7 +1083,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1293:
 
 - **Summary:** New ink always lands on a shared board, once
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [03d8316d](https://github.com/idvorkin/context-grabber/commit/03d8316d), restore and Larry's other cases in [050aa053](https://github.com/idvorkin/context-grabber/commit/050aa053); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: boards live in the Cockpit, any of iPad, web and Mac draws
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
 
@@ -1101,7 +1101,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1322:
 
 - **Summary:** A change to something changed since is refused by name
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [03d8316d](https://github.com/idvorkin/context-grabber/commit/03d8316d), restore and Larry's other cases in [050aa053](https://github.com/idvorkin/context-grabber/commit/050aa053); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
 
@@ -1119,7 +1119,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1323:
 
 - **Summary:** Nothing lands on a deleted board
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [03d8316d](https://github.com/idvorkin/context-grabber/commit/03d8316d), restore and Larry's other cases in [050aa053](https://github.com/idvorkin/context-grabber/commit/050aa053); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, at 2d7bbe90); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: deleted boards are kept forever, and refused ink can become a new board
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*
 
