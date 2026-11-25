@@ -721,6 +721,11 @@ check(clash.rev === 95 && same(clash.applied, [1, 2]) && clash.refused.length ==
 const gone = ask('bw_store_clash', { board: { rev: 3, deleted: { rev: 3, device: 'web', by: 'igor', at: 't' } }, base_rev: 3, device: 'ipad', by: 'igor', at: 't', ops: [{ op: 'rename', name: 'x' }] });
 check(same(gone.applied, []) && gone.refused[0].reason === 'deleted' && gone.refused[0].id === '@board', `bw_store_clash refuses on a deleted board: ${JSON.stringify(gone)}`);
 check(ask('bw_store_clash', { board: { rev: 1 } }).error === 'no base_rev', 'bw_store_clash without base_rev says so');
+const restored = ask('bw_store_clash', { board: { rev: 6, things: { 's-a': { rev: 5, device: 'ipad', by: 'igor', at: 't', erased: true } } }, base_rev: 5, device: 'ipad', by: 'igor', at: 't2', ops: [{ op: 'restore', ids: ['s-a'] }, { op: 'translate', below_y: 300, dy: 40 }, { op: 'select', ids: ['s-a'] }] });
+check(same(restored.applied, [0]) && restored.board.things['s-a'].erased === undefined && restored.refused.length === 1 && restored.refused[0].reason === 'unknown' && same(restored.missing_ids, []),
+  `bw_store_clash restores erased ink, refuses an op naming nothing, skips select: ${JSON.stringify(restored)}`);
+const ahead = ask('bw_store_clash', { board: { rev: 4 }, base_rev: 9, device: 'ipad', by: 'igor', at: 't', ops: [{ op: 'add_strokes', strokes: [{ id: 's-1' }] }] });
+check(same(ahead.applied, []) && ahead.refused[0].reason === 'ahead' && ahead.rev === 4, `bw_store_clash refuses a base ahead of the board: ${JSON.stringify(ahead)}`);
 
 for (const f of failures) console.log(`FAIL ${f}`);
 console.log(`${failures.length ? 'FAIL' : 'ok  '} board wasm: ${passed} checks passed, ${failures.length} failed (${names.length} recorded sessions, ${(fs.statSync(wasmPath).size / 1e6).toFixed(1)} MB module)`);
