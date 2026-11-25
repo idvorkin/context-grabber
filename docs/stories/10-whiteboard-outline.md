@@ -806,7 +806,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1292:
 
 - **Summary:** A margin-tap header is the one line tapped beside, even when a descender touches the next
-- **Status:** in progress (the fix proposed by Larry on the web side, cockpit-gvv)
+- **Status:** implemented in [40f68c9e](https://github.com/idvorkin/context-grabber/commit/40f68c9e) (Larry's fix from the web side, cockpit-gvv); verified by host tests (`BoardOutlineHeaderLineTests`, both failing on the old code) and `just test`; on Larry's Linux VM the board wasm (interface version 21) passes `test-board-wasm.mjs` (319 checks) and his golden header fixture goes 10 of 10 (7 of 10 on main); the whiteboard UI classes on the iPad Pro 11-inch (M5) simulator (rung 2, 2026-11-24: `WhiteboardDropRoomUITests` failed in the full run with more xcodebuilds than lanes and passed alone, and `WhiteboardGroupTapUITests` passed on retry, the canvas-not-drawing flake of context-grabber-7un4); not yet seen on the iPad
 - **Spec:** [Board ops](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Acceptance criteria*
 - **Issues:** Igor on the board, 2026-11-24 19:04, "why did it copy 2 lines to collapse"; 3 of his 5 margin taps that evening made two-line headers, and 9 of the 24 stored headers spanned more than one line (Larry, cockpit-gvv)
 
