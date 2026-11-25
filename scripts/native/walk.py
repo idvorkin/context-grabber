@@ -286,7 +286,8 @@ def main() -> int:
                     scripts[ref] = rc_row(r, f"{f.relative_to(ROOT)}", log)
             rc["mac"] = sh(["just", "native-build-mac"], out / "logs/mac.log", 1800)
         else:
-            scripts = {ref: {"outcome": "skip", "detail": "the host rung was not run this walk"} for ref in s}
+            scripts = {ref: {"outcome": "skip", "detail": "the host rung was not run this walk"} for ref in s
+                       if ref.split(":", 1)[1] not in SIM_SUITES}
         sim: dict[str, dict] = {}
         steps: dict[str, bool] = {}
         if not a.skip_sim:
@@ -311,7 +312,7 @@ def main() -> int:
         recipes = just_recipes()
         host_row = rc_row(rc["host"], "ContextCore's swift test")
         lint_row = rc_row(rc["lint"], "swift-format and SwiftLint")
-        script_rows = list(scripts.values())
+        script_rows = [row for ref, row in scripts.items() if ref.split(":", 1)[1] not in SIM_SUITES]
         step_row = lambda label: (None if not steps or label not in steps else
                                   {"outcome": "pass" if steps[label] else "fail", "detail": f"the ladder's {label} step"})
         mapped = {
