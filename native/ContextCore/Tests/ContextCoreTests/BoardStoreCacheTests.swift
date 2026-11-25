@@ -200,7 +200,7 @@ final class BoardStoreCacheTests: XCTestCase {
       "things": [
         ["id": "s1", "kind": "stroke", "body": stroke("s1"), "rev": 3, "device": "web-3f9a", "by": "igor", "at": "t"],
         [
-          "id": "g1", "kind": "group", "body": ["owner": "larry"], "rev": 4, "device": "web-3f9a", "by": "larry",
+          "id": "g1", "kind": "object", "body": ["owner": "larry"], "rev": 4, "device": "web-3f9a", "by": "larry",
           "at": "t",
         ],
       ],
@@ -474,5 +474,33 @@ final class BoardStoreCacheTests: XCTestCase {
     XCTAssertEqual(note.reason, "changed")
     XCTAssertEqual(note.author, web)
     XCTAssertTrue(note.local)
+  }
+
+  // The store's kinds (cockpit board-store-s1 a925f69): a thing the device adds, or pulls new, is kinded as the store
+  // kinds it, so the copy and the Cockpit's snapshot agree.
+  func testThingsTakeTheStoresKinds() {
+    var cache = board()
+    cache.enqueue([
+      ["op": "add_text", "id": "t1", "text": "hi"], ["op": "add_card", "id": "k1", "ask": "why?"],
+      ["op": "group", "id": "g1", "ids": ["s1"]], ["op": "header", "id": "h1", "ids": ["s2"]],
+      ["op": "connector", "id": "c1", "from": "s1", "to": "s2"], ["op": "overlay", "id": "o1"],
+    ])
+    _ = cache.freeze(batchID: "b1", deviceAt: at)
+    _ = cache.receive(status: 200, answer: answer(rev: 6, applied: [0, 1, 2, 3, 4, 5]), me: me, slug: "7c2e")
+    let mine = ["t1", "k1", "g1", "h1", "c1", "o1"].map { cache.things[$0]?.kind }
+    XCTAssertEqual(mine, ["object", "object", "object", "header", "connector", "object"])
+    cache.pull(
+      rev: 7,
+      batches: [
+        webBatch(
+          rev: 7,
+          ops: [
+            ["op": "add_text", "ids": ["t2"], "bodies": ["t2": ["text": "yo"]]],
+            ["op": "group", "ids": ["g2", "s1"], "bodies": ["g2": ["owner": "igor"], "s1": stroke("s1")]],
+            ["op": "header", "ids": ["h2"], "bodies": ["h2": [:]]],
+          ])
+      ])
+    XCTAssertEqual(["t2", "g2", "h2"].map { cache.things[$0]?.kind }, ["object", "object", "header"])
+    XCTAssertEqual(cache.things["s1"]?.kind, "stroke", "a member keeps its own kind")
   }
 }

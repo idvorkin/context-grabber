@@ -178,6 +178,10 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   author, erased; an erased thing keeps its body so a local `restore` can bring it back), `deleted`, `queue` (batches,
   oldest first; only `queue[0]` may be frozen), `setAside` (ops refused `deleted`), `notes` (refusals to show),
   `needsPull`, `needsReload`.
+- **Kinds** are the store's (cockpit `board-store-s1` a925f69): `stroke`, `object` (text, card, overlay, group),
+  `header`, `connector`, `board`, so a copy built from ops matches one downloaded. The fake Cockpit's store routes
+  follow that branch too (Larry's diff, msg d4af53f5b79d): `landed` in the answer, the door's checks and words,
+  `ahead` per id, batch ids per board, a delete as `{rev, device, by, at}`, a worker failure as a 503.
 - **Per id**: one function turns a storage op into the ids it lands with their bodies after (`add_strokes`' strokes,
   an add's or group's or header's own id with the op as its body, `set`'s `bodies`, `erase`/`remove_overlay`/`replace`'s
   ids to an erased tombstone, `restore` to the kept body, `rename`/`paper` to `@board`, `delete_board` to deleted).
