@@ -57,7 +57,8 @@ that draws it**. A stroke's number is the median of its frames, and its worst fr
 a stroke counts from the pen-down; each later frame counts from the first pen movement since the last frame drawn.
 
 - **Left (PencilKit):** the touch's own timestamp (the earliest coalesced touch since the last frame), to the
-  display link's timestamp for the frame that follows it. Both are seconds of system uptime.
+  display link's timestamp for the first frame that starts after it. A frame already under way when the touch
+  arrives can't draw it, so it doesn't count. Both are seconds of system uptime.
 - **Right (web):** the web board's own numbers, read as it logs them: the pointer event's timestamp, to the
   animation-frame time of the frame its live ink paints the new segment in. The app adds no measuring of its own to
   the page; it passes along the median, worst and frame count the page logs for each stroke. A tap on the page's own

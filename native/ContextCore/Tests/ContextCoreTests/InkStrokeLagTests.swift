@@ -32,6 +32,15 @@ final class InkStrokeLagTests: XCTestCase {
     XCTAssertEqual(summary, InkStrokeLag.Summary(lag: 21, lagMax: 30, frames: 4))
   }
 
+  /// A display link's timestamp is the start of the frame now on screen, which can be earlier than a touch that
+  /// arrived just after it: that frame can't draw the touch, so it neither counts nor clears the wait.
+  func testAFrameThatStartedBeforeTheWaitingTouchDoesNotDrawIt() {
+    var stroke = InkStrokeLag(down: 100)
+    stroke.frame(at: 92)
+    stroke.frame(at: 108.3)
+    XCTAssertEqual(stroke.lags.map { ($0 * 10).rounded() / 10 }, [8.3])
+  }
+
   func testAStrokeThatNeverReachedAFrameHasNoNumber() {
     XCTAssertNil(InkStrokeLag(down: 5).summary)
   }

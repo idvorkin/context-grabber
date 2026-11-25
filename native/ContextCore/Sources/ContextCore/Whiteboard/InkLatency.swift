@@ -35,9 +35,10 @@ public struct InkStrokeLag: Equatable, Sendable {
     if undrawn == nil { undrawn = at }
   }
 
-  /// A frame started at `at` (ms): it draws whatever is waiting.
+  /// A frame started at `at` (ms): it draws whatever is waiting. A frame that started before the waiting touch can't
+  /// draw it (a display link's timestamp is the frame now on screen), so it neither counts nor ends the wait.
   public mutating func frame(at: Double) {
-    guard let start = undrawn else { return }
+    guard let start = undrawn, at >= start else { return }
     lags.append(at - start)
     undrawn = nil
   }
