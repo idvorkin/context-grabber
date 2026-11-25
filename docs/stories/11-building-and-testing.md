@@ -2261,7 +2261,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1638:
 
 - **Summary:** A story's link to a commit the pipeline's rebase replaced is renamed before the merge, not sent to review
-- **Status:** implemented in [d0e4d1eb](https://github.com/idvorkin/context-grabber/commit/d0e4d1eb), [27fd70ba](https://github.com/idvorkin/context-grabber/commit/27fd70ba); verified on the host rung by `scripts/native/test-story-commits.sh` in `just test`, on a throwaway repository with a bare origin: a branch rebased onto a moved main passes with a note; with the local branch behind the force-pushed one and a file staged, pre-merge renames the link, pushes a commit that changes only the story and leaves the checkout as it was; and a second run has nothing to rename
+- **Status:** implemented in [88bec8be](https://github.com/idvorkin/context-grabber/commit/88bec8be), [27fd70ba](https://github.com/idvorkin/context-grabber/commit/27fd70ba); verified on the host rung by `scripts/native/test-story-commits.sh` in `just test`, on a throwaway repository with a bare origin: a branch rebased onto a moved main passes with a note; with the local branch behind the force-pushed one and a file staged, pre-merge renames the link, pushes a commit that changes only the story and leaves the checkout as it was; and a second run has nothing to rename
 - **Issues:** bead context-grabber-zisx
 
 #### Use Case:
