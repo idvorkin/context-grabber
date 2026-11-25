@@ -94,6 +94,8 @@ native-test-host:
     scripts/native/test-sim-lane.sh
     # Stories 795, 797, 798 (context-grabber-mkd0): the host slots, six jobs on four, the wait, a killed holder.
     scripts/native/test-host-lane.sh
+    # Story 1627: lane simulators run slim (simslim) once, keeping what the tests use, and never fail the caller.
+    scripts/native/test-sim-slim.sh
     # Bead context-grabber-2l07: the lane script tests pass with the caller's SIM and lane settings set.
     scripts/native/test-lane-env.sh
     # Story 1519 (context-grabber-6ocd): pre-merge's Release build of ContextCore runs when the branch changes it, and fails loudly.

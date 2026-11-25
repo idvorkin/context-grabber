@@ -1618,6 +1618,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1627:
+
+- **Summary:** A build lane's simulator runs slim: simslim turns off the background daemons a test run never needs, once per simulator
+- **Status:** implemented in 72d9a381, f2009eed and 8cc3a605; verified by `scripts/native/test-sim-slim.sh`, `scripts/native/test-sim-lane.sh` and `scripts/native/test-ladder-map.sh` (host; a simulator that isn't slimmed is waited for once, as before) and on the simulator rung, 2026-11-24: all four iPad Pro 11-inch (M5) lane simulators slimmed (102 of 173 daemons off), then the whiteboard smoke and `WhiteboardUndoRedrawUITests`, `WhiteboardDropRoomUITests` and the PaperKit contract classes on a slim lane passed, the rung in 185 s against 255 s on a stock lane. An idle lane simulator went from 180 processes and 10.2 GB summed RSS to 84 and 7.0 GB fresh, 121 and 8.5 GB after a run; its disk image is unchanged. `WhiteboardDropRoomUITests` failed one run on a slim lane while the Mac ran three builds, the same drop-short failure seen on stock lanes the same day (beads d455, mph6)
+- **Issues:** chop-conventions ios-codev skill (Igor, 2026-11-24: "did we get the slim sims too")
+
+#### Use Case:
+- **As Igor,** running several build lanes, each with its own booted simulator
+- **I want to** have each lane's simulator run only the daemons the app and its tests use
+- **so that** more lanes fit in the Mac's memory and CPU without starving each other
+
+#### Acceptance Criteria:
+- **Scenario:** A lane boots a simulator that isn't slim
+- **Given:** simslim is installed and the simulator runs stock
+- **When:** sim-boot.sh brings it up for its lane
+- **Then:** it is slimmed once, keeping Siri and dictation, Health, iCloud and Photos on, and the run waits for it to be booted again after the slim's reboot (a simulator that doesn't come back fails the boot); a simulator already slim, a Mac without simslim, `SIM_SLIM=0` or a failed slim all leave the run going as before
+
+---
+
 ### User Story 1623:
 
 - **Summary:** The web board asks the app's own rules how much room a reply of Larry's opens when kept over ink written since its picture, and where a text of his set on ink lands
