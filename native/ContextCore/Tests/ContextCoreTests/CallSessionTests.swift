@@ -1078,6 +1078,40 @@ final class CallSessionCountersTests: XCTestCase {
     XCTAssertEqual(t.events.filter { $0.0 == "call_stats" }.count, 2)  // nothing after the end
   }
 
+  /// Stories 1082 and 1083: the five-second line says how the mic sounded, and the ending scores the whole call.
+  func testCallStatsCarryTheMicReadingAndTheEndingScoresTheCall() {
+    let t = CallHarness()
+    t.goLive(.eleven)
+    t.socket.say(["type": "mic_ack", "token": 1])
+    // A quiet room for 3 s and speech for 2 s, in 0.1 s buffers at 48 kHz.
+    for _ in 0..<30 { t.audio.mic(4800, rate: 48000, value: 0.001) }
+    for _ in 0..<20 { t.audio.mic(4800, rate: 48000, value: 0.1) }
+    t.clock.advance(5000)
+    let stats = t.last("call_stats")!
+    XCTAssertEqual(stats["mic_pieces"] as? Int, 50)
+    XCTAssertEqual(stats["mic_floor_db"] as? Double, -60)
+    XCTAssertEqual(stats["mic_speech_db"] as? Double, -20)
+    XCTAssertEqual(stats["mic_snr_db"] as? Double, 40)
+    XCTAssertEqual(stats["mic_score"] as? Int, 100)
+    XCTAssertEqual(stats["mic_frames"] as? Int, 50)  // the call's own fields are untouched
+    t.session.stop()
+    let summary = t.last("call_mic_score")!
+    XCTAssertEqual(summary["score"] as? Int, 100)
+    XCTAssertEqual(summary["windows"] as? Int, 1)
+    XCTAssertEqual(summary["speech"] as? Bool, true)
+    let names = t.events.map(\.0)
+    XCTAssertLessThan(names.lastIndex(of: "call_mic_score")!, names.lastIndex(of: "call_ended")!)
+  }
+
+  func testACallWithNoMicBuffersLogsNoScore() {
+    let t = CallHarness()
+    t.goLive(.eleven)
+    t.clock.advance(5000)
+    XCTAssertNil(t.last("call_stats")?["mic_score"])
+    t.session.stop()
+    XCTAssertNil(t.last("call_mic_score"))
+  }
+
   func testTonysTextWithNoAudioForFiveSecondsIsNamedAndClearsWhenAudioComes() {
     let t = CallHarness()
     t.goLive(.eleven)

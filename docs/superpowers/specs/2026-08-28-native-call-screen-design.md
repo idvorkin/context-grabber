@@ -824,6 +824,47 @@ reason — *a call is live in the Cockpit tab* — rather than opening a
 second microphone on the same phone. The reverse is not policed; the page
 does not know about the native call.
 
+### How the mic sounds
+
+Igor, on a call while walking (2026-11-25, bead context-grabber-ka1i), asked for *"background analysis of my voice
+and background noise"*, and *"if you can score it… convert down to a metric for a score."* With AirPods in call mode
+and wind, nothing on the phone said the mic was the problem, and Larry could only guess. So the phone measures what
+it sends.
+
+Every five seconds while the call is live, the call's log says how the microphone sounded over those five seconds.
+It is measured on exactly the audio that goes to Larry, after the phone's echo cancelling and noise processing:
+
+- **Noise floor**: how loud the quiet moments are, in dBFS; lower is quieter. A room is around −60; wind on AirPods
+  is around −30.
+- **Speech level**: how loud Igor's speaking moments are, in dBFS.
+- **SNR**: the speech level minus the noise floor, in dB. It is blank when he didn't speak in those five seconds,
+  which means his speech was less than 6 dB above the floor.
+- **Peak** and **clips**: the loudest sample, and how many tenth-of-a-second pieces hit full scale.
+- **Dropouts**: how many tenth-of-a-second pieces were exact digital silence, the mic delivering nothing.
+- **Score**: one number from 0 to 100, defined below.
+
+When the call ends, one summary line gives:
+- the whole call's score: the median of its five-second scores, so one gust doesn't sink a call;
+- its worst five seconds;
+- the floor and the SNR across the call.
+
+These lines travel with the call's log to the Cockpit's archive at the ending, like the rest of the log. Larry sees
+them on the call's thread and can say *"AirPods plus wind, switch mic"*. Muted stretches still measure the floor, and
+the measuring never changes the audio or the route.
+
+**The score** adds four parts, each explainable on its own:
+
+| Part | Points | Full marks | Zero |
+|---|---|---|---|
+| SNR | 50 | 30 dB or more | 0 dB or less |
+| Noise floor | 20 | −60 dBFS or quieter | −30 dBFS or louder |
+| Clipping | 15 | no clipped pieces | 10% or more of the pieces clipped |
+| Dropouts | 15 | no silent pieces | 20% or more of the pieces digital silence |
+
+Each part is linear between its ends. Five seconds with no speech has no SNR part: its score is the other three
+scaled up to 100, and the line says *no speech*. A call with no speech at all still gets a score, and the summary says
+so.
+
 ### The call's chat thread
 
 The Cockpit gives every real call its own chat thread (Cockpit story 321): it opens when Igor first speaks, Larry's
