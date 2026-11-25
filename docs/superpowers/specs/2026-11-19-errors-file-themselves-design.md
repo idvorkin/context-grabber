@@ -38,6 +38,11 @@ he sees, he does not have time to report, so they are never fixed.
   closed, the app in the background) starts the count again. Why: on 2026-11-22 the Cockpit answered 502 to one poll
   in a hundred for hours, each blip healed on the next poll 4 seconds later, and each filed a report (#1245–#1253,
   #1259). Any other failed read (the Cockpit answered 404, or an answer the app can't read) files at once, as before.
+  A board's turn that can't reach Larry the same way (a 5xx, a timeout, no connection) is the same blink: the board
+  says *Larry couldn't be reached* with Copy error as before and files nothing, unless turns keep failing that way for
+  2 minutes, with no turn reaching him and no pause of over a minute between them; then it files one report for the
+  outage. Why: on 2026-11-25 one turn got a 502 and the next, 12 seconds later, reached him, and the one blip filed
+  #1450. A turn the Cockpit refuses (a 4xx) still files at once.
 - **The share sheet.** An error on the share card files too (the first was its mic's, #1135, before the mic was taken
   off the card). The share sheet is its own small
   program with no network of its own, so it keeps the report in the space it shares with the app; the next time the
@@ -64,5 +69,8 @@ he sees, he does not have time to report, so they are never fixed.
   read gets through; the log has `chat` `cockpit_outage` with `filed` and the outage's length and failures, and
   `ended` when a read gets through.
 - A chat read that fails because the device's own connection is down saves nothing, however long it lasts.
+- A board turn that fails once to reach Larry with HTTP 502 (or any 5xx, a timeout, a refused or dropped connection)
+  and whose next turn reaches him saves nothing; the board still showed *Larry couldn't be reached* with Copy error,
+  and the log has `whiteboard` `cockpit_outage` `ended` with `filed: false`.
 - An error on the share card is saved in the shared space; the app's next launch or foreground takes it into its own
   reports (`bug_report_adopted` in the app's log), and it is queued for iCloud like any report.

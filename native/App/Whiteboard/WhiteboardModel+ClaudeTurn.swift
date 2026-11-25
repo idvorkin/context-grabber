@@ -166,13 +166,18 @@ extension WhiteboardModel {
   }
 
   /// `turns` has already said so in the note; logged once a run, and Larry's as a copyable problem.
-  func failed(_ who: WhiteboardTurn.Who, _ message: String, status: Int?, first: Bool) {
+  /// `autoFile` false keeps a blink's problem from filing (story 1136); `extra` goes on the report.
+  func failed(
+    _ who: WhiteboardTurn.Who, _ message: String, status: Int?, first: Bool, autoFile: Bool = true,
+    extra more: [String: JSONValue] = [:]
+  ) {
     if first {
       log.event("error", ["where": "whiteboard_turn", "who": who.rawValue, "message": message, "board": board.id])
     }
     guard who == .larry else { return }
     var extra: [String: JSONValue] = ["board": .string(board.id), "cockpit": .string(cockpit)]
     if let status { extra["status"] = .int(status) }
-    problem = .grabber(message, context: "WhiteboardView.larry", extra: extra)
+    extra.merge(more) { $1 }
+    problem = .grabber(message, context: "WhiteboardView.larry", extra: extra, autoFile: autoFile)
   }
 }

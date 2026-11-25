@@ -160,6 +160,7 @@ extension WhiteboardModel {
       // Cockpit that marks nothing never reads *Sent* (story 773).
       if larryOut?.picture.pictureID == picture.pictureID { larryOut?.delivered = true }
       turns.larryReached()
+      larryOutageEnded()
       // Story 1270: the marks this picture told him it takes away go now that it reached him.
       if let drops = picture.report?.marksDropped { marksDropped(drops) }
       if problem?.context == "WhiteboardView.larry" { problem = nil }
@@ -193,7 +194,10 @@ extension WhiteboardModel {
         return
       }
       larry.failed(turn, words: said)
-      failed(.larry, "Larry couldn't be reached: \(reason)", status: nil, first: turns.failed(.larry, stale: false))
+      let away = larryTurnBlinked()
+      failed(
+        .larry, "Larry couldn't be reached: \(reason)\(away.said)", status: nil,
+        first: turns.failed(.larry, stale: false), autoFile: away.files, extra: away.extra)
     }
   }
 

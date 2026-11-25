@@ -3386,7 +3386,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 1136:
 
 - **Summary:** A Cockpit that blinks files no report
-- **Issues:** [#1245](https://github.com/idvorkin/context-grabber/issues/1245), [#1246](https://github.com/idvorkin/context-grabber/issues/1246), [#1247](https://github.com/idvorkin/context-grabber/issues/1247), [#1248](https://github.com/idvorkin/context-grabber/issues/1248), [#1249](https://github.com/idvorkin/context-grabber/issues/1249), [#1250](https://github.com/idvorkin/context-grabber/issues/1250), [#1251](https://github.com/idvorkin/context-grabber/issues/1251), [#1252](https://github.com/idvorkin/context-grabber/issues/1252), [#1253](https://github.com/idvorkin/context-grabber/issues/1253), [#1259](https://github.com/idvorkin/context-grabber/issues/1259), [#1268](https://github.com/idvorkin/context-grabber/issues/1268), [#1269](https://github.com/idvorkin/context-grabber/issues/1269)
+- **Issues:** [#1450](https://github.com/idvorkin/context-grabber/issues/1450) (a board's turn), [#1245](https://github.com/idvorkin/context-grabber/issues/1245), [#1246](https://github.com/idvorkin/context-grabber/issues/1246), [#1247](https://github.com/idvorkin/context-grabber/issues/1247), [#1248](https://github.com/idvorkin/context-grabber/issues/1248), [#1249](https://github.com/idvorkin/context-grabber/issues/1249), [#1250](https://github.com/idvorkin/context-grabber/issues/1250), [#1251](https://github.com/idvorkin/context-grabber/issues/1251), [#1252](https://github.com/idvorkin/context-grabber/issues/1252), [#1253](https://github.com/idvorkin/context-grabber/issues/1253), [#1259](https://github.com/idvorkin/context-grabber/issues/1259), [#1268](https://github.com/idvorkin/context-grabber/issues/1268), [#1269](https://github.com/idvorkin/context-grabber/issues/1269)
 - **Status:** implemented in [1a685bc5](https://github.com/idvorkin/context-grabber/commit/1a685bc5); verified by the host rung (`just native-test`, `CockpitOutageTests`: a blip that heals files nothing) and the Mac build (`just native-build-mac`); the simulator and the devices are not yet verified (no iPhone runs while the whiteboard work is in progress)
 - **Spec:** [An error on screen files a report by itself](../superpowers/specs/2026-11-19-errors-file-themselves-design.md), [Chat with Larry](../superpowers/specs/2026-10-25-native-chat-design.md)
 
@@ -3402,6 +3402,14 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **When:** the next poll reads the thread
 - **Then:** no automatic report was saved (a thread that had loaded shows no banner for one blip, story 1606), and the log
   has `chat` `cockpit_outage` `ended` with `filed: false`
+
+- **Scenario:** A board's turn that blinks files no report (#1450)
+- **Given:** a board is open, the device is online, and a turn to Larry just got HTTP 502 (or any 5xx, or it timed out,
+  could not connect or lost its connection)
+- **When:** the next turn, within a minute, reaches him
+- **Then:** the board showed *Larry couldn't be reached* with Copy error for the failed turn, no automatic report was
+  saved, and the log has `whiteboard` `cockpit_outage` `ended` with `filed: false`; turns that keep failing that way
+  for 2 minutes save one report for the outage
 
 ---
 

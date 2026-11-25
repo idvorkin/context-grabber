@@ -18,6 +18,8 @@ final class WhiteboardModel: ObservableObject {
   /// What the last Send did, shown in the bar until the next stroke.
   @Published var sent: String?
   @Published var problem: BugProblem?
+  /// Story 1136, #1450: Larry's turns that couldn't reach the Cockpit, as one outage, so a blink files no report.
+  var larryOutage = CockpitOutage()
   /// The ghosts and the rules of Claude's turn: what shows, whose, for how long, and when Claude is asked (stories 344,
   /// 349, 351, 357, 358, 359, 367, 370). The host tests are `WhiteboardGhostTurnsTests`.
   @Published var turns: WhiteboardGhostTurns<Ghost> {
