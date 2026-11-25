@@ -1368,6 +1368,19 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** the device encodes the commit
 - **Then:** the changes come out as one bring-back, one erase, one change of the two moved strokes together, the new stroke, the group and the rename, in an order the Cockpit accepts as one batch
 
+### User Story 1342:
+
+- **Summary:** A partial erase never doubles ink another device moved
+- **Status:** a split encoded as one replace (Larry's answer) in [9e30b90f](https://github.com/idvorkin/context-grabber/commit/9e30b90f); verified by host tests (`StoreClashGoldenTests`: the `encode/split-is-replace` golden, landing whole under the clash rule, and the `clash/split-contended` golden refused naming the move); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Issues:** cockpit-8kh; review of Larry's board store spec, point 10
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As someone** erasing part of a stroke on the iPad that I moved on the web
+- **I want to** have the erase refused rather than land beside the move
+- **so that** the board never shows the stroke twice
+
+#### Acceptance Criteria:
 - **Scenario:** A partial erase of a stroke another device moved
 - **Given:** a stroke the web moved after the iPad last saw it
 - **When:** the iPad erases part of it, leaving two pieces, and the commit is encoded and sent

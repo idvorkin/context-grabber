@@ -4,7 +4,7 @@ import XCTest
 
 @testable import BoardWasm
 
-/// The shared board-store goldens (stories 1293, 1322, 1323, 1326–1329, 1299, 1300; cockpit-8kh): each file under
+/// The shared board-store goldens (stories 1293, 1322, 1323, 1326–1329, 1299, 1300, 1342; cockpit-8kh): each file under
 /// `Fixtures/board-store/clash/` is one `bw_store_clash` input and the answer both repos must give, and each under
 /// `encode/` one `bw_store_encode` input and its ops. The Cockpit keeps a
 /// sha-pinned copy (`SHA256SUMS`, checked by `scripts/native/board-store-goldens.py`) and runs it through the wasm.

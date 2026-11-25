@@ -590,7 +590,7 @@ version 22 and every point accepted; this version settles the rule's side of tho
   that changed it, or whose `erased` is neither true/false nor 1/0, answers `{"error": "malformed thing <name>"}`
   instead of being dropped, so an add of that name can't land a second time. A `deleted` of `null` is no delete.
 
-- **One encoder for every device** (stories 1299, 1300): new, `bw_store_encode`, input `{"before": board, "after":
+- **One encoder for every device** (stories 1299, 1300, 1342): new, `bw_store_encode`, input `{"before": board, "after":
   board, "erased"?: {name: thing}}`, a board in the web board's own shape (`strokes`, `objects`, `headers`,
   `connectors`, and the board's `name`, `paper`, `lines`, `ruled`), `erased` the erased things the device still holds
   for undo, and an optional `why` (what the gesture was, such as a move by so much) copied onto the change it makes.

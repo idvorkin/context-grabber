@@ -208,6 +208,6 @@
     }
   },
   "name" : "split-is-replace",
-  "story" : "1299",
+  "story" : "1342",
   "why" : "A partial erase: the stroke taken off and its pieces named <id>-<n> go up as one replace (Larry, 2026-11-25), so a clash on the stroke refuses the pieces with it; an unrelated new stroke is still an add, and an unrelated removal still an erase."
 }
