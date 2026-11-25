@@ -55,6 +55,11 @@ public enum BoardStoreClash {
       self.things = things
       self.deleted = deleted
     }
+
+    /// Who deleted the board, however the store recorded it: `deleted`, or `@board` erased (interface 23).
+    public var deletedBy: Thing? {
+      deleted ?? things[BoardStoreClash.boardID].flatMap { $0.erased ? $0 : nil }
+    }
   }
 
   public enum Reason: String, Sendable {
@@ -121,11 +126,23 @@ public enum BoardStoreClash {
         self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: [])
       case "replace": self.init(kind: kind, adds: named("strokes"), changes: ids)
       case "select": self.init(kind: kind, adds: [], changes: [], local: true)
-      case "group": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: ids)
+      case "group", "header": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: ids)
       case "reply": self.init(kind: kind, adds: (id.map { [$0] } ?? []) + named("marks"), changes: [])
       case "rename", "paper", "delete_board": self.init(kind: kind, adds: [], changes: [BoardStoreClash.boardID])
       default: self.init(kind: kind, adds: [], changes: ids.isEmpty ? (id.map { [$0] } ?? []) : ids)
       }
+    }
+  }
+
+  /// The ids one op landed, its adds first and then its changes (interface 23): the store applies from these, never
+  /// from `applied` alone, since a group whose own id `exists` still lands its strokes' change.
+  public struct Landed: Equatable, Sendable {
+    public var op: Int
+    public var ids: [String]
+
+    public init(op: Int, ids: [String]) {
+      self.op = op
+      self.ids = ids
     }
   }
 
@@ -134,13 +151,14 @@ public enum BoardStoreClash {
     public var rev: Int
     public var applied: [Int]
     public var refused: [Refusal]
+    public var landed: [Landed] = []
     public var board: Board
 
-    /// `{rev, applied, refused: [{op, id, reason, rev?, device?, by?, at?}], missing_ids}` (plan section 3);
-    /// `missing_ids` names the `unknown` ones the way the Cockpit's batch contract does.
+    /// `{rev, applied, landed: [{op, ids}], refused: [{op, id, reason, rev?, device?, by?, at?}], missing_ids}` (plan
+    /// section 3); `missing_ids` names the `unknown` ones the way the Cockpit's batch contract does.
     public var wire: [String: Any] {
       [
-        "rev": rev, "applied": applied,
+        "rev": rev, "applied": applied, "landed": landed.map { ["op": $0.op, "ids": $0.ids] as [String: Any] },
         "missing_ids": refused.filter { $0.reason == .unknown && !$0.id.isEmpty }.map(\.id),
         "refused": refused.map { refusal -> [String: Any] in
           var out: [String: Any] = ["op": refusal.op, "id": refusal.id, "reason": refusal.reason.rawValue]
@@ -164,6 +182,7 @@ public enum BoardStoreClash {
     let rev = board.rev + 1
     var applied: [Int] = []
     var refused: [Refusal] = []
+    var landedIDs: [Landed] = []
     var mine: Set<String> = []  // ids this batch added or changed: its own later ops build on them
 
     for (index, op) in ops.enumerated() where !op.local {
@@ -178,7 +197,7 @@ public enum BoardStoreClash {
         refused.append(Refusal(op: index, id: "", reason: .unknown, rev: nil, author: nil))
         continue
       }
-      if let deleted = next.deleted {
+      if let deleted = next.deletedBy {
         for id in op.adds + op.changes {
           refused.append(Refusal(op: index, id: id, reason: .deleted, rev: deleted.rev, author: deleted.author))
         }
@@ -205,7 +224,7 @@ public enum BoardStoreClash {
         refused.append(blocked)
         continue
       }
-      var landed = !op.changes.isEmpty
+      var ids: [String] = []
       for id in op.adds {
         if let thing = next.things[id] {
           refused.append(Refusal(op: index, id: id, reason: .exists, rev: thing.rev, author: thing.author))
@@ -213,17 +232,21 @@ public enum BoardStoreClash {
         }
         next.things[id] = Thing(rev: rev, author: author)
         mine.insert(id)
-        landed = true
+        ids.append(id)
       }
       for id in op.changes {
         next.things[id] = Thing(rev: rev, author: author, erased: erasing.contains(op.kind))
         mine.insert(id)
+        ids.append(id)
       }
       if op.kind == "delete_board" { next.deleted = Thing(rev: rev, author: author) }
-      if landed { applied.append(index) }
+      if !ids.isEmpty {
+        applied.append(index)
+        landedIDs.append(Landed(op: index, ids: ids))
+      }
     }
     if applied.isEmpty { return Answer(rev: board.rev, applied: [], refused: refused, board: board) }
     next.rev = rev
-    return Answer(rev: rev, applied: applied, refused: refused, board: next)
+    return Answer(rev: rev, applied: applied, refused: refused, landed: landedIDs, board: next)
   }
 }

@@ -229,6 +229,83 @@ final class BoardStoreClashTests: XCTestCase {
     XCTAssertEqual(answer.refused, [.init(op: 0, id: "s-1", reason: .ahead, rev: 4, author: nil)])
   }
 
+  // Story 1326: a header is a new thing with its own name over the strokes it heads, like a group.
+  func testAHeaderAddsItsIdAndChangesItsStrokes() throws {
+    var board = BoardStoreClash.Board(rev: 3)
+    board.things["s-1"] = .init(rev: 1, author: web)
+    board.things["h-old"] = .init(rev: 2, author: web)
+    let batch = try ops(#"[{"op":"header","id":"h-1","ids":["s-1"]},{"op":"header","id":"h-old","ids":["s-1"]}]"#)
+    let answer = BoardStoreClash.apply(batch, to: board, base: 3, author: igorIPad)
+    XCTAssertEqual(answer.applied, [0, 1])
+    XCTAssertEqual(answer.refused, [.init(op: 1, id: "h-old", reason: .exists, rev: 2, author: web)])
+    XCTAssertEqual(answer.landed, [.init(op: 0, ids: ["h-1", "s-1"]), .init(op: 1, ids: ["s-1"])])
+    XCTAssertEqual(answer.board.things["h-1"]?.rev, 4)
+  }
+
+  // Story 1328: a group whose own name exists lands only its strokes' change, and says so per id; a wholly refused op
+  // is absent from `landed`; an add of three with one already there lands two.
+  func testLandedNamesExactlyWhatLanded() throws {
+    var board = BoardStoreClash.Board(rev: 5)
+    board.things["s-1"] = .init(rev: 1, author: web)
+    board.things["s-2"] = .init(rev: 5, author: web)
+    board.things["g-1"] = .init(rev: 2, author: web)
+    let batch = try ops(
+      #"[{"op":"group","id":"g-1","ids":["s-1"]},{"op":"erase","ids":["s-2"]},"#
+        + #"{"op":"add_strokes","strokes":[{"id":"s-3"},{"id":"s-1"},{"id":"s-4"}]}]"#)
+    let answer = BoardStoreClash.apply(batch, to: board, base: 3, author: igorIPad)
+    XCTAssertEqual(answer.applied, [0, 2])
+    XCTAssertEqual(answer.landed, [.init(op: 0, ids: ["s-1"]), .init(op: 2, ids: ["s-3", "s-4"])])
+  }
+
+  // Story 1322 (interface 23): `set` over several ids is one op, all or none.
+  func testASetOverSeveralIdsLandsWhole() throws {
+    var board = BoardStoreClash.Board(rev: 9)
+    board.things["s-1"] = .init(rev: 1, author: web)
+    board.things["s-2"] = .init(rev: 9, author: web)
+    board.things["s-3"] = .init(rev: 1, author: web)
+    let batch = try ops(
+      #"[{"op":"set","ids":["s-1","s-2"],"bodies":{"s-1":{},"s-2":{}}},{"op":"set","ids":["s-3"],"bodies":{"s-3":{}}}]"#
+    )
+    let answer = BoardStoreClash.apply(batch, to: board, base: 8, author: igorIPad)
+    XCTAssertEqual(answer.applied, [1])
+    XCTAssertEqual(answer.refused, [.init(op: 0, id: "s-2", reason: .changed, rev: 9, author: web)])
+    XCTAssertEqual(answer.board.things["s-1"]?.rev, 1, "the clash on s-2 keeps s-1 as it was")
+    XCTAssertEqual(answer.landed, [.init(op: 1, ids: ["s-3"])])
+  }
+
+  // Story 1327: a board whose `@board` is erased is deleted: adds and restores are refused as `deleted`, with
+  // `@board`'s change.
+  func testAnErasedBoardEntryMeansDeleted() throws {
+    var board = BoardStoreClash.Board(rev: 7)
+    board.things[BoardStoreClash.boardID] = .init(rev: 7, author: web, erased: true)
+    board.things["s-a"] = .init(rev: 3, author: igorIPad, erased: true)
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"add_strokes","strokes":[{"id":"s-n"}]},{"op":"restore","ids":["s-a"]}]"#), to: board, base: 7,
+      author: igorIPad)
+    XCTAssertEqual(answer.applied, [])
+    XCTAssertEqual(answer.rev, 7)
+    XCTAssertEqual(
+      answer.refused,
+      [
+        .init(op: 0, id: "s-n", reason: .deleted, rev: 7, author: web),
+        .init(op: 1, id: "s-a", reason: .deleted, rev: 7, author: web),
+      ])
+  }
+
+  // Story 1327: `deleted` with a live `@board` is still deleted, and `delete_board` leaves `@board` live (the store
+  // keeps `deleted` as the truth).
+  func testDeletedWithALiveBoardEntryIsDeleted() throws {
+    var board = BoardStoreClash.Board(rev: 4, deleted: .init(rev: 4, author: web))
+    board.things[BoardStoreClash.boardID] = .init(rev: 2, author: web)
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"restore","ids":["s-a"]}]"#), to: board, base: 4, author: igorIPad)
+    XCTAssertEqual(answer.refused.map(\.reason), [.deleted])
+    let deleting = BoardStoreClash.apply(
+      try ops(#"[{"op":"delete_board"}]"#), to: .init(rev: 1), base: 1, author: igorIPad)
+    XCTAssertEqual(deleting.board.things[BoardStoreClash.boardID]?.erased, false)
+    XCTAssertNotNil(deleting.board.deleted)
+  }
+
   // The answer's wire shape, as the Cockpit's endpoint and the web board read it (plan section 3).
   func testTheAnswerWire() throws {
     var board = BoardStoreClash.Board(rev: 2)
@@ -239,7 +316,7 @@ final class BoardStoreClashTests: XCTestCase {
     let wire = try JSONSerialization.data(withJSONObject: answer.wire, options: [.sortedKeys])
     XCTAssertEqual(
       String(decoding: wire, as: UTF8.self),
-      #"{"applied":[1],"missing_ids":[],"refused":[{"at":"2026-11-24T20:59:00Z","by":"igor","device":"web","#
+      #"{"applied":[1],"landed":[{"ids":["s-b"],"op":1}],"missing_ids":[],"refused":[{"at":"2026-11-24T20:59:00Z","by":"igor","device":"web","#
         + #""id":"s-a","op":0,"reason":"changed","rev":2}],"rev":3}"#)
   }
 }

@@ -1133,3 +1133,75 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a board the web deleted after the iPad last saw it
 - **When:** the iPad's new strokes and a rename reach the Cockpit
 - **Then:** none of them lands, the revision stays, and each is refused as deleted with when and where
+
+### User Story 1326:
+
+- **Summary:** A header on a shared board is a thing of its own
+- **Status:** planned (interface 23, the board store's first slice)
+- **Issues:** cockpit-8kh; review of Larry's board store spec, point Q2
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As someone** who makes a header on a board another device also draws on
+- **I want to** have the header land as one new thing over its strokes
+- **so that** a header made twice is caught, and a header over strokes changed since is refused by name
+
+#### Acceptance Criteria:
+- **Scenario:** A header whose name the board already has
+- **Given:** a board that already has a header of that name
+- **When:** the iPad's batch makes the header again over its strokes
+- **Then:** the header's name is refused as already there, and the answer names exactly which of its names landed
+
+### User Story 1327:
+
+- **Summary:** A board is deleted however the store records it
+- **Status:** planned (interface 23, the board store's first slice)
+- **Issues:** cockpit-8kh; review of Larry's board store spec, points 1 and 7
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As someone** whose board was deleted on another device
+- **I want to** have my late ink refused whether the store marked the board deleted or erased its own entry
+- **so that** ink never lands on a deleted board because of how the delete was stored
+
+#### Acceptance Criteria:
+- **Scenario:** Ink sent to a board whose own entry was erased
+- **Given:** a board the store recorded as deleted only by erasing its own entry
+- **When:** the iPad's new strokes, and an undo bringing ink back, reach the Cockpit
+- **Then:** none of them lands, and each is refused as deleted with when and where
+
+### User Story 1328:
+
+- **Summary:** A change that also adds says which of its names landed
+- **Status:** planned (interface 23, the board store's first slice)
+- **Issues:** cockpit-8kh; review of Larry's board store spec, point 3
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As the** Cockpit's store applying a device's batch
+- **I want to** know per change exactly which names landed
+- **so that** a group whose own name was refused adds nothing new, while its strokes still change
+
+#### Acceptance Criteria:
+- **Scenario:** A group whose name the board already has
+- **Given:** a board with a group of that name, and strokes nobody changed since the iPad saw them
+- **When:** the iPad's batch groups those strokes under that name
+- **Then:** the strokes' change lands, the group's name is refused as already there, and the answer lists only the strokes as landed for that change
+
+### User Story 1329:
+
+- **Summary:** A broken record on a shared board is refused out loud
+- **Status:** planned (interface 23, the board store's first slice)
+- **Issues:** cockpit-8kh; review of Larry's board store spec, gap "the wasm silently drops a thing row"
+- **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
+
+#### Use Case:
+- **As the** Cockpit's store asking the shared rule about a batch
+- **I want to** be told when a thing's record lacks its revision or who changed it
+- **so that** a broken record is fixed instead of letting the same name be added twice
+
+#### Acceptance Criteria:
+- **Scenario:** A thing with no revision
+- **Given:** a board whose record for one stroke has no revision
+- **When:** a batch is checked against it
+- **Then:** the answer is an error naming that stroke, and nothing is decided
