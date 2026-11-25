@@ -43,41 +43,6 @@
    "until": "2026-11-26T04:51:43Z"
   },
   {
-   "id": 1616,
-   "journey": "02-larry.md",
-   "branch": "native/chat-search-1443",
-   "at": 1795582396.135343,
-   "until": "2026-11-26T04:53:16Z"
-  },
-  {
-   "id": 1617,
-   "journey": "02-larry.md",
-   "branch": "native/chat-search-1443",
-   "at": 1795582396.135343,
-   "until": "2026-11-26T04:53:16Z"
-  },
-  {
-   "id": 1618,
-   "journey": "02-larry.md",
-   "branch": "native/chat-search-1443",
-   "at": 1795582396.135343,
-   "until": "2026-11-26T04:53:16Z"
-  },
-  {
-   "id": 1626,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/nightly-all-3rk",
-   "at": 1795583606.318187,
-   "until": "2026-11-26T05:13:26Z"
-  },
-  {
-   "id": 1627,
-   "journey": "11-building-and-testing.md",
-   "branch": "chore/simslim-lanes",
-   "at": 1795585687.1865852,
-   "until": "2026-11-26T05:48:07Z"
-  },
-  {
    "id": 1325,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/question-looks-1387",
@@ -90,6 +55,13 @@
    "branch": "native/pre-merge-merged-tip",
    "at": 1795589934.6726022,
    "until": "2026-11-26T06:58:54Z"
+  },
+  {
+   "id": 1078,
+   "journey": "05-call.md",
+   "branch": "native/call-thread-link-lsue",
+   "at": 1795591473.920227,
+   "until": "2026-11-26T07:24:33Z"
   }
  ]
 }
