@@ -239,9 +239,71 @@ public struct BoardOutline: Sendable {
     if let header = inside.compactMap(\.header).first {
       return Row(header: header, names: [], top: r.lowerBound, bottom: r.upperBound)
     }
-    return Row(
-      header: nil, names: names(inside.filter(his).flatMap(\.members)), top: r.lowerBound,
-      bottom: r.upperBound)
+    // cockpit-gvv: one line of his writing, the one at y. A descender grazing the line below chains the two into one
+    // room row (BoardRoom.rows), but a header is the line he tapped beside, not the paragraph.
+    let mine = inside.filter(his)
+    guard let line = Self.line(of: mine, at: y) else {
+      return Row(header: nil, names: [], top: r.lowerBound, bottom: r.upperBound)
+    }
+    // its underline stays part of it, as the row's always was
+    let unders = mine.filter { u in
+      !line.contains { $0.members == u.members } && u.members.count == 1 && Self.isUnderline(strokes[u.members[0]])
+        && Self.underlineOf(u.bounds, line.reduce(CGRect.null) { $0.union($1.bounds) })
+    }
+    let chosen = line + unders
+    let box = chosen.reduce(CGRect.null) { $0.union($1.bounds) }
+    return Row(header: nil, names: names(chosen.flatMap(\.members)), top: box.minY, bottom: box.maxY)
+  }
+
+  /// Units on one line of writing: one line while a unit overlaps it by a good part of the smaller height (the
+  /// writingLines rule), so a descender grazing the next line doesn't chain the two.
+  static func lines(_ us: [Unit]) -> [[Unit]] {
+    var out: [(box: CGRect, us: [Unit])] = []
+    for u in us.sorted(by: { $0.bounds.minY < $1.bounds.minY }) {
+      let overlap = { (b: CGRect) in min(b.maxY, u.bounds.maxY) - max(b.minY, u.bounds.minY) }
+      var best: Int?
+      for (i, l) in out.enumerated() where overlap(l.box) >= 0.4 * min(u.bounds.height, l.box.height) {
+        if best.map({ overlap(l.box) > overlap(out[$0].box) }) ?? true { best = i }
+      }
+      if let best {
+        out[best].box = out[best].box.union(u.bounds)
+        out[best].us.append(u)
+      } else {
+        out.append((u.bounds, [u]))
+      }
+    }
+    // A flat mark (an i's dot, a bar, an underline that wanders) is no line of its own: it joins the nearest line it
+    // touches or nearly touches, the one above on a tie.
+    let flat = { (l: (box: CGRect, us: [Unit])) in l.box.height < Self.line / 2 }
+    var lines = out.filter { !flat($0) }
+    for f in out.filter(flat) {
+      let gap = { (b: CGRect) in max(0, max(b.minY - f.box.maxY, f.box.minY - b.maxY)) }
+      if let i = lines.indices.min(by: { gap(lines[$0].box) < gap(lines[$1].box) }), gap(lines[i].box) <= Self.line / 4 {
+        lines[i].box = lines[i].box.union(f.box)
+        lines[i].us += f.us
+      } else {
+        lines.append(f)
+      }
+    }
+    return lines.map(\.us)
+  }
+
+  /// The line of `us` at y: the one whose box holds y (the nearest middle when two do), else the nearest.
+  static func line(of us: [Unit], at y: CGFloat) -> [Unit]? {
+    let ls = lines(us).map { l in (us: l, box: l.reduce(CGRect.null) { $0.union($1.bounds) }) }
+    let dist = { (b: CGRect) in y < b.minY ? b.minY - y : y > b.maxY ? y - b.maxY : 0 }
+    return ls.min { a, b in
+      let (da, db) = (dist(a.box), dist(b.box))
+      return da != db ? da < db : abs(a.box.midY - y) < abs(b.box.midY - y)
+    }?.us
+  }
+
+  /// Below the header's line: under it, or reaching up into it by less than a good part of the smaller height (a line
+  /// the header's descender touches is the next line, cockpit-gvv).
+  static func below(_ u: CGRect, _ hb: CGRect) -> Bool {
+    if u.minY >= hb.maxY { return true }
+    let overlap = min(u.maxY, hb.maxY) - max(u.minY, hb.minY)
+    return u.midY > hb.maxY && overlap < 0.4 * min(u.height, hb.height)
   }
 
   /// The header showing whose row a margin tap at `y` is on, or whose ▾ it is within reach of (#1004).
@@ -293,13 +355,14 @@ public struct BoardOutline: Sendable {
   func section(_ id: String) -> Section? {
     guard let header = header(id), let hb = box(header) else { return nil }
     let us = units()
-    let all = us.filter { $0.header != id && $0.bounds.minY >= hb.maxY }
+    let all = us.filter { $0.header != id && Self.below($0.bounds, hb) }
     // The indent is the header's writing, not an underline that overshoots it.
     let at = index
     let words = header.ids.compactMap { at[$0] }.filter { !Self.isUnderline(strokes[$0]) }
     let left = words.isEmpty ? hb.minX : words.reduce(CGRect.null) { $0.union(strokes[$1].bounds) }.minX
     let edge = left + Self.indentTolerance
-    let lines = BoardRoom.rows(us.map(\.bounds)).filter { $0.lowerBound >= hb.maxY }.map { r in
+    // the rows of what is below alone: the header's descender no longer chains the first line into its own row
+    let lines = BoardRoom.rows(all.map(\.bounds)).map { r in
       (top: r.lowerBound, us: all.filter { $0.bounds.minY >= r.lowerBound && $0.bounds.maxY <= r.upperBound })
     }.filter { !$0.us.isEmpty }
     let leftOf = { (us: [Unit]) in us.map(\.bounds.minX).min() ?? 0 }
