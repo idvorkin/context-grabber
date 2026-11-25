@@ -517,8 +517,12 @@ recording ends with the report still open, the report's mic comes back at his ne
 - **A live call.** While a call with Larry is live, the mic is the call's: the button is dimmed and a tap says so,
   starting nothing. A call that starts mid-recording stops it at once; the words already in the field stay, and a
   line says the call took the microphone.
-- **An interruption.** A phone call, Siri or the microphone changing mid-recording stops it; the words heard so far
-  stay in the field (still never sent), and a copyable line says the microphone was interrupted.
+- **An interruption.** A phone call or Siri taking the audio stops it; the words heard so far stay in the field
+  (still never sent), and a copyable line says the microphone was interrupted.
+- **The microphone changing does not stop it** (#1398, BugKit 0.3.18). When the audio route changes mid-recording
+  (AirPods connect or drop, a USB microphone is plugged in), the recording carries on with the new microphone and the
+  words so far kept. It stops, with the copyable line, only if the microphone can't be restarted or the route keeps
+  changing (three restarts within ten seconds). The board's mic behaves the same.
   The session log records every microphone change during a recording (#1165): why iOS moved the route, the microphone
   and speaker before and after, what iOS offers, the seconds in, and whether the app was on screen and the phone
   unlocked. The recording's stop line records the same state. A headset that went away can then be told apart from a
