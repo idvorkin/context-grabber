@@ -133,6 +133,8 @@ native-test-host:
     scripts/native/test-host-lane.sh
     # Story 1627: lane simulators run slim (simslim) once, keeping what the tests use, and never fail the caller.
     scripts/native/test-sim-slim.sh
+    # Story 1632 (context-grabber-3hj9.3): Exercise Analyzer's simulator build goes on before the test that opens it.
+    scripts/native/test-install-exercise-analyzer.sh
     # Bead context-grabber-2l07: the lane script tests pass with the caller's SIM and lane settings set.
     scripts/native/test-lane-env.sh
     # Story 1519 (context-grabber-6ocd): pre-merge's Release build of ContextCore runs when the branch changes it, and fails loudly.
