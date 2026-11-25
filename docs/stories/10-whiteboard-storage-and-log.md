@@ -1299,7 +1299,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1337:
 
 - **Summary:** A clash still counts when Larry restored the board in the same stretch
-- **Status:** the cache's pull keeps the clash check beside Larry's restore in [79551e9b](https://github.com/idvorkin/context-grabber/commit/79551e9b); verified by host tests (`testAnAdminBatchInAPullStillChecksTheQueue`); not yet used by the app
+- **Status:** the cache's pull keeps the clash check beside Larry's restore in [781cdabf](https://github.com/idvorkin/context-grabber/commit/781cdabf); verified by host tests (`testAnAdminBatchInAPullStillChecksTheQueue`); not yet used by the app
 - **Issues:** bead context-grabber-4v8k (a pull with Larry's restore skipped the check); bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
