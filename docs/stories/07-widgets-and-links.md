@@ -1019,7 +1019,7 @@ lapsed, and nothing said so or what to do (#1371).
 ### User Story 569:
 
 - **Summary:** A link to a web ink board opens its page in the browser
-- **Status:** native app only: implemented in [e146d45c](https://github.com/idvorkin/context-grabber/commit/e146d45c); verified by host tests (`WebInkBoardTests`: which ids are web boards, the page's address) and on the iPad Pro 11-inch (M5) simulator (`WebInkBoardLinkUITests`: the link opens Safari, no board-missing problem; the session log's `open_web_board` then `opened_web_board ok`); the board debug page's chip on the real iPad not yet
+- **Status:** native app only: implemented in [e146d45c](https://github.com/idvorkin/context-grabber/commit/e146d45c); verified by host tests (`WebInkBoardTests`: which ids are web boards, the page's address) and on the iPad Pro 11-inch (M5) simulator (`WebInkBoardLinkUITests`: the link opens Safari, no board-missing problem; the session log's `open_web_board` then `opened_web_board ok`); the board debug page's chip on the real iPad not yet; a web board's thread (*Board*) and its pictures (*Jump to board*) open its page too (#1454) in [04293d2f](https://github.com/idvorkin/context-grabber/commit/04293d2f): `ChatImageUITests` testAWebBoardsThreadOpensItsPageInSafari and testAPictureFromAWebBoardJumpsToItsPage on the iPhone 17 simulator against the fake Cockpit (rung 2); on the phone not yet
 - **Issues:** [#1354](https://github.com/idvorkin/context-grabber/issues/1354), [#1454](https://github.com/idvorkin/context-grabber/issues/1454) (a web board's thread: *Board* looked for it in iCloud and filed a report)
 - **Spec:** [Native links](../superpowers/specs/2026-10-06-native-links-design.md)
 
