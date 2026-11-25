@@ -764,8 +764,8 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     // A look the moment his purple settles can catch the paper's tiles mid-redraw; the settled board has nothing black
     // in his circles (rung 2, 2026-11-20: six looks over three seconds after the keep found none).
     XCTAssertTrue(PaperScreen.clears(app) { $0.ink(in: marks) }, "the newer line left his circles")
-    // Wait for the pushed line to show under his reply, not one look: the kept circles' own redraw (a cut one is taken
-    // out and put back, then the view moves a screen away and back) can leave the paper's tiles under them blank for a
+    // Wait for the pushed line to show under his reply, not one look: the kept circles' own redraw (a cut one has the view
+    // move a screen away and back) can leave the paper's tiles under them blank for a
     // moment (bead context-grabber-pmv6: both failed tries had that heal just after the keep).
     let pushed = try XCTUnwrap(
       PaperScreen.showing(app, { $0.ink(in: under) }, { $0.maxY > before.maxY + 0.005 }),

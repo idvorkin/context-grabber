@@ -103,13 +103,13 @@ final class BoardUndoRedrawTests: XCTestCase {
   /// found them drawn.
   func testAHealIsLoggedWithItsTilesStrokesStepAndOutcome() {
     let heal = BoardUndoRedraw.Heal(
-      why: "undo", attempt: 1, how: "readd", tiles: [[1, 2]], strokes: 1, missingAfter: 0)
+      why: "undo", attempt: 1, how: "scroll", tiles: [[1, 2]], strokes: 1, missingAfter: 0)
     XCTAssertTrue(heal.worked)
     let fields = heal.fields
     XCTAssertEqual(fields["action"] as? String, "paper_ink_heal")
     XCTAssertEqual(fields["why"] as? String, "undo")
     XCTAssertEqual(fields["attempt"] as? Int, 1)
-    XCTAssertEqual(fields["how"] as? String, "readd")
+    XCTAssertEqual(fields["how"] as? String, "scroll")
     XCTAssertEqual(fields["tiles"] as? [[Int]], [[1, 2]])
     XCTAssertEqual(fields["tile_size"] as? Int, 256)
     XCTAssertEqual(fields["strokes"] as? Int, 1)

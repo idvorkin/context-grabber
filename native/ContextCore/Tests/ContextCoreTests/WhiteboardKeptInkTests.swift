@@ -104,11 +104,11 @@ final class WhiteboardKeptInkTests: XCTestCase {
     XCTAssertNil(WhiteboardKeptInk.partMissing(drawn: .unread, expected: expected, darkBefore: 0, ink: purple))
   }
 
-  /// The view moves a screen away only after a redraw in place left the mark partly drawn, and nothing after that.
-  func testTheMoveAwayComesOnlyAfterARedrawInPlace() {
-    XCTAssertEqual(WhiteboardKeptInk.heal(afterLook: 0), "readd")
-    XCTAssertEqual(WhiteboardKeptInk.heal(afterLook: 1), "scroll")
-    XCTAssertNil(WhiteboardKeptInk.heal(afterLook: 2))
+  /// A mark found partly drawn is redrawn by the view moving a screen away and back once, never by taking its strokes
+  /// out and putting them back (story 1343), and nothing after that.
+  func testAPartlyDrawnMarkIsRedrawnByOneMoveAway() {
+    XCTAssertEqual(WhiteboardKeptInk.heal(afterLook: 0), "scroll")
+    XCTAssertNil(WhiteboardKeptInk.heal(afterLook: 1))
   }
 
   func testTheLookLabelHook() {

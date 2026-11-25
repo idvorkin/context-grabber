@@ -377,18 +377,18 @@ paper. That description is the requirement, and this lists only where paper need
   seconds, with no visible jump. Ink taken away in that second (an undo, a delete, a clear) isn't missing: the board
   neither redraws nor moves for it. Part of a kept mark missing counts too, and so does part of it drawn in a colour that
   isn't its own: a kept text of Larry's whose first letter showed in his purple and the rest blank or black is drawn
-  again on its own a second later (context-grabber-ikya); the mark may blink once as it does. If that first try still
-  leaves it partly drawn, the view moves a screen away and straight back once, and always ends where it was. A mark drawn
+  again on its own a second later (context-grabber-ikya), by moving the view a screen away and straight back once, always
+  ending where it was. Its strokes are never taken out and put back: doing that left the next Undo of a stroke Igor drew
+  taking nothing back (context-grabber-pmv6). A mark drawn
   whole is never taken for one drawn in part: a small label of thin letters, its colour as far across and as tall as the
-  same strokes drawn alone show it, is left as it is, with no blink and no move (context-grabber-qko5). The move a screen
-  away only ever follows a redraw in place that left the mark still partly drawn.
+  same strokes drawn alone show it, is left as it is, with no move (context-grabber-qko5).
 - **Ink an Undo or Redo leaves in place is on the screen too** (context-grabber-9bll; seen only on the simulator so far).
   An Undo or Redo that moves, adds or takes away ink redraws the board around what changed, and a second later the
   board checks every stroke near the change, piece by piece across the screen, for a piece that should show and
   doesn't. Ink the step never touched counts: on the iPad simulator, after a group dropped just above Igor's line was
   undone, the line stayed drawn only up to one edge and was blank past it. A piece found missing is drawn again by
   moving the view a screen away and back once, ending where it was. The strokes are never taken out and put back after
-  an Undo or Redo, as a kept mark's are: doing that left the next Undo of a stroke Igor drew taking nothing back
+  an Undo or Redo, nor a kept mark's: doing that left the next Undo of a stroke Igor drew taking nothing back
   (context-grabber-pmv6). Undo and Redo stay one step each, every step still takes back what it would have, and the step
   Redo would take is still there afterwards.
 - **One undo takes a kept ghost back, whole.** A kept mark that needs a new page brings the page with it, in the same step.
