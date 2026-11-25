@@ -24,6 +24,7 @@ line of its own here and in the recipe; `scripts/native/test-testing-lists.sh` f
 - `scripts/native/test-breath-clips.py`: the breathing clips, each ending in silence, not on a click (#279)
 - `scripts/native/test-tile-art.sh`: the asset catalog compiled with actool with every home tile's art present and square (#304, #299)
 - `scripts/native/test-ladder-map.sh`: the ladder's own map, which rungs and UI test classes a change gets, from the real script's dry run (story 683)
+- `scripts/native/test-nightly-ladder.sh`: the daily full ladder waits outside its hours, on battery, on a busy CPU or a held build lane, runs once a day, and leaves a failed run's failures (story 1626)
 - `scripts/native/test-build-lane.sh`: the build lanes, their locks and simulators, sim-boot and the xcodebuild wait per lane (story 785, #954)
 - `scripts/native/test-time-limit.sh`: the repo's own rung time limit, a hang and everything it started stopped (exit 124), a finished command's status kept, the lane count past it unchanged (stories 1505, 1506)
 - `scripts/native/test-sim-lane.sh` checks simulator lane selection and refusals, including UUID case and the default lane for Health access and smoke (stories 1516, 1517 and 1518, bead context-grabber-w7nl).
@@ -929,6 +930,17 @@ VM runs (wasm, the Linux rung, board-ops, node and web checks) and recipes that 
 filing) are written skipped with the reason. A named class, test, recipe or script missing from the tree is red. The
 newest walk is `~/tmp/agent/walks/context-grabber/latest`, the next walk's `--previous`. File reds with
 `walk.py file-reds OUT/walk.json --apply --parent <bead>`; a first walk files nothing (its reds are the baseline).
+
+## Every UI test, once a day: `just nightly-ladder` (story 1626)
+
+A change runs only the UI test classes its files touch, so a class no recent change picked can go untested for days.
+`scripts/native/nightly-ladder.sh` climbs the whole ladder with `--all` on a fresh copy of `origin/main` (a detached
+worktree in `~/tmp/agent/nightly/checkout`) once a day, and only when the Mac is idle: between 1 and 6 in the morning,
+on AC power, under 30% CPU over a minute, with no build lane held. A locked screen is fine; the wrapper skips only the
+tests that open the mic. Each day's run is `~/tmp/agent/nightly/<date>.log`, and a failed one leaves its failures in
+`<date>.fail` beside it. `just nightly-ladder --dry-run` says whether it would start now and why not.
+`just nightly-install` schedules the check every half hour as a LaunchAgent, which is installed by hand once;
+`just nightly-uninstall` removes it. `NIGHTLY_WINDOW` and `NIGHTLY_CPU_MAX` change the window and the ceiling.
 
 ## The phone
 

@@ -18,6 +18,36 @@ test-ladder *args:
 walk *args:
     scripts/native/walk.py {{args}}
 
+# Story 1626 (bead context-grabber-3rk): the full ladder once a day on main while the Mac is idle (--dry-run says why
+# not). `nightly-install` schedules it every half hour as a LaunchAgent; `nightly-uninstall` removes it.
+nightly-ladder *args:
+    scripts/native/nightly-ladder.sh {{args}}
+
+nightly-install:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    plist=~/Library/LaunchAgents/com.idvorkin.grabber.nightly-ladder.plist
+    mkdir -p ~/tmp/agent/nightly
+    cat >"$plist" <<PLIST
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0"><dict>
+      <key>Label</key><string>com.idvorkin.grabber.nightly-ladder</string>
+      <key>ProgramArguments</key><array><string>$PWD/scripts/native/nightly-ladder.sh</string></array>
+      <key>StartInterval</key><integer>1800</integer>
+      <key>StandardOutPath</key><string>$HOME/tmp/agent/nightly/launchd.log</string>
+      <key>StandardErrorPath</key><string>$HOME/tmp/agent/nightly/launchd.log</string>
+      <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+    </dict></plist>
+    PLIST
+    launchctl bootout gui/$(id -u) "$plist" 2>/dev/null || true
+    launchctl bootstrap gui/$(id -u) "$plist"
+    echo "nightly: scheduled every 30 min from $plist (runs only when idle, once a day)"
+
+nightly-uninstall:
+    launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.idvorkin.grabber.nightly-ladder.plist 2>/dev/null || true
+    rm -f ~/Library/LaunchAgents/com.idvorkin.grabber.nightly-ladder.plist
+
 # New story IDs come from `scripts/native/story-ids.py reserve <journey> [n]` (story 791). This, story 793, runs
 # right before `gh pr merge`: the story IDs on the branch as pushed, merged with origin/main as it is now. Story 1519:
 # then ContextCore compiled in Release, as an archive compiles it, when the branch changes it (release-check.sh).
@@ -86,6 +116,8 @@ native-test-host:
     scripts/native/test-tile-art.sh
     # Story 683: which rungs and UI test classes a change gets, from the real script's dry run.
     scripts/native/test-ladder-map.sh
+    # Story 1626 (bead context-grabber-3rk): the daily full ladder starts only on an idle Mac, once a day.
+    scripts/native/test-nightly-ladder.sh
     # Story 785 (#954): the build lanes, their locks and simulators, sim-boot and the xcodebuild wait per lane.
     scripts/native/test-build-lane.sh
     # Stories 1505, 1506 (context-grabber-xmwp): the repo's own rung time limit stops a hang and all it started, exit 124.

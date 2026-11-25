@@ -2016,3 +2016,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** the agent runs `just walk`
 - **Then:** the walk still runs every other class and the report names that class's stories red
 
+---
+
+### User Story 1626:
+
+- **Summary:** Every UI test runs once a day while the Mac is idle
+- **Status:** implemented on branch `native/nightly-all-3rk`; verified on the host by `scripts/native/test-nightly-ladder.sh` in `just test`, with every Mac reading stood in for. The schedule is installed by hand (`just nightly-install`).
+- **Issues:** bead context-grabber-3rk (Igor approved the daily run, 2026-11-12)
+
+#### Use Case:
+- **As Igor,** whose changes each run only the UI test classes they touch
+- **I want to** have the whole ladder, every UI test class, run once a day on main when the Mac isn't working
+- **so that** a test no recent change picked still runs daily, without slowing anyone's day
+
+#### Acceptance Criteria:
+- **Scenario:** The Mac is idle in the night
+- **Given:** it is between 1 and 6 in the morning, the Mac is on AC power, its CPU is under 30% busy, no build lane is held, and the full ladder hasn't run today
+- **When:** the scheduled check runs
+- **Then:** the full ladder climbs on a fresh copy of main, once that day; if anything fails, the failures are written beside the day's log and the run ends with a failure; at any other time it says why it waited and starts nothing
+
