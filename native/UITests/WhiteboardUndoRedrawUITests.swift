@@ -47,7 +47,13 @@ final class WhiteboardUndoRedrawUITests: XCTestCase {
     new.tap()
     let ghosts = app.buttons["whiteboard-ghosts"]
     XCTAssertTrue(ghosts.appears(within: 10), app.debugDescription)
-    if ghosts.label.hasPrefix("Ghosts on") { ghosts.tap() }
+    // d455: the switch was renamed from "Ghosts" to "Ask at my pauses" (767aabac), so a "Ghosts on" check never
+    // matched and the board asked at every pause: on a loaded Mac a pause turn's circle made "4 to keep", not 3.
+    if ghosts.label.hasPrefix("Ask at my pauses: on") { ghosts.tap() }
+    let off = NSPredicate(format: "label BEGINSWITH %@", "Ask at my pauses: off")
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: off, object: ghosts)], timeout: 5), .completed,
+      "Ask at my pauses is off, so no pause turn: \(ghosts.label)")
     let pen = app.buttons["Pen"]
     XCTAssertTrue(pen.appears(within: 10), "the tool picker: \(app.debugDescription)")
     if !pen.isSelected { pen.tap() }
