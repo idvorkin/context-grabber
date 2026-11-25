@@ -1,13 +1,6 @@
 {
  "reservations": [
   {
-   "id": 570,
-   "journey": "07-widgets-and-links.md",
-   "branch": "native/ledger-401-hint-1371",
-   "at": 1795536872.689673,
-   "until": "2026-11-25T16:14:32Z"
-  },
-  {
    "id": 1335,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/plus-no-markup-dataloss",
@@ -41,6 +34,13 @@
    "branch": "native/counter-week-graph-1493",
    "at": 1795622703.0136478,
    "until": "2026-11-26T16:05:03Z"
+  },
+  {
+   "id": 1302,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "?",
+   "at": 1795623507.572017,
+   "until": "2026-11-26T16:18:27Z"
   }
  ]
 }
