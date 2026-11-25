@@ -1597,9 +1597,9 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ### User Story 1632:
 
-- **Summary:** The ladder puts Exercise Analyzer on the simulator before the test that opens it, or says why it can't
-- **Status:** implemented in 6632349e; verified by `scripts/native/test-install-exercise-analyzer.sh` (host) and on the iPad simulator (iPad Pro 11-inch (M5), rung 2, 2026-11-25): the ladder installed Exercise Analyzer's `just build-sim` product and `ExerciseAnalyzerLinkUITests` passed, where both store walks had failed it with the app missing
-- **Issues:** bead context-grabber-3hj9.3
+- **Summary:** The ladder puts Exercise Analyzer on the simulator before the test that opens it
+- **Status:** implemented in 6632349e; verified by `scripts/native/test-install-exercise-analyzer.sh` (host) and on the iPad simulator (iPad Pro 11-inch (M5), rung 2, 2026-11-25): the ladder installed Exercise Analyzer's simulator build and `ExerciseAnalyzerLinkUITests` passed, where both store walks had failed it with the app missing
+- **Issues:** bead context-grabber-3hj9.3; bead context-grabber-3hj9.6 (the Status named the other repo's recipe, which the store walk read as a missing check)
 
 #### Use Case:
 - **As Igor,** reading a store walk or a full ladder run
@@ -1610,7 +1610,26 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** The other app's simulator build is on this Mac
 - **Given:** Exercise Analyzer's simulator build exists in its repo's build folder (or `EXERCISE_ANALYZER_APP` names one)
 - **When:** the ladder's chosen classes include `ExerciseAnalyzerLinkUITests`
-- **Then:** it installs that build on the lane's simulator first, and the test runs against it; with no build, the class is left out and the run says which file it looked for and how to build it
+- **Then:** it installs that build on the lane's simulator first, and the test runs against it
+
+---
+
+### User Story 1633:
+
+- **Summary:** With no Exercise Analyzer build on this Mac, the ladder leaves out the test that opens it and says why
+- **Status:** implemented in 6632349e; verified by `scripts/native/test-install-exercise-analyzer.sh` (host: with no build it exits naming the path it looked for, and the ladder drops the class)
+- **Issues:** bead context-grabber-89sb (split from story 1632)
+
+#### Use Case:
+- **As Igor,** on a Mac that has never built Exercise Analyzer
+- **I want to** have the run skip `ExerciseAnalyzerLinkUITests` and say what's missing
+- **so that** a missing build reads as a setup gap, not a red test
+
+#### Acceptance Criteria:
+- **Scenario:** The other app's simulator build isn't on this Mac
+- **Given:** no Exercise Analyzer simulator build in its repo's build folder and no `EXERCISE_ANALYZER_APP`
+- **When:** the ladder's chosen classes include `ExerciseAnalyzerLinkUITests`
+- **Then:** the class is left out, and the run says which file it looked for and how to build it
 
 ---
 
