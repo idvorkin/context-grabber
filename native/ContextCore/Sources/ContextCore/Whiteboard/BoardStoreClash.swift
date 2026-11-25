@@ -61,8 +61,10 @@ public enum BoardStoreClash {
     case deleted
     /// An add of an id the board already has (a resend, or the same ink twice). Re-added ink takes a new id.
     case exists
-    /// A change to something the board doesn't have.
+    /// A change to something the board doesn't have, or an op that names nothing to check.
     case unknown
+    /// The batch is based on a revision the board hasn't reached: another board's, or a broken cache.
+    case ahead
   }
 
   public struct Refusal: Equatable, Sendable {
@@ -87,16 +89,21 @@ public enum BoardStoreClash {
     public var kind: String
     public var adds: [String]
     public var changes: [String]
+    /// The device's own (a selection): changes nothing on the board, so it neither lands nor is refused.
+    public var local: Bool
 
-    public init(kind: String, adds: [String], changes: [String]) {
+    public init(kind: String, adds: [String], changes: [String], local: Bool = false) {
       self.kind = kind
       self.adds = adds
       self.changes = changes
+      self.local = local
     }
 
     /// Reads an op of the plan's op set (section 4) or of Larry's existing batches. Adds name their new ids
-    /// (`add_strokes`' strokes, `add_text`/`add_card`'s id, a group's or reply's own id and a reply's marks); board-level
-    /// ops change the board; every other op changes its `ids` (or its `id`).
+    /// (`add_strokes`' strokes, `add_text`/`add_card`/`overlay`/`connector`'s id, a group's or reply's own id and a
+    /// reply's marks; a connector's ends are only referred to); `replace` changes its ids and adds its strokes;
+    /// `restore` brings erased names back; board-level ops change the board; `select` is the device's own; every
+    /// other op changes its `ids` (or its `id`).
     public init(json: Any) {
       let op = json as? [String: Any] ?? [:]
       let kind = op["op"] as? String ?? ""
@@ -107,7 +114,9 @@ public enum BoardStoreClash {
       }
       switch kind {
       case "add_strokes": self.init(kind: kind, adds: named("strokes"), changes: [])
-      case "add_text", "add_card": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: [])
+      case "add_text", "add_card", "overlay", "connector": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: [])
+      case "replace": self.init(kind: kind, adds: named("strokes"), changes: ids)
+      case "select": self.init(kind: kind, adds: [], changes: [], local: true)
       case "group": self.init(kind: kind, adds: id.map { [$0] } ?? [], changes: ids)
       case "reply": self.init(kind: kind, adds: (id.map { [$0] } ?? []) + named("marks"), changes: [])
       case "rename", "paper", "delete_board": self.init(kind: kind, adds: [], changes: [BoardStoreClash.boardID])
@@ -123,10 +132,12 @@ public enum BoardStoreClash {
     public var refused: [Refusal]
     public var board: Board
 
-    /// `{rev, applied, refused: [{op, id, reason, rev?, device?, by?, at?}]}` (plan section 3).
+    /// `{rev, applied, refused: [{op, id, reason, rev?, device?, by?, at?}], missing_ids}` (plan section 3);
+    /// `missing_ids` names the `unknown` ones the way the Cockpit's batch contract does.
     public var wire: [String: Any] {
       [
         "rev": rev, "applied": applied,
+        "missing_ids": refused.filter { $0.reason == .unknown && !$0.id.isEmpty }.map(\.id),
         "refused": refused.map { refusal -> [String: Any] in
           var out: [String: Any] = ["op": refusal.op, "id": refusal.id, "reason": refusal.reason.rawValue]
           if let rev = refusal.rev { out["rev"] = rev }
@@ -151,7 +162,17 @@ public enum BoardStoreClash {
     var refused: [Refusal] = []
     var mine: Set<String> = []  // ids this batch added or changed: its own later ops build on them
 
-    for (index, op) in ops.enumerated() {
+    for (index, op) in ops.enumerated() where !op.local {
+      if base > board.rev {
+        for id in op.adds + op.changes {
+          refused.append(Refusal(op: index, id: id, reason: .ahead, rev: board.rev, author: nil))
+        }
+        continue
+      }
+      if op.adds.isEmpty && op.changes.isEmpty {
+        refused.append(Refusal(op: index, id: "", reason: .unknown, rev: nil, author: nil))
+        continue
+      }
       if let deleted = board.deleted {
         for id in op.adds + op.changes {
           refused.append(Refusal(op: index, id: id, reason: .deleted, rev: deleted.rev, author: deleted.author))
@@ -164,7 +185,12 @@ public enum BoardStoreClash {
           blocked = Refusal(op: index, id: id, reason: .unknown, rev: nil, author: nil)
           break
         }
-        if thing.rev > base || thing.erased {
+        // An erased name changes only by `restore`, and `restore` only an erased one.
+        if thing.rev > base || thing.erased != (op.kind == "restore") {
+          if !thing.erased, thing.rev <= base {
+            blocked = Refusal(op: index, id: id, reason: .unknown, rev: nil, author: nil)
+            break
+          }
           blocked = Refusal(op: index, id: id, reason: .changed, rev: thing.rev, author: thing.author)
           break
         }

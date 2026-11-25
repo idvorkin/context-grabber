@@ -77,6 +77,7 @@ final class BoardStoreClashTests: XCTestCase {
     XCTAssertEqual(answer.applied, [0, 1, 2])
     XCTAssertEqual(answer.refused, [.init(op: 3, id: "s-9", reason: .unknown, rev: nil, author: nil)])
     XCTAssertEqual(answer.board.things["g-1"]?.rev, 8)
+    XCTAssertEqual(answer.wire["missing_ids"] as? [String], ["s-9"], "as the Cockpit's batch contract names them")
   }
 
   // Story 1322: renaming the board is a change like any other.
@@ -115,6 +116,61 @@ final class BoardStoreClashTests: XCTestCase {
     XCTAssertEqual(answer.board.deleted, .init(rev: 6, author: igorIPad))
   }
 
+  // Larry's question 1: undo and redo restore erased ink under its own names with `restore`, which lands when nobody
+  // changed those names after the erase the device saw; an add of an erased name is still refused.
+  func testRestoreBringsBackErasedInkUnderItsNames() throws {
+    var board = BoardStoreClash.Board(rev: 6)
+    board.things["s-a"] = .init(rev: 5, author: igorIPad, erased: true)
+    board.things["s-b"] = .init(rev: 6, author: web, erased: true)
+    board.things["s-c"] = .init(rev: 2, author: web)
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"restore","ids":["s-a"]},{"op":"restore","ids":["s-b"]},{"op":"restore","ids":["s-c"]}]"#),
+      to: board, base: 5, author: igorIPad)
+    XCTAssertEqual(answer.applied, [0])
+    XCTAssertEqual(answer.refused.map(\.reason), [.changed, .unknown])
+    XCTAssertEqual(answer.board.things["s-a"]?.erased, false)
+    XCTAssertEqual(answer.board.things["s-a"]?.rev, 7)
+  }
+
+  // Larry's question 2: an op that names nothing (a `translate` by `below_y` alone) can't be checked, so it's refused;
+  // the device sends the names it moves.
+  func testAnOpThatNamesNothingIsRefused() throws {
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"translate","below_y":300,"dy":40}]"#), to: .init(rev: 1), base: 1, author: igorIPad)
+    XCTAssertEqual(answer.applied, [])
+    XCTAssertEqual(answer.refused, [.init(op: 0, id: "", reason: .unknown, rev: nil, author: nil)])
+  }
+
+  // Larry's question 4: select is the device's own and changes nothing; an overlay and a connector are new things (a
+  // connector's ends are only referred to); replace changes its ids and adds its new strokes.
+  func testLarrysOtherKinds() throws {
+    var board = BoardStoreClash.Board(rev: 3)
+    board.things["s-a"] = .init(rev: 1, author: web)
+    board.things["s-b"] = .init(rev: 1, author: web)
+    board.things["o-old"] = .init(rev: 1, author: web)
+    let batch = try ops(
+      #"[{"op":"select","ids":["s-a"]},{"op":"overlay","id":"o-1"},{"op":"remove_overlay","id":"o-old"},"#
+        + #"{"op":"connector","id":"c-1","from":"s-a","to":"s-b"},"#
+        + #"{"op":"replace","ids":["s-b"],"strokes":[{"id":"s-b2"}]}]"#)
+    let answer = BoardStoreClash.apply(batch, to: board, base: 3, author: igorIPad)
+    XCTAssertEqual(answer.applied, [1, 2, 3, 4])
+    XCTAssertEqual(answer.refused, [])
+    XCTAssertEqual(answer.board.things["s-a"]?.rev, 1, "select and a connector's ends change nothing")
+    XCTAssertEqual(answer.board.things["c-1"]?.rev, 4)
+    XCTAssertEqual(answer.board.things["s-b"]?.rev, 4)
+    XCTAssertEqual(answer.board.things["s-b2"]?.rev, 4)
+  }
+
+  // Larry's question 5: a batch based on a revision the board hasn't reached is from another board or a broken cache:
+  // nothing lands, each op refused as `ahead`.
+  func testABaseAheadOfTheBoardLandsNothing() throws {
+    let answer = BoardStoreClash.apply(
+      try ops(#"[{"op":"add_strokes","strokes":[{"id":"s-1"}]}]"#), to: .init(rev: 4), base: 9, author: igorIPad)
+    XCTAssertEqual(answer.applied, [])
+    XCTAssertEqual(answer.rev, 4)
+    XCTAssertEqual(answer.refused, [.init(op: 0, id: "s-1", reason: .ahead, rev: 4, author: nil)])
+  }
+
   // The answer's wire shape, as the Cockpit's endpoint and the web board read it (plan section 3).
   func testTheAnswerWire() throws {
     var board = BoardStoreClash.Board(rev: 2)
@@ -125,7 +181,7 @@ final class BoardStoreClashTests: XCTestCase {
     let wire = try JSONSerialization.data(withJSONObject: answer.wire, options: [.sortedKeys])
     XCTAssertEqual(
       String(decoding: wire, as: UTF8.self),
-      #"{"applied":[1],"refused":[{"at":"2026-11-24T20:59:00Z","by":"igor","device":"web","id":"s-a","op":0,"#
-        + #""reason":"changed","rev":2}],"rev":3}"#)
+      #"{"applied":[1],"missing_ids":[],"refused":[{"at":"2026-11-24T20:59:00Z","by":"igor","device":"web","#
+        + #""id":"s-a","op":0,"reason":"changed","rev":2}],"rev":3}"#)
   }
 }
