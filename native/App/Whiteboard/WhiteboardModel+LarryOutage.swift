@@ -1,16 +1,17 @@
-//  Story 1136 (#1450): a turn to Larry that can't reach the Cockpit (a 5xx, a timeout, no connection) is a blink, as a
-//  chat read's is. The board still says Larry couldn't be reached, with Copy error; only an outage that lasts 2 minutes
-//  files a report, once. The rule is ContextCore's `CockpitOutage`, host-tested by `CockpitOutageTests`.
+//  Story 1302 (#1450): a turn to Larry that can't reach the Cockpit (a 5xx, a timeout, a refused or dropped connection)
+//  is a blink, as a chat read's is (story 1136). The board still says Larry couldn't be reached, with Copy error; only
+//  an outage that lasts 2 minutes files a report, once. A device offline never files; any other failure files at once.
+//  The rule is ContextCore's `CockpitOutage`, host-tested by `CockpitOutageTests`.
 
 import BugKit
 import ContextCore
 import Foundation
 
 extension WhiteboardModel {
-  /// What a turn that couldn't reach the Cockpit does about a report: whether its problem files, the words that say how
-  /// long the Cockpit has been away when it does, and the outage's numbers for the report.
-  func larryTurnBlinked() -> (files: Bool, said: String, extra: [String: JSONValue]) {
-    switch larryOutage.failed(.away, now: Self.outageNow) {
+  /// What a turn that failed as `kind` does about a report: whether its problem files, the words that say how long the
+  /// Cockpit has been away when an outage files, and the outage's numbers for the report.
+  func larryTurnBlinked(_ kind: CockpitOutage.Kind) -> (files: Bool, said: String, extra: [String: JSONValue]) {
+    switch larryOutage.failed(kind, now: Self.outageNow) {
     case .file: return (true, "", [:])
     case .quiet: return (false, "", [:])
     case .fileOutage(let ms, let failures):

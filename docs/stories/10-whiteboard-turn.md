@@ -2576,3 +2576,25 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** the ear is showing
 - **When:** Larry's next message lands, or the Cockpit stops marking the hold
 - **Then:** the ear goes, and the line shows his words as usual
+
+---
+
+### User Story 1302:
+
+- **Summary:** A board's turn that blinks files no report
+- **Status:** implemented in [c857b02d](https://github.com/idvorkin/context-grabber/commit/c857b02d); verified by the outage rule's own host tests (`CockpitOutageTests`), the Mac build, and `WhiteboardTurnUITests` with `WhiteboardLarryWaitUITests` on the iPad Pro 11-inch (M5) simulator (11 passed); a real 502 on the iPad not yet
+- **Issues:** [#1450](https://github.com/idvorkin/context-grabber/issues/1450)
+- **Spec:** [An error on screen files a report by itself](../superpowers/specs/2026-11-19-errors-file-themselves-design.md); the chat's rule is story 1136
+
+#### Use Case:
+- **As** the developer reading the automatic reports
+- **I want to** get no report when one turn to Larry gets a 502 from the Cockpit's proxy and the next one reaches him
+- **so that** a board that heals in twelve seconds does not become an issue
+
+#### Acceptance Criteria:
+- **Scenario:** A board's turn that blinks files no report
+- **Given:** a board is open, the device is online, and a turn to Larry just got HTTP 502 (or any 5xx, or it timed out,
+  could not connect or lost its connection)
+- **When:** the next turn, within a minute, reaches him
+- **Then:** the board showed *Larry couldn't be reached* with Copy error for the failed turn, no automatic report was
+  saved, and the log has `whiteboard` `cockpit_outage` `ended` with `filed: false`

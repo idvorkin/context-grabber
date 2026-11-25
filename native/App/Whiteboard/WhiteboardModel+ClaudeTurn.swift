@@ -166,7 +166,7 @@ extension WhiteboardModel {
   }
 
   /// `turns` has already said so in the note; logged once a run, and Larry's as a copyable problem.
-  /// `autoFile` false keeps a blink's problem from filing (story 1136); `extra` goes on the report.
+  /// `autoFile` false keeps a blink's problem from filing (story 1302); `extra` goes on the report.
   func failed(
     _ who: WhiteboardTurn.Who, _ message: String, status: Int?, first: Bool, autoFile: Bool = true,
     extra more: [String: JSONValue] = [:]

@@ -137,7 +137,7 @@ extension WhiteboardModel {
       t: 0, build: Self.buildLine, from: from, renderMs: out.renderMs, encodeMs: out.encodeMs,
       strokesMs: WhiteboardTimings.ms(strokesStarted.duration(to: .now)), bytes: jpeg.count)
     if !folds.isEmpty { event["folds"] = folds.count }
-    let outcome = await deliver(
+    let (outcome, blink) = await deliver(
       jpeg, picture: picture, thread: thread, note: said ?? WhiteboardNote.boardTurnNote, attempt: attempt,
       post: &post, facts: &event)
     for (name, ms) in [
@@ -194,7 +194,7 @@ extension WhiteboardModel {
         return
       }
       larry.failed(turn, words: said)
-      let away = larryTurnBlinked()
+      let away = larryTurnBlinked(blink)
       failed(
         .larry, "Larry couldn't be reached: \(reason)\(away.said)", status: nil,
         first: turns.failed(.larry, stale: false), autoFile: away.files, extra: away.extra)
@@ -309,10 +309,11 @@ extension WhiteboardModel {
   /// once more by itself, once the app is back on screen and if the hand-off still speaks for the board; `facts` gets
   /// what became of it, and the app's state when it was lost and when it went again.
   /// `post`: the send's timing (story 1112), finished here as the message leaves and added to its events.
+  /// With a `.retry`, what kind of failure it was, so only a Cockpit that is away waits before filing (story 1302).
   private func deliver(
     _ jpeg: Data, picture: WhiteboardPicture, thread: String?, note: String, attempt: Int,
     post: inout BoardPostTiming, facts: inout [String: Any]
-  ) async -> ChatSend.Outcome {
+  ) async -> (ChatSend.Outcome, CockpitOutage.Kind) {
     var lost: WhiteboardLostConnection.Record?
     var states: [String: Any] = [:]
     defer {
@@ -330,9 +331,10 @@ extension WhiteboardModel {
       let (body, response) = try await WhiteboardLostConnection.run("upload", record: &lost, again: again) {
         try await URLSession.shared.data(for: try ChatSend.uploadRequest(image: jpeg, cockpit: self.cockpit))
       }
-      switch ChatSend.upload(status: (response as? HTTPURLResponse)?.statusCode, body: body) {
-      case .refused(let status, let reason): return .refused(status: status, reason: reason)
-      case .retry(let reason): return .retry(reason: "image upload: \(reason)")
+      let status = (response as? HTTPURLResponse)?.statusCode
+      switch ChatSend.upload(status: status, body: body) {
+      case .refused(let status, let reason): return (.refused(status: status, reason: reason), .other)
+      case .retry(let reason): return (.retry(reason: "image upload: \(reason)"), Self.blink(status))
       case .ref(let ref):
         post.uploadMs = WhiteboardTimings.ms(uploading.duration(to: .now))
         post.t = Self.unixMs()
@@ -347,11 +349,16 @@ extension WhiteboardModel {
           try await URLSession.shared.data(
             for: try ChatSend.messageRequest(item, attachment: ref, cockpit: self.cockpit))
         }
-        return ChatSend.outcome(status: (response as? HTTPURLResponse)?.statusCode, body: body)
+        let status = (response as? HTTPURLResponse)?.statusCode
+        return (ChatSend.outcome(status: status, body: body), Self.blink(status))
       }
     } catch {
-      return .retry(reason: error.localizedDescription)
+      return (.retry(reason: error.localizedDescription), CockpitOutage.kind(error))
     }
+  }
+
+  private static func blink(_ status: Int?) -> CockpitOutage.Kind {
+    status.map { CockpitOutage.kind(status: $0) } ?? .other
   }
 
   /// #1136: the app's state, for the lost connection's log fields.

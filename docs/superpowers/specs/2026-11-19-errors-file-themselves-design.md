@@ -42,7 +42,8 @@ he sees, he does not have time to report, so they are never fixed.
   says *Larry couldn't be reached* with Copy error as before and files nothing, unless turns keep failing that way for
   2 minutes, with no turn reaching him and no pause of over a minute between them; then it files one report for the
   outage. Why: on 2026-11-25 one turn got a 502 and the next, 12 seconds later, reached him, and the one blip filed
-  #1450. A turn the Cockpit refuses (a 4xx) still files at once.
+  #1450. A turn that fails because the device's own connection is down never files; a turn the Cockpit refuses (a
+  4xx), or whose answer the app can't read, still files at once.
 - **The share sheet.** An error on the share card files too (the first was its mic's, #1135, before the mic was taken
   off the card). The share sheet is its own small
   program with no network of its own, so it keeps the report in the space it shares with the app; the next time the
