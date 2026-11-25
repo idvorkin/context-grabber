@@ -38,8 +38,8 @@ does today, and nothing about the web board changes either.
   tools. If the Cockpit can't be reached, the half shows the app's copyable error, *The web board didn't load* with
   the reason, and the left half still works.
 - **The readout:** each half's top corner shows its numbers as `last 18 ms · median 21 ms · 12 strokes`, and
-  *Draw to measure* before the first stroke. The numbers update with each stroke. Leaving the screen and coming back
-  starts both counts again.
+  *Draw to measure* before the first stroke. The numbers update with each stroke. Pressing **Clear**, or leaving the
+  screen and coming back, starts both counts again, the web half's included.
 - **The log:** each stroke on either side adds an `ink_side_by_side` event: which side, that stroke's median and
   worst lag, how many frames it drew in, the running median and the count. Pressing **Clear** or leaving the screen
   adds one `board_pen_latency` line per half that drew, with `surface` *native* or *web*: how many frames were
@@ -75,8 +75,8 @@ can't see:
   native side's doesn't have to pay. That is part of the difference being measured.
 - PencilKit predicts the Pencil's path ahead of the touches, and the web page can't. That shows in the feel, never
   in the number.
-- A frame that takes longer than a second, or a number below zero, is a fault in the measuring, not a stroke: it is
-  dropped and counted in the log as dropped.
+- A stroke whose median or worst frame takes longer than a second, or comes out below zero, is a fault in the
+  measuring: the whole stroke is dropped and counted in the log as dropped.
 - The board itself (not this screen) logs its own `board_pen_latency` lines with `surface` *board*, sampled from
   one Pencil moment in four to the frame's presentation time (story 1311). Those are a different span, so compare
   this screen's two surfaces with each other, not with the board's line.

@@ -2161,7 +2161,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1324:
 
 - **Summary:** Ink side by side: one pen-latency line per half, both measured the way the web board measures
-- **Status:** implemented in c2de0213 and bc0c07c4 (bead context-grabber-1zgr, Igor's "measure first" on 2vv, 2026-11-24); verified by InkStrokeLagTests and test-pen-latency.sh (host), the Mac build, IPadInkSideBySideUITests on the iPad simulator, and the wasm on Larry's VM; the numbers themselves need the real iPad and Pencil
+- **Status:** implemented in 8ec45dd3 and e0c86293 (bead context-grabber-1zgr, Igor's "measure first" on 2vv, 2026-11-24); verified by InkStrokeLagTests and test-pen-latency.sh (host), the Mac build, IPadInkSideBySideUITests on the iPad simulator, and the wasm on Larry's VM; the numbers themselves need the real iPad and Pencil
 - **Spec:** [Ink side by side](../superpowers/specs/2026-11-22-ink-side-by-side-design.md), *What the number means*
 
 #### Use Case:
