@@ -1838,12 +1838,12 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** A kept mark only partly drawn
 - **Given:** a board on paper, and a mark of Larry's I keep
 - **When:** the screen shows only part of it in his colour a second later (the rest blank, or in another colour)
-- **Then:** the board draws it again on its own within a few seconds, every stroke in his colour; the mark may blink once, and if that is not enough the view moves a screen away and back once, ending where it was
+- **Then:** the board draws it again on its own within a few seconds, every stroke in his colour, by moving the view a screen away and back once, ending where it was
 
 - **Scenario:** A small mark kept whole
 - **Given:** a board on paper, and a small label of Larry's in thin letters at a normal pen
 - **When:** I keep it and it shows whole in his colour
-- **Then:** the board leaves it as it is: it doesn't blink, and the view doesn't move
+- **Then:** the board leaves it as it is: the view doesn't move
 
 - **Scenario:** Ink taken away before the board looks
 - **Given:** a board on paper, and ink I just pasted or kept
@@ -1869,7 +1869,32 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** A line left half drawn by an Undo
 - **Given:** a board on paper, a group of Larry's dropped just above my line, and the drop undone
 - **When:** a second later part of my line near the change isn't on the screen
-- **Then:** the board draws it again on its own within a few seconds; the line may blink once, and if that's not enough the view moves a screen away and back once, ending where it was
+- **Then:** the board draws it again on its own within a few seconds, by moving the view a screen away and back once, ending where it was
+
+---
+
+### User Story 1343:
+
+- **Summary:** Undo still takes back my stroke after the board redrew missing ink
+- **Status:** implemented in [823b9fbf](https://github.com/idvorkin/context-grabber/commit/823b9fbf); verified by host tests (`BoardUndoRedrawTests`) and the iPad Pro 11-inch (M5) simulator (`WhiteboardPaperGhostsUITests`' OneUndo, OneUndo after a heal and KeepAll, and `WhiteboardUndoRedrawUITests`, 3/3 each); not yet on the iPad
+- **Issues:** bead context-grabber-pmv6
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Ink an Undo or Redo leaves in place is on the screen too*
+
+#### Use Case:
+- **As someone** undoing on a board on paper
+- **I want to** have every Undo take back the step it would have, even after the board redrew ink it found missing
+- **so that** an Undo never silently does nothing and leaves my stroke behind
+
+#### Acceptance Criteria:
+- **Scenario:** A redraw between Undos
+- **Given:** a board on paper with my stroke and a kept mark of Claude's, and after each Undo or Redo the board finds ink missing and redraws it
+- **When:** I undo the keep, redo it, undo it again, and undo once more
+- **Then:** the last Undo takes my stroke away, and the board is empty
+
+- **Scenario:** A redraw of a kept mark before Undos
+- **Given:** a board on paper with my stroke, and a kept mark of Claude's the board finds partly drawn and redraws
+- **When:** I undo the keep, and undo once more
+- **Then:** the last Undo takes my stroke away, and the board is empty
 
 ---
 

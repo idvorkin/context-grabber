@@ -55,54 +55,23 @@ extension PaperBoardController {
           "attempt": attempt,
           "missing": part ?? (none ? "none" : ""),
         ].merging(whose) { $1 })
-      // A redraw in place first; the view a screen away and back only once that left it partly drawn.
       let how = missing && self.touchesDown == 0 ? WhiteboardKeptInk.heal(afterLook: attempt) : nil
       self.showKeptInkForTests(inView ? (part ?? (none ? "none" : "whole")) : "out", healed: how != nil)
       guard let how else { return }
       // The view's nudge (`redrawSoon`, #906) left such a tile as it was, both tries, on the iPad simulator, and so did
-      // setting the same markup again or marking every view to draw again. The first try takes the mark out of the markup
-      // and puts it back a moment later; the second scrolls the view a screen away and back.
+      // setting the same markup again or marking every view to draw again. The view scrolls a screen away and back.
       self.log.event(
         "whiteboard",
         [
           "action": "paper_ink_heal", "why": "kept_\(part ?? "")", "board": self.model.board.id, "attempt": attempt + 1,
           "how": how,
         ])
-      if how == "readd" {
-        await self.readd(moments)
-      } else {
-        let place = self.paper.contentVisibleFrame
-        self.paper.contentVisibleFrame = place.offsetBy(dx: 0, dy: place.height)
-        try? await Task.sleep(for: .seconds(0.1))
-        self.paper.contentVisibleFrame = place
-      }
+      let place = self.paper.contentVisibleFrame
+      self.paper.contentVisibleFrame = place.offsetBy(dx: 0, dy: place.height)
+      try? await Task.sleep(for: .seconds(0.1))
+      self.paper.contentVisibleFrame = place
       self.lookAtKeptInk(made, why: why, attempt: attempt + 1, before: darkBefore)
     }
-  }
-
-  /// The markup set without the strokes made at `moments`, and a moment later with them again where they were, their ids
-  /// kept, in whatever the markup holds by then, unless an Undo or Redo ran meanwhile.
-  private func readd(_ moments: Set<Int64>) async {
-    guard let markup = paper.markup else { return }
-    var without = markup
-    var removed: [(index: Int, element: MarkupOrderedSet.Element)] = []
-    for stroke in markup.subelements.strokes where moments.contains(BoardMoment.nearest(stroke)) {
-      guard let element = without.subelements.removeElement(for: stroke.elementID) else { continue }
-      removed.append((markup.subelements.firstIndex(of: element) ?? markup.subelements.count, element))
-    }
-    guard !removed.isEmpty else { return }
-    let steps = undoSteps
-    setMarkup(without)
-    inkFrames = without.strokeFrames
-    try? await Task.sleep(for: .seconds(0.1))
-    guard undoSteps == steps else { return }
-    var back = paper.markup ?? without
-    for (index, element) in removed {
-      _ = back.subelements.insert(element, at: min(index, back.subelements.count))
-    }
-    let held = setMarkup(back).held
-    inkFrames = held.strokeFrames
-    model.settled(held.inkDrawing)
   }
 
   /// `GRABBER_WHITEBOARD_KEPT_INK_LABEL=1`: every look at kept ink this launch as an element a UI test reads

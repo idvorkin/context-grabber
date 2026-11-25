@@ -111,13 +111,10 @@ public enum WhiteboardKeptInk {
     drawn.ink == 0 && drawn.dark == 0 && drawn.other == 0 && expected.ink <= 0
   }
 
-  /// How a mark found partly drawn at look `attempt` is drawn again: in place first (taken out of the markup and put
-  /// back, a blink), and only if that look still finds it partly drawn, the view a screen away and back; none after two.
+  /// How a mark found partly drawn at look `attempt` is drawn again: the view a screen away and back once, then nothing
+  /// more. Never taken out of the markup and put back (story 1343, bead context-grabber-pmv6): that left PaperKit's own
+  /// Undo of a stroke Igor drew taking nothing back.
   public static func heal(afterLook attempt: Int) -> String? {
-    switch attempt {
-    case 0: "readd"
-    case 1: "scroll"
-    default: nil
-    }
+    attempt == 0 ? "scroll" : nil
   }
 }

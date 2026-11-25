@@ -88,14 +88,11 @@ public enum BoardUndoRedraw {
     return cells.sorted().map { [$0.column, $0.row] }
   }
 
-  /// The heal after the look numbered `afterLook` found a piece missing: the strokes taken out and put back, then the view
-  /// a screen away and back, then nothing more.
+  /// The heal after the look numbered `afterLook` found a piece missing: the view a screen away and back once, then nothing
+  /// more. Never the strokes taken out and put back (story 1343, bead context-grabber-pmv6): after an Undo or Redo that
+  /// left PaperKit's own Undo of a stroke Igor drew taking nothing back.
   public static func healStep(afterLook attempt: Int) -> String? {
-    switch attempt {
-    case 0: "readd"
-    case 1: "scroll"
-    default: nil
-    }
+    attempt == 0 ? "scroll" : nil
   }
 
   /// One heal as the session log says it, once the look after it has run: the tiles it was for, how many strokes, which

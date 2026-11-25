@@ -379,6 +379,24 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     shot(app, "after his stroke too")
   }
 
+  /// Bead context-grabber-pmv6: the same steps with every look after an Undo or Redo finding ink missing, so each asks for
+  /// a heal. A heal must leave Undo taking the steps it would have: the last undo still takes his stroke.
+  func testOneUndoTakesAKeptMarkBackAfterAHeal() throws {
+    let app = try openBoard([
+      "GRABBER_WHITEBOARD_AFTER_KEEP": "4,undo,redo,undo,undo", "GRABBER_WHITEBOARD_UNDO_LOOK": "miss",
+    ])
+    let ghost = try XCTUnwrap(strokeBringsAGhost(app))
+    PaperScreen.tap(app, ghost.center)
+    keep(app)
+    wait(send(app), label: strokes(2))
+    wait(send(app), label: strokes(1))
+    wait(send(app), label: strokes(2))
+    wait(send(app), label: strokes(1))
+    wait(send(app), label: strokes(0))
+    XCTAssertNil(PaperScreen(app).ink, "the last undo took his stroke, heals and all")
+    shot(app, "after his stroke too, with heals")
+  }
+
   /// Stories 619, 620, 621, 643: a kept mark and the strokes keep their names through the file, and a ghost left showing
   /// isn't saved. Claude's ghost is kept, Larry's turn sends both strokes to the fake Cockpit (which says what it got)
   /// and leaves his marks showing; the app is killed once the save is written, and after a relaunch the board holds
@@ -746,7 +764,12 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     // A look the moment his purple settles can catch the paper's tiles mid-redraw; the settled board has nothing black
     // in his circles (rung 2, 2026-11-20: six looks over three seconds after the keep found none).
     XCTAssertTrue(PaperScreen.clears(app) { $0.ink(in: marks) }, "the newer line left his circles")
-    let pushed = try XCTUnwrap(PaperScreen(app).ink(in: under), "the line went down under his reply")
+    // Wait for the pushed line to show under his reply, not one look: the kept circles' own redraw (a cut one has the view
+    // move a screen away and back) can leave the paper's tiles under them blank for a
+    // moment (bead context-grabber-pmv6: both failed tries had that heal just after the keep).
+    let pushed = try XCTUnwrap(
+      PaperScreen.showing(app, { $0.ink(in: under) }, { $0.maxY > before.maxY + 0.005 }),
+      "the line went down under his reply")
     XCTAssertGreaterThan(pushed.maxY, before.maxY + 0.005, "what's under his reply reaches lower")
     shot(app, "the line pushed under his kept reply")
     waitUntil(NSPredicate(format: "label == %@", strokes(2)), send(app), timeout: 12)
