@@ -191,6 +191,34 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     add(picture)
   }
 
+  /// How many pause turns the fake Cockpit has been asked so far, by any board (story 1171).
+  private func turnsAsked(_ cockpit: String) throws -> Int {
+    let url = try XCTUnwrap(URL(string: cockpit + "/fake/turns"))
+    var got: Data?
+    let done = expectation(description: "the fake Cockpit answered")
+    URLSession.shared.dataTask(with: url) { body, _, _ in
+      got = body
+      done.fulfill()
+    }.resume()
+    wait(for: [done], timeout: 5)
+    let json = try JSONSerialization.jsonObject(with: try XCTUnwrap(got)) as? [String: Any]
+    return try XCTUnwrap(json?["turns"] as? [Any]).count
+  }
+
+  /// Until the fake Cockpit has been asked more than `before` pause turns, then past the answer drawing in.
+  private func waitUntilAsked(more before: Int, _ app: XCUIApplication, timeout: TimeInterval = 15) {
+    let cockpit = (try? cockpit()) ?? ""
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if let now = try? turnsAsked(cockpit), now > before {
+        _ = PaperScreen.settled(app) { $0.ghost }
+        return
+      }
+      Thread.sleep(forTimeInterval: 0.25)
+    }
+    XCTFail("the pause after the second stroke never asked: \(app.debugDescription)")
+  }
+
   /// A stroke and the ghost that answers it, settled.
   private func strokeBringsAGhost(_ app: XCUIApplication) -> PaperScreen.Box? {
     stroke(app)
@@ -249,16 +277,22 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     sleep(1)
     XCTAssertEqual(send(app).label, strokes(1), "the tap off leaves no dot")
     XCTAssertEqual(ghosts(app).label, "Ask at my pauses: on, 1 showing", "and dismisses nothing")
+    let asked = try turnsAsked(try cockpit())
     stroke(app, atHeight: 0.4)
     wait(send(app), label: strokes(2))
     XCTAssertEqual(ghosts(app).label, "Ask at my pauses: on, 1 showing", "the mark still shows")
     shot(app, "drew with the mark showing")
-    PaperScreen.tap(app, ghost.center)
+    // This stroke's own pause asks again, and its answer redraws the mark: chosen before that lands, the mark the
+    // Dismiss below would act on is replaced and nothing is dismissed (the full ladder, 2026-11-25: whiteboard_turn
+    // 1.6 s after the choice, no mark_choice). Choose it once that pause has been asked, wherever it now sits.
+    waitUntilAsked(more: asked, app)
+    let now = try XCTUnwrap(PaperScreen.settled(app) { $0.ghost } ?? Optional(ghost), "the mark after the pause")
+    PaperScreen.tap(app, now.center)
     XCTAssertTrue(app.buttons["whiteboard-mark-keep"].appears(within: 5), app.debugDescription)
     sleep(1)
     XCTAssertEqual(send(app).label, strokes(2), "a tap on the mark leaves no dot")
     XCTAssertEqual(finger(app).label, "draws", "choosing a mark leaves the pen")
-    app.buttons["whiteboard-mark-dismiss"].tap()
+    app.buttons["whiteboard-mark-dismiss"].tapWhenSettled()
     wait(ghosts(app), label: "Ask at my pauses: on")
     sleep(1)
     XCTAssertEqual(send(app).label, strokes(2), "Dismiss keeps nothing")

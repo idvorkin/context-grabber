@@ -27,9 +27,12 @@ extension XCUIElement {
   /// (the session log shows the touch on the row and no action after it), leaving the menu up over the bar. Tap the
   /// row, and tap again only while the row is still there and `took` says the action hasn't happened, at most `tries`
   /// times: a slow fade is never tapped twice.
-  func tapUntilGone(tries: Int = 3, timeout: TimeInterval = 1.5, took: () -> Bool) {
+  func tapUntilGone(tries: Int = 3, timeout: TimeInterval = 3, took: () -> Bool) {
     for _ in 0..<tries {
-      tapWhenSettled()
+      settle()
+      // A first tap that took can still be fading out: never tap a row that has gone, or one whose action shows.
+      if took() || !exists { return }
+      tap()
       let deadline = Date().addingTimeInterval(timeout)
       while Date() < deadline {
         if took() || !exists { return }
