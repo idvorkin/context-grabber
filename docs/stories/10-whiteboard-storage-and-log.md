@@ -1489,7 +1489,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1344:
 
 - **Summary:** A stroke drawn on a Cockpit board is saved to the Cockpit
-- **Status:** implemented in [20002d0e](https://github.com/idvorkin/context-grabber/commit/20002d0e); verified by host tests (`CockpitBoardEditTests`) and on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testADrawnStrokeIsSavedAndARefusedOneGoesBack`); against the real Cockpit in [c1c64a69](https://github.com/idvorkin/context-grabber/commit/c1c64a69): one stroke on the scratch board `scratch-ipad-smoke` from the iPad Pro 11-inch (M5) simulator took it from version 0 to 1, and `ops?since=0` shows the `add_strokes` (`testOneStrokeOnTheRealCockpitsScratchBoard`, run only on request)
+- **Status:** implemented in [20002d0e](https://github.com/idvorkin/context-grabber/commit/20002d0e); verified by host tests (`CockpitBoardEditTests`) and on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardCockpitBoardsUITests.testADrawnStrokeIsSavedAndARefusedOneGoesBack`); against the real Cockpit in [abeffed2](https://github.com/idvorkin/context-grabber/commit/abeffed2): one stroke on the scratch board `scratch-ipad-smoke` from the iPad Pro 11-inch (M5) simulator took it from version 0 to 1, and `ops?since=0` shows the `add_strokes` (`testOneStrokeOnTheRealCockpitsScratchBoard`, run only on request)
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*, Drawing on a Cockpit board
 
