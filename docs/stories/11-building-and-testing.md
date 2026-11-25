@@ -1633,7 +1633,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** A UI test launches the app with `GRABBER_HEALTH=off`
 - **Given:** every UI test launches through `XCUIApplication.forTests`, which sets `GRABBER_HEALTH=off`
 - **When:** the app comes to the front at launch or later
-- **Then:** it asks HealthKit nothing for its Today refresh and logs `mirror_refresh_skipped` with reason `health_off`; a test that sets `GRABBER_MIRROR` still grabs its fixture week (fixture or HealthKit) as before, and the launch smoke, which doesn't use `forTests`, still runs the real Health refresh
+- **Then:** it asks HealthKit nothing for its Today refresh and logs `mirror_refresh_skipped` with `health_request_status` `health_off`; a test that sets `GRABBER_MIRROR` still grabs its fixture week (fixture or HealthKit) as before, and the launch smoke, which doesn't use `forTests`, still runs the real Health refresh
 
 ---
 
