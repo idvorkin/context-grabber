@@ -532,6 +532,30 @@ the shared core's, so the web board's long-press menu gets the row the same way.
 
 `bw_info` says `"abi": 21`. Every other export's arguments and answers are as in version 20.
 
+### Interface 22: the shared-board store's clash rule (stories 1293, 1322, 1323; t12b)
+
+Igor, 2026-11-24: boards live in the Cockpit, and any of the iPad, the web board and the Mac draws on them (option C,
+spec *Boards live in the Cockpit*). A device sends a batch of changes against the last revision it saw; the Cockpit
+decides, per change, what lands. The rule is the shared core's, so the Cockpit's store and every device decide alike.
+
+- New, `bw_store_clash`, input `{"board": {"rev", "things": {name: thing}, "deleted"?: thing}, "base_rev", "device",
+  "by", "at", "ops": [op]}`, a thing being `{"rev", "device", "by", "at", "erased"?}`: who last changed it and when.
+- The answer is `{"rev", "applied": [op index], "refused": [{"op", "id", "reason", "rev"?, "device"?, "by"?, "at"?}],
+  "board"}`, the board after the batch in the same shape as the input's.
+- New ink always lands, once per name: an add of a name the board already has, live or erased, is refused as `exists`,
+  out loud. Ink added again (an undo of a synced erase, the pieces a partial erase leaves) takes new names.
+- A change lands only when every name it touches was last changed at or before `base_rev`, or earlier in the same
+  batch. Otherwise that change is refused as `changed`, naming the thing and who changed it and when; the rest of the
+  batch still lands. One change over several things lands for all of them or none. A change to a name the board
+  doesn't have is refused as `unknown`.
+- Renaming the board and its paper are changes to the board itself, under the same rule.
+- Once the board is deleted, nothing lands on it, new ink included: every change is refused as `deleted`, with when and
+  where it was deleted.
+- An accepted batch is one new revision; a batch where nothing landed leaves the revision as it was.
+- Missing input says so: `{"error": "no board" | "no base_rev" | "no device" | "no ops"}`.
+
+`bw_info` says `"abi": 22`. Every other export's arguments and answers are as in version 21.
+
 ## Precision: a known difference from the iPad
 
 In WebAssembly the rules' arithmetic is 32-bit (the SDK has no 64-bit target), where the iPad's is 64-bit. Boxes

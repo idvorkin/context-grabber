@@ -34,7 +34,7 @@ let boardTests = [
   "BoardRoomBandTests.swift",
   "BoardRoomDropTests.swift",
   "BoardRoomLateTests.swift", "BoardRoomTests.swift", "BoardSaveTimingTests.swift", "BoardSelectionLabelTests.swift",
-  "BoardSessionReplayTests.swift", "BoardShapeSnapTests.swift",
+  "BoardSessionReplayTests.swift", "BoardShapeSnapTests.swift", "BoardStoreClashTests.swift",
   "BoardSyncFailureTests.swift",
   "BoardSyncRetryTests.swift", "BoardThreadFindTests.swift", "BoardThreadRefusalTests.swift",
   "BoardToTextTests.swift", "BoardUndoButtonsTests.swift", "BoardUndoProbeTests.swift", "BoardUndoRedrawTests.swift",
