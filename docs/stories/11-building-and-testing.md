@@ -1621,7 +1621,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1627:
 
 - **Summary:** A build lane's simulator runs slim: simslim turns off the background daemons a test run never needs, once per simulator
-- **Status:** in progress (branch chore/simslim-lanes). Measured 2026-11-24 on the idle iPad Pro 11-inch (M5) lane 3 simulator, iOS 27.2: 180 processes to 84, summed RSS 10.2 GB to 7.0 GB, disk unchanged; verified by `scripts/native/test-sim-slim.sh` (host)
+- **Status:** implemented in 852030fb; verified by `scripts/native/test-sim-slim.sh` (host) and on the simulator rung, 2026-11-24: all four iPad Pro 11-inch (M5) lane simulators slimmed (102 of 173 daemons off), then the whiteboard smoke and `WhiteboardUndoRedrawUITests`, `WhiteboardDropRoomUITests` and the PaperKit contract classes on a slim lane passed, the rung in 185 s against 255 s on a stock lane. An idle lane simulator went from 180 processes and 10.2 GB summed RSS to 84 and 7.0 GB fresh, 121 and 8.5 GB after a run; its disk image is unchanged. `WhiteboardDropRoomUITests` failed one run on a slim lane while the Mac ran three builds, the same drop-short failure seen on stock lanes the same day (beads d455, mph6)
 - **Issues:** chop-conventions ios-codev skill (Igor, 2026-11-24: "did we get the slim sims too")
 
 #### Use Case:
