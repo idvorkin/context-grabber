@@ -2229,7 +2229,7 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 
 - **Summary:** The counter's week as a little graph by day
 - **Issues:** [#1493](https://github.com/idvorkin/context-grabber/issues/1493)
-- **Status:** implemented in [fa6a0a6](https://github.com/idvorkin/context-grabber/commit/fa6a0a6); verified by `CounterWeekTests` (host: the seven bars oldest to today with each weekday's initial, today marked, other devices' counts included, and − and + before Confirm moving the bars) and `DailyStripUITests` on the iPhone 17 and iPad Pro 11-inch (M5) simulators (the graph above the rows, all seven rows still on screen, today's bar following − before Confirm; 2026-11-25); its look in light and dark from the previews by eye; the phone in the next build turn
+- **Status:** implemented in [51defe9](https://github.com/idvorkin/context-grabber/commit/51defe9d); verified by `CounterWeekTests` (host: the seven bars oldest to today with each weekday's initial, today marked, other devices' counts included, and − and + before Confirm moving the bars) and `DailyStripUITests` on the iPhone 17 and iPad Pro 11-inch (M5) simulators (the graph above the rows, all seven rows still on screen, today's bar following − before Confirm; 2026-11-25); its look in light and dark from the previews by eye; the phone in the next build turn
 - **Spec:** [native home screen, "The week at a glance"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
@@ -2244,6 +2244,21 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 - **Then:** above the seven rows a bar chart shows the seven days oldest to newest with bars of 0, 0, 0, 1, 1, 3, 0
   and today marked, and today's bar rises to 1 at once, before *Confirm*
 
+---
+
+### User Story 573:
+
+- **Summary:** Cancel takes the week graph's bars back to what was saved
+- **Issues:** [#1493](https://github.com/idvorkin/context-grabber/issues/1493)
+- **Status:** implemented in [51defe9](https://github.com/idvorkin/context-grabber/commit/51defe9d); verified by `CounterWeekTests` (host: steps that were never confirmed leave the week, opened again, with the saved bars); not yet exercised on the simulator; the phone in the next build turn
+- **Spec:** [native home screen, "The week at a glance"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
+
+#### Use Case:
+- **As someone** who makes balloons and does magic for others
+- **I want** the week graph to drop the steps I cancelled
+- **so that** the bars only ever show a week I meant to keep
+
+#### Acceptance Criteria:
 - **Scenario:** Cancel takes the bars back
 - **Given:** the week sheet with today's bar raised by a +
 - **When:** I tap *Cancel* and press and hold Balloons again

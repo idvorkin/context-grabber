@@ -73,6 +73,17 @@ final class CounterWeekTests: XCTestCase {
     XCTAssertEqual(week.graph.map(\.count), [0, 0, 0, 1, 1, 2, 1], "the bars follow the sheet's counts at once")
   }
 
+  // #1493, story 573: Cancel drops the sheet's steps, so the week opened again draws the saved bars.
+  func testTheGraphOpenedAgainAfterCancelShowsTheSavedWeek() throws {
+    let s = try strip()
+    try s.set(.balloons, day: "2026-11-24", value: 3)
+    var cancelled = try CounterWeek(.balloons, today: "2026-11-25", strip: s)
+    cancelled.step(0, by: 1)
+    XCTAssertEqual(cancelled.graph.last?.count, 1)
+    let reopened = try CounterWeek(.balloons, today: "2026-11-25", strip: s)
+    XCTAssertEqual(reopened.graph.map(\.count), [0, 0, 0, 0, 0, 3, 0])
+  }
+
   func testTheGraphCountsOtherDevicesToo() throws {
     let s = try strip()
     try s.mergePeer("ipad", month: "2026-10", rows: [StripRow(day: today, item: .magic, value: 2, updatedAt: 5)])
