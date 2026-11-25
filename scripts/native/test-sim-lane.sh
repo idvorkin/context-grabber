@@ -7,7 +7,8 @@
 #   xcodebuild-log.sh refusing a test run on another lane's simulator but not a build; a script run outside any lane
 #   taking one (take_lane) and reading a lane's udid as that model in its own lane (lane_target).
 set -uo pipefail
-unset BUILD_LANES BUILD_LANE BUILD_LANE_PORT_OFFSET SIM_LANE_TAKEN SIM WHITEBOARD_SIM
+unset BUILD_LANES BUILD_LANE BUILD_LANE_PORT_OFFSET SIM_LANE_TAKEN SIM WHITEBOARD_SIM SIMSLIM
+export SIM_SLIM=0
 cd "$(dirname "$0")/../.."
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/cg-sim-lane-test.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
@@ -127,6 +128,17 @@ is "a run of built tests in lane 2 on lane 1's iPad: exit 64" "$?" 64
 rm -f "$MARKS/xcodebuild"
 XACT=build xlog "$PAD"
 [ -e "$MARKS/xcodebuild" ] && ok "a build for the simulator, outside a lane: it runs" || bad "a build for the simulator, outside a lane: it runs"
+
+# Story 1627: sim-boot.sh slims the simulator once it is booted, and waits for it to be booted again after the slim.
+printf '#!/usr/bin/env bash\necho "simslim $*" >>"$MARKS/xcrun"\n[ "$1" != verify ]\n' >"$tmp/simslim"
+chmod +x "$tmp/simslim"
+: >"$MARKS/xcrun"
+with BUILD_LANES=1 BUILD_LANE=1 SIM_SLIM=1 SIMSLIM="$tmp/simslim" scripts/native/sim-boot.sh "$PAD" >"$out" 2>&1
+is "sim-boot with simslim: exit 0" "$?" 0
+is "it boots, slims, then waits for the boot again" \
+  "$(sed -nE 's/^xcrun simctl (bootstatus) .*/\1/p; s/^simslim (verify|on) .*/\1/p' "$MARKS/xcrun" | tr '\n' ' ')" \
+  "bootstatus verify on bootstatus "
+has "and slims the simulator it booted" "$MARKS/xcrun" "simslim on $PAD --except siri,health,icloud,photos"
 
 recipe() {
   with SIM="iPad Pro 11-inch (M5)" BUILD_LANES=2 BUILD_LANE_WAIT=0 SMOKE_ONLY=mirror \

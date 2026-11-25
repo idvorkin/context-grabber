@@ -67,5 +67,6 @@ xcrun simctl list devices booted | grep -qF "($udid)" || "$here/sim-poster-prune
 # -b boots it only if it isn't booted, and returns at once if it is; a bare bootstatus after a failed boot waits forever.
 xcrun simctl bootstatus "$udid" -b >/dev/null || { echo "the simulator $udid did not boot" >&2; exit 1; }
 # Story 1627: the lane's simulator runs slim (simslim, when it's installed; a no-op otherwise). Only a simulator that
-# isn't slim yet is changed, and that reboots it once.
+# isn't slim yet is changed, and that reboots it once, so it is waited for again.
 "$here/sim-slim.sh" "$udid"
+xcrun simctl bootstatus "$udid" -b >/dev/null || { echo "the simulator $udid did not boot after its slim" >&2; exit 1; }

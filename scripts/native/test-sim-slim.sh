@@ -34,6 +34,4 @@ check "SIM_SLIM=0 skips it" '[ ! -s "$CALLS" ] && [ $status -eq 0 ]'
 : >"$CALLS"; out=$(SIMSLIM=$tmp/no-such-simslim "$here/sim-slim.sh" UDID-1 2>&1); status=$?
 check "no simslim installed is a quiet no-op" '[ ! -s "$CALLS" ] && [ $status -eq 0 ] && [ -z "$out" ]'
 
-check "sim-boot.sh calls it after the boot" 'tail -3 "$here/sim-boot.sh" | grep -q "sim-slim.sh"'
-
 [ "$fails" -eq 0 ] && echo "sim-slim: all passed" || { echo "sim-slim: $fails failed"; exit 1; }
