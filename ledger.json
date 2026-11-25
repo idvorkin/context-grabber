@@ -8,41 +8,6 @@
    "until": "2026-11-25T16:14:32Z"
   },
   {
-   "id": 1330,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-cache-8kh",
-   "at": 1795616994.733512,
-   "until": "2026-11-26T14:29:54Z"
-  },
-  {
-   "id": 1331,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-cache-8kh",
-   "at": 1795616994.733512,
-   "until": "2026-11-26T14:29:54Z"
-  },
-  {
-   "id": 1332,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-cache-8kh",
-   "at": 1795616994.733512,
-   "until": "2026-11-26T14:29:54Z"
-  },
-  {
-   "id": 1333,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-cache-8kh",
-   "at": 1795616994.733512,
-   "until": "2026-11-26T14:29:54Z"
-  },
-  {
-   "id": 1334,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-cache-8kh",
-   "at": 1795616994.733512,
-   "until": "2026-11-26T14:29:54Z"
-  },
-  {
    "id": 1335,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/plus-no-markup-dataloss",
@@ -64,18 +29,18 @@
    "until": "2026-11-26T15:19:11Z"
   },
   {
-   "id": 1301,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/board-store-cache-8kh",
-   "at": 1795619978.923294,
-   "until": "2026-11-26T15:19:38Z"
-  },
-  {
    "id": 572,
    "journey": "07-widgets-and-links.md",
    "branch": "native/counter-week-graph-1493",
    "at": 1795621199.99909,
    "until": "2026-11-26T15:39:59Z"
+  },
+  {
+   "id": 573,
+   "journey": "07-widgets-and-links.md",
+   "branch": "native/counter-week-graph-1493",
+   "at": 1795622703.0136478,
+   "until": "2026-11-26T16:05:03Z"
   }
  ]
 }
