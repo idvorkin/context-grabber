@@ -32,6 +32,7 @@ kill -0 "$cockpit" 2>/dev/null || { echo "the fake Cockpit did not start on port
 # native/UITests/Whiteboard*UITests.swift files.
 classes=(
   -only-testing:GrabberNativeUITests/WhiteboardBubblesUITests
+  -only-testing:GrabberNativeUITests/WhiteboardCockpitBoardsUITests
   -only-testing:GrabberNativeUITests/WhiteboardConnectUITests
   -only-testing:GrabberNativeUITests/WhiteboardConversationPlaceUITests
   -only-testing:GrabberNativeUITests/WhiteboardDropRoomUITests

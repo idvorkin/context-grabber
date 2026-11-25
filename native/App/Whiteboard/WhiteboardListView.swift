@@ -21,11 +21,15 @@ struct WhiteboardListView: View {
   @State private var chatProblem: BugProblem?
   /// Bead context-grabber-dbku: a row's thread, slid in over the list by its chat bubble; Back comes back to the list.
   @State private var listChat: ChatJump?
+  /// Stories 1339-1340: Boards from the Cockpit (beta), off by default; on, the store's boards are listed below.
+  @AppStorage(WhiteboardCockpitBoards.key) private var cockpitBoardsOn = false
+  @StateObject private var cockpitBoards: CockpitBoardsModel
   private let app: AppModel
   private let onDone: () -> Void
 
   init(app: AppModel, onDone: @escaping () -> Void) {
     _store = ObservedObject(wrappedValue: app.whiteboards)
+    _cockpitBoards = StateObject(wrappedValue: CockpitBoardsModel(cockpit: app.chat.cockpit, log: app.log))
     self.app = app
     self.onDone = onDone
   }
@@ -46,6 +50,8 @@ struct WhiteboardListView: View {
         if let linkProblem { BugProblemView(problem: linkProblem, logger: app.bugLogger) }
         if let chatProblem { BugProblemView(problem: chatProblem, logger: app.bugLogger) }
         if let note = store.syncNote { Text(note).font(.footnote).foregroundStyle(.secondary) }
+        // Story 1340: first, so a long list of the iPad's own boards never hides it.
+        if cockpitBoardsOn { CockpitBoardsSection(model: cockpitBoards, logger: app.bugLogger) }
         // Bead context-grabber-1jb4: a board whose first drawing hasn't come down isn't a row yet.
         if store.index.shown.isEmpty {
           ContentUnavailableView(
@@ -55,7 +61,10 @@ struct WhiteboardListView: View {
         }
       }
       .listStyle(.plain)
-      .refreshable { await store.sync(reason: "pull") }
+      .refreshable {
+        await store.sync(reason: "pull")
+        if cockpitBoardsOn { await cockpitBoards.refresh(reason: "pull") }
+      }
       .navigationTitle("Boards")
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {
@@ -89,6 +98,7 @@ struct WhiteboardListView: View {
       } else {
         await store.sync(reason: "open")
       }
+      if cockpitBoardsOn { await cockpitBoards.refresh(reason: "open") }
       if store.onPhone, let id = LaunchHooks.current.whiteboard.listChat, let board = store.index.board(id) {
         await openChat(board)
       }
@@ -101,6 +111,9 @@ struct WhiteboardListView: View {
         app.whiteboardNewBoard = false
         path = [store.create()]
       }
+    }
+    .onChange(of: cockpitBoardsOn) { _, on in
+      if on { Task { await cockpitBoards.refresh(reason: "switched_on") } }
     }
     .onChange(of: scenePhase) { _, phase in
       if phase == .active { Task { await store.sync(reason: "foreground") } }

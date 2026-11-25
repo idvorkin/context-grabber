@@ -1421,3 +1421,57 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** strokes carrying every field the web and the iPad write, and one neither knows
 - **When:** a move of them is encoded
 - **Then:** each moved stroke goes up with its new points and every other field exactly as it was
+
+### User Story 1339:
+
+- **Summary:** With the beta switch off, boards are exactly as they were
+- **Status:** in progress (lane 76)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
+
+#### Use Case:
+- **As someone** whose real boards live in iCloud today
+- **I want to** have the Cockpit board store stay out of my way until I turn it on
+- **so that** trying the store never risks a board I draw on
+
+#### Acceptance Criteria:
+- **Scenario:** The boards list with the switch off
+- **Given:** Boards from the Cockpit (beta) is off, as it is on a fresh install
+- **When:** the boards list opens
+- **Then:** it shows only the iPad's own boards, as before, and the iPad asks the Cockpit for no boards
+
+### User Story 1340:
+
+- **Summary:** With the beta switch on, the boards list shows the Cockpit's boards
+- **Status:** in progress (lane 76)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
+
+#### Use Case:
+- **As someone** trying the Cockpit board store on the iPad
+- **I want to** see the Cockpit's boards beside my own
+- **so that** I can tell the store holds what the web and Larry drew
+
+#### Acceptance Criteria:
+- **Scenario:** The boards list with the switch on
+- **Given:** Boards from the Cockpit (beta) is on and the Cockpit holds a board named "Store trial" at version 3
+- **When:** the boards list opens
+- **Then:** above the iPad's own boards, a *From the Cockpit* section lists "Store trial" with its 3 versions; with no Cockpit boards it says *No boards in the Cockpit yet*, and with the Cockpit unreachable it shows the copyable *Cockpit not answering* problem
+
+### User Story 1341:
+
+- **Summary:** A Cockpit board's waiting saves survive a relaunch and go up one at a time
+- **Status:** in progress (lane 76)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Trying it before the rollout: Boards from the Cockpit (beta)*
+
+#### Use Case:
+- **As someone** whose iPad may be killed or go offline mid-save
+- **I want to** have every waiting save kept on the iPad and sent exactly once, in order
+- **so that** no ink is lost and none lands twice
+
+#### Acceptance Criteria:
+- **Scenario:** The app is killed with a save in flight
+- **Given:** a Cockpit board with two waiting saves, the first sent and its answer not yet back
+- **When:** the app is relaunched and reaches the Cockpit
+- **Then:** the iPad fetches what it missed, sends the first save again with the same body and name (the Cockpit answers it once), and sends the second only after that answer

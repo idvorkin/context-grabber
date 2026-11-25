@@ -530,6 +530,8 @@ private struct HomeSettingsView: View {
         }
         // Stories 1611-1613: the day, summed up, to Larry.
         DailyPushSection(push: model.dailyPush)
+        // Story 1339: Boards from the Cockpit (beta), off by default.
+        WhiteboardCockpitSettingsSection()
         Section("Build") {
           LabeledContent("Commit", value: BuildInfo.sha)
           LabeledContent("Branch", value: BuildInfo.branch)

@@ -209,6 +209,28 @@ sections 3 and 6). This section is what Igor sees of it on a drawing device.
 Each step is a setting on the device that Igor never has to touch, and it can be turned back. Step 3 waits for a
 week of step 2 with no missing changes on the Cockpit's debug page.
 
+### Trying it before the rollout: *Boards from the Cockpit (beta)*
+
+Before step 2, the iPad gets one switch in the whiteboard's settings, **Boards from the Cockpit (beta)**, off by
+default. It is for trying the store while Larry and the app build it, not for Igor's real boards.
+
+- **Off** (the default): nothing changes. The boards list, drawing and iCloud sync are exactly as they are today, and
+  the iPad never asks the Cockpit for boards.
+- **On**: the boards list gets a section, *From the Cockpit*, above the iPad's own boards (first, so a long list of the iPad's boards never hides it). It lists the
+  Cockpit's boards (name, and how many versions each has), fetched when the list opens and on a pull. The iPad's own
+  boards above it are untouched and still sync over iCloud.
+  - With no Cockpit boards yet, the section says *No boards in the Cockpit yet*.
+  - When the Cockpit can't be reached, the section shows the copyable *Cockpit not answering* problem (the address it
+    tried and what failed), and the iPad's own boards still open.
+- **Each Cockpit board's copy and its waiting saves live on the iPad** and survive a relaunch: the copy the iPad last
+  saw, the saves not yet sent, and the notes about saves that were refused. A save in flight when the app is killed
+  goes again as it was (the same body, the same name), so the Cockpit never takes it twice.
+- **The iPad talks to the Cockpit one save at a time**: it fetches what it missed before it sends, sends its oldest
+  waiting save, waits for that answer, and only then sends the next. Refused changes become the copyable notes the
+  *Offline* section describes; ink refused because the board was deleted waits for *Keep my ink as a new board*.
+- Drawing on a Cockpit board from the iPad comes in the next step of this switch; until then a Cockpit board is
+  listed, not opened.
+
 ## Decided (Igor, 2026-11-24, in his Inbox)
 
 - **Who may draw: C.** Any drawing device (the iPad, the web board, the Mac) draws on any board. New strokes from
