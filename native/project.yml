@@ -248,6 +248,24 @@ targets:
         TARGETED_DEVICE_FAMILY: "2"
         CODE_SIGN_STYLE: Automatic
         "EXCLUDED_SOURCE_FILE_NAMES[sdk=macosx*]": LiveActivityController.swift GrabberActivityAttributes.swift
+    # Story 1631 (bead context-grabber-3hj9.1): the lab shares the app's Info.plist but must answer none of its links.
+    # Two apps claiming grabbernative:// let iOS hand a link to either; the store walk found every warm link in the lab.
+    postBuildScripts:
+      - name: The lab answers no links
+        script: |
+          plist="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$plist" >/dev/null 2>&1; then
+            /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$plist"
+          fi
+          # PlistBuddy exits 0 when it can't save, so check the key is really gone.
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$plist" >/dev/null 2>&1; then
+            echo "error: the lab's Info.plist still declares CFBundleURLTypes ($plist)" >&2
+            exit 1
+          fi
+        inputFiles:
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
+        basedOnDependencyAnalysis: false
+        showEnvVars: false
   # The whiteboard UI test classes that launch the Board Lab (story 1501), with the helpers they share with the app's.
   BoardLabUITests:
     type: bundle.ui-testing

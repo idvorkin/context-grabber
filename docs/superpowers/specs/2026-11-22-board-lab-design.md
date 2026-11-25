@@ -33,3 +33,6 @@ app, and so waits less for the parts of a launch it doesn't need.
   run by the whiteboard UI test script with the app's own classes.
 - The plan's table holds the measured before and after: class seconds, launch seconds per case, and the lab's added
   build time.
+- The lab answers none of the app's links. A `grabbernative://` link opens Grabber Native even on a simulator or device
+  where the lab is installed beside it: two apps claiming one link scheme let the system hand it to either (the store
+  walk of 2026-11-24 found every warm link landing in the lab, bead context-grabber-3hj9.1).

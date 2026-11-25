@@ -1575,6 +1575,26 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1631:
+
+- **Summary:** The Board Lab never answers Grabber's links, so a link opens the app even with the lab installed
+- **Status:** implemented in 21eefd14; verified on the iPad simulator (iPad Pro 11-inch (M5), rung 2): `LinksUITests.testWarmLinksOverEachKindOfScreenBringTheirScreenUp` failed with the old lab installed (every warm link opened the lab) and passed with the rebuilt lab, whose Info.plist has no `CFBundleURLTypes`
+- **Spec:** [The Board Lab](../superpowers/specs/2026-11-22-board-lab-design.md)
+- **Issues:** bead context-grabber-3hj9.1
+
+#### Use Case:
+- **As Igor,** running the app's UI tests on a simulator that also has the Board Lab
+- **I want to** have every `grabbernative://` link open Grabber Native
+- **so that** a link test checks the app, not whichever of two apps the system picked
+
+#### Acceptance Criteria:
+- **Scenario:** A warm link on a simulator with the lab installed
+- **Given:** the Board Lab and Grabber Native are both installed on the iPad simulator, and Grabber Native is running
+- **When:** a `grabbernative://` link opens through the system, as a Shortcut's *Open URL* does
+- **Then:** Grabber Native stays in front and shows the linked screen, and the lab never opens
+
+---
+
 ### User Story 1502:
 
 - **Summary:** The lists every PR adds to in the testing guide are one item a line, and the host rung fails when one drifts from its script
