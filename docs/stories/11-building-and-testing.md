@@ -1598,7 +1598,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1632:
 
 - **Summary:** The ladder puts Exercise Analyzer on the simulator before the test that opens it, or says why it can't
-- **Status:** implemented in b1b189e0; verified by `scripts/native/test-install-exercise-analyzer.sh` (host) and on the iPad simulator (iPad Pro 11-inch (M5), rung 2, 2026-11-25): the ladder installed Exercise Analyzer's `just build-sim` product and `ExerciseAnalyzerLinkUITests` passed, where both store walks had failed it with the app missing
+- **Status:** implemented in 745cd18c; verified by `scripts/native/test-install-exercise-analyzer.sh` (host) and on the iPad simulator (iPad Pro 11-inch (M5), rung 2, 2026-11-25): the ladder installed Exercise Analyzer's `just build-sim` product and `ExerciseAnalyzerLinkUITests` passed, where both store walks had failed it with the app missing
 - **Issues:** bead context-grabber-3hj9.3
 
 #### Use Case:
