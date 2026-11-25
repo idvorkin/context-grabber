@@ -919,6 +919,17 @@ minutes show, with each class's passes only on retry apart from its repeats. `--
 pins it on a fixture with a retry, a flaky climb and a quarantined flake, a wrong-device skip, a missing deploy, an
 upload alone, a censored climb, a failure on the rerun after a locked screen, and a climb with no start line.
 
+## Walking the store: `just walk` (story 1628)
+
+The walk-the-store skill's Mac half. `just walk [OUT]` runs each rung once: the lint, ContextCore's `swift test` (a red
+case gets one serial retry), each script check a story names, the Mac build, and the simulator rung with every UI class
+(`test-ladder --all --rung 2` with `LADDER_KEEP_GOING=1`, so a red class doesn't stop the rest). It writes
+`OUT/checks.json` and runs the skill's `walk.py judge` (set `WALK_PY` if the skill isn't installed). Refs only the Linux
+VM runs (wasm, the Linux rung, board-ops, node and web checks) and recipes that aren't checks (installs, uploads, bug
+filing) are written skipped with the reason. A named class, test, recipe or script missing from the tree is red. The
+newest walk is `~/tmp/agent/walks/context-grabber/latest`, the next walk's `--previous`. File reds with
+`walk.py file-reds OUT/walk.json --apply --parent <bead>`; a first walk files nothing (its reds are the baseline).
+
 ## The phone
 
 How a build gets to a device at all, the cable and network install, the over-the-air `just ota` and its watcher,

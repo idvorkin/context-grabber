@@ -423,9 +423,19 @@ step() {  # <label> <command...>: times one step of rung 2
   status=$?
   stop_fakes
   echo "  rung 2 $label: $((SECONDS - start)) s"
+  [ "$status" -eq 0 ] || echo "  rung 2 $label: failed (exit $status)"
   note step --arg rung 2 --arg label "$label" --argjson secs $((SECONDS - start)) --argjson status "$status" \
     ${warm:+--argjson warm "$warm"}
   return $status
+}
+
+# Story 1628: LADDER_KEEP_GOING=1 (the store walk) runs every class step even after one fails, so one red class can't
+# hide the rest; the rung still fails. A failed build, project or device boot still stops it.
+keep_failed=0
+kept() {  # <status>: in keep-going mode, remember a failed step and carry on; otherwise pass the status through
+  [ "$1" -eq 0 ] && return 0
+  if [ "${LADDER_KEEP_GOING:-0}" = 1 ]; then keep_failed=1; return 0; fi
+  return "$1"
 }
 
 chat_classes() {
@@ -512,15 +522,15 @@ tablet_classes() {
 # The steps on the iPhone's simulator: everything but the whiteboard's drawing.
 phone_steps() {
   step "iPhone simulator" use_device "$phone" || return
-  if [ "$run_chat_classes" -gt 0 ]; then step "chat classes" chat_classes || return; fi
-  if [ "$n_places" -gt 0 ]; then step "places classes" places_classes || return; fi
-  if [ "$n_other" -gt 0 ]; then step "other classes" other_classes || return; fi
+  if [ "$run_chat_classes" -gt 0 ]; then step "chat classes" chat_classes; kept $? || return; fi
+  if [ "$n_places" -gt 0 ]; then step "places classes" places_classes; kept $? || return; fi
+  if [ "$n_other" -gt 0 ]; then step "other classes" other_classes; kept $? || return; fi
   # Story 755: the smoke's touched sections on this build and this boot, rather than a second build and boot from
   # `just native-test-sim` (the same build: native-build-sim's flags). LADDER_SMOKE=0 leaves it out.
   if [ "${LADDER_SMOKE:-1}" = 1 ]; then
     step smoke env SMOKE_ONLY="${SMOKE_ONLY-$(smoke_sections)}" \
       bash "${SIM_SMOKE:-scripts/native/sim-smoke.sh}" "$udid" com.idvorkin.grabbernative \
-      native/Build/Build/Products/Debug-iphonesimulator/GrabberNative.app || return
+      native/Build/Build/Products/Debug-iphonesimulator/GrabberNative.app; kept $? || return
   fi
   if [ "$full" -eq 1 ] && [ "$n_chat" -gt 0 ]; then
     step "chat suite" env SUITE_PREBUILT=1 scripts/native/test-chat-ui.sh "$udid" || return
@@ -545,17 +555,17 @@ ipad_steps() {
         *" WhiteboardPasteUITests "*) xcrun simctl shutdown "$ipad" 2>/dev/null ;;
       esac
       step "iPad simulator" use_device "$ipad" || return
-      step "whiteboard classes" whiteboard_classes || return
+      step "whiteboard classes" whiteboard_classes; kept $? || return
     fi
   fi
   if [ "$n_tablet" -gt 0 ]; then
     # After the whiteboard's suite the iPad is still up, so this boots only when nothing ran on it yet.
     step "iPad simulator" use_device "$ipad" || return
-    step "iPad classes" tablet_classes || return
+    step "iPad classes" tablet_classes; kept $? || return
   fi
   if [ "$contracts" -eq 1 ]; then
     step "iPad simulator" use_device "$ipad" || return
-    step "contract tests" contract_classes || return
+    step "contract tests" contract_classes; kept $? || return
   fi
   return 0
 }
@@ -576,6 +586,7 @@ simulator_steps() {
     if xcrun simctl list devices booted | grep -qF "($ipad)"; then groups=(ipad ${groups[@]+"${groups[@]}"}); else groups+=(ipad); fi
   fi
   for g in ${groups[@]+"${groups[@]}"}; do "${g}_steps" || return; done
+  [ "$keep_failed" -eq 0 ]
 }
 
 rung_simulator() {

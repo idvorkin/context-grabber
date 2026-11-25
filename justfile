@@ -13,6 +13,11 @@ test: native-test
 test-ladder *args:
     scripts/native/test-ladder.sh {{args}}
 
+# Story 1628: walk the store: every implemented story's named check, run once on this Mac, judged by the
+# walk-the-store skill's walk.py (WALK_PY). Writes ~/tmp/agent/walks/context-grabber/<stamp>/report.md (docs/TESTING.md).
+walk *args:
+    scripts/native/walk.py {{args}}
+
 # New story IDs come from `scripts/native/story-ids.py reserve <journey> [n]` (story 791). This, story 793, runs
 # right before `gh pr merge`: the story IDs on the branch as pushed, merged with origin/main as it is now. Story 1519:
 # then ContextCore compiled in Release, as an archive compiles it, when the branch changes it (release-check.sh).

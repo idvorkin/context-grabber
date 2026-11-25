@@ -1996,3 +1996,23 @@ Part of the [user stories](README.md); persona and format are described there.
 - **When:** the agent runs `just pre-merge` immediately before `gh pr merge`
 - **Then:** if ContextCore's Release build fails, pre-merge ends with a FAIL line naming the Release build and a nonzero exit
 
+---
+
+### User Story 1628:
+
+- **Summary:** The store is walked on the Mac: every implemented story's named check runs again
+- **Status:** implemented on branch native/walk-the-store; verified by a full walk of main on this Mac (scripts/native/walk.py, `just walk`)
+- **Issues:** Igor 2026-11-24, "Drive build and walk store tonight"
+- **Spec:** [The store walk on the Mac](../superpowers/specs/2026-11-24-store-walk-design.md)
+
+#### Use Case:
+- **As Igor,** wanting to know which features still work as their stories say
+- **I want to** have the Mac run every check the stories name, once, and report per story
+- **so that** a feature that quietly broke, or a story whose test is gone, shows up as a red I can act on
+
+#### Acceptance Criteria:
+- **Scenario:** A walk with one red UI class
+- **Given:** a UI test class fails on the iPad simulator
+- **When:** the agent runs `just walk`
+- **Then:** the walk still runs every other class and the report names that class's stories red
+
