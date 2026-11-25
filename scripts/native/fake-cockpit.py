@@ -64,7 +64,8 @@ agency"), found only with all=1 but always counted: a /threads row each with mat
 the word "bdfail" the 502 of bd failing.
 The delta wire (cockpit story 346, "Chats load slow"): GET /chat and GET /chat/<key> send a weak ETag and answer 304
 with no body to a matching If-None-Match; GET /chat/<key>?after=<id it holds> answers full: false with every row (a
-merge by id gives the thread exactly), an unknown after answers full: true; both carry cursor, the newest id.
+merge by id gives the thread exactly), an unknown after, or a thread a move rewrote, answers full: true; both carry
+cursor, the newest id.
 
 Searching the chat list (stories 1616-1618, #1443): GET /chat?q=<words> answers as the Cockpit's does (cockpit story
 335): GET /chat's rows, kept when every lowercased word is in the title or any message's text; a blank q is the plain
@@ -708,7 +709,7 @@ def thread_answer(t, query):
     messages = t["messages"] if t else []
     tag = "W/\"" + hashlib.sha1(json.dumps(messages, sort_keys=True).encode()).hexdigest()[:16] + "\""
     after = (query.get("after") or [""])[0]
-    full = not after or after not in {m.get("id") for m in messages}
+    full = not after or after not in {m.get("id") for m in messages} or bool(t and t.get("rewritten"))
     cursor = messages[-1]["id"] if messages else ""
     return tag, {"ok": True, "full": full, "cursor": cursor, "messages": messages}
 
@@ -1026,6 +1027,8 @@ class Handler(BaseHTTPRequestHandler):
                 line = row(data["thread"], "system", "Moved to a new chat")
                 line.update(kind="moved", moved_to=key)
                 t["messages"][t["messages"].index(m)] = line
+                # A message a client holds is gone: its next delta read is the whole thread (cockpit story 346).
+                t["rewritten"] = True
                 m["thread"] = key
                 THREADS[key] = {"title": title, "messages": [m], "seen": ""}
                 reply_later(key, m["text"])

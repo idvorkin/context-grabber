@@ -105,7 +105,9 @@ final class ChatCockpitDownUITests: XCTestCase {
   func testASlowFirstReadSaysItIsLoading() throws {
     let cockpit = try fakeCockpit()
     try slow(cockpit, 6)
-    let app = launch(cockpit, ["GRABBER_LINK": "grabbernative://chat?thread=igor2-88g.900"])
+    // A thread read before shows the device's copy at once; this one must be a first read.
+    let app = launch(
+      cockpit, ["GRABBER_LINK": "grabbernative://chat?thread=igor2-88g.900", "GRABBER_CHAT_COPIES": "off"])
     let loading = app.descendants(matching: .any)["chat-thread-loading"]
     XCTAssertTrue(loading.appears(within: 10), app.debugDescription)
     let larrys = app.descendants(matching: .any)

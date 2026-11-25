@@ -532,8 +532,12 @@ final class ChatModel: ObservableObject {
 
   // MARK: The device's copy of each thread ("Chats load slow", 2026-11-25)
 
+  /// `GRABBER_CHAT_COPIES=off`: no device copy is read or written, so a test sees a thread's first read as before.
+  private static let copiesOff = ProcessInfo.processInfo.environment["GRABBER_CHAT_COPIES"] == "off"
+
   private static var copiesFolder: URL? {
-    FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+    guard !copiesOff else { return nil }
+    return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
       .appendingPathComponent("chat-threads", isDirectory: true)
   }
 
