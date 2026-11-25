@@ -695,6 +695,16 @@ just touch-fixture <log>.jsonl --out native/ContextCore/Tests/ContextCoreTests/F
 - A scratch-out's verdict here is its shape and speed; whether ink was under it needs the board's strokes, as in
   `Fixtures/scratch-out/`.
 
+## SwiftUI previews
+
+The screens agents change most have `#Preview`s, on offline fixtures that never reach the network, the Cockpit or
+HealthKit (`native/App/Previews/`; the chat list's private rows and bubbles at the end of `ChatViews.swift`). They
+cover the chat list, thread rows, message bubbles, the decision card, the Decisions row and line, and the home tiles.
+They compile into Debug builds only. Look at one in Xcode's canvas, or render it to a PNG from the command line with
+`scripts/native/render-preview.sh <file.swift> <out.png> <index>` (story 1625): about 2 minutes cold, under a second
+warm, 20 s when the file changed. The whiteboard's menus and hold menu need a live board model and PaperKit, so they
+have no preview yet.
+
 ## The Board Lab: a whiteboard UI test without the whole app (story 1501)
 
 `BoardLab` is a second app target, simulator only (`native/project.yml`, plan

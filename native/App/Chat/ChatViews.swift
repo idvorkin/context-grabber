@@ -2063,3 +2063,29 @@ private struct EarlierSharesView: View {
 extension InboxItem {
   fileprivate var pendingKey: String { "pending-" + id }
 }
+
+// MARK: - Previews (the private rows and bubbles; the screens' previews are in Previews/AppPreviews.swift)
+
+#if DEBUG
+  #Preview("Thread rows") {
+    List {
+      ForEach(PreviewFixtures.threads) { thread in
+        ThreadRow(thread: thread, decisionWaiting: thread.key == "igor2-88g.1620")
+      }
+    }
+  }
+
+  #Preview("Message bubbles") {
+    ScrollView {
+      VStack(spacing: 8) {
+        ForEach(PreviewFixtures.messages) { message in
+          MessageBubble(
+            message: message, thread: "igor2-88g.1801", answerFailed: false, chat: PreviewFixtures.chat,
+            logger: PreviewFixtures.logger, react: { _ in }, quote: {}, copy: {}, sendToNewChat: {}, openMoved: { _ in }
+          )
+        }
+      }
+      .padding()
+    }
+  }
+#endif
