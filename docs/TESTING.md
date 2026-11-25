@@ -29,6 +29,7 @@ line of its own here and in the recipe; `scripts/native/test-testing-lists.sh` f
 - `scripts/native/test-sim-lane.sh` checks simulator lane selection and refusals, including UUID case and the default lane for Health access and smoke (stories 1516, 1517 and 1518, bead context-grabber-w7nl).
 - `scripts/native/test-host-lane.sh`: the host slots, six jobs on four, the wait, a killed holder (stories 795, 797, 798)
 - `scripts/native/test-lane-env.sh`: the build, simulator and host lane self-tests pass with a caller's `SIM` and lane settings set (story 785, context-grabber-2l07)
+- `scripts/native/test-sim-slim.sh`: a lane simulator is slimmed (simslim) once, with the kept categories, and a slim simulator, a Mac without simslim, `SIM_SLIM=0` or a failed slim never fail the run (story 1627)
 - `scripts/native/test-release-check.sh`: `just pre-merge`'s Release build of ContextCore runs when the branch as pushed changes it, skips otherwise, a failing build ends in a FAIL line and exit 1, and a checkout behind the pushed branch fails without building (story 1519, context-grabber-6ocd). The Release build itself only runs in pre-merge: about 25 s to a minute in a slot, two minutes cold
 - `scripts/native/test-ui-timings.sh`: the UI test timing digest against a real run's log
 - `scripts/native/test-device-build-check.sh`: the build each device last reported against the last install in the deploys ledger (match, mismatch, no session yet, over the air, unknown), and `just deploy` recording each installed device and checking its next session, with fakes (story 1511)
@@ -255,7 +256,7 @@ the iPad is still fresh-booted when `WhiteboardPasteUITests` runs, and only then
 983). The wallpaper snapshots of every shut-down simulator are deleted before a boot and again when the rung, the
 whiteboard suite or the smoke ends (`scripts/native/sim-poster-prune.sh`, stories 984 and 987), whatever the free disk: a booted
 simulator's are never touched (each device's state is read again just before its delete; story 988), PosterBoard rebuilds about
-300 MB on the next boot, one line names the simulators and the MB freed, and a failed prune never fails the run (story 989). Don't `xcrun simctl shutdown all` after a run; that is a heat stop's, not a habit.
+300 MB on the next boot, one line names the simulators and the MB freed, and a failed prune never fails the run (story 989). Don't `xcrun simctl shutdown all` after a run; that is a heat stop's, not a habit. A lane's simulator runs slim (story 1627): `sim-boot.sh` calls `scripts/native/sim-slim.sh`, which, when [simslim](https://github.com/MobAI-App/simslim) is installed (`brew install mobai-app/tap/simslim`, by hand), turns off the daemons a test run never needs, once per simulator (it persists across reboots), keeping Siri and dictation, Health, iCloud and Photos. On an idle iPad lane simulator that took 180 processes to 84 and summed RSS from 10.2 GB to 7.0 GB; the disk image is unchanged. `simslim off <udid>` restores one, and `SIM_SLIM=0` skips it.
 
 **UI tests need the Mac's display on; on a locked screen only the tests that open the mic are skipped** (stories 782,
 1022, 1023, 1509; bead context-grabber-wm8y). With the display off they don't start, and running ones stall: on

@@ -1618,6 +1618,25 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ---
 
+### User Story 1627:
+
+- **Summary:** A build lane's simulator runs slim: simslim turns off the background daemons a test run never needs, once per simulator
+- **Status:** in progress (branch chore/simslim-lanes). Measured 2026-11-24 on the idle iPad Pro 11-inch (M5) lane 3 simulator, iOS 27.2: 180 processes to 84, summed RSS 10.2 GB to 7.0 GB, disk unchanged; verified by `scripts/native/test-sim-slim.sh` (host)
+- **Issues:** chop-conventions ios-codev skill (Igor, 2026-11-24: "did we get the slim sims too")
+
+#### Use Case:
+- **As Igor,** running several build lanes, each with its own booted simulator
+- **I want to** have each lane's simulator run only the daemons the app and its tests use
+- **so that** more lanes fit in the Mac's memory and CPU without starving each other
+
+#### Acceptance Criteria:
+- **Scenario:** A lane boots a simulator that isn't slim
+- **Given:** simslim is installed and the simulator runs stock
+- **When:** sim-boot.sh brings it up for its lane
+- **Then:** it is slimmed once, keeping Siri and dictation, Health, iCloud and Photos on, and a simulator already slim, a Mac without simslim, `SIM_SLIM=0` or a failed slim all leave the run going as before
+
+---
+
 ### User Story 1623:
 
 - **Summary:** The web board asks the app's own rules how much room a reply of Larry's opens when kept over ink written since its picture, and where a text of his set on ink lands

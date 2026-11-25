@@ -30,6 +30,8 @@ mkdir -p "$fakes"
 export MARKS=$tmp/marks STATE=$tmp/state
 # Story 1022: sim-boot waits while the Mac's screen is locked; unlocked here, whatever this Mac's own screen is doing.
 export SMOKE_LOCK_PROBE="echo unlocked"
+# Story 1627: sim-boot.sh slims the simulator it boots; these are fake simulators, so the real simslim stays out.
+export SIM_SLIM=0
 # lockf -k -t <seconds> <file> <command…>: a lock named in FAKE_HELD is another job's, so it times out (75).
 cat >"$fakes/lockf" <<'F'
 #!/usr/bin/env bash
