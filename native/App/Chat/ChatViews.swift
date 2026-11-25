@@ -937,6 +937,11 @@ struct ChatThreadView: View {
 
   /// Stories 1122, 1123: iCloud is asked first, as for a picture's *Jump to board*; a board that can't open says why here.
   private func openBoard(_ found: ChatThreadBoard) {
+    // Story 569 (#1454): a web ink board's page opens in the browser; iCloud never has it.
+    if let web = WebInkBoard(board: found.board) {
+      boardProblem = nil
+      return chat.openWebBoard(web, "thread_board")
+    }
     lookingForBoard = true
     boardProblem = nil
     let started = ProcessInfo.processInfo.systemUptime
@@ -1379,6 +1384,11 @@ private struct ChatImage: View {
 
   /// The board is found first, so a missing one leaves the picture open with the reason on it.
   private func jump(to board: String) {
+    // Story 569 (#1454): a picture from a web ink board opens the board's page; the picture stays.
+    if let web = WebInkBoard(board: board) {
+      jumpProblem = nil
+      return chat.openWebBoard(web, "picture")
+    }
     looking = true
     jumpProblem = nil
     let started = ProcessInfo.processInfo.systemUptime

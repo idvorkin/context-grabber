@@ -46,6 +46,7 @@ it, so a test can see *Larry hasn't got the picture* and Retry (stories 775, 802
 Thread igor2-88g.593 is one Larry marks as looking done (#599). Thread igor2-88g.1268 is the pinned one, listed with no messages and refusing an archive (#598). By default this is a Cockpit with no skill threads (story 516). POST /fake/file-thread adds igor2-88g.633, titled The lease, whose one message from Igor carries a one-page PDF (story 1125). POST /fake/skill-thread is a test's way to add one (#632, cockpit#90), igor2-88g.632: pinned under Larry's, listed with no messages, refusing an archive, its replies from "idvorkin"; a message saying "fail" gets a failure row instead, with Igor's messages marked done either way, as on the Cockpit. Thread igor2-88g.592 holds one picture from Larry, all white and twice as tall as wide: on an iPhone it fills the
 full-size view, under its Done (story 306).
 Threads igor2-88g.603 and .604 hold the same picture from a whiteboard: board-603 (the UI test makes it with GRABBER_BOARD_FIXTURE) and board-gone-603, which no device has (stories 317, 319, #603).
+Thread igor2-88g.1454 is the web ink board's: its board is ink-board-1454, which only the Cockpit's /ink page draws (story 569, #1454).
 Decision cards (#878): POST /fake/asks {"open": true} adds (and resets, with what was answered) three open asks for GET /asks, the shape of the
 Cockpit's normalize_ask with its `thread` (cockpit-7fr): igor2-88g.881 filed from chat igor2-88g.878 (thread names its
 parent's chat), igor2-88g.879 on no chat (thread null), and igor2-88g.880 on a chat of its own bead, whose answer is always
@@ -247,6 +248,13 @@ SEARCH_THREAD = {"title": "Travel docs", "seen": "", "messages": [  # story 1617
 
 
 SLOW = 0.0  # story 1608: seconds each GET /chat/<key> waits before it answers; 0 answers at once
+# #1454, story 569: a thread of the web ink board's turns, its board a web board (`ink-<name>`) no device draws. Last
+# of the threads and dated long ago, so it moves no other test's row down the list.
+THREADS["igor2-88g.1454"] = {"title": "A web board", "seen": "", "messages": [
+    dict(row("igor2-88g.1454", "larry", "Your turn on the ink board (board-1454)", attachments=[WHITE_PICTURE],
+             board="ink-board-1454"), ts="2026-01-01T00:00:00+00:00"),
+]}
+
 DOWN = 0  # stories 1604-1606: the status GET /chat and /chat/<key> answer while a test has the Cockpit down; 0 is up
 ASKS = {}  # #878: id -> the open ask, as GET /asks lists it
 ANSWERS = []  # every POST /act, /close and /snooze, as posted

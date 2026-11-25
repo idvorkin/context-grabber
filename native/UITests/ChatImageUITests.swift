@@ -177,6 +177,31 @@ final class ChatImageUITests: XCTestCase {
     XCTAssertFalse(app.buttons["whiteboard-done"].exists, "no boards on the way: \(app.debugDescription)")
   }
 
+  /// Story 569 (#1454): a web ink board's thread has *Board* in its bar, and it opens the board's page in Safari, not a
+  /// problem saying the board isn't on this device.
+  func testAWebBoardsThreadOpensItsPageInSafari() throws {
+    let app = try launchThread("igor2-88g.1454", picture: false)
+    let board = app.buttons["chat-thread-board"]
+    XCTAssertTrue(board.appears(within: 20), app.debugDescription)
+    board.tap()
+    let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+    XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "the web board opens in Safari")
+    app.activate()
+    XCTAssertFalse(app.buttons["copy-error"].appears(within: 3), "no board-missing problem: \(app.debugDescription)")
+  }
+
+  /// Story 569 (#1454): a picture from a web ink board jumps to the board's page in Safari.
+  func testAPictureFromAWebBoardJumpsToItsPage() throws {
+    let app = try openPicture(thread: "igor2-88g.1454")
+    let jump = app.buttons["chat-image-jump"]
+    XCTAssertTrue(jump.appears(within: 5), app.debugDescription)
+    jump.tap()
+    let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+    XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 20), "the web board opens in Safari")
+    app.activate()
+    XCTAssertFalse(app.buttons["copy-error"].appears(within: 3), "no board-missing problem: \(app.debugDescription)")
+  }
+
   /// The board's *Open in Chat*: the panel's on an iPad (opened by a tap on the note when it's closed), the note itself
   /// on an iPhone.
   private func openInChat(_ app: XCUIApplication) {

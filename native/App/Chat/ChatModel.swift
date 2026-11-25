@@ -52,6 +52,9 @@ final class ChatModel: ObservableObject {
   var findBoard: @MainActor (String, String) async -> BugProblem? = { _, _ in nil }
   /// #603, set by the app: leaves the thread for that board.
   var openBoard: @MainActor (String) -> Void = { _ in }
+  /// Story 569 (#1454), set by the app: a web ink board's page in the browser, given where it was opened from. The app
+  /// can't draw one, so it is never looked for among the app's boards.
+  var openWebBoard: @MainActor (WebInkBoard, String) -> Void = { _, _ in }
   /// Bead context-grabber-dbku, set by the app: the board's own screen, slid in over a thread, told which thread it was
   /// jumped from and the boards set aside under it; nil when the board isn't here.
   var boardScreen: @MainActor (_ board: String, _ fromThread: String?, _ under: BoardsUnder) -> AnyView? = {
