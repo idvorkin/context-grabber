@@ -189,13 +189,17 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
   is frozen, after the earlier answer.
 - **Answer**: `ok: false` keeps the batch frozen and queued. A 409 `batch_id_reused` is a copyable error, the batch
   stays. `ahead` sets `needsReload`. Otherwise the batch leaves the queue; refusals become notes; `deleted` ones go to
-  `setAside`; `exists` on an add is re-added under `<id>-<slug>` as a new queued add. Caught up (applied non-empty and
-  rev == base+1, or applied empty and rev == base): the batch folds in and `rev` moves; otherwise `needsPull`, and the
-  batch's own landed ids come back in the pull, recognised by `batch_id`.
-- **Pull**: `pull(rev:batches:)` applies each batch's bodies; an `admin` batch sets `needsReload`. Then the unsent queue
-  runs through `BoardStoreClash.apply` as one batch at the **old** base, against things whose rev is the pulled rev
-  when a foreign batch changed them and the old base otherwise (the device's own batches don't clash with its own
-  queue). Each refused op leaves the queue with a note, so the view shows the pulled body; then `rev` moves.
+  `setAside`; `exists` on an add is re-added under `<id>-<slug>` as a new queued add (for a partly refused reply, only
+  the refused parts, never an own id that already landed; its landed marks stay in the folded op). Caught up (applied
+  non-empty and rev == base+1, or applied empty and rev == base): the batch folds in and `rev` moves; otherwise
+  `needsPull`, and the batch's own landed ids come back in the pull, recognised by `batch_id`.
+- **Pull**: `pull(rev:batches:)` applies each batch's bodies (an id new to the copy takes its kind from the op); an
+  `admin` batch sets `needsReload` and the check below waits for the reload, so a delete Larry undid in the same pull
+  refuses nothing. Otherwise the unsent queue runs through `BoardStoreClash.apply` as one batch at the **old** base,
+  against things whose rev is the pulled rev when a foreign batch changed them and the old base otherwise (the
+  device's own batches, the frozen one in flight included, don't clash with its own queue). The batch in flight goes
+  first so later saves build on it, but its refusals are ignored and it is never rebuilt. Each refused op leaves the
+  queue with a note, so the view shows the pulled body; then `rev` moves (never backwards).
 - **Reload**: `reload(snapshot)` replaces things and rev, keeps the queue and set-aside ink, and runs the same rebase
   check at the reloaded rev against nothing changed, so only `deleted` and `exists` can refuse.
 - **Keep my ink as a new board**: `keptInk(newID:)` gives the create body (old name + " (kept ink)", old paper) and the

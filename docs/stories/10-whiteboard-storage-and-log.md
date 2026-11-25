@@ -1281,7 +1281,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1333:
 
 - **Summary:** Ink refused for a deleted board waits for my answer
-- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f), and a delete Larry undid in the same catch-up sets nothing aside in [d6fa7eb3](https://github.com/idvorkin/context-grabber/commit/d6fa7eb3); verified by host tests (`BoardStoreCacheTests`); not yet used by the app
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: refused ink can become a new board
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*, *Offline: each device's copy and its unsent changes*
 

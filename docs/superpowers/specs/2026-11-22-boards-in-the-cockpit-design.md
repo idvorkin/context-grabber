@@ -154,7 +154,8 @@ sections 3 and 6). This section is what Igor sees of it on a drawing device.
   says so.
 - **Ink refused because the board was deleted is kept aside**, off the queue, until Igor answers the note. *Keep my ink
   as a new board* makes a board with the old name and *(kept ink)* after it, holding that ink; dismissing the note lets
-  it go.
+  it go. A delete that Larry has already undone by the time the device catches up sets nothing aside: the ink goes up
+  to the board as usual.
 - **A copy that's ahead of the Cockpit** (a broken cache) is thrown away and the board downloaded again. Unsent changes
   are kept and checked against the fresh copy.
 - **A save the Cockpit couldn't look at** stays queued and is tried again. A save the Cockpit says was already used for
