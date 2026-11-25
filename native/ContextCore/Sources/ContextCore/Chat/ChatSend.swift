@@ -106,8 +106,14 @@ public enum ChatSend {
       return .ref(ref)
     }
     let reason = (json?["error"] as? String) ?? "HTTP \(status)"
-    if (400..<500).contains(status) { return .refused(status: status, reason: reason) }
+    if refusesForGood(status) { return .refused(status: status, reason: reason) }
     return .retry(reason: reason)
+  }
+
+  /// A 4xx says the item itself is wrong, so it isn't sent again; except a 408 (the Cockpit gave up reading the upload,
+  /// as a 2.2 MB photo on a slow link made it do, #1452) and a 429 (too many at once), which say try later.
+  public static func refusesForGood(_ status: Int) -> Bool {
+    (400..<500).contains(status) && status != 408 && status != 429
   }
 
   /// The message itself; `attachment` is the ref an upload returned. `build` says which build sent it (story 1134).
@@ -145,8 +151,8 @@ public enum ChatSend {
       return .sent(thread: thread, duplicate: json?["duplicate"] as? Bool == true)
     }
     let reason = (json?["error"] as? String) ?? (json?["reason"] as? String) ?? "HTTP \(status)"
-    // 404 is a thread the Cockpit no longer has: wrong for good, like any other 4xx.
-    if (400..<500).contains(status) { return .refused(status: status, reason: reason) }
+    // 404 is a thread the Cockpit no longer has: wrong for good, like any other 4xx but a 408 or a 429.
+    if refusesForGood(status) { return .refused(status: status, reason: reason) }
     return .retry(reason: reason)
   }
 

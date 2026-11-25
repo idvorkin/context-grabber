@@ -118,6 +118,18 @@ final class ChatTests: XCTestCase {
     XCTAssertEqual(ChatSend.outcome(status: 200, body: Data(#"{"ok": true}"#.utf8)), .retry(reason: "HTTP 200"))
   }
 
+  /// #1452, story 261: a 408 (the Cockpit gave up reading the upload) or a 429 (too many at once) says try later, not
+  /// that the item is wrong, so it waits rather than reading *refused*.
+  func testATimeoutOrBusyAnswerWaitsRatherThanRefuses() {
+    let timeout = Data(#"{"ok": false, "error": "request body timeout"}"#.utf8)
+    XCTAssertEqual(ChatSend.upload(status: 408, body: timeout), .retry(reason: "request body timeout"))
+    XCTAssertEqual(ChatSend.upload(status: 429, body: nil), .retry(reason: "HTTP 429"))
+    XCTAssertEqual(ChatSend.outcome(status: 408, body: timeout), .retry(reason: "request body timeout"))
+    XCTAssertEqual(ChatSend.outcome(status: 429, body: nil), .retry(reason: "HTTP 429"))
+    XCTAssertEqual(
+      ChatSend.upload(status: 413, body: nil), .refused(status: 413, reason: "HTTP 413"), "too big stays refused")
+  }
+
   // MARK: The sender
 
   func testAShareBecomesAThreadAndAReplyGoesToItsThread() async throws {

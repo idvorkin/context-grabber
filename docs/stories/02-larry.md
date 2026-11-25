@@ -392,7 +392,8 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 #### Acceptance Criteria:
 - **Scenario:** The Cockpit refuses an item
-- **Given:** an item waits in the Inbox that the Cockpit will answer with a 4xx (too big, an unreadable image)
+- **Given:** an item waits in the Inbox that the Cockpit will answer with a 4xx that says the item is wrong (too big,
+  an unreadable image), not one that says to try later (a timeout reading the upload, or too many at once)
 - **When:** I open Grabber Native with the Cockpit reachable
 - **Then:** the item reads *Larry's inbox refused it* with the Cockpit's reason, copyable, it is not sent again on later opens, the items after it still go, and the log has an `inbox` refused line with the status and the reason
 
@@ -402,7 +403,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** With the Cockpit out of reach, the Inbox waits for the next open
 - **Status:** native app only: implemented in [99b308e](https://github.com/idvorkin/context-grabber/commit/99b308e); #406's wording and the failed-send regression in [7efc955](https://github.com/idvorkin/context-grabber/commit/7efc955); verified by `InboxTests` (host: no answer or a 5xx leaves the item waiting and stops the send, oldest first; a transport failure retains the item and a later success sends it once); off the tailnet on the phone still for Igor
-- **Issues:** [#305](https://github.com/idvorkin/context-grabber/issues/305), [#406](https://github.com/idvorkin/context-grabber/issues/406)
+- **Issues:** [#305](https://github.com/idvorkin/context-grabber/issues/305), [#406](https://github.com/idvorkin/context-grabber/issues/406), [#1452](https://github.com/idvorkin/context-grabber/issues/1452) and [#1453](https://github.com/idvorkin/context-grabber/issues/1453) (a 408 on a photo's upload read as refused, and the photo was lost)
 - **Spec:** [Share into Grabber Native, and Larry's inbox — phase 2](../superpowers/specs/2026-10-17-native-share-inbox-design.md)
 
 #### Use Case:
@@ -415,6 +416,13 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** three items wait in the Inbox
 - **When:** I open Grabber Native with the Cockpit unreachable or answering 5xx
 - **Then:** all three stay *Not sent yet*, the log has one `inbox` failed line with the reason and the rest of that send waits, and on the next open with the Cockpit reachable they go, oldest first
+
+- **Scenario:** The Cockpit timed out reading a photo (#1452)
+- **Given:** a photo waits in the Inbox, and the Cockpit answers its upload with 408 (it gave up waiting for the
+  body, as a 2.2 MB photo on a slow link did on 2026-11-25) or 429 (too many at once)
+- **When:** it is sent
+- **Then:** it stays *Not sent yet*, never *Larry refused it*, and goes again with the next send; no automatic report
+  is filed for it, and the log has the `chat` failed line with the status and the reason
 
 ---
 
