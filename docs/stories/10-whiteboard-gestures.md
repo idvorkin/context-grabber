@@ -1006,7 +1006,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 - **Summary:** A finger tap on a kept text rewords it in place
 - **Issues:** bead context-grabber-yfrl (the UI test read the old words before the new ones were drawn: a flake, not the app); bead context-grabber-4ief (a Return that came in the same change as other letters, as " world\n" did under load on the iPad simulator, stayed in the field as a new line and the field stayed open: the app, not the test)
-- **Status:** the first tap selects and the second opens since story 1197 (context-grabber-awz) in [d7ddf7d7](https://github.com/idvorkin/context-grabber/commit/d7ddf7d7); implemented in [ea93cbb](https://github.com/idvorkin/context-grabber/commit/ea93cbb); verified by host tests (`BoardRewordTests`: `testItWrapsAtTheWiderOfItsOwnWidthAndTheWebBoardsWithinThePage`, `testWordsWrapByWordKeepTheirOwnBreaksAndALongWordBreaks`, `testTheNewWordsStartWhereTheOldOnesDid`; `just test`) and the Mac build (`just native-build-mac`); on the simulator against the fake Cockpit (`WhiteboardRewordUITests.testATapOnAKeptTextRewordsItInPlace`, rung 2); the test waits for the new words before reading them in [cafe6cc1](https://github.com/idvorkin/context-grabber/commit/cafe6cc1) (context-grabber-yfrl), passing 3 runs of 3 on the iPad simulator (rung 2); a Return that comes in one change with other letters is done too in [2a4b481a](https://github.com/idvorkin/context-grabber/commit/2a4b481a) (context-grabber-4ief), host tests (`BoardRewordTests`: `testAReturnArrivingWithOtherLettersAtOnceIsDoneToo` and two more) and `WhiteboardRewordUITests` 3 runs of 3, 5 of 5 each, on the iPad simulator (rung 2); only a change that ends in a line is done, a paste with a line inside keeps it (`testAPasteWithALineInsideKeepsItAndOnlyAnEndingLineIsDone`, host); a text of Larry's opens at the second tap in [38843ea5](https://github.com/idvorkin/context-grabber/commit/38843ea5) (#1171, story 1141), host tests and the Mac build; not yet seen on the iPad
+- **Status:** the first tap selects and the second opens since story 1197 (context-grabber-awz) in [d7ddf7d7](https://github.com/idvorkin/context-grabber/commit/d7ddf7d7); implemented in [ea93cbb](https://github.com/idvorkin/context-grabber/commit/ea93cbb); verified by host tests (`BoardRewordTests`: `testItWrapsAtTheWiderOfItsOwnWidthAndTheWebBoardsWithinThePage`, `testWordsWrapByWordKeepTheirOwnBreaksAndALongWordBreaks`, `testTheNewWordsStartWhereTheOldOnesDid`; `just test`) and the Mac build (`just native-build-mac`); on the simulator against the fake Cockpit (`WhiteboardRewordUITests.testATapOnAKeptTextRewordsItInPlace`, rung 2); the test waits for the new words before reading them in [cafe6cc1](https://github.com/idvorkin/context-grabber/commit/cafe6cc1) (context-grabber-yfrl), passing 3 runs of 3 on the iPad simulator (rung 2); a Return that comes in one change with other letters is done too in [2a4b481a](https://github.com/idvorkin/context-grabber/commit/2a4b481a) (context-grabber-4ief), host tests (`BoardRewordTests`: `testAReturnArrivingWithOtherLettersAtOnceIsDoneToo` and two more) and `WhiteboardRewordUITests` 3 runs of 3, 5 of 5 each, on the iPad simulator (rung 2); a text of Larry's opens at the second tap in [38843ea5](https://github.com/idvorkin/context-grabber/commit/38843ea5) (#1171, story 1141), host tests and the Mac build; not yet seen on the iPad
 - **Spec:** [Rewording a kept text, and a snap you see before you lift](../superpowers/specs/2026-11-17-whiteboard-reword-and-live-snap-design.md), *Rewording a kept text*
 
 #### Use Case:
@@ -1020,10 +1020,25 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I tap it with a finger once to select it (story 1197), tap it again, change the words to "hello world" and press Return
 - **Then:** the text shows "hello world" from the same top-left in its own lettering, size and colour, wrapped by word to its width; one undo brings "hello" back
 
+---
+
+### User Story 1347:
+
+- **Summary:** A paste with a line break inside it keeps the break, and the reword field stays open
+- **Issues:** bead context-grabber-4ief (a Return was done wherever a new line came in the change, so a pasted "buy milk", new line, "call mom" closed the field as "buy milkcall mom")
+- **Status:** implemented in [47c1ce17](https://github.com/idvorkin/context-grabber/commit/47c1ce17); verified by host tests (`BoardRewordTests.testAPasteWithALineInsideKeepsItAndOnlyAnEndingLineIsDone`, rung 1); not yet seen on the simulator or the iPad
+- **Spec:** [Rewording a kept text, and a snap you see before you lift](../superpowers/specs/2026-11-17-whiteboard-reword-and-live-snap-design.md), *Rewording a kept text*
+
+#### Use Case:
+- **As someone** rewording a kept text on the board
+- **I want to** paste words with a line break inside them
+- **so that** the text keeps its lines and I finish it with Return when I'm ready
+
+#### Acceptance Criteria:
 - **Scenario:** A paste with a line break inside it
-- **Given:** the field open on a kept text reading "note: "
+- **Given:** the reword field open on a kept text reading "note: "
 - **When:** I paste "buy milk", a new line and "call mom"
-- **Then:** the field stays open with the line break kept; a Return after it is done, and the text reads "note: buy milk" over "call mom"
+- **Then:** the field stays open, reading "note: buy milk" over "call mom"
 
 ---
 
