@@ -41,6 +41,13 @@
    "branch": "?",
    "at": 1795628820.820575,
    "until": "2026-11-26T17:47:00Z"
+  },
+  {
+   "id": 1343,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/uitest-flakes-dud7",
+   "at": 1795629614.148778,
+   "until": "2026-11-26T18:00:14Z"
   }
  ]
 }
