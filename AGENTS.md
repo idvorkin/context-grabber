@@ -114,7 +114,7 @@ Mac, never by hand: watch `~/tmp/agent/bugs/inbox.jsonl` (or its Herdr notificat
   story IDs on the branch as pushed, merged with main as it is now; if it fails, renumber with a fresh reservation,
   push and rerun), then merge the PR yourself and check that its commits reached `origin/main`. Chain them, `just
   pre-merge && gh pr merge …`, so its exit status decides: never pipe its output (`| tail` hid a failure and #1400
-  merged duplicate story IDs onto main, 2026-11-24). It also compiles the app on the branch merged onto main as it is now (story 1629: #1459 and #1465 each passed alone and broke main's build together). The pipeline's lint step (`just pipeline-lint`, story 1515)
+  merged duplicate story IDs onto main, 2026-11-24). On a detached HEAD it judges the one pushed branch at that commit, or fails asking for `just pre-merge <branch>`: a failed pre-merge is never merged past (bead context-grabber-9g0j). It also compiles the app on the branch merged onto main as it is now (story 1629: #1459 and #1465 each passed alone and broke main's build together). The pipeline's lint step (`just pipeline-lint`, story 1515)
   already fails a branch that adds a story ID another open PR adds. Don't wait for PR
   feedback, because nobody gives it: the pipeline is the review.
 - **One pipeline run per train** (Igor, 2026-10-11). Finish the whole stack before the first push, and don't push

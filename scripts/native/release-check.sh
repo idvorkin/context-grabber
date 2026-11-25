@@ -12,8 +12,7 @@ set -uo pipefail
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote=${PRE_MERGE_REMOTE:-origin}
 here=$(cd "$(dirname "$0")" && pwd)
-branch=${1:-$(git branch --show-current)}
-[ -n "$branch" ] || { echo "FAIL release-check: not on a branch; name one"; exit 1; }
+branch=$("$here/pr-branch.sh" release-check "${1:-}") || exit 1
 git fetch -q "$remote" main || { echo "FAIL release-check: can't fetch $remote main"; exit 1; }
 if git fetch -q "$remote" "$branch" 2>/dev/null; then
   ref=$remote/$branch

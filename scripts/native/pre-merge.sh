@@ -4,13 +4,13 @@
 # both merge; this sees main as it is at the moment of merging. It fetches origin/main and the branch as pushed (the
 # pipeline adds its own commits to the PR, so the local branch can be behind), merges them with git merge-tree,
 # which touches neither the checkout nor the index, and runs story-ids.py on the merged tree's docs/stories.
-# Usage: scripts/native/pre-merge.sh [branch]   (default: the current branch). PRE_MERGE_REMOTE overrides origin.
+# Usage: scripts/native/pre-merge.sh [branch]   (default: the current branch, or on a detached HEAD the one pushed branch
+# at it; scripts/native/pr-branch.sh). PRE_MERGE_REMOTE overrides origin.
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 cd "$(git rev-parse --show-toplevel)" || exit 1
 remote=${PRE_MERGE_REMOTE:-origin}
-branch=${1:-$(git branch --show-current)}
-[ -n "$branch" ] || { echo "FAIL pre-merge: not on a branch; name one"; exit 1; }
+branch=$("$here/pr-branch.sh" pre-merge "${1:-}") || exit 1
 git fetch -q "$remote" main || { echo "FAIL pre-merge: can't fetch $remote main"; exit 1; }
 if git fetch -q "$remote" "$branch" 2>/dev/null; then
   ref=$remote/$branch
