@@ -3615,7 +3615,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 ### User Story 1607:
 
 - **Summary:** The + opens a new chat again after the last one landed
-- **Issues:** [#1365](https://github.com/idvorkin/context-grabber/issues/1365)
+- **Issues:** [#1365](https://github.com/idvorkin/context-grabber/issues/1365); bead context-grabber-6d1b (on the iPhone, two quick Backs to Home left the list's bottom search toolbar over the Chat tile)
 - **Status:** the + logs what it found, and new_chat_shown, new_chat_gone or new_chat_not_shown, in [3b090f81](https://github.com/idvorkin/context-grabber/commit/3b090f81); verified by `ChatNewChatAgainUITests` on the iPad simulator against the fake Cockpit (the + opened a new chat again after each of four ways out) and that run's session log (new_chat_shown after every +, no new_chat_not_shown); the Mac's dead + is not reproduced yet
 - **Spec:** [Chat with Larry in Grabber Native — A new chat](../superpowers/specs/2026-10-25-native-chat-design.md)
 

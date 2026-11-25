@@ -56,7 +56,11 @@ final class ChatNewChatAgainUITests: XCTestCase {
     startOne(app, "Again C \(stamp)")
     // C: land, open another thread from the list, Back, +.
     back(app)
-    let row = app.buttons["chat-thread-igor2-88g.629"]
+    // Any other thread will do, and the one nearest the top is the one on screen: a fixed thread id was pushed out of
+    // view as the fake Cockpit's list grew (bead context-grabber-6d1b, .629 never appeared under eight newer rows).
+    let other = NSPredicate(
+      format: "identifier BEGINSWITH %@ AND NOT (label CONTAINS %@)", "chat-thread-igor2-88g.", "Again")
+    let row = app.buttons.matching(other).firstMatch
     XCTAssertTrue(row.appears(within: 10), app.debugDescription)
     row.tap()
     Thread.sleep(forTimeInterval: 2)
