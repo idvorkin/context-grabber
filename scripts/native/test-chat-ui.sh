@@ -43,7 +43,7 @@ TEST_RUNNER_GRABBER_FAKE_COCKPIT="http://localhost:$port" TEST_RUNNER_GRABBER_FA
   -only-testing:GrabberNativeUITests/ChatImageUITests -only-testing:GrabberNativeUITests/ChatFileUITests \
   -only-testing:GrabberNativeUITests/ChatArchiveUITests \
   -only-testing:GrabberNativeUITests/ChatSkillThreadUITests \
-  -only-testing:GrabberNativeUITests/ChatDecisionUITests -only-testing:GrabberNativeUITests/ChatAskSearchUITests \
+  -only-testing:GrabberNativeUITests/ChatDecisionUITests -only-testing:GrabberNativeUITests/ChatAskSearchUITests -only-testing:GrabberNativeUITests/ChatThreadSearchUITests \
   -only-testing:GrabberNativeUITests/ChatCockpitDownUITests \
   -only-testing:GrabberNativeUITests/ChatReactionUITests -only-testing:GrabberNativeUITests/ChatMoveUITests "$action"
 status=$?

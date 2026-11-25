@@ -3679,19 +3679,19 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 ### User Story 1617:
 
-- **Summary:** A chat list search reaches the bead the chat belongs to
+- **Summary:** A chat list search reaches words deep in a thread's older messages
 - **Issues:** [#1443](https://github.com/idvorkin/context-grabber/issues/1443)
 - **Status:** planned
 - **Spec:** [Chat with Larry — Searching the threads](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
-- **As** Igor whose words are in the bead a chat belongs to, not in its title or newest message
-- **I want to** the search to find the chat anyway, as the Cockpit's Stream search does
+- **As** Igor who remembers words from somewhere in a conversation, not from its title or newest message
+- **I want to** the search to find that chat anyway, as the Cockpit's own chat search does
 - **so that** the phone and the laptop find the same threads
 
 #### Acceptance Criteria:
-- **Scenario:** A word only in the chat's bead
-- **Given:** a chat whose bead description says "passport" and whose title and newest message do not
+- **Scenario:** A word only in an older message
+- **Given:** a chat whose first message says "passport" and whose title and newest message do not
 - **When:** I search "passport"
 - **Then:** once the Cockpit answers, that chat's row shows; a done or archived chat that matches shows after the live ones
 

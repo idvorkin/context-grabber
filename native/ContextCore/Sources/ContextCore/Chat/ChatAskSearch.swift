@@ -148,7 +148,7 @@ public enum ChatAskSearch {
   }
 
   /// Every character but the unreserved ones escaped, so `+`, `&`, `#` and `=` reach the Cockpit as typed.
-  private static let queryAllowed = CharacterSet(
+  static let queryAllowed = CharacterSet(
     charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
 
   /// `GET /asks/search?q=<words>[&all=1]`; nil for a query with no words, which never goes.

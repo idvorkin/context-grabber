@@ -50,16 +50,14 @@ button itself, only on the rest of the row. The **+** starts a new thread. Pull 
 
 **Searching the threads** (Igor, 2026-11-24, #1443: "Didn't we add search from thread list" → "Yes"; the Cockpit's
 Stream has the same box). The list has a search box above its rows, as *Decisions* does. Words typed there, once typing
-rests, show only the chats that say every one of them, case ignored and in any order: in the thread's title, its newest
-message, or the bead it belongs to (its description and its ask's options and answer), the same words the Stream's search
-reads. Done and archived chats count too, so an old thread can be found; they show after the live ones. Each result is the
+rests, show only the chats that say every one of them, case ignored and in any order, in the thread's title or in any
+of its messages, the same words the Cockpit's own chat search reads. Done and archived chats count too, so an old thread can be found; they show after the live ones. Each result is the
 thread's usual row, with the words marked in its title and message line, and a tap opens the thread. While a search shows,
 the *All* / *New* picker, *Decisions*, and *Done* step aside; emptying the box, or Cancel, brings the list back exactly as
 it was. With no match the list says *No chats match.* The rows the phone already has answer at once; the Cockpit's part
 follows, and when the Cockpit can't be reached the phone's own matches still show, with a copyable problem saying the
-Cockpit's part is missing. The session log records each search's word and character counts and how many it found, never
-the words. Words that appear only deep inside an older message, not the newest one, wait on the Cockpit searching message
-text (asked of Larry, 2026-11-24).
+Cockpit's part is missing: until the Cockpit answers, or when it can't, only a title or newest message can match. The
+session log records each search's word and character counts and how many it found, never the words.
 
 **Archiving** (Igor, 2026-11-01: "Let me archive threads both via swipe and via buttons in chat overflow"; #589, the
 Cockpit's archive shipped first). Swiping a thread left in the list offers *Archive*; it folds under *Done* at once,
@@ -923,8 +921,8 @@ asked him to confirm the build and he couldn't tell; only board pictures said).
   answer, the copyable problem shows by then and says iCloud hadn't answered, and the session log's find says so
   (context-grabber-4qel).
 
-- Searching the threads (#1443): words in the list's box show only the chats whose title, newest message or bead says
-  every word, case ignored; Done and archived ones count and show after the live ones; the words are marked; a tap opens
+- Searching the threads (#1443): words in the list's box show only the chats whose title or messages say every word,
+  case ignored; Done and archived ones count and show after the live ones; the words are marked; a tap opens
   the thread; an emptied box brings the list back as it was; no match says *No chats match.*
 - When the Cockpit's search fails, the phone's own matches still show, under a copyable problem naming the search and
   the Cockpit's answer.

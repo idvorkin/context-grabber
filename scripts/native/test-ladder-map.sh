@@ -150,7 +150,7 @@ run() {  # <env assignments...> -- <ladder arguments...>
     XCODEBUILD_IDLE_POLL=1 SMOKE_LOCK_PROBE="$fakes/unlocked" SIM_DEVICES_DIR="$tmp/devices" ${vars[@]+"${vars[@]}"} "$ladder" "$@" >"$out" 2>&1
 }
 
-chat_all="ChatArchiveUITests ChatAskSearchUITests ChatCockpitDownUITests ChatDecisionUITests ChatFileUITests ChatImageUITests ChatMoveUITests ChatNewChatAgainUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests"
+chat_all="ChatArchiveUITests ChatAskSearchUITests ChatCockpitDownUITests ChatDecisionUITests ChatFileUITests ChatImageUITests ChatMoveUITests ChatNewChatAgainUITests ChatNewThreadUITests ChatReactionUITests ChatSkillThreadUITests ChatThreadSearchUITests"
 # Every whiteboard UI test file's class, in name order (story 1502): the ladder's list, read from the suite's script, has to
 # name them all.
 board_all=$(cd native/UITests && ls Whiteboard*UITests.swift | sed 's/\.swift$//' | LC_ALL=C sort | paste -sd ' ' -)
