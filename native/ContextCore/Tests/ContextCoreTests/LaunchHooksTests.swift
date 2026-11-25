@@ -408,6 +408,10 @@ final class LaunchHooksTests: XCTestCase {
     XCTAssertEqual(steps(["GRABBER_CALL": "ws://x", "GRABBER_CALL_SECONDS": ""]), [.call(seconds: 8)])
     XCTAssertEqual(steps(["GRABBER_CALL": "", "GRABBER_CALL_SECONDS": "3"]), [])
     XCTAssertEqual(steps(["GRABBER_CALL_SECONDS": "3"]), [])
+    XCTAssertEqual(
+      steps(["GRABBER_CALL": "ws://x", "GRABBER_CALL_THREAD": "open"]), [.call(seconds: 8), .callThread])
+    XCTAssertEqual(steps(["GRABBER_CALL": "ws://x", "GRABBER_CALL_THREAD": "yes"]), [.call(seconds: 8)])
+    XCTAssertEqual(steps(["GRABBER_CALL_THREAD": "open"]), [])
   }
 
   func testMirror() throws {

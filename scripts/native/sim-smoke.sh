@@ -431,6 +431,21 @@ call_check() {  # $1: label, $2: audio (synthetic or empty)
   else bad "call ($label): a clean call filed (or the window held back) $filed automatic report(s): $(jq -r 'map(.reason // .type) | join(",")' <<<"$reports")"; fi
 }
 call_check synthetic synthetic
+# Story 1078: the call's chat link, tapped by its hook mid-call: the call screen goes down, Chat comes up on the
+# thread the bridge named, and the call goes on until the hook hangs it up.
+SIMCTL_CHILD_GRABBER_CALL="ws://localhost:$PORT" SIMCTL_CHILD_GRABBER_CALL_AUDIO=synthetic \
+  SIMCTL_CHILD_GRABBER_CALL_THREAD=open relaunch
+wait_for call_ended 30 || echo "      (timed out waiting for call_ended)"
+sleep 2
+f=$(newest_log)
+tapped=$(jq -sr '[.[] | select(.type=="ui" and .action=="open_call_thread")][0] | "\(.thread) \(.live)"' "$f")
+closed=$(jq -sr '[.[] | select(.type=="ui" and .action=="close_call")] | length' "$f")
+chat_on=$(jq -sr '[.[] | select(.type=="ui" and .action=="open_chat_thread")][0].thread // empty' "$f")
+ended=$(jq -sr '[.[] | select(.type=="call_ended")][0].reason // empty' "$f")
+if [ "$tapped" = "fake-call-thread true" ] && [ "$closed" -ge 1 ] && [ "$chat_on" = "fake-call-thread" ] \
+  && [ "$ended" = "stopped" ]; then
+  ok "call: the chat link closed the live call's screen, Chat opened on its thread, the call went on"
+else bad "call: chat link tapped '$tapped', close_call x$closed, Chat thread '$chat_on', ended '$ended'"; fi
 # Story 1025: with the lid closed on the built-in mic the simulator hears exact zeros, so the call is skipped, not run.
 if audio_ok "call (real audio)" && mic_ok "call (real audio)"; then call_check "real audio" ""; fi
 

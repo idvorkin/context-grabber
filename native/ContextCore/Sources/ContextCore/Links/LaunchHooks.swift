@@ -51,6 +51,8 @@ public enum LaunchHook: Equatable, Sendable {
   case archive
   /// `GRABBER_CALL=<bridge>`: a call, hung up after `GRABBER_CALL_SECONDS` (8 unless that is a number).
   case call(seconds: Double)
+  /// `GRABBER_CALL_THREAD=open` with `GRABBER_CALL`: the call screen's *This call's chat* link, once the call has one.
+  case callThread
   /// `GRABBER_MIRROR=<mode>`, then `GRABBER_METRIC=<key>`'s sheet.
   case mirror(mode: String, metric: MetricKey?)
   /// `GRABBER_LINK=<url>`.
@@ -136,6 +138,7 @@ public struct LaunchHooks: Equatable, Sendable {
     if env["GRABBER_ARCHIVE"] == "run" { add(.archive) }
     if let bridge = env["GRABBER_CALL"], !bridge.isEmpty {
       add(.call(seconds: Double(env["GRABBER_CALL_SECONDS"] ?? "") ?? 8))
+      if env["GRABBER_CALL_THREAD"] == "open" { add(.callThread) }
     }
     if let mode = env["GRABBER_MIRROR"], !mode.isEmpty {
       add(.mirror(mode: mode, metric: env["GRABBER_METRIC"].flatMap(MetricKey.init(rawValue:))))

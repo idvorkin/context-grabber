@@ -13,4 +13,16 @@ extension AppModel {
       if call.snapshot.isActive { call.hangUp(from: "hook") }
     }
   }
+
+  /// Story 1078: the *This call's chat* link's tap, once the bridge has named the call's thread (it waits up to 6 s).
+  func runCallThreadHook() {
+    Task {
+      for _ in 0..<30 where call.snapshot.thread == nil { try? await Task.sleep(for: .milliseconds(200)) }
+      guard let key = call.snapshot.thread else {
+        log.event("ui", ["action": "open_call_thread", "from": "hook", "ok": false, "reason": "no thread"])
+        return
+      }
+      openCallThread(key)
+    }
+  }
 }
