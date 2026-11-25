@@ -394,6 +394,14 @@ check "pre-merge judges the branch as pushed when the checkout is behind it" \
   "$?|$(grep -c '^note pre-merge: checking origin/behind' <<<"$out")|$(grep -c '^FAIL story 2 is used 2 times' <<<"$out")" "1|1|1"
 out=$(premerge clash 2>&1)
 check "pre-merge fails a branch that conflicts with main" "$?|$(grep -c 'conflicts with origin/main' <<<"$out")" "1|1"
+# Bead context-grabber-9g0j: a detached HEAD (a temp worktree, a pipeline head) judges the one pushed branch at it, and
+# fails, naming what to pass, when no pushed branch is there.
+out=$(premerge origin/fine 2>&1)
+check "pre-merge on a detached HEAD judges the one pushed branch at it" \
+  "$?|$(grep -c '^note pre-merge: detached HEAD at .* judging origin/fine' <<<"$out")|$(grep -c '^ok   pre-merge: origin/fine' <<<"$out")" "0|1|1"
+out=$(premerge "$(cd "$repo" && git rev-parse clash)" 2>&1)
+check "pre-merge on a detached HEAD no pushed branch is at fails, naming the branch to pass" \
+  "$?|$(grep -c '^FAIL pre-merge: detached HEAD at .* no branch on origin points at it; name the PR.s branch: just pre-merge <branch>' <<<"$out")" "1|1"
 
 if out=$(scripts/native/story-ids.py docs/stories); then
   echo "ok   docs/stories: ${out#ok   story-ids: }"

@@ -821,7 +821,7 @@ Part of the [user stories](README.md); persona and format are described there.
 
 - **Summary:** Right before merging, the story IDs are checked on the branch merged with main as it is now
 - **Status:** implemented in f50b4ddc, c195bb52 on branch `native/story-id-reserve` (bead context-grabber-jg3w); Mac build passes (rung 1.5); verified on the host rung by `scripts/native/test-story-ids.sh` in `just test`, on a throwaway repository: a branch that passes alone but adds an ID main took since fails naming both places, a branch with a free ID passes, a branch that conflicts with main fails
-- **Issues:** bead context-grabber-jg3w
+- **Issues:** bead context-grabber-jg3w, bead context-grabber-9g0j
 - **Spec:** [Story ID reservations](../superpowers/specs/2026-11-22-story-id-reservations-design.md)
 
 #### Use Case:
@@ -833,7 +833,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Main gained a story with the same ID since the branch was checked
 - **Given:** the branch's PR has passed the pipeline, and main has since merged another PR that added a story with one of its IDs
 - **When:** the agent runs `just pre-merge` immediately before `gh pr merge`
-- **Then:** it fails naming the ID and both places, judging the branch as pushed (the pipeline's own commits included, even when the checkout is behind them) merged with main, without touching the checkout
+- **Then:** it fails naming the ID and both places, judging the branch as pushed (the pipeline's own commits included, even when the checkout is behind them) merged with main, without touching the checkout; from a detached HEAD it judges the one pushed branch at that commit, and when no pushed branch is there it fails naming the branch to pass instead of letting the merge go ahead
 
 ---
 
