@@ -1083,7 +1083,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1293:
 
 - **Summary:** New ink always lands on a shared board, once
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: boards live in the Cockpit, any of iPad, web and Mac draws
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
 
@@ -1101,7 +1101,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1322:
 
 - **Summary:** A change to something changed since is refused by name
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Two devices, one board, apart*
 
@@ -1119,7 +1119,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1323:
 
 - **Summary:** Nothing lands on a deleted board
-- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); not yet used by a device or the Cockpit
+- **Status:** the rule in BoardCore and `bw_store_clash` (interface 22) in [72d3c0cb](https://github.com/idvorkin/context-grabber/commit/72d3c0cb), restore and Larry's other cases in [60014ea8](https://github.com/idvorkin/context-grabber/commit/60014ea8), the review's tombstone, in-batch and ahead fixes in [2178e4bc](https://github.com/idvorkin/context-grabber/commit/2178e4bc); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`, the review fixes included) and the wasm run on Larry's VM (`test-board-wasm.mjs` 324 passed, 0 failed, abi 22, on the merged code at ea45a2e6, review fixes included; wasm sha 58524ac8); the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** bead context-grabber-t12b; Igor, 2026-11-24: deleted boards are kept forever, and refused ink can become a new board
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Deleting*
 
@@ -1137,7 +1137,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1326:
 
 - **Summary:** A header on a shared board is a thing of its own
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point Q2
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1155,7 +1155,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1327:
 
 - **Summary:** A board is deleted however the store records it
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, points 1 and 7
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1173,7 +1173,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1328:
 
 - **Summary:** A change that also adds says which of its names landed
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, point 3
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
@@ -1191,7 +1191,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1329:
 
 - **Summary:** A broken record on a shared board is refused out loud
-- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; not yet used by a device or the Cockpit
+- **Status:** interface 23 in [60ac2271](https://github.com/idvorkin/context-grabber/commit/60ac2271); verified by host tests (`BoardStoreClashTests`, `WebStoreClashTests`); the wasm run on Larry's VM pending; the shared goldens both repos run (`StoreClashGoldenTests`, `Fixtures/board-store/`, sha-pinned for the Cockpit) in [c6a92169](https://github.com/idvorkin/context-grabber/commit/c6a92169); not yet used by a device or the Cockpit
 - **Issues:** cockpit-8kh; review of Larry's board store spec, gap "the wasm silently drops a thing row"
 - **Spec:** [Board rules on the web](../superpowers/specs/2026-11-22-board-rules-on-the-web-design.md), *Interface 23*
 
