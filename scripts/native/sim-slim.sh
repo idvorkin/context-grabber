@@ -2,8 +2,9 @@
 # Story 1627: a lane's simulator runs slim. simslim (https://github.com/MobAI-App/simslim, a Homebrew tap Igor installs
 # by hand) turns off the background daemons a test run never needs. Done once per simulator, it persists across
 # reboots, so this only acts on a simulator that isn't slim yet (a new lane clone, a recreated or erased device).
-# Measured 2026-11-24 on an idle iPad Pro 11-inch (M5) lane simulator, iOS 27.2: 180 processes down to 84, summed RSS
-# 10.2 GB down to 7.0 GB, with Widgets still off (keeping them on gives a few daemons back). It doesn't shrink the disk image.
+# Measured 2026-11-25, paired on one iPad Pro 11-inch (M5) lane simulator, iOS 27.2, Widgets on: idle, 214 processes and
+# 29.9 GB summed RSS stock against 120 and 16.6 GB slim; test time unchanged. It saves memory, not time, and doesn't shrink
+# the disk image.
 # Kept on, because the app or its tests use them: Siri & Intelligence (dictation and speech), Health (HealthKit), iCloud
 # (CloudKit, the board sync, BugKit), Photos (the picker, pasted images) and Widgets (with it off the widget gallery lists
 # none of the app's widgets, so the tile tests fail: bead context-grabber-3hj9.4). Pasteboard, keyboard, location and audio are
