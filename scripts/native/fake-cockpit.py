@@ -6,7 +6,7 @@
 GET /chat, GET /chat/<key>, POST /chat (a new thread; with subject_id, the ask's own thread, #1387), POST /chat/<key>, POST /chat-seen, POST /attachments,
 POST /chat/<key>/archive and /unarchive (#589; a new message brings a thread back; 415 unless application/json, as on
 the Cockpit's write boundary),
-GET /attachments/<ref>, POST /whiteboard/strokes (story 419: counted and answered, never kept), POST /whiteboard/suggest (a ghost circle at the picture's right edge, streamed as NDJSON when the request
+GET /attachments/<ref>, the board store's /boards routes (fake_cockpit_store.py, stories 1330-1334), POST /whiteboard/strokes (story 419: counted and answered, never kept), POST /whiteboard/suggest (a ghost circle at the picture's right edge, streamed as NDJSON when the request
 accepts it, as one JSON when not). A chat URL ending /plain gets a Cockpit that doesn't stream whatever is asked; one ending /many gets six marks of every kind, 400 ms apart. GET /fake/strokes says the ids of each POST /whiteboard/strokes so far, and the folds beside each (story 857). GET /fake/turns lists the board of each POST /whiteboard/suggest so far (story 1171). GET and POST /whiteboard/responder keep each board's knob (story 659), Sonnet by default. A message resent with an id the thread has is a duplicate, as on the Cockpit. Larry
 answers every message of Igor's a second later ("Larry heard: <text>"), and a message with a board's picture with marks (cockpit#85: an arrow and a
 label as kind + points, with the picture's picture_id and frame echoed). POST /fake/larry-draws {"count": n, "separate": bool} is a test's way to have him draw
@@ -106,6 +106,8 @@ import time
 import urllib.parse
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+import fake_cockpit_store  # the board store's routes (stories 1330-1334), beside this file
 
 PORT, REPORT = int(sys.argv[1]), sys.argv[2]
 NEW_DELAY = float(os.environ.get("FAKE_COCKPIT_NEW_DELAY") or 0)
@@ -717,6 +719,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.unquote(self.path.split("?")[0])
         self._report({})
+        store = fake_cockpit_store.get(path, urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query))
+        if store is not None:
+            return self._json(*store)
         with LOCK:
             if path == "/asks":
                 return self._json(200, {"ok": True, "fetched_at": now(), "asks": list(ASKS.values())})
@@ -772,6 +777,15 @@ class Handler(BaseHTTPRequestHandler):
         global SESSION
         path = urllib.parse.unquote(self.path.split("?")[0])
         raw = self.rfile.read(int(self.headers.get("Content-Length", "0") or 0))
+        if path == "/boards" or path.startswith("/boards/") or path.startswith("/fake/store"):
+            self._report({})
+            try:
+                data = json.loads(raw or b"{}")
+            except ValueError:
+                return self._json(400, {"ok": False, "error": "not JSON"})
+            store = fake_cockpit_store.post(path, data if isinstance(data, dict) else {})
+            if store is not None:
+                return self._json(*store)
         if path == "/attachments":
             self._report({"bytes": len(raw), "origin": self.headers.get("Origin")})
             ext = "png" if is_picture(raw) else document(raw)
