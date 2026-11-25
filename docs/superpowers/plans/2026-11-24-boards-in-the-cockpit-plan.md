@@ -45,22 +45,43 @@ A device sends a **batch**: the ops of one save, against the last `rev` it saw.
 POST /boards/<id>/ops
 { "batch_id": "<uuid>", "device": "ipad-air-11", "by": "igor", "base_rev": 92,
   "ops": [ ... ], "picture": "<sha>"? }
-→ 200 { "rev": 95, "applied": [0, 1, 3], "refused": [ { "op": 2, "id": "s-1795...", "reason": "moved",
-         "device": "web", "by": "igor", "rev": 94, "at": "..." } ] }
+→ 200 { "rev": 95, "applied": [0, 1, 3], "refused": [ { "op": 2, "id": "s-1795...", "reason": "changed",
+         "device": "web", "by": "igor", "rev": 94, "at": "..." } ], "missing_ids": [] }
 ```
 
 - **Idempotent by `batch_id`**: a resend returns the first answer.
-- **Adds always land** (`add_strokes`, `add_text`, `add_card`, new group of new ids), **once per id**: an add whose id
-  the board already has (live or erased) is a no-op, reported as applied. Stroke ids are stable creation moments, so a
-  stroke sent twice by any path is one stroke.
+- **Adds always land** (`add_strokes`, `add_text`, `add_card`, `overlay`, `connector`, a new group or reply of new
+  ids), **once per id**: an add whose id the board already has (live or erased) is refused as `exists`, out loud, not
+  reported as applied. Stroke ids are stable creation moments, so a stroke sent twice by any path is one stroke and a
+  real collision stays visible. Re-added ink takes new ids: the pieces a partial erase leaves are `s-<ms>-n`.
+- **Undo and redo restore** erased ink under its own ids with `restore`: it lands when the id is erased and nobody
+  changed it after the erase the device saw (`changed_at_rev <= base_rev`), else `changed`. A `restore` of a live id
+  is `unknown`, and any other change to an erased id is `changed`. Erase and delete leave a tombstone (the id stays
+  taken), which the store must keep. Keep reusing a group id after an erase is a `restore` (or a new id).
 - **A change to an existing thing lands only if `changed_at_rev(id) <= base_rev`**. Otherwise that one op is refused
   with who changed it and when; the rest of the batch still applies (the spec's "everything else still goes up").
 - **Ops on a deleted board are refused** (`reason: "deleted"`, with `deleted_at` and device): new ink does not
   override a delete.
-- **Rename** is a change to the board's name field and follows the same rule.
+- **Rename**, **paper** and **delete_board** are changes to the board itself (`@board`) under the same rule; today
+  they are Cockpit routes, and the store makes them ops.
+- **What each op names** (Larry's question 4): `select` is the device's own and neither lands nor is refused; a
+  connector's `from`/`to` are only referred to; `replace` changes its `ids` and adds its strokes; `remove_overlay`
+  changes its id; every other op changes its `ids` (or `id`).
+- **An op that names nothing** (`translate` by `below_y` alone) can't be checked and is refused as `unknown`: the sender
+  resolves `below_y` to the ids it moves, against its base (Larry's question 2).
+- **A change to a missing id** is refused per op as `unknown`, and the answer also lists those ids as `missing_ids`, as
+  the Cockpit's batch contract does today (question 3).
+- **A base ahead of the board** (`base_rev > rev`: another board's batch, or a broken cache) lands nothing: every op
+  is refused as `ahead`, with the board's `rev` (question 5).
+- One op over several ids lands for all of them or none.
 - Each accepted batch is one new `rev`. The answer always carries the new `rev` so the device rebases its cache.
 - *B, rejected*: no per-thing check; a batch with `base_rev < rev` would replace the board wholesale and save the
   loser as a copy board. Simpler server, but it loses the named refusal, and Igor picked C.
+
+The rule is built: `BoardStoreClash` in BoardCore and `bw_store_clash` (interface 22, stories 1293, 1322, 1323). Today's
+*/ink* can't adopt it as is (Larry, 2026-11-24): it saves whole boards, last write wins, with no per-thing revision,
+device or tombstone, and its batch contract is all-or-nothing `stale`, so a per-op `refused[]` is a contract version
+bump. It is the contract for the new store, a separate project Larry puts to Igor.
 
 The device checks the same rule before sending (BoardCore already does this for Larry's batches), so a refusal is
 rare and explained; the Cockpit's check is the authority. The Cockpit's check is a per-id integer comparison, so it
