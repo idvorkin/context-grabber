@@ -56,4 +56,7 @@ idle env NIGHTLY_TODAY=2026-11-26 NIGHTLY_LADDER="echo 'FAIL WhiteboardTurnUITes
 code=$?
 [ "$code" -eq 2 ] && ok "a failed climb fails" || bad "a failed climb fails (exit $code)"
 grep -q "FAIL WhiteboardTurnUITests" "$dir/home/2026-11-26.fail" 2>/dev/null && ok "and leaves its failures" || bad "and leaves its failures"
+idle env NIGHTLY_TODAY=2026-11-27 NIGHTLY_LADDER="echo 'the screen locked'; exit 75" "$here/nightly-ladder.sh" >"$out" 2>&1
+grep -q "exited 75" "$dir/home/2026-11-27.fail" 2>/dev/null && grep -q "the screen locked" "$dir/home/2026-11-27.fail" &&
+  ok "a failure with no FAIL line still leaves its exit and the log's end" || bad "a failure with no FAIL line still leaves its exit and the log's end"
 exit $fail

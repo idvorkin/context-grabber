@@ -10,7 +10,7 @@
 #   NIGHTLY_HOME [~/tmp/agent/nightly]      the checkout, the day's log, the ran-today marker, a failure's summary
 #   NIGHTLY_WINDOW [1-6]                    it starts at or after the first local hour and before the last
 #   NIGHTLY_CPU_MAX [30]                    the busiest 1-minute CPU average (percent) it starts under
-#   NIGHTLY_LADDER [<checkout>/scripts/native/test-ladder.sh --all]   what it runs in the checkout
+#   NIGHTLY_LADDER [LADDER_KEEP_GOING=1 <checkout>/scripts/native/test-ladder.sh --all]   what it runs in the checkout
 #   NIGHTLY_HOUR, NIGHTLY_POWER (ac|battery), NIGHTLY_CPU, NIGHTLY_BUSY (lanes held), NIGHTLY_TODAY (YYYY-MM-DD)
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -81,12 +81,15 @@ fi
 touch "$home/ran-$today"
 rm -f "$home/$today.fail"
 
-ladder=${NIGHTLY_LADDER:-"$checkout/scripts/native/test-ladder.sh --all"}
+ladder=${NIGHTLY_LADDER:-"LADDER_KEEP_GOING=1 $checkout/scripts/native/test-ladder.sh --all"}
 (cd "$checkout" && eval "$ladder") >>"$log" 2>&1
 status=$?
 echo "nightly: finished $(date +%T), exit $status" >>"$log"
 if [ "$status" -ne 0 ]; then
-  grep -E "FAIL|failed|error:" "$log" | tail -40 >"$home/$today.fail"
+  {
+    echo "nightly: the full ladder exited $status"
+    grep -E "FAIL|failed|error:" "$log" | grep -vE "(^|[^0-9])0 failed" | tail -40 || tail -40 "$log"
+  } >"$home/$today.fail"
   echo "nightly: the full ladder failed (exit $status); the failures are in $home/$today.fail, the run in $log"
   exit "$status"
 fi

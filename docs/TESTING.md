@@ -934,7 +934,7 @@ newest walk is `~/tmp/agent/walks/context-grabber/latest`, the next walk's `--pr
 ## Every UI test, once a day: `just nightly-ladder` (story 1626)
 
 A change runs only the UI test classes its files touch, so a class no recent change picked can go untested for days.
-`scripts/native/nightly-ladder.sh` climbs the whole ladder with `--all` on a fresh copy of `origin/main` (a detached
+`scripts/native/nightly-ladder.sh` climbs the whole ladder with `--all`, every class step even after one fails (story 1628), on a fresh copy of `origin/main` (a detached
 worktree in `~/tmp/agent/nightly/checkout`) once a day, and only when the Mac is idle: it starts between 1:00 and 6:00
 in the morning, on AC power, under 30% CPU over a minute, with no build lane held. A locked screen is fine; the wrapper skips only the
 tests that open the mic. Each day's run is `~/tmp/agent/nightly/<date>.log`, and a failed one leaves its failures in

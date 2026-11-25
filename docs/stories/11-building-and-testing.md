@@ -2021,7 +2021,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1626:
 
 - **Summary:** Every UI test runs once a day while the Mac is idle
-- **Status:** implemented in 656c5995; verified on the host by `scripts/native/test-nightly-ladder.sh` in `just test`, with every Mac reading stood in for. The schedule is installed by hand (`just nightly-install`).
+- **Status:** implemented in d5f3ea25 and 238a7d3e; verified on the host by `scripts/native/test-nightly-ladder.sh` in `just test`, with every Mac reading stood in for. The schedule is installed by hand (`just nightly-install`).
 - **Issues:** bead context-grabber-3rk (Igor approved the daily run, 2026-11-12)
 
 #### Use Case:
