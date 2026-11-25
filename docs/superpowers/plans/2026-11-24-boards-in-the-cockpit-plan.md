@@ -172,7 +172,7 @@ The listing is small enough to call on every list open. Sign-in is the chat's; r
 ### 7a. The cache and queue as built (lane 70, 2026-11-25, to Larry's store spec 2bf00b04 sections 3 and 6)
 
 `BoardStoreCache` in BoardCore, a value type the app persists (Codable) and drives; no network, no UI. Stories
-1330-1334.
+1330-1334 and 1301.
 
 - **State**: `rev` (the base: the last revision whose ops the cache has all seen), `things` (id → body, kind, rev,
   author, erased; an erased thing keeps its body so a local `restore` can bring it back), `deleted`, `queue` (batches,

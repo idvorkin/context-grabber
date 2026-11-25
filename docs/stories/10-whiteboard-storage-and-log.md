@@ -1208,21 +1208,39 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 1330:
 
-- **Summary:** A board drawn on offline opens with my unsent ink and goes up oldest first
+- **Summary:** A board drawn on offline opens with my unsent ink
 - **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app, which gets it behind the rollout setting (off by default)
 - **Issues:** bead context-grabber-t12b; cockpit-8kh (Larry's store spec 2bf00b04, sections 3 and 6)
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
 
 #### Use Case:
 - **As someone** drawing on the iPad with no network
-- **I want to** see everything I drew on the board at once, and have it reach the Cockpit in the order I drew it
-- **so that** going offline never costs me ink or scrambles it
+- **I want to** see everything I drew on the board at once
+- **so that** going offline never hides ink I drew
 
 #### Acceptance Criteria:
-- **Scenario:** Two saves made offline
+- **Scenario:** A board with two unsent saves opens
 - **Given:** a board the iPad last saw at one version, and two saves drawn on it offline
-- **When:** the board opens, and then the network comes back
-- **Then:** the board shows both saves' ink on the last-seen copy, the first save goes up alone at that version, and the second goes up only after the first's answer, at the version that answer left
+- **When:** the board opens
+- **Then:** it shows both saves' ink on the last-seen copy
+
+### User Story 1301:
+
+- **Summary:** Unsent saves go up oldest first, one at a time
+- **Status:** the cache and queue in BoardCore (`BoardStoreCache`) in [19891f8f](https://github.com/idvorkin/context-grabber/commit/19891f8f); verified by host tests (`BoardStoreCacheTests`); not yet used by the app, which gets it behind the rollout setting (off by default)
+- **Issues:** bead context-grabber-t12b; cockpit-8kh (Larry's store spec 2bf00b04, sections 3 and 6)
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Offline: each device's copy and its unsent changes*
+
+#### Use Case:
+- **As someone** who drew on the iPad with no network
+- **I want to** have my saves reach the Cockpit in the order I drew them
+- **so that** going offline never scrambles my ink
+
+#### Acceptance Criteria:
+- **Scenario:** The network comes back with two saves waiting
+- **Given:** two saves drawn offline on a board the iPad last saw at one version
+- **When:** the network comes back
+- **Then:** the first save goes up alone at that version, and the second goes up only after the first's answer, at the version that answer left
 
 ### User Story 1331:
 

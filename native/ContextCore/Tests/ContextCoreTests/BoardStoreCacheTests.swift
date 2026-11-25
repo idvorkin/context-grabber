@@ -1,6 +1,6 @@
 //  The device's copy of a store board and its queue of unsent saves (spec 2026-11-22-boards-in-the-cockpit-design.md,
 //  Offline: each device's copy and its unsent changes; plan 2026-11-24-boards-in-the-cockpit-plan.md section 7a;
-//  stories 1330-1334; Larry's store spec, cockpit 2bf00b04, sections 3 and 6).
+//  stories 1301, 1330-1334; Larry's store spec, cockpit 2bf00b04, sections 3 and 6).
 
 import XCTest
 
@@ -51,7 +51,7 @@ final class BoardStoreCacheTests: XCTestCase {
     ]
   }
 
-  // Story 1330: unsent saves show at once and go up oldest first, one at a time, each at the base its turn finds.
+  // Stories 1330, 1301: unsent saves show at once and go up oldest first, one at a time, each at the base its turn finds.
   func testOfflineSavesShowAndGoUpOneAtATime() throws {
     var cache = board()
     cache.enqueue([["op": "add_strokes", "strokes": [stroke("s3")]]])
@@ -154,6 +154,7 @@ final class BoardStoreCacheTests: XCTestCase {
     XCTAssertEqual(cache.notes, [])
     XCTAssertEqual(cache.rev, 7)
     XCTAssertEqual(cache.things["s9"]?.author, web)
+    XCTAssertEqual(cache.things["s9"]?.kind, "stroke", "a pulled add carries its kind, as the snapshot's do")
     XCTAssertEqual(cache.things["s3"]?.rev, 7)
     XCTAssertEqual(cache.freeze(batchID: "b2", deviceAt: at)?.baseRev, 7)
   }
@@ -316,6 +317,7 @@ final class BoardStoreCacheTests: XCTestCase {
       ])
     XCTAssertEqual(cache.view["s7"]?.body, stroke("s7", x: 3))
     XCTAssertEqual(cache.view["s7"]?.erased, false)
+    XCTAssertEqual(cache.order, ["s7"], "a restored thing is drawn")
     cache.pull(
       rev: 7,
       batches: [
@@ -347,5 +349,91 @@ final class BoardStoreCacheTests: XCTestCase {
     XCTAssertEqual(cache.setAside.count, 4)
     XCTAssertEqual(Set(cache.notes.map(\.reason)), ["deleted"])
     XCTAssertEqual(cache.notes.first?.author, web)
+  }
+
+  // Section 6: a pull while a save's answer is lost counts that save as mine, and later saves build on it.
+  func testPullWithASaveInFlightKeepsTheSavesBuiltOnIt() throws {
+    func inFlight() -> BoardStoreCache {
+      var cache = board()
+      cache.enqueue([["op": "add_strokes", "strokes": [stroke("s3")]]])
+      _ = cache.freeze(batchID: "b1", deviceAt: at)
+      cache.enqueue([["op": "set", "ids": ["s3"], "bodies": ["s3": stroke("s3", x: 7)]]])
+      return cache
+    }
+    let web6 = webBatch(rev: 6, ops: [["op": "set", "ids": ["s2"], "bodies": ["s2": stroke("s2", x: 1)]]])
+
+    var notLanded = inFlight()
+    let queued = notLanded.queue
+    notLanded.pull(rev: 6, batches: [web6])
+    XCTAssertEqual(notLanded.notes, [], "my unsent set builds on my own add in flight")
+    XCTAssertEqual(notLanded.queue, queued)
+
+    var landed = inFlight()
+    landed.pull(
+      rev: 7,
+      batches: [
+        web6,
+        [
+          "rev": 7, "batch_id": "b1", "kind": "ops", "device": .string(me.device), "by": "igor", "at": .string(me.at),
+          "ops": [["op": "add_strokes", "ids": ["s3"], "bodies": ["s3": stroke("s3")]]],
+        ],
+      ])
+    XCTAssertEqual(landed.notes, [], "my own add that landed is not someone else's change")
+    XCTAssertEqual(landed.queue.count, 2)
+    XCTAssertEqual(landed.view["s3"]?.body, stroke("s3", x: 7))
+
+    var late = inFlight()
+    late.pull(rev: 8, batches: [web6, webBatch(rev: 8, id: "w8", ops: [])])
+    _ = late.receive(status: 200, answer: answer(rev: 6, applied: [0]), me: me, slug: "7c2e")
+    XCTAssertEqual(late.rev, 8, "an answer never moves the base back")
+  }
+
+  // Story 1333: a delete undone in the same pull sets nothing aside; the fresh download decides.
+  func testDeleteUndoneInTheSamePullKeepsTheQueue() throws {
+    var cache = board()
+    cache.enqueue([["op": "add_strokes", "strokes": [stroke("s3")]]])
+    let queued = cache.queue
+    cache.pull(
+      rev: 7,
+      batches: [
+        webBatch(rev: 6, ops: [["op": "delete_board", "ids": [], "bodies": [:]]]),
+        ["rev": 7, "batch_id": "a1", "kind": "admin", "device": "cockpit", "by": "larry", "at": "t", "ops": []],
+      ])
+    XCTAssertTrue(cache.needsReload)
+    XCTAssertEqual(cache.setAside, [])
+    XCTAssertEqual(cache.notes, [])
+    XCTAssertEqual(cache.queue, queued)
+
+    cache.reload(snapshot: ["id": "b-1", "rev": 7, "erased": [], "things": []])
+    XCTAssertNil(cache.deleted)
+    XCTAssertEqual(try XCTUnwrap(cache.freeze(batchID: "b1", deviceAt: at)).ops, queued[0].ops)
+  }
+
+  // Section 6: a reply refused in part keeps the marks that landed and never sends a landed id again.
+  func testReplyRefusedInPartKeepsItsLandedMarks() throws {
+    let reply: BoardStoreJSON = ["op": "reply", "id": "r1", "marks": [stroke("m1"), stroke("m2")]]
+    func answered(_ refusedID: String) -> BoardStoreCache {
+      var cache = board()
+      cache.enqueue([reply])
+      _ = cache.freeze(batchID: "b1", deviceAt: at)
+      let refusal: BoardStoreJSON = [
+        "op": 0, "id": .string(refusedID), "reason": "exists", "rev": 3, "device": "web-3f9a", "by": "igor", "at": "t3",
+      ]
+      _ = cache.receive(status: 200, answer: answer(rev: 6, applied: [0], refused: [refusal]), me: me, slug: "7c2e")
+      return cache
+    }
+
+    let replyTaken = answered("r1")
+    XCTAssertEqual(replyTaken.things["m1"]?.rev, 6, "the marks that landed show")
+    XCTAssertEqual(replyTaken.things["m2"]?.rev, 6)
+    XCTAssertNil(replyTaken.things["r1"])
+    XCTAssertEqual(replyTaken.queue.first?.ops, [["op": "reply", "id": "r1-7c2e", "marks": []]])
+
+    let markTaken = answered("m1")
+    XCTAssertEqual(markTaken.things["r1"]?.rev, 6)
+    XCTAssertEqual(markTaken.things["m2"]?.rev, 6)
+    var readd = stroke("m1")
+    readd["id"] = "m1-7c2e"
+    XCTAssertEqual(markTaken.queue.first?.ops, [["op": "reply", "marks": [readd]]], "r1 landed: not sent again")
   }
 }

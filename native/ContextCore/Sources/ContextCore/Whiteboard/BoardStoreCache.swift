@@ -1,6 +1,6 @@
 //  A drawing device's copy of a store board and its queue of unsent saves (spec 2026-11-22-boards-in-the-cockpit-design.md,
 //  Offline: each device's copy and its unsent changes; plan 2026-11-24-boards-in-the-cockpit-plan.md section 7a;
-//  stories 1330-1334; Larry's store spec, cockpit 2bf00b04, sections 3 and 6). A value the app keeps on disk and
+//  stories 1301, 1330-1334; Larry's store spec, cockpit 2bf00b04, sections 3 and 6). A value the app keeps on disk and
 //  drives: no network and no UI here. One batch is in flight at a time and frozen once sent; an answer folds in per id
 //  from `refused`; a copy that is behind pulls, then checks its unsent saves with `BoardStoreClash` at its OLD base, so
 //  no change goes up over a change it never saw.
@@ -155,7 +155,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     let caughtUp = applied.isEmpty ? answerRev == base : answerRev == base + 1
     if caughtUp {
       for op in landed { apply(Self.landings(of: op, things: things), rev: answerRev, author: me) }
-      rev = answerRev
+      rev = max(rev, answerRev)
     } else {
       if !landed.isEmpty { awaitingPull.append(Batch(ops: landed, batchID: batchID, baseRev: base)) }
       needsPull = true
@@ -166,10 +166,11 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
   // MARK: Catching up
 
   /// `GET /boards/<id>/ops?since=<rev>`'s batches, applied in order, then the unsent queue checked against them at the
-  /// old base. The batch in flight, if any, is never rebased.
+  /// old base; after an admin batch the check waits for the fresh download. The batch in flight, if any, is never
+  /// rebased.
   public mutating func pull(rev newRev: Int, batches: [BoardStoreJSON], slug: String = "") {
     let oldBase = rev
-    let mine = Set(awaitingPull.compactMap(\.batchID))
+    let mine = Set((awaitingPull + queue.prefix(1)).compactMap(\.batchID))
     var foreign: [String: BoardStoreClash.Thing] = [:]
     var foreignDelete: BoardStoreClash.Thing?
     for batch in batches {
@@ -182,7 +183,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
         device: batch["device"]?.string ?? "", by: batch["by"]?.string ?? "", at: batch["at"]?.string ?? "")
       let own = batch["batch_id"]?.string.map(mine.contains) ?? false
       for op in batch["ops"]?.array ?? [] {
-        let landings = Self.pulledLandings(of: op)
+        let landings = Self.pulledLandings(of: op, things: things)
         apply(landings, rev: batchRev, author: author)
         guard !own else { continue }
         for landing in landings {
@@ -197,6 +198,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     awaitingPull = []
     needsPull = false
     rev = max(newRev, rev)
+    guard !needsReload else { return }
     rebase(base: oldBase, foreign: foreign, foreignDelete: foreignDelete, slug: slug)
   }
 
@@ -301,12 +303,25 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     }
   }
 
-  /// A pulled op, `{op, ids, bodies: {id: body after}}`: every landed id with its body, `null` for an erase.
-  static func pulledLandings(of op: BoardStoreJSON) -> [Landing] {
-    if op["op"]?.string == "delete_board" { return [Landing(id: BoardStoreClash.boardID, effect: .deleteBoard)] }
-    return (op["ids"]?.strings ?? []).map { id in
+  /// A pulled op, `{op, ids, bodies: {id: body after}}`: every landed id with its body, `null` for an erase; an id new
+  /// to the copy takes its kind from the op (a reply's first id is the reply, the rest its marks).
+  static func pulledLandings(of op: BoardStoreJSON, things: [String: Thing]) -> [Landing] {
+    let name = op["op"]?.string ?? ""
+    if name == "delete_board" { return [Landing(id: BoardStoreClash.boardID, effect: .deleteBoard)] }
+    return (op["ids"]?.strings ?? []).enumerated().map { index, id in
       guard let body = op["bodies"]?[id], !body.isNull else { return Landing(id: id, effect: .erase) }
-      return Landing(id: id, effect: op["op"]?.string == "restore" ? .restore(body) : .put(body))
+      let kind = things[id] == nil && (name != "reply" || index == 0) ? addedKind(name) : nil
+      return Landing(id: id, effect: name == "restore" ? .restore(body) : .put(body), kind: kind)
+    }
+  }
+
+  static func addedKind(_ name: String) -> String? {
+    switch name {
+    case "add_strokes", "replace": return "stroke"
+    case "add_text", "add_card", "overlay", "connector", "group", "header", "reply":
+      return String(name.dropFirst(name.hasPrefix("add_") ? 4 : 0))
+    case "rename", "paper": return "board"
+    default: return nil
     }
   }
 
@@ -318,6 +333,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
         things[landing.id] = Thing(
           body: body, kind: landing.kind ?? things[landing.id]?.kind, rev: rev, author: author)
       case .erase:
+        if things[landing.id] == nil { order.append(landing.id) }
         var thing = things[landing.id] ?? Thing(body: nil, rev: rev, author: author)
         thing.erased = true
         thing.rev = rev
@@ -405,18 +421,19 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
     return landed
   }
 
-  /// The op as it landed with its adds in `ids` taken out: an `add_strokes`' strokes, or a group's or header's own id,
-  /// whose members' change still lands while its body doesn't.
+  /// The op as it landed with its adds in `ids` taken out: an `add_strokes`' strokes, a reply's marks, or an op's own id
+  /// (a group's or header's members' change and a reply's other marks still land while its body doesn't).
   static func without(_ ids: Set<String>, in op: BoardStoreJSON) -> BoardStoreJSON {
     var out = op
     for key in ["strokes", "marks"] {
       if let items = op[key]?.array { out[key] = .array(items.filter { !ids.contains($0["id"]?.string ?? "") }) }
     }
-    if let id = op["id"]?.string, ids.contains(id) { out = ["op": "touch", "ids": op["ids"] ?? []] }
+    if let id = op["id"]?.string, ids.contains(id) { out["id"] = nil }
     return out
   }
 
-  /// The op with its refused adds under new names: all of it (`only: false`), or just those adds (`only: true`).
+  /// The op with its refused adds under new names: all of it (`only: false`), or just those adds (`only: true`, which
+  /// never sends an own id that landed again).
   static func renaming(_ names: [String: String], in op: BoardStoreJSON, only: Bool) -> BoardStoreJSON {
     var out = op
     for key in ["strokes", "marks"] {
@@ -429,14 +446,14 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
           return renamed
         })
     }
-    if let id = op["id"]?.string, let name = names[id] { out["id"] = .string(name) }
+    if let id = op["id"]?.string { out["id"] = names[id].map(BoardStoreJSON.string) ?? (only ? nil : op["id"]) }
     return out
   }
 
   /// The unsent queue through `BoardStoreClash` as one batch at `base`, against the copy's things: a thing a foreign
   /// pulled batch changed carries that batch's rev and author, every other thing at most `base` (the device's own
   /// landed ink doesn't clash with its own queue). A refused op leaves the queue with a note, so the view shows the
-  /// pulled body. The batch in flight is never rebased.
+  /// pulled body. The batch in flight goes first, so later saves build on it, but is never rebased.
   mutating func rebase(
     base: Int, foreign: [String: BoardStoreClash.Thing], foreignDelete: BoardStoreClash.Thing?, slug: String
   ) {
@@ -452,16 +469,16 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
       board.deleted = foreignDelete ?? .init(rev: min(deleted.rev, base), author: deleted.author)
     }
     var flat: [(batch: Int, op: BoardStoreJSON)] = []
-    for index in start..<queue.count { flat += queue[index].ops.map { (index, $0) } }
+    for index in queue.indices { flat += queue[index].ops.map { (index, $0) } }
     let answer = BoardStoreClash.apply(
       flat.map { BoardStoreClash.Op(json: $0.op.any) }, to: board, base: base, author: .init(device: "", by: "", at: "")
     )
-    guard !answer.refused.isEmpty else { return }
-    let refused = answer.refused.map {
+    let refused = answer.refused.filter { flat[$0.op].batch >= start }.map {
       Refusal(op: $0.op, id: $0.id, reason: $0.reason.rawValue, rev: $0.rev, author: $0.author)
     }
+    guard !refused.isEmpty else { return }
     var rebuilt: [Int: [BoardStoreJSON]] = [:]
-    for (index, entry) in flat.enumerated() {
+    for (index, entry) in flat.enumerated() where entry.batch >= start {
       let result = settle(entry.op, refused: refused.filter { $0.op == index }, local: true, slug: slug)
       if let op = result.landed { rebuilt[entry.batch, default: []].append(op) }
     }
@@ -483,6 +500,7 @@ public struct BoardStoreCache: Equatable, Sendable, Codable {
       )
     }
     for id in snapshot["erased"]?.strings ?? [] where things[id] == nil {
+      order.append(id)
       things[id] = Thing(body: nil, rev: 0, author: Author(device: "", by: "", at: ""), erased: true)
     }
     if let gone = snapshot["deleted"], gone != .bool(false), !gone.isNull {
