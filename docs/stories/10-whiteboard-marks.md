@@ -1948,6 +1948,6 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** Larry answers with a label that, on one line, would reach past the right edge of the picture he was sent
 - **When:** it shows on the board
 - **Then:** it goes on to further lines, breaking between words, every line inside that edge less a small margin
-- **And:** each further line starts at the label's left edge, a quarter more than the letters' height below the one before
+- **And:** each further line starts at the label's left edge, a fifth more than the letters' height below the one before (the Cockpit's line height)
 - **And:** a label that fits shows on one line, as before
 - **And:** keeping it keeps the lines as they show

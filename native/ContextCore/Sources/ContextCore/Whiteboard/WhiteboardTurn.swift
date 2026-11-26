@@ -293,11 +293,12 @@ public enum WhiteboardTurn {
       }
       return [[a, b], [wing(.pi / 6), b, wing(-.pi / 6)]]
     case .text:
-      let size = (shape.size ?? 28) / scale
+      // A long label wraps to the picture's right edge (story 1348); one that fits is one row, as before.
       let height = textHeight(shape, scale: scale)
-      let top = CGPoint(x: p[0].x, y: p[0].y + ascent(shape.face) * (size - height))
-      return glyphLines(
-        shape.text ?? "", topLeft: top, height: height, face: shape.face, lettering: shape.lettering ?? lettering)
+      let style = shape.lettering ?? lettering
+      return wrappedRows(shape, frame: frame, scale: scale, lettering: style).flatMap { row in
+        glyphLines(row.text, topLeft: CGPoint(x: row.x, y: row.y), height: height, face: shape.face, lettering: style)
+      }
     }
   }
 

@@ -274,7 +274,7 @@ suggest changes the board until Igor keeps it.
   the board he was looking at. A label that would cross the right edge of the picture he was sent (less a small
   margin) goes on to further lines, breaking between words; a single word too long for the room breaks where it must.
   Each further line starts at the label's left edge, one line pitch lower, the pitch in proportion to the letters' size
-  (a quarter more than their height). A label that fits draws as before, on one line, and a label placed so near the
+  (a fifth more than their height, the Cockpit's own line height, so its placer and the board agree). A label that fits draws as before, on one line, and a label placed so near the
   edge that hardly any room is left still gets a few words to a line, never one letter. Keeping it keeps the lines as
   shown, and a tap anywhere in the box its lines fill reaches it. Texts with no picture behind them (a reworded text,
   a word turned to text) don't wrap: they have no edge to wrap to.
