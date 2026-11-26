@@ -885,9 +885,12 @@ every few seconds while he talks. The call ends that session when it ends.
   workout; Exercise Analyzer refuses that.
 - **When it can't:** if Exercise Analyzer isn't installed, or it says it couldn't start or end the session (a workout
   already running, the watch out of reach), the call carries on. A quiet line under the call says so, with the reason,
-  and the line can be copied. Nothing else interrupts the call.
+  and the line can be copied. Nothing else interrupts the call. The line stays until the next call begins, and a new
+  call (not a redial) starts without it.
 - **One ask per call:** a redial or a reconnect within the same call doesn't ask again. The end is asked only when the
-  start was.
+  start went out and Exercise Analyzer didn't refuse it: when Exercise Analyzer isn't installed, iOS didn't open it,
+  or it answered that it couldn't start, the call's end asks nothing and the line keeps the start's reason. A start
+  that went out with no answer yet is still ended, so a running session is never left running.
 - **The log:** every ask and every answer is in the session log, as `live_hr_link`, with which ask, whether it went
   out, and the reason Exercise Analyzer gave.
 

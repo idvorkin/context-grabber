@@ -1689,7 +1689,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1088:
 
 - **Summary:** A live call starts the watch's live heart rate, and the call's end ends it
-- **Status:** implemented on branch native/live-hr-on-calls-at59; host-verified by `just test` (`LiveHeartRateLinkTests`: once at live, once at the end, nothing on a redial or with the switch off); on the iPhone 17 simulator a synthetic call opened Exercise Analyzer's link, Exercise Analyzer's x-error came back with its reason (no HealthKit entitlement on a simulator build) and the call stayed live in the background meanwhile (its `call_stats` kept coming); a real watch session needs the phone
+- **Status:** implemented on branch native/live-hr-on-calls-at59; host-verified by `just test` (`LiveHeartRateLinkTests`: once at live, once at the end, nothing on a redial or with the switch off, no end after a start that failed or was refused); on the iPhone 17 simulator a synthetic call opened Exercise Analyzer's link, Exercise Analyzer's x-error came back with its reason (no HealthKit entitlement on a simulator build) and the call stayed live in the background meanwhile (its `call_stats` kept coming); a real watch session needs the phone
 - **Issues:** context-grabber-at59
 - **Spec:** [Native call — Live heart rate on calls](../superpowers/specs/2026-08-28-native-call-screen-design.md#live-heart-rate-on-calls)
 
@@ -1720,4 +1720,4 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Exercise Analyzer isn't installed
 - **Given:** *Live heart rate on calls* is on and Exercise Analyzer isn't on the phone
 - **When:** a call goes live
-- **Then:** the call stays live and a copyable line under it says live heart rate couldn't start because Exercise Analyzer isn't installed
+- **Then:** the call stays live and a copyable line under it says live heart rate couldn't start because Exercise Analyzer isn't installed, a line the call's end leaves as it is and the next call clears

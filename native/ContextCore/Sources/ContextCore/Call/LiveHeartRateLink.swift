@@ -48,13 +48,18 @@ public enum LiveHeartRateLink {
   }
 }
 
-/// When a call asks: once when it goes live, and once when it ends, but only if it asked to start. A redial within
-/// the call asks nothing; turning the switch off mid-call still ends what was started.
+/// When a call asks: once when it goes live, and once when it ends, but only if its start went out and wasn't
+/// refused. A redial within the call asks nothing; turning the switch off mid-call still ends what was started.
 public struct LiveHeartRatePlan: Equatable, Sendable {
   private var started = false
   private var wasLive = false
 
   public init() {}
+
+  /// The start never reached Exercise Analyzer, or it answered that it couldn't start: the call's end asks nothing.
+  public mutating func startFailed() {
+    started = false
+  }
 
   public mutating func next(state: CallState, redialing: Bool, enabled: Bool) -> LiveHeartRateLink.Action? {
     switch state {

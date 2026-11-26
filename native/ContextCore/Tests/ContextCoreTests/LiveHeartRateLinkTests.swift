@@ -89,4 +89,28 @@ final class LiveHeartRateLinkTests: XCTestCase {
     XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
     XCTAssertEqual(plan.next(state: .ended, redialing: false, enabled: false), .end)
   }
+
+  func testAStartThatFailedEndsNothing() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
+    plan.startFailed()
+    XCTAssertNil(plan.next(state: .live, redialing: false, enabled: true))
+    XCTAssertNil(plan.next(state: .ended, redialing: false, enabled: true))
+  }
+
+  func testAStartThatFailedStillLetsTheNextCallStart() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
+    plan.startFailed()
+    XCTAssertNil(plan.next(state: .ended, redialing: false, enabled: true))
+    XCTAssertNil(plan.next(state: .connecting, redialing: false, enabled: true))
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
+    XCTAssertEqual(plan.next(state: .ended, redialing: false, enabled: true), .end)
+  }
+
+  func testAStartWithNoAnswerYetIsStillEnded() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
+    XCTAssertEqual(plan.next(state: .ended, redialing: false, enabled: true), .end)
+  }
 }
