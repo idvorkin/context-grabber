@@ -484,7 +484,15 @@ extension WhiteboardModel {
     let toShow = Set(update.marks.map(\.id))
     restoreLarrysMarks(excluding: Set(rows.map(\.id)))
     for row in rows {
-      if toShow.contains(row.id), let drawing = row.drawing { showLarrys(drawing) }
+      if toShow.contains(row.id), let drawing = row.drawing {
+        showLarrys(drawing)
+        // Story 1353: a choice this build doesn't know is left out, and named here.
+        if !row.unknownActions.isEmpty {
+          log.event(
+            "whiteboard_marks",
+            ["action": "mark_actions_unknown", "board": board.id, "row": row.id, "unknown": row.unknownActions])
+        }
+      }
       for (batch, source) in batches[row.id] ?? [] { receive(batch, from: source) }
     }
   }
@@ -776,7 +784,7 @@ extension WhiteboardModel {
     marksHistory = history
   }
 
-  private var marksHistory: WhiteboardMarks.History {
+  var marksHistory: WhiteboardMarks.History {
     get {
       let defaults = UserDefaults.standard
       if let data = defaults.data(forKey: marksHistoryKey),

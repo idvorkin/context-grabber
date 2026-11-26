@@ -82,16 +82,22 @@ private struct MarkChoiceButtons: View {
     GeometryReader { geometry in
       if let mark {
         let group = model.chosenMarks.count > 1
-        let size = CGSize(width: group ? 300 : 210, height: Self.height)
+        // Stories 1352, 1353 (#1525): the reply's own choices, in its order.
+        let offers = model.chosenOffers
+        let size = CGSize(width: Self.width(offers, group: group), height: Self.height)
         let origin = geometry.frame(in: .global).origin
         let place = WhiteboardMarkChoice.place(
           mark: mark, buttons: size, in: CGRect(origin: .zero, size: geometry.size),
           avoid: model.cornerFrame.offsetBy(dx: -origin.x, dy: -origin.y))
         HStack(spacing: 4) {
-          Button(action: model.keepChosen) { Self.label(group ? "Keep group" : "Keep", "checkmark") }
-            .accessibilityIdentifier("whiteboard-mark-keep")
-          Button(action: model.dismissChosen) { Self.label(group ? "Dismiss group" : "Dismiss", "xmark") }
-            .accessibilityIdentifier("whiteboard-mark-dismiss")
+          ForEach(offers, id: \.action) { offer in
+            Button {
+              model.chooseMark(offer.action)
+            } label: {
+              Self.label(offer.title(group: group), Self.symbol(offer.action))
+            }
+            .accessibilityIdentifier(Self.identifier(offer.action))
+          }
         }
         .font(.subheadline.weight(.semibold))
         .buttonStyle(.bordered)
@@ -104,6 +110,30 @@ private struct MarkChoiceButtons: View {
         .onTapGesture {}
         .position(x: place.midX, y: place.midY)
       }
+    }
+  }
+
+  /// Wide enough for every button's title and glyph: Keep and Dismiss as before, more for a reply that offers more.
+  static func width(_ offers: [WhiteboardMarkActions.Offer], group: Bool) -> CGFloat {
+    let standard = offers == WhiteboardMarkActions.standard
+    if standard { return group ? 300 : 210 }
+    return offers.reduce(12) { $0 + CGFloat($1.title(group: group).count) * 9 + 52 }
+  }
+
+  static func symbol(_ action: WhiteboardMarkActions.Action) -> String {
+    switch action {
+    case .keep: "checkmark"
+    case .dismiss: "xmark"
+    case .questionAnswer: "text.line.first.and.arrowtriangle.forward"
+    }
+  }
+
+  /// Keep and Dismiss keep the identifiers the UI tests know them by.
+  static func identifier(_ action: WhiteboardMarkActions.Action) -> String {
+    switch action {
+    case .keep: "whiteboard-mark-keep"
+    case .dismiss: "whiteboard-mark-dismiss"
+    case .questionAnswer: "whiteboard-mark-qa"
     }
   }
 

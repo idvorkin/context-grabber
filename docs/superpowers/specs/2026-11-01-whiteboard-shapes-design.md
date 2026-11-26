@@ -335,6 +335,32 @@ the first clear space, which the first Keep all did).
 - The session log says what each did: how many marks were kept and how many moved, how many labels the tidy found and
   moved.
 
+### Larry chooses the buttons beside his reply, and *To question/answer* (stories 1352–1354, #1525; Igor, iPad board, 2026-11-26: "let more UX be server driven choice … Keep, Dismiss, To Question/Answer (collapsible)")
+
+Beside a mark of Larry's the buttons have always been Keep and Dismiss (*Keep group* and *Dismiss group* for a reply of
+several marks). Now **the reply says which buttons it offers**, so a new choice reaches the board without a new build.
+
+- A reply can name its choices, in order, each with an optional label. The board shows a button for each choice it
+  knows, in the reply's order, with the reply's label (or its own name for that choice: *Keep* / *Keep group*,
+  *Dismiss* / *Dismiss group*, *To question/answer*).
+- A reply that names no choices offers Keep and Dismiss as before. A choice the board doesn't know yet is left out, and
+  the session log names it, so Larry can offer a choice before the build that does it reaches Igor. A reply whose
+  choices are all unknown still offers Keep and Dismiss, so a mark can always be kept or dismissed.
+- What Keep and Dismiss do doesn't change.
+- **To question/answer** keeps the reply as Keep would, then folds Igor's question and Larry's answer into one
+  question node: the question's first line of Igor's writing becomes a header, and Larry's answer and the rest of the
+  question fold under it, showing *▸ N lines folded*. A tap beside the header opens it and closes it again, as any
+  fold does. The question is the ink Igor wrote since the turn before, up to the picture Larry answered (Larry,
+  2026-11-26: older lines in the picture stay out); on a board that doesn't know when its pictures were taken, his ink
+  in that picture. The fold ends just below the answer, so ink after the answer stays out of it.
+- The fold is a header and a fold like any other: Larry's next picture shows it, and a board that lives in the Cockpit
+  carries it to the web board as its headers.
+- When there is no new writing of Igor's to be the question (he asked in chat, or the ink was erased since), *To
+  question/answer* keeps the reply and folds nothing, and the bar says *Nothing to fold under*. (Folding the marks under
+  a header made from the chat's words is not built yet.)
+- Undo after *To question/answer* opens the fold and unmakes the header first; a second Undo takes the keep back.
+- The session log records each choice offered, which were unknown, and each one taken.
+
 ### His marks hold to the ink they answer, and fade when written over (stories 1180, 1181, 1269–1271; bead context-grabber-p2an; Igor, 2026-11-23, 16:55: "Anchor, and fade when written over")
 
 A mark of Larry's that Igor hasn't kept or dismissed answers something on the board: a check on a word, a label beside

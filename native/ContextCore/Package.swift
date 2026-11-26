@@ -28,6 +28,7 @@ let boardTests = [
   "BoardMarksReplayTests.swift", "BoardMomentTests.swift",
   "BoardMeaningTests.swift", "BoardMicMenuTests.swift", "BoardOpsControlsTests.swift", "BoardOpsInkTests.swift",
   "BoardOutlineHeaderLineTests.swift", "BoardOutlineIgorGroupsTests.swift", "BoardOutlineTests.swift",
+  "BoardQuestionFoldTests.swift", "WhiteboardMarkActionsTests.swift",
   "BoardPagesTests.swift", "BoardPaperTests.swift",
   "BoardPicturePagesTests.swift",
   "BoardPlaybackOffScreenTests.swift", "BoardPlaybackTests.swift", "BoardRealFontTests.swift",

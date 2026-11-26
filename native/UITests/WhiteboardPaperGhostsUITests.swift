@@ -455,10 +455,14 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
 
   /// The fake Cockpit draws `count` circles in a row on the board's thread, unprompted, as one reply of Larry's; with
   /// `onLastStroke`, one circle on the middle of the last stroke the board sent (story 1180).
-  private func larryDraws(_ count: Int, _ cockpit: String, onLastStroke: Bool = false) throws {
+  private func larryDraws(
+    _ count: Int, _ cockpit: String, onLastStroke: Bool = false, actions: [String]? = nil
+  ) throws {
     var request = URLRequest(url: try XCTUnwrap(URL(string: cockpit + "/fake/larry-draws")))
     request.httpMethod = "POST"
-    request.httpBody = Data(#"{"count": \#(count), "on_last_stroke": \#(onLastStroke)}"#.utf8)
+    var body: [String: Any] = ["count": count, "on_last_stroke": onLastStroke]
+    if let actions { body["actions"] = actions }
+    request.httpBody = try JSONSerialization.data(withJSONObject: body)
     let done = expectation(description: "the fake Cockpit took it")
     URLSession.shared.dataTask(with: request) { _, response, _ in
       XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
@@ -572,6 +576,36 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let redone = ink(app, within: 8) { $0.maxY > before.maxY + 0.03 }
     XCTAssertNotNil(redone, "redo pushed it down again")
     XCTAssertEqual(send(app).label, strokes(2))
+  }
+
+  /// Stories 1352, 1354 (#1525): the buttons beside his mark are the ones his reply offers, in its order, and *To
+  /// question/answer* keeps his circle and folds it, with my lower line, under my upper line as a header. Unknown
+  /// choices and the fold's rules are `WhiteboardMarkActionsTests` and `BoardQuestionFoldTests`, on the host.
+  func testHisRepliesChoicesShowAndToQuestionAnswerFoldsTheAnswerUnderTheQuestion() throws {
+    let cockpit = try cockpit()
+    let app = try openBoard(["GRABBER_WHITEBOARD_FINGER_LABEL": "1"])
+    _ = try inkAboveAndBelow(app)
+    try WhiteboardWordsOnlyFixture.prepare(cockpit, for: self)
+    send(app).tap()
+    XCTAssertTrue(WhiteboardWordsOnlyFixture.reply(in: app).appears(within: 15), app.debugDescription)
+    try larryDraws(1, cockpit, onLastStroke: true, actions: ["qa", "keep", "dismiss"])
+    XCTAssertTrue(toKeep(app, 1).appears(within: 10), app.debugDescription)
+    let mark = try XCTUnwrap(PaperScreen.settled(app) { $0.larryGhost }, "his circle on my lower line, faint")
+    PaperScreen.tap(app, mark.center)
+    let qa = app.buttons["whiteboard-mark-qa"]
+    XCTAssertTrue(qa.appears(within: 5), app.debugDescription)
+    XCTAssertEqual(qa.label, "To question/answer")
+    let keep = app.buttons["whiteboard-mark-keep"]
+    XCTAssertTrue(keep.exists && app.buttons["whiteboard-mark-dismiss"].exists, "Keep and Dismiss too")
+    XCTAssertLessThan(qa.frame.minX, keep.frame.minX, "in the reply's order")
+    shot(app, "his reply's choices")
+    qa.tap()
+    let folded = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Folded header"))
+      .firstMatch
+    XCTAssertTrue(folded.appears(within: 10), "my question, folded over his answer: \(app.debugDescription)")
+    XCTAssertTrue((folded.value as? String ?? "").hasPrefix("▸ "), "its lines folded")
+    XCTAssertFalse(qa.exists, "the buttons went with the mark")
+    shot(app, "question and answer folded")
   }
 
   /// Story 1180 (bead context-grabber-p2an): Larry's mark on my lower line moves down with it when his push moves it,
