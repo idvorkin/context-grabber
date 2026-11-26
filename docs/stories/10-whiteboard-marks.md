@@ -1934,7 +1934,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1348:
 
 - **Summary:** A long label of Larry's wraps to the board he was looking at
-- **Status:** in progress
+- **Status:** implemented in [e927e9f9](https://github.com/idvorkin/context-grabber/commit/e927e9f9); verified on the host (`BoardLabelWrapTests`: breaks between words, a long word breaks where it must, a newline starts a row, rows stay inside the picture's right edge less the margin, each a 1.2 letter-height pitch lower, a label that fits draws as before, no picture means no wrap) and a before/after render of the lines on the Mac. Not yet seen on the iPad
 - **Issues:** [#1526](https://github.com/idvorkin/context-grabber/issues/1526) (Igor on the iPad, 2026-11-26: "Larry ink should be wrapped as required")
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A long label wraps to the picture's width*
 
