@@ -19,6 +19,8 @@
 #   build-lane.sh sims list        story 788: each lane's copies, their ids and states, or missing; changes nothing
 set -uo pipefail
 self=$0
+# Story 1901: refuse branch work in the main checkout.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/main-checkout-guard.sh"
 here=$(dirname "$0")
 locks=${BUILD_LOCK_DIR:-$HOME/tmp/agent/locks}
 
@@ -51,6 +53,7 @@ free() { lockf -k -t 0 "$(lock "$1")" true 2>/dev/null; }
 
 run() {
   [ $# -gt 0 ] || { echo "build-lane: run needs a command" >&2; exit 2; }
+  main_checkout_guard build-lane
   local n wait poll start i status said=
   n=$(lanes)
   wait=${BUILD_LANE_WAIT:-3600} poll=${BUILD_LANE_POLL:-5}

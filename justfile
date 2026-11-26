@@ -186,6 +186,8 @@ native-test-host:
     # #943: URL loading on Linux needs FoundationNetworking. Bead cmk: check Apple-only imports against Linux branches,
     # including #if canImport and #if os, on the Mac host rung.
     scripts/native/test-linux-imports.sh
+    # Story 1901 (bead 8w8c): lease-slot.sh prints a slot or nothing; lane runs refuse branch work in the main checkout.
+    scripts/native/test-lease-slot.sh
     # Story 789 (#993): every story ID is used once and sits in its journey's ranges in docs/stories/README.md.
     # Stories 791-794: reserve hands out free IDs against main, open PRs and a locked ledger; pre-merge catches a collision.
     scripts/native/test-story-ids.sh

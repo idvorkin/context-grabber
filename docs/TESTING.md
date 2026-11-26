@@ -873,10 +873,18 @@ file touched 7 s. [treehouse](https://github.com/kunchenguid/treehouse)
 keeps a pool of twelve (`treehouse.toml`; two per build lane at the M5 Pro's six, story 785) under `~/.treehouse/`, and a slot is leased, returned and leased again:
 
 ```bash
-slot=$(treehouse get --lease -b native/123-my-change)   # prints the slot's path; the branch is cut from origin/main
+slot=$(scripts/native/lease-slot.sh native/123-my-change) || exit 1   # the slot's path; the branch is cut from origin/main
 cd "$slot" && just native-test-sim                      # work, build, commit and push from here
 treehouse return "$slot"                                # when the branch is pushed; the branch itself is kept
 ```
+
+- **A lease that fails stops the lane (story 1901).** `lease-slot.sh` wraps `treehouse get --lease -b`: it retries
+  every `LEASE_SLOT_POLL` seconds (30) for `LEASE_SLOT_WAIT` seconds (1800) while the pool is full, and prints the
+  slot's path only when it has one. With no slot, an empty answer or a path that is the main checkout, it prints
+  nothing and exits non-zero, so `cd "$slot"` never lands a lane's checkout, reset or rebase in
+  `~/gits/context-grabber` (twice on 2026-11-26, bead context-grabber-8w8c). As a second guard, `build-lane.sh run`
+  and `host-lane.sh run` refuse to run from the main checkout while it is on a branch other than main; from main
+  (the lead's `just deploy`) or from a slot they run as before.
 
 - **The build is reused.** Returning a slot resets tracked files to main and removes untracked ones, but not ignored
   ones (`git clean -fd`, no `-x`), so `native/Build`, its Swift packages and the generated project are still there

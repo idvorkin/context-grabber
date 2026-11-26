@@ -15,6 +15,8 @@
 #                                 while every slot is busy, then exit 75; exports HOST_LANE and HOST_LANES
 set -uo pipefail
 self=$0
+# Story 1901: refuse branch work in the main checkout.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/main-checkout-guard.sh"
 locks=${BUILD_LOCK_DIR:-$HOME/tmp/agent/locks}
 
 slots() {
@@ -43,6 +45,7 @@ free() { lockf -k -t 0 "$(lock "$1")" true 2>/dev/null; }
 
 run() {
   [ $# -gt 0 ] || { echo "host-lane: run needs a command" >&2; exit 2; }
+  main_checkout_guard host-lane
   local n wait poll start i status said=
   n=$(slots)
   wait=${HOST_LANE_WAIT:-3600} poll=${HOST_LANE_POLL:-3}

@@ -2274,3 +2274,22 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a story links a commit the rebase replaced, and one commit on the branch carries the same change
 - **When:** the host checks run, then `just pre-merge` runs, even from a checkout still behind the rebased branch or on a detached HEAD at its pushed head
 - **Then:** the checks pass with a note naming the rebased commit, and pre-merge renames the link on the branch as pushed, pushes that docs-only commit to the branch without touching the checkout and goes on; a link no branch commit matches still fails as before
+
+---
+
+### User Story 1901:
+
+- **Summary:** A lane that can't lease a slot stops instead of working in the main checkout
+- **Status:** planned (bead context-grabber-8w8c)
+- **Issues:** bead context-grabber-8w8c
+
+#### Use Case:
+- **As Igor,** running a dozen agent lanes that each lease a treehouse slot for their branch
+- **I want** a lease that fails, because every slot is leased, to stop the lane, and branch work refused in the main checkout
+- **so that** a lane never checks out, resets or rebases its branch in `~/gits/context-grabber` (it happened twice on 2026-11-26, and both lanes put main back by hand)
+
+#### Acceptance Criteria:
+- **Scenario:** Every slot is leased, or the lease lands in the main checkout
+- **Given:** a lane leases its slot with `scripts/native/lease-slot.sh <branch>`, and the build and host lanes run its commands
+- **When:** no slot frees up before the wait ends, the lease returns nothing, or the path it returns is the main checkout; or a build or host lane is asked to run from the main checkout while it's on a branch other than main
+- **Then:** `lease-slot.sh` prints nothing and exits non-zero with a message saying why, and the lane run refuses with a message naming the main checkout and saying to lease a slot; a run from the main checkout on main, such as the lead's `just deploy`, and any run from a slot go ahead as before
