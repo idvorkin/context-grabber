@@ -1720,7 +1720,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** Hanging up a call that started live heart rate
 - **Given:** a call that asked Exercise Analyzer to start its Call session
 - **When:** the call ends and doesn't come back within five seconds
-- **Then:** Exercise Analyzer is asked once to end its Call session (at once if Grabber leaves the foreground first)
+- **Then:** Exercise Analyzer is asked once to end its Call session, five seconds after the call ends with Grabber coming back afterwards, or at once if Grabber leaves the foreground first
 
 ### User Story 1089:
 
