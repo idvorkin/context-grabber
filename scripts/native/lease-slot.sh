@@ -5,8 +5,9 @@
 #
 #   slot=$(scripts/native/lease-slot.sh native/123-my-change) || exit 1
 #
-# Retries every LEASE_SLOT_POLL seconds (30) for up to LEASE_SLOT_WAIT seconds (1800) while the lease fails. Exits 75
-# when the wait runs out, 70 when treehouse hands back nothing usable or the main checkout, 2 on bad usage.
+# Retries every LEASE_SLOT_POLL seconds (30) for up to LEASE_SLOT_WAIT seconds (1800) while the pool is full. Exits 75
+# when the wait runs out; 70 when treehouse hands back nothing usable or the main checkout, or its lease fails while
+# `treehouse status` shows a slot available (not a full pool); 127 when there is no treehouse; 2 on bad usage.
 # TREEHOUSE overrides the treehouse command (the tests use a stand-in).
 set -uo pipefail
 
@@ -14,6 +15,7 @@ set -uo pipefail
 branch=$1
 wait=${LEASE_SLOT_WAIT:-1800} poll=${LEASE_SLOT_POLL:-30}
 treehouse=${TREEHOUSE:-treehouse}
+command -v "$treehouse" >/dev/null 2>&1 || { echo "lease-slot: no treehouse command ($treehouse)" >&2; exit 127; }
 here=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=main-checkout-guard.sh
 . "$here/main-checkout-guard.sh"
@@ -38,6 +40,10 @@ while :; do
     exit 0
   fi
   err=$(cat "$errf" 2>/dev/null)
+  if "$treehouse" status 2>/dev/null | grep -qiw available; then
+    echo "lease-slot: treehouse couldn't lease a slot for $branch though one is available: ${err:-no error}" >&2
+    exit 70
+  fi
   if [ $((SECONDS - start)) -ge "$wait" ]; then
     echo "lease-slot: no slot for $branch after ${wait}s; last error: ${err:-none}. Nothing leased; stop, don't work in the main checkout." >&2
     exit 75

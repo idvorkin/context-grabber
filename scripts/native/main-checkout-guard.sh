@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Story 1901 (bead context-grabber-8w8c): branch work belongs in a treehouse slot, never in the main checkout.
 # Sourced by build-lane.sh and host-lane.sh; `main_checkout_guard` exits 64 when the current directory is the
-# repository's primary worktree and it isn't on main. LANE_ALLOW_MAIN_CHECKOUT=1 skips it (a deliberate override).
+# repository's primary worktree and it isn't on main.
 
 # The primary worktree's top: the parent of the shared .git directory.
 main_checkout_top() {
@@ -12,7 +12,6 @@ main_checkout_top() {
 
 main_checkout_guard() {
   local who=${1:-lane} top main branch
-  [ "${LANE_ALLOW_MAIN_CHECKOUT:-}" = 1 ] && return 0
   top=$(git rev-parse --show-toplevel 2>/dev/null) || return 0   # not in a repository: nothing to guard
   top=$(cd "$top" && pwd -P)
   main=$(main_checkout_top) || return 0
