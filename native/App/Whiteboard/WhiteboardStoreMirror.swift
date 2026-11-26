@@ -121,7 +121,8 @@ final class WhiteboardStoreMirror: ObservableObject {
       cache = BoardStoreCache(snapshot: snapshot)
     }
     let records = await Task.detached(priority: .utility) { Self.records(drawing) }.value
-    let after = CockpitBoardMirror.after(records: records, cache: cache, device: device)
+    let sent = CockpitBoardMirror.Book.load(bookURL).sent[board] ?? []
+    let after = CockpitBoardMirror.after(records: records, cache: cache, sent: sent)
     switch CockpitBoardEdit.ops(cache, after: after) {
     case .failure(let failure):
       fail("this board's ink couldn't be turned into the Cockpit's changes (\(failure))", operation: "encode")
@@ -129,6 +130,11 @@ final class WhiteboardStoreMirror: ObservableObject {
     case .success(var ops):
       if let rename = CockpitBoardMirror.rename(cache, name: name) { ops.append(rename) }
       let saves = CockpitBoardMirror.saves(ops)
+      if !saves.isEmpty {
+        book = CockpitBoardMirror.Book.load(bookURL)
+        book.sent[board, default: []].formUnion(records.compactMap { $0["id"]?.string })
+        try? book.save(bookURL)
+      }
       for save in saves { cache.enqueue(save) }
       if !saves.isEmpty {
         log.event("board_mirror", ["action": "queued", "board": board, "saves": saves.count, "ops": ops.count])

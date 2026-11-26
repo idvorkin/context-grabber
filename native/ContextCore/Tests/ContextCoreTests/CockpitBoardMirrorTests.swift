@@ -32,17 +32,37 @@ final class CockpitBoardMirrorTests: XCTestCase {
       thing("s-1x1", device: "ipad-1"), thing("s-2x2", device: "ipad-1"), thing("w-9", device: "web-1"),
     ])
     let records = [stroke("s-1x1", points: 2)]
-    let after = CockpitBoardMirror.after(records: records, cache: cache, device: "ipad-1")
+    let after = CockpitBoardMirror.after(records: records, cache: cache, sent: ["s-1x1", "s-2x2"])
     let ops = try CockpitBoardEdit.ops(cache, after: after).get()
     let erased = ops.filter { $0["op"]?.string == "erase" }.flatMap { $0["ids"]?.strings ?? [] }
     XCTAssertEqual(erased, ["s-2x2"], "only the stroke this iPad sent and no longer has: \(ops)")
     XCTAssertFalse(ops.contains { $0["op"]?.string == "set" }, "the web's stroke is left as it is: \(ops)")
   }
 
+  func testAnIPadStrokeTheWebChangedIsStillErasedFromTheIPad() throws {
+    let cache = copy([thing("s-1x1", device: "ipad-1"), thing("s-2x2", device: "web-1"), thing("w-9", device: "web-1")])
+    let after = CockpitBoardMirror.after(
+      records: [stroke("s-1x1", points: 2)], cache: cache, sent: ["s-1x1", "s-2x2"])
+    let ops = try CockpitBoardEdit.ops(cache, after: after).get()
+    let erased = ops.filter { $0["op"]?.string == "erase" }.flatMap { $0["ids"]?.strings ?? [] }
+    XCTAssertEqual(erased, ["s-2x2"], "the iPad's stroke, last moved on the web, goes when the iPad erases it: \(ops)")
+  }
+
+  func testAnIPadStrokeTheWebChangedTakesTheIPadsVersion() throws {
+    let cache = copy([thing("s-1x1", device: "web-1"), thing("w-9", device: "web-1")])
+    let after = CockpitBoardMirror.after(
+      records: [stroke("s-1x1", points: 3)], cache: cache, sent: ["s-1x1"])
+    let ops = try CockpitBoardEdit.ops(cache, after: after).get()
+    let set = ops.filter { $0["op"]?.string == "set" }
+    XCTAssertEqual(set.flatMap { $0["ids"]?.strings ?? [] }, ["s-1x1"], "the iPad is the truth: \(ops)")
+    XCTAssertEqual(set.first?["bodies"]?["s-1x1"]?["pts"]?.array?.count, 3)
+    XCTAssertFalse(ops.contains { $0["op"]?.string == "erase" }, "the web's own stroke stays: \(ops)")
+  }
+
   func testASecondSendOfTheSameBoardLandsNothing() throws {
     let cache = copy([thing("s-1x1", device: "ipad-1"), thing("w-9", device: "web-1")])
     let after = CockpitBoardMirror.after(
-      records: [stroke("s-1x1", points: 2)], cache: cache, device: "ipad-1")
+      records: [stroke("s-1x1", points: 2)], cache: cache, sent: ["s-1x1"])
     XCTAssertEqual(try CockpitBoardEdit.ops(cache, after: after).get(), [])
   }
 
@@ -110,8 +130,11 @@ final class CockpitBoardMirrorTests: XCTestCase {
     var book = CockpitBoardMirror.Book()
     book.mirrored = ["b1"]
     book.created = ["b1"]
+    book.sent = ["b1": ["s-1x1"]]
     try book.save(url)
     XCTAssertEqual(CockpitBoardMirror.Book.load(url), book)
     XCTAssertEqual(CockpitBoardMirror.Book.load(url.appendingPathExtension("missing")), CockpitBoardMirror.Book())
+    try Data(#"{"mirrored":["b2"],"created":[]}"#.utf8).write(to: url)
+    XCTAssertEqual(CockpitBoardMirror.Book.load(url).mirrored, ["b2"], "a book from before the sent ids still opens")
   }
 }

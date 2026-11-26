@@ -1634,7 +1634,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1366:
 
 - **Summary:** The mirror leaves ink drawn on the Cockpit's copy elsewhere
-- **Status:** implemented in [ba4912a1](https://github.com/idvorkin/context-grabber/commit/ba4912a1e4f55a91fe5a4e5266c31c312de47f1b); verified on the host (`CockpitBoardMirrorTests.testASaveNeverErasesAnotherDevicesStrokes`)
+- **Status:** implemented in [ba4912a1](https://github.com/idvorkin/context-grabber/commit/ba4912a1e4f55a91fe5a4e5266c31c312de47f1b); verified on the host (`CockpitBoardMirrorTests.testASaveNeverErasesAnotherDevicesStrokes`, `testAnIPadStrokeTheWebChangedIsStillErasedFromTheIPad`, `testAnIPadStrokeTheWebChangedTakesTheIPadsVersion`)
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 

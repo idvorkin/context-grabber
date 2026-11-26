@@ -45,16 +45,11 @@ public enum CockpitBoardMirror {
   }
 
   /// The strokes the mirror's save compares the copy against: this device's `records`, and every live stroke on the copy
-  /// that another device drew (the web board, Larry) as it is, so a save never erases or overwrites what it didn't send.
-  /// A stroke this device sent, or has waiting, is its own: one the drawing no longer has is erased.
-  public static func after(records: [BoardStoreJSON], cache: BoardStoreCache, device: String) -> [BoardStoreJSON] {
-    let view = cache.view
-    let ours = Set(records.compactMap { $0["id"]?.string })
-    let theirs = CockpitBoardEdit.strokes(cache).filter { stroke in
-      let author = view[stroke.id]?.author.device ?? ""
-      return !author.isEmpty && author != device && !ours.contains(stroke.id)
-    }
-    return records + theirs.map(\.record)
+  /// this device never sent (the web board's, Larry's) as it is, so a save never erases or overwrites what it didn't
+  /// send. A stroke in `sent` is the iPad's however it was changed since: one the drawing no longer has is erased.
+  public static func after(records: [BoardStoreJSON], cache: BoardStoreCache, sent: Set<String>) -> [BoardStoreJSON] {
+    let ours = sent.union(records.compactMap { $0["id"]?.string })
+    return records + CockpitBoardEdit.strokes(cache).filter { !ours.contains($0.id) }.map(\.record)
   }
 
   /// The name the store keeps for a board: its own, or *Untitled* for one without.
@@ -139,8 +134,17 @@ public enum CockpitBoardMirror {
     public var mirrored: Set<String> = []
     /// Boards whose `POST /boards` (and asset) the Cockpit answered: their saves can go.
     public var created: Set<String> = []
+    /// Per board, every stroke id this device has queued for the Cockpit: the strokes that are the iPad's.
+    public var sent: [String: Set<String>] = [:]
 
     public init() {}
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      mirrored = try container.decodeIfPresent(Set<String>.self, forKey: .mirrored) ?? []
+      created = try container.decodeIfPresent(Set<String>.self, forKey: .created) ?? []
+      sent = try container.decodeIfPresent([String: Set<String>].self, forKey: .sent) ?? [:]
+    }
 
     public static func load(_ url: URL) -> Book {
       guard let data = try? Data(contentsOf: url), let book = try? JSONDecoder().decode(Book.self, from: data) else {
