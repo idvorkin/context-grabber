@@ -83,6 +83,13 @@
    "branch": "native/connect-inside-selection-1440",
    "at": 1795712777.170922,
    "until": "2026-11-27T17:06:17Z"
+  },
+  {
+   "id": 1359,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/board-perf-fix-1527",
+   "at": 1795714553.871347,
+   "until": "2026-11-27T17:35:53Z"
   }
  ]
 }
