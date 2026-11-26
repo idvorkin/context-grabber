@@ -2021,3 +2021,26 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a board on the iPad
 - **When:** I write a few lines with the Pencil and lift it
 - **Then:** the session log has a pen-latency line with how many moments it measured, the median and 90th percentile in milliseconds, the slowest, and the screen's refresh rate, and one command prints it from the pulled logs
+
+---
+
+### User Story 1359:
+
+- **Summary:** Drawing on a full board stays as quick as on a new one
+- **Status:** in progress
+- **Issues:** [#1527](https://github.com/idvorkin/context-grabber/issues/1527) (the iPad, 2026-11-26: drawing lag on a board of about 960 strokes; the logs since 11-22 show a stroke's handling growing from about 8 ms on a new board to 85 on one of 600 or more, and up to 5 s on the slow ones, in the marks a stroke writes over and the model taking the drawing)
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *The log says what held the board up while Igor wrote*
+
+#### Use Case:
+- **As someone** drawing on a board that has grown to a thousand strokes, with Larry's marks on it
+- **I want to** have each stroke land as quickly as on a new board
+- **so that** the pen never waits on the size of the board
+
+#### Acceptance Criteria:
+- **Scenario:** A stroke on a full board with Larry's marks
+- **Given:** a board of about a thousand strokes with Larry's marks showing
+- **When:** I draw a stroke
+- **Then:** the board reads only that stroke afresh for the marks and the outline, and every other stroke from what it read before
+- **And:** a stroke that moved, was cut by an erase or changed ink is read afresh
+- **And:** the marks, the outline and what Larry gets are the same as before
+

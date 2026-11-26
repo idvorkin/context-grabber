@@ -448,7 +448,9 @@ extension WhiteboardModel {
   /// The strokes as a plan of the board sees them, by the names Larry knows them (one moved before keeps its first
   /// name), with each one's hashes now. Ink with no colour to see is hidden.
   func opStrokes(_ ink: [PKStroke]) -> (strokes: [BoardOps.Stroke], hashes: [[String]]) {
-    let sent = ink.map { Self.strokesForLarry(PKDrawing(strokes: [$0])) }
+    // #1527: each stroke sampled once, not on every stroke of the board.
+    let sent = ink.map { strokeCache.stretches(of: $0) { Self.strokesForLarry(PKDrawing(strokes: [$0])) } }
+    strokeCache.trim(to: ink)
     let hashes = sent.map { $0.map(\.id) }
     let strokes = zip(ink, sent).map { stroke, stretches in
       BoardOps.Stroke(
