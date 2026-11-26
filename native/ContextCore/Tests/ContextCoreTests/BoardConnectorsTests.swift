@@ -484,9 +484,13 @@ final class BoardConnectorsTests: XCTestCase {
   /// is long and open like a shaft, but both its ends meet other sides' ends; only the arrow becomes the connector.
   func testConnectInsideAWholeDiagramSkipsTheSidesOfABoxDrawnInFourStrokes() throws {
     func sides(_ name: String, _ x: CGFloat) -> [BoardOps.Stroke] {
-      let a = CGPoint(x: x, y: 0), b = CGPoint(x: x + 200, y: 0)
-      let c = CGPoint(x: x + 200, y: 200), d = CGPoint(x: x, y: 200)
-      return [line("\(name)1", [a, b]), line("\(name)2", [b, c]), line("\(name)3", [c, d]), line("\(name)4", [d, a])]
+      let a = CGPoint(x: x, y: 0)
+      let b = CGPoint(x: x + 200, y: 0)
+      let c = CGPoint(x: x + 200, y: 200)
+      let d = CGPoint(x: x, y: 200)
+      return [
+        line("\(name)1", [a, b]), line("\(name)2", [b, c]), line("\(name)3", [c, d]), line("\(name)4", [d, a]),
+      ]
     }
     let strokes =
       sides("A", 0) + sides("B", 280)
