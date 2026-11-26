@@ -53,7 +53,7 @@ final class BoardLabelWrapTests: XCTestCase {
       let tops = WhiteboardTurn.wrappedRows(shape, frame: frame, scale: 1).map(\.y)
       XCTAssertGreaterThan(tops.count, 1)
       for (a, b) in zip(tops, tops.dropFirst()) {
-        XCTAssertEqual(b - a, 40 * WhiteboardTurn.labelLinePitch, accuracy: 0.01)
+        XCTAssertEqual(b - a, 40 * 1.2, accuracy: 0.01)
       }
     }
 
@@ -74,7 +74,8 @@ final class BoardLabelWrapTests: XCTestCase {
       let frame = CGRect(x: 0, y: 0, width: 400, height: 800)
       let shape = WhiteboardTurn.Shape(kind: .text, points: [CGPoint(x: 390, y: 0)], text: "one two three", size: 20)
       let rows = WhiteboardTurn.wrappedRows(shape, frame: frame, scale: 1)
-      XCTAssertLessThanOrEqual(rows.count, 2)
+      XCTAssertEqual(rows.map(\.text), ["one two", "three"])
+      XCTAssertEqual(rows.map(\.x), [390, 390])
     }
   #endif
 }

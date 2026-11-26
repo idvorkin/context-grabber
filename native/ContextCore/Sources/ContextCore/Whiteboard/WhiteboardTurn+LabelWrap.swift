@@ -1,6 +1,6 @@
 //  A long label of Larry's wraps to the right edge of the picture he was sent (story 1348, #1526; spec
 //  2026-11-01-whiteboard-shapes-design.md, "A long label wraps to the picture's width"). The breaking is plain text
-//  over a measure, so it runs anywhere; the rows' places need the letters' widths, so CoreText.
+//  over a measure, so it runs anywhere; the measure is the letters' widths, none on Linux, where nothing wraps.
 
 #if FOUNDATION_ESSENTIALS_ONLY
   import FoundationEssentials
@@ -61,30 +61,28 @@ extension WhiteboardTurn {
     public var y: CGFloat
   }
 
-  #if canImport(CoreText)
-    /// A label's rows on the board. With a picture (`frame` not empty), a label that would cross its right edge less
-    /// `labelMargin` goes on to further rows, each `labelLinePitch` letter heights below the last; a label that fits,
-    /// or one with no picture behind it, is one row of its text as written.
-    static func wrappedRows(
-      _ shape: Shape, frame: CGRect, scale: CGFloat, lettering: LetterStyle = .single
-    ) -> [LabelRow] {
-      guard let first = shape.points.first else { return [] }
-      let at = CGPoint(x: frame.minX + first.x / scale, y: frame.minY + first.y / scale)
-      let size = (shape.size ?? 28) / scale
-      let height = textHeight(shape, scale: scale)
-      let top = CGPoint(x: at.x, y: at.y + ascent(shape.face) * (size - height))
-      let text = shape.text ?? ""
-      let whole = [LabelRow(text: text, x: top.x, y: top.y)]
-      guard frame.width > 0 else { return whole }
-      let style = shape.lettering ?? lettering
-      let room = max(frame.maxX - labelMargin - top.x, height * labelLeastRoom)
-      let rows = wrap(text, room: room) {
-        lettered($0, topLeft: .zero, height: height, face: shape.face, lettering: style).width
-      }
-      guard rows.count > 1 else { return whole }
-      return rows.enumerated().map { i, row in
-        LabelRow(text: row, x: top.x, y: top.y + CGFloat(i) * height * labelLinePitch)
-      }
+  /// A label's rows on the board. With a picture (`frame` not empty), a label that would cross its right edge less
+  /// `labelMargin` goes on to further rows, each `labelLinePitch` letter heights below the last; a label that fits,
+  /// or one with no picture behind it, is one row of its text as written.
+  static func wrappedRows(
+    _ shape: Shape, frame: CGRect, scale: CGFloat, lettering: LetterStyle = .single
+  ) -> [LabelRow] {
+    guard let first = shape.points.first else { return [] }
+    let at = CGPoint(x: frame.minX + first.x / scale, y: frame.minY + first.y / scale)
+    let size = (shape.size ?? 28) / scale
+    let height = textHeight(shape, scale: scale)
+    let top = CGPoint(x: at.x, y: at.y + ascent(shape.face) * (size - height))
+    let text = shape.text ?? ""
+    let whole = [LabelRow(text: text, x: top.x, y: top.y)]
+    guard frame.width > 0 else { return whole }
+    let style = shape.lettering ?? lettering
+    let room = max(frame.maxX - labelMargin - top.x, height * labelLeastRoom)
+    let rows = wrap(text, room: room) {
+      lettered($0, topLeft: .zero, height: height, face: shape.face, lettering: style).width
     }
-  #endif
+    guard rows.count > 1 else { return whole }
+    return rows.enumerated().map { i, row in
+      LabelRow(text: row, x: top.x, y: top.y + CGFloat(i) * height * labelLinePitch)
+    }
+  }
 }

@@ -506,5 +506,8 @@ public enum WhiteboardTurn {
     static func glyphLines(
       _ text: String, topLeft: CGPoint, height: CGFloat, face: Face = .print, lettering: LetterStyle = .single
     ) -> [[CGPoint]] { [] }
+    static func lettered(
+      _ text: String, topLeft: CGPoint, height: CGFloat, face: Face, lettering: LetterStyle = .single
+    ) -> (lines: [[CGPoint]], width: CGFloat) { ([], 0) }
   #endif
 }
