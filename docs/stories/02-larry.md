@@ -3800,3 +3800,21 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** a chat open on the phone
 - **When:** it checks the Cockpit again and nothing has changed
 - **Then:** the Cockpit answers *no change* with no body, nothing on screen moves, and the session log counts it; when a reply arrives or a receipt moves on, only that comes, a new message lands at the bottom and a changed one changes in place; when the Cockpit says the thread was rewritten, or any read fails, the next read is a whole one and what is on screen stays until then
+
+### User Story 1702:
+
+- **Summary:** New heart rate reaches the Cockpit soon after the phone gets it, not at the next four-hourly run
+- **Status:** implemented in [ec867fab](https://github.com/idvorkin/context-grabber/commit/ec867fab); host-verified by `just test` (`HeartRateWakeTests`: a locked wake waits for the unlock, wakes within a minute share one run) and the Mac build (rung 1.5). Background delivery only happens on the phone: the real cadence is read from its `hr_wake` lines after the next install
+- **Issues:** context-grabber-jimz (Igor, on a call 2026-11-25 11:56 via Larry d55e5d6cc81c: "Can Context Grabber be grabbing and uploading my heart rate whenever it gets a new reading?")
+- **Spec:** [Stats archive — Heart rate as it comes](../superpowers/specs/2026-10-19-native-stats-archive-design.md#heart-rate-as-it-comes)
+
+#### Use Case:
+- **As** Igor, whose Watch records his heart rate all day
+- **I want to** have new readings go to the Cockpit's archive as the phone receives them
+- **so that** Larry sees today's heart rate within minutes, not hours later
+
+#### Acceptance Criteria:
+- **Scenario:** The Watch syncs new heart rate while the phone sits locked in my pocket
+- **Given:** Grabber installed, Health access granted, the phone locked
+- **When:** the Watch's new readings reach the phone and I unlock it a while later
+- **Then:** the readings go to the Cockpit's archive at that unlock, without opening Grabber and without waiting for the four-hourly run; the session log has an `hr_wake` line saying how many new readings there were and how old the newest was; and nothing is sent twice
