@@ -478,7 +478,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1355:
 
 - **Summary:** Larry's answer lands on the board as a card
-- **Status:** planned
+- **Status:** implemented in [a4c7f468](https://github.com/idvorkin/context-grabber/commit/a4c7f468); verified by host tests (`WhiteboardAnswerCardsTests`; `just test`), the Mac build and on the iPad simulator (`WhiteboardAnswerCardUITests.testLarrysAnswerLandsAsHisCardAndFolds`, against the fake Cockpit's `/fake/larry-answers`); not yet on the iPad
 - **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439) (Igor, 2026-11-24, iPad board: "Add an answer card")
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
 
@@ -498,7 +498,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1356:
 
 - **Summary:** An answer to a question card answers it and lands under it, as on the web board
-- **Status:** planned
+- **Status:** implemented in [a4c7f468](https://github.com/idvorkin/context-grabber/commit/a4c7f468); verified by host tests (`WhiteboardAnswerCardsTests.testAnAnswerNamingAQuestionCardAnswersItAndLandsUnderIt`) and on the iPad simulator (`WhiteboardAnswerCardUITests.testAnAnswerNamingAQuestionCardAnswersIt`); matches the web board (Cockpit 8e4b034); not yet on the iPad
 - **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
 
@@ -518,7 +518,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1357:
 
 - **Summary:** An answer card folds, moves, archives and erases like an answered card
-- **Status:** planned
+- **Status:** implemented in [a4c7f468](https://github.com/idvorkin/context-grabber/commit/a4c7f468); verified by host tests (`WhiteboardAnswerCardsTests.testAnAnswerCardFoldsAndTheEraserTakesIt`) and on the iPad simulator (the card's Collapse to its title line, the read-only tap); the drag and the eraser on the iPad simulator are covered by the question card's own tests, which share the card; not yet on the iPad
 - **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
 
