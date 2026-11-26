@@ -336,7 +336,7 @@ public enum BoardConnectors {
   }
 
   /// The most strokes a lassoed diagram may hold for Connect to look inside it for an arrow.
-  static let maxDiagram = 60
+  public static let maxDiagram = 60
   /// An arrowhead's largest side, and how far its middle may sit from the shaft's end.
   static let headSize: CGFloat = 40
   static let headReach: CGFloat = 30
