@@ -156,12 +156,12 @@ answer card lands just under it. A card already answered keeps its answer, and a
 answer lands at his place as its own card.
 
 **What it looks like.** A card in Larry's purple, edged like a question card but marked as his answer: *Larry ·
-\<title>* on its first line and his words under it, wrapped to the card. With no title, the first line of his words is
-its title.
+\<title>* on its first line and his words under it on one line, cut short when longer; a tap opens it read-only with
+his words in full. With no title, the first line of his words is its title.
 
 **What it does.** Everything an answered question card does: it collapses to its title line, then to a round, and a tap
 opens it out; it drags anywhere on the page and stays there; it archives off the board and *Reopen* puts it back; the
-eraser takes it. A tap on it opens nothing to answer: there is nothing to answer. It is never ink: *Keep* and the
+eraser takes it. Its read-only view has nothing to answer. It is never ink: *Keep* and the
 handwriting tools don't touch it.
 
 **On the web board.** The same card, from the same reply, on Larry's web board (the Cockpit's part).
