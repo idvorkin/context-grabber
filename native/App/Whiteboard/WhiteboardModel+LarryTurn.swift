@@ -528,6 +528,7 @@ extension WhiteboardModel {
     turns.larrysMarks(marks)
     history.place(row, shown: marks.map(\.id), nowhere: nowhere.map(\.id))
     marksHistory = history
+    replyOffers[row.id] = row.offers
     log.event(
       "whiteboard_marks",
       [
@@ -535,6 +536,7 @@ extension WhiteboardModel {
         "picture": row.pictureID ?? "", "picture_known": seen != nil, "folds_open": folds?.steps.count ?? 0,
         "earlier_stayed": earlier.count,
         "earlier_replies": Set(earlier.compactMap { WhiteboardMarks.reply(of: $0.id) }).count,
+        "offers": row.offers.map(\.action.rawValue),
       ])
   }
 

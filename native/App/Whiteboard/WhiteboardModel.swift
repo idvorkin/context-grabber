@@ -90,6 +90,8 @@ final class WhiteboardModel: ObservableObject {
   var declined: Set<String> = []
   /// `labelBoxes()`'s answer for the ink and headers as they are.
   var cachedLabelBoxes: [CGRect]?
+  /// Each reply of Larry's shown, by its row id: the buttons beside its marks (stories 1352, 1353).
+  var replyOffers: [String: [WhiteboardMarkActions.Offer]] = [:]
   /// Each element's ink hashes, to tell Larry what Igor added, erased and moved (story 843).
   var ink = BoardInk()
   /// The lasso's selection as last told (story 844).

@@ -16,7 +16,12 @@ extension WhiteboardModel {
 
   /// The buttons beside the chosen marks, in the reply's order: Keep and Dismiss for a reply that names none, or for
   /// Claude's ghosts.
-  var chosenOffers: [WhiteboardMarkActions.Offer] { chosenReply?.offers ?? WhiteboardMarkActions.standard }
+  var chosenOffers: [WhiteboardMarkActions.Offer] {
+    guard let first = chosenMarks.first, first.who == .larry, let reply = WhiteboardMarks.reply(of: first.id) else {
+      return WhiteboardMarkActions.standard
+    }
+    return replyOffers[reply] ?? WhiteboardMarkActions.standard
+  }
 
   /// A button beside the chosen marks was pressed.
   func chooseMark(_ action: WhiteboardMarkActions.Action) {
@@ -34,8 +39,10 @@ extension WhiteboardModel {
     let reply = chosenReply
     let question = reply?.frame
     // Larry (8abe63373b12): the question is the ink made since the turn before, up to the picture he answered.
-    let taken = pictureTimes.taken(reply?.pictureID, board: board.id)
-    let made = taken.map { (pictureTimes.before(reply?.pictureID, board: board.id).map { $0 + 1 } ?? 0)...$0 }
+    let made = pictureTimes.taken(reply?.pictureID, board: board.id).flatMap { taken -> ClosedRange<Int64>? in
+      let since = pictureTimes.before(reply?.pictureID, board: board.id).map { $0 + 1 } ?? 0
+      return since <= taken ? since...taken : nil
+    }
     let answer = marks.flatMap(\.lines).flatMap { $0 }.map(\.y).max()
     keepChosen()
     var folded = false
