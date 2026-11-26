@@ -824,6 +824,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self.wfile.write(data)
         self._json(404, {"ok": False, "error": "not found"})
 
+    def do_PUT(self):
+        path = urllib.parse.unquote(self.path.split("?")[0])
+        raw = self.rfile.read(int(self.headers.get("Content-Length", "0") or 0))
+        if path.startswith("/boards/assets/"):
+            self._report({"bytes": len(raw)})
+            return self._json(*fake_cockpit_store.put_asset(path, raw))
+        self._json(404, {"ok": False, "error": "not found"})
+
     def do_POST(self):
         global SESSION
         path = urllib.parse.unquote(self.path.split("?")[0])

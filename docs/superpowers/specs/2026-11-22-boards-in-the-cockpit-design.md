@@ -241,6 +241,40 @@ default. It is for trying the store while Larry and the app build it, not for Ig
   - Saves go to the Cockpit the board was read from. Igor's own boards aren't in the store yet (the web still saves
     them to its ink files), so only trial boards like *Scratch: iPad store smoke test* are drawn on here.
 
+### Sending a board to the Cockpit (the mirror, beta)
+
+Igor's own boards reach the store before the rollout's switch, by the rollout's step 2 for chosen boards: the board
+stays a full iPad board (Larry's turns, the outline, folds, paper, question cards) whose truth is still iCloud, and the
+Cockpit keeps a copy that Larry and the web board read (Larry's pick B, 2026-11-26; Igor's "go straight to my main
+board", 08:15). Behind the same beta switch:
+
+- **Send this board to the Cockpit**, in the board's menu. It gives the Cockpit the board as it stands: a new store
+  board with the same id and name, all its ink, and the board's original drawing kept beside it, untouched, for a
+  lossless way back. From then on the board is *mirrored*: every save of the board on the iPad also goes to the
+  Cockpit, a stroke drawn, erased or moved at a time, through the same one-at-a-time saves as a Cockpit board.
+  A board renamed on the iPad is renamed in the Cockpit with its next save.
+- **A send that doesn't reach the Cockpit isn't a mirror.** The board counts as mirrored only once the Cockpit has
+  taken it. Until then the menu shows the copyable problem and keeps *Send this board to the Cockpit* to try again.
+- **The mirror only changes what the iPad sent.** Strokes drawn on the Cockpit's copy from the web board or by Larry
+  stay there: a later save from the iPad never erases or overwrites them.
+- **The board itself doesn't change.** It opens, draws, talks to Larry and syncs over iCloud exactly as before; the
+  iCloud copy is never deleted or altered. A line in the menu says where the mirror stands: *In the Cockpit ·
+  version 12*, *2 saves waiting*, or the copyable *Cockpit not answering* problem.
+- **Sending again is safe.** A board sent twice, or one whose first send was cut off, lands nothing twice: the
+  Cockpit already holds each stroke by its id.
+- **A big board goes in parts**, each under the Cockpit's 8 MB limit for one save, in order.
+- **New boards** made with + while the beta switch is on are mirrored from their first save.
+- **Not yet:** the board's meaning (headers, folds, Larry's marks and cards) goes with a later step; this one sends
+  the ink. A change made to the Cockpit's copy on the web doesn't come back to the iPad yet: the iPad's board stays
+  the truth until the rollout's step 3.
+- **It waited for the Cockpit's backup.** Until the store's nightly backup to igor2 was live, *Send this board to the
+  Cockpit* was dimmed with *Waiting for the Cockpit's backup* (a board named *Scratch…* could go for trying it). Larry
+  posted the backup live on 2026-11-26 (cockpit cfbb196), so any board can go; the hold comes back if the backup ever
+  has to stop.
+- **Only Igor starts it.** Nothing is mirrored until he turns the beta switch on and chooses *Send this board to the
+  Cockpit* on a board; boards he makes with + afterwards, while the switch is on, are mirrored from their first save.
+  Nothing on the Cockpit's side can start it.
+
 ## Decided (Igor, 2026-11-24, in his Inbox)
 
 - **Who may draw: C.** Any drawing device (the iPad, the web board, the Mac) draws on any board. New strokes from

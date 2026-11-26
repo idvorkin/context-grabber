@@ -70,6 +70,8 @@ struct WhiteboardBoardMenu: View, Equatable {
         model.canvas?.menuChose()
       }
       .accessibilityIdentifier("whiteboard-tidy")
+      // Stories 1361-1363: send the board to the Cockpit (beta switch only).
+      WhiteboardMirrorRow(model: model)
       // Story 1315 (#1387): the questions archived off the board, to read or reopen; only while there are some.
       WhiteboardArchivedQuestionsRow(questions: model.questions)
       // #950 (stories 1056, 1057): how the board letters its text. One row, a switch, as the menu has room for no

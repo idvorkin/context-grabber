@@ -26,6 +26,7 @@ LOCK = threading.Lock()
 BOARDS = {}  # id -> {"name", "rev", "things": {id: thing}, "order": [id], "deleted", "log": [batch], "changed_at"}
 ANSWERS = {}  # (board, batch_id) -> (sha of the body, answer)
 POSTS = []  # every POST /boards/<id>/ops body, in order
+ASSETS = {}  # sha -> bytes, from PUT /boards/assets/<sha> (story 1361: the original drawing)
 NEXT = None  # what /fake/store-next armed: once
 
 BOARD = "@board"
@@ -266,7 +267,8 @@ def get(path, query):
     """GET's (status, answer), or None when the path isn't the store's."""
     with LOCK:
         if path == "/fake/store":
-            return 200, {"ok": True, "posts": POSTS, "revs": {i: b["rev"] for i, b in BOARDS.items()}}
+            return 200, {"ok": True, "posts": POSTS, "revs": {i: b["rev"] for i, b in BOARDS.items()},
+                         "assets": {k: len(v) for k, v in ASSETS.items()}}
         if path == "/boards":
             show_deleted = (query.get("deleted") or [""])[0] == "1"
             rows = sorted(BOARDS.items(), key=lambda item: item[1]["changed_at"], reverse=True)
@@ -310,7 +312,8 @@ def create(data):
     created = id_ not in BOARDS
     if created:
         who = {"device": device, "by": by, "at": now()}
-        body = {"name": name.strip(), **{k: data[k] for k in ("paper", "lines", "ruled") if k in data}, "v": 1}
+        body = {"name": name.strip(), **{k: data[k] for k in ("paper", "lines", "ruled", "original_asset") if k in data},
+                "v": 1}
         BOARDS[id_] = {"name": name.strip(), "rev": 0, "order": [BOARD], "deleted": None, "log": [],
                        "changed_at": who["at"], "things": {BOARD: {"kind": "board", "body": body, "erased": False,
                                                                    **stamp(0, who)}}}
@@ -393,3 +396,13 @@ def post(path, data):
                   "missing_ids": [r["id"] for r in refused if r.get("reason") == "unknown" and r.get("id")]}
         ANSWERS[key] = (sha, answer)
         return 200, answer
+
+
+def put_asset(path, raw):
+    """PUT /boards/assets/<sha>: the bytes kept by their sha (story 1361); a wrong sha is a 400."""
+    sha = path[len("/boards/assets/"):]
+    if hashlib.sha256(raw).hexdigest() != sha:
+        return 400, {"ok": False, "error": "sha doesn't match the body"}
+    with LOCK:
+        ASSETS[sha] = raw
+    return 200, {"ok": True, "sha": sha, "bytes": len(raw)}

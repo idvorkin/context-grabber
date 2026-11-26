@@ -61,6 +61,8 @@ extension WhiteboardModel {
         opLedger.wrote(written)
       }
       dirty = false
+      // Stories 1361-1363: a mirrored board's ink also goes to the Cockpit's copy.
+      mirrorSaved()
       if trigger != .close { saidWhatWasNotKept(trigger) }
       saveFailing = false
       if problem?.context == "WhiteboardView.save" { problem = nil }

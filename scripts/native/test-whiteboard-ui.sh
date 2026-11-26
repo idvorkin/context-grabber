@@ -59,6 +59,7 @@ classes=(
   -only-testing:GrabberNativeUITests/WhiteboardRewordUITests
   -only-testing:GrabberNativeUITests/WhiteboardRowDeleteUITests
   -only-testing:GrabberNativeUITests/WhiteboardScratchOutUITests
+  -only-testing:GrabberNativeUITests/WhiteboardStoreMirrorUITests
   -only-testing:GrabberNativeUITests/WhiteboardTheirsTapUITests
   -only-testing:BoardLabUITests/WhiteboardTitleRenameUITests
   -only-testing:GrabberNativeUITests/WhiteboardToTextUITests
