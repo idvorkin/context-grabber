@@ -71,13 +71,6 @@
    "until": "2026-11-27T17:05:56Z"
   },
   {
-   "id": 1358,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/connect-inside-selection-1440",
-   "at": 1795712777.170922,
-   "until": "2026-11-27T17:06:17Z"
-  },
-  {
    "id": 1359,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/board-perf-fix-1527",
@@ -90,6 +83,13 @@
    "branch": "native/diagram-boxes-1528",
    "at": 1795715455.3620071,
    "until": "2026-11-27T17:50:55Z"
+  },
+  {
+   "id": 570,
+   "journey": "07-widgets-and-links.md",
+   "branch": "native/gym-sheet-icons-1503",
+   "at": 1795716640.702842,
+   "until": "2026-11-27T18:10:40Z"
   }
  ]
 }
