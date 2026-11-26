@@ -1,6 +1,9 @@
-import CoreGraphics
 import Foundation
 import XCTest
+
+#if canImport(CoreGraphics)
+  import CoreGraphics
+#endif
 
 @testable import ContextCore
 
