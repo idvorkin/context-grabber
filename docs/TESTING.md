@@ -77,7 +77,7 @@ it before every push. In order, it:
 4. runs the host rung's portable script checks (each described in the host list above): the ladder's map
    (`test-ladder-map.sh`), the breath clips and the UI timing digest, the ladder report (`test-ladder-report.sh`), the
    smoke on a locked Mac (`test-smoke-lock.sh`), the Linux import check (`test-linux-imports.sh`), the build lanes
-   (`test-build-lane.sh`), the story IDs (`test-story-ids.sh`), the stories' commit links (`test-story-commits.sh`), the tests
+   (`test-build-lane.sh`), the slot lease (`test-lease-slot.sh`), the story IDs (`test-story-ids.sh`), the stories' commit links (`test-story-commits.sh`), the tests
    their Status lines cite (`test-story-tests.sh`), the vendored board sessions (`test-board-sessions.py`), and this guide's one-a-line lists (`test-testing-lists.sh`). The asset
    catalog check needs `actool` and the signing guard needs BugKit's script, so they stay the Mac's.
 
