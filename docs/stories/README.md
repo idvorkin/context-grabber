@@ -20,7 +20,7 @@ on its `Issues:` line.
 | Journey | What it covers | IDs |
 |---|---|---|
 | [The mirror](01-mirror.md) | Today and the week at a glance: the metric cards, the detail sheets, sleep, movement, mind; Settings and About. | 001–019, 440–459 |
-| [Feeding Larry](02-larry.md) | Grab Context: the summary and raw exports, the 7-day window, what the coach sees. | 020–039, 260–279, 300–319, 480–499, 500–519, 540–559, 728–729, 740–744, 747–749, 820–824, 830–835, 838–839, 1120–1139, 1600–1619 |
+| [Feeding Larry](02-larry.md) | Grab Context: the summary and raw exports, the 7-day window, what the coach sees. | 020–039, 260–279, 300–319, 480–499, 500–519, 540–559, 728–729, 740–744, 747–749, 820–824, 830–835, 838–839, 1120–1139, 1600–1619, 1700–1799 |
 | [Places](03-places.md) | Background location, stays and known places, the per-day breakdown, the map, the database export. | 040–059 |
 | [Roles and the journal](04-roles-and-journal.md) | Who I have been: the identity threads, time-since, the journal and its tags, gratitude, affirmations, mood. | 060–079 |
 | [Calling Larry](05-call.md) | The native Call tab that survives the lock, the Cockpit page, voices, diagnostics that reach Larry. | 080–099, 200–219, 248, 320–339, 751–752, 829, 1070–1089 |
