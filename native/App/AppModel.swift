@@ -358,6 +358,12 @@ final class AppModel: ObservableObject {
       places.importDatabase(url, from: "file")
       return
     }
+    // Stories 1088-1089: Exercise Analyzer's answer to a live heart rate ask; the call stays on screen.
+    if let answer = LiveHeartRateLink.callback(url), AppLink.schemes.contains(url.scheme?.lowercased() ?? "") {
+      log.event("open_url", ["url": url.absoluteString, "route": "live_heart_rate", "ok": true, "from": "link"])
+      call.liveHeartRate.handle(answer)
+      return
+    }
     let parsed = AppLink.parse(url)
     log.event(
       "open_url", ["url": url.absoluteString, "route": parsed.route.name, "ok": parsed.understood, "from": "link"])

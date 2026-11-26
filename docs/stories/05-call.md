@@ -1685,3 +1685,39 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Given:** a call whose five-second stretches all scored 100
 - **When:** I say "bye" and hang up a moment later
 - **Then:** the call's summary leaves out that last moment, under half of five seconds, and its score and worst stay 100
+
+### User Story 1088:
+
+- **Summary:** A live call starts the watch's live heart rate, and the call's end ends it
+- **Status:** planned on branch native/live-hr-on-calls-at59
+- **Issues:** context-grabber-at59
+- **Spec:** [Native call — Live heart rate on calls](../superpowers/specs/2026-08-28-native-call-screen-design.md#live-heart-rate-on-calls)
+
+#### Use Case:
+- **As** Igor, calling Larry while walking
+- **I want to** have my heart rate stream to the Cockpit for the length of the call without touching the watch
+- **so that** Larry can see how hard I'm working while we talk
+
+#### Acceptance Criteria:
+- **Scenario:** A call with the switch on
+- **Given:** *Live heart rate on calls* is on and Exercise Analyzer is installed
+- **When:** a call goes live, and later ends
+- **Then:** Exercise Analyzer is asked once to start its Call session when the call goes live and once to end it when the call ends, Grabber comes back to the call each time, and the call's voice is never cut
+
+### User Story 1089:
+
+- **Summary:** When the watch can't start, the call carries on with a quiet note
+- **Status:** planned on branch native/live-hr-on-calls-at59
+- **Issues:** context-grabber-at59
+- **Spec:** [Native call — Live heart rate on calls](../superpowers/specs/2026-08-28-native-call-screen-design.md#live-heart-rate-on-calls)
+
+#### Use Case:
+- **As** Igor, with the switch on but Exercise Analyzer missing or refusing
+- **I want to** have the call go on as if nothing happened, with a line saying why
+- **so that** a heart-rate problem never costs me the call
+
+#### Acceptance Criteria:
+- **Scenario:** Exercise Analyzer isn't installed
+- **Given:** *Live heart rate on calls* is on and Exercise Analyzer isn't on the phone
+- **When:** a call goes live
+- **Then:** the call stays live and a copyable line under it says live heart rate couldn't start because Exercise Analyzer isn't installed

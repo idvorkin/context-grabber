@@ -21,6 +21,8 @@ struct CallView: View {
   var body: some View {
     VStack(spacing: 0) {
       callLine
+      // Stories 1088-1089: why live heart rate didn't start or end; the call carries on.
+      LiveHeartRateNote(live: call.liveHeartRate).padding(.horizontal)
       threadLink
       if call.snapshot.isActive || call.snapshot.state == .ended { Divider() }
       content
