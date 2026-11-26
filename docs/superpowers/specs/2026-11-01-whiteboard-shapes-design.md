@@ -272,7 +272,7 @@ suggest changes the board until Igor keeps it.
 - **A long label wraps to the picture's width** (#1526; Igor on the iPad, 2026-11-26: "Larry ink should be wrapped as
   required"). Larry sends a label as one line at whatever length he wrote it, so a long one ran past the right edge of
   the board he was looking at. A label that would cross the right edge of the picture he was sent (less a small
-  margin) goes on to further lines, breaking between words; a single word too long for the room breaks where it must.
+  margin) goes on to further lines, breaking between words and at any newline he wrote; a single word too long for the room breaks where it must.
   Each further line starts at the label's left edge, one line pitch lower, the pitch in proportion to the letters' size
   (a fifth more than their height, the Cockpit's own line height, so its placer and the board agree). A label that fits draws as before, on one line, and a label placed so near the
   edge that hardly any room is left still gets a few words to a line, never one letter. Keeping it keeps the lines as
