@@ -2280,7 +2280,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1901:
 
 - **Summary:** A lane that can't lease a slot stops instead of working in the main checkout
-- **Status:** planned (bead context-grabber-8w8c)
+- **Status:** implemented in [c859630f](https://github.com/idvorkin/context-grabber/commit/c859630f), [6db78535](https://github.com/idvorkin/context-grabber/commit/6db78535); verified on the host rung by `scripts/native/test-lease-slot.sh` in `just test`, on a throwaway repository with a linked worktree and a stand-in treehouse: a free slot prints its path; a full pool past the wait, an empty answer and the main checkout each print nothing and fail; a slot that frees up within the wait is leased on a retry; a lane run in the main checkout on a branch (and from its subdirectory) is refused, while one on main, from a slot, outside a repository or with the override runs; and both lane scripts call the guard in `run`
 - **Issues:** bead context-grabber-8w8c
 
 #### Use Case:
