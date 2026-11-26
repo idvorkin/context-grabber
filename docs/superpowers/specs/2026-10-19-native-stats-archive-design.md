@@ -101,7 +101,12 @@ them on the phone, Health wakes Grabber, even in the background, and a run goes 
 every stream's delta, so nothing is sent twice.
 
 - **The phone is locked:** Health can't be read while it is, and most heart rate lands then, because the Watch syncs
-  to a phone in a pocket. The run waits for the next unlock and goes then.
+  to a phone in a pocket. iOS wakes no app at an unlock, so the run goes the next time Grabber runs with the phone
+  unlocked: a later Health wake, the unlock itself if Grabber is still awake, opening Grabber, or a background refresh
+  (an ordinary run). That a locked wake is waiting survives a suspension or a relaunch.
+- **Health is answered quickly:** a wake's run is short and holds the background time it asks iOS for; if that runs
+  out, the run stops where its last page left it and Health is told the wake was handled, so Health keeps waking
+  the app. A wake while a run is already going rides along on it.
 - **A burst of wakes** (the Watch syncs all three types at once): wakes within a minute of a run share it.
 - **How often it really comes is iOS's call:** Health wakes an app at most once per its frequency, and a heart rate
   sample reaches the phone only when the Watch syncs it, so expect batches minutes to tens of minutes apart rather

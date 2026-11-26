@@ -3817,4 +3817,4 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Scenario:** The Watch syncs new heart rate while the phone sits locked in my pocket
 - **Given:** Grabber installed, Health access granted, the phone locked
 - **When:** the Watch's new readings reach the phone and I unlock it a while later
-- **Then:** the readings go to the Cockpit's archive at that unlock, without opening Grabber and without waiting for the four-hourly run; the session log has an `hr_wake` line saying how many new readings there were and how old the newest was; and nothing is sent twice
+- **Then:** the readings go to the Cockpit's archive the next time Grabber runs with the phone unlocked (a later Health wake, the unlock itself while Grabber is still awake, opening Grabber, or a background refresh), without waiting for the four-hourly run, and a locked wake is not forgotten when iOS suspends or relaunches Grabber; the session log has an `hr_wake` line saying how many new readings there were and how old the newest was; and nothing is sent twice

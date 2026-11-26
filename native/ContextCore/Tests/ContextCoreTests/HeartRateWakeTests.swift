@@ -21,13 +21,31 @@ final class HeartRateWakeTests: XCTestCase {
     var wakes = HeartRateWake()
     XCTAssertEqual(wakes.wake(nowMs: 0, unlocked: false), .waitForUnlock)
     XCTAssertEqual(wakes.wake(nowMs: 10_000, unlocked: false), .waitForUnlock)
-    XCTAssertTrue(wakes.unlocked(nowMs: 600_000))
-    XCTAssertFalse(wakes.unlocked(nowMs: 700_000))  // nothing new waited
+    XCTAssertTrue(wakes.flush(nowMs: 600_000, unlocked: true))
+    XCTAssertFalse(wakes.flush(nowMs: 700_000, unlocked: true))  // nothing new waited
     XCTAssertEqual(wakes.wake(nowMs: 610_000, unlocked: true), .tooSoon)  // the unlock's run covers it
   }
 
   func testAnUnlockWithNoLockedWakeSendsNothing() {
     var wakes = HeartRateWake()
-    XCTAssertFalse(wakes.unlocked(nowMs: 0))
+    XCTAssertFalse(wakes.flush(nowMs: 0, unlocked: true))
+  }
+
+  func testAFlushWhileStillLockedKeepsWaiting() {
+    var wakes = HeartRateWake()
+    XCTAssertEqual(wakes.wake(nowMs: 0, unlocked: false), .waitForUnlock)
+    XCTAssertFalse(wakes.flush(nowMs: 5_000, unlocked: false))
+    XCTAssertTrue(wakes.waitingForUnlock)
+    XCTAssertTrue(wakes.flush(nowMs: 9_000, unlocked: true))
+    XCTAssertFalse(wakes.waitingForUnlock)
+  }
+
+  func testAWaitKeptAcrossARelaunchRunsAtTheNextUnlockedFlush() {
+    var before = HeartRateWake()
+    XCTAssertEqual(before.wake(nowMs: 0, unlocked: false), .waitForUnlock)
+    var relaunched = HeartRateWake(waitingForUnlock: before.waitingForUnlock)
+    XCTAssertTrue(relaunched.flush(nowMs: 3_600_000, unlocked: true))
+    XCTAssertEqual(relaunched.lastRunAtMs, 3_600_000)
+    XCTAssertFalse(HeartRateWake().waitingForUnlock)
   }
 }
