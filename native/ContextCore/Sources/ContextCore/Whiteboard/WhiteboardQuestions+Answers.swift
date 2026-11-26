@@ -65,9 +65,11 @@ extension WhiteboardQuestions {
     for p in placements where !handled.contains(p.mark) {
       handled.append(p.mark)
       var at = p.at
-      if let re = p.re, let i = cards.firstIndex(where: {
-        $0.ask == re && !$0.fromLarry && $0.answered == nil && $0.archived == nil
-      }) {
+      // Only a question card still open answers: a closed or archived one leaves Larry's answer as its own card.
+      let isOpenQuestion = { (c: WhiteboardQuestion) in
+        c.ask == p.re && !c.fromLarry && c.answered == nil && c.archived == nil
+      }
+      if p.re != nil, let i = cards.firstIndex(where: isOpenQuestion) {
         cards[i].answered = WhiteboardQuestion.Answer(title: Self.answerTitle(p), label: p.text)
         cards[i].collapsed = true
         at = CGPoint(x: cards[i].x, y: cards[i].y + Self.height + Self.gap)
