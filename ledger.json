@@ -62,6 +62,13 @@
    "branch": "native/mirror-meaning-8kh",
    "at": 1795731607.569633,
    "until": "2026-11-27T22:20:07Z"
+  },
+  {
+   "id": 1901,
+   "journey": "11-building-and-testing.md",
+   "branch": "native/lease-slot-guard-8w8c",
+   "at": 1795732806.772504,
+   "until": "2026-11-27T22:40:06Z"
   }
  ]
 }
