@@ -1598,7 +1598,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1368:
 
 - **Summary:** A mirrored board's meaning goes to the Cockpit too
-- **Status:** implemented on branch native/mirror-meaning-8kh; verified on the host (`CockpitBoardMeaningTests`) and on the iPad simulator (`WhiteboardStoreMirrorUITests.testAMirroredBoardsHeaderAndFoldReachTheCockpit`); the web board drawing them is the Cockpit's
+- **Status:** implemented in [7a16750e](https://github.com/idvorkin/context-grabber/commit/7a16750eeee06d3791065d9215f2f9af76cfffa6); verified on the host (`CockpitBoardMeaningTests`) and on the iPad simulator (`WhiteboardStoreMirrorUITests.testAMirroredBoardsHeaderAndFoldReachTheCockpit`); the web board drawing them is the Cockpit's
 - **Issues:** cockpit-8kh; Larry's shape, 2026-11-26 (msg e837e6cbcbbb)
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
