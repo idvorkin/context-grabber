@@ -359,6 +359,22 @@ final class BoardConnectorsTests: XCTestCase {
       "two boxes and no arrow: no Connect")
   }
 
+  /// #1440, story 1358: a whole-diagram lasso also takes the boxes' small marks by where the arrow leaves; only the
+  /// shaft and its real head are his arrow, so the label inside box A and a tick by the tail stay as drawn.
+  func testConnectInsideAWholeDiagramLeavesTheBoxesMarksByTheTail() throws {
+    let metas = two.metas
+    let label = line("label", [CGPoint(x: 135, y: 106), CGPoint(x: 140, y: 118), CGPoint(x: 145, y: 106)])
+    let tick = line("tick", [CGPoint(x: 176, y: 124), CGPoint(x: 180, y: 128)])
+    let strokes = drawn + [label, tick]
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(
+        selected: ["A", "B", "shaft", "head", "label", "tick"], id: "k1", strokes: strokes, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "only the shaft and its head go; the label and the tick stay")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"], "it still points from A to B")
+  }
+
   func testTheNotesRoundTrip() {
     let c = BoardConnector(
       from: "a", to: "b", fromSide: .bottom, toSide: .top, route: [CGPoint(x: 1, y: 2), CGPoint(x: 3, y: 4)],

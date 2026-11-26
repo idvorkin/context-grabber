@@ -322,12 +322,7 @@ public enum BoardConnectors {
     }
     guard chosen.count > 1, chosen.count <= maxDiagram else { return nil }
     for shaft in shafts(chosen) {
-      let ends = [chosen[shaft].points.first, chosen[shaft].points.last].compactMap { $0 }
-      let heads = chosen.indices.filter { k in
-        k != shaft && max(chosen[k].bounds.width, chosen[k].bounds.height) <= headSize
-          && ends.contains { hypot(chosen[k].bounds.midX - $0.x, chosen[k].bounds.midY - $0.y) <= headReach }
-      }
-      let arrow = [chosen[shaft]] + heads.map { chosen[$0] }
+      let arrow = [chosen[shaft]] + heads(of: shaft, in: chosen).map { chosen[$0] }
       if let ops = connectArrow(arrow, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
         return ops
       }
@@ -340,6 +335,29 @@ public enum BoardConnectors {
   /// An arrowhead's largest side, and how far its middle may sit from the shaft's end.
   static let headSize: CGFloat = 40
   static let headReach: CGFloat = 30
+
+  /// The small marks at one end of `shaft` that make its arrowhead: the end whose nearest mark is closest (a head sits at
+  /// one end), leaving out a mark inside a bigger stroke (a box's label by where the arrow leaves it).
+  static func heads(of shaft: Int, in chosen: [BoardOps.Stroke]) -> [Int] {
+    func small(_ s: BoardOps.Stroke) -> Bool { max(s.bounds.width, s.bounds.height) <= headSize }
+    let marks = chosen.indices.filter { k in
+      let mid = CGPoint(x: chosen[k].bounds.midX, y: chosen[k].bounds.midY)
+      return k != shaft && small(chosen[k])
+        && !chosen.indices.contains { j in
+          j != shaft && j != k && !small(chosen[j]) && chosen[j].bounds.contains(mid)
+        }
+    }
+    let ends = [chosen[shaft].points.first, chosen[shaft].points.last].compactMap { $0 }
+    let near = ends.map { end in
+      marks.filter { hypot(chosen[$0].bounds.midX - end.x, chosen[$0].bounds.midY - end.y) <= headReach }
+    }
+    let gap = ends.indices.map { e in
+      near[e].map { hypot(chosen[$0].bounds.midX - ends[e].x, chosen[$0].bounds.midY - ends[e].y) }.min()
+        ?? .infinity
+    }
+    guard let end = gap.indices.min(by: { gap[$0] < gap[$1] }) else { return [] }
+    return near[end]
+  }
 
   /// The strokes of a selection that could be an arrow's shaft, longest first: long enough, and not closed on itself
   /// (a box's ends meet; an elbow arrow's are at least half its length apart).
