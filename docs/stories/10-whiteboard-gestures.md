@@ -711,7 +711,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1358:
 
 - **Summary:** Connect works when the lasso takes the whole diagram
-- **Status:** implemented on branch native/connect-inside-selection-1440; verified by host tests (`BoardConnectorsTests.testConnectFindsTheArrowInsideALassoThatTookTheWholeDiagram`, failing before the change); not yet seen on the iPad
+- **Status:** implemented in [c3318179](https://github.com/idvorkin/context-grabber/commit/c3318179) and [584f9276](https://github.com/idvorkin/context-grabber/commit/584f9276); verified by host tests (`BoardConnectorsTests.testConnectFindsTheArrowInsideALassoThatTookTheWholeDiagram`, failing before the change), `just test`, and on the iPad Pro 11-inch (M5) simulator `WhiteboardConnectUITests` (both passing); not yet seen on the iPad
 - **Issues:** [#1440](https://github.com/idvorkin/context-grabber/issues/1440)
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Step 5: connectors*
 
