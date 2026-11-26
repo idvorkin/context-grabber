@@ -383,14 +383,25 @@ public enum BoardConnectors {
   /// The strokes of a selection that could be an arrow's shaft, longest first: long enough, and not closed on itself
   /// (a box's ends meet; an elbow arrow's are at least half its length apart).
   static func shafts(_ chosen: [BoardOps.Stroke]) -> [Int] {
-    chosen.indices.filter { k in
+    let open = chosen.indices.filter { k in
       let s = chosen[k]
       guard let a = s.points.first, let b = s.points.last else { return false }
       let l = length(s)
       return l >= 40 && hypot(b.x - a.x, b.y - a.y) >= l / 2
     }
-    .sorted { length(chosen[$0]) > length(chosen[$1]) }
-    .prefix(4).map { $0 }
+    return open.filter { !isSide($0, of: open, in: chosen) }
+      .sorted { length(chosen[$0]) > length(chosen[$1]) }
+      .prefix(4).map { $0 }
+  }
+
+  /// A side of a box drawn as separate strokes (bead yzsq): both its ends meet an end of another long open stroke, as
+  /// a box's corners do. An arrow's tail lands on a box's side, not a corner, and its head's ink is short.
+  static func isSide(_ k: Int, of open: [Int], in chosen: [BoardOps.Stroke]) -> Bool {
+    let ends = { (s: BoardOps.Stroke) in [s.points.first, s.points.last].compactMap { $0 } }
+    let others = open.filter { $0 != k }.flatMap { ends(chosen[$0]) }
+    let meets = { (p: CGPoint) in others.contains { hypot($0.x - p.x, $0.y - p.y) <= headTouch } }
+    let mine = ends(chosen[k])
+    return mine.count == 2 && mine.allSatisfy(meets)
   }
 
   /// `chosen` as one arrow: its ink erased and a connector from tail to head, when both ends land on two things.

@@ -712,7 +712,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 - **Summary:** Connect works when the lasso takes the whole diagram
 - **Status:** implemented in [c3318179](https://github.com/idvorkin/context-grabber/commit/c3318179) and [584f9276](https://github.com/idvorkin/context-grabber/commit/584f9276); verified by host tests (`BoardConnectorsTests.testConnectFindsTheArrowInsideALassoThatTookTheWholeDiagram`, failing before the change), `just test`, and on the iPad Pro 11-inch (M5) simulator `WhiteboardConnectUITests` (both passing); not yet seen on the iPad
-- **Issues:** [#1440](https://github.com/idvorkin/context-grabber/issues/1440)
+- **Issues:** [#1440](https://github.com/idvorkin/context-grabber/issues/1440), bead context-grabber-yzsq (a box drawn as four lines)
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Step 5: connectors*
 
 #### Use Case:
@@ -722,7 +722,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** The lasso takes both boxes and the arrow
-- **Given:** two boxes of mine with an arrow I drew from one to the other, and a lasso that selects all of them
+- **Given:** two boxes of mine, each drawn in one stroke or as separate lines, with an arrow I drew from one to the other, and a lasso that selects all of them
 - **When:** I tap Connect beside the selection
 - **Then:** only my arrow is replaced by a clean connector from the first box to the second, the boxes stay as drawn, and one Undo named Connect gives my arrow back
 
