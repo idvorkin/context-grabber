@@ -120,7 +120,12 @@ public struct ArchiveUploader {
       var outcome: ArchiveSend.Outcome = .taken(inserted: 0, duplicate: 0)
       var inserted = 0
       var duplicate = 0
+      var cancelledAt: Int?
       for (index, chunk) in chunks.enumerated() {
+        if index > 0, Task.isCancelled || isCancelled() {
+          cancelledAt = index
+          break
+        }
         let batch = ArchiveBatch(stream: source.stream, deviceId: deviceId, records: chunk)
         fields = [
           "action": "page", "stream": source.stream, "batch": batch.batchId, "records": chunk.count,
@@ -141,6 +146,13 @@ public struct ArchiveUploader {
         if index < chunks.count - 1 {
           log("archive", fields.merging(["ok": true, "inserted": i, "duplicate": d]) { $1 })
         }
+      }
+      if let index = cancelledAt {
+        report.inserted += inserted
+        report.duplicate += duplicate
+        log("archive", ["action": "cancelled", "stream": source.stream, "part": "\(index)/\(chunks.count)"])
+        report.stopped = .cancelled
+        return report
       }
       if case .taken = outcome { outcome = .taken(inserted: inserted, duplicate: duplicate) }
       report.pages += 1

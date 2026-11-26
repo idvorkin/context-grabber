@@ -58,12 +58,15 @@ Igor, 2026-11-25, asking Larry for the heart-rate shape of his HIIT workouts: th
 - **Every reading in a workout.** During a workout the Watch keeps its heart rate as a few samples that each hold
   a run of readings, one every few seconds. The archive keeps each reading as a record of its own (when, the value,
   and the sample it came from), beside the sample itself, so a workout's heart-rate curve is whole in the archive.
-  A reading archived twice is still one record.
+  A reading archived twice is still one record. A running total kept the same way (steps, active energy, distance
+  during a workout) stays one record, so a day's sum counts it once.
 - **The newest year first.** Health hands its history over in the order it was stored, so a phone restored from a
   backup sends years of old history before the readings since the restore. For the busy types (heart rate, steps,
   active energy, walking distance) the archive also walks the last 400 days newest-first, alongside the oldest-first
-  history, then keeps up with what's new. Both walks feed the same stream, so a record either walk sends is still
-  there once.
+  history, then keeps up with what's new, each time going back over the last day it sent, because the Watch syncs
+  some readings hours after the phone wrote later ones. Both walks feed the same stream, so a record either walk
+  sends is still there once. Settings names the newest-first walk apart from its stream ("Heart Rate, last 400
+  days").
 - **Big pages still go.** A page that grows past what the Cockpit takes in one batch, once a workout's readings are
   in it, goes as several batches; the stream's place moves on only once every batch of the page is taken.
 
@@ -162,5 +165,7 @@ check's latest change), and when the phone saw it. **The newest observation of a
 - On a phone whose heart-rate history is still going over oldest-first, the last 400 days' heart rate, steps,
   active energy and walking distance reach the archive within the next few runs, newest first, and new readings keep
   arriving after that.
-- A page bigger than one batch goes as several, and a run that stops between them sends the whole page again next
-  time, which the Cockpit counts as duplicates.
+- A page bigger than one batch goes as several, and a run that stops between them (iOS taking the run back
+  included) sends the whole page again next time, which the Cockpit counts as duplicates.
+- A workout's steps, active energy and distance reach the archive as one record each, not once more per reading.
+- Heart rate the Watch syncs after the phone sent newer readings still reaches the archive on the next run.

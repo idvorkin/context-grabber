@@ -48,6 +48,13 @@ extension ArchiveGUID {
 /// second pass over the type's stream, beside the anchored history that goes oldest-first in stored order.
 public struct RecentSweep: Codable, Equatable, Sendable {
   public static let days = 400
+  /// How far back of `newest` each walk forward starts again: Health takes samples late (the Watch syncs after the
+  /// phone, a workout's series is saved at its end), and the archive dedupes what goes twice.
+  public static let overlapMs: Int64 = 86_400_000
+  /// The cursor key of a stream's newest-first pass.
+  public static let keySuffix = "#recent"
+
+  public static func cursorKey(_ stream: String) -> String { stream + keySuffix }
   /// The Health types busy enough that their history takes weeks of runs: heart rate, steps, active energy and
   /// walking distance.
   public static let denseTypes: Set<String> = [
@@ -59,16 +66,19 @@ public struct RecentSweep: Codable, Equatable, Sendable {
   public var floor: Int64
   /// The oldest start sent going back; nil before the first page.
   public var oldest: Int64?
-  /// The newest start sent; the walk forward asks for what started after it.
+  /// The newest start sent; each walk forward starts `overlapMs` before it.
   public var newest: Int64?
   /// The walk back reached `floor`.
   public var done: Bool
+  /// Where a walk forward that has more to read goes on from; nil once it caught up.
+  public var ahead: Int64?
 
-  public init(floor: Int64, oldest: Int64? = nil, newest: Int64? = nil, done: Bool = false) {
+  public init(floor: Int64, oldest: Int64? = nil, newest: Int64? = nil, done: Bool = false, ahead: Int64? = nil) {
     self.floor = floor
     self.oldest = oldest
     self.newest = newest
     self.done = done
+    self.ahead = ahead
   }
 
   public static func start(now: Int64) -> RecentSweep {
@@ -78,17 +88,18 @@ public struct RecentSweep: Codable, Equatable, Sendable {
   public enum Query: Equatable, Sendable {
     /// Samples starting in `from...through`, newest first.
     case back(from: Int64, through: Int64)
-    /// Samples starting after `after`, oldest first.
-    case forward(after: Int64)
+    /// Samples starting at or after `from`, oldest first.
+    case forward(from: Int64)
   }
 
   public func next(now: Int64) -> Query {
-    done ? .forward(after: newest ?? floor) : .back(from: floor, through: oldest ?? now)
+    done ? .forward(from: ahead ?? (newest ?? floor) - Self.overlapMs) : .back(from: floor, through: oldest ?? now)
   }
 
   /// The sweep after a page of `query` whose samples started at `starts`, and whether there is more to read.
   /// A full page going back moves `oldest` to its oldest start (one ms further when the page did not move it, so
-  /// a run of samples on one instant cannot hold the walk), a short one ends the walk; going forward moves `newest`.
+  /// a run of samples on one instant cannot hold the walk), a short one ends the walk; going forward, a full page
+  /// goes on from its newest start (one ms further when that did not move) and a short one has caught up.
   public func after(_ query: Query, starts: [Int64], limit: Int) -> (sweep: RecentSweep, more: Bool) {
     var next = self
     if let top = starts.max() { next.newest = max(next.newest ?? top, top) }
@@ -103,8 +114,13 @@ public struct RecentSweep: Codable, Equatable, Sendable {
       next.oldest = low < through ? low : through - 1
       if let oldest = next.oldest, oldest < floor { next.done = true }
       return (next, true)
-    case .forward:
-      return (next, starts.count >= limit)
+    case .forward(let from):
+      guard starts.count >= limit, let top = starts.max() else {
+        next.ahead = nil
+        return (next, false)
+      }
+      next.ahead = top > from ? top : from + 1
+      return (next, true)
     }
   }
 

@@ -29,14 +29,15 @@ struct HealthArchiveSource: ArchiveSource {
       restarted: cursor != nil && anchor == nil)
   }
 
-  /// Each sample's record, and after a stored series (a workout's heart rate: one sample holding a reading every
-  /// few seconds) a record for each of its readings (story 270, context-grabber-kseb).
+  /// Each sample's record, and after a stored series of separate readings (a workout's heart rate: one sample
+  /// holding a reading every few seconds) a record for each of them (story 270, context-grabber-kseb). A running
+  /// total's series (steps, energy, distance) keeps its one record, so a day's sum counts it once.
   static func records(_ samples: [HKSample], store: HKHealthStore) async -> [[String: Any]] {
     var records: [[String: Any]] = []
     for sample in samples {
       let record = Self.record(sample)
       records.append(record)
-      guard let quantity = sample as? HKQuantitySample, quantity.count > 1,
+      guard let quantity = sample as? HKDiscreteQuantitySample, quantity.count > 1,
         let kind = QuantityKind.allCases.first(where: { HealthKitSource.type($0) == quantity.quantityType })
       else { continue }
       let readings = await Self.readings(of: quantity, unit: HealthKitSource.fallbackUnit(kind), store: store)
@@ -91,7 +92,7 @@ struct HealthArchiveSource: ArchiveSource {
     if let device = sample.device?.name { record["device"] = device }
     switch sample {
     case let quantity as HKQuantitySample:
-      if quantity.count > 1 { record["count"] = quantity.count }
+      if let series = quantity as? HKDiscreteQuantitySample, series.count > 1 { record["count"] = series.count }
       if let kind = QuantityKind.allCases.first(where: { HealthKitSource.type($0) == quantity.quantityType }) {
         let unit = HealthKitSource.fallbackUnit(kind)
         record["value"] = quantity.quantity.doubleValue(for: unit)
@@ -118,7 +119,7 @@ struct HealthRecentSource: ArchiveSource {
   let store: HKHealthStore
   let type: HKSampleType
   var stream: String { ArchiveStream.health(type.identifier) }
-  var cursorKey: String { stream + "#recent" }
+  var cursorKey: String { RecentSweep.cursorKey(stream) }
 
   func page(after cursor: String?, limit: Int) async throws -> ArchivePage {
     let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
@@ -132,8 +133,8 @@ struct HealthRecentSource: ArchiveSource {
       predicate = NSPredicate(
         format: "%K >= %@ AND %K <= %@", key, Self.date(from) as NSDate, key, Self.date(through) as NSDate)
       order = .reverse
-    case .forward(let after):
-      predicate = NSPredicate(format: "%K > %@", key, Self.date(after) as NSDate)
+    case .forward(let from):
+      predicate = NSPredicate(format: "%K >= %@", key, Self.date(from) as NSDate)
       order = .forward
     }
     let descriptor = HKSampleQueryDescriptor(

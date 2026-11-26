@@ -77,34 +77,48 @@ final class HealthSeriesTests: XCTestCase {
       .back(from: sweep.floor, through: sweep.oldest!), starts: [now - 350 * day], limit: 5)
     XCTAssertTrue(done.done)
     XCTAssertTrue(more, "the same run goes on to what is new")
-    XCTAssertEqual(done.next(now: now), .forward(after: now - 1000))
-    let (fwd, fwdMore) = done.after(.forward(after: now - 1000), starts: [now - 500, now - 200], limit: 5)
+    XCTAssertEqual(done.next(now: now), .forward(from: now - 1000 - day))
+    let (fwd, fwdMore) = done.after(.forward(from: now - 1000 - day), starts: [now - 500, now - 200], limit: 5)
     XCTAssertEqual(fwd.newest, now - 200)
     XCTAssertFalse(fwdMore)
-    XCTAssertEqual(fwd.next(now: now), .forward(after: now - 200))
+    XCTAssertEqual(
+      fwd.next(now: now), .forward(from: now - 200 - day),
+      "a sample the Watch syncs late, starting before the newest sent, is still asked for")
+  }
+
+  func testAFullPageForwardGoesOnFromItsNewestStartWithoutSkippingTies() {
+    let sweep = RecentSweep(floor: 0, newest: now, done: true)
+    let from = now - day
+    let (next, more) = sweep.after(.forward(from: from), starts: [from, now - 10, now - 10], limit: 3)
+    XCTAssertTrue(more)
+    XCTAssertEqual(next.next(now: now), .forward(from: now - 10), "samples sharing the last start are asked again")
+    let (stuck, _) = next.after(.forward(from: now - 10), starts: [now - 10, now - 10, now - 10], limit: 3)
+    XCTAssertEqual(stuck.next(now: now), .forward(from: now - 9), "a page all on one instant cannot hold the walk")
+    let (caught, caughtMore) = stuck.after(.forward(from: now - 9), starts: [now + 5], limit: 3)
+    XCTAssertFalse(caughtMore)
+    XCTAssertEqual(caught.next(now: now), .forward(from: now + 5 - day))
   }
 
   func testAnEmptyHistoryWalksForwardFromWhereTheWalkStarted() {
     let sweep = RecentSweep.start(now: now)
     let (done, _) = sweep.after(.back(from: sweep.floor, through: now), starts: [], limit: 5)
     XCTAssertTrue(done.done)
-    XCTAssertEqual(done.next(now: now + 1000), .forward(after: now))
+    XCTAssertEqual(done.next(now: now + 1000), .forward(from: now - day))
   }
 
   func testTheSweepSurvivesAsItsCursor() {
-    let sweep = RecentSweep(floor: 1, oldest: 5, newest: 9, done: false)
+    let sweep = RecentSweep(floor: 1, oldest: 5, newest: 9, done: true, ahead: 7)
     XCTAssertEqual(RecentSweep(json: sweep.json), sweep)
+    XCTAssertEqual(
+      RecentSweep(json: #"{"floor":1,"oldest":5,"newest":9,"done":true}"#),
+      RecentSweep(floor: 1, oldest: 5, newest: 9, done: true), "a cursor kept before `ahead` still reads")
     XCTAssertNil(RecentSweep(json: "not json"))
     XCTAssertNil(RecentSweep(json: nil))
   }
 
-  func testTheDenseTypesAreTheOnesThatStoppedOnPages() {
-    XCTAssertEqual(
-      RecentSweep.denseTypes,
-      [
-        "HKQuantityTypeIdentifierHeartRate", "HKQuantityTypeIdentifierStepCount",
-        "HKQuantityTypeIdentifierActiveEnergyBurned", "HKQuantityTypeIdentifierDistanceWalkingRunning",
-      ])
+  func testSettingsNamesTheNewestFirstPassApartFromItsStream() {
+    XCTAssertEqual(ArchiveStatus.name("health.HKQuantityTypeIdentifierHeartRate#recent"), "Heart Rate, last 400 days")
+    XCTAssertEqual(ArchiveStatus.name("health.HKQuantityTypeIdentifierHeartRate"), "Heart Rate")
   }
 
   // MARK: Two passes over one stream, big pages in several batches
@@ -161,6 +175,24 @@ final class HealthSeriesTests: XCTestCase {
     XCTAssertEqual(try cursors.cursor("health.test"), "0")
     XCTAssertNil(report.stopped)
     XCTAssertEqual(report.pages, 1, "one page of the source, however many batches it took")
+  }
+
+  @MainActor
+  func testARunCutShortBetweenBatchesStopsAndKeepsThePagesPlace() async throws {
+    let cursors = try ArchiveCursorStore(db: SQLiteDatabase())
+    let batches = Batches()
+    var up = uploader(cursors, batches: batches)
+    up.pageSize = 1000
+    var asked = 0
+    let cutShort = {
+      asked += 1
+      return asked > 1
+    }
+    let report = await up.upload(Paged(pages: [2500]), isCancelled: cutShort, log: { _, _ in })
+    XCTAssertEqual(report.stopped, .cancelled)
+    let counts = await batches.sent.map(\.count)
+    XCTAssertEqual(counts, [1000], "no batch goes after iOS takes the run back")
+    XCTAssertNil(try cursors.cursor("health.test"), "the page was not all taken, so its place stays")
   }
 
   @MainActor
