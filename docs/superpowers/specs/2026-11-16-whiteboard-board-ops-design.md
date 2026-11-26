@@ -492,7 +492,8 @@ ink that stayed put when anything moved. The first slice makes a kept diagram a 
   Tapping the box selects all of it, and dragging moves it as one.
 - **An arrow between two boxes keeps as a connector.** A plain arrow of the same reply whose tail and head each land on
   a box (within the 16 points a connector's end reaches) keeps as a connector joining those two boxes, drawn from one
-  box's facing side to the other's, as Larry's connector marks keep. It is not part of any box.
+  box's facing side to the other's, as Larry's connector marks keep. It is not part of any box. An end that reaches
+  more than one box joins the smallest, so an end in or just outside a box nested in another joins the inner box.
 - **Arrows follow.** When Igor drags a box, every connector joined to it re-routes to where the box went, as any
   connector follows its ends, however the drag is taken, including a drag that starts on a small selection's handle and
   is put on as a move. The other boxes stay where they are.
