@@ -1252,7 +1252,8 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1350:
 
 - **Summary:** Larry's arrow between two boxes keeps as a connector
-- **Status:** implemented in [26f14eec](https://github.com/idvorkin/context-grabber/commit/26f14eec) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
+- **Issues:** bead context-grabber-nseh (an end just outside a nested box)
+- **Status:** implemented in [26f14eec](https://github.com/idvorkin/context-grabber/commit/26f14eec) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); the nested-box end changed in [7e3f3a4a](https://github.com/idvorkin/context-grabber/commit/7e3f3a4a) and [9a2e63ca](https://github.com/idvorkin/context-grabber/commit/9a2e63ca) (bead nseh), verified by host tests (`WhiteboardDiagramTests.testAnArrowEndJustOutsideANestedBoxJoinsTheInnerBox`, `testAnArrowEndBetweenTwoCloseSiblingBoxesJoinsTheNearer`); not yet seen on the iPad
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
 
 #### Use Case:
@@ -1262,9 +1263,9 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** An arrow from one box to another
-- **Given:** a reply of Larry's with two boxes and a plain arrow whose tail and head each touch one of them
+- **Given:** a reply of Larry's with two boxes and a plain arrow whose tail and head each touch one of them, a box perhaps nested inside a bigger one
 - **When:** I keep the reply
-- **Then:** the arrow is a connector joining the two boxes, drawn from one box's facing side to the other's
+- **Then:** the arrow is a connector joining the two boxes, drawn from one box's facing side to the other's; an end in or just outside a nested box joins that inner box, not the box round it
 
 ---
 

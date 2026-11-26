@@ -53,7 +53,7 @@ public enum WhiteboardDiagram {
   /// The boxes and joined arrows among `marks`, all of one reply. A rectangle is a box when at least one label's middle
   /// is inside it; a label inside two goes with the smaller. An arrow is joined when its tail and head each land on a
   /// different box, within a connector end's reach: the
-  /// nearest, an end inside nested boxes joining the smaller.
+  /// nearest box whose reach holds the end, a box that holds another such box giving way to the one inside it.
   public static func plan(_ marks: [Mark]) -> Plan {
     var plan = Plan()
     let rects = marks.filter { $0.kind == .rect }.map { (id: $0.id, box: $0.bounds) }.filter { !$0.box.isNull }
@@ -74,9 +74,10 @@ public enum WhiteboardDiagram {
     let boxes = plan.boxes
     func box(at point: CGPoint) -> (name: String, box: CGRect)? {
       let reach = BoardConnectors.reach
+      let candidates = boxes.filter { $0.value.insetBy(dx: -reach, dy: -reach).contains(point) }
       return
-        boxes
-        .filter { $0.value.insetBy(dx: -reach, dy: -reach).contains(point) }
+        candidates
+        .filter { outer in !candidates.contains { $0.value != outer.value && outer.value.contains($0.value) } }
         .min {
           let (a, b) = (distance(point, $0.value), distance(point, $1.value))
           if a != b { return a < b }
