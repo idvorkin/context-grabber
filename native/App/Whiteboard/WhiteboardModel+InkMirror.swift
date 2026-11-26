@@ -10,13 +10,20 @@ import SwiftUI
 
 extension WhiteboardModel {
   func changed(_ new: PKDrawing) {
-    guard editable, new != drawing else { return }
+    guard editable else { return }
+    // #1527: this part of a stroke grows with the board; slow, it names its own steps.
+    let laps = StepLaps()
+    defer { logPartLaps(laps, part: "model") }
+    let same = laps.time("equal") { new == drawing }
+    guard !same else { return }
     let added = new.strokes.count > drawing.strokes.count
-    logStrokesMoved(to: new)
-    drawing = new
-    if added, let last = new.strokes.last { vad.stroke(last.renderBounds) }
-    if added { strokeLanded() }
-    drawingMoved()
+    laps.time("moved_log") { logStrokesMoved(to: new) }
+    laps.time("drawing") { drawing = new }
+    laps.time("landed") {
+      if added, let last = new.strokes.last { vad.stroke(last.renderBounds) }
+      if added { strokeLanded() }
+    }
+    drawingMoved(laps: laps)
   }
 
   /// Kept ink as the canvas reads it back. Nothing to ask about or save that the keep hasn't already started.
@@ -48,22 +55,26 @@ extension WhiteboardModel {
       ])
   }
 
-  func drawingMoved() {
+  func drawingMoved(laps: StepLaps? = nil) {
     ops.changed()
     isEmpty = drawing.strokes.isEmpty
     sent = nil
     sentFrame = nil
-    inkMoved()
+    laps?.lap("ops")
+    inkMoved(laps: laps)
     pasteNote = nil
     dirty = true
     saveSoon()
+    laps?.lap("save")
   }
 
   /// The ink changed: what's on screen may have too.
-  private func inkMoved() {
+  private func inkMoved(laps: StepLaps? = nil) {
     inkBoxes = drawing.strokes.map(\.renderBounds)
     cachedLabelBoxes = nil
+    laps?.lap("ink_boxes")
     screenMoved()
+    laps?.lap("screen")
   }
 
   /// On paper, the view moved or the ink changed (story 433): what Send and Larry's turn would show. A Send already made is
