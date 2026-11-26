@@ -5,6 +5,7 @@ refused at the door, ahead lands nothing, an armed refusal is applied per id (a 
 ops?since carries every landed id's body after (restore's kept body, erase's null), another device's batch lands, and
 a malformed op or an odd body is a 400 or stored as is, never a crash."""
 
+import hashlib
 import json
 import os
 import socket
@@ -175,6 +176,22 @@ try:
     check([t["id"] for t in again["things"]].count("d1") == 1, "an id added twice is on the board once")
     call("/boards/b-2/ops", batch("r3", again["rev"], [{"op": "erase", "ids": ["d1"]}]))
     check(call("/boards/b-2")[1]["erased"].count("d1") == 1, "an id added twice is erased once")
+
+    # Story 1361: the mirror's create keeps its original drawing, PUT by its sha.
+    blob = b"pkdrawing-bytes"
+    sha = hashlib.sha256(blob).hexdigest()
+    put = urllib.request.Request("%s/boards/assets/%s" % (base, sha), data=blob, method="PUT")
+    check(json.loads(urllib.request.urlopen(put).read())["bytes"] == len(blob), "PUT /boards/assets/<sha> keeps the bytes")
+    bad = urllib.request.Request("%s/boards/assets/%s" % (base, "0" * 64), data=blob, method="PUT")
+    try:
+        urllib.request.urlopen(bad)
+        check(False, "a PUT whose sha doesn't match is refused")
+    except urllib.error.HTTPError as e:
+        check(e.code == 400, "a PUT whose sha doesn't match is refused")
+    call("/boards", {"id": "m-1", "name": "Mirrored", "device": "ipad-7c2e", "original_asset": sha})
+    board = [t for t in call("/boards/m-1")[1]["things"] if t["id"] == "@board"][0]
+    check(board["body"].get("original_asset") == sha and call("/fake/store")[1]["assets"].get(sha) == len(blob),
+          "a create keeps original_asset, and /fake/store lists the asset")
 finally:
     fake.terminate()
 

@@ -1579,18 +1579,18 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 1363:
 
-- **Summary:** None of Igor's boards goes to the Cockpit before its backup is live
+- **Summary:** No board went to the Cockpit before its backup was live
 - **Status:** planned
-- **Issues:** cockpit-8kh; bead context-grabber-t12b; cockpit-8kh.1 (the backup)
+- **Issues:** cockpit-8kh; bead context-grabber-t12b; cockpit-8kh.1 (the backup, live 2026-11-26, cockpit cfbb196)
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
 #### Use Case:
 - **As someone** who wants my boards safe in the store
-- **I want to** be unable to send a real board until the store is backed up
+- **I want to** send a real board only once the store is backed up
 - **so that** a store fault can never lose my board's history
 
 #### Acceptance Criteria:
-- **Scenario:** The menu before the backup is live
-- **Given:** the beta switch on and the Cockpit's backup not yet live
-- **When:** I open the board menu of a board not named *Scratch…*
-- **Then:** *Send this board to the Cockpit* is dimmed with *Waiting for the Cockpit's backup*, and new boards I make aren't mirrored
+- **Scenario:** The menu once the backup is live
+- **Given:** the beta switch on and the Cockpit's backup live
+- **When:** I open the board menu of a board with any name
+- **Then:** *Send this board to the Cockpit* is offered, and with the hold turned back on only a board named *Scratch…* could be sent

@@ -167,6 +167,8 @@ final class WhiteboardStore: ObservableObject {
     // Story 410 (#915): a new board opens with the grid on.
     BoardLines().startNew(id, bare: LaunchHooks.current.whiteboard.newBoardsBare)
     saveIndex()
+    // Story 1363: mirrored from its first save while the beta switch is on, once the Cockpit's backup allows it.
+    WhiteboardStoreMirror.markNew(id)
     log.event("whiteboard", ["action": "new", "board": id, "on_paper": true])
     return id
   }

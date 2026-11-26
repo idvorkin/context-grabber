@@ -262,10 +262,13 @@ board", 08:15). Behind the same beta switch:
 - **Not yet:** the board's meaning (headers, folds, Larry's marks and cards) goes with a later step; this one sends
   the ink. A change made to the Cockpit's copy on the web doesn't come back to the iPad yet: the iPad's board stays
   the truth until the rollout's step 3.
-- **It waits for the Cockpit's backup.** Until Larry says the store's nightly backup to igor2 is live, *Send this
-  board to the Cockpit* is shown dimmed with *Waiting for the Cockpit's backup*, and new boards aren't mirrored, so
-  none of Igor's boards can go early. A board whose name starts with *Scratch* can be sent before that, for trying
-  it.
+- **It waited for the Cockpit's backup.** Until the store's nightly backup to igor2 was live, *Send this board to the
+  Cockpit* was dimmed with *Waiting for the Cockpit's backup* (a board named *Scratch…* could go for trying it). Larry
+  posted the backup live on 2026-11-26 (cockpit cfbb196), so any board can go; the hold comes back if the backup ever
+  has to stop.
+- **Only Igor starts it.** Nothing is mirrored until he turns the beta switch on and chooses *Send this board to the
+  Cockpit* on a board; boards he makes with + afterwards, while the switch is on, are mirrored from their first save.
+  Nothing on the Cockpit's side can start it.
 
 ## Decided (Igor, 2026-11-24, in his Inbox)
 
