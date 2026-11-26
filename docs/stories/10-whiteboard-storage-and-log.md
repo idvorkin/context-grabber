@@ -259,6 +259,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Then:** the log has one line with the whole time and each part's time by name, the stroke count, how many strokes the change added, moved and removed, and the time since the ink last changed
 - **And:** nothing I see changes
 - **And:** a change handled in less than a quarter of a second writes no such line
+- **And:** when the board taking the new drawing, or my stroke fading the marks it writes over, takes a twentieth of a second or more, the log has a line naming that part's own steps by time, with the stroke and mark counts (#1527)
 
 ---
 

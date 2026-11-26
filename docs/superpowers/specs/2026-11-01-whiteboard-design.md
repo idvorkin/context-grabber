@@ -693,6 +693,12 @@ size came in the middle of a stroke, outside it. Before anything changes, the lo
   quarter of a second or more, the log gets one line saying how long the whole of it took and how long each part took,
   by name, with the stroke count, what the change was, and how long it had been since the ink last changed.
 - **A quick change logs nothing more**, so the usual line for each stroke stays as it was.
+- **The two parts that grow with the board name their own parts** (#1527). Igor's logs since then show the time per
+  stroke growing with the board, from under 10 ms on a new board to about 85 on one of 600 or more, and the slow
+  strokes' time almost all in two parts: the board taking the new drawing (up to a second) and his stroke fading the
+  marks it writes over (up to five seconds on a board of 770). When either of those takes a twentieth of a second or
+  more, the log gets a line naming its own steps by time, with the stroke and mark counts, so the fix goes at the step
+  that grows.
 - Nothing Igor sees changes: this is the evidence for the fix, not the fix.
 - **Time away is never a stall** (story 1221, bead context-grabber-55vm). The iPad logged the app's time asleep in the
   background, minutes at a time, as the main thread stuck, which would hide a real hang. If the watch was still running

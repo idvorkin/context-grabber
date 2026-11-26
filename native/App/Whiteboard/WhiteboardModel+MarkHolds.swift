@@ -47,7 +47,8 @@ extension WhiteboardModel {
   }
 
   /// The ink or the marks changed: a new mark takes its anchor, and every mark goes where its anchor is now.
-  func marksFollow() {
+  /// `laps` names this one's steps inside its caller's (#1527).
+  func marksFollow(laps: StepLaps? = nil) {
     guard editable, !turns.ghosts.isEmpty || !markHolds.places.isEmpty else { return }
     var state = markHolds
     let live = Set(turns.ghosts.map(\.id))
@@ -57,7 +58,9 @@ extension WhiteboardModel {
       state.landed[id] = nil
       state.places[id] = nil
     }
+    laps?.lap("follow")
     let ink = marksInk()
+    laps?.lap("follow_ink")
     for ghost in turns.ghosts where state.landed[ghost.id] == nil {
       state.landed[ghost.id] = ghost.lines
       guard state.anchors[ghost.id] == nil else { continue }
@@ -91,21 +94,29 @@ extension WhiteboardModel {
       state.places[ghost.id] = place
       if place.hidden != nil { hidden.insert(ghost.id) }
     }
+    laps?.lap("follow_place")
     if turns.hiddenMarks != hidden { turns.hiddenMarks = hidden }
     if state != markHolds { markHolds = state }
     saveMarkAnchors()
+    laps?.lap("follow")
   }
 
   /// Igor's new strokes (the Pencil, or a finger that draws): each mark one writes over fades (story 1269).
   func marksWritten(_ new: [PKStroke]) {
     guard editable, !new.isEmpty, !turns.ghosts.isEmpty else { return }
-    marksFollow()
+    // #1527: this part of a stroke grows with the board; slow, it names its own steps.
+    let laps = StepLaps()
+    defer { logPartLaps(laps, part: "marks") }
+    marksFollow(laps: laps)
     var state = markHolds
     let strokes = opStrokes(drawing.strokes).strokes
+    laps.lap("op_all")
     let marks = turns.ghosts.compactMap { ghost in
       state.landed[ghost.id].map { boardMark(ghost, lines: $0) }
     }
-    for stroke in opStrokes(new).strokes {
+    let written = opStrokes(new).strokes
+    laps.lap("op_new")
+    for stroke in written {
       for over in BoardMarkHolds.wrote(stroke, marks: marks, anchors: &state.anchors, strokes: strokes) {
         log.event(
           "whiteboard_marks",
@@ -115,9 +126,10 @@ extension WhiteboardModel {
           ])
       }
     }
+    laps.lap("wrote")
     guard state != markHolds else { return }
     markHolds = state
-    marksFollow()
+    marksFollow(laps: laps)
   }
 
   /// What a post now would take away (story 1270).
