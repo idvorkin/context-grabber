@@ -1702,7 +1702,7 @@ Part of the [user stories](README.md); persona and format are described there.
 - **Scenario:** A call with the switch on
 - **Given:** *Live heart rate on calls* is on and Exercise Analyzer is installed
 - **When:** a call goes live, and later ends
-- **Then:** Exercise Analyzer is asked once to start its Call session when the call goes live and once to end it when the call ends, Grabber comes back to the call each time, and the call's voice is never cut
+- **Then:** Exercise Analyzer is asked once to start its Call session when the call goes live and once to end it five seconds after the call ends (at once if Grabber leaves the foreground first), Grabber comes back to the call each time, and the call's voice is never cut
 
 ### User Story 1089:
 

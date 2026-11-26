@@ -33,6 +33,7 @@ final class LiveHeartRateOnCalls: ObservableObject {
   /// The opener, swapped in tests. Answers whether the link went out.
   private let canOpen: (URL) -> Bool
   private let open: (URL, @escaping (Bool) -> Void) -> Void
+  private var resignObserver: NSObjectProtocol?
 
   init(log: SessionLog, database: AppDatabase, environment: [String: String]) {
     self.log = log
@@ -48,6 +49,14 @@ final class LiveHeartRateOnCalls: ObservableObject {
       canOpen = { UIApplication.shared.canOpenURL($0) }
     }
     open = { url, done in UIApplication.shared.open(url, options: [:], completionHandler: done) }
+    resignObserver = NotificationCenter.default.addObserver(
+      forName: UIApplication.willResignActiveNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated {
+        guard let self, let action = self.plan.endNow() else { return }
+        self.ask(action)
+      }
+    }
   }
 
   /// Every change of the call's state: asks to start once it's live, and to end once it ends.

@@ -107,6 +107,12 @@ public struct LiveHeartRatePlan: Equatable, Sendable {
     return finish()
   }
 
+  /// The app is leaving the foreground, where a link can't be opened: a held end goes now rather than be lost.
+  public mutating func endNow() -> LiveHeartRateLink.Action? {
+    guard endedAt != nil else { return nil }
+    return finish()
+  }
+
   private mutating func finish() -> LiveHeartRateLink.Action? {
     let end = started
     started = false

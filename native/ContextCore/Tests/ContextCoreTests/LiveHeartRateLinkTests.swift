@@ -167,4 +167,22 @@ final class LiveHeartRateLinkTests: XCTestCase {
     XCTAssertNil(plan.next(state: .ended, redialing: false, enabled: true, now: at(20)))
     XCTAssertEqual(plan.endDue(now: at(25)), .end)
   }
+
+  func testLeavingTheForegroundSendsAHeldEndAtOnce() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true, now: at(0)), .start)
+    XCTAssertNil(plan.endNow())
+    XCTAssertNil(plan.next(state: .ended, redialing: false, enabled: true, now: at(10)))
+    XCTAssertEqual(plan.endNow(), .end)
+    XCTAssertNil(plan.endDue(now: at(15)))
+    XCTAssertFalse(plan.inCall)
+  }
+
+  func testLeavingTheForegroundAfterAFailedStartEndsNothing() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true, now: at(0)), .start)
+    XCTAssertTrue(plan.startAnswered(failed: true))
+    XCTAssertNil(plan.next(state: .ended, redialing: false, enabled: true, now: at(10)))
+    XCTAssertNil(plan.endNow())
+  }
 }
