@@ -314,19 +314,16 @@ public enum BoardConnectors {
     metas: BoardStrokeMeta = BoardStrokeMeta(), folds: [String: String] = [:]
   ) -> [BoardOps.Op]? {
     let chosen = strokes.filter { !$0.hidden && $0.ids.contains(where: names.contains) }
-    if !chosen.contains(where: isBox),
-      let ops = connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
-    {
-      return ops
-    }
-    guard chosen.count > 1, chosen.count <= maxDiagram else { return nil }
-    for shaft in shafts(chosen) {
-      let arrow = [chosen[shaft]] + heads(of: shaft, in: chosen).map { chosen[$0] }
-      if let ops = connectArrow(arrow, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
-        return ops
+    if chosen.count > 1, chosen.count <= maxDiagram {
+      for shaft in shafts(chosen) {
+        let arrow = [chosen[shaft]] + heads(of: shaft, in: chosen).map { chosen[$0] }
+        if let ops = connectArrow(arrow, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
+          return ops
+        }
       }
     }
-    return nil
+    guard chosen.count <= 3, !chosen.contains(where: isBox) else { return nil }
+    return connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
   }
 
   /// The most strokes a lassoed diagram may hold for Connect to look inside it for an arrow.
@@ -347,13 +344,17 @@ public enum BoardConnectors {
     zip(s.points, s.points.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
   }
 
-  /// The small marks at one end of `shaft` that make its arrowhead: marks touching that end, at the end whose nearest
-  /// mark is closest (a head sits at one end; a box's label near where the arrow leaves it doesn't touch it).
+  /// The marks at one end of `shaft` that make its arrowhead: no box, no bigger than a head or half the shaft, touching
+  /// that end, at the end whose nearest mark is closest (a head sits at one end; a box's label near where the arrow
+  /// leaves it doesn't touch it).
   static func heads(of shaft: Int, in chosen: [BoardOps.Stroke]) -> [Int] {
     let ends = [chosen[shaft].points.first, chosen[shaft].points.last].compactMap { $0 }
+    let most = max(headSize, length(chosen[shaft]) / 2)
     let near = ends.map { end in
       chosen.indices.filter { k in
-        k != shaft && small(chosen[k]) && chosen[k].bounds.insetBy(dx: -headTouch, dy: -headTouch).contains(end)
+        let s = chosen[k]
+        return k != shaft && !isBox(s) && max(s.bounds.width, s.bounds.height) <= most
+          && s.bounds.insetBy(dx: -headTouch, dy: -headTouch).contains(end)
       }
     }
     let gap = ends.indices.map { e in

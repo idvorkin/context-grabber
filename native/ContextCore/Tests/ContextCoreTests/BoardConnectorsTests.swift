@@ -376,16 +376,36 @@ final class BoardConnectorsTests: XCTestCase {
   }
 
   /// #1440, story 1358: Igor's two boxes each round a typed text, lassoed with his arrow; the boxes stay as drawn.
-  func testConnectInsideAWholeDiagramKeepsTheBoxesRoundTypedTexts() throws {
-    func glyph(_ t: Int64, _ x: CGFloat) -> BoardOps.Stroke {
-      let points = [CGPoint(x: x, y: 106), CGPoint(x: x + 15, y: 118)]
-      return BoardOps.Stroke(
-        ids: ["g\(t)"], t: t, bounds: CGRect(x: x, y: 106, width: 15, height: 12), points: points, pen: 2)
-    }
-    let texts = [
-      BoardText(id: "tA", t: 100, text: "A", font: .plain, size: 12, color: "#000000"),
-      BoardText(id: "tB", t: 200, text: "B", font: .plain, size: 12, color: "#000000"),
+  private func glyph(_ t: Int64, _ x: CGFloat) -> BoardOps.Stroke {
+    let points = [CGPoint(x: x, y: 106), CGPoint(x: x + 15, y: 118)]
+    return BoardOps.Stroke(
+      ids: ["g\(t)"], t: t, bounds: CGRect(x: x, y: 106, width: 15, height: 12), points: points, pen: 2)
+  }
+
+  private let typed = [
+    BoardText(id: "tA", t: 100, text: "A", font: .plain, size: 12, color: "#000000"),
+    BoardText(id: "tB", t: 200, text: "B", font: .plain, size: 12, color: "#000000"),
+  ]
+
+  /// #1440, story 1358: two typed texts, his arrow between them and a handwritten note beside it, lassoed together; only
+  /// the arrow's ink goes.
+  func testConnectInsideALassoKeepsAHandwrittenNote() throws {
+    let strokes = [
+      glyph(100, 140), glyph(200, 505),
+      line("shaft", [CGPoint(x: 165, y: 112), CGPoint(x: 495, y: 112)]),
+      line("head", [CGPoint(x: 482, y: 102), CGPoint(x: 495, y: 112), CGPoint(x: 482, y: 122)]),
+      line(
+        "note", [CGPoint(x: 250, y: 140), CGPoint(x: 270, y: 155), CGPoint(x: 290, y: 140), CGPoint(x: 310, y: 155)]),
     ]
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: ["shaft", "head", "note"], id: "k1", strokes: strokes, texts: typed))
+    let plan = BoardOps.plan(ops, strokes: strokes, texts: typed, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "only his arrow's ink goes; the note stays")
+    XCTAssertNotNil(BoardConnector(plan.added.first?.meta))
+  }
+
+  func testConnectInsideAWholeDiagramKeepsTheBoxesRoundTypedTexts() throws {
+    let texts = typed
     var strokes = drawn
     strokes[1] = box("B", 500, 100)
     strokes[2] = line("shaft", [CGPoint(x: 165, y: 112), CGPoint(x: 495, y: 112)])
