@@ -263,6 +263,10 @@ board", 08:15). Behind the same beta switch:
 - **Sending again is safe.** A board sent twice, or one whose first send was cut off, lands nothing twice: the
   Cockpit already holds each stroke by its id.
 - **A big board goes in parts**, each under the Cockpit's 8 MB limit for one save, in order.
+- **Mirroring never slows the drawing.** Turning a save into the Cockpit's changes and writing the board's Cockpit
+  copy happen away from the pen, so a mirrored board of a thousand strokes draws as smoothly as one that isn't.
+  Saves that come quickly one after another go up as one, in order. When the work for one save takes a twentieth of a
+  second or more, the session log names its steps, as it does for a slow stroke.
 - **New boards** made with + while the beta switch is on are mirrored from their first save.
 - **Not yet:** the board's meaning (headers, folds, Larry's marks and cards) goes with a later step; this one sends
   the ink. A change made to the Cockpit's copy on the web doesn't come back to the iPad yet: the iPad's board stays

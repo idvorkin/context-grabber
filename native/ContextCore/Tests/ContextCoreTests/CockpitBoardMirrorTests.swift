@@ -137,4 +137,65 @@ final class CockpitBoardMirrorTests: XCTestCase {
     try Data(#"{"mirrored":["b2"],"created":[]}"#.utf8).write(to: url)
     XCTAssertEqual(CockpitBoardMirror.Book.load(url).mirrored, ["b2"], "a book from before the sent ids still opens")
   }
+
+  // Story 1367 (bead ze0h): the mirror's save, prepared in one call that runs off the main thread.
+
+  private func board(_ ids: [String]) -> BoardStoreCache {
+    copy(
+      [["id": "@board", "kind": "board", "body": ["name": "Main"], "rev": 1, "device": "ipad-1", "by": "igor"]]
+        + ids.map { thing($0, device: "ipad-1") })
+  }
+
+  func testPrepareQueuesTheSaveAndNamesTheSentStrokes() throws {
+    let records = (0..<3).map { stroke("s-\($0)x1", points: 4) }
+    let laps = StepLaps()
+    let prepared = try CockpitBoardMirror.prepare(
+      records: records, cache: copy([]), sent: [], name: "Main", laps: laps
+    ).get()
+    XCTAssertEqual(prepared.cache.queue.count, prepared.saves, "each save is queued")
+    XCTAssertGreaterThan(prepared.saves, 0)
+    XCTAssertEqual(Set(prepared.sentIDs), ["s-0x1", "s-1x1", "s-2x1"])
+    XCTAssertTrue(
+      Set(["after", "encode", "cut", "queue"]).isSubset(of: laps.laps.map(\.name)), "each step is timed: \(laps.laps)")
+  }
+
+  func testPrepareOfAnUnchangedBoardQueuesNothing() throws {
+    let cache = board(["s-1x1", "s-2x2"])
+    let records = [stroke("s-1x1", points: 2), stroke("s-2x2", points: 2)]
+    let prepared = try CockpitBoardMirror.prepare(
+      records: records, cache: cache, sent: ["s-1x1", "s-2x2"], name: "Main", laps: StepLaps()
+    ).get()
+    XCTAssertEqual(prepared.saves, 0)
+    XCTAssertTrue(prepared.cache.queue.isEmpty)
+    XCTAssertTrue(prepared.sentIDs.isEmpty, "nothing new is named sent when nothing goes")
+  }
+
+  func testPrepareOfAThousandStrokeBoard() throws {
+    let ids = (0..<1000).map { "s-\($0)x1" }
+    let records = ids.map { stroke($0, points: 40) }
+    var start = ProcessInfo.processInfo.systemUptime
+    let first = try CockpitBoardMirror.prepare(
+      records: records, cache: copy([]), sent: [], name: "Main", laps: StepLaps()
+    ).get()
+    let firstMs = (ProcessInfo.processInfo.systemUptime - start) * 1000
+    XCTAssertEqual(Set(first.sentIDs).count, 1000)
+    // The next save: the same board plus one stroke, against a copy that holds the thousand.
+    var held = copy(
+      ids.map { id in
+        ["id": .string(id), "kind": "stroke", "body": stroke(id, points: 40), "rev": 1, "device": "ipad-1", "by": "x"]
+      })
+    held.queue = []
+    start = ProcessInfo.processInfo.systemUptime
+    let next = try CockpitBoardMirror.prepare(
+      records: records + [stroke("s-new", points: 40)], cache: held, sent: Set(ids), name: "", laps: StepLaps()
+    ).get()
+    let nextMs = (ProcessInfo.processInfo.systemUptime - start) * 1000
+    XCTAssertEqual(next.sentIDs, ["s-new"], "only the new stroke goes")
+    start = ProcessInfo.processInfo.systemUptime
+    let written = try JSONEncoder().encode(next.cache)
+    let writeMs = (ProcessInfo.processInfo.systemUptime - start) * 1000
+    print(
+      "mirror prepare, 1000 strokes: first send \(Int(firstMs)) ms, one-stroke save \(Int(nextMs)) ms,"
+        + " copy encode \(Int(writeMs)) ms (\(written.count / 1024) KB)")
+  }
 }
