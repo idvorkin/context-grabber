@@ -1230,6 +1230,63 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
+### User Story 1349:
+
+- **Summary:** A box Larry drew keeps as one thing Igor can move
+- **Status:** in progress on branch `native/diagram-boxes-1528` (#1528)
+- **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
+
+#### Use Case:
+- **As Igor,** keeping a diagram Larry drew on the board
+- **I want to** move each of its boxes, with its words, as one thing
+- **so that** I can rearrange the diagram and talk about one box at a time
+
+#### Acceptance Criteria:
+- **Scenario:** A rectangle with words inside it
+- **Given:** a reply of Larry's with a rectangle and a label inside it, beside other marks of the reply
+- **When:** I keep the reply and drag the rectangle
+- **Then:** the rectangle and its label move together, and the reply's other marks stay where they were
+
+---
+
+### User Story 1350:
+
+- **Summary:** Larry's arrow between two boxes keeps as a connector
+- **Status:** in progress on branch `native/diagram-boxes-1528` (#1528)
+- **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
+
+#### Use Case:
+- **As Igor,** keeping a boxes-and-arrows diagram of Larry's
+- **I want to** have his arrows join the boxes they point between
+- **so that** the diagram stays a diagram, not loose ink
+
+#### Acceptance Criteria:
+- **Scenario:** An arrow from one box to another
+- **Given:** a reply of Larry's with two boxes and a plain arrow whose tail and head each touch one of them
+- **When:** I keep the reply
+- **Then:** the arrow is a connector joining the two boxes, drawn from one box's facing side to the other's, and an arrow with an end on bare paper keeps as the plain arrow he drew
+
+---
+
+### User Story 1351:
+
+- **Summary:** Arrows follow a box Igor moves
+- **Status:** in progress on branch `native/diagram-boxes-1528` (#1528)
+- **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
+
+#### Use Case:
+- **As Igor,** rearranging a kept diagram of Larry's
+- **I want to** see its arrows stay on the boxes when I move one
+- **so that** I never have to redraw an arrow after a move
+
+#### Acceptance Criteria:
+- **Scenario:** Dragging one box of a kept diagram
+- **Given:** a kept diagram with an arrow joining two of its boxes
+- **When:** I drag one of the boxes somewhere else
+- **Then:** the arrow re-routes from where that box went to the other box, and the other box stays put
+
+---
+
 ### User Story 990:
 
 - **Summary:** Larry replays a change on a copy of Igor's board and sees the result before sending it

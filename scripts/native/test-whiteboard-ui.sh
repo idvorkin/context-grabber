@@ -35,6 +35,7 @@ classes=(
   -only-testing:GrabberNativeUITests/WhiteboardCockpitBoardsUITests
   -only-testing:GrabberNativeUITests/WhiteboardConnectUITests
   -only-testing:GrabberNativeUITests/WhiteboardConversationPlaceUITests
+  -only-testing:GrabberNativeUITests/WhiteboardDiagramBoxesUITests
   -only-testing:GrabberNativeUITests/WhiteboardDropRoomUITests
   -only-testing:BoardLabUITests/WhiteboardEraserUITests
   -only-testing:GrabberNativeUITests/WhiteboardGroupTapUITests
