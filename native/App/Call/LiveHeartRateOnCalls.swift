@@ -41,7 +41,12 @@ final class LiveHeartRateOnCalls: ObservableObject {
     let hook = environment["GRABBER_LIVE_HR_CALLS"]
     if let hook { database.setSetting(Self.key, hook == "1" ? "1" : "0") }
     enabled = database.setting(Self.key) == "1"
-    canOpen = { UIApplication.shared.canOpenURL($0) }
+    // GRABBER_LIVE_HR_EA=absent: a UI test acts as if Exercise Analyzer weren't installed, whatever this simulator has.
+    if environment["GRABBER_LIVE_HR_EA"] == "absent" {
+      canOpen = { _ in false }
+    } else {
+      canOpen = { UIApplication.shared.canOpenURL($0) }
+    }
     open = { url, done in UIApplication.shared.open(url, options: [:], completionHandler: done) }
   }
 
@@ -84,7 +89,8 @@ final class LiveHeartRateOnCalls: ObservableObject {
 
   static func noteText(_ action: LiveHeartRateLink.Action, _ reason: String) -> String {
     let what = action == .start ? "couldn't start" : "couldn't end"
-    return "Live heart rate \(what): \(reason)."
+    let end = reason.hasSuffix(".") ? "" : "."
+    return "Live heart rate \(what): \(reason)\(end)"
   }
 }
 

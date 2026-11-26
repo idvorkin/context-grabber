@@ -1,6 +1,6 @@
-//  Stories 1088-1089 (context-grabber-at59): *Live heart rate on calls*. The simulator has no Exercise Analyzer, so with
-//  the switch on a live call says, in a quiet line under it, that live heart rate couldn't start, and stays live; with
-//  it off nothing is asked and no line shows. A synthetic call (GRABBER_CALL_AUDIO=synthetic) never opens the mic.
+//  Stories 1088-1089 (context-grabber-at59): *Live heart rate on calls*. With the switch on and Exercise Analyzer
+//  missing (GRABBER_LIVE_HR_EA=absent, whatever the simulator has), a live call says so in a quiet line under it and
+//  stays live; with it off nothing is asked and no line shows. A synthetic call (GRABBER_CALL_AUDIO=synthetic) never opens the mic.
 
 import XCTest
 
@@ -10,9 +10,9 @@ final class ChatCallLiveHeartRateUITests: XCTestCase {
     let note = app.staticTexts["call-live-hr-note"]
     XCTAssertTrue(note.appears(within: 20), app.debugDescription)
     XCTAssertEqual(note.label, "Live heart rate couldn't start: Exercise Analyzer isn't installed.")
+    XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10), "Grabber is back in front")
     XCTAssertTrue(
       app.staticTexts["call-status"].label.hasPrefix("live"), "the call carries on: \(app.debugDescription)")
-    XCTAssertEqual(app.state, .runningForeground)
   }
 
   func testWithTheSwitchOffACallAsksNothing() throws {
@@ -35,6 +35,8 @@ final class ChatCallLiveHeartRateUITests: XCTestCase {
     app.launchEnvironment["GRABBER_CALL_SECONDS"] = "120"
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_LIVE_HR_CALLS"] = switchOn ? "1" : "0"
+    // Other lanes may have put Exercise Analyzer on this simulator; the test acts as if it weren't there.
+    app.launchEnvironment["GRABBER_LIVE_HR_EA"] = "absent"
     app.launch()
     XCTAssertTrue(app.staticTexts["call-status"].appears(within: 20), app.debugDescription)
     return app
