@@ -2231,7 +2231,7 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 
 - **Summary:** Gym's two weeks show what I did each day
 - **Issues:** [#1503](https://github.com/idvorkin/context-grabber/issues/1503)
-- **Status:** planned
+- **Status:** implemented in [b7416dd](https://github.com/idvorkin/context-grabber/commit/b7416ddb); verified by `GymDayMarksTests` (host: strength first, the timer once, the rest each kind once, three icons or two and +N, each kind's figure and name, the tile's label naming what was done, a tapped-only day with no icons) and `DailyStripUITests.testGymsTwoWeeksShowWhatWasDone` on the iPhone 17 simulator (a finished Gym Timer workout puts a stopwatch under today, the sheet at full height, tiles at least 80 points tall; 2026-11-26); the iPad simulator run stalled on SpringBoard in the existing strip test under load, so the iPad is by the next build; Health's kinds on the phone
 - **Spec:** [native home screen, "What I did on each gym day"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
 
 #### Use Case:
