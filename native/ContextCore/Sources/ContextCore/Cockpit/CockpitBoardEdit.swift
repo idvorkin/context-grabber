@@ -70,6 +70,55 @@ public enum CockpitBoardEdit {
     return .success((answer["ops"] as? [Any] ?? []).map { BoardStoreJSON(any: $0) })
   }
 
+  /// The web board's list a thing of the store's `kind` belongs in; nil for the board itself and Larry's replies,
+  /// which no device's encode writes.
+  static func list(_ thing: BoardStoreCache.Thing) -> String? {
+    if isStroke(thing) { return "strokes" }
+    switch thing.kind {
+    case "object": return "objects"
+    case "header": return "headers"
+    case "connector": return "connectors"
+    default: return nil
+    }
+  }
+
+  /// Story 1368: the ops that take the board as it opens to `after`, a whole board in the web board's lists
+  /// (`strokes`, `objects`, `headers`, `connectors`): every live thing of those kinds is on both sides of the encode.
+  public static func ops(
+    _ cache: BoardStoreCache, board after: [String: [BoardStoreJSON]]
+  ) -> Result<[BoardStoreJSON], Failure> {
+    let view = cache.view
+    var before: [String: Any] = [:]
+    var lists: [String: [Any]] = [:]
+    var erased: [String: Any] = [:]
+    for id in cache.viewOrder {
+      guard let thing = view[id], let list = list(thing), let body = thing.body else { continue }
+      if thing.erased {
+        erased[id] = body.any
+      } else {
+        lists[list, default: []].append(body.any)
+      }
+    }
+    for (list, things) in lists { before[list] = things }
+    var board: [String: Any] = [:]
+    for (list, things) in after { board[list] = things.map(\.any) }
+    let answer = BoardStoreEncode.encode(before: before, after: board, erased: erased)
+    if let error = answer["error"] as? String { return .failure(.malformed(error)) }
+    return .success((answer["ops"] as? [Any] ?? []).map { BoardStoreJSON(any: $0) })
+  }
+
+  /// The copy's live things of the web board's lists that `ids` doesn't name, by list, as they are: what another
+  /// device or Larry put there.
+  public static func others(_ cache: BoardStoreCache, ids: Set<String>) -> [String: [BoardStoreJSON]] {
+    let view = cache.view
+    var out: [String: [BoardStoreJSON]] = [:]
+    for id in cache.viewOrder where !ids.contains(id) {
+      guard let thing = view[id], !thing.erased, let list = list(thing), let body = thing.body else { continue }
+      out[list, default: []].append(body)
+    }
+    return out
+  }
+
   /// A new empty board's copy: what *Keep my ink as a new board* starts from before its first save.
   public static func emptyBoard(id: String, name: String) -> BoardStoreCache {
     BoardStoreCache(snapshot: [

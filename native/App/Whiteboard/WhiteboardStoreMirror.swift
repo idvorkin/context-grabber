@@ -21,7 +21,18 @@ final class WhiteboardStoreMirror: ObservableObject {
   private let disk: CockpitBoardDisk
   private let bookURL: URL
   private var syncing = false
-  private var again: (drawing: PKDrawing, name: String, paper: String, ruled: Bool)?
+  private var again: Job?
+
+  /// One save of the board to mirror: its ink, its name and paper, and (story 1368) its meaning with the names the
+  /// iPad knows each stroke by.
+  struct Job: @unchecked Sendable {
+    var drawing: PKDrawing
+    var name: String
+    var paper: String
+    var ruled: Bool
+    var meaning: BoardMeaning?
+    var names: [[String]]
+  }
 
   init(board: String, cockpit: String, log: SessionLog) {
     self.board = board
@@ -66,7 +77,9 @@ final class WhiteboardStoreMirror: ObservableObject {
 
   /// Story 1361: *Send this board to the Cockpit*. The gate is the menu's; this checks it again. The board counts as
   /// mirrored once the Cockpit has taken its create; until then a failed send leaves the row to try again.
-  func send(drawing: PKDrawing, name: String, paper: String, ruled: Bool) {
+  func send(_ job: Job) {
+    let drawing = job.drawing
+    let name = job.name
     guard Self.betaOn, CockpitBoardMirror.allowed(name: name) else {
       log.event("board_mirror", ["action": "held", "board": board, "reason": "waiting_for_backup"])
       return
@@ -74,33 +87,37 @@ final class WhiteboardStoreMirror: ObservableObject {
     log.event("board_mirror", ["action": "send", "board": board, "strokes": drawing.strokes.count])
     problem = nil
     line = "Sending to the Cockpit…"
-    run(drawing: drawing, name: name, paper: paper, ruled: ruled)
+    run(job)
   }
 
   /// The board was just saved: its ink, as the Cockpit's ops, queued and sent. Nothing while it isn't mirrored.
-  func saved(drawing: PKDrawing, name: String, paper: String, ruled: Bool) {
+  func saved(_ job: Job) {
     guard mirrored else { return }
-    run(drawing: drawing, name: name, paper: paper, ruled: ruled)
+    run(job)
   }
 
-  private func run(drawing: PKDrawing, name: String, paper: String, ruled: Bool) {
+  private func run(_ job: Job) {
     guard !syncing else {
-      again = (drawing, name, paper, ruled)
+      again = job
       return
     }
     syncing = true
     Task {
-      var next: (drawing: PKDrawing, name: String, paper: String, ruled: Bool)? = (drawing, name, paper, ruled)
+      var next: Job? = job
       while let job = next {
         again = nil
-        await pass(job.drawing, name: job.name, paper: job.paper, ruled: job.ruled)
+        await pass(job)
         next = again
       }
       syncing = false
     }
   }
 
-  private func pass(_ drawing: PKDrawing, name: String, paper: String, ruled: Bool) async {
+  private func pass(_ job: Job) async {
+    let drawing = job.drawing
+    let name = job.name
+    let paper = job.paper
+    let ruled = job.ruled
     let board = board
     // The create and the original drawing first, once (story 1361); a second create of the same id is a no-op.
     var book = CockpitBoardMirror.Book.load(bookURL)
@@ -129,8 +146,12 @@ final class WhiteboardStoreMirror: ObservableObject {
       () -> (Result<CockpitBoardMirror.Prepared, CockpitBoardEdit.Failure>, StepLapsReport?, String?) in
       let laps = StepLaps()
       let records = laps.time("records") { Self.records(drawing) }
+      // Story 1368: the board's meaning goes in the web board's lists beside the ink.
+      let meaning = job.meaning.map { meaning in
+        laps.time("meaning") { CockpitBoardMeaning.lists(meaning: meaning, names: job.names, records: records) }
+      }
       let prepared = CockpitBoardMirror.prepare(
-        records: records, cache: started, sent: sent, name: name, laps: laps)
+        records: records, cache: started, sent: sent, name: name, laps: laps, meaning: meaning)
       var writeError: String?
       if case .success(let ready) = prepared {
         do { try laps.time("write") { try disk.save(ready.cache) } } catch {

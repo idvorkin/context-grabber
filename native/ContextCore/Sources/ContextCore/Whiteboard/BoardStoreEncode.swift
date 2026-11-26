@@ -102,7 +102,8 @@ public enum BoardStoreEncode {
       switch thing.body["kind"] as? String {
       case "group": return ("group", "group")
       case "text": return ("add_text", "object")
-      case "question", "card": return ("add_card", "object")
+      // An answer is a card too (Larry, 2026-11-26, msg e837e6cbcbbb: the web's isCard; story 356).
+      case "question", "card", "answer": return ("add_card", "object")
       default: return ("overlay", "object")
       }
     default: return nil
