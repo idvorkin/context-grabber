@@ -1233,7 +1233,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1349:
 
 - **Summary:** A box Larry drew keeps as one thing Igor can move
-- **Status:** implemented in [3a0f5b26](https://github.com/idvorkin/context-grabber/commit/3a0f5b26) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
+- **Status:** implemented in [26f14eec](https://github.com/idvorkin/context-grabber/commit/26f14eec) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
 
 #### Use Case:
@@ -1252,7 +1252,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1350:
 
 - **Summary:** Larry's arrow between two boxes keeps as a connector
-- **Status:** implemented in [3a0f5b26](https://github.com/idvorkin/context-grabber/commit/3a0f5b26) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
+- **Status:** implemented in [26f14eec](https://github.com/idvorkin/context-grabber/commit/26f14eec) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
 
 #### Use Case:
@@ -1271,7 +1271,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1360:
 
 - **Summary:** Larry's arrow with an end on bare paper keeps as the arrow he drew
-- **Status:** implemented in [3a0f5b26](https://github.com/idvorkin/context-grabber/commit/3a0f5b26) (#1528); verified by host tests (`WhiteboardDiagramTests.testAnArrowWithAnEndOnBarePaperStaysAPlainArrow`) and `just test`; not yet seen on the iPad
+- **Status:** implemented in [26f14eec](https://github.com/idvorkin/context-grabber/commit/26f14eec) (#1528); verified by host tests (`WhiteboardDiagramTests.testAnArrowWithAnEndOnBarePaperStaysAPlainArrow`) and `just test`; not yet seen on the iPad
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
 
 #### Use Case:
@@ -1290,7 +1290,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1351:
 
 - **Summary:** Arrows follow a box Igor moves
-- **Status:** implemented in [3a0f5b26](https://github.com/idvorkin/context-grabber/commit/3a0f5b26) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
+- **Status:** implemented in [26f14eec](https://github.com/idvorkin/context-grabber/commit/26f14eec) (#1528); verified by host tests (`WhiteboardDiagramTests`), `just test` and the Mac build (`just native-build-mac`), and on the iPad simulator (`WhiteboardDiagramBoxesUITests.testABoxDragsAsOneThingAndItsArrowFollows`, rung 2); not yet seen on the iPad
 - **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
 
 #### Use Case:
