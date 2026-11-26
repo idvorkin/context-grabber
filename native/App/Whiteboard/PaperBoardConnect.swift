@@ -61,7 +61,10 @@ extension PaperBoardController {
   }
 
   private func connectOps(_ keys: Set<String>, id: String) -> [BoardOps.Op]? {
-    guard model.editable, !keys.isEmpty, keys.count <= 12, let markup = paper.markup else { return nil }
+    // Up to a whole small diagram: PaperKit's lasso can take both boxes with the arrow (#1440, story 1358).
+    guard model.editable, !keys.isEmpty, keys.count <= BoardConnectors.maxDiagram, let markup = paper.markup else {
+      return nil
+    }
     let (strokes, _, names) = selected(keys, in: markup)
     return BoardConnectors.connect(
       selected: names, id: id, strokes: strokes, texts: model.texts, metas: model.strokeMeta,
@@ -71,6 +74,11 @@ extension PaperBoardController {
   /// Story 910: the lasso holds an arrow whose two ends land on two things: Connect shows beside it.
   func offerConnect(_ keys: Set<String>) {
     let ready = connectOps(keys, id: "connect-probe") != nil
+    // #1440: what the lasso took and whether Connect could show, so a selection that offers nothing is visible.
+    if !keys.isEmpty {
+      log.event(
+        "board_connectors", ["action": "connect_offer", "board": model.board.id, "keys": keys.count, "ready": ready])
+    }
     connectKeys = ready ? keys : []
     showConnect()
     nameSelection(connectReady: ready)

@@ -309,12 +309,59 @@ public enum BoardConnectors {
   }
 
   /// Igor's Connect on the strokes he lassoed (`selected`, their names): his arrow's ink erased and a connector in its
-  /// place, as ops for `BoardOps.plan`; nil unless both ends land on two different things outside the selection.
+  /// place, as ops for `BoardOps.plan`; nil unless both ends land on two different things outside the arrow. When the
+  /// whole selection isn't one arrow (#1440: PaperKit's lasso took the whole diagram, both boxes and the arrow), the
+  /// arrow inside it is found and joins the things around it (story 1358).
   public static func connect(
     selected names: Set<String>, id: String, strokes: [BoardOps.Stroke], texts: [BoardText] = [],
     metas: BoardStrokeMeta = BoardStrokeMeta(), folds: [String: String] = [:]
   ) -> [BoardOps.Op]? {
     let chosen = strokes.filter { !$0.hidden && $0.ids.contains(where: names.contains) }
+    if let ops = connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
+      return ops
+    }
+    guard chosen.count > 1, chosen.count <= maxDiagram else { return nil }
+    for shaft in shafts(chosen) {
+      let ends = [chosen[shaft].points.first, chosen[shaft].points.last].compactMap { $0 }
+      let heads = chosen.indices.filter { k in
+        k != shaft && max(chosen[k].bounds.width, chosen[k].bounds.height) <= headSize
+          && ends.contains { hypot(chosen[k].bounds.midX - $0.x, chosen[k].bounds.midY - $0.y) <= headReach }
+      }
+      let arrow = [chosen[shaft]] + heads.map { chosen[$0] }
+      if let ops = connectArrow(arrow, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
+        return ops
+      }
+    }
+    return nil
+  }
+
+  /// The most strokes a lassoed diagram may hold for Connect to look inside it for an arrow.
+  static let maxDiagram = 60
+  /// An arrowhead's largest side, and how far its middle may sit from the shaft's end.
+  static let headSize: CGFloat = 40
+  static let headReach: CGFloat = 30
+
+  /// The strokes of a selection that could be an arrow's shaft, longest first: long enough, and not closed on itself
+  /// (a box's ends meet; an elbow arrow's are at least half its length apart).
+  static func shafts(_ chosen: [BoardOps.Stroke]) -> [Int] {
+    func length(_ s: BoardOps.Stroke) -> CGFloat {
+      zip(s.points, s.points.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+    }
+    return chosen.indices.filter { k in
+      let s = chosen[k]
+      guard let a = s.points.first, let b = s.points.last else { return false }
+      let l = length(s)
+      return l >= 40 && hypot(b.x - a.x, b.y - a.y) >= l / 2
+    }
+    .sorted { length(chosen[$0]) > length(chosen[$1]) }
+    .prefix(4).map { $0 }
+  }
+
+  /// `chosen` as one arrow: its ink erased and a connector from tail to head, when both ends land on two things.
+  private static func connectArrow(
+    _ chosen: [BoardOps.Stroke], id: String, strokes: [BoardOps.Stroke], texts: [BoardText],
+    metas: BoardStrokeMeta, folds: [String: String]
+  ) -> [BoardOps.Op]? {
     guard !chosen.isEmpty, let ends = arrow(chosen) else { return nil }
     let ops: [BoardOps.Op] = [
       .delete(chosen.flatMap(\.ids)),

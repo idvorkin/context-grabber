@@ -317,6 +317,7 @@ Not session-log lines: fields on what the board sends, so the Cockpit's GET /deb
   - **select_newest_hook** when `GRABBER_WHITEBOARD_SELECT_NEWEST` selected the newest stroke, with board and strokes
   - **connect_pressed** when Connect is tapped, with board, keys (the lassoed strokes it holds) and selected
   - **connect_refused** when there was nothing to connect, with board and keys
+  - **connect_offer** each time a selection is weighed for Connect, with board, keys (the strokes the lasso took) and ready (whether Connect shows); a lasso that took a whole diagram shows here with its stroke count (#1440, story 1358)
   - Larry's connector marks (stories 917–919):
     - **mark_names_nothing** when a reply's connector marks name nothing on the board (they show nothing and settle), with board and marks (their ids)
     - **mark_kept** when Igor keeps one, with board, mark, id, joins, from and to

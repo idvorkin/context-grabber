@@ -331,6 +331,34 @@ final class BoardConnectorsTests: XCTestCase {
     XCTAssertNil(BoardConnectors.connect(selected: [], id: "k", strokes: drawn, metas: metas))
   }
 
+  /// #1440, story 1358: on the iPad the lasso took the whole diagram (both boxes and the arrow, 20 strokes); Connect
+  /// still finds the arrow inside and joins the two things around it.
+  func testConnectFindsTheArrowInsideALassoThatTookTheWholeDiagram() throws {
+    let metas = two.metas
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: ["A", "B", "shaft", "head"], id: "k1", strokes: drawn, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: drawn, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "only his arrow's ink goes; the boxes stay")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"])
+
+    // His own boxes, plain ink with no groups, and an elbow arrow, as he drew it.
+    let elbow = [
+      box("A", 100, 100), box("B", 500, 300),
+      line(
+        "shaft",
+        [CGPoint(x: 165, y: 112), CGPoint(x: 330, y: 112), CGPoint(x: 330, y: 312), CGPoint(x: 495, y: 312)]),
+      line("head", [CGPoint(x: 482, y: 302), CGPoint(x: 495, y: 312), CGPoint(x: 482, y: 322)]),
+    ]
+    XCTAssertNotNil(
+      BoardConnectors.connect(selected: ["A", "B", "shaft", "head"], id: "k2", strokes: elbow),
+      "an elbow arrow between two of his own boxes")
+
+    XCTAssertNil(
+      BoardConnectors.connect(selected: ["A", "B"], id: "k", strokes: drawn, metas: metas),
+      "two boxes and no arrow: no Connect")
+  }
+
   func testTheNotesRoundTrip() {
     let c = BoardConnector(
       from: "a", to: "b", fromSide: .bottom, toSide: .top, route: [CGPoint(x: 1, y: 2), CGPoint(x: 3, y: 4)],

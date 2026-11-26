@@ -708,6 +708,26 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
+### User Story 1358:
+
+- **Summary:** Connect works when the lasso takes the whole diagram
+- **Status:** implemented on branch native/connect-inside-selection-1440; verified by host tests (`BoardConnectorsTests.testConnectFindsTheArrowInsideALassoThatTookTheWholeDiagram`, failing before the change); not yet seen on the iPad
+- **Issues:** [#1440](https://github.com/idvorkin/context-grabber/issues/1440)
+- **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Step 5: connectors*
+
+#### Use Case:
+- **As someone** sketching two boxes joined by an arrow on the iPad
+- **I want to** get Connect even when the lasso grabs the boxes along with my arrow
+- **so that** I don't have to fight the lasso to circle the arrow alone
+
+#### Acceptance Criteria:
+- **Scenario:** The lasso takes both boxes and the arrow
+- **Given:** two boxes of mine with an arrow I drew from one to the other, and a lasso that selects all of them
+- **When:** I tap Connect beside the selection
+- **Then:** only my arrow is replaced by a clean connector from the first box to the second, the boxes stay as drawn, and one Undo named Connect gives my arrow back
+
+---
+
 ### User Story 911:
 
 - **Summary:** A connector follows what it joins
