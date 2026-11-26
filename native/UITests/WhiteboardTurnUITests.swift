@@ -202,6 +202,35 @@ final class WhiteboardTurnUITests: XCTestCase {
     XCTAssertTrue(panel.appears(within: 5), app.debugDescription)
   }
 
+  /// Story 1045 (#1438, Igor 2026-11-24: "Make docked chat be wider, like only halfway"): the docked conversation's text
+  /// runs to about half the board, not a narrow column nor across it. The simulator stays in its own orientation: turning
+  /// it leaves SpringBoard a minute from idle for the next test. Half of a wide board is `WhiteboardNoteTests`, on the
+  /// host; in portrait the seventy-character floor is a little over half.
+  func testTheDockedConversationIsAboutHalfTheBoard() throws {
+    let (app, ghosts) = try openBoard()
+    ghosts.tap()
+    stroke(app)
+    wait(app, strokes: 1)
+    app.buttons["whiteboard-send"].tap()
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "Larry: this is where it goes")).firstMatch
+        .appears(within: 15), app.debugDescription)
+    let chevron = app.buttons["whiteboard-note-chevron"]
+    XCTAssertTrue(chevron.appears(within: 5), app.debugDescription)
+    let panel = app.textViews["whiteboard-conversation-text"]
+    if !panel.exists { chevron.tap() }
+    addTeardownBlock {
+      if panel.exists { chevron.tap() }
+    }
+    XCTAssertTrue(panel.appears(within: 5), app.debugDescription)
+    let window = app.windows.firstMatch.frame.width
+    let deadline = Date().addingTimeInterval(5)
+    while panel.frame.width < window * 0.45, Date() < deadline { usleep(200_000) }
+    XCTAssertGreaterThanOrEqual(panel.frame.width, window * 0.45, "docked, the text runs to about half the board")
+    XCTAssertLessThanOrEqual(panel.frame.width, window * 0.65, "and not across the whole board")
+    shot("whiteboard-conversation-docked-half")
+  }
+
   private static let boardTurnNote = "Your turn on the board"
 
   /// A picture for the PR, when the run names a folder (TEST_RUNNER_GRABBER_SHOTS).

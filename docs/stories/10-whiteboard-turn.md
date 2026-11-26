@@ -1766,21 +1766,21 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ### User Story 1045:
 
-- **Summary:** The conversation's lines are about seventy characters
-- **Status:** implemented in [60c8129](https://github.com/idvorkin/context-grabber/commit/60c8129); verified by the Mac build and the iPad simulator run (`WhiteboardTurnUITests`); a reply long enough to wrap at seventy characters is for the iPad's eye
-- **Issues:** [#1003](https://github.com/idvorkin/context-grabber/issues/1003) (the banner covered Igor's top line of ink and was mostly *You: Your turn on the board · done* rows; iPad screenshots 2026-11-20)
+- **Summary:** Docked, the conversation's lines run to about half the board
+- **Status:** implemented in [60c8129](https://github.com/idvorkin/context-grabber/commit/60c8129); widened to about half the board docked in [81f75e60](https://github.com/idvorkin/context-grabber/commit/81f75e60) (#1438), verified by host tests (`WhiteboardNoteTests.testTheDockedTextIsAboutHalfTheBoard`; `just test`), the Mac build and the iPad simulator (`WhiteboardTurnUITests.testTheDockedConversationIsAboutHalfTheBoard` passed in landscape; the portrait run, where the seventy-character floor is a little over half, timed out under Mac load and is not yet verified)
+- **Issues:** [#1003](https://github.com/idvorkin/context-grabber/issues/1003) (the banner covered Igor's top line of ink and was mostly *You: Your turn on the board · done* rows; iPad screenshots 2026-11-20); [#1438](https://github.com/idvorkin/context-grabber/issues/1438) (Igor, 2026-11-24: "Make docked chat be wider, like only halfway")
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *Open: the conversation*
 
 #### Use Case:
 - **As someone** reading a long reply of Larry's on an iPad
-- **I want to** have it wrap like a paragraph, not run across the whole board
-- **so that** I can read it at a glance
+- **I want to** have the docked conversation about half the board wide, wrapping like a paragraph, not a narrow column or one line across the whole board
+- **so that** I can read it at a glance and use the room the board gives it
 
 #### Acceptance Criteria:
 - **Scenario:** A long reply on a wide iPad
 - **Given:** Larry's reply of several sentences and the iPad in landscape
 - **When:** I open the conversation
-- **Then:** his reply wraps at about seventy characters, the panel's background still spanning the width
+- **Then:** with the conversation docked, his reply wraps at about half the board's width and never narrower than about seventy characters, the panel's background still spanning the width
 
 ---
 

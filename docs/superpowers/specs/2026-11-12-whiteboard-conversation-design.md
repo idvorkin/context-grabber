@@ -193,8 +193,10 @@ of the screen is just under the panel.
 - **Larry's words get the emphasis.** His lines are in the main text colour; Igor's lines and the status are quieter
   but still at least 4.5:1 against the panel (the grey marks were about 2:1). The same holds for the closed line:
   Larry's words in the main colour, his state in the quieter one.
-- **Lines of about seventy characters.** On a wide iPad the text column stops at about seventy characters, so a long
-  reply reads as a paragraph and not one line across the whole board; the panel's background still spans the width.
+- **Docked, the conversation is about half the board wide** (#1438, Igor 2026-11-24: "Make docked chat be wider, like
+  only halfway"). On a wide iPad the docked text column runs to about half the board's width, never narrower than about
+  seventy characters, so a long reply reads as a paragraph and not one line across the whole board; the panel's
+  background still spans the width. Floating, the text fills the card, whatever width it was given.
 - **One status chip, one vocabulary.** Under the messages, one chip says where Igor's newest board picture is. While
   a turn is out it says exactly what the closed line's state says, the clock and what waits to go next: *Your board ·
   Sent · 0:02* or *Your board · Larry · 0:36 · next: ink*. With no turn out it says where the last picture got to:
@@ -430,7 +432,8 @@ nothing: that board had a thread with Larry, but only the iPad knew which one.
 - Larry holds on the picture he is looking at with *waiting for more*: the clock stops, an ear and *Larry: waiting
   for more* start the note's line, the chip reads *Your board · Larry: waiting for more*, and no *Interrupt* or *Larry
   didn't answer* ever comes. His next reply takes the ear away.
-- On an iPad in landscape, Larry's long reply wraps at about seventy characters.
+- On an iPad in landscape with the conversation docked, Larry's long reply wraps at about half the board's width, and
+  never narrower than about seventy characters. Floated into a wide card, it fills the card.
 - With more messages than fit, the panel is a fifth of the board tall, shows the newest message at its bottom, and
   scrolls with a finger to the older ones; another reply arrives and the panel stays the same height, the reply in view.
 - Scroll the panel up to an older message, and another reply arrives: the panel stays where it was; scroll back down to
