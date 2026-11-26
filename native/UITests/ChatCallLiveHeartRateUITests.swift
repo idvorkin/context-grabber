@@ -4,7 +4,7 @@
 
 import XCTest
 
-final class CallLiveHeartRateUITests: XCTestCase {
+final class ChatCallLiveHeartRateUITests: XCTestCase {
   func testWithTheSwitchOnAMissingExerciseAnalyzerLeavesTheCallLiveWithANote() throws {
     let app = try launchCall(switchOn: true)
     let note = app.staticTexts["call-live-hr-note"]
