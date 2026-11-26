@@ -1,11 +1,11 @@
 import Foundation
 import XCTest
 
+@testable import ContextCore
+
 #if canImport(CoreGraphics)
   import CoreGraphics
 #endif
-
-@testable import ContextCore
 
 /// Story 1348 (#1526): a long label of Larry's wraps to the right edge of the picture he was sent.
 final class BoardLabelWrapTests: XCTestCase {
