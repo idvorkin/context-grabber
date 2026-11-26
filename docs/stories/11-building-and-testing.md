@@ -2280,7 +2280,7 @@ Part of the [user stories](README.md); persona and format are described there.
 ### User Story 1901:
 
 - **Summary:** A lane that can't lease a slot stops instead of working in the main checkout
-- **Status:** implemented in [c859630f](https://github.com/idvorkin/context-grabber/commit/c859630f), [6db78535](https://github.com/idvorkin/context-grabber/commit/6db78535); verified on the host rung by `scripts/native/test-lease-slot.sh` in `just test`, on a throwaway repository with a linked worktree and a stand-in treehouse: a free slot prints its path; a full pool past the wait, an empty answer and the main checkout each print nothing and fail; a slot that frees up within the wait is leased on a retry; a lease that fails while a slot is available, or with no treehouse, fails at once; and `build-lane.sh run` and `host-lane.sh run`, each run for real with a stand-in lockf, refuse a command in the main checkout on a branch (and from its subdirectory) without running it, while from main, from a slot or outside a repository the command runs
+- **Status:** implemented in [c859630f](https://github.com/idvorkin/context-grabber/commit/c859630f), [6db78535](https://github.com/idvorkin/context-grabber/commit/6db78535); verified on the host rung by `scripts/native/test-lease-slot.sh` in `just test`, on a throwaway repository with a linked worktree and a stand-in treehouse: a free slot prints its path; a full pool past the wait, an empty answer and the main checkout each print nothing and fail; a slot that frees up within the wait is leased on a retry; a lease that fails twice in a row while a slot is available, or with no treehouse, fails at once, while a slot returned between a failed lease and the status check is leased on the next try; and `build-lane.sh run` and `host-lane.sh run`, each run for real with a stand-in lockf, refuse a command in the main checkout on a branch (and from its subdirectory) without running it, while from main, from a slot or outside a repository the command runs
 - **Issues:** bead context-grabber-8w8c
 
 #### Use Case:
@@ -2291,5 +2291,5 @@ Part of the [user stories](README.md); persona and format are described there.
 #### Acceptance Criteria:
 - **Scenario:** Every slot is leased, or the lease lands in the main checkout
 - **Given:** a lane leases its slot with `scripts/native/lease-slot.sh <branch>`, and the build and host lanes run its commands
-- **When:** no slot frees up before the wait ends, the lease returns nothing, or the path it returns is the main checkout; or a build or host lane is asked to run from the main checkout while it's on a branch other than main
+- **When:** no slot frees up before the wait ends, the lease returns nothing, or the path it returns is the main checkout; or a build or host lane is asked to run from the main checkout while it's on a branch other than main, or a detached HEAD
 - **Then:** `lease-slot.sh` prints nothing and exits non-zero with a message saying why, and the lane run refuses with a message naming the main checkout and saying to lease a slot; a run from the main checkout on main, such as the lead's `just deploy`, and any run from a slot go ahead as before

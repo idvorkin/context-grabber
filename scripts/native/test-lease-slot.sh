@@ -28,6 +28,8 @@ case "\${STUB_MODE:-}" in
   main) echo "$repo" ;;
   empty) exit 0 ;;
   full) echo "error: every worktree in the pool is leased" >&2; exit 1 ;;
+  second) n=\$(cat "$tmp/calls" 2>/dev/null || echo 0); n=\$((n + 1)); echo \$n >"$tmp/calls"
+          [ \$n -ge 2 ] && echo "$slot" && exit 0; echo "pool full" >&2; exit 1 ;;
   later) n=\$(cat "$tmp/calls" 2>/dev/null || echo 0); n=\$((n + 1)); echo \$n >"$tmp/calls"
          [ \$n -ge 3 ] && echo "$slot" && exit 0; echo "pool full" >&2; exit 1 ;;
 esac
@@ -54,7 +56,14 @@ out=$(STUB_MODE=later WAIT=60 run_lease 2>/dev/null); rc=$?
 start=$SECONDS
 out=$(STUB_MODE=full STUB_STATUS="slot-1  available" WAIT=60 run_lease 2>"$tmp/err"); rc=$?
 [ $rc -eq 70 ] && [ -z "$out" ] && [ $((SECONDS - start)) -lt 30 ] && grep -q "leased" "$tmp/err" \
-  && ok "a lease that fails with a slot available: treehouse's error, exit 70 at once" || bad "failed get, slot available: rc=$rc out='$out'"
+  && ok "a lease that fails twice with a slot available: treehouse's error, exit 70 at once" || bad "failed get, slot available: rc=$rc out='$out'"
+
+rm -f "$tmp/calls"
+out=$(STUB_MODE=second STUB_STATUS="slot-1  available" WAIT=0 run_lease 2>/dev/null); rc=$?
+[ $rc -eq 0 ] && [ "$out" = "$slot" ] && ok "a slot returned between a failed lease and status: leased on the next try" || bad "returned in the gap: rc=$rc out='$out'"
+
+out=$(STUB_MODE=full STUB_STATUS="slot-1  leased  [native/available-x]" run_lease 2>/dev/null); rc=$?
+[ $rc -eq 75 ] && [ -z "$out" ] && ok "a leased slot whose branch names 'available': still a full pool, exit 75" || bad "branch named available: rc=$rc out='$out'"
 
 out=$(cd "$repo" && TREEHOUSE="$tmp/no-such-treehouse" "$lease" native/x 2>/dev/null); rc=$?
 [ $rc -eq 127 ] && [ -z "$out" ] && ok "no treehouse command: exit 127" || bad "no treehouse: rc=$rc out='$out'"

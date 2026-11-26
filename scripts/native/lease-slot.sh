@@ -6,8 +6,8 @@
 #   slot=$(scripts/native/lease-slot.sh native/123-my-change) || exit 1
 #
 # Retries every LEASE_SLOT_POLL seconds (30) for up to LEASE_SLOT_WAIT seconds (1800) while the pool is full. Exits 75
-# when the wait runs out; 70 when treehouse hands back nothing usable or the main checkout, or its lease fails while
-# `treehouse status` shows a slot available (not a full pool); 127 when there is no treehouse; 2 on bad usage.
+# when the wait runs out; 70 when treehouse hands back nothing usable or the main checkout, or its lease fails twice in
+# a row while `treehouse status` shows a slot available (not a full pool); 127 when there is no treehouse; 2 on bad usage.
 # TREEHOUSE overrides the treehouse command (the tests use a stand-in).
 set -uo pipefail
 
@@ -23,7 +23,7 @@ main=$(cd "$here" && main_checkout_top) || { echo "lease-slot: not in a git repo
 
 errf=$(mktemp "${TMPDIR:-/tmp}/lease-slot.XXXXXX") || exit 1
 trap 'rm -f "$errf"' EXIT
-start=$SECONDS said=
+start=$SECONDS said= again=
 while :; do
   if out=$("$treehouse" get --lease -b "$branch" 2>"$errf"); then
     slot=$(printf '%s\n' "$out" | tail -1)
@@ -40,10 +40,15 @@ while :; do
     exit 0
   fi
   err=$(cat "$errf" 2>/dev/null)
-  if "$treehouse" status 2>/dev/null | grep -qiw available; then
-    echo "lease-slot: treehouse couldn't lease a slot for $branch though one is available: ${err:-no error}" >&2
-    exit 70
+  if "$treehouse" status 2>/dev/null | awk '{for (i = 1; i <= NF; i++) if (tolower($i) == "available") f = 1} END {exit !f}'; then
+    if [ -n "$again" ]; then
+      echo "lease-slot: treehouse couldn't lease a slot for $branch though one is available: ${err:-no error}" >&2
+      exit 70
+    fi
+    again=1
+    continue
   fi
+  again=
   if [ $((SECONDS - start)) -ge "$wait" ]; then
     echo "lease-slot: no slot for $branch after ${wait}s; last error: ${err:-none}. Nothing leased; stop, don't work in the main checkout." >&2
     exit 75
