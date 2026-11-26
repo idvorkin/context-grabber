@@ -134,7 +134,7 @@ Meditation or Journal to open a two-week editor. Its header has Cancel, the item
 Done button. Fourteen tiles fill seven columns and two rows, oldest at top left and today at bottom right.
 Each tile shows the weekday letter and date number; today and yesterday add “today” and “yest.” tags.
 Done days have an accent fill, other days a dark fill, today a subtle outline, and days changed since opening
-an orange ring. Tiles are at least 44 points tall (normally 64), with full-date accessibility labels saying
+an orange ring. Tiles are at least 44 points tall (normally 64; Gym's are taller, below), with full-date accessibility labels saying
 whether the day is done, and a selected trait for done days.
 
 The headline says “N of the last 14 days”. Under it, “Last done today”, “Last done yesterday”,
