@@ -78,6 +78,8 @@ final class WhiteboardModel: ObservableObject {
   /// The names Larry knows moved strokes by: a move never renames a stroke (stories 814, 815); his drawn strokes go by
   /// his names (story 840).
   var strokeIDs: BoardStrokeIDs
+  /// #1527: each stroke as Larry's form, sampled once.
+  let strokeCache = WhiteboardStrokeCache()
   /// Larry's notes on strokes, kept as he wrote them (story 842).
   var strokeMeta: BoardStrokeMeta
   /// Story 855: the board's headers and their folds, kept on this device by their strokes' names.

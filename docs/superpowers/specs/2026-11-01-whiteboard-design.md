@@ -700,6 +700,12 @@ size came in the middle of a stroke, outside it. Before anything changes, the lo
   more, the log gets a line naming its own steps by time, with the stroke and mark counts, so the fix goes at the step
   that grows.
 - Nothing Igor sees changes: this is the evidence for the fix, not the fix.
+- **Drawing on a full board stays as quick as on a new one** (#1527, story 1359). The board reads its ink as Larry
+  names it for the marks rule, the outline and the plans, and it read the whole board that way afresh, several times,
+  on every stroke of a board with Larry's marks. A stroke is now read once and kept by what it is: the same stroke,
+  unmoved, uncut and in the same ink, is never read twice, and one that moves, is cut by an erase or changes ink is
+  read again. What Larry gets and how the marks behave are unchanged; only the time per stroke stops growing with the
+  board.
 - **Time away is never a stall** (story 1221, bead context-grabber-55vm). The iPad logged the app's time asleep in the
   background, minutes at a time, as the main thread stuck, which would hide a real hang. If the watch was still running
   when the app was suspended, the first look, reply, or stop to see a gap of at least five seconds since the last look
