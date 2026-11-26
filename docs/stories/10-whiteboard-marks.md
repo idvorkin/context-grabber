@@ -1928,3 +1928,26 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Then:** the mark doesn't show and can't be tapped
 - **And:** Undo of the erase shows the mark again beside the word
 - **And:** erasing part of the word leaves the mark beside what is left
+
+---
+
+### User Story 1348:
+
+- **Summary:** A long label of Larry's wraps to the board he was looking at
+- **Status:** implemented in [00efb292](https://github.com/idvorkin/context-grabber/commit/00efb292); verified on the host (`BoardLabelWrapTests`: breaks between words, a long word breaks where it must, a newline starts a row, rows stay inside the picture's right edge less the margin, each a 1.2 letter-height pitch lower, a label that fits draws as before, no picture means no wrap) and a before/after render of the lines on the Mac. Not yet seen on the iPad
+- **Issues:** [#1526](https://github.com/idvorkin/context-grabber/issues/1526) (Igor on the iPad, 2026-11-26: "Larry ink should be wrapped as required")
+- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *A long label wraps to the picture's width*
+
+#### Use Case:
+- **As someone** reading Larry's answer on the iPad board
+- **I want to** see a long label of his wrapped onto further lines inside the board I was showing him
+- **so that** none of his words run off the edge where I can't read them
+
+#### Acceptance Criteria:
+- **Scenario:** A label longer than the room to the right edge
+- **Given:** Larry answers with a label that, on one line, would reach past the right edge of the picture he was sent
+- **When:** it shows on the board
+- **Then:** it goes on to further lines, breaking between words, every line inside that edge less a small margin
+- **And:** each further line starts at the label's left edge, a fifth more than the letters' height below the one before (the Cockpit's line height)
+- **And:** a label that fits shows on one line, as before
+- **And:** keeping it keeps the lines as they show
