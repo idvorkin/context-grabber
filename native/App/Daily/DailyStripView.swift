@@ -320,7 +320,25 @@ private struct CheckFortnightSheet: View {
       }
     }
     .preferredColorScheme(.dark)
-    .presentationDetents([.medium, .large])
+    // #1503, story 570: Gym's sheet opens full height (more room for the icons); the others keep the half sheet.
+    .presentationDetents(fortnight.item == .gym ? [.large] : [.medium, .large])
+  }
+
+  /// #1503, story 570: Gym's sheet is taller, and its tiles show what was done.
+  private var isGym: Bool { fortnight.item == .gym }
+
+  /// Up to three icons for the day's workouts and the timer, else the first two and "+N" (story 570).
+  private func marksRow(_ day: CheckFortnight.Day) -> some View {
+    let icons = DailyStrip.gymIcons(day.marks)
+    return HStack(spacing: 2) {
+      ForEach(icons.shown, id: \.self) { mark in
+        Image(systemName: mark.symbol).font(.system(size: 11))
+      }
+      if icons.more > 0 { Text("+\(icons.more)").font(.system(size: 10).weight(.semibold)) }
+    }
+    .frame(height: 14)
+    .accessibilityHidden(true)  // the tile's label names them
+    .accessibilityIdentifier("strip-day-marks-\(day.daysAgo)")
   }
 
   private func tile(_ day: CheckFortnight.Day, index: Int) -> some View {
@@ -331,8 +349,9 @@ private struct CheckFortnightSheet: View {
         Text(day.weekday).font(.caption2)
         Text(day.number).font(.body.weight(.semibold).monospacedDigit())
         Text(day.tag).font(.system(size: 9)).lineLimit(1)
+        if isGym { marksRow(day) }
       }
-      .frame(maxWidth: .infinity, minHeight: 64)
+      .frame(maxWidth: .infinity, minHeight: isGym ? 88 : 64)
       .foregroundStyle(day.done ? Color.white : Color.primary)
       .background(
         day.done ? Color.accentColor : Color(uiColor: .secondarySystemBackground), in: .rect(cornerRadius: 10)

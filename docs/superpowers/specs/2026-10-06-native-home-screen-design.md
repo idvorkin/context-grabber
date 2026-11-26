@@ -148,6 +148,16 @@ rule as today's un-tap. The strip and Gym's days since update immediately after 
 Balloons and Magic still open their week (below). Each changed day saved produces one `ui` event, action
 daily_strip, with the item, the day, `backdated` and `done` true or false.
 
+**What I did on each gym day** (Igor, #1503: *"Let gym graph show icons of what I did. And use more space!"*).
+Gym's two weeks open at full height, and each tile is taller (normally 88 points) so it can hold a row of small
+icons under the date: a stopwatch for a finished Gym Timer workout, and one figure per kind of Health workout that
+day (strength training, functional strength, running, walking, cycling, hiking, swimming, stretching, rowing,
+dance, cross training, mixed cardio, and a generic figure for any other kind). A kind done twice shows once. Up to
+three icons fit; more show the first two and “+N”. The strength kinds that make the day count come first, then the
+timer, then the rest in the order they were done. A day marked only by a tap shows no icons. The icons are part
+of the tile's accessibility label (“Thursday November 20, done, Gym Timer and Functional Strength”). Meditation and
+Journal keep their shorter sheet; Balloons and Magic keep their week.
+
 **The same strip on the phone and the iPad** (Igor, iPad, 2026-10-17, #376: *"Do stats sync over Cloud kit like the
 did I do magic if not implement"*). What Igor marks on one device shows on the others signed into his iCloud,
 usually within a minute, and offline changes catch up when the device is back online:

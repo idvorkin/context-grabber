@@ -130,14 +130,17 @@ final class DailyStripModel: ObservableObject {
       guard let store else { throw CocoaError(.fileReadUnknown) }
       let entries = try activity?.entries(since: Date(timeIntervalSince1970: 0)) ?? []
       var automatic: Set<String> = []
+      var marks: [String: [GymDayMark]] = [:]
       if item == .gym {
-        automatic = DailyStrip.gymDays(tapped: [], timer: entries, workoutsByDay: health()?.workoutsByDay ?? [:])
+        let workoutsByDay = health()?.workoutsByDay ?? [:]
+        automatic = DailyStrip.gymDays(tapped: [], timer: entries, workoutsByDay: workoutsByDay)
+        marks = DailyStrip.gymMarks(timer: entries, workoutsByDay: workoutsByDay)  // #1503, story 570
       } else if item == .meditation {
         automatic = DailyStrip.meditationDays(tapped: [], activity: entries)
         if meditationFrom != nil { automatic.insert(today) }
       }
       problem = nil
-      return CheckFortnight(item, today: today, marked: try store.days(item), automatic: automatic)
+      return CheckFortnight(item, today: today, marked: try store.days(item), automatic: automatic, marks: marks)
     } catch {
       log.event("error", ["where": "daily_strip", "item": item.rawValue, "message": "\(error)"])
       problem = .grabber(

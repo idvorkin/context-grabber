@@ -2227,6 +2227,29 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 
 ---
 
+### User Story 570:
+
+- **Summary:** Gym's two weeks show what I did each day
+- **Issues:** [#1503](https://github.com/idvorkin/context-grabber/issues/1503)
+- **Status:** planned
+- **Spec:** [native home screen, "What I did on each gym day"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
+
+#### Use Case:
+- **As someone** who trains a few times a week in different ways
+- **I want to** see on Gym's two-week sheet what kind of workout each day was
+- **so that** the fortnight reads as what I did, not just which days I went
+
+#### Acceptance Criteria:
+- **Scenario:** Icons under each gym day, in a taller sheet
+- **Given:** over the last two weeks a Gym Timer workout and a Functional Strength workout on one day, two Strength
+  Training workouts on another, four different kinds on a third, and a day marked only by a tap
+- **When:** I press and hold Gym
+- **Then:** the sheet opens at full height with taller tiles; the first day shows a strength figure then a stopwatch,
+  the second one strength figure, the third two icons and “+2”, and the tapped day none; each tile's label names
+  what was done
+
+---
+
 ### User Story 572:
 
 - **Summary:** The counter's week as a little graph by day

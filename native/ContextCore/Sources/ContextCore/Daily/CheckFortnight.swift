@@ -12,17 +12,26 @@ public struct CheckFortnight: Equatable, Sendable {
     public let automatic: Bool
     let saved: Bool
     public fileprivate(set) var done: Bool
+    /// #1503, story 570: what was done that day (Gym only), oldest-first rules in `DailyStrip.gymMarks`.
+    public let marks: [GymDayMark]
 
     public var tag: String { daysAgo == 0 ? "today" : daysAgo == 1 ? "yest." : "" }
     public var changed: Bool { saved != done }
-    public var accessibilityLabel: String { "\(fullDate), \(done ? "done" : "not done")" }
+    public var accessibilityLabel: String {
+      let base = "\(fullDate), \(done ? "done" : "not done")"
+      let names = marks.map(\.name)
+      guard let last = names.last else { return base }
+      let list = names.count == 1 ? last : names.dropLast().joined(separator: ", ") + " and " + last
+      return base + ", " + list
+    }
   }
 
   public let item: DailyItem
   public private(set) var days: [Day]
 
   public init(
-    _ item: DailyItem, today: String, marked: Set<String>, automatic: Set<String> = [], calendar: Calendar = .current
+    _ item: DailyItem, today: String, marked: Set<String>, automatic: Set<String> = [],
+    marks: [String: [GymDayMark]] = [:], calendar: Calendar = .current
   ) {
     self.item = item
     let formatter = DateFormatter()
@@ -41,7 +50,7 @@ public struct CheckFortnight: Equatable, Sendable {
       let done = marked.contains(key) || automatic.contains(key)
       return Day(
         day: key, daysAgo: ago, weekday: weekday, number: number, fullDate: formatter.string(from: date),
-        automatic: automatic.contains(key), saved: done, done: done)
+        automatic: automatic.contains(key), saved: done, done: done, marks: marks[key] ?? [])
     }
   }
 
