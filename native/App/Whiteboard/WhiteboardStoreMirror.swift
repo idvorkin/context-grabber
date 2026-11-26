@@ -30,7 +30,10 @@ final class WhiteboardStoreMirror: ObservableObject {
     let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     disk = CockpitBoardDisk(folder: support.appendingPathComponent("cockpit-mirror", isDirectory: true))
     bookURL = Self.bookURL
-    if mirrored { line = "In the Cockpit" }
+    if mirrored {
+      line =
+        CockpitBoardMirror.Book.load(bookURL).created.contains(board) ? "In the Cockpit" : "Not in the Cockpit yet"
+    }
   }
 
   private static var all: [String: WhiteboardStoreMirror] = [:]
@@ -61,23 +64,26 @@ final class WhiteboardStoreMirror: ObservableObject {
     try? book.save(bookURL)
   }
 
-  /// Story 1361: *Send this board to the Cockpit*. The gate is the menu's; this checks it again.
+  /// Story 1361: *Send this board to the Cockpit*. The gate is the menu's; this checks it again. The board counts as
+  /// mirrored once the Cockpit has taken its create; until then a failed send leaves the row to try again.
   func send(drawing: PKDrawing, name: String, paper: String, ruled: Bool) {
     guard Self.betaOn, CockpitBoardMirror.allowed(name: name) else {
       log.event("board_mirror", ["action": "held", "board": board, "reason": "waiting_for_backup"])
       return
     }
-    var book = CockpitBoardMirror.Book.load(bookURL)
-    book.mirrored.insert(board)
-    try? book.save(bookURL)
     log.event("board_mirror", ["action": "send", "board": board, "strokes": drawing.strokes.count])
+    problem = nil
     line = "Sending to the Cockpit…"
-    saved(drawing: drawing, name: name, paper: paper, ruled: ruled)
+    run(drawing: drawing, name: name, paper: paper, ruled: ruled)
   }
 
   /// The board was just saved: its ink, as the Cockpit's ops, queued and sent. Nothing while it isn't mirrored.
   func saved(drawing: PKDrawing, name: String, paper: String, ruled: Bool) {
     guard mirrored else { return }
+    run(drawing: drawing, name: name, paper: paper, ruled: ruled)
+  }
+
+  private func run(drawing: PKDrawing, name: String, paper: String, ruled: Bool) {
     guard !syncing else {
       again = (drawing, name, paper, ruled)
       return
@@ -102,6 +108,7 @@ final class WhiteboardStoreMirror: ObservableObject {
       guard await create(drawing, name: name, paper: paper, ruled: ruled) else { return }
       book = CockpitBoardMirror.Book.load(bookURL)
       book.created.insert(board)
+      book.mirrored.insert(board)
       try? book.save(bookURL)
     }
     var cache: BoardStoreCache
@@ -114,11 +121,13 @@ final class WhiteboardStoreMirror: ObservableObject {
       cache = BoardStoreCache(snapshot: snapshot)
     }
     let records = await Task.detached(priority: .utility) { Self.records(drawing) }.value
-    switch CockpitBoardEdit.ops(cache, after: records) {
+    let after = CockpitBoardMirror.after(records: records, cache: cache, device: device)
+    switch CockpitBoardEdit.ops(cache, after: after) {
     case .failure(let failure):
       fail("this board's ink couldn't be turned into the Cockpit's changes (\(failure))", operation: "encode")
       return
-    case .success(let ops):
+    case .success(var ops):
+      if let rename = CockpitBoardMirror.rename(cache, name: name) { ops.append(rename) }
       let saves = CockpitBoardMirror.saves(ops)
       for save in saves { cache.enqueue(save) }
       if !saves.isEmpty {
@@ -200,11 +209,11 @@ final class WhiteboardStoreMirror: ObservableObject {
     line = "Not in the Cockpit yet: \(what)"
   }
 
-  /// The board's strokes as the store's records, under ids from their creation moments (stable across sends).
+  /// The board's strokes as the store's records, under ids from their creation moments and seeds (stable across sends).
   nonisolated static func records(_ drawing: PKDrawing) -> [BoardStoreJSON] {
     let strokes = drawing.strokes
     let ids = CockpitBoardMirror.strokeIDs(
-      createdMs: strokes.map { Int64($0.path.creationDate.timeIntervalSince1970 * 1000) })
+      strokes.map { (Int64($0.path.creationDate.timeIntervalSince1970 * 1000), $0.randomSeed) })
     return zip(strokes, ids).map { CockpitStrokeRecord.record($0, id: $1) }
   }
 }

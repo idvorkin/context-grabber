@@ -252,6 +252,11 @@ board", 08:15). Behind the same beta switch:
   board with the same id and name, all its ink, and the board's original drawing kept beside it, untouched, for a
   lossless way back. From then on the board is *mirrored*: every save of the board on the iPad also goes to the
   Cockpit, a stroke drawn, erased or moved at a time, through the same one-at-a-time saves as a Cockpit board.
+  A board renamed on the iPad is renamed in the Cockpit with its next save.
+- **A send that doesn't reach the Cockpit isn't a mirror.** The board counts as mirrored only once the Cockpit has
+  taken it. Until then the menu shows the copyable problem and keeps *Send this board to the Cockpit* to try again.
+- **The mirror only changes what the iPad sent.** Strokes drawn on the Cockpit's copy from the web board or by Larry
+  stay there: a later save from the iPad never erases or overwrites them.
 - **The board itself doesn't change.** It opens, draws, talks to Larry and syncs over iCloud exactly as before; the
   iCloud copy is never deleted or altered. A line in the menu says where the mirror stands: *In the Cockpit ·
   version 12*, *2 saves waiting*, or the copyable *Cockpit not answering* problem.

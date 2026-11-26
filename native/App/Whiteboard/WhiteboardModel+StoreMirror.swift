@@ -43,6 +43,9 @@ struct WhiteboardMirrorRow: View {
       if mirror.mirrored {
         Text(mirror.line ?? "In the Cockpit").accessibilityIdentifier("whiteboard-mirror-status")
       } else if CockpitBoardMirror.allowed(name: store.index.board(model.board.id)?.title ?? model.mirrorName) {
+        if mirror.problem != nil, let line = mirror.line {
+          Text(line).accessibilityIdentifier("whiteboard-mirror-status")
+        }
         Button("Send this board to the Cockpit") { model.sendToCockpit() }
           .accessibilityIdentifier("whiteboard-mirror-send")
       } else {

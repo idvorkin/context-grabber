@@ -23,22 +23,48 @@ public enum CockpitBoardMirror {
     backupLive || name.trimmingCharacters(in: .whitespaces).lowercased().hasPrefix("scratch")
   }
 
-  /// The id each stroke is sent under, from its creation moment, in draw order: `s-<ms>`, and for a second stroke made
-  /// in the same millisecond a letter after it (never `-<n>`, which the encoder reads as a piece of an erased stroke).
-  /// The same board gives the same ids every time, so a second send lands nothing twice (story 1362).
-  public static func strokeIDs(createdMs: [Int64]) -> [String] {
+  /// The id each stroke is sent under, from the stroke itself, in draw order: `s-<ms>x<seed>`, its creation moment and
+  /// its random seed in hex, and only for a second stroke with both the same a letter after it (never `-<n>`, which the
+  /// encoder reads as a piece of an erased stroke). The same board gives the same ids every time, so a second send
+  /// lands nothing twice (story 1362), and erasing one stroke moves no other stroke's id.
+  public static func strokeIDs(_ strokes: [(ms: Int64, seed: UInt32)]) -> [String] {
     var taken = Set<String>()
-    return createdMs.map { ms in
-      let base = "s-\(ms)"
+    var repeats: [String: Int] = [:]
+    return strokes.map { stroke in
+      let base = "s-\(stroke.ms)x\(String(stroke.seed, radix: 16))"
       var id = base
-      if taken.contains(base) {
-        id =
-          "abcdefghijklmnopqrstuvwxyz".map { base + String($0) }.first { !taken.contains($0) }
-          ?? base + "z\(taken.count)"
+      while taken.contains(id) {
+        let n = repeats[base, default: 0]
+        repeats[base] = n + 1
+        let letters = Array("abcdefghijklmnopqrstuvwxyz")
+        id = n < letters.count ? base + String(letters[n]) : base + "z\(n)"
       }
       taken.insert(id)
       return id
     }
+  }
+
+  /// The strokes the mirror's save compares the copy against: this device's `records`, and every live stroke on the copy
+  /// that another device drew (the web board, Larry) as it is, so a save never erases or overwrites what it didn't send.
+  /// A stroke this device sent, or has waiting, is its own: one the drawing no longer has is erased.
+  public static func after(records: [BoardStoreJSON], cache: BoardStoreCache, device: String) -> [BoardStoreJSON] {
+    let view = cache.view
+    let ours = Set(records.compactMap { $0["id"]?.string })
+    let theirs = CockpitBoardEdit.strokes(cache).filter { stroke in
+      let author = view[stroke.id]?.author.device ?? ""
+      return !author.isEmpty && author != device && !ours.contains(stroke.id)
+    }
+    return records + theirs.map(\.record)
+  }
+
+  /// The name the store keeps for a board: its own, or *Untitled* for one without.
+  public static func storeName(_ name: String) -> String { name.isEmpty ? "Untitled" : name }
+
+  /// The store's `rename` when the board's name isn't the copy's, so a board renamed after its first send follows.
+  public static func rename(_ cache: BoardStoreCache, name: String) -> BoardStoreJSON? {
+    let name = storeName(name)
+    guard cache.view[BoardStoreClash.boardID]?.body?["name"]?.string != name else { return nil }
+    return ["op": "rename", "name": .string(name)]
   }
 
   /// `POST /boards`'s body: the iCloud board's own id and name, its paper, and the original drawing's asset.
@@ -46,7 +72,7 @@ public enum CockpitBoardMirror {
     id: String, name: String, paper: String?, ruled: Bool, device: String, originalAsset: String?
   ) -> BoardStoreJSON {
     var body: BoardStoreJSON = [
-      "id": .string(id), "name": .string(name.isEmpty ? "Untitled" : name), "ruled": .bool(ruled),
+      "id": .string(id), "name": .string(storeName(name)), "ruled": .bool(ruled),
       "device": .string(device), "by": "igor",
     ]
     if let paper { body["paper"] = .string(paper) }

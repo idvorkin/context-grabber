@@ -1544,7 +1544,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1361:
 
 - **Summary:** Send this board to the Cockpit, and it stays mirrored
-- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardStoreMirrorUITests.testABoardIsSentFromItsMenuAndAStrokeAfterFollows`, `testANewBoardWithTheSwitchOnIsMirroredFromItsFirstSave`); the real Cockpit is the iPad's
+- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardStoreMirrorUITests.testABoardIsSentFromItsMenuAndAStrokeAfterFollows`, `testANewBoardWithTheSwitchOnIsMirroredFromItsFirstSave`); the real Cockpit is the iPad's; the rename and the web's strokes kept are verified on the host (`CockpitBoardMirrorTests.testARenameFollowsTheBoard`, `testASaveNeverErasesAnotherDevicesStrokes`); the failed first send is not exercised by a test
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
@@ -1559,10 +1559,25 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I choose *Send this board to the Cockpit* and then draw a third stroke
 - **Then:** the Cockpit has the board under the same id with the two strokes and the original drawing kept beside it, then the third stroke too, and the board on the iPad is unchanged and still syncs over iCloud
 
+- **Scenario:** The first send doesn't reach the Cockpit
+- **Given:** the beta switch on and the Cockpit not answering
+- **When:** I choose *Send this board to the Cockpit*
+- **Then:** the menu shows the copyable problem and still offers *Send this board to the Cockpit*, and after a relaunch it doesn't say the board is in the Cockpit
+
+- **Scenario:** A board renamed after it was sent
+- **Given:** a mirrored board
+- **When:** I rename it and draw on it
+- **Then:** the Cockpit's copy takes the new name
+
+- **Scenario:** Ink drawn on the Cockpit's copy elsewhere
+- **Given:** a mirrored board, and a stroke added to the Cockpit's copy on the web board or by Larry
+- **When:** I draw on the board on the iPad
+- **Then:** the iPad's stroke goes up and the web's stroke stays on the Cockpit's copy
+
 ### User Story 1362:
 
 - **Summary:** Sending a board again lands nothing twice
-- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the host (`CockpitBoardMirrorTests.testStrokeIDsAreStableAndUnique`) and by the fake Cockpit refusing a second add of an id as exists; a second send on the iPad is the iPad's
+- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the host (`CockpitBoardMirrorTests.testStrokeIDsAreStableAndUnique`, `testASecondSendOfTheSameBoardLandsNothing`) and by the fake Cockpit refusing a second add of an id as exists; a second send on the iPad is the iPad's
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 

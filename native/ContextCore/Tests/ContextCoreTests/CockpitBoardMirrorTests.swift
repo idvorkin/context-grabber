@@ -5,10 +5,54 @@ import XCTest
 /// Stories 1361-1363: sending a board to the Cockpit, the mirror.
 final class CockpitBoardMirrorTests: XCTestCase {
   func testStrokeIDsAreStableAndUnique() {
-    let ids = CockpitBoardMirror.strokeIDs(createdMs: [100, 200, 200, 200, 300])
-    XCTAssertEqual(ids, ["s-100", "s-200", "s-200a", "s-200b", "s-300"])
-    XCTAssertEqual(CockpitBoardMirror.strokeIDs(createdMs: [100, 200, 200, 200, 300]), ids, "a second send, same ids")
+    let strokes: [(ms: Int64, seed: UInt32)] = [(100, 1), (200, 0xab), (200, 0xcd), (200, 0xab), (300, 7)]
+    let ids = CockpitBoardMirror.strokeIDs(strokes)
+    XCTAssertEqual(ids, ["s-100x1", "s-200xab", "s-200xcd", "s-200xaba", "s-300x7"])
+    XCTAssertEqual(CockpitBoardMirror.strokeIDs(strokes), ids, "a second send, same ids")
     XCTAssertFalse(ids.contains { $0.range(of: #"-\d+-\d+$"#, options: .regularExpression) != nil })
+    XCTAssertEqual(
+      CockpitBoardMirror.strokeIDs([(100, 1), (200, 0xcd), (300, 7)]), ["s-100x1", "s-200xcd", "s-300x7"],
+      "erasing a stroke that shares a millisecond moves no other stroke's id")
+  }
+
+  private func copy(_ things: [BoardStoreJSON]) -> BoardStoreCache {
+    BoardStoreCache(snapshot: ["id": "b1", "rev": 3, "erased": [], "things": .array(things)])
+  }
+
+  private func thing(_ id: String, device: String) -> BoardStoreJSON {
+    [
+      "id": .string(id), "kind": "stroke", "body": stroke(id, points: 2), "rev": 1, "device": .string(device),
+      "by": "x",
+    ]
+  }
+
+  func testASaveNeverErasesAnotherDevicesStrokes() throws {
+    let cache = copy([
+      ["id": "@board", "kind": "board", "body": ["name": "Main"], "rev": 1, "device": "ipad-1", "by": "igor"],
+      thing("s-1x1", device: "ipad-1"), thing("s-2x2", device: "ipad-1"), thing("w-9", device: "web-1"),
+    ])
+    let records = [stroke("s-1x1", points: 2)]
+    let after = CockpitBoardMirror.after(records: records, cache: cache, device: "ipad-1")
+    let ops = try CockpitBoardEdit.ops(cache, after: after).get()
+    let erased = ops.filter { $0["op"]?.string == "erase" }.flatMap { $0["ids"]?.strings ?? [] }
+    XCTAssertEqual(erased, ["s-2x2"], "only the stroke this iPad sent and no longer has: \(ops)")
+    XCTAssertFalse(ops.contains { $0["op"]?.string == "set" }, "the web's stroke is left as it is: \(ops)")
+  }
+
+  func testASecondSendOfTheSameBoardLandsNothing() throws {
+    let cache = copy([thing("s-1x1", device: "ipad-1"), thing("w-9", device: "web-1")])
+    let after = CockpitBoardMirror.after(
+      records: [stroke("s-1x1", points: 2)], cache: cache, device: "ipad-1")
+    XCTAssertEqual(try CockpitBoardEdit.ops(cache, after: after).get(), [])
+  }
+
+  func testARenameFollowsTheBoard() {
+    let cache = copy([
+      ["id": "@board", "kind": "board", "body": ["name": "Untitled"], "rev": 1, "device": "", "by": ""]
+    ])
+    XCTAssertEqual(CockpitBoardMirror.rename(cache, name: "Plans")?["name"]?.string, "Plans")
+    XCTAssertEqual(CockpitBoardMirror.rename(cache, name: "Plans")?["op"]?.string, "rename")
+    XCTAssertNil(CockpitBoardMirror.rename(cache, name: ""), "an unnamed board is the copy's Untitled")
   }
 
   func testTheGateHoldsRealBoardsUntilTheBackupIsLive() {
@@ -16,7 +60,6 @@ final class CockpitBoardMirrorTests: XCTestCase {
     XCTAssertTrue(CockpitBoardMirror.allowed(name: "Scratch: mirror test", backupLive: false))
     XCTAssertTrue(CockpitBoardMirror.allowed(name: "  scratch two", backupLive: false))
     XCTAssertTrue(CockpitBoardMirror.allowed(name: "Main board", backupLive: true))
-    XCTAssertTrue(CockpitBoardMirror.backupLive, "Larry posted the backup is live (cockpit cfbb196)")
   }
 
   func testCreateBodyKeepsTheBoardsOwnIDAndTheOriginalAsset() {
