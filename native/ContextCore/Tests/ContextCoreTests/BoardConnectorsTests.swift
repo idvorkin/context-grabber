@@ -413,6 +413,19 @@ final class BoardConnectorsTests: XCTestCase {
     XCTAssertEqual([c.from, c.to], ["gA", "gB"])
   }
 
+  /// Story 910: a lasso of just his arrow, its V head 50 pt across, still erases the head with the shaft.
+  func testConnectOnJustHisArrowTakesABigHead() throws {
+    let metas = two.metas
+    var strokes = drawn
+    strokes[3] = line("head", [CGPoint(x: 460, y: 285), CGPoint(x: 495, y: 310), CGPoint(x: 455, y: 330)])
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: ["shaft", "head"], id: "k1", strokes: strokes, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "the shaft and its big head both go")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"])
+  }
+
   func testTheNotesRoundTrip() {
     let c = BoardConnector(
       from: "a", to: "b", fromSide: .bottom, toSide: .top, route: [CGPoint(x: 1, y: 2), CGPoint(x: 3, y: 4)],

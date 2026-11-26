@@ -314,8 +314,7 @@ public enum BoardConnectors {
     metas: BoardStrokeMeta = BoardStrokeMeta(), folds: [String: String] = [:]
   ) -> [BoardOps.Op]? {
     let chosen = strokes.filter { !$0.hidden && $0.ids.contains(where: names.contains) }
-    let longest = chosen.indices.max { length(chosen[$0]) < length(chosen[$1]) }
-    if chosen.indices.allSatisfy({ $0 == longest || small(chosen[$0]) }),
+    if !chosen.contains(where: isBox),
       let ops = connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
     {
       return ops
@@ -337,6 +336,12 @@ public enum BoardConnectors {
   static let headTouch: CGFloat = 8
 
   static func small(_ s: BoardOps.Stroke) -> Bool { max(s.bounds.width, s.bounds.height) <= headSize }
+
+  /// A box's outline: bigger than a head, and closed on itself (its ends within a quarter of its length).
+  static func isBox(_ s: BoardOps.Stroke) -> Bool {
+    guard !small(s), let a = s.points.first, let b = s.points.last else { return false }
+    return hypot(b.x - a.x, b.y - a.y) <= length(s) / 4
+  }
 
   static func length(_ s: BoardOps.Stroke) -> CGFloat {
     zip(s.points, s.points.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
