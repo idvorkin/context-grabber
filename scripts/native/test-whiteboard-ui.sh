@@ -31,6 +31,7 @@ kill -0 "$cockpit" 2>/dev/null || { echo "the fake Cockpit did not start on port
 # this list for its whiteboard area, and scripts/native/test-testing-lists.sh holds it to docs/TESTING.md and the
 # native/UITests/Whiteboard*UITests.swift files.
 classes=(
+  -only-testing:GrabberNativeUITests/WhiteboardAnswerCardUITests
   -only-testing:GrabberNativeUITests/WhiteboardBubblesUITests
   -only-testing:GrabberNativeUITests/WhiteboardCockpitBoardsUITests
   -only-testing:GrabberNativeUITests/WhiteboardConnectUITests

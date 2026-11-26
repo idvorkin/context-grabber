@@ -37,13 +37,17 @@ struct WhiteboardQuestionAnsweredFace: View {
 
   var body: some View {
     let lines = WhiteboardQuestions.lines(card, title: nil)
+    // Story 1355 (#1439): Larry's answer card is his, in his purple; an answered question is grey.
+    let larry = Color(uiColor: UIColor(rgb: WhiteboardTurn.larryColor))
     HStack(alignment: .center, spacing: 10 * scale) {
-      Capsule().fill(Color(white: 0.78)).frame(width: max(1.5, 3 * scale))
+      Capsule().fill(card.fromLarry ? larry : Color(white: 0.78)).frame(width: max(1.5, 3 * scale))
       VStack(alignment: .leading, spacing: 1 * scale) {
         ForEach(Array(lines.enumerated()), id: \.offset) { i, line in
           Text(line)
             .font(.system(size: max(6, (i == 0 && lines.count > 1 ? 13 : 16) * scale)))
-            .foregroundStyle(i == 0 && lines.count > 1 ? Color(white: 0.5) : Color(white: 0.16))
+            .foregroundStyle(
+              i == 0 && lines.count > 1 ? (card.fromLarry ? larry : Color(white: 0.5)) : Color(white: 0.16)
+            )
             .lineLimit(1)
             .truncationMode(.tail)
         }

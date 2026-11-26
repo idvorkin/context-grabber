@@ -472,3 +472,68 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I tap *Collapse* on its strip twice
 - **Then:** it went to its short line, then to a grey round *✓* (an open card's round is a purple *?*), *Open out* showed on the strip once it wasn't full, and a tap on the round opened it out to full
 
+
+---
+
+### User Story 1355:
+
+- **Summary:** Larry's answer lands on the board as a card
+- **Status:** implemented in [87eb3ef3](https://github.com/idvorkin/context-grabber/commit/87eb3ef3); verified by host tests (`WhiteboardAnswerCardsTests`; `just test`), the Mac build and on the iPad simulator (`WhiteboardAnswerCardUITests.testLarrysAnswerLandsAsHisCardAndFolds`, against the fake Cockpit's `/fake/larry-answers`); not yet on the iPad
+- **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439) (Igor, 2026-11-24, iPad board: "Add an answer card")
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
+
+#### Use Case:
+- **As someone** drawing with Larry on the iPad
+- **I want to** see his answer as a card on the drawing it is about
+- **so that** it stays where the question was, not only as loose ghost labels or words in the conversation
+
+#### Acceptance Criteria:
+- **Scenario:** Larry answers with a card
+- **Given:** a board open on the iPad
+- **When:** Larry's reply on the board's thread holds an answer with a title, his words and a place
+- **Then:** one card lands there, once, reading *Larry · \<title>* over his words, in Larry's purple
+
+---
+
+### User Story 1356:
+
+- **Summary:** An answer to a question card answers it and lands under it, as on the web board
+- **Status:** implemented in [87eb3ef3](https://github.com/idvorkin/context-grabber/commit/87eb3ef3); verified by host tests (`WhiteboardAnswerCardsTests.testAnAnswerNamingAQuestionCardAnswersItAndLandsUnderIt`, `testAnAnswerNamingAClosedOrArchivedQuestionCardLandsAsItsOwnCard`) and on the iPad simulator (`WhiteboardAnswerCardUITests.testAnAnswerNamingAQuestionCardAnswersIt`); matches the web board (Cockpit 8e4b034); not yet on the iPad
+- **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
+
+#### Use Case:
+- **As someone** who asked something on a board's question card
+- **I want to** see Larry's answer on that card
+- **so that** the question and its answer stay together
+
+#### Acceptance Criteria:
+- **Scenario:** Larry's answer names a question card
+- **Given:** an open question card on the board
+- **When:** Larry's reply holds an answer that names that card's question
+- **Then:** the question card folds to *✓ \<the answer's title>*, and his answer card lands just under it, as on the web board
+
+- **Scenario:** Larry's answer names a card that is already answered
+- **Given:** a question card Igor has already answered, or one archived off the board
+- **When:** Larry's reply holds an answer that names that card's question
+- **Then:** the card keeps its answer and stays where it is, and his answer card lands at his place on its own
+
+---
+
+### User Story 1357:
+
+- **Summary:** An answer card folds, moves, archives and erases like an answered card
+- **Status:** implemented in [87eb3ef3](https://github.com/idvorkin/context-grabber/commit/87eb3ef3); verified by host tests (`WhiteboardAnswerCardsTests.testAnAnswerCardFoldsAndTheEraserTakesIt`) and on the iPad simulator (the card's Collapse to its title line, the read-only tap); the drag and the eraser on the iPad simulator are covered by the question card's own tests, which share the card; not yet on the iPad
+- **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439)
+- **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
+
+#### Use Case:
+- **As someone** with Larry's answer cards on a board
+- **I want to** fold, move, archive and erase them as I do answered cards
+- **so that** the board stays mine to arrange
+
+#### Acceptance Criteria:
+- **Scenario:** I tidy an answer card
+- **Given:** an answer card on the board
+- **When:** I tap it, collapse it, drag it, then erase it
+- **Then:** the tap opened nothing to answer, *Collapse* took it to its title line then a round, the drag moved it and it stayed there, and the eraser took it

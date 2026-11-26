@@ -273,8 +273,12 @@ private struct WhiteboardQuestionPopup: View {
   /// Story 885: the question and the answer in full; the card's strip collapses it (story 1321).
   private func answered(_ card: WhiteboardQuestion, _ answer: WhiteboardQuestion.Answer) -> some View {
     VStack(alignment: .leading, spacing: 8) {
-      Label(answer.title ?? "Answered", systemImage: "checkmark.circle")
-        .font(.headline)
+      // Story 1355 (#1439): Larry's answer card says it is his.
+      Label(
+        card.fromLarry ? "Larry · \(answer.title ?? "Answer")" : (answer.title ?? "Answered"),
+        systemImage: card.fromLarry ? "bubble.left" : "checkmark.circle"
+      )
+      .font(.headline)
       if !answer.label.isEmpty { Text(answer.label).font(.body.weight(.semibold)) }
       if let note = answer.note { Text(note).foregroundStyle(.secondary) }
     }
