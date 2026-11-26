@@ -2027,7 +2027,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1359:
 
 - **Summary:** Drawing on a full board stays as quick as on a new one
-- **Status:** in progress
+- **Status:** implemented in [06ede2f6](https://github.com/idvorkin/context-grabber/commit/06ede2f6); verified by the contract tests on the iPad Pro 11-inch (M5) simulator (`StrokeCacheTests`: a 1,000-stroke board read again in 2.9 ms against 113 sampled; a remade stroke hits; a moved, cut or recoloured one is sampled again; `just native-test-contracts`), `just test` and the Mac build; the iPad's `ink_part_slow` before and after is owed
 - **Issues:** [#1527](https://github.com/idvorkin/context-grabber/issues/1527) (the iPad, 2026-11-26: drawing lag on a board of about 960 strokes; the logs since 11-22 show a stroke's handling growing from about 8 ms on a new board to 85 on one of 600 or more, and up to 5 s on the slow ones, in the marks a stroke writes over and the model taking the drawing)
 - **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *The log says what held the board up while Igor wrote*
 
