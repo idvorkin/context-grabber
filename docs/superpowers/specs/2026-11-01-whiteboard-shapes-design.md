@@ -269,6 +269,15 @@ suggest changes the board until Igor keeps it.
 - A point in an answer that lies past anywhere the board could reach is ignored, and a shape left with too few points
   isn't shown: a model's bad number never breaks the board. A label with nothing to draw (an emoji has no outline)
   isn't shown or counted either.
+- **A long label wraps to the picture's width** (#1526; Igor on the iPad, 2026-11-26: "Larry ink should be wrapped as
+  required"). Larry sends a label as one line at whatever length he wrote it, so a long one ran past the right edge of
+  the board he was looking at. A label that would cross the right edge of the picture he was sent (less a small
+  margin) goes on to further lines, breaking between words; a single word too long for the room breaks where it must.
+  Each further line starts at the label's left edge, one line pitch lower, the pitch in proportion to the letters' size
+  (a quarter more than their height). A label that fits draws as before, on one line, and a label placed so near the
+  edge that hardly any room is left still gets a few words to a line, never one letter. Keeping it keeps the lines as
+  shown, and a tap anywhere in the box its lines fill reaches it. Texts with no picture behind them (a reworded text,
+  a word turned to text) don't wrap: they have no edge to wrap to.
 
 ### When he has stopped writing (stories 892–894; Igor, 2026-11-16: "match Larry's web board")
 
