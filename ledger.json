@@ -1,32 +1,18 @@
 {
  "reservations": [
   {
-   "id": 1347,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "?",
-   "at": 1795637595.5006778,
-   "until": "2026-11-26T20:13:15Z"
-  },
-  {
-   "id": 1700,
-   "journey": "02-larry.md",
-   "branch": "native/chat-delta-poll",
-   "at": 1795652728.187818,
-   "until": "2026-11-27T00:25:28Z"
-  },
-  {
-   "id": 1701,
-   "journey": "02-larry.md",
-   "branch": "native/chat-delta-poll",
-   "at": 1795652728.187818,
-   "until": "2026-11-27T00:25:28Z"
-  },
-  {
    "id": 1702,
    "journey": "02-larry.md",
    "branch": "?",
    "at": 1795654305.302428,
    "until": "2026-11-27T00:51:45Z"
+  },
+  {
+   "id": 1348,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/wrap-larry-labels-1526",
+   "at": 1795712563.746263,
+   "until": "2026-11-27T17:02:43Z"
   }
  ]
 }
