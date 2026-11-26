@@ -52,10 +52,19 @@ final class LiveHeartRateOnCalls: ObservableObject {
 
   /// Every change of the call's state: asks to start once it's live, and to end once it ends.
   func onCall(_ snap: CallSnapshot) {
+    let action = plan.next(
+      state: snap.state, redialing: snap.redialing, enabled: enabled && Self.offered, now: Date())
     if snap.state == .connecting, !plan.inCall { note = nil }
-    guard let action = plan.next(state: snap.state, redialing: snap.redialing, enabled: enabled && Self.offered)
-    else { return }
-    ask(action)
+    if let action { ask(action) }
+    if snap.state == .ended { scheduleEnd() }
+  }
+
+  private func scheduleEnd() {
+    Task { @MainActor [weak self] in
+      try? await Task.sleep(for: .seconds(LiveHeartRatePlan.endWait))
+      guard let self, let action = self.plan.endDue(now: Date()) else { return }
+      self.ask(action)
+    }
   }
 
   /// Exercise Analyzer's answer, from the `grabbernative://live-heart-rate/…` link it opened.
@@ -63,10 +72,10 @@ final class LiveHeartRateOnCalls: ObservableObject {
     switch callback {
     case .ok(let action):
       log.event("live_hr_link", ["action": action.rawValue, "stage": "callback", "ok": true])
-      if action == .start { note = nil }
+      if action == .start, plan.startAnswered(failed: false) { note = nil }
     case .error(let action, let reason):
       log.event("live_hr_link", ["action": action.rawValue, "stage": "callback", "ok": false, "reason": reason])
-      if action == .start { plan.startFailed() }
+      if action == .start, !plan.startAnswered(failed: true) { return }
       note = Self.noteText(action, reason)
     }
   }
@@ -76,7 +85,7 @@ final class LiveHeartRateOnCalls: ObservableObject {
     guard canOpen(url) else {
       let reason = "Exercise Analyzer isn't installed"
       log.event("live_hr_link", ["action": action.rawValue, "stage": "open", "ok": false, "reason": reason])
-      if action == .start { plan.startFailed() }
+      if action == .start, !plan.startAnswered(failed: true) { return }
       note = Self.noteText(action, reason)
       return
     }
@@ -86,7 +95,7 @@ final class LiveHeartRateOnCalls: ObservableObject {
         guard let self else { return }
         self.log.event("live_hr_link", ["action": action.rawValue, "stage": "opened", "ok": went])
         guard !went else { return }
-        if action == .start { self.plan.startFailed() }
+        if action == .start, !self.plan.startAnswered(failed: true) { return }
         self.note = Self.noteText(action, "iOS didn't open Exercise Analyzer")
       }
     }

@@ -881,8 +881,10 @@ every few seconds while he talks. The call ends that session when it ends.
   its audio keeps running in the background, as it does with the phone locked.
 - **What Igor sees:** Exercise Analyzer comes to the front for about a second while it asks the watch, then Grabber
   comes back on the call screen. The call carries on throughout, and the voice is never cut.
-- **When it ends:** when the call ends, Grabber asks Exercise Analyzer to end the Call session. It never ends a gym
-  workout; Exercise Analyzer refuses that.
+- **When it ends:** once the call has stayed ended for five seconds, Grabber asks Exercise Analyzer to end the Call
+  session. A call that connects again within those five seconds (the app hanging up and dialling again to heal a
+  silent microphone) is the same call: no end, and no second start. An answer that arrives after its call is over
+  changes nothing. It never ends a gym workout; Exercise Analyzer refuses that.
 - **When it can't:** if Exercise Analyzer isn't installed, or it says it couldn't start or end the session (a workout
   already running, the watch out of reach), the call carries on. A quiet line under the call says so, with the reason,
   and the line can be copied. Nothing else interrupts the call. The line stays until the next call begins, and a new
