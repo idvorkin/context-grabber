@@ -346,6 +346,8 @@ public enum BoardConnectors {
   /// An arrowhead's largest side, and how near the shaft's end its ink must come.
   static let headSize: CGFloat = 40
   static let headTouch: CGFloat = 8
+  /// How far apart two sides' ends may be and still make a box's corner: a hand-drawn corner overshoots or falls short.
+  static let corner: CGFloat = headSize / 2
 
   static func small(_ s: BoardOps.Stroke) -> Bool { max(s.bounds.width, s.bounds.height) <= headSize }
 
@@ -391,15 +393,15 @@ public enum BoardConnectors {
     }
     return open.filter { !isSide($0, of: open, in: chosen) }
       .sorted { length(chosen[$0]) > length(chosen[$1]) }
-      .prefix(4).map { $0 }
   }
 
-  /// A side of a box drawn as separate strokes (bead yzsq): both its ends meet an end of another long open stroke, as
-  /// a box's corners do. An arrow's tail lands on a box's side, not a corner, and its head's ink is short.
+  /// A side of a box drawn as separate strokes (bead yzsq): both its ends come within a hand-drawn corner's overshoot
+  /// or gap of an end of another long open stroke, as a box's corners do. An arrow's tail lands on a box's side, not a
+  /// corner, and its head's ink is short.
   static func isSide(_ k: Int, of open: [Int], in chosen: [BoardOps.Stroke]) -> Bool {
     let ends = { (s: BoardOps.Stroke) in [s.points.first, s.points.last].compactMap { $0 } }
     let others = open.filter { $0 != k }.flatMap { ends(chosen[$0]) }
-    let meets = { (p: CGPoint) in others.contains { hypot($0.x - p.x, $0.y - p.y) <= headTouch } }
+    let meets = { (p: CGPoint) in others.contains { hypot($0.x - p.x, $0.y - p.y) <= corner } }
     let mine = ends(chosen[k])
     return mine.count == 2 && mine.allSatisfy(meets)
   }
