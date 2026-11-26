@@ -139,7 +139,7 @@ struct WhiteboardProblemRow: View {
 
 /// Story 768: the open note, above the board (story 1048): the board's thread, selectable, then the status chip and
 /// what the mic hears, and *Open in Chat*. The Pencil never acts on it: the thread's text takes finger touches only,
-/// and the rest holds nothing to scroll or draw on. Its text stops at about seventy characters (story 1045), and its
+/// and the rest holds nothing to scroll or draw on. Docked, its text runs to about half the board (story 1045, #1438), and its
 /// thread at a fifth of the page, past which it scrolls rather than grows (story 837).
 struct WhiteboardConversationPanel: View {
   /// The thread's recent end.
@@ -166,7 +166,7 @@ struct WhiteboardConversationPanel: View {
   var dock: WhiteboardPanelDock?
   /// Story 1277 (#1384): Lines or Bubbles, remembered for the next board.
   @AppStorage(WhiteboardPanelLook.storageKey) private var look: WhiteboardPanelLook = .lines
-  /// Story 1045 (#1003): the conversation's text stops at about seventy characters of its own type.
+  /// Story 1045 (#1003): about seventy characters of the conversation's type, the narrowest its docked text runs.
   @ScaledMetric(relativeTo: .footnote) private var readableWidth: CGFloat = 470
   /// Story 837: what the panel's chip, Open in Chat and padding take, and the fewest lines of thread it keeps.
   @ScaledMetric(relativeTo: .footnote) private var panelChrome: CGFloat = 72
@@ -174,6 +174,15 @@ struct WhiteboardConversationPanel: View {
 
   /// Story 1313 (#1416): what the chip, the mic's words and the foot really take under the thread, once laid out.
   @State private var belowThread: CGFloat = 0
+  /// Story 1045 (#1438): the width the panel is given, so docked its text runs to about half the board.
+  @State private var givenWidth: CGFloat = 0
+
+  /// Story 1045 (#1438): docked, about half the board and never under seventy characters; floating, the card's width.
+  private var textWidth: CGFloat {
+    WhiteboardNote.panelTextWidth(
+      board: Double(givenWidth), readable: Double(readableWidth), floating: dock?.floating ?? false
+    ).map { CGFloat($0) } ?? .infinity
+  }
 
   /// The panel's chrome: measured when it has been laid out (the foot can be taller than a line), else the estimate.
   private var chrome: CGFloat { belowThread > 0 ? belowThread + 18 : panelChrome }
@@ -215,9 +224,14 @@ struct WhiteboardConversationPanel: View {
         belowThread = $0
       }
     }
-    .frame(maxWidth: readableWidth, alignment: .leading)
+    .frame(maxWidth: textWidth, alignment: .leading)
     .padding(.horizontal).padding(.vertical, 6)
     .frame(maxWidth: .infinity, alignment: .leading)
+    .onGeometryChange(for: CGFloat.self) {
+      $0.size.width
+    } action: {
+      givenWidth = $0
+    }
     .background(.regularMaterial)
     .contentShape(Rectangle())
     .accessibilityElement(children: .contain)

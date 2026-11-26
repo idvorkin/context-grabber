@@ -56,6 +56,16 @@ public enum WhiteboardNote {
     min(max(board, 0), max(board / 5, panelFloor))
   }
 
+  /// Story 1045 (#1438, Igor 2026-11-24: "Make docked chat be wider, like only halfway"): how wide the panel's text
+  /// runs over a board `board` points wide. Docked, about half the board, never narrower than `readable` (about seventy
+  /// characters of its type) nor wider than the board; floating, nil: the text fills the card it was given. A board not
+  /// laid out yet (0) gets `readable`.
+  public static func panelTextWidth(board: Double, readable: Double, floating: Bool) -> Double? {
+    if floating { return nil }
+    guard board > 0 else { return readable }
+    return min(board, max(board / 2, readable))
+  }
+
   /// Bead context-grabber-97s (stories 837, 887): whether the panel's thread, scrolled to `offset` of the `end` its newest
   /// line sits at, follows the newest: a new line keeps it at the bottom only while Igor is there, within a few points.
   /// Scrolled up to read, a new line leaves him where he is.

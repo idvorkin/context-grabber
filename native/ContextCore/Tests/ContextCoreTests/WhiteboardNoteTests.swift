@@ -358,6 +358,20 @@ final class WhiteboardNoteTests: XCTestCase {
     XCTAssertEqual(WhiteboardNote.panelHeight(board: -1), 0)
   }
 
+  /// Story 1045 (#1438): docked, the text runs to about half the board, never narrower than about seventy characters;
+  /// floating, it fills the card.
+  func testTheDockedTextIsAboutHalfTheBoard() {
+    XCTAssertEqual(
+      WhiteboardNote.panelTextWidth(board: 1194, readable: 470, floating: false), 597, "an iPad in landscape: half")
+    XCTAssertEqual(
+      WhiteboardNote.panelTextWidth(board: 834, readable: 470, floating: false), 470, "portrait: seventy characters")
+    XCTAssertEqual(
+      WhiteboardNote.panelTextWidth(board: 400, readable: 470, floating: false), 400, "never wider than the board")
+    XCTAssertNil(
+      WhiteboardNote.panelTextWidth(board: 1194, readable: 470, floating: true), "floating: the card's width")
+    XCTAssertEqual(WhiteboardNote.panelTextWidth(board: 0, readable: 470, floating: false), 470, "not laid out yet")
+  }
+
   /// Bead context-grabber-97s: a new line pulls the panel to the newest only while Igor is at the bottom.
   func testThePanelFollowsTheNewestOnlyFromTheBottom() {
     XCTAssertTrue(WhiteboardNote.followsNewest(offset: 300, end: 300), "at the bottom")
