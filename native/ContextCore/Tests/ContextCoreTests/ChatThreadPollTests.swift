@@ -74,6 +74,11 @@ final class ChatThreadPollTests: XCTestCase {
     XCTAssertNil(poll.cursor)
   }
 
+  func testADeviceCopyTheAppCannotReadIsNoCopy() throws {
+    let saved = Data(#"{"rows":[{"id":"m1","json":"e30="}],"cursor":"m1","etag":"x"}"#.utf8)
+    XCTAssertNil(ChatThreadPoll(saved: saved))
+  }
+
   func testOpeningAsksForTheWholeThreadButAPollAsksForWhatChanged() throws {
     var poll = ChatThreadPoll()
     _ = poll.apply(status: 200, etag: #"W/"a""#, body: answer([row("m1", "one")], full: true, cursor: "m1"))

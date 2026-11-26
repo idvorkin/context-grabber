@@ -26,15 +26,6 @@ public struct ChatThreadPoll: Equatable, Sendable {
     case changed(new: Int, changed: Int)
     /// Not read; the cursor and ETag are dropped so the next read is whole.
     case failed(String)
-
-    public var logName: String {
-      switch self {
-      case .unchanged: return "unchanged"
-      case .whole: return "whole"
-      case .changed: return "changed"
-      case .failed: return "failed"
-      }
-    }
   }
 
   public private(set) var rows: [Row] = []
@@ -117,6 +108,10 @@ public struct ChatThreadPoll: Equatable, Sendable {
   /// The thread as the screen shows it; nil before anything was read.
   public var messages: [ChatMessage]? {
     guard held else { return nil }
+    return Self.decode(rows)
+  }
+
+  private static func decode(_ rows: [Row]) -> [ChatMessage]? {
     let joined = Data("[".utf8) + rows.map(\.json).joined(separator: Data(",".utf8)) + Data("]".utf8)
     return try? JSONDecoder().decode([ChatMessage].self, from: joined)
   }
@@ -136,7 +131,9 @@ public struct ChatThreadPoll: Equatable, Sendable {
   }
 
   public init?(saved: Data) {
-    guard let copy = try? JSONDecoder().decode(Saved.self, from: saved) else { return nil }
+    guard let copy = try? JSONDecoder().decode(Saved.self, from: saved), Self.decode(copy.rows) != nil else {
+      return nil
+    }
     rows = copy.rows
     cursor = copy.cursor
     etag = copy.etag

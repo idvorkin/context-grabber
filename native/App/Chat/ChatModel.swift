@@ -566,7 +566,7 @@ final class ChatModel: ObservableObject {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try data.write(to: file, options: .atomic)
       } catch {
-        log.event("chat", ["action": "thread_copy_failed", "thread": key, "reason": error.localizedDescription])
+        log.event("error", ["where": "chat_thread_copy", "thread": key, "message": error.localizedDescription])
       }
     }
   }
