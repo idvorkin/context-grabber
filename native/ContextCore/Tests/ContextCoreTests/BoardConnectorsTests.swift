@@ -398,7 +398,8 @@ final class BoardConnectorsTests: XCTestCase {
         "note", [CGPoint(x: 250, y: 140), CGPoint(x: 270, y: 155), CGPoint(x: 290, y: 140), CGPoint(x: 310, y: 155)]),
     ]
     let ops = try XCTUnwrap(
-      BoardConnectors.connect(selected: ["shaft", "head", "note"], id: "k1", strokes: strokes, texts: typed))
+      BoardConnectors.connect(
+        selected: ["g100", "g200", "shaft", "head", "note"], id: "k1", strokes: strokes, texts: typed))
     let plan = BoardOps.plan(ops, strokes: strokes, texts: typed, pages: 1)
     XCTAssertEqual(plan.erase, [2, 3], "only his arrow's ink goes; the note stays")
     XCTAssertNotNil(BoardConnector(plan.added.first?.meta))
@@ -442,6 +443,39 @@ final class BoardConnectorsTests: XCTestCase {
       BoardConnectors.connect(selected: ["shaft", "head"], id: "k1", strokes: strokes, metas: metas))
     let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
     XCTAssertEqual(plan.erase, [2, 3], "the shaft and its big head both go")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"])
+  }
+
+  /// Story 910: a lasso of just his arrow, its V head in two strokes drawn 12 pt past the shaft's tip; all of it goes.
+  func testConnectOnJustHisArrowTakesAHeadDrawnPastTheTip() throws {
+    let metas = two.metas
+    let strokes =
+      two.strokes + [
+        line("shaft", [CGPoint(x: 165, y: 115), CGPoint(x: 488, y: 310)]),
+        line("arm1", [CGPoint(x: 500, y: 300), CGPoint(x: 512, y: 310)]),
+        line("arm2", [CGPoint(x: 512, y: 310), CGPoint(x: 500, y: 320)]),
+      ]
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: ["shaft", "arm1", "arm2"], id: "k1", strokes: strokes, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3, 4], "the shaft and both arms go")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"])
+  }
+
+  /// #1440, story 1358: a short arrow whose V head's ink is longer than its shaft, lassoed with both boxes.
+  func testConnectInsideAWholeDiagramTakesAHeadLongerThanTheShaft() throws {
+    let strokes = [
+      box("A", 100, 100), box("B", 300, 100),
+      line("shaft", [CGPoint(x: 165, y: 112), CGPoint(x: 288, y: 112)]),
+      line("head", [CGPoint(x: 230, y: 82), CGPoint(x: 288, y: 112), CGPoint(x: 230, y: 142)]),
+    ]
+    let metas = grouped([("A", "gA"), ("B", "gB")])
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: ["A", "B", "shaft", "head"], id: "k1", strokes: strokes, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "the shaft and its head go; the boxes stay")
     let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
     XCTAssertEqual([c.from, c.to], ["gA", "gB"])
   }

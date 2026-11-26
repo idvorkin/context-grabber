@@ -305,6 +305,14 @@ public enum BoardConnectors {
     return (tail, tip)
   }
 
+  /// A known shaft's tail and head: the head is the end its heads touch, else its last point.
+  static func arrow(shaft: BoardOps.Stroke, heads: [BoardOps.Stroke]) -> (tail: CGPoint, head: CGPoint)? {
+    guard var tail = shaft.points.first, var tip = shaft.points.last, tail != tip else { return nil }
+    let touched = { (p: CGPoint) in heads.contains { $0.bounds.insetBy(dx: -headTouch, dy: -headTouch).contains(p) } }
+    if touched(tail) && !touched(tip) { swap(&tail, &tip) }
+    return (tail, tip)
+  }
+
   /// Igor's Connect on the strokes he lassoed (`selected`, their names): his arrow's ink erased and a connector in its
   /// place, as ops for `BoardOps.plan`; nil unless both ends land on two different things outside the arrow. When the
   /// whole selection isn't one arrow (#1440: PaperKit's lasso took the whole diagram, both boxes and the arrow), the
@@ -314,16 +322,23 @@ public enum BoardConnectors {
     metas: BoardStrokeMeta = BoardStrokeMeta(), folds: [String: String] = [:]
   ) -> [BoardOps.Op]? {
     let chosen = strokes.filter { !$0.hidden && $0.ids.contains(where: names.contains) }
-    if chosen.count > 1, chosen.count <= maxDiagram {
-      for shaft in shafts(chosen) {
-        let arrow = [chosen[shaft]] + heads(of: shaft, in: chosen).map { chosen[$0] }
-        if let ops = connectArrow(arrow, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
-          return ops
-        }
+    if chosen.count <= 3, !chosen.contains(where: isBox),
+      let ops = connectArrow(
+        chosen, ends: arrow(chosen), id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
+    {
+      return ops
+    }
+    guard chosen.count > 1, chosen.count <= maxDiagram else { return nil }
+    for shaft in shafts(chosen) {
+      let marks = heads(of: shaft, in: chosen).map { chosen[$0] }
+      let ends = arrow(shaft: chosen[shaft], heads: marks)
+      if let ops = connectArrow(
+        [chosen[shaft]] + marks, ends: ends, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
+      {
+        return ops
       }
     }
-    guard chosen.count <= 3, !chosen.contains(where: isBox) else { return nil }
-    return connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
+    return nil
   }
 
   /// The most strokes a lassoed diagram may hold for Connect to look inside it for an arrow.
@@ -380,10 +395,10 @@ public enum BoardConnectors {
 
   /// `chosen` as one arrow: its ink erased and a connector from tail to head, when both ends land on two things.
   private static func connectArrow(
-    _ chosen: [BoardOps.Stroke], id: String, strokes: [BoardOps.Stroke], texts: [BoardText],
-    metas: BoardStrokeMeta, folds: [String: String]
+    _ chosen: [BoardOps.Stroke], ends: (tail: CGPoint, head: CGPoint)?, id: String, strokes: [BoardOps.Stroke],
+    texts: [BoardText], metas: BoardStrokeMeta, folds: [String: String]
   ) -> [BoardOps.Op]? {
-    guard !chosen.isEmpty, let ends = arrow(chosen) else { return nil }
+    guard !chosen.isEmpty, let ends else { return nil }
     let ops: [BoardOps.Op] = [
       .delete(chosen.flatMap(\.ids)),
       .connector(
