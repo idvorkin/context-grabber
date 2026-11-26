@@ -74,13 +74,20 @@ final class WhiteboardQuestionsModel: ObservableObject {
     await fillAnswers()
   }
 
-  /// A look at the board's thread: Larry's question marks not landed before land where he put them.
+  /// A look at the board's thread: Larry's question marks not landed before land where he put them, and his answer marks
+  /// land as his cards or answer the question cards they name (story 1355, #1439).
   func looked(_ body: Data) {
     let placements = WhiteboardQuestions.placements(body)
-    guard !placements.isEmpty else { return }
+    let answers = WhiteboardQuestions.answerPlacements(body)
+    guard !placements.isEmpty || !answers.isEmpty else { return }
     var next = board
     let landed = next.land(placements)
+    let answered = next.landAnswers(answers)
     change(next)
+    if answered > 0 {
+      log.event(
+        "whiteboard_questions", ["action": "answers_landed", "board": boardID, "from": "larry", "cards": answered])
+    }
     guard landed > 0 else { return }
     log.event("whiteboard_questions", ["action": "landed", "board": boardID, "from": "larry", "cards": landed])
     Task { await self.readAsks(reason: "landed") }

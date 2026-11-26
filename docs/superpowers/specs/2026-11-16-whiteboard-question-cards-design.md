@@ -143,6 +143,28 @@ board takes nothing. An open card is still live: the eraser leaves it.
 card is opened. Offline, or with no Cockpit address, nothing is read: the cards on the board stay as they are, and an
 open card's popup says the Cockpit's asks didn't load.
 
+## Answer cards (#1439)
+
+Igor, on his iPad board 2026-11-24: *"Add an answer card."* The counterpart of a question card: when Larry answers
+something about a drawing, his answer can land on the board as a card, not only as loose ghost labels or words in the
+conversation.
+
+**Where one comes from.** Larry's reply on the board's thread holds an answer: a short title, the answer's words, and
+where he put it. It lands there, inside the page, once per reply. If he says which question card it answers, it does
+what the web board does: that card turns answered and folds to *✓ \<the answer's title>*, and the answer card lands
+just under it.
+
+**What it looks like.** A card in Larry's purple, edged like a question card but marked as his answer: *Larry ·
+\<title>* on its first line and his words under it, wrapped to the card. With no title, the first line of his words is
+its title.
+
+**What it does.** Everything an answered question card does: it collapses to its title line, then to a round, and a tap
+opens it out; it drags anywhere on the page and stays there; it archives off the board and *Reopen* puts it back; the
+eraser takes it. A tap on it opens nothing to answer: there is nothing to answer. It is never ink: *Keep* and the
+handwriting tools don't touch it.
+
+**On the web board.** The same card, from the same reply, on Larry's web board (the Cockpit's part).
+
 ## Explaining itself
 
 The session log says when cards landed (how many, from Larry's reply or from the open asks), when a card's answer came
@@ -173,12 +195,19 @@ works. Never the answer's words.
 - A card, a chip or a *?* drags to anywhere on the page and stays there, across a reopen; a drag opens nothing.
 - The eraser takes an answered card and leaves an open one.
 - Offline or with no address nothing is read, and the board's cards stay as they were.
+- Larry's reply holding an answer puts one answer card on the board, at his place, once: *Larry · \<title>* over his
+  words.
+- An answer that names a question card folds that card to *✓ \<the answer's title>* and lands just under it.
+- An answer card collapses, rounds, drags, archives and reopens like an answered card; the eraser takes it; a tap
+  opens nothing to answer.
 
 ## Depends on the Cockpit
 
 `GET /asks?snoozed=1` (the open asks, the snoozed ones too, so a snoozed ask's card stays open), `POST /act` (the
 answer), and `GET /ink/answers?ids=` (the question and answer of closed asks, the decisions log first). Larry places a
 card with a `question` shape in a reply on the board's thread: the ask's id and where, in the picture's pixels.
+An answer card comes from an `answer` shape in the same kind of reply: its title, its words, where, and
+optionally the question card it answers (#1439; the board contract names the shape).
 *Thinking* uses the ask's own chat thread, keyed by the ask's id: `POST /chat` with `subject_id` set to the ask's id
 and Igor's words (as a board's chat post, no picture), and `GET /chat/<ask id>` for the conversation (Larry,
 2026-11-24: no new route or verb; the ask closes only when an option or Igor's words answer it).

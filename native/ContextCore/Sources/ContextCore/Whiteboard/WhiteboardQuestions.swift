@@ -48,10 +48,12 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
   public var archived: Int64?
   /// Story 1316 (#1387): Igor is thinking it over with Larry on the ask's own thread.
   public var thinking: Bool
+  /// Story 1355 (#1439): Larry's answer card, not a question: it lands answered, with his title and words.
+  public var fromLarry: Bool
 
   public init(
     id: String, ask: String, x: CGFloat, y: CGFloat, answered: Answer? = nil, collapsed: Bool = false,
-    hidden: Bool = false, archived: Int64? = nil, thinking: Bool = false
+    hidden: Bool = false, archived: Int64? = nil, thinking: Bool = false, fromLarry: Bool = false
   ) {
     self.id = id
     self.ask = ask
@@ -62,9 +64,12 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
     self.hidden = hidden
     self.archived = archived
     self.thinking = thinking
+    self.fromLarry = fromLarry
   }
 
-  private enum CodingKeys: String, CodingKey { case id, ask, x, y, answered, collapsed, hidden, archived, thinking }
+  private enum CodingKeys: String, CodingKey {
+    case id, ask, x, y, answered, collapsed, hidden, archived, thinking, fromLarry
+  }
 
   /// A board kept before cards could hide, archive or think has none of those: its cards are shown, on the board.
   public init(from decoder: Decoder) throws {
@@ -78,10 +83,12 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
     hidden = try c.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
     archived = try c.decodeIfPresent(Int64.self, forKey: .archived)
     thinking = try c.decodeIfPresent(Bool.self, forKey: .thinking) ?? false
+    fromLarry = try c.decodeIfPresent(Bool.self, forKey: .fromLarry) ?? false
   }
 
   /// Closed, but the board doesn't hold its question and answer yet: none, no question, or the placeholder.
   public var needsAnswer: Bool {
+    if fromLarry { return false }
     guard let answered else { return true }
     return answered.title == nil || answered == .unknown
   }
@@ -91,7 +98,7 @@ public struct WhiteboardQuestion: Codable, Equatable, Sendable, Identifiable {
 public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   public internal(set) var cards: [WhiteboardQuestion]
   /// Larry's question marks that have landed (`WhiteboardMarks.mark`): each lands once, even once erased.
-  public private(set) var handled: [String]
+  public internal(set) var handled: [String]
 
   public init(cards: [WhiteboardQuestion] = [], handled: [String] = []) {
     self.cards = cards
@@ -243,7 +250,7 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
     card.hidden ? mark : width
   }
 
-  private static func inPage(x: CGFloat, width: CGFloat) -> CGFloat {
+  static func inPage(x: CGFloat, width: CGFloat) -> CGFloat {
     max(BoardPages.margin + 8, min(x, BoardPages.pageWidth - width - 8))
   }
 
@@ -279,6 +286,7 @@ public struct WhiteboardQuestions: Codable, Equatable, Sendable {
   /// note); folded, the question alone; one answered with no question known, its answer.
   public static func lines(_ card: WhiteboardQuestion, title: String?) -> [String] {
     if card.hidden { return [card.answered == nil ? "?" : "✓"] }
+    if card.fromLarry, let a = card.answered { return answerCardLines(a, collapsed: card.collapsed) }
     guard let a = card.answered else { return [openLine(title: title, thinking: card.thinking)] }
     guard let question = a.title else { return ["✓ \(a.label.isEmpty ? "answered" : a.label)"] }
     if card.collapsed { return ["✓ \(question)"] }

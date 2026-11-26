@@ -77,6 +77,9 @@ Question cards on a board (stories 880-886): GET /asks?snoozed=1 is GET /asks; P
 the asks as /fake/asks does (with "other" as there) and has Larry put a question card for that ask on the newest board thread ({kind: question,
 ask, x, y} in the picture's pixels, with its frame); GET /ink/answers?ids=a,b answers with the question and answer of the
 asks decided here, as ink_store.decision_answer reads them, and lists the rest as unknown.
+Answer cards (#1439, stories 1355-1357): POST /fake/larry-answers {"text": words, "title"?, "re"?: ask id, "y"?} has Larry
+put an answer card on the newest board thread ({kind: answer, text, x, y, title?, re?} in the picture's pixels, with its
+frame).
 Thread igor2-88g.820 holds one message of Igor's and Larry's answer, for Send to new chat (story 820; ChatMoveUITests
 moves Igor's out, so a retry against the same fake Cockpit checks only the moved line; a full second run needs a
 fresh one, as the chat UI script starts).
@@ -952,6 +955,19 @@ class Handler(BaseHTTPRequestHandler):
                 open_asks(True, other=bool(data.get("other")))
                 key = list(BOARD_MESSAGES)[-1]
                 marks(key, "a question for you", [{"kind": "question", "ask": data.get("ask"), "x": 40, "y": 40}])
+            return self._json(200, {"ok": True})
+        if path == "/fake/larry-answers":
+            # Answer cards (#1439, stories 1355-1357): Larry's answer on the newest board thread, {kind: answer, text,
+            # x, y, title?, re?} in the picture's pixels, with its frame.
+            with LOCK:
+                if not BOARD_MESSAGES:
+                    return self._json(404, {"ok": False, "error": "no board thread"})
+                key = list(BOARD_MESSAGES)[-1]
+                shape = {"kind": "answer", "text": data.get("text", ""), "x": 40, "y": data.get("y", 120)}
+                for field in ("title", "re"):
+                    if data.get(field):
+                        shape[field] = data[field]
+                marks(key, "an answer for you", [shape])
             return self._json(200, {"ok": True})
         if path == "/whiteboard/events":
             self._report({"body": data})
