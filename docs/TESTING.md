@@ -52,6 +52,7 @@ line of its own here and in the recipe; `scripts/native/test-testing-lists.sh` f
 - `scripts/native/test-testflight.sh`: what `just testflight` refuses before it builds, from its dry run (stories 1012, 1013)
 - `scripts/native/test-ota.sh`: `just ota`'s arguments and dry run; ota-watch's batch rule and post (stories 1027–1029)
 - `scripts/native/test-linux-imports.sh`: Apple-only imports checked against Linux branches, including `#if canImport` and `#if os` (#943, bead context-grabber-cmk)
+- `scripts/native/test-lease-slot.sh`: that `lease-slot.sh` prints a slot's path or nothing, refusing a full pool past the wait, an empty answer and the main checkout, retrying until a slot frees up and failing at once when the lease fails twice with a slot available or there is no treehouse; and that `build-lane.sh run` and `host-lane.sh run` (with a stand-in lockf) refuse branch work in the main checkout without running it but run from main and from a slot (story 1901, bead context-grabber-8w8c), against a throwaway repository with a linked worktree and a stand-in treehouse
 - `scripts/native/test-story-ids.sh`: that every user story's ID is used once and sits in its journey's ranges (story 789), with the reserve command against a fake gh and main and a bare repository as the shared ledger's remote, two checkouts standing in for two machines, the pre-merge check on a throwaway repository, including from a detached HEAD (stories 791–794, bead context-grabber-9g0j), and the pipeline's claim check, which fails a branch adding a story ID another open PR adds unless that PR is the branch's own (story 1515; the gate's lint step runs it as `just pipeline-lint`)
 - `scripts/native/test-story-commits.sh`: checks links to Context Grabber commits in the stories against the checkout's history and reports each missing hash with its file and line (beads context-grabber-t309, context-grabber-lldg). A link to a commit a rebase replaced, when one branch commit carries the same change (patch-id), passes with a note, and `just pre-merge` renames it on the branch as pushed, in a scratch worktree (never the checkout, its index or its branch), and pushes that docs-only commit to the branch before the merge (story 1638). If a shallow checkout can't verify a link, it fails and asks you to run `git fetch --unshallow` and rerun the check.
 - `scripts/native/test-story-tests.sh`: checks that every test a story's Status line names (a test class, `Class.testMethod` or a bare `testMethod`) still exists under native/, and names each one that is gone with its file and line (story 1624). A test in another repo is written with the repo first, `bug-kit:WhatsNewTests`, and is not looked for.
@@ -76,7 +77,7 @@ it before every push. In order, it:
 4. runs the host rung's portable script checks (each described in the host list above): the ladder's map
    (`test-ladder-map.sh`), the breath clips and the UI timing digest, the ladder report (`test-ladder-report.sh`), the
    smoke on a locked Mac (`test-smoke-lock.sh`), the Linux import check (`test-linux-imports.sh`), the build lanes
-   (`test-build-lane.sh`), the story IDs (`test-story-ids.sh`), the stories' commit links (`test-story-commits.sh`), the tests
+   (`test-build-lane.sh`), the slot lease (`test-lease-slot.sh`), the story IDs (`test-story-ids.sh`), the stories' commit links (`test-story-commits.sh`), the tests
    their Status lines cite (`test-story-tests.sh`), the vendored board sessions (`test-board-sessions.py`), and this guide's one-a-line lists (`test-testing-lists.sh`). The asset
    catalog check needs `actool` and the signing guard needs BugKit's script, so they stay the Mac's.
 
@@ -876,10 +877,19 @@ file touched 7 s. [treehouse](https://github.com/kunchenguid/treehouse)
 keeps a pool of twelve (`treehouse.toml`; two per build lane at the M5 Pro's six, story 785) under `~/.treehouse/`, and a slot is leased, returned and leased again:
 
 ```bash
-slot=$(treehouse get --lease -b native/123-my-change)   # prints the slot's path; the branch is cut from origin/main
+slot=$(scripts/native/lease-slot.sh native/123-my-change) || exit 1   # the slot's path; the branch is cut from origin/main
 cd "$slot" && just native-test-sim                      # work, build, commit and push from here
 treehouse return "$slot"                                # when the branch is pushed; the branch itself is kept
 ```
+
+- **A lease that fails stops the lane (story 1901).** `lease-slot.sh` wraps `treehouse get --lease -b`: it retries
+  every `LEASE_SLOT_POLL` seconds (30) for `LEASE_SLOT_WAIT` seconds (1800) while the pool is full (a lease that
+  fails twice in a row while `treehouse status` shows a slot available fails at once with treehouse's error), and prints the
+  slot's path only when it has one. With no slot, an empty answer or a path that is the main checkout, it prints
+  nothing and exits non-zero, so `cd "$slot"` never lands a lane's checkout, reset or rebase in
+  `~/gits/context-grabber` (twice on 2026-11-26, bead context-grabber-8w8c). As a second guard, `build-lane.sh run`
+  and `host-lane.sh run` refuse to run from the main checkout while it is on a branch other than main; from main
+  (the lead's `just deploy`) or from a slot they run as before.
 
 - **The build is reused.** Returning a slot resets tracked files to main and removes untracked ones, but not ignored
   ones (`git clean -fd`, no `-x`), so `native/Build`, its Swift packages and the generated project are still there
