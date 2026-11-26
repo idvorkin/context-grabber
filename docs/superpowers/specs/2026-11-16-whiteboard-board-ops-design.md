@@ -439,8 +439,10 @@ stays joined when they move.
 - On the iPad the lasso often takes more than the arrow: the boxes at both ends come with it, the whole diagram in one
   rectangle (#1440). Connect still shows then: it finds the arrow inside the selection (a long open stroke, with the
   marks touching one of its ends, none bigger than half the arrow, as its arrowhead, and the head at that end) and
-  joins the two things at its ends. The boxes and their labels stay as they are. A selection of things with no arrow
-  between them offers no Connect.
+  joins the two things at its ends. The boxes and their labels stay as they are, and a box drawn as separate lines is
+  still a box: a line whose ends both meet other lines' ends, as a box's corners do (a hand-drawn corner may
+  overshoot or fall short by up to 20 pt), is never taken for the arrow. A selection of things with no arrow between
+  them offers no Connect.
 - Connect takes his drawn arrow away and puts a clean connector in its place, joining the two things. One Undo,
   named *Connect*, gives his own arrow back.
 - The head is the end nearest the rest of the strokes he circled (the arrowhead). With only one stroke circled, the

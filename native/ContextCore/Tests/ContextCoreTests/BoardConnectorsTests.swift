@@ -480,6 +480,55 @@ final class BoardConnectorsTests: XCTestCase {
     XCTAssertEqual([c.from, c.to], ["gA", "gB"])
   }
 
+  /// Bead yzsq, story 1358: two boxes each drawn as four separate lines, lassoed with his arrow. A box's straight side
+  /// is long and open like a shaft, but both its ends meet other sides' ends; only the arrow becomes the connector.
+  func testConnectInsideAWholeDiagramSkipsTheSidesOfABoxDrawnInFourStrokes() throws {
+    func sides(_ name: String, _ x: CGFloat) -> [BoardOps.Stroke] {
+      let a = CGPoint(x: x, y: 0)
+      let b = CGPoint(x: x + 200, y: 0)
+      let c = CGPoint(x: x + 200, y: 200)
+      let d = CGPoint(x: x, y: 200)
+      return [
+        line("\(name)1", [a, b]), line("\(name)2", [b, c]), line("\(name)3", [c, d]), line("\(name)4", [d, a]),
+      ]
+    }
+    let strokes =
+      sides("A", 0) + sides("B", 280)
+      + [
+        line("shaft", [CGPoint(x: 200, y: 100), CGPoint(x: 280, y: 100)]),
+        line("head", [CGPoint(x: 268, y: 90), CGPoint(x: 280, y: 100), CGPoint(x: 268, y: 110)]),
+      ]
+    let metas = grouped((1...4).map { ("A\($0)", "gA") } + (1...4).map { ("B\($0)", "gB") })
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(
+        selected: Set(strokes.flatMap(\.ids)), id: "k1", strokes: strokes, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [8, 9], "only the arrow's shaft and head go; every side of both boxes stays")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"])
+  }
+
+  func testConnectInsideAWholeDiagramSkipsTheSidesOfHandDrawnBoxesWhoseCornersOvershootOrFallShort() throws {
+    func sides(_ name: String, _ x: CGFloat, by d: CGFloat) -> [BoardOps.Stroke] {
+      [
+        line("\(name)1", [CGPoint(x: x - d, y: 0), CGPoint(x: x + 200 + d, y: 0)]),
+        line("\(name)2", [CGPoint(x: x + 200, y: -d), CGPoint(x: x + 200, y: 200 + d)]),
+        line("\(name)3", [CGPoint(x: x + 200 + d, y: 200), CGPoint(x: x - d, y: 200)]),
+        line("\(name)4", [CGPoint(x: x, y: 200 + d), CGPoint(x: x, y: -d)]),
+      ]
+    }
+    let strokes =
+      sides("A", 0, by: 12) + sides("B", 280, by: -12)
+      + [
+        line("shaft", [CGPoint(x: 200, y: 100), CGPoint(x: 280, y: 100)]),
+        line("head", [CGPoint(x: 268, y: 90), CGPoint(x: 280, y: 100), CGPoint(x: 268, y: 110)]),
+      ]
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: Set(strokes.flatMap(\.ids)), id: "k1", strokes: strokes))
+    let plan = BoardOps.plan(ops, strokes: strokes, pages: 1)
+    XCTAssertEqual(plan.erase, [8, 9], "only the arrow's shaft and head go; no side of either box becomes a connector")
+  }
+
   func testTheNotesRoundTrip() {
     let c = BoardConnector(
       from: "a", to: "b", fromSide: .bottom, toSide: .top, route: [CGPoint(x: 1, y: 2), CGPoint(x: 3, y: 4)],
