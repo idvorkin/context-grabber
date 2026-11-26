@@ -76,6 +76,13 @@
    "branch": "native/answer-card-1439",
    "at": 1795712756.128899,
    "until": "2026-11-27T17:05:56Z"
+  },
+  {
+   "id": 1358,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/connect-inside-selection-1440",
+   "at": 1795712777.170922,
+   "until": "2026-11-27T17:06:17Z"
   }
  ]
 }
