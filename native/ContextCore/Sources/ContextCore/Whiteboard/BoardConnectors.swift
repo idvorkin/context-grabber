@@ -293,9 +293,6 @@ public enum BoardConnectors {
   /// A lassoed hand-drawn arrow's tail and head: the longest stroke is the shaft; its end nearest the other strokes'
   /// points (the arrowhead) is the head, else its last point (board.mjs `arrowEnds`). Strokes need their points.
   public static func arrow(_ selected: [BoardOps.Stroke]) -> (tail: CGPoint, head: CGPoint)? {
-    let length = { (s: BoardOps.Stroke) in
-      zip(s.points, s.points.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
-    }
     guard let shaft = selected.indices.max(by: { length(selected[$0]) < length(selected[$1]) }),
       var tail = selected[shaft].points.first, var tip = selected[shaft].points.last, tail != tip
     else { return nil }
@@ -317,7 +314,10 @@ public enum BoardConnectors {
     metas: BoardStrokeMeta = BoardStrokeMeta(), folds: [String: String] = [:]
   ) -> [BoardOps.Op]? {
     let chosen = strokes.filter { !$0.hidden && $0.ids.contains(where: names.contains) }
-    if let ops = connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds) {
+    let longest = chosen.indices.max { length(chosen[$0]) < length(chosen[$1]) }
+    if chosen.indices.allSatisfy({ $0 == longest || small(chosen[$0]) }),
+      let ops = connectArrow(chosen, id: id, strokes: strokes, texts: texts, metas: metas, folds: folds)
+    {
       return ops
     }
     guard chosen.count > 1, chosen.count <= maxDiagram else { return nil }
@@ -332,24 +332,24 @@ public enum BoardConnectors {
 
   /// The most strokes a lassoed diagram may hold for Connect to look inside it for an arrow.
   public static let maxDiagram = 60
-  /// An arrowhead's largest side, and how far its middle may sit from the shaft's end.
+  /// An arrowhead's largest side, and how near the shaft's end its ink must come.
   static let headSize: CGFloat = 40
-  static let headReach: CGFloat = 30
+  static let headTouch: CGFloat = 8
 
-  /// The small marks at one end of `shaft` that make its arrowhead: the end whose nearest mark is closest (a head sits at
-  /// one end), leaving out a mark inside a bigger stroke (a box's label by where the arrow leaves it).
+  static func small(_ s: BoardOps.Stroke) -> Bool { max(s.bounds.width, s.bounds.height) <= headSize }
+
+  static func length(_ s: BoardOps.Stroke) -> CGFloat {
+    zip(s.points, s.points.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
+  }
+
+  /// The small marks at one end of `shaft` that make its arrowhead: marks touching that end, at the end whose nearest
+  /// mark is closest (a head sits at one end; a box's label near where the arrow leaves it doesn't touch it).
   static func heads(of shaft: Int, in chosen: [BoardOps.Stroke]) -> [Int] {
-    func small(_ s: BoardOps.Stroke) -> Bool { max(s.bounds.width, s.bounds.height) <= headSize }
-    let marks = chosen.indices.filter { k in
-      let mid = CGPoint(x: chosen[k].bounds.midX, y: chosen[k].bounds.midY)
-      return k != shaft && small(chosen[k])
-        && !chosen.indices.contains { j in
-          j != shaft && j != k && !small(chosen[j]) && chosen[j].bounds.contains(mid)
-        }
-    }
     let ends = [chosen[shaft].points.first, chosen[shaft].points.last].compactMap { $0 }
     let near = ends.map { end in
-      marks.filter { hypot(chosen[$0].bounds.midX - end.x, chosen[$0].bounds.midY - end.y) <= headReach }
+      chosen.indices.filter { k in
+        k != shaft && small(chosen[k]) && chosen[k].bounds.insetBy(dx: -headTouch, dy: -headTouch).contains(end)
+      }
     }
     let gap = ends.indices.map { e in
       near[e].map { hypot(chosen[$0].bounds.midX - ends[e].x, chosen[$0].bounds.midY - ends[e].y) }.min()
@@ -362,10 +362,7 @@ public enum BoardConnectors {
   /// The strokes of a selection that could be an arrow's shaft, longest first: long enough, and not closed on itself
   /// (a box's ends meet; an elbow arrow's are at least half its length apart).
   static func shafts(_ chosen: [BoardOps.Stroke]) -> [Int] {
-    func length(_ s: BoardOps.Stroke) -> CGFloat {
-      zip(s.points, s.points.dropFirst()).reduce(CGFloat(0)) { $0 + hypot($1.1.x - $1.0.x, $1.1.y - $1.0.y) }
-    }
-    return chosen.indices.filter { k in
+    chosen.indices.filter { k in
       let s = chosen[k]
       guard let a = s.points.first, let b = s.points.last else { return false }
       let l = length(s)

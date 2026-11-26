@@ -375,6 +375,44 @@ final class BoardConnectorsTests: XCTestCase {
     XCTAssertEqual([c.from, c.to], ["gA", "gB"], "it still points from A to B")
   }
 
+  /// #1440, story 1358: Igor's two boxes each round a typed text, lassoed with his arrow; the boxes stay as drawn.
+  func testConnectInsideAWholeDiagramKeepsTheBoxesRoundTypedTexts() throws {
+    func glyph(_ t: Int64, _ x: CGFloat) -> BoardOps.Stroke {
+      let points = [CGPoint(x: x, y: 106), CGPoint(x: x + 15, y: 118)]
+      return BoardOps.Stroke(
+        ids: ["g\(t)"], t: t, bounds: CGRect(x: x, y: 106, width: 15, height: 12), points: points, pen: 2)
+    }
+    let texts = [
+      BoardText(id: "tA", t: 100, text: "A", font: .plain, size: 12, color: "#000000"),
+      BoardText(id: "tB", t: 200, text: "B", font: .plain, size: 12, color: "#000000"),
+    ]
+    var strokes = drawn
+    strokes[1] = box("B", 500, 100)
+    strokes[2] = line("shaft", [CGPoint(x: 165, y: 112), CGPoint(x: 495, y: 112)])
+    strokes[3] = line("head", [CGPoint(x: 482, y: 102), CGPoint(x: 495, y: 112), CGPoint(x: 482, y: 122)])
+    strokes += [glyph(100, 140), glyph(200, 505)]
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(
+        selected: ["A", "B", "shaft", "head"], id: "k1", strokes: strokes, texts: texts))
+    let plan = BoardOps.plan(ops, strokes: strokes, texts: texts, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "only his arrow's ink goes; the boxes and their texts stay")
+    XCTAssertNotNil(BoardConnector(plan.added.first?.meta))
+  }
+
+  /// #1440, story 1358: a head drawn into box B's edge is still his arrow's head, erased with the shaft.
+  func testConnectInsideAWholeDiagramTakesAHeadDrawnIntoTheBox() throws {
+    let metas = two.metas
+    var strokes = drawn
+    strokes[2] = line("shaft", [CGPoint(x: 165, y: 115), CGPoint(x: 300, y: 200), CGPoint(x: 510, y: 312)])
+    strokes[3] = line("head", [CGPoint(x: 497, y: 302), CGPoint(x: 510, y: 312), CGPoint(x: 497, y: 322)])
+    let ops = try XCTUnwrap(
+      BoardConnectors.connect(selected: ["A", "B", "shaft", "head"], id: "k1", strokes: strokes, metas: metas))
+    let plan = BoardOps.plan(ops, strokes: strokes, metas: metas, pages: 1)
+    XCTAssertEqual(plan.erase, [2, 3], "the shaft and the head both go")
+    let c = try XCTUnwrap(BoardConnector(plan.added.first?.meta))
+    XCTAssertEqual([c.from, c.to], ["gA", "gB"])
+  }
+
   func testTheNotesRoundTrip() {
     let c = BoardConnector(
       from: "a", to: "b", fromSide: .bottom, toSide: .top, route: [CGPoint(x: 1, y: 2), CGPoint(x: 3, y: 4)],
