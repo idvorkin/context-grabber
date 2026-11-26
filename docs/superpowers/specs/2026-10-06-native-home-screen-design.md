@@ -134,7 +134,7 @@ Meditation or Journal to open a two-week editor. Its header has Cancel, the item
 Done button. Fourteen tiles fill seven columns and two rows, oldest at top left and today at bottom right.
 Each tile shows the weekday letter and date number; today and yesterday add “today” and “yest.” tags.
 Done days have an accent fill, other days a dark fill, today a subtle outline, and days changed since opening
-an orange ring. Tiles are at least 44 points tall (normally 64), with full-date accessibility labels saying
+an orange ring. Tiles are at least 44 points tall (normally 64; Gym's are taller, below), with full-date accessibility labels saying
 whether the day is done, and a selected trait for done days.
 
 The headline says “N of the last 14 days”. Under it, “Last done today”, “Last done yesterday”,
@@ -147,6 +147,16 @@ day and closes; Cancel or dismissing saves nothing. Taking a tapped day back syn
 rule as today's un-tap. The strip and Gym's days since update immediately after Done.
 Balloons and Magic still open their week (below). Each changed day saved produces one `ui` event, action
 daily_strip, with the item, the day, `backdated` and `done` true or false.
+
+**What I did on each gym day** (Igor, #1503: *"Let gym graph show icons of what I did. And use more space!"*).
+Gym's two weeks open at full height, and each tile is taller (normally 88 points) so it can hold a row of small
+icons under the date: a stopwatch for a finished Gym Timer workout, and one figure per kind of Health workout that
+day (strength training, functional strength, running, walking, cycling, hiking, swimming, stretching, rowing,
+dance, cross training, mixed cardio, and a generic figure for any other kind). A kind done twice shows once. Up to
+three icons fit; more show the first two and “+N”. The strength kinds that make the day count come first, then the
+timer, then the rest in the order they were done. A day marked only by a tap shows no icons. The icons are part
+of the tile's accessibility label (“Thursday November 20, done, Gym Timer and Functional Strength”). Meditation and
+Journal keep their shorter sheet; Balloons and Magic keep their week.
 
 **The same strip on the phone and the iPad** (Igor, iPad, 2026-10-17, #376: *"Do stats sync over Cloud kit like the
 did I do magic if not implement"*). What Igor marks on one device shows on the others signed into his iCloud,

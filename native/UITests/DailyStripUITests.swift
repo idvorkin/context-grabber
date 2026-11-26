@@ -89,4 +89,33 @@ final class DailyStripUITests: XCTestCase {
     app.buttons["strip-grid-done"].tap()
     XCTAssertTrue(yesterday.waitForNonExistence(timeout: 5))
   }
+
+  /// #1503, story 570: a Gym Timer workout finished today puts a stopwatch under today's tile in Gym's two weeks,
+  /// which open at full height with taller tiles. Health's workout kinds, their order and "+N" are `GymDayMarksTests`,
+  /// on the host (the simulator's UI tests ask Health nothing, story 1630).
+  func testGymsTwoWeeksShowWhatWasDone() throws {
+    let app = XCUIApplication.forTests()
+    app.launchEnvironment["GRABBER_TIMER"] = "1,0,1"  // one round of a second: a finished workout in a few seconds
+    app.launch()
+    let stop = app.buttons["STOP"]
+    XCTAssertTrue(stop.appears(within: 15), "the hook starts the workout: \(app.debugDescription)")
+    XCTAssertTrue(stop.waitForNonExistence(timeout: 30), "and it finishes")
+    app.buttons["Done"].firstMatch.tap()
+
+    let gym = app.buttons["strip-gym"]
+    XCTAssertTrue(gym.appears(within: 10), app.debugDescription)
+    gym.press(forDuration: 1.0)
+    let today = app.buttons["strip-day-0"]
+    XCTAssertTrue(today.appears(within: 5), app.debugDescription)
+    XCTAssertTrue(app.descendants(matching: .any)["strip-day-marks-0"].exists, "today's tile shows what was done")
+    XCTAssertTrue(today.label.contains("Gym Timer"), "and says it: \(today.label)")
+    XCTAssertGreaterThanOrEqual(today.frame.height, 80, "taller tiles")
+    let window = app.windows.firstMatch.frame
+    XCTAssertLessThan(app.buttons["strip-day-13"].frame.minY, window.minY + window.height * 0.45, "full height")
+    if let shots = ProcessInfo.processInfo.environment["GRABBER_SHOTS"] {
+      try? XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: "\(shots)/gym-two-weeks.png"))
+    }
+    app.buttons["strip-backdate-cancel"].tap()
+    XCTAssertTrue(today.waitForNonExistence(timeout: 5))
+  }
 }

@@ -2227,6 +2227,29 @@ drawn on the Cockpit's web ink page, and the app looked for it among its own boa
 
 ---
 
+### User Story 570:
+
+- **Summary:** Gym's two weeks show what I did each day
+- **Issues:** [#1503](https://github.com/idvorkin/context-grabber/issues/1503)
+- **Status:** implemented in [b7416dd](https://github.com/idvorkin/context-grabber/commit/b7416ddb); verified by `GymDayMarksTests` (host: strength first, the timer once, the rest each kind once, three icons or two and +N, each kind's figure and name, the tile's label naming what was done, a tapped-only day with no icons) and `DailyStripUITests.testGymsTwoWeeksShowWhatWasDone` on the iPhone 17 simulator (a finished Gym Timer workout puts a stopwatch under today, the sheet at full height, tiles at least 80 points tall; 2026-11-26); the iPad simulator run stalled on SpringBoard in the existing strip test under load, so the iPad is by the next build; Health's kinds on the phone
+- **Spec:** [native home screen, "What I did on each gym day"](../superpowers/specs/2026-10-06-native-home-screen-design.md)
+
+#### Use Case:
+- **As someone** who trains a few times a week in different ways
+- **I want to** see on Gym's two-week sheet what kind of workout each day was
+- **so that** the fortnight reads as what I did, not just which days I went
+
+#### Acceptance Criteria:
+- **Scenario:** Icons under each gym day, in a taller sheet
+- **Given:** over the last two weeks a Gym Timer workout and a Functional Strength workout on one day, two Strength
+  Training workouts on another, four different kinds on a third, and a day marked only by a tap
+- **When:** I press and hold Gym
+- **Then:** the sheet opens at full height with taller tiles; the first day shows a strength figure then a stopwatch,
+  the second one strength figure, the third two icons and “+2”, and the tapped day none; each tile's label names
+  what was done
+
+---
+
 ### User Story 572:
 
 - **Summary:** The counter's week as a little graph by day
