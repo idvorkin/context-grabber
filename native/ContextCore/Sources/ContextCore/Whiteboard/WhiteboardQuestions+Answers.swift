@@ -56,8 +56,8 @@ extension WhiteboardQuestions {
     return out
   }
 
-  /// Larry's answer marks not landed before, each as his card. One naming a question card on the board (`re`, the
-  /// card's ask) does as the web board does: the question card answers and collapses to *✓ <answer's title>*, and his
+  /// Larry's answer marks not landed before, each as his card. One naming an open question card on the board (`re`,
+  /// the card's ask) does as the web board does: the question card answers and collapses to *✓ <answer's title>*, and his
   /// answer card lands under it. How many answer cards landed.
   @discardableResult
   public mutating func landAnswers(_ placements: [AnswerPlacement]) -> Int {
@@ -65,7 +65,9 @@ extension WhiteboardQuestions {
     for p in placements where !handled.contains(p.mark) {
       handled.append(p.mark)
       var at = p.at
-      if let re = p.re, let i = cards.firstIndex(where: { $0.ask == re && !$0.fromLarry }) {
+      if let re = p.re, let i = cards.firstIndex(where: {
+        $0.ask == re && !$0.fromLarry && $0.answered == nil && $0.archived == nil
+      }) {
         cards[i].answered = WhiteboardQuestion.Answer(title: Self.answerTitle(p), label: p.text)
         cards[i].collapsed = true
         at = CGPoint(x: cards[i].x, y: cards[i].y + Self.height + Self.gap)

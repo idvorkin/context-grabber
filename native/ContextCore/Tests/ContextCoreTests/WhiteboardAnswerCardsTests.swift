@@ -74,6 +74,28 @@ final class WhiteboardAnswerCardsTests: XCTestCase {
     XCTAssertEqual(board.cards.filter(\.fromLarry).count, 2)
   }
 
+  func testAnAnswerNamingAClosedOrArchivedQuestionCardLandsAsItsOwnCard() throws {
+    var board = WhiteboardQuestions()
+    board.add(ask: "b-7", x: 80, y: 40)
+    let id = try XCTUnwrap(board.cards.first?.id)
+    let igors = WhiteboardQuestion.Answer(title: "Keep the gym?", label: "Yes, renew")
+    board.answer(id, igors)
+    XCTAssertEqual(board.landAnswers(WhiteboardQuestions.answerPlacements(thread)), 2)
+    let card = try XCTUnwrap(board.cards.first { $0.id == id })
+    XCTAssertEqual(card.answered, igors, "Igor's answer stays his")
+    XCTAssertFalse(card.collapsed)
+    let answer = try XCTUnwrap(board.cards.first { $0.ask == "answer:m2#2" })
+    XCTAssertEqual(answer.y, 2100, "where Larry put it, not under the closed card")
+
+    var archived = WhiteboardQuestions()
+    archived.add(ask: "b-7", x: 80, y: 40)
+    let gone = try XCTUnwrap(archived.cards.first?.id)
+    archived.cards[0].archived = 1
+    XCTAssertEqual(archived.landAnswers(WhiteboardQuestions.answerPlacements(thread)), 2)
+    XCTAssertNil(try XCTUnwrap(archived.cards.first { $0.id == gone }).answered, "an archived card is not answered")
+    XCTAssertEqual(try XCTUnwrap(archived.cards.first { $0.ask == "answer:m2#2" }).y, 2100)
+  }
+
   // MARK: Story 1357: it folds, moves, archives and erases like an answered card
 
   func testAnAnswerCardFoldsAndTheEraserTakesIt() throws {

@@ -150,9 +150,10 @@ something about a drawing, his answer can land on the board as a card, not only 
 conversation.
 
 **Where one comes from.** Larry's reply on the board's thread holds an answer: a short title, the answer's words, and
-where he put it. It lands there, inside the page, once per reply. If he says which question card it answers, it does
-what the web board does: that card turns answered and folds to *✓ \<the answer's title>*, and the answer card lands
-just under it.
+where he put it. It lands there, inside the page, once per reply. If he says which open question card on the board it
+answers, it does what the web board does: that card turns answered and folds to *✓ \<the answer's title>*, and the
+answer card lands just under it. A card already answered keeps its answer, and an archived one stays as it was: the
+answer lands at his place as its own card.
 
 **What it looks like.** A card in Larry's purple, edged like a question card but marked as his answer: *Larry ·
 \<title>* on its first line and his words under it, wrapped to the card. With no title, the first line of his words is
@@ -197,7 +198,8 @@ works. Never the answer's words.
 - Offline or with no address nothing is read, and the board's cards stay as they were.
 - Larry's reply holding an answer puts one answer card on the board, at his place, once: *Larry · \<title>* over his
   words.
-- An answer that names a question card folds that card to *✓ \<the answer's title>* and lands just under it.
+- An answer that names an open question card folds that card to *✓ \<the answer's title>* and lands just under it.
+- An answer that names a card already answered, or archived, leaves that card as it was and lands at his place.
 - An answer card collapses, rounds, drags, archives and reopens like an answered card; the eraser takes it; a tap
   opens nothing to answer.
 

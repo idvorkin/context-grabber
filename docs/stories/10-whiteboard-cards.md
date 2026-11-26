@@ -498,7 +498,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1356:
 
 - **Summary:** An answer to a question card answers it and lands under it, as on the web board
-- **Status:** implemented in [a4c7f468](https://github.com/idvorkin/context-grabber/commit/a4c7f468); verified by host tests (`WhiteboardAnswerCardsTests.testAnAnswerNamingAQuestionCardAnswersItAndLandsUnderIt`) and on the iPad simulator (`WhiteboardAnswerCardUITests.testAnAnswerNamingAQuestionCardAnswersIt`); matches the web board (Cockpit 8e4b034); not yet on the iPad
+- **Status:** implemented in [a4c7f468](https://github.com/idvorkin/context-grabber/commit/a4c7f468); verified by host tests (`WhiteboardAnswerCardsTests.testAnAnswerNamingAQuestionCardAnswersItAndLandsUnderIt`, `testAnAnswerNamingAClosedOrArchivedQuestionCardLandsAsItsOwnCard`) and on the iPad simulator (`WhiteboardAnswerCardUITests.testAnAnswerNamingAQuestionCardAnswersIt`); matches the web board (Cockpit 8e4b034); not yet on the iPad
 - **Issues:** [#1439](https://github.com/idvorkin/context-grabber/issues/1439)
 - **Spec:** [Question cards](../superpowers/specs/2026-11-16-whiteboard-question-cards-design.md), *Answer cards (#1439)*
 
@@ -512,6 +512,11 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** an open question card on the board
 - **When:** Larry's reply holds an answer that names that card's question
 - **Then:** the question card folds to *✓ \<the answer's title>*, and his answer card lands just under it, as on the web board
+
+- **Scenario:** Larry's answer names a card that is already answered
+- **Given:** a question card Igor has already answered, or one archived off the board
+- **When:** Larry's reply holds an answer that names that card's question
+- **Then:** the card keeps its answer and stays where it is, and his answer card lands at his place on its own
 
 ---
 
