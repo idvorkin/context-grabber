@@ -52,6 +52,34 @@ public enum CockpitBoardMirror {
     return records + CockpitBoardEdit.strokes(cache).filter { !ours.contains($0.id) }.map(\.record)
   }
 
+  /// One save of a mirrored board, ready to send: the copy with its saves queued, how many, the ops in them, and the
+  /// strokes now sent (empty when nothing goes).
+  public struct Prepared: Sendable {
+    public var cache: BoardStoreCache
+    public var saves: Int
+    public var ops: Int
+    public var sentIDs: [String]
+  }
+
+  /// Story 1367 (bead ze0h): a save of a mirrored board turned into the Cockpit's queued saves, in one call that runs
+  /// away from the main thread. Each step is timed into `laps` (after, encode, cut, queue) so a slow save names its part.
+  public static func prepare(
+    records: [BoardStoreJSON], cache: BoardStoreCache, sent: Set<String>, name: String, laps: StepLaps
+  ) -> Result<Prepared, CockpitBoardEdit.Failure> {
+    let after = laps.time("after") { Self.after(records: records, cache: cache, sent: sent) }
+    let encoded = laps.time("encode") { CockpitBoardEdit.ops(cache, after: after) }
+    guard case .success(var ops) = encoded else {
+      if case .failure(let failure) = encoded { return .failure(failure) }
+      return .failure(.malformed("no answer"))
+    }
+    if let rename = rename(cache, name: name) { ops.append(rename) }
+    let saves = laps.time("cut") { Self.saves(ops) }
+    var cache = cache
+    laps.time("queue") { for save in saves { cache.enqueue(save) } }
+    let sentIDs = saves.isEmpty ? [] : records.compactMap { $0["id"]?.string }.filter { !sent.contains($0) }
+    return .success(Prepared(cache: cache, saves: saves.count, ops: ops.count, sentIDs: sentIDs))
+  }
+
   /// The name the store keeps for a board: its own, or *Untitled* for one without.
   public static func storeName(_ name: String) -> String { name.isEmpty ? "Untitled" : name }
 

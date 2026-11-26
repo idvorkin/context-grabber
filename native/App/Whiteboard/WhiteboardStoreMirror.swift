@@ -112,7 +112,8 @@ final class WhiteboardStoreMirror: ObservableObject {
       try? book.save(bookURL)
     }
     var cache: BoardStoreCache
-    if let saved = disk.load(board: board) {
+    let disk = disk
+    if let saved = await Task.detached(priority: .utility) { disk.load(board: board) }.value {
       cache = saved
     } else {
       // A first send, or a copy lost: start from what the Cockpit holds, so strokes it has already land as no change.
@@ -120,28 +121,43 @@ final class WhiteboardStoreMirror: ObservableObject {
       else { return }
       cache = BoardStoreCache(snapshot: snapshot)
     }
-    let records = await Task.detached(priority: .utility) { Self.records(drawing) }.value
+    // Story 1367 (bead ze0h): the records, the encode, the cut into saves and the copy's write run off the main
+    // thread, so a save of a big mirrored board never holds up the pen; each step is timed for a slow save's log line.
     let sent = CockpitBoardMirror.Book.load(bookURL).sent[board] ?? []
-    let after = CockpitBoardMirror.after(records: records, cache: cache, sent: sent)
-    switch CockpitBoardEdit.ops(cache, after: after) {
+    let started = cache
+    let work = await Task.detached(priority: .utility) {
+      () -> (Result<CockpitBoardMirror.Prepared, CockpitBoardEdit.Failure>, StepLapsReport?, String?) in
+      let laps = StepLaps()
+      let records = laps.time("records") { Self.records(drawing) }
+      let prepared = CockpitBoardMirror.prepare(
+        records: records, cache: started, sent: sent, name: name, laps: laps)
+      var writeError: String?
+      if case .success(let ready) = prepared {
+        do { try laps.time("write") { try disk.save(ready.cache) } } catch {
+          writeError = error.localizedDescription
+        }
+      }
+      return (prepared, StepLapsReport(laps, strokes: records.count), writeError)
+    }.value
+    let (prepared, laps, writeError) = work
+    if let laps { logSlow(laps) }
+    switch prepared {
     case .failure(let failure):
       fail("this board's ink couldn't be turned into the Cockpit's changes (\(failure))", operation: "encode")
       return
-    case .success(var ops):
-      if let rename = CockpitBoardMirror.rename(cache, name: name) { ops.append(rename) }
-      let saves = CockpitBoardMirror.saves(ops)
-      if !saves.isEmpty {
+    case .success(let ready):
+      cache = ready.cache
+      if ready.saves > 0 {
         book = CockpitBoardMirror.Book.load(bookURL)
-        book.sent[board, default: []].formUnion(records.compactMap { $0["id"]?.string })
+        book.sent[board, default: []].formUnion(ready.sentIDs)
         try? book.save(bookURL)
-      }
-      for save in saves { cache.enqueue(save) }
-      if !saves.isEmpty {
-        log.event("board_mirror", ["action": "queued", "board": board, "saves": saves.count, "ops": ops.count])
+        log.event(
+          "board_mirror",
+          ["action": "queued", "board": board, "saves": ready.saves, "ops": ready.ops, "ms": laps?.totalMs ?? 0])
       }
     }
-    do { try disk.save(cache) } catch {
-      fail("the board's Cockpit copy couldn't be written (\(error.localizedDescription))", operation: "save_copy")
+    if let writeError {
+      fail("the board's Cockpit copy couldn't be written (\(writeError))", operation: "save_copy")
       return
     }
     let device = device
@@ -153,8 +169,13 @@ final class WhiteboardStoreMirror: ObservableObject {
       },
       newBatchID: { "\(device)-\(UUID().uuidString.prefix(12).lowercased())" },
       now: { ISO8601DateFormatter().string(from: Date()) })
-    let disk = disk
-    let report = await sync.run(&cache) { copy in try disk.save(copy) }
+    let synced = cache
+    let (after, report) = await Task.detached(priority: .utility) {
+      var copy = synced
+      let report = await sync.run(&copy) { copy in try disk.save(copy) }
+      return (copy, report)
+    }.value
+    cache = after
     log.event(
       "board_mirror",
       [
@@ -171,6 +192,18 @@ final class WhiteboardStoreMirror: ObservableObject {
         : cache.queue.count == 1
           ? "In the Cockpit · 1 save waiting" : "In the Cockpit · \(cache.queue.count) saves waiting"
     }
+  }
+
+  /// Story 1367: a save whose mirror work took a twentieth of a second or more names its steps, as a slow stroke does
+  /// (`ink_part_slow`, part `mirror_save`).
+  private func logSlow(_ laps: StepLapsReport) {
+    guard laps.totalMs >= WhiteboardModel.slowPartMs else { return }
+    log.event(
+      "whiteboard",
+      [
+        "action": "ink_part_slow", "part": "mirror_save", "board": board, "total_ms": laps.totalMs, "laps": laps.laps,
+        "strokes": laps.strokes,
+      ])
   }
 
   /// `PUT` the original drawing, then `POST /boards` with it named.
@@ -221,5 +254,19 @@ final class WhiteboardStoreMirror: ObservableObject {
     let ids = CockpitBoardMirror.strokeIDs(
       strokes.map { (Int64($0.path.creationDate.timeIntervalSince1970 * 1000), $0.randomSeed) })
     return zip(strokes, ids).map { CockpitStrokeRecord.record($0, id: $1) }
+  }
+}
+
+/// A save's step times, carried back from the background work (story 1367).
+struct StepLapsReport: Sendable {
+  let totalMs: Int
+  let laps: [String: Int]
+  let strokes: Int
+
+  init?(_ laps: StepLaps, strokes: Int) {
+    guard let report = laps.report(overMs: 0) else { return nil }
+    totalMs = report.totalMs
+    self.laps = report.laps
+    self.strokes = strokes
   }
 }

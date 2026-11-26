@@ -1577,6 +1577,24 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** it is sent again
 - **Then:** the Cockpit's copy has each stroke once, and the board is still mirrored
 
+### User Story 1367:
+
+- **Summary:** Mirroring a big board never slows the drawing
+- **Status:** implemented in [55c218cb](https://github.com/idvorkin/context-grabber/commit/55c218cb8); verified on the host (`CockpitBoardMirrorTests.testPrepareOfAThousandStrokeBoard`, `testPrepareQueuesTheSaveAndNamesTheSentStrokes`, `testPrepareOfAnUnchangedBoardQueuesNothing`) and on the iPad simulator (`WhiteboardStoreMirrorUITests`); the pen on a real thousand-stroke board is the iPad's
+- **Issues:** bead context-grabber-ze0h; cockpit-8kh
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
+
+#### Use Case:
+- **As someone** whose main board of a thousand strokes is mirrored to the Cockpit
+- **I want to** keep drawing while each save goes up
+- **so that** the mirror never brings back the lag a full board used to have
+
+#### Acceptance Criteria:
+- **Scenario:** Drawing on a big mirrored board
+- **Given:** a mirrored board of about a thousand strokes
+- **When:** I draw strokes one after another, each saved
+- **Then:** the pen never waits on the mirror, the saves reach the Cockpit in order, and a save whose mirror work took a twentieth of a second or more names its steps in the session log
+
 ### User Story 1363:
 
 - **Summary:** No board went to the Cockpit before its backup was live
