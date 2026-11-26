@@ -57,6 +57,24 @@ final class CockpitBoardMeaningTests: XCTestCase {
     XCTAssertEqual(text?["w"], .number(30))
   }
 
+  /// A drawing read back from disk truncates a stroke's creation time, so its id can sit a millisecond under the
+  /// kept text's and Larry's recorded moments.
+  func testAReloadedDrawingsStrokesAMillisecondUnderStillMatch() {
+    var meaning = BoardMeaning()
+    meaning.strokeMeta.set(meta(["group": "his"]), for: "c")
+    meaning.theirs = [300, 600]
+    meaning.texts = [BoardText(id: "t1", t: 400, text: "hello", font: .plain, size: 20, color: "#5b3fa8")]
+    let names = [["c"], ["g1"], ["l"]]
+    let records = [stroke("s-299x3"), stroke("s-399x4"), stroke("s-599x6")]
+    let lists = CockpitBoardMeaning.lists(meaning: meaning, names: names, records: records)
+    let text = lists.objects.first { $0["kind"]?.string == "text" }
+    XCTAssertEqual(text?["ids"]?.strings, ["s-399x4"], "the glyph a millisecond under is still the text's")
+    let groups = lists.objects.filter { $0["kind"]?.string == "group" }
+    XCTAssertEqual(groups.first { $0["id"]?.string == "g-his" }?["owner"]?.string, "larry")
+    XCTAssertEqual(
+      groups.first { $0["id"]?.string == "g-larry-600" }?["ids"]?.strings, ["s-599x6"], "his loose ink is still his")
+  }
+
   func testAHeaderNamesItsStrokesByTheMirrorsIDsAndDropsUnknownNames() {
     var (meaning, names, records) = sample()
     meaning.headers[0].fold = fold(["b", "p"], own: ["b"], shift: 120.04)

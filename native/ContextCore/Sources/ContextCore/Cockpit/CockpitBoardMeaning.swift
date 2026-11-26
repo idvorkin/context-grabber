@@ -50,6 +50,10 @@ public enum CockpitBoardMeaning {
     let groups = meaning.strokeMeta.groups
     let textIDs = Set(meaning.texts.map(\.id))
     let theirs = Set(meaning.theirs)
+    func theirsMoment(_ t: Int64?) -> Int64? {
+      guard let t else { return nil }
+      return [t, t - 1, t + 1].first(where: theirs.contains)
+    }
 
     // Connectors first, so their strokes are known before groups and Larry's kept ink are counted.
     for (i, stretchNames) in names.enumerated() where i < strokeIDs.count {
@@ -93,15 +97,20 @@ public enum CockpitBoardMeaning {
       let ids = members[group] ?? []
       guard !ids.isEmpty else { continue }
       grouped.formUnion(ids)
-      let owner = ids.allSatisfy { ms(of: $0).map(theirs.contains) ?? false } ? "larry" : "igor"
+      let owner = ids.allSatisfy { theirsMoment(ms(of: $0)) != nil } ? "larry" : "igor"
       lists.objects.append(
         BoardStoreJSON(any: ["id": groupID(group), "kind": "group", "ids": ids, "owner": owner] as [String: Any]))
     }
 
     // Kept texts: the text object names its glyph strokes, which still go up (Larry, Q2).
     var glyphs = Set<String>()
+    let textsByTime = BoardText.byTime(meaning.texts)
+    var glyphsOf: [String: [String]] = [:]
+    for id in strokeIDs where !id.isEmpty {
+      if let text = BoardText.owning(ms(of: id), in: textsByTime) { glyphsOf[text.id, default: []].append(id) }
+    }
     for text in meaning.texts {
-      let ids = strokeIDs.filter { !$0.isEmpty && ms(of: $0) == text.t }
+      let ids = glyphsOf[text.id] ?? []
       guard let box = bounds(ids.compactMap { id in records.first { $0["id"]?.string == id } }) else { continue }
       glyphs.formUnion(ids)
       lists.objects.append(
@@ -120,7 +129,7 @@ public enum CockpitBoardMeaning {
     where !id.isEmpty && !grouped.contains(id) && !glyphs.contains(id)
       && !lists.connectorStrokes.contains(id)
     {
-      guard let t = ms(of: id), theirs.contains(t) else { continue }
+      guard let t = theirsMoment(ms(of: id)) else { continue }
       if larry[t] == nil { larryOrder.append(t) }
       larry[t, default: []].append(id)
     }
