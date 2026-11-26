@@ -39,6 +39,8 @@ public enum WhiteboardDiagram {
     public var boxOf: [String: String] = [:]
     public var boxes: [String: CGRect] = [:]
     public var connectors: [String: BoardConnector] = [:]
+
+    public init() {}
   }
 
   /// A box's name, from its rectangle's mark id: `box-` and its letters, anything else a dash; a name the Cockpit

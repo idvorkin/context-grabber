@@ -61,21 +61,26 @@ final class WhiteboardDiagramBoxesUITests: XCTestCase {
     try larryDrawsADiagram(cockpit)
     let keepAll = app.buttons["whiteboard-keep-all"]
     XCTAssertTrue(keepAll.appears(within: 15), app.debugDescription)
-    _ = try XCTUnwrap(PaperScreen.settled(app) { $0.larryGhost }, "his diagram, faint")
+    let ghost = try XCTUnwrap(PaperScreen.settled(app) { $0.larryGhost }, "his diagram, faint")
     shot(app, "his diagram as ghosts")
     keepAll.tap()
-    let kept = try XCTUnwrap(PaperScreen.settled(app) { $0.larryKept }, "his diagram kept, in his purple")
+    // Kept ink shows dark for a moment before it takes his purple: wait for all of it, as wide as the ghost was.
+    let kept = try XCTUnwrap(
+      PaperScreen.settled(app, within: 15) { screen in
+        screen.larryKept.flatMap { $0.width > ghost.width * 0.9 ? $0 : nil }
+      }, "his diagram kept, all of it in his purple (the ghost was \(ghost))")
     shot(app, "kept")
     return kept
   }
 
-  private func strip(_ kept: PaperScreen.Box, from: CGFloat, to: CGFloat, below: CGFloat = 0.3) -> PaperScreen.Box {
+  /// A column of the diagram, as high as `PaperScreen` looks: from under the bars to above the tool picker.
+  private func strip(_ kept: PaperScreen.Box, from: CGFloat, to: CGFloat) -> PaperScreen.Box {
     PaperScreen.Box(
-      minX: kept.minX + kept.width * from, minY: kept.minY - 0.02, maxX: kept.minX + kept.width * to,
-      maxY: kept.maxY + below)
+      minX: kept.minX + kept.width * from, minY: 0.2, maxX: kept.minX + kept.width * to, maxY: 0.75)
   }
 
-  /// Stories 1349 and 1351: the left box drags on its own; the right box stays; the arrow follows the left one down.
+  /// Stories 1349 and 1351: the left box drags on its own; the right box stays; the arrow follows the left one up. Up, because
+  /// `PaperScreen` looks no lower than three quarters of the screen, and the diagram lands near there.
   func testABoxDragsAsOneThingAndItsArrowFollows() throws {
     let app = XCUIApplication.forTests(animated: true)
     let kept = try keptDiagram(app)
@@ -91,23 +96,31 @@ final class WhiteboardDiagramBoxesUITests: XCTestCase {
     XCTAssertTrue(app.selectionLabel.appears(within: 5), "the tap selected the box: \(app.debugDescription)")
     shot(app, "the left box selected")
     let from = app.coordinate(withNormalizedOffset: CGVector(dx: left.center.x, dy: left.center.y))
-    let to = app.coordinate(withNormalizedOffset: CGVector(dx: left.center.x, dy: left.center.y + 0.15))
+    let to = app.coordinate(withNormalizedOffset: CGVector(dx: left.center.x, dy: left.center.y - 0.15))
     from.press(forDuration: 0.3, thenDragTo: to, withVelocity: 200, thenHoldForDuration: 0.5)
     sleep(1)
-
-    let moved = PaperScreen.settled(app, within: 10) { screen in
-      guard let box = screen.larryKept(in: leftStrip), abs(box.minY - left.minY - 0.15) < 0.03 else { return nil }
-      return box
-    }
     shot(app, "dragged")
-    XCTAssertNotNil(moved, "the left box, label and all, moved down from \(left)")
+    // The selection's menu and label sit over the strip, the menu tinted: a tap on blank paper puts them away before the
+    // ink is read.
+    PaperScreen.tap(app, CGPoint(x: 0.5, y: 0.3))
+    XCTAssertTrue(app.selectionLabel.waitForNonExistence(timeout: 5), "the selection put away")
+
+    // Above where the left box was, in its own column: the box where it was put down.
+    let landed = PaperScreen.Box(minX: left.minX - 0.01, minY: 0.2, maxX: left.maxX + 0.01, maxY: left.minY - 0.02)
+    let moved = PaperScreen.settled(app, within: 10) { $0.larryKept(in: landed) }
+    let gone = PaperScreen(app).larryKept(
+      in: PaperScreen.Box(
+        minX: left.minX, minY: left.minY, maxX: left.maxX, maxY: left.maxY))
+    shot(app, "dragged and put down")
+    XCTAssertNotNil(moved, "the left box, label and all, moved up from \(left)")
+    XCTAssertNil(gone, "nothing of the left box left where it was: \(String(describing: gone))")
     let stayed = try XCTUnwrap(PaperScreen(app).larryKept(in: rightStrip), "the right box")
     XCTAssertEqual(stayed.minY, right.minY, accuracy: 0.01, "the right box stayed where it was")
     XCTAssertEqual(stayed.maxY, right.maxY, accuracy: 0.01, "the right box stayed where it was")
     let followed = PaperScreen.settled(app, within: 10) { screen in
-      guard let ink = screen.larryKept(in: middleStrip), ink.maxY > arrow.maxY + 0.03 else { return nil }
+      guard let ink = screen.larryKept(in: middleStrip), ink.minY < arrow.minY - 0.03 else { return nil }
       return ink
     }
-    XCTAssertNotNil(followed, "the arrow re-routed toward the moved box, below where it was (\(arrow))")
+    XCTAssertNotNil(followed, "the arrow re-routed toward the moved box, above where it was (\(arrow))")
   }
 }

@@ -487,7 +487,8 @@ ink that stayed put when anything moved. The first slice makes a kept diagram a 
   a box (within the 16 points a connector's end reaches) keeps as a connector joining those two boxes, drawn from one
   box's facing side to the other's, as Larry's connector marks keep. It is not part of any box.
 - **Arrows follow.** When Igor drags a box, every connector joined to it re-routes to where the box went, as any
-  connector follows its ends. The other boxes stay where they are.
+  connector follows its ends, however the drag is taken, including a drag that starts on a small selection's handle and
+  is put on as a move. The other boxes stay where they are.
 - **The rest of the reply stays one group.** Marks that are no box and no joined arrow (a label on bare paper, a
   circle, a line, an arrow with an end on bare paper) keep together as the reply's group, as before. A reply with no
   box keeps exactly as before.

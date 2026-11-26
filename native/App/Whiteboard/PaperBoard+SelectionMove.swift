@@ -130,6 +130,10 @@ extension PaperBoardController {
             metas: self.model.strokeMeta, folds: tags, pages: self.pages, board: self.board)
         } ?? BoardOps.Plan(pagesBefore: self.pages, pagesAfter: self.pages)
       for index in dragged { plan.offsets[index] = travel }
+      // Story 1351 (#1528): the connectors joined to what moved follow it to where it lands, not to PaperKit's stretch
+      // that was just taken back.
+      BoardConnectors.follow(
+        &plan, strokes: strokes, texts: self.model.texts, metas: self.model.strokeMeta, folds: tags)
       let framesBefore = self.inkFrames
       self.registerStepBack(to: live, named: "Move")
       guard let (held, _, _) = self.put(plan, on: live, hashes: hashes, named: "Move", stepBack: false) else {
