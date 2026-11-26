@@ -100,6 +100,19 @@ final class WhiteboardDiagramTests: XCTestCase {
     XCTAssertEqual(plan.connectors["r#6"]?.to, WhiteboardDiagram.boxName(rect: "r#4"))
   }
 
+  /// Sibling boxes 20 pt apart: an end in both reaches but nearer the bigger box joins the bigger box, not the smaller.
+  func testAnArrowEndBetweenTwoCloseSiblingBoxesJoinsTheNearer() {
+    let small = CGRect(x: 120, y: 0, width: 50, height: 30)
+    let plan = WhiteboardDiagram.plan([
+      rect("r#0", left), label("r#1", at: CGPoint(x: 30, y: 25)),
+      rect("r#2", small), label("r#3", at: CGPoint(x: 125, y: 10)),
+      rect("r#4", right), label("r#5", at: CGPoint(x: 330, y: 25)),
+      arrow("r#6", CGPoint(x: 104, y: 20), CGPoint(x: 296, y: 30)),
+    ])
+    XCTAssertEqual(plan.connectors["r#6"]?.from, WhiteboardDiagram.boxName(rect: "r#0"))
+    XCTAssertEqual(plan.connectors["r#6"]?.to, WhiteboardDiagram.boxName(rect: "r#4"))
+  }
+
   func testAnArrowWithAnEndOnBarePaperStaysAPlainArrow() {
     let plan = WhiteboardDiagram.plan([
       rect("r#0", left), label("r#1", at: CGPoint(x: 30, y: 25)),
