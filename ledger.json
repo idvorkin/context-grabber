@@ -8,13 +8,6 @@
    "until": "2026-11-27T00:51:45Z"
   },
   {
-   "id": 1348,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/wrap-larry-labels-1526",
-   "at": 1795712563.746263,
-   "until": "2026-11-27T17:02:43Z"
-  },
-  {
    "id": 1349,
    "journey": "10-whiteboard-boards.md",
    "branch": "native/diagram-boxes-1528",
@@ -90,6 +83,13 @@
    "branch": "native/board-perf-fix-1527",
    "at": 1795714553.871347,
    "until": "2026-11-27T17:35:53Z"
+  },
+  {
+   "id": 1360,
+   "journey": "10-whiteboard-boards.md",
+   "branch": "native/diagram-boxes-1528",
+   "at": 1795715455.3620071,
+   "until": "2026-11-27T17:50:55Z"
   }
  ]
 }
