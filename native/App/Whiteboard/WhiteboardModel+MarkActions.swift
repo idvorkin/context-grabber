@@ -43,8 +43,7 @@ extension WhiteboardModel {
       let since = pictureTimes.before(reply?.pictureID, board: board.id).map { $0 + 1 } ?? 0
       return since <= taken ? since...taken : nil
     }
-    let answer = marks.flatMap(\.lines).flatMap { $0 }.map(\.y).max()
-    keepChosen()
+    let answer = keepChosen()
     var folded = false
     if let question, let answer {
       folded =

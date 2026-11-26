@@ -181,8 +181,8 @@ extension WhiteboardModel {
 
   /// Keep beside the chosen mark, one undo. A mark of Larry's keeps its whole reply still showing as one group, as Keep
   /// all keeps it (story 1154; bead context-grabber-it0e); a lone mark, his text from a change and Claude's keep alone.
-  func keepChosen() {
-    guard let kept = turns.keepChosenReply(), let first = kept.first else { return }
+  @discardableResult func keepChosen() -> CGFloat? {
+    guard let kept = turns.keepChosenReply(), let first = kept.first else { return nil }
     log.event(
       "whiteboard",
       [
@@ -190,10 +190,10 @@ extension WhiteboardModel {
       ])
     guard kept.count > 1 else {
       settleLarrys(first)
-      ink(first)
-      return
+      return ink(first)
     }
     keepAsReplies(kept, why: "keep_reply", undoName: Self.keepUndoName)
+    return kept.flatMap(\.lines).flatMap { $0 }.map(\.y).max()
   }
 
   /// Story 1000: where the corner's buttons are, in window points.
@@ -215,7 +215,7 @@ extension WhiteboardModel {
   }
 
   /// The ghost as ink in its colour. Its point spacing is what makes PencilKit's spline follow the shape.
-  private func ink(_ ghost: Ghost) {
+  private func ink(_ ghost: Ghost) -> CGFloat? {
     // Story 817: a text of Larry's is one thing on the board, known by its glyphs' one creation time.
     let made = BoardText.time(Date())
     // #938: a text of his that Igor's ink has come under makes room as it lands. #894: a mark of his on ink written
@@ -254,9 +254,11 @@ extension WhiteboardModel {
     if room.dy != 0 { event["landed_dy"] = Double(room.dy) }
     if ghost.text == nil { event.merge(Self.lateFields(late, [ghost])) { $1 } }
     log.event("whiteboard", event)
-    if let push = room.push, canvas?.keepMakingRoom(strokes, push: push, why: "keep_text") == true { return }
-    if let push = late?.push, canvas?.keepMakingRoom(strokes, push: push, why: "keep_late") == true { return }
+    let bottom = lines.flatMap { $0 }.map(\.y).max()
+    if let push = room.push, canvas?.keepMakingRoom(strokes, push: push, why: "keep_text") == true { return bottom }
+    if let push = late?.push, canvas?.keepMakingRoom(strokes, push: push, why: "keep_late") == true { return bottom }
     add(strokes, named: Self.keepUndoName)
+    return bottom
   }
 
   /// #894 (stories 1004–1006): the room Larry's marks need when kept, for what Igor made after the picture they answer;
