@@ -1580,7 +1580,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1367:
 
 - **Summary:** Mirroring a big board never slows the drawing
-- **Status:** planned
+- **Status:** implemented in [55c218cb](https://github.com/idvorkin/context-grabber/commit/55c218cb8); verified on the host (`CockpitBoardMirrorTests.testPrepareOfAThousandStrokeBoard`, `testPrepareQueuesTheSaveAndNamesTheSentStrokes`, `testPrepareOfAnUnchangedBoardQueuesNothing`) and on the iPad simulator (`WhiteboardStoreMirrorUITests`); the pen on a real thousand-stroke board is the iPad's
 - **Issues:** bead context-grabber-ze0h; cockpit-8kh
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
