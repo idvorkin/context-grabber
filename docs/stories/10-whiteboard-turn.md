@@ -1767,7 +1767,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1045:
 
 - **Summary:** Docked, the conversation's lines run to about half the board
-- **Status:** implemented in [60c8129](https://github.com/idvorkin/context-grabber/commit/60c8129); verified by the Mac build and the iPad simulator run (`WhiteboardTurnUITests`); a reply long enough to wrap at seventy characters is for the iPad's eye
+- **Status:** implemented in [60c8129](https://github.com/idvorkin/context-grabber/commit/60c8129); widened to about half the board docked in [3ab7f93c](https://github.com/idvorkin/context-grabber/commit/3ab7f93c) (#1438), verified by host tests (`WhiteboardNoteTests.testTheDockedTextIsAboutHalfTheBoard`; `just test`), the Mac build and the iPad simulator (`WhiteboardTurnUITests.testTheDockedConversationIsAboutHalfTheBoard`, in portrait, where the seventy-character floor is a little over half); landscape on the iPad is for Igor's eye
 - **Issues:** [#1003](https://github.com/idvorkin/context-grabber/issues/1003) (the banner covered Igor's top line of ink and was mostly *You: Your turn on the board · done* rows; iPad screenshots 2026-11-20); [#1438](https://github.com/idvorkin/context-grabber/issues/1438) (Igor, 2026-11-24: "Make docked chat be wider, like only halfway")
 - **Spec:** [Larry's clock and the conversation strip](../superpowers/specs/2026-11-12-whiteboard-conversation-design.md), *Open: the conversation*
 
