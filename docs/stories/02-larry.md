@@ -3769,7 +3769,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** A chat opened before shows at once from the phone's copy, then catches up
 - **Issues:** Igor, 2026-11-25: *"Chats load slow."* (cockpit story 346)
-- **Status:** implemented in [35146254](https://github.com/idvorkin/context-grabber/commit/35146254) and [51790ded](https://github.com/idvorkin/context-grabber/commit/51790ded); verified by the host rung (`ChatThreadPollTests`), the Mac build (`just native-build-mac`), and the chat UI tests against the fake Cockpit on the iPhone 17 and iPad Pro 11-inch (M5) simulators; not yet on a device
+- **Status:** implemented in [a5f8e5f2](https://github.com/idvorkin/context-grabber/commit/a5f8e5f2) and [24fde6c0](https://github.com/idvorkin/context-grabber/commit/24fde6c0); verified by the host rung (`ChatThreadPollTests`), the Mac build (`just native-build-mac`), and the chat UI tests against the fake Cockpit on the iPhone 17 and iPad Pro 11-inch (M5) simulators; not yet on a device
 - **Spec:** [Chat with Larry — Chats open at once and stay fresh without the wait](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
@@ -3787,7 +3787,7 @@ Part of the [user stories](README.md); persona and format are described there. T
 
 - **Summary:** An open chat with nothing new costs nothing to keep fresh, and brings only what changed
 - **Issues:** Igor, 2026-11-25: *"Chats load slow."* (cockpit story 346)
-- **Status:** implemented in [35146254](https://github.com/idvorkin/context-grabber/commit/35146254) and [51790ded](https://github.com/idvorkin/context-grabber/commit/51790ded); verified by the host rung (`ChatThreadPollTests`: a 304, a delta merged by id, `full: true`, an older Cockpit, a failed read starting over), the fake Cockpit's delta and ETag answers, and the chat UI tests on the iPhone 17 and iPad Pro 11-inch (M5) simulators; not yet on a device
+- **Status:** implemented in [a5f8e5f2](https://github.com/idvorkin/context-grabber/commit/a5f8e5f2) and [24fde6c0](https://github.com/idvorkin/context-grabber/commit/24fde6c0); verified by the host rung (`ChatThreadPollTests`: a 304, a delta merged by id, `full: true`, an older Cockpit, a failed read starting over), the fake Cockpit's delta and ETag answers, and the chat UI tests on the iPhone 17 and iPad Pro 11-inch (M5) simulators; not yet on a device
 - **Spec:** [Chat with Larry — Chats open at once and stay fresh without the wait](../superpowers/specs/2026-10-25-native-chat-design.md)
 
 #### Use Case:
