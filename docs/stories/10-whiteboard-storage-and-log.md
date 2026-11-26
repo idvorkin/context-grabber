@@ -1540,3 +1540,57 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Given:** a Cockpit board deleted on another device after the iPad last saw it, and a stroke drawn on it on the iPad
 - **When:** the iPad hears the board is deleted
 - **Then:** the note offers *Keep my ink as a new board* and *Let it go*; keeping it makes a Cockpit board named for the old one plus *(kept ink)* with that stroke, and letting it go drops the stroke
+
+### User Story 1361:
+
+- **Summary:** Send this board to the Cockpit, and it stays mirrored
+- **Status:** planned
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
+
+#### Use Case:
+- **As someone** whose main board lives in iCloud
+- **I want to** put it in the Cockpit store without losing anything the iPad board does
+- **so that** Larry and the web board read my real board while I keep drawing and talking to Larry on the iPad
+
+#### Acceptance Criteria:
+- **Scenario:** Sending a board, then drawing on it
+- **Given:** the beta switch on, the Cockpit's backup live, and a board with two strokes
+- **When:** I choose *Send this board to the Cockpit* and then draw a third stroke
+- **Then:** the Cockpit has the board under the same id with the two strokes and the original drawing kept beside it, then the third stroke too, and the board on the iPad is unchanged and still syncs over iCloud
+
+### User Story 1362:
+
+- **Summary:** Sending a board again lands nothing twice
+- **Status:** planned
+- **Issues:** cockpit-8kh; bead context-grabber-t12b
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
+
+#### Use Case:
+- **As someone** whose first send may be cut off or repeated
+- **I want to** send a board again safely
+- **so that** the Cockpit's copy never holds a stroke twice
+
+#### Acceptance Criteria:
+- **Scenario:** A second send of the same board
+- **Given:** a board already sent to the Cockpit
+- **When:** it is sent again
+- **Then:** the Cockpit's copy has each stroke once, and the board is still mirrored
+
+### User Story 1363:
+
+- **Summary:** None of Igor's boards goes to the Cockpit before its backup is live
+- **Status:** planned
+- **Issues:** cockpit-8kh; bead context-grabber-t12b; cockpit-8kh.1 (the backup)
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
+
+#### Use Case:
+- **As someone** who wants my boards safe in the store
+- **I want to** be unable to send a real board until the store is backed up
+- **so that** a store fault can never lose my board's history
+
+#### Acceptance Criteria:
+- **Scenario:** The menu before the backup is live
+- **Given:** the beta switch on and the Cockpit's backup not yet live
+- **When:** I open the board menu of a board not named *Scratch…*
+- **Then:** *Send this board to the Cockpit* is dimmed with *Waiting for the Cockpit's backup*, and new boards I make aren't mirrored
