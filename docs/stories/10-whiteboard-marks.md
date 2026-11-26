@@ -2034,7 +2034,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1352:
 
 - **Summary:** The buttons beside Larry's reply are the ones his reply offers
-- **Status:** implemented in [1d5afeec](https://github.com/idvorkin/context-grabber/commit/1d5afeec); verified on the host (`WhiteboardMarkActionsTests`) and on the iPad simulator (`WhiteboardPaperGhostsUITests.testHisRepliesChoicesShowAndToQuestionAnswerFoldsTheAnswerUnderTheQuestion`, with `testAGhostShowsOnThePaperAndKeepMakesItInk` and `testKeepAllKeepsHisWholeReplyAndOneUndoTakesItBack` unchanged). Not yet seen on the iPad
+- **Status:** implemented in [ae87c9c8](https://github.com/idvorkin/context-grabber/commit/ae87c9c8); verified on the host (`WhiteboardMarkActionsTests`) and on the iPad simulator (`WhiteboardPaperGhostsUITests.testHisRepliesChoicesShowAndToQuestionAnswerFoldsTheAnswerUnderTheQuestion`, with `testAGhostShowsOnThePaperAndKeepMakesItInk` and `testKeepAllKeepsHisWholeReplyAndOneUndoTakesItBack` unchanged). Not yet seen on the iPad
 - **Issues:** #1525
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply, and To question/answer*
 
@@ -2055,7 +2055,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1353:
 
 - **Summary:** A choice the board doesn't know is left out, never blocking Keep and Dismiss
-- **Status:** implemented in [1d5afeec](https://github.com/idvorkin/context-grabber/commit/1d5afeec); verified on the host (`WhiteboardMarkActionsTests`)
+- **Status:** implemented in [ae87c9c8](https://github.com/idvorkin/context-grabber/commit/ae87c9c8); verified on the host (`WhiteboardMarkActionsTests`)
 - **Issues:** #1525
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply, and To question/answer*
 
@@ -2076,7 +2076,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1354:
 
 - **Summary:** To question/answer folds Larry's answer under my question
-- **Status:** implemented in [1d5afeec](https://github.com/idvorkin/context-grabber/commit/1d5afeec); verified on the host (`BoardQuestionFoldTests`) and on the iPad simulator (`WhiteboardPaperGhostsUITests.testHisRepliesChoicesShowAndToQuestionAnswerFoldsTheAnswerUnderTheQuestion`). Not yet seen on the iPad
+- **Status:** implemented in [ae87c9c8](https://github.com/idvorkin/context-grabber/commit/ae87c9c8); verified on the host (`BoardQuestionFoldTests`) and on the iPad simulator (`WhiteboardPaperGhostsUITests.testHisRepliesChoicesShowAndToQuestionAnswerFoldsTheAnswerUnderTheQuestion`). Not yet seen on the iPad
 - **Issues:** #1525
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply, and To question/answer*
 
