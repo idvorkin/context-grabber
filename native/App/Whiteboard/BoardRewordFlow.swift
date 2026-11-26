@@ -174,8 +174,9 @@ struct RewordField: View {
         .submitLabel(.done)
         .onSubmit { controller.finishReword(why: "return") }
         .onChange(of: state.words) { before, after in
-          // Return in a field that wraps is a new line: here it is done, and the line isn't kept.
-          if let typed = Self.typedReturn(before: before, after: after) {
+          // Return in a field that wraps is a new line: here it is done, and the line isn't kept, even when it came with
+          // other letters in one change (bead context-grabber-4ief).
+          if let typed = BoardReword.typedReturn(before: before, after: after) {
             state.words = typed
             controller.finishReword(why: "return")
           }
@@ -196,17 +197,5 @@ struct RewordField: View {
   private func font(_ editing: BoardRewordState.Editing) -> Font {
     editing.text.font == .hand
       ? .custom("Noteworthy-Light", fixedSize: editing.fontSize) : .custom("Helvetica", fixedSize: editing.fontSize)
-  }
-
-  /// The words before a lone Return was typed into them, or nil when the change was anything else.
-  static func typedReturn(before: String, after: String) -> String? {
-    guard after.count == before.count + 1 else { return nil }
-    let a = Array(after)
-    let b = Array(before)
-    let at = b.indices.first { a[$0] != b[$0] } ?? b.count
-    guard a[at].isNewline else { return nil }
-    var rest = a
-    rest.remove(at: at)
-    return String(rest) == before ? before : nil
   }
 }

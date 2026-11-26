@@ -43,7 +43,10 @@ box or a loop: the clean shape shows at once, and lands when you lift.
   moves and stretches as before.
 - A tap on ink that isn't a kept text, or on blank paper, does what it did before. The Pencil writes as ever: a Pencil
   tap on a text is a dot, not an edit.
-- He edits the words. Return, or a tap anywhere off the field, is *done*.
+- He edits the words. Return, or a tap anywhere off the field, is *done*. A Return is done however it arrives: typed on
+  its own, or together with other letters at once (fast typing, a paste or dictation that ends in a line, a busy
+  device); the letters stay and the new line doesn't. Only a change that ends in a line is done: a paste with a line
+  break inside it keeps that break and the field stays open. The text's own line breaks stay.
 - Done with new words: the text is drawn again with them, from the same top-left, in its own lettering, letter size and
   colour, wrapped by word to its width. Its width is the wider of how wide it was and the web board's text width (480
   board points), but never past the page's right edge; a word longer than a line is broken. A text keeps its own line
