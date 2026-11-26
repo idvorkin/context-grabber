@@ -391,8 +391,10 @@ public enum BoardConnectors {
       let l = length(s)
       return l >= 40 && hypot(b.x - a.x, b.y - a.y) >= l / 2
     }
+    // Each candidate costs a whole-board plan on the main actor, so only the six longest that aren't box sides.
     return open.filter { !isSide($0, of: open, in: chosen) }
       .sorted { length(chosen[$0]) > length(chosen[$1]) }
+      .prefix(6).map { $0 }
   }
 
   /// A side of a box drawn as separate strokes (bead yzsq): both its ends come within a hand-drawn corner's overshoot
