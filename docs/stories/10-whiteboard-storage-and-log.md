@@ -1544,7 +1544,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1361:
 
 - **Summary:** Send this board to the Cockpit, and it stays mirrored
-- **Status:** planned
+- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the iPad Pro 11-inch (M5) simulator against the fake Cockpit (`WhiteboardStoreMirrorUITests.testABoardIsSentFromItsMenuAndAStrokeAfterFollows`, `testANewBoardWithTheSwitchOnIsMirroredFromItsFirstSave`); the real Cockpit is the iPad's
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
@@ -1562,7 +1562,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1362:
 
 - **Summary:** Sending a board again lands nothing twice
-- **Status:** planned
+- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the host (`CockpitBoardMirrorTests.testStrokeIDsAreStableAndUnique`) and by the fake Cockpit refusing a second add of an id as exists; a second send on the iPad is the iPad's
 - **Issues:** cockpit-8kh; bead context-grabber-t12b
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
@@ -1580,7 +1580,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1363:
 
 - **Summary:** No board went to the Cockpit before its backup was live
-- **Status:** planned
+- **Status:** implemented in [385ce64f](https://github.com/idvorkin/context-grabber/commit/385ce64fa3b98a670c316ef24f76e7110af72299); verified on the host (`CockpitBoardMirrorTests.testTheGateHoldsRealBoardsUntilTheBackupIsLive`); the backup went live before merge (cockpit cfbb196), so the menu offers every board
 - **Issues:** cockpit-8kh; bead context-grabber-t12b; cockpit-8kh.1 (the backup, live 2026-11-26, cockpit cfbb196)
 - **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
 
