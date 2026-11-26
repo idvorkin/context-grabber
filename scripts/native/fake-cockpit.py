@@ -11,7 +11,9 @@ accepts it, as one JSON when not). A chat URL ending /plain gets a Cockpit that 
 answers every message of Igor's a second later ("Larry heard: <text>"), and a message with a board's picture with marks (cockpit#85: an arrow and a
 label as kind + points, with the picture's picture_id and frame echoed). POST /fake/larry-draws {"count": n, "separate": bool} is a test's way to have him draw
 unprompted on the newest board thread (n circles, as /whiteboard/suggest strokes; with "on_last_stroke": one circle on the
-middle of the last stroke the board posted, story 1180). POST /fake/larry-says {"count": n,
+middle of the last stroke the board posted, story 1180; with "diagram": two boxes, each a rectangle with a label inside,
+and an arrow between them, stories 1349-1351).
+POST /fake/larry-says {"count": n,
 "from": k} adds n replies of Larry's words, "Reply k: …" onwards, on the newest board thread (bead context-grabber-97s). POST /fake/larry-ops {"stale": false, "dy": 120}
 is a test's way to have his next board answer be a batch of changes instead of marks (stories 814-817): room opened
 below the middle of the picture he was sent (its frame, in board points) by dy, and a line of plain text in the gap,
@@ -1135,7 +1137,16 @@ class Handler(BaseHTTPRequestHandler):
             if not BOARD_MESSAGES:
                 return self._json(404, {"ok": False, "error": "no board thread"})
             key = list(BOARD_MESSAGES)[-1]
-            circles = [{"kind": "circle", "cx": 40 * i, "cy": 40, "r": 20} for i in range(1, data["count"] + 1)]
+            circles = [{"kind": "circle", "cx": 40 * i, "cy": 40, "r": 20} for i in range(1, data.get("count", 0) + 1)]
+            if data.get("diagram"):
+                # Stories 1349-1351 (#1528): two boxes, each a rectangle with a label inside, and an arrow between them.
+                circles = [
+                    {"kind": "rect", "x": 20, "y": 80, "w": 120, "h": 60},
+                    {"kind": "label", "x": 40, "y": 120, "text": "Box A", "size": 20},
+                    {"kind": "rect", "x": 260, "y": 80, "w": 120, "h": 60},
+                    {"kind": "label", "x": 280, "y": 120, "text": "Box B", "size": 20},
+                    {"kind": "arrow", "x1": 145, "y1": 110, "x2": 255, "y2": 110},
+                ]
             ink = [st["points"] for st in LAST_STROKES if st.get("points")]
             if data.get("on_last_stroke") and ink:
                 # Story 1180: a circle on the last stroke, which it then holds to.

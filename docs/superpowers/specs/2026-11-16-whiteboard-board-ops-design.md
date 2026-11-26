@@ -478,6 +478,34 @@ that drift when he makes room."
   board doesn't have shows nothing, and is set aside as if dismissed.
 - Dismiss throws it away, like any mark.
 
+### Larry's diagrams keep as boxes Igor can move (#1528)
+
+Igor, 2026-11-26, after Larry drew a boxes-and-arrows diagram on the iPad board: "I want it to look more like Visio.
+And I want to be able to have these sort of boxes I can move around and talk about."
+
+Until now Keep all made a whole reply one group, so a diagram moved only as a whole, and Larry's plain arrows were dead
+ink that stayed put when anything moved. The first slice makes a kept diagram a set of boxes joined by live arrows:
+
+- **A box is a rectangle of Larry's and the labels inside it.** When Igor keeps a reply, by Keep all or by Keep beside
+  one of its marks, each rectangle of the reply that has at least one of the reply's labels inside it (the label's
+  middle within the rectangle) keeps as one thing with those labels. A label inside two rectangles goes with the smaller.
+  Tapping the box selects all of it, and dragging moves it as one.
+- **An arrow between two boxes keeps as a connector.** A plain arrow of the same reply whose tail and head each land on
+  a box (within the 16 points a connector's end reaches) keeps as a connector joining those two boxes, drawn from one
+  box's facing side to the other's, as Larry's connector marks keep. It is not part of any box.
+- **Arrows follow.** When Igor drags a box, every connector joined to it re-routes to where the box went, as any
+  connector follows its ends, however the drag is taken, including a drag that starts on a small selection's handle and
+  is put on as a move. The other boxes stay where they are.
+- **The rest of the reply stays one group.** Marks that are no box and no joined arrow (a label on bare paper, a
+  circle, a line, an arrow with an end on bare paper) keep together as the reply's group, as before. A reply with no
+  box keeps exactly as before.
+- **One Undo.** The boxes, the connectors and the rest are one keep, undone together.
+- **Larry hears it** as he hears any keep: each box by its own name, and each connector as a stroke whose notes say
+  which two boxes it joins.
+
+Not in this slice (each its own follow-up): the web board keeping a diagram the same way; a box Igor draws himself;
+resizing a box; words on a connector; Igor pointing at or circling a box and Larry being told which box he means.
+
 ### What Larry gets back
 
 - A connector goes back to Larry with the board's strokes, as a stroke under its name, so it shows in every picture he

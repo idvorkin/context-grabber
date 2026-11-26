@@ -81,6 +81,9 @@ extension WhiteboardModel {
   /// or story 1154's Keep beside a mark of a reply). `why` names the keep in the log and the room.
   private func keepAsReplies(_ marks: [Ghost], why: String, undoName: String) {
     let groups = WhiteboardMarks.keptGroups(marks.map(\.id))
+    // Stories 1349–1351 (#1528): a reply's boxes keep as one thing each, its arrows between boxes as connectors.
+    let diagram = diagramPlan(marks)
+    var diagramNames: [String: [String]] = [:]
     let started = Date()
     var strokes: [PKStroke] = []
     var repliesByStroke: [String: String] = [:]
@@ -89,9 +92,12 @@ extension WhiteboardModel {
       let made = BoardText.time(started.addingTimeInterval(Double(i) * 0.005))
       let mine =
         connectorInk(ghost)
+        ?? diagramArrowInk(ghost, plan: diagram, made: made.date)
         ?? Self.strokes(ghost.lines, color: ghost.color, width: ghost.width, spacing: 4, made: made.date)
       strokes += mine
-      if let reply = groups[ghost.id] {
+      if diagram.boxOf[ghost.id] != nil || diagram.connectors[ghost.id] != nil {
+        diagramNames[ghost.id] = opStrokes(mine).strokes.flatMap(\.ids)
+      } else if let reply = groups[ghost.id] {
         // Named as Larry will hear them, before the canvas has them (`paper_keep` says the names survive it).
         for name in opStrokes(mine).strokes.flatMap(\.ids) where repliesByStroke[name] == nil {
           repliesByStroke[name] = reply
@@ -111,8 +117,9 @@ extension WhiteboardModel {
     // #894 (story 1004): before the groups' notes, so the board it measures is the one he wrote on.
     let late = lateRoom(marks)
     rememberTheirs(strokes)
-    if !repliesByStroke.isEmpty {
-      for (name, reply) in repliesByStroke {
+    let boxed = noteDiagram(diagram, names: diagramNames)
+    if !repliesByStroke.isEmpty || !boxed.isEmpty {
+      for (name, reply) in repliesByStroke where !boxed.contains(name) {
         if let note = WhiteboardMarks.groupNote(reply: reply, over: strokeMeta[name]) {
           strokeMeta.set(note, for: name)
         }
