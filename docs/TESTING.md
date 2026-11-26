@@ -399,6 +399,7 @@ and it sets the app's players to zero volume, so every cue still plays and still
 
 | Hook | Effect |
 |---|---|
+| `GRABBER_CHAT_COPIES=off` | the chat keeps no device copy of a thread and reads none, so an opened thread's first read is what shows (the slow-first-read UI test) |
 | `GRABBER_BUG=text` | two seconds after launch, file a problem report with that note, as a shake and *Log it* would |
 | `GRABBER_TIMER=<chip>` | open the Gym Timer on that chip (`30sec`, `1min`, `2min`, `5-1`, `custom`) and start it, as a widget tile would. `GRABBER_TIMER=work,rest,rounds` (seconds, seconds, count) runs that shape as Custom without remembering it: `10,10,2` is a whole workout in 35 s; `just native-test-sim` runs `10,0,1` (15 s) and reads `timer_cue` and `live_activity` from |
 | `GRABBER_BREATHE=breath,cycles[,cue[,pause_at_seconds]]` | open Box breathing and begin exactly that session (seconds a side, whole cycles, `voice` / `tone` / `off`; the cue is used but not remembered): `2,1,voice` is a whole session in 10 s, which `just native-test-sim` runs and reads `breath_cue` and `live_activity` from. A fourth field pauses the session by itself that many seconds into the breathing, as a tap on the circle would (`breath_pause` with reason `hook`): `6,1,off,3` shows the paused circle mid-inhale, for a screenshot. Any other value (`open`) just opens the sliders, for a screenshot |

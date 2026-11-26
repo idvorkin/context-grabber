@@ -3764,3 +3764,39 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** the Cockpit answers the search with a 502
 - **When:** I search words a chat's title says
 - **Then:** that chat's row shows under a copyable problem naming the search and the 502; with no match at all the list says *No chats match.*; emptying the box brings back the list, its *All*/*New* choice and *Decisions* as they were
+
+### User Story 1700:
+
+- **Summary:** A chat opened before shows at once from the phone's copy, then catches up
+- **Issues:** Igor, 2026-11-25: *"Chats load slow."* (cockpit story 346)
+- **Status:** implemented in [a5f8e5f2](https://github.com/idvorkin/context-grabber/commit/a5f8e5f2) and [24fde6c0](https://github.com/idvorkin/context-grabber/commit/24fde6c0); verified by the host rung (`ChatThreadPollTests`), the Mac build (`just native-build-mac`), and the chat UI tests against the fake Cockpit on the iPhone 17 and iPad Pro 11-inch (M5) simulators; not yet on a device
+- **Spec:** [Chat with Larry — Chats open at once and stay fresh without the wait](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor opening a chat I have read before
+- **I want to** see its messages the moment it opens
+- **so that** I never wait on the Cockpit to send the whole thread again before I can read it
+
+#### Acceptance Criteria:
+- **Scenario:** Opening a chat this phone read before
+- **Given:** this phone read a chat earlier, even in an earlier launch
+- **When:** I open it again
+- **Then:** its messages show at once from the phone's copy, and the chat then catches up with anything new or changed, exactly as a full read would show it
+
+### User Story 1701:
+
+- **Summary:** An open chat with nothing new costs nothing to keep fresh, and brings only what changed
+- **Issues:** Igor, 2026-11-25: *"Chats load slow."* (cockpit story 346)
+- **Status:** implemented in [a5f8e5f2](https://github.com/idvorkin/context-grabber/commit/a5f8e5f2) and [24fde6c0](https://github.com/idvorkin/context-grabber/commit/24fde6c0); verified by the host rung (`ChatThreadPollTests`: a 304, a delta merged by id, `full: true`, an older Cockpit, a failed read starting over), the fake Cockpit's delta and ETag answers, and the chat UI tests on the iPhone 17 and iPad Pro 11-inch (M5) simulators; not yet on a device
+- **Spec:** [Chat with Larry — Chats open at once and stay fresh without the wait](../superpowers/specs/2026-10-25-native-chat-design.md)
+
+#### Use Case:
+- **As** Igor with a chat or the chat list open
+- **I want to** have it update itself without fetching everything again
+- **so that** new replies arrive quickly, even on a slow connection, and nothing on screen moves when nothing changed
+
+#### Acceptance Criteria:
+- **Scenario:** Polling an open chat
+- **Given:** a chat open on the phone
+- **When:** it checks the Cockpit again and nothing has changed
+- **Then:** the Cockpit answers *no change* with no body, nothing on screen moves, and the session log counts it; when a reply arrives or a receipt moves on, only that comes, a new message lands at the bottom and a changed one changes in place; when the Cockpit says the thread was rewritten, or any read fails, the next read is a whole one and what is on screen stays until then
