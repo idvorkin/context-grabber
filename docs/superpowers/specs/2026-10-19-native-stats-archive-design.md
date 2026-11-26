@@ -37,7 +37,8 @@ ever there twice.
 ## What Igor sees
 
 Nothing, by design. With the Cockpit reachable, the app sends what is new every four hours or so, once more when
-it comes to the front after that long, and once at the end of the day; a first run after install sends history in
+it comes to the front after that long, and once at the end of the day (heart rate, resting heart rate and HRV sooner, as Health delivers them: [Heart
+rate as it comes](#heart-rate-as-it-comes)); a first run after install sends history in
 pages, carrying on across runs until it is caught up. Off the tailnet, nothing is sent and nothing is lost: the
 next run picks up exactly where the last successful page ended. Health is never asked for access by the archive;
 Today asks, and until it has, only the trail and the strip are archived. While the phone is locked Health cannot be
