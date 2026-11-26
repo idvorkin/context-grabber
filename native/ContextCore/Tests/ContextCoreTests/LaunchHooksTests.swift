@@ -336,6 +336,23 @@ final class LaunchHooksTests: XCTestCase {
       WhiteboardHooks.AfterKeep(delay: 3, presses: []))
   }
 
+  // pbvt: a loop of three-stroke keeps on the simulator, for the rate at which a kept mark draws wrong.
+  func testKeepLoop() {
+    XCTAssertNil(WhiteboardHooks([:]).keepLoop)
+    XCTAssertEqual(
+      WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_LOOP": "300"]).keepLoop,
+      WhiteboardHooks.KeepLoop(count: 300, how: .each), "the board's own way")
+    XCTAssertEqual(
+      WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_LOOP": "40,batch"]).keepLoop,
+      WhiteboardHooks.KeepLoop(count: 40, how: .batch))
+    XCTAssertNil(
+      WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_LOOP": "40,fresh"]).keepLoop, "fresh copies went: they drew the same")
+    XCTAssertNil(WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_LOOP": "lots"]).keepLoop, "a count or nothing")
+    XCTAssertNil(WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_LOOP": "5,sideways"]).keepLoop, "a way it knows or nothing")
+    XCTAssertEqual(WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_WAY": "batch"]).keepWay, .batch)
+    XCTAssertNil(WhiteboardHooks(["GRABBER_WHITEBOARD_KEEP_WAY": "x"]).keepWay)
+  }
+
   // MARK: Chat
 
   func testChatSend() {

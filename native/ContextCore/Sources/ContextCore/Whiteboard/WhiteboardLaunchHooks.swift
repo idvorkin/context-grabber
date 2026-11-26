@@ -38,6 +38,28 @@ public struct WhiteboardHooks: Equatable, Sendable {
     }
   }
 
+  /// `GRABBER_WHITEBOARD_KEEP_LOOP=<count>[,each|batch]`: on the board that opens, that many keeps of three of Larry's
+  /// circles, each looked at and taken out again, for the simulator's rate of a kept mark drawn in part black or not at
+  /// all (bead context-grabber-pbvt). `how` is the way the strokes go into the markup: one append per stroke, the board's
+  /// way (`each`), or all in one append (`batch`), the way that drew wrong.
+  public struct KeepLoop: Equatable, Sendable {
+    public enum How: String, Equatable, Sendable { case each, batch }
+    public var count: Int
+    public var how: How
+
+    public init(count: Int, how: How) {
+      self.count = count
+      self.how = how
+    }
+
+    init?(_ spec: String) {
+      let parts = spec.split(separator: ",").map(String.init)
+      guard let count = parts.first.flatMap({ Int($0) }), count > 0 else { return nil }
+      guard let how = parts.count > 1 ? How(rawValue: parts[1]) : .each else { return nil }
+      self.init(count: count, how: how)
+    }
+  }
+
   /// `GRABBER_WHITEBOARD_LARRY_TIMEOUT=<seconds>[,dismiss]`: how long a turn of Larry's is out before the board stops
   /// waiting, and whether *Larry didn't answer* then dismisses itself (stories 669, 761).
   public struct LarryTimeout: Equatable, Sendable {
@@ -121,6 +143,10 @@ public struct WhiteboardHooks: Equatable, Sendable {
   /// `GRABBER_WHITEBOARD_REVIEW_FINDING=1`: the first stroke's step is followed by a stand-in Keep that changed the pen,
   /// so the review finds a bug the simulator can show (stories 1243–1245).
   public var reviewFinding: Bool
+  public var keepLoop: KeepLoop?
+  /// `GRABBER_WHITEBOARD_KEEP_WAY=each|batch`: every keep this launch goes into the markup that way, as the keep
+  /// loop's do, so a UI test's own keeps can be counted the same way (bead context-grabber-pbvt).
+  public var keepWay: KeepLoop.How?
 
   public init(_ env: [String: String] = [:]) {
     saveFails = env["GRABBER_WHITEBOARD_SAVE_FAILS"] != nil
@@ -157,5 +183,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
     fakeHandwritingOffer = env["GRABBER_WHITEBOARD_FAKE_OFFER"] == "1"
     reviewIdle = env["GRABBER_WHITEBOARD_REVIEW_IDLE"].flatMap { Double($0) }
     reviewFinding = env["GRABBER_WHITEBOARD_REVIEW_FINDING"] == "1"
+    keepLoop = env["GRABBER_WHITEBOARD_KEEP_LOOP"].flatMap(KeepLoop.init)
+    keepWay = env["GRABBER_WHITEBOARD_KEEP_WAY"].flatMap(KeepLoop.How.init(rawValue:))
   }
 }

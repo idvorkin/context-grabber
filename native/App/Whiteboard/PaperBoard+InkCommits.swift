@@ -28,7 +28,7 @@ extension PaperBoardController {
     let made = PKDrawing(strokes: strokes)
     let before = markup
     if wanted > pages { markup.bounds = board.bounds(pages: wanted) }
-    markup.append(contentsOf: made)
+    Self.appendKept(made.strokes, to: &markup)
     let landed = setMarkup(markup, stepBack: before, named: name)
     let toolAfter = toolText(paper.drawingTool)
     let restore = decidingTool.tool ?? tool
@@ -75,6 +75,18 @@ extension PaperBoardController {
     undoSoonForTests(LaunchHooks.current.whiteboard.afterKeep)
     lookForInk(made.bounds, why: "kept")
     lookAtKeptInk(strokes, why: "keep")
+  }
+
+  /// A kept mark's strokes into `markup`, one append each (bead context-grabber-pbvt, story 650): appended all at once,
+  /// three circles of Larry's kept by Keep all drew in part black or not at all on the iPad simulator in 17 of 152 keeps,
+  /// with PaperKit holding them purple; one append each, in the same one change and one undo, 1 of 145. `keepWay`
+  /// `batch` (the simulator's keep loop) puts them in all at once, to count that again.
+  static func appendKept(_ strokes: [PKStroke], to markup: inout PaperMarkup) {
+    guard keepWay != .batch else {
+      markup.append(contentsOf: PKDrawing(strokes: strokes))
+      return
+    }
+    for stroke in strokes { markup.append(contentsOf: PKDrawing(strokes: [stroke])) }
   }
 
   /// Stories 814–816, 840–842: a batch of Larry's changes on the markup. Every stroke it moves moves whole, by a transform
@@ -169,7 +181,7 @@ extension PaperBoardController {
       }
     }
     model.rememberTheirs(theirs)
-    if !extra.isEmpty { markup.append(contentsOf: PKDrawing(strokes: extra)) }
+    if !extra.isEmpty { Self.appendKept(extra, to: &markup) }
     if plan.pagesAfter != pages { markup.bounds = board.bounds(pages: plan.pagesAfter) }
     let landed = setMarkup(markup, stepBack: stepBack ? undoTo ?? before : nil, named: name)
     putKeys = Set(markup.strokeFrames.keys)
