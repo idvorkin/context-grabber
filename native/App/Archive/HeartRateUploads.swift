@@ -93,8 +93,12 @@ final class HeartRateUploads {
     let since = lastCountedAt
     lastCountedAt = Date()
     let descriptor = HKSampleQueryDescriptor(
-      predicates: [.quantitySample(type: HKQuantityType(.heartRate), predicate: HKQuery.predicateForSamples(
-        withStart: since.addingTimeInterval(-6 * 3600), end: nil))],
+      predicates: [
+        .quantitySample(
+          type: HKQuantityType(.heartRate),
+          predicate: HKQuery.predicateForSamples(
+            withStart: since.addingTimeInterval(-6 * 3600), end: nil))
+      ],
       sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)])
     do {
       let samples = try await descriptor.result(for: health)
