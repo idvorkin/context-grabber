@@ -103,6 +103,8 @@ final class ArchiveModel: ObservableObject {
     return task
   }
 
+  var isRunning: Bool { running != nil }
+
   /// iOS is taking the background time back: the page in flight finishes or fails on its own, nothing after it
   /// starts, and the cursor stays wherever the last 2xx put it.
   func cancel() {

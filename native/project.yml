@@ -60,6 +60,8 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        # Health wakes the app for new heart rate (context-grabber-jimz); without it background delivery fails.
+        com.apple.developer.healthkit.background-delivery: true
         # The live tile reads the usage reading the app writes here (story 136).
         com.apple.security.application-groups:
           - group.com.idvorkin.grabbernative

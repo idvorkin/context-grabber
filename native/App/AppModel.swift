@@ -28,6 +28,8 @@ final class AppModel: ObservableObject {
   private let chatNotifications = ChatNotificationDelegate()
   /// Everything the app collects, to the Cockpit's archive every few hours (story 270).
   let archive: ArchiveModel
+  /// context-grabber-jimz: heart rate to the archive as Health delivers it.
+  let heartRate: HeartRateUploads
   /// Stories 1611-1613: the day, summed up, to Larry after each grab (the iPhone only).
   let dailyPush: DailyPushModel
   /// Shake (hard or gentle), ⌘I or the Settings button opens BugKit's report dialog (stories 142, 146). Set at the
@@ -191,6 +193,8 @@ final class AppModel: ObservableObject {
     archive = ArchiveModel(log: log, database: database, environment: LaunchHooks.environment)
     dailyPush = DailyPushModel(log: log, database: database, environment: LaunchHooks.environment)
     archive.registerBackgroundTasks()  // before the launch finishes, or iOS refuses the handlers
+    heartRate = HeartRateUploads(log: log, database: database, archive: archive)
+    heartRate.start(sends: archiveSends)  // at launch, so a background wake finds its observer
     call = CallModel(log: log, database: database, environment: LaunchHooks.environment)
     chatVoice = ChatVoiceModel(log: log, callLive: call.$snapshot.map(\.isActive).eraseToAnyPublisher())
     // Before BugKit the ✕ was kept in the database: carry it over once, so a dismissed row stays dismissed.
@@ -292,6 +296,7 @@ final class AppModel: ObservableObject {
       tracker.foreground(); usage.resume(reason: "launch")
       mirror.refresh(reason: "launch")  // #355: the Today card current, in the background
       archive.launch()  // story 270: the next slots asked for, and a run if one is due
+      heartRate.flushIfWaiting(trigger: "launch")  // story 1702: what a locked Health wake waited for
       chat.scheduleBackgroundCheck()  // chat: Larry's replies noticed while the app is away
       Task { await chat.refreshList(reason: "launch") }
     case .foreground: foreground()
@@ -318,6 +323,7 @@ final class AppModel: ObservableObject {
     chat.scheduleBackgroundCheck()
     dailyPush.foreground()  // stories 1611-1613: days that waited for the Cockpit
     archive.runIfDue(reason: "foreground")  // story 270: the delta, once four hours have passed
+    heartRate.flushIfWaiting()  // story 1702: what a locked Health wake waited for
   }
 
   /// Chat's list, or with `thread` that thread on top of it (a notification's tap).

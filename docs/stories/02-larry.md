@@ -3800,3 +3800,21 @@ Part of the [user stories](README.md); persona and format are described there. T
 - **Given:** a chat open on the phone
 - **When:** it checks the Cockpit again and nothing has changed
 - **Then:** the Cockpit answers *no change* with no body, nothing on screen moves, and the session log counts it; when a reply arrives or a receipt moves on, only that comes, a new message lands at the bottom and a changed one changes in place; when the Cockpit says the thread was rewritten, or any read fails, the next read is a whole one and what is on screen stays until then
+
+### User Story 1702:
+
+- **Summary:** New heart rate reaches the Cockpit soon after the phone gets it, not at the next four-hourly run
+- **Status:** implemented in [b1443ac0](https://github.com/idvorkin/context-grabber/commit/b1443ac0), [6c9dddae](https://github.com/idvorkin/context-grabber/commit/6c9dddae); a locked wake kept across a suspension or relaunch and sent at the next unlocked wake, launch or foreground, a wake during a run riding along, and the wake's run held to its background time in [ac857188](https://github.com/idvorkin/context-grabber/commit/ac857188); host-verified by `just test` (`HeartRateWakeTests`: a locked wake waits for the unlock, wakes within a minute share one run, a flush while still locked keeps waiting, and `testAWaitKeptAcrossARelaunchRunsAtTheNextUnlockedFlush`) and the Mac build (rung 1.5). Background delivery only happens on the phone: the real cadence is read from its `hr_wake` lines after the next install
+- **Issues:** context-grabber-jimz (Igor, on a call 2026-11-25 11:56 via Larry d55e5d6cc81c: "Can Context Grabber be grabbing and uploading my heart rate whenever it gets a new reading?")
+- **Spec:** [Stats archive — Heart rate as it comes](../superpowers/specs/2026-10-19-native-stats-archive-design.md#heart-rate-as-it-comes)
+
+#### Use Case:
+- **As** Igor, whose Watch records his heart rate all day
+- **I want to** have new readings go to the Cockpit's archive as the phone receives them
+- **so that** Larry sees today's heart rate within minutes, not hours later
+
+#### Acceptance Criteria:
+- **Scenario:** The Watch syncs new heart rate while the phone sits locked in my pocket
+- **Given:** Grabber installed, Health access granted, the phone locked
+- **When:** the Watch's new readings reach the phone and I unlock it a while later
+- **Then:** the readings go to the Cockpit's archive the next time Grabber runs with the phone unlocked (a later Health wake, the unlock itself while Grabber is still awake, opening Grabber, or a background refresh), without waiting for the four-hourly run, and a locked wake is not forgotten when iOS suspends or relaunches Grabber; the session log has an `hr_wake` line saying how many new readings there were and how old the newest was; and nothing is sent twice

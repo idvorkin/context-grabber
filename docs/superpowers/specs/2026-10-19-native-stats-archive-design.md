@@ -37,7 +37,8 @@ ever there twice.
 ## What Igor sees
 
 Nothing, by design. With the Cockpit reachable, the app sends what is new every four hours or so, once more when
-it comes to the front after that long, and once at the end of the day; a first run after install sends history in
+it comes to the front after that long, and once at the end of the day (heart rate, resting heart rate and HRV sooner, as Health delivers them: [Heart
+rate as it comes](#heart-rate-as-it-comes)); a first run after install sends history in
 pages, carrying on across runs until it is caught up. Off the tailnet, nothing is sent and nothing is lost: the
 next run picks up exactly where the last successful page ended. Health is never asked for access by the archive;
 Today asks, and until it has, only the trail and the strip are archived. While the phone is locked Health cannot be
@@ -90,6 +91,31 @@ When more than one stream stopped, the Cockpit being out of reach wins, then a r
 **A locked run is not counted.** A run that found the phone locked (Health cannot be read) changes neither the state
 nor Settings, so the next time the app comes to the front is due by the run before it. Background tasks (the refresh
 and the end-of-day batch) run whenever iOS starts them, whatever the state.
+
+### Heart rate as it comes
+
+Igor, on a call on 2026-11-25 (bead context-grabber-jimz): *"Can Context Grabber be grabbing and uploading my heart
+rate whenever it gets a new reading?"*
+
+Heart rate, resting heart rate and HRV don't wait for the four-hourly run. When Health saves a new sample of any of
+them on the phone, Health wakes Grabber, even in the background, and a run goes then: the same run as any other,
+every stream's delta, so nothing is sent twice.
+
+- **The phone is locked:** Health can't be read while it is, and most heart rate lands then, because the Watch syncs
+  to a phone in a pocket. iOS wakes no app at an unlock, so the run goes the next time Grabber runs with the phone
+  unlocked: a later Health wake, the unlock itself if Grabber is still awake, opening Grabber, or a background refresh
+  (an ordinary run). That a locked wake is waiting survives a suspension or a relaunch.
+- **Health is answered quickly:** a wake's run is short and holds the background time it asks iOS for; if that runs
+  out, the run stops where its last page left it and Health is told the wake was handled, so Health keeps waking
+  the app. A wake while a run is already going rides along on it.
+- **A burst of wakes** (the Watch syncs all three types at once): wakes within a minute of a run share it.
+- **How often it really comes is iOS's call:** Health wakes an app at most once per its frequency, and a heart rate
+  sample reaches the phone only when the Watch syncs it, so expect batches minutes to tens of minutes apart rather
+  than every reading. Each wake says in the session log how many new heart-rate samples there were and how old the
+  newest was, so the real cadence can be read off the phone.
+- **Live heart rate during a call**, every few seconds, needs a Watch workout session. It is a separate feature
+  (bead context-grabber-w6po).
+- A simulator or a Mac build sends nothing, as for every other stream.
 
 ## In Settings
 
