@@ -213,8 +213,11 @@ final class ArchiveModel: ObservableObject {
       log.event("archive", ["action": "health_skipped", "reason": "not asked yet: Today asks"])
       return []
     }
-    return HealthKitSource.readTypes.compactMap { $0 as? HKSampleType }
-      .sorted { $0.identifier < $1.identifier }
-      .map { HealthArchiveSource(store: health, type: $0) }
+    let types = HealthKitSource.readTypes.compactMap { $0 as? HKSampleType }.sorted { $0.identifier < $1.identifier }
+    // The busy types' last 400 days go first, newest-first (story 270, context-grabber-kseb): their oldest-first
+    // history can take weeks of runs, and the last year is what Larry reads.
+    let recent: [ArchiveSource] = types.filter { RecentSweep.denseTypes.contains($0.identifier) }
+      .map { HealthRecentSource(store: health, type: $0) }
+    return recent + types.map { HealthArchiveSource(store: health, type: $0) }
   }
 }

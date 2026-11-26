@@ -109,7 +109,7 @@ public struct ArchiveRun {
     var refused: [String: Int] = [:]
     for source in sources {
       if isCancelled() {
-        result.stopped[source.stream] = .cancelled
+        result.stopped[source.cursorKey] = .cancelled
         break
       }
       let report = await uploader.upload(source, now: now, isCancelled: isCancelled) { [reason] type, fields in
@@ -119,8 +119,8 @@ public struct ArchiveRun {
       result.records += report.records
       result.inserted += report.inserted
       result.duplicate += report.duplicate
-      if let why = report.stopped { result.stopped[source.stream] = why }
-      if let status = report.refusedStatus { refused[source.stream] = status }
+      if let why = report.stopped { result.stopped[source.cursorKey] = why }
+      if let status = report.refusedStatus { refused[source.cursorKey] = status }
       // The Cockpit is away: every stream after this one would fail the same way.
       if report.stopped == .cockpitAway { break }
       if report.stopped == .unreadable && !isUnlocked() {

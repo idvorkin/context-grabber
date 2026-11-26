@@ -140,8 +140,12 @@ public enum ArchiveStatus {
   }
 
   /// `location.points` → "Trail", `health.HKQuantityTypeIdentifierHeartRate` → "Heart Rate", `strip.balloons` →
-  /// "Strip: balloons".
+  /// "Strip: balloons"; a stream's newest-first pass, `health.HKQuantityTypeIdentifierHeartRate#recent` → "Heart Rate,
+  /// last 400 days".
   public static func name(_ stream: String) -> String {
+    if stream.hasSuffix(RecentSweep.keySuffix) {
+      return name(String(stream.dropLast(RecentSweep.keySuffix.count))) + ", last \(RecentSweep.days) days"
+    }
     if stream == ArchiveStream.points { return "Trail" }
     if stream.hasPrefix("strip.") { return "Strip: " + String(stream.dropFirst("strip.".count)) }
     if stream.hasPrefix("health.") {
