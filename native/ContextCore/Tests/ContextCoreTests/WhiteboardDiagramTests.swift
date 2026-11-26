@@ -73,6 +73,19 @@ final class WhiteboardDiagramTests: XCTestCase {
     XCTAssertNil(plan.boxOf["r#4"], "a joined arrow is part of no box")
   }
 
+  func testAnArrowEndInsideABoxNestedInAnotherJoinsTheInnerBox() {
+    let outer = CGRect(x: 0, y: 0, width: 200, height: 200)
+    let inner = CGRect(x: 20, y: 20, width: 100, height: 60)
+    let plan = WhiteboardDiagram.plan([
+      rect("r#0", outer), label("r#1", at: CGPoint(x: 40, y: 150)),
+      rect("r#2", inner), label("r#3", at: CGPoint(x: 40, y: 40)),
+      rect("r#4", right), label("r#5", at: CGPoint(x: 330, y: 25)),
+      arrow("r#6", CGPoint(x: 110, y: 50), CGPoint(x: 296, y: 30)),
+    ])
+    XCTAssertEqual(plan.connectors["r#6"]?.from, WhiteboardDiagram.boxName(rect: "r#2"))
+    XCTAssertEqual(plan.connectors["r#6"]?.to, WhiteboardDiagram.boxName(rect: "r#4"))
+  }
+
   func testAnArrowWithAnEndOnBarePaperStaysAPlainArrow() {
     let plan = WhiteboardDiagram.plan([
       rect("r#0", left), label("r#1", at: CGPoint(x: 30, y: 25)),

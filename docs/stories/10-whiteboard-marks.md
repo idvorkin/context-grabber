@@ -1264,7 +1264,26 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** An arrow from one box to another
 - **Given:** a reply of Larry's with two boxes and a plain arrow whose tail and head each touch one of them
 - **When:** I keep the reply
-- **Then:** the arrow is a connector joining the two boxes, drawn from one box's facing side to the other's, and an arrow with an end on bare paper keeps as the plain arrow he drew
+- **Then:** the arrow is a connector joining the two boxes, drawn from one box's facing side to the other's
+
+---
+
+### User Story 1360:
+
+- **Summary:** Larry's arrow with an end on bare paper keeps as the arrow he drew
+- **Status:** implemented in [3a0f5b26](https://github.com/idvorkin/context-grabber/commit/3a0f5b26) (#1528); verified by host tests (`WhiteboardDiagramTests.testAnArrowWithAnEndOnBarePaperStaysAPlainArrow`) and `just test`; not yet seen on the iPad
+- **Spec:** [Larry edits the board](../superpowers/specs/2026-11-16-whiteboard-board-ops-design.md), *Larry's diagrams keep as boxes Igor can move*
+
+#### Use Case:
+- **As Igor,** keeping a diagram of Larry's with an arrow that points at nothing
+- **I want to** have that arrow keep as he drew it
+- **so that** a pointer into open paper isn't bent onto a box it never meant
+
+#### Acceptance Criteria:
+- **Scenario:** An arrow with one end on bare paper
+- **Given:** a reply of Larry's with a box and a plain arrow whose tail touches the box and whose head is on bare paper
+- **When:** I keep the reply
+- **Then:** the arrow keeps as the plain arrow he drew, where he drew it, joined to nothing
 
 ---
 

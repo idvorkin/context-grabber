@@ -12,7 +12,7 @@ answers every message of Igor's a second later ("Larry heard: <text>"), and a me
 label as kind + points, with the picture's picture_id and frame echoed). POST /fake/larry-draws {"count": n, "separate": bool} is a test's way to have him draw
 unprompted on the newest board thread (n circles, as /whiteboard/suggest strokes; with "on_last_stroke": one circle on the
 middle of the last stroke the board posted, story 1180; with "diagram": two boxes, each a rectangle with a label inside,
-and an arrow between them, stories 1349-1351). GET /fake/last-strokes is the newest POST /whiteboard/strokes whole.
+and an arrow between them, stories 1349-1351).
 POST /fake/larry-says {"count": n,
 "from": k} adds n replies of Larry's words, "Reply k: …" onwards, on the newest board thread (bead context-grabber-97s). POST /fake/larry-ops {"stale": false, "dy": 120}
 is a test's way to have his next board answer be a batch of changes instead of marks (stories 814-817): room opened
@@ -786,9 +786,6 @@ class Handler(BaseHTTPRequestHandler):
                     k: SESSION[k] for k in ("name", "thread", "next", "pending", "hints", "answers")}})
             if path == "/fake/strokes":
                 return self._json(200, {"ok": True, "sends": STROKE_SENDS, "folds": FOLD_SENDS})
-            if path == "/fake/last-strokes":
-                with LOCK:
-                    return self._json(200, {"ok": True, "strokes": LAST_STROKES})
             if path == "/fake/to-text":
                 return self._json(200, {"ok": True, "sends": TO_TEXT_SENDS})
             if path == "/fake/ops":
