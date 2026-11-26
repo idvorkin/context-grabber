@@ -52,7 +52,7 @@ final class LiveHeartRateOnCalls: ObservableObject {
 
   /// Every change of the call's state: asks to start once it's live, and to end once it ends.
   func onCall(_ snap: CallSnapshot) {
-    if snap.state == .connecting, !snap.redialing { note = nil }
+    if snap.state == .connecting, !plan.inCall { note = nil }
     guard let action = plan.next(state: snap.state, redialing: snap.redialing, enabled: enabled && Self.offered)
     else { return }
     ask(action)

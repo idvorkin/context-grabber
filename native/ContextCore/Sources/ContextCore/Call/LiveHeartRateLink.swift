@@ -56,6 +56,9 @@ public struct LiveHeartRatePlan: Equatable, Sendable {
 
   public init() {}
 
+  /// The call has been live, redials included: a `.connecting` now is the same call's redial, not a new call.
+  public var inCall: Bool { wasLive }
+
   /// The start never reached Exercise Analyzer, or it answered that it couldn't start: the call's end asks nothing.
   public mutating func startFailed() {
     started = false
@@ -65,7 +68,7 @@ public struct LiveHeartRatePlan: Equatable, Sendable {
     switch state {
     case .live:
       defer { wasLive = true }
-      if !wasLive, !started, enabled {
+      if !wasLive, enabled {
         started = true
         return .start
       }
@@ -78,8 +81,10 @@ public struct LiveHeartRatePlan: Equatable, Sendable {
         return .end
       }
       return nil
-    case .idle, .connecting:
-      if !redialing { wasLive = false }
+    case .idle:
+      wasLive = false
+      return nil
+    case .connecting:
       return nil
     }
   }

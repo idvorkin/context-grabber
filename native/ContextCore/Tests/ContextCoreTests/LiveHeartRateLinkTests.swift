@@ -65,9 +65,29 @@ final class LiveHeartRateLinkTests: XCTestCase {
     var plan = LiveHeartRatePlan()
     XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
     XCTAssertNil(plan.next(state: .ended, redialing: true, enabled: true))
-    XCTAssertNil(plan.next(state: .connecting, redialing: true, enabled: true))
+    XCTAssertTrue(plan.inCall)
+    XCTAssertNil(plan.next(state: .connecting, redialing: false, enabled: true))
     XCTAssertNil(plan.next(state: .live, redialing: false, enabled: true))
     XCTAssertEqual(plan.next(state: .ended, redialing: false, enabled: true), .end)
+  }
+
+  func testARedialAfterAFailedStartDoesNotAskAgain() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
+    plan.startFailed()
+    XCTAssertNil(plan.next(state: .ended, redialing: true, enabled: true))
+    XCTAssertNil(plan.next(state: .connecting, redialing: false, enabled: true))
+    XCTAssertNil(plan.next(state: .live, redialing: false, enabled: true))
+    XCTAssertNil(plan.next(state: .ended, redialing: false, enabled: true))
+  }
+
+  func testANewCallIsNotInTheLastOne() {
+    var plan = LiveHeartRatePlan()
+    XCTAssertEqual(plan.next(state: .live, redialing: false, enabled: true), .start)
+    XCTAssertEqual(plan.next(state: .ended, redialing: false, enabled: true), .end)
+    XCTAssertFalse(plan.inCall)
+    XCTAssertNil(plan.next(state: .connecting, redialing: false, enabled: true))
+    XCTAssertFalse(plan.inCall)
   }
 
   func testACallThatNeverWentLiveEndsNothing() {
