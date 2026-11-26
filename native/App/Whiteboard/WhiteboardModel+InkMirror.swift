@@ -10,14 +10,15 @@ import SwiftUI
 
 extension WhiteboardModel {
   func changed(_ new: PKDrawing) {
+    guard editable else { return }
     // #1527: this part of a stroke grows with the board; slow, it names its own steps.
     let laps = StepLaps()
     defer { logPartLaps(laps, part: "model") }
     let same = laps.time("equal") { new == drawing }
-    guard editable, !same else { return }
+    guard !same else { return }
     let added = new.strokes.count > drawing.strokes.count
     laps.time("moved_log") { logStrokesMoved(to: new) }
-    drawing = new
+    laps.time("drawing") { drawing = new }
     laps.time("landed") {
       if added, let last = new.strokes.last { vad.stroke(last.renderBounds) }
       if added { strokeLanded() }
