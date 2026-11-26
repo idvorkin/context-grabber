@@ -1688,9 +1688,9 @@ Part of the [user stories](README.md); persona and format are described there.
 
 ### User Story 1088:
 
-- **Summary:** A live call starts the watch's live heart rate, and the call's end ends it
-- **Status:** implemented on branch native/live-hr-on-calls-at59; host-verified by `just test` (`LiveHeartRateLinkTests`: once at live, once five seconds after the end, nothing on a redial, a dial-again within those five seconds or with the switch off, no end after a start that failed or was refused); on the iPhone 17 simulator a synthetic call opened Exercise Analyzer's link, Exercise Analyzer's x-error came back with its reason (no HealthKit entitlement on a simulator build) and the call stayed live in the background meanwhile (its `call_stats` kept coming); a real watch session needs the phone
-- **Issues:** context-grabber-at59
+- **Summary:** A live call starts the watch's live heart rate
+- **Status:** implemented in #1546 (417c9258); host-verified by `just test` (`LiveHeartRateLinkTests`: once at live, once five seconds after the end, nothing on a redial, a dial-again within those five seconds or with the switch off, no end after a start that failed or was refused); on the iPhone 17 simulator a synthetic call opened Exercise Analyzer's link, Exercise Analyzer's x-error came back with its reason (no HealthKit entitlement on a simulator build) and the call stayed live in the background meanwhile (its `call_stats` kept coming); a real watch session needs the phone
+- **Issues:** context-grabber-at59, context-grabber-iige
 - **Spec:** [Native call — Live heart rate on calls](../superpowers/specs/2026-08-28-native-call-screen-design.md#live-heart-rate-on-calls)
 
 #### Use Case:
@@ -1699,10 +1699,28 @@ Part of the [user stories](README.md); persona and format are described there.
 - **so that** Larry can see how hard I'm working while we talk
 
 #### Acceptance Criteria:
-- **Scenario:** A call with the switch on
+- **Scenario:** A call goes live with the switch on
 - **Given:** *Live heart rate on calls* is on and Exercise Analyzer is installed
-- **When:** a call goes live, and later ends
-- **Then:** Exercise Analyzer is asked once to start its Call session when the call goes live and once to end it five seconds after the call ends (at once if Grabber leaves the foreground first), Grabber comes back to the call each time, and the call's voice is never cut
+- **When:** a call goes live
+- **Then:** Exercise Analyzer is asked once to start its Call session, Grabber comes back to the call, and the call's voice is never cut
+
+### User Story 1800:
+
+- **Summary:** The call's end ends the watch's live heart rate
+- **Status:** implemented in #1546 (417c9258); host-verified by `just test` (`LiveHeartRateLinkTests`: once at live, once five seconds after the end, nothing on a redial, a dial-again within those five seconds or with the switch off, no end after a start that failed or was refused); on the iPhone 17 simulator a synthetic call opened Exercise Analyzer's link, Exercise Analyzer's x-error came back with its reason (no HealthKit entitlement on a simulator build) and the call stayed live in the background meanwhile (its `call_stats` kept coming); a real watch session needs the phone
+- **Issues:** context-grabber-at59, context-grabber-iige
+- **Spec:** [Native call — Live heart rate on calls](../superpowers/specs/2026-08-28-native-call-screen-design.md#live-heart-rate-on-calls)
+
+#### Use Case:
+- **As** Igor, hanging up a call that started live heart rate
+- **I want to** have the watch's Call session end with the call
+- **so that** it doesn't keep running on my wrist after I've stopped talking
+
+#### Acceptance Criteria:
+- **Scenario:** Hanging up a call that started live heart rate
+- **Given:** a call that asked Exercise Analyzer to start its Call session
+- **When:** the call ends and doesn't come back within five seconds
+- **Then:** Exercise Analyzer is asked once to end its Call session (at once if Grabber leaves the foreground first)
 
 ### User Story 1089:
 
