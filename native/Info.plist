@@ -89,6 +89,11 @@
 			</dict>
 		</dict>
 	</array>
+	<!-- Stories 1088-1089: Live heart rate on calls asks canOpenURL whether Exercise Analyzer is installed. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>exerciseanalyzer</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

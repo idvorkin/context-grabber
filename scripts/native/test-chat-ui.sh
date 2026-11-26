@@ -44,7 +44,7 @@ TEST_RUNNER_GRABBER_FAKE_COCKPIT="http://localhost:$port" TEST_RUNNER_GRABBER_FA
   -only-testing:GrabberNativeUITests/ChatArchiveUITests \
   -only-testing:GrabberNativeUITests/ChatSkillThreadUITests \
   -only-testing:GrabberNativeUITests/ChatDecisionUITests -only-testing:GrabberNativeUITests/ChatAskSearchUITests -only-testing:GrabberNativeUITests/ChatThreadSearchUITests \
-  -only-testing:GrabberNativeUITests/ChatCockpitDownUITests \
+  -only-testing:GrabberNativeUITests/ChatCockpitDownUITests -only-testing:GrabberNativeUITests/ChatCallLiveHeartRateUITests \
   -only-testing:GrabberNativeUITests/ChatReactionUITests -only-testing:GrabberNativeUITests/ChatMoveUITests "$action"
 status=$?
 echo "fake Cockpit: $(grep -c '"method": "POST", "path": "/chat"' "$report") POST /chat, $(grep -c '"path": "/chat/igor2' "$report") requests to a thread"

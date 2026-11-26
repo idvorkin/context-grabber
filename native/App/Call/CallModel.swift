@@ -43,6 +43,8 @@ final class CallModel: ObservableObject {
   }
 
   let events = CallEventLog()
+  /// Stories 1088-1089: *Live heart rate on calls* asks Exercise Analyzer to start and end the watch's Call session.
+  let liveHeartRate: LiveHeartRateOnCalls
   let bridgeURL: String
   /// Story 212: where every call's log goes at its end (the stats archive's destination, same simulator and Mac rule).
   private let archiveURL: String?
@@ -83,6 +85,7 @@ final class CallModel: ObservableObject {
   init(log: SessionLog, database: AppDatabase, environment: [String: String]) {
     self.log = log
     self.database = database
+    liveHeartRate = LiveHeartRateOnCalls(log: log, database: database, environment: environment)
     archiveURL = ArchiveModel.destination(environment)
     bridgeURL = CallProtocol.bridgeURL(environment: environment, cockpit: Self.cockpitURL) ?? ""
     backend = database.setting(Self.backendKey).flatMap(CallBackend.init(rawValue:)) ?? .default
@@ -255,6 +258,7 @@ final class CallModel: ObservableObject {
     route = CallAudioEngine.describeRoute()
     if snap.isActive { refreshDevices() }
     if snap.state == .connecting, was != .connecting { watchNetwork() }
+    if snap.state != was { liveHeartRate.onCall(snap) }
     if snap.state == .ended, was != .ended {
       stopWatchingNetwork()
       // #440: a handoff redial keeps the devices Igor picked and files no trouble report; its log still archives.

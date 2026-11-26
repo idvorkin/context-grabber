@@ -530,6 +530,8 @@ private struct HomeSettingsView: View {
         }
         // Stories 1611-1613: the day, summed up, to Larry.
         DailyPushSection(push: model.dailyPush)
+        // Stories 1088-1089: Live heart rate on calls, iPhone only, off by default.
+        LiveHeartRateSettingsSection(live: model.call.liveHeartRate)
         // Story 1339: Boards from the Cockpit (beta), off by default.
         WhiteboardCockpitSettingsSection()
         Section("Build") {

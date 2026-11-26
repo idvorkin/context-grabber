@@ -870,6 +870,34 @@ other three scaled up to 100, and the line says *no speech*. A call with no spee
 out a stretch shorter than half of five seconds, such as the last moment before hanging up, unless the call has
 nothing longer.
 
+### Live heart rate on calls
+
+Settings has a switch, **Live heart rate on calls**, off by default and only on the iPhone. When it's on, a Larry
+call asks Exercise Analyzer to start its light Call session on the watch, so his heart rate streams to the Cockpit
+every few seconds while he talks. The call ends that session when it ends.
+
+- **When it starts:** once the call is live. Asking earlier would put Exercise Analyzer in front while the call is
+  still taking the microphone, and iOS doesn't let a call start its audio from the background. Once the call is live,
+  its audio keeps running in the background, as it does with the phone locked.
+- **What Igor sees:** Exercise Analyzer comes to the front for about a second while it asks the watch, then Grabber
+  comes back on the call screen. The call carries on throughout, and the voice is never cut.
+- **When it ends:** once the call has stayed ended for five seconds, Grabber asks Exercise Analyzer to end the Call
+  session. A call that connects again within those five seconds (the app hanging up and dialling again to heal a
+  silent microphone) is the same call: no end, and no second start. An answer that arrives after its call is over
+  changes nothing. If Grabber is leaving the foreground before the five seconds are up (Igor hangs up and locks the
+  phone, or swipes home), the end is asked at once, since a link can't be opened from the background. It never ends
+  a gym workout; Exercise Analyzer refuses that.
+- **When it can't:** if Exercise Analyzer isn't installed, or it says it couldn't start or end the session (a workout
+  already running, the watch out of reach), the call carries on. A quiet line under the call says so, with the reason,
+  and the line can be copied. Nothing else interrupts the call. The line stays until the next call begins, and a new
+  call (not a redial) starts without it.
+- **One ask per call:** a redial or a reconnect within the same call doesn't ask again. The end is asked only when the
+  start went out and Exercise Analyzer didn't refuse it: when Exercise Analyzer isn't installed, iOS didn't open it,
+  or it answered that it couldn't start, the call's end asks nothing and the line keeps the start's reason. A start
+  that went out with no answer yet is still ended, so a running session is never left running.
+- **The log:** every ask and every answer is in the session log, as `live_hr_link`, with which ask, whether it went
+  out, and the reason Exercise Analyzer gave.
+
 ### The call's chat thread
 
 The Cockpit gives every real call its own chat thread (Cockpit story 321): it opens when Igor first speaks, Larry's

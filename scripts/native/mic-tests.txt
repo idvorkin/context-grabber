@@ -14,6 +14,8 @@
 mic GrabberNativeUITests/ChatNewThreadUITests/testTheVoiceButtonOpensANewChatWithItsMicTapped  # the voice button starts dictation; the crashes of beads 2v63 and 208e
 mic GrabberNativeUITests/CockpitBackUITests/testBackAndCockpitLeaveAPageTheDashboardOpenedAndItsCallStaysInTheApp  # dials a real call, whose prepare switches on voice processing on the mic's input node
 
+reviewed ChatCallLiveHeartRateUITests/testWithTheSwitchOnAMissingExerciseAnalyzerLeavesTheCallLiveWithANote  # a synthetic call (GRABBER_CALL_AUDIO=synthetic: no audio hardware)
+reviewed ChatCallLiveHeartRateUITests/testWithTheSwitchOffACallAsksNothing  # a synthetic call (GRABBER_CALL_AUDIO=synthetic: no audio hardware)
 reviewed ChatDecisionUITests/testOtherAnswersInIgorsOwnWords  # looks at the mic beside Send, types the answer
 reviewed ChatNewThreadUITests/testALiveCallKeepsTheMicFromTheVoiceButton  # a synthetic call (GRABBER_CALL_AUDIO=synthetic: no audio hardware), and the voice button is refused while it's live
 reviewed IPadUITests/testHomeFillsTheIPadAndEachLauncherOpensInLandscape  # opens the Call screen and looks for Call Larry; never dials
