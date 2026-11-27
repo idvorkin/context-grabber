@@ -273,6 +273,13 @@ struct WhiteboardView: View {
       model.paste(text)
     }
     .task {
+      // Bead context-grabber-pbvt: the simulator's way of keeping, and its loop of three-stroke keeps.
+      if let way = LaunchHooks.current.whiteboard.keepWay { PaperBoardController.keepWay = way }
+      guard model.editable, LaunchHooks.current.whiteboard.keepLoop != nil else { return }
+      try? await Task.sleep(for: .seconds(1))
+      (model.canvas as? PaperBoardController)?.keepLoopForTests()
+    }
+    .task {
       // #965: the simulator presses the bar's own Undo and Redo, as a tap on them does.
       guard model.editable, let hook = LaunchHooks.current.whiteboard.barUndo else { return }
       try? await Task.sleep(for: .seconds(hook.delay))

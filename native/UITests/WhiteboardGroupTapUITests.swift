@@ -43,6 +43,10 @@ final class WhiteboardGroupTapUITests: XCTestCase {
     app.launchEnvironment["GRABBER_SILENT"] = "1"
     app.launchEnvironment["GRABBER_CHAT_URL"] = cockpit
     app.launchEnvironment["GRABBER_WHITEBOARD_GHOST_SECONDS"] = "600"
+    // Bead context-grabber-pbvt: a run can ask for the way kept marks go into the markup, to count it (TEST_RUNNER_).
+    if let way = ProcessInfo.processInfo.environment["GRABBER_WHITEBOARD_KEEP_WAY"] {
+      app.launchEnvironment["GRABBER_WHITEBOARD_KEEP_WAY"] = way
+    }
     app.launch()
     let new = app.buttons["whiteboard-new"]
     XCTAssertTrue(new.appears(within: 20), app.debugDescription)
