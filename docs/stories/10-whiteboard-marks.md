@@ -2034,7 +2034,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1352:
 
 - **Summary:** The buttons beside Larry's reply are the ones his reply offers
-- **Status:** in progress (#1525)
+- **Status:** implemented in [f6d25eda](https://github.com/idvorkin/context-grabber/commit/f6d25eda); verified on the host (`WhiteboardMarkActionsTests`), the Mac build and the iPad simulator (`WhiteboardPaperGhostsUITests.testTheButtonsBesideHisMarkAreTheOnesHisReplyOffers`, with `testAGhostShowsOnThePaperAndKeepMakesItInk` and `testKeepAllKeepsHisWholeReplyAndOneUndoTakesItBack` unchanged). Not yet seen on the iPad
 - **Issues:** #1525
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply*
 
@@ -2055,7 +2055,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 ### User Story 1353:
 
 - **Summary:** A choice the board doesn't know is left out, never blocking Keep and Dismiss
-- **Status:** in progress (#1525)
+- **Status:** implemented in [f6d25eda](https://github.com/idvorkin/context-grabber/commit/f6d25eda); verified on the host (`WhiteboardMarkActionsTests`) and the iPad simulator (`WhiteboardPaperGhostsUITests.testTheButtonsBesideHisMarkAreTheOnesHisReplyOffers`: its qa choice is left out)
 - **Issues:** #1525
 - **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply*
 
