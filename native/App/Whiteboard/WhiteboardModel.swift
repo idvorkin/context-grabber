@@ -134,6 +134,8 @@ final class WhiteboardModel: ObservableObject {
   /// Story 1000: the board's top-right corner (? and Feedback, and the chip), window points, which the chosen mark's
   /// buttons keep clear of.
   @Published var cornerFrame: CGRect = .null
+  /// Story 1352 (#1525): the buttons each of Larry's replies showing offers, by reply, for as long as the board is open.
+  var replyOffers: [String: [WhiteboardMarkActions.Offer]] = [:]
   /// The board's mic (story 345): open, on its way up and finishing its last words.
   @Published var micOn = false
   @Published var micStarting = false

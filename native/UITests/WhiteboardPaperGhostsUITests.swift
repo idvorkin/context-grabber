@@ -455,10 +455,14 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
 
   /// The fake Cockpit draws `count` circles in a row on the board's thread, unprompted, as one reply of Larry's; with
   /// `onLastStroke`, one circle on the middle of the last stroke the board sent (story 1180).
-  private func larryDraws(_ count: Int, _ cockpit: String, onLastStroke: Bool = false) throws {
+  private func larryDraws(
+    _ count: Int, _ cockpit: String, onLastStroke: Bool = false, actions: [Any]? = nil
+  ) throws {
     var request = URLRequest(url: try XCTUnwrap(URL(string: cockpit + "/fake/larry-draws")))
     request.httpMethod = "POST"
-    request.httpBody = Data(#"{"count": \#(count), "on_last_stroke": \#(onLastStroke)}"#.utf8)
+    var body: [String: Any] = ["count": count, "on_last_stroke": onLastStroke]
+    if let actions { body["actions"] = actions }
+    request.httpBody = try JSONSerialization.data(withJSONObject: body)
     let done = expectation(description: "the fake Cockpit took it")
     URLSession.shared.dataTask(with: request) { _, response, _ in
       XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
@@ -572,6 +576,32 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let redone = ink(app, within: 8) { $0.maxY > before.maxY + 0.03 }
     XCTAssertNotNil(redone, "redo pushed it down again")
     XCTAssertEqual(send(app).label, strokes(2))
+  }
+
+  /// Stories 1352, 1353 (#1525): the buttons beside his mark are the ones his reply offers, in its order and with its
+  /// labels; a choice this build doesn't know ("qa", not built yet) is left out. The parsing is
+  /// `WhiteboardMarkActionsTests`, on the host.
+  func testTheButtonsBesideHisMarkAreTheOnesHisReplyOffers() throws {
+    let cockpit = try cockpit()
+    let app = try openBoard(["GRABBER_WHITEBOARD_FINGER_LABEL": "1"])
+    _ = try inkAboveAndBelow(app)
+    try WhiteboardWordsOnlyFixture.prepare(cockpit, for: self)
+    send(app).tap()
+    XCTAssertTrue(WhiteboardWordsOnlyFixture.reply(in: app).appears(within: 15), app.debugDescription)
+    try larryDraws(1, cockpit, onLastStroke: true, actions: ["qa", ["id": "dismiss", "label": "Not now"], "keep"])
+    XCTAssertTrue(toKeep(app, 1).appears(within: 10), app.debugDescription)
+    let mark = try XCTUnwrap(PaperScreen.settled(app) { $0.larryGhost }, "his circle on my lower line, faint")
+    PaperScreen.tap(app, mark.center)
+    let dismiss = app.buttons["whiteboard-mark-dismiss"]
+    XCTAssertTrue(dismiss.appears(within: 5), app.debugDescription)
+    XCTAssertEqual(dismiss.label, "Not now", "his label")
+    let keep = app.buttons["whiteboard-mark-keep"]
+    XCTAssertTrue(keep.exists)
+    XCTAssertLessThan(dismiss.frame.minX, keep.frame.minX, "in his reply's order")
+    XCTAssertFalse(app.buttons["whiteboard-mark-qa"].exists, "a choice this build doesn't know is left out")
+    shot(app, "his reply's choices")
+    dismiss.tap()
+    XCTAssertFalse(keep.waitForExistence(timeout: 2), "Not now dismissed his mark")
   }
 
   /// Story 1180 (bead context-grabber-p2an): Larry's mark on my lower line moves down with it when his push moves it,
