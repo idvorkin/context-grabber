@@ -1595,6 +1595,24 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I draw strokes one after another, each saved
 - **Then:** the pen never waits on the mirror, the saves reach the Cockpit in order, and a save whose mirror work took a twentieth of a second or more names its steps in the session log
 
+### User Story 1368:
+
+- **Summary:** A mirrored board's meaning goes to the Cockpit too
+- **Status:** implemented in [b14a1a8e](https://github.com/idvorkin/context-grabber/commit/b14a1a8e892c35d454b3fc922eb0acd3042c1fbd); verified on the host (`CockpitBoardMeaningTests`) and on the iPad simulator (`WhiteboardStoreMirrorUITests.testAMirroredBoardsHeaderAndFoldReachTheCockpit`); the web board drawing them is the Cockpit's
+- **Issues:** cockpit-8kh; Larry's shape, 2026-11-26 (msg e837e6cbcbbb)
+- **Spec:** [Boards live in the Cockpit](../superpowers/specs/2026-11-22-boards-in-the-cockpit-design.md), *Sending a board to the Cockpit (the mirror, beta)*
+
+#### Use Case:
+- **As someone** whose main board is mirrored to the Cockpit
+- **I want to** see its headers, folds, groups, kept texts, cards and connectors there too, not only its ink
+- **so that** the web board and Larry read the board I see on the iPad
+
+#### Acceptance Criteria:
+- **Scenario:** A header and a group on a mirrored board
+- **Given:** a mirrored board with a header over some strokes and a group of strokes
+- **When:** the board saves
+- **Then:** the Cockpit's copy holds the header over those same strokes and the group as one thing, and folding the header later changes only that header in the Cockpit
+
 ### User Story 1363:
 
 - **Summary:** No board went to the Cockpit before its backup was live

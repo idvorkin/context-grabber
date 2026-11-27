@@ -134,4 +134,47 @@ final class WhiteboardStoreMirrorUITests: XCTestCase {
     app.buttons["whiteboard-board"].tap()
     XCTAssertTrue(app.descendants(matching: .any)["whiteboard-mirror-status"].appears(within: 10), app.debugDescription)
   }
+
+  /// The fake's things of `kind` on board `id`.
+  private func things(_ kind: String, on id: String) throws -> [[String: Any]] {
+    ((try get("/boards/" + id)["things"] as? [[String: Any]]) ?? []).filter { $0["kind"] as? String == kind }
+  }
+
+  /// Story 1368: a mirrored board's header goes to the Cockpit over its strokes, and folding it changes only it.
+  func testAMirroredBoardsHeaderAndFoldReachTheCockpit() throws {
+    let app = try launch(switchOn: true)
+    let name = "Meaning board \(UUID().uuidString.prefix(6))"
+    newBoard(app, named: name)
+    sleep(1)
+    let at = { (x: CGFloat, y: CGFloat) in app.coordinate(withNormalizedOffset: CGVector(dx: x, dy: y)) }
+    at(0.12, 0.30).press(forDuration: 0.05, thenDragTo: at(0.4, 0.31))
+    at(0.2, 0.36).press(forDuration: 0.05, thenDragTo: at(0.5, 0.37))
+    waitForStrokesSent(2, app)
+    let id = try waitForStrokes(2, named: name)
+    // The margin's left 64 board points: a tap there beside the first line makes it a header (story 855).
+    at(0.025, 0.305).tap()
+    let deadline = Date().addingTimeInterval(30)
+    var headers: [[String: Any]] = []
+    while Date() < deadline {
+      headers = try things("header", on: id)
+      if !headers.isEmpty { break }
+      sleep(1)
+    }
+    let seen = try get("/boards/" + id)
+    XCTAssertEqual(headers.count, 1, "the header reached the Cockpit: \(seen)")
+    let body = headers.first?["body"] as? [String: Any]
+    XCTAssertEqual((body?["ids"] as? [String])?.count, 1, "over the first line's stroke: \(String(describing: body))")
+    XCTAssertTrue((body?["ids"] as? [String] ?? []).allSatisfy { $0.hasPrefix("s-") }, "by the mirror's stroke ids")
+    // A tap on its mark folds the indented line under it: the Cockpit's header gains `folded`.
+    at(0.025, 0.305).tap()
+    let foldBy = Date().addingTimeInterval(30)
+    var folded: [String: Any]?
+    while Date() < foldBy {
+      folded = (try things("header", on: id).first?["body"] as? [String: Any])?["folded"] as? [String: Any]
+      if folded != nil { break }
+      sleep(1)
+    }
+    let after = try get("/boards/" + id)
+    XCTAssertNotNil(folded, "the fold went with its header: \(after)")
+  }
 }

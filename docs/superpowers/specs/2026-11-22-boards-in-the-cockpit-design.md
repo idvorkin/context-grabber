@@ -268,8 +268,15 @@ board", 08:15). Behind the same beta switch:
   Saves that come quickly one after another go up as one, in order. When the work for one save takes a twentieth of a
   second or more, the session log names its steps, as it does for a slow stroke.
 - **New boards** made with + while the beta switch is on are mirrored from their first save.
-- **Not yet:** the board's meaning (headers, folds, Larry's marks and cards) goes with a later step; this one sends
-  the ink. A change made to the Cockpit's copy on the web doesn't come back to the iPad yet: the iPad's board stays
+- **The board's meaning goes too.** Its headers (a fold travels with its header), the groups of strokes that move
+  as one (Igor's, Larry's kept replies, a kept diagram's boxes), kept texts, question cards and Larry's answer cards,
+  and the connectors between boxes reach the Cockpit's copy as the same things the web board draws, so the web board
+  and Larry see the board as the iPad shows it. Folding a header, moving a card or keeping a reply changes only that
+  thing in the Cockpit. A connector goes as the arrow between its two ends, not as the ink it was drawn with, so the
+  web board's arrow follows its boxes; a connector to loose ink, with nothing on the web to follow, stays ink. What
+  goes is agreed with Larry (2026-11-26); the iPad's own bookkeeping (what Larry asked to tidy, his op records) stays
+  on the iPad.
+- **Not yet:** a change made to the Cockpit's copy on the web doesn't come back to the iPad: the iPad's board stays
   the truth until the rollout's step 3.
 - **It waited for the Cockpit's backup.** Until the store's nightly backup to igor2 was live, *Send this board to the
   Cockpit* was dimmed with *Waiting for the Cockpit's backup* (a board named *Scratch…* could go for trying it). Larry

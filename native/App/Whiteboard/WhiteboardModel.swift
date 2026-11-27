@@ -325,6 +325,8 @@ final class WhiteboardModel: ObservableObject {
     do {
       try store.saveMeaning(opLedger.meaning, board: board.id)
       opLedger.wrote(opLedger.meaning)
+      // Story 1368: a change to the meaning alone (a fold, a header, a card) follows to a mirrored board's copy.
+      mirrorSaved()
     } catch {
       log.event(
         "error", ["where": "whiteboard_meaning", "board": board.id, "operation": "save", "message": "\(error)"])
