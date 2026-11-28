@@ -41,7 +41,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
   /// `GRABBER_WHITEBOARD_KEEP_LOOP=<count>[,each|batch]`: on the board that opens, that many keeps of three of Larry's
   /// circles, each looked at and taken out again, for the simulator's rate of a kept mark drawn in part black or not at
   /// all (bead context-grabber-pbvt). `how` is the way the strokes go into the markup: one append per stroke, the board's
-  /// way (`each`), or all in one append (`batch`), the way that drew wrong.
+  /// way (`each`), or all in one append (`batch`).
   public struct KeepLoop: Equatable, Sendable {
     public enum How: String, Equatable, Sendable { case each, batch }
     public var count: Int
