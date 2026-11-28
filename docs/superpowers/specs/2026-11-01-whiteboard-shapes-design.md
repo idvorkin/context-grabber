@@ -39,7 +39,7 @@ suggest changes the board until Igor keeps it.
   - **Keep all keeps every mark of Larry's showing, each reply as one thing** (#942; Igor, 2026-11-17, via Larry:
     "accept the group", after keeping his four named boxes one mark at a time; Igor, 2026-11-22, bead
     context-grabber-yqau: "Keep group and Keep all become one button, Keep all"). There is one such button, **Keep all**,
-    in the note's line beside the count of marks to keep (below); beside a chosen mark there are only Keep and Dismiss, which read *Keep group* and *Dismiss group* when the mark's reply shows two or more (below).
+    in the note's line beside the count of marks to keep (below); beside a chosen mark there are only Keep and Dismiss, which read *Keep group* and *Dismiss group* when the mark's reply shows two or more (below), or the ones Larry's reply offers (*Larry chooses the buttons beside his reply*).
     One tap keeps every mark of Larry's still showing, from every reply of his that shows, where each showed, as ink in
     his colours: nothing of Igor's moves, as with one Keep, unless the marks would land on what he wrote after Larry
     looked (below). It is **one keep**: one room made for all of them and **one undo takes them all back**, named
@@ -334,6 +334,20 @@ the first clear space, which the first Keep all did).
 - A tidy or a keep that moves ink past the last page brings the pages it needs, as any keep does.
 - The session log says what each did: how many marks were kept and how many moved, how many labels the tidy found and
   moved.
+
+### Larry chooses the buttons beside his reply (stories 1352–1353, #1525)
+
+Beside a mark of Larry's the buttons have always been Keep and Dismiss (*Keep group* and *Dismiss group* for a reply of
+several marks). Now **the reply says which buttons it offers**, so a new choice reaches the board without a new build.
+
+- A reply can name its choices, in order, each with an optional label. The same choices apply to marks drawn on the
+  picture and to pending text added by board edits. Moving pending text keeps its original choices.
+- The board shows a button for each choice it knows, in the reply's order. Blank labels use the board's own names
+  (*Keep* or *Keep group*, *Dismiss* or *Dismiss group*). If the labels are too wide for the window, the chooser uses
+  those standard names in the same order.
+- A reply that names no choices offers Keep and Dismiss as before. A choice the board doesn't know yet is left out, and
+  the session log names it (a few, cut short), so Larry can offer a choice before the build that does it reaches Igor.
+  A reply whose choices are all unknown still offers Keep and Dismiss, so a mark can always be kept or dismissed.
 
 ### His marks hold to the ink they answer, and fade when written over (stories 1180, 1181, 1269–1271; bead context-grabber-p2an; Igor, 2026-11-23, 16:55: "Anchor, and fade when written over")
 

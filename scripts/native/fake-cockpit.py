@@ -10,13 +10,14 @@ GET /attachments/<ref>, the board store's /boards routes (fake_cockpit_store.py,
 accepts it, as one JSON when not). A chat URL ending /plain gets a Cockpit that doesn't stream whatever is asked; one ending /many gets six marks of every kind, 400 ms apart. GET /fake/strokes says the ids of each POST /whiteboard/strokes so far, and the folds beside each (story 857). GET /fake/turns lists the board of each POST /whiteboard/suggest so far (story 1171). GET and POST /whiteboard/responder keep each board's knob (story 659), Sonnet by default. A message resent with an id the thread has is a duplicate, as on the Cockpit. Larry
 answers every message of Igor's a second later ("Larry heard: <text>"), and a message with a board's picture with marks (cockpit#85: an arrow and a
 label as kind + points, with the picture's picture_id and frame echoed). POST /fake/larry-draws {"count": n, "separate": bool} is a test's way to have him draw
-unprompted on the newest board thread (n circles, as /whiteboard/suggest strokes; with "on_last_stroke": one circle on the
+unprompted on the newest board thread ("actions": the choices his reply offers, #1525) (n circles, as /whiteboard/suggest strokes; with "on_last_stroke": one circle on the
 middle of the last stroke the board posted, story 1180; with "diagram": two boxes, each a rectangle with a label inside,
 and an arrow between them, stories 1349-1351).
 POST /fake/larry-says {"count": n,
 "from": k} adds n replies of Larry's words, "Reply k: …" onwards, on the newest board thread (bead context-grabber-97s). POST /fake/larry-ops {"stale": false, "dy": 120}
 is a test's way to have his next board answer be a batch of changes instead of marks (stories 814-817): room opened
 below the middle of the picture he was sent (its frame, in board points) by dy, and a line of plain text in the gap,
+with "actions" for the choices beside that text,
 on the message's own rev (one behind it with "behind", which the board still applies, story 961; before anything the
 board remembers with "stale", which it refuses); with "kind": "connector_marks", marks instead: a
 connector by points from the end of the first stroke sent to the start of the second (story 917); with "kind": "link_reply",
@@ -490,10 +491,12 @@ def reply_later(key, text):
     threading.Thread(target=go, daemon=True).start()
 
 
-def marks(key, text, shapes):
+def marks(key, text, shapes, actions=None):
     source = BOARD_MESSAGES[key]
     r = row(key, "larry", text)
     r.update(shapes=shapes, picture_id=source["picture_id"], frame=source["frame"], board=source["board"])
+    if actions is not None:
+        r["actions"] = actions
     THREADS[key]["messages"].append(r)
 
 
@@ -696,6 +699,8 @@ def answer_board_later(key):
                 source, armed, LARRY_OPS = BOARD_MESSAGES[key], LARRY_OPS, None
                 r = row(key, "larry", "made room")
                 r.update(ops=ops_batch(source, armed), picture_id=source["picture_id"], board=source["board"])
+                if "actions" in armed:
+                    r["actions"] = armed["actions"]
                 THREADS[key]["messages"].append(r)
                 return
             frame = BOARD_MESSAGES[key]["frame"]
@@ -1182,9 +1187,9 @@ class Handler(BaseHTTPRequestHandler):
             if data.get("separate"):
                 # Story 1154: one reply per circle, so Keep beside each keeps it alone.
                 for circle in circles:
-                    marks(key, "", [circle])
+                    marks(key, "", [circle], data.get("actions"))
             else:
-                marks(key, "", circles)
+                marks(key, "", circles, data.get("actions"))
         return self._json(200, {"ok": True})
 
 

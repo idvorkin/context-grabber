@@ -37,7 +37,7 @@ extension WhiteboardModel {
         "whiteboard",
         [
           "action": "mark_chosen", "board": board.id, "who": ghost.who.rawValue, "kind": ghost.kind.rawValue,
-          "within": within, "marks": turns.chosenMarks.count,
+          "within": within, "marks": turns.chosenMarks.count, "actions": chosenOffers.map(\.action.rawValue),
         ])
     case .putAway:
       log.event("whiteboard", ["action": "mark_choice", "board": board.id, "choice": "away", "why": "tap_off"])

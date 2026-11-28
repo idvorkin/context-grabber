@@ -179,20 +179,38 @@ public struct WhiteboardMarks: Sendable {
     public let scale: CGFloat
     /// Larry's changes to the board on this row (stories 814–817), for `WebBoardOpSource`.
     public let ops: BoardOps.Batch?
+    /// The buttons beside this reply's marks, in its order (stories 1352–1353, #1525), and the choices it named that
+    /// this build doesn't know.
+    public let actions: [WhiteboardMarkActions.Offer]
+    public let unknownActions: [String]
 
     public var drawable: Bool { frame != nil && !shapes.isEmpty }
 
     public var drawing: Drawing? {
       guard let frame, !shapes.isEmpty else { return nil }
-      return Drawing(id: id, shapes: shapes, pictureID: pictureID, frame: frame, scale: scale)
+      return Drawing(
+        id: id, shapes: shapes, pictureID: pictureID, frame: frame, scale: scale,
+        actions: actions == WhiteboardMarkActions.standard ? nil : actions)
     }
 
     public init(
       id: String, text: String = "", shapes: [WhiteboardTurn.Shape] = [], pictureID: String? = nil,
-      frame: CGRect? = nil, scale: CGFloat = 1, ops: BoardOps.Batch? = nil
+      frame: CGRect? = nil, scale: CGFloat = 1, ops: BoardOps.Batch? = nil,
+      actions: [WhiteboardMarkActions.Offer] = WhiteboardMarkActions.standard, unknownActions: [String] = []
     ) {
       self.id = id
-      self.ops = ops
+      self.ops = ops.map { input in
+        guard actions != WhiteboardMarkActions.standard else { return input }
+        var batch = input
+        batch.ops = input.ops.map { op in
+          guard case .addText(var text) = op else { return op }
+          text.markOffers = actions
+          return .addText(text)
+        }
+        return batch
+      }
+      self.actions = actions
+      self.unknownActions = unknownActions
       self.text = text
       self.shapes = shapes
       self.pictureID = pictureID
@@ -207,6 +225,11 @@ public struct WhiteboardMarks: Sendable {
     public let pictureID: String?
     public let frame: CGRect
     public let scale: CGFloat
+    /// The reply's buttons when they aren't Keep and Dismiss (story 1352); nil in a history from before them.
+    public var actions: [WhiteboardMarkActions.Offer]? = nil
+
+    /// The buttons beside this reply's marks.
+    public var offers: [WhiteboardMarkActions.Offer] { actions ?? WhiteboardMarkActions.standard }
   }
 
   public struct History: Codable, Sendable {
@@ -358,11 +381,13 @@ public struct WhiteboardMarks: Sendable {
   ) -> Row? {
     guard message["who"] as? String == "larry", let id = message["id"] as? String else { return nil }
     let place = (message["frame"] as? [String: Any]).flatMap(frame)
+    let offered = WhiteboardMarkActions.parse(message["actions"])
     return Row(
       id: id, text: (message["text"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
       shapes: (message["shapes"] as? [Any] ?? []).compactMap { WhiteboardTurn.anyShape($0, lettering: lettering) },
       pictureID: message["picture_id"] as? String, frame: place?.rect, scale: place?.scale ?? 1,
-      ops: BoardOps.batch(message["ops"], key: id, source: "web"))
+      ops: BoardOps.batch(message["ops"], key: id, source: "web"), actions: offered.offers,
+      unknownActions: offered.unknown)
   }
 
   /// A row's frame; nil for a number a picture of this board can't have, so a bad one can't send marks to infinity.

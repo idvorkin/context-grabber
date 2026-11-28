@@ -484,8 +484,16 @@ extension WhiteboardModel {
     let toShow = Set(update.marks.map(\.id))
     restoreLarrysMarks(excluding: Set(rows.map(\.id)))
     for row in rows {
-      if toShow.contains(row.id), let drawing = row.drawing { showLarrys(drawing) }
-      for (batch, source) in batches[row.id] ?? [] { receive(batch, from: source) }
+      let drawing = toShow.contains(row.id) ? row.drawing : nil
+      if let drawing {
+        showLarrys(drawing)
+        logUnknownMarkActions(row.unknownActions, row: row.id)
+      }
+      for (incoming, source) in batches[row.id] ?? [] {
+        var batch = incoming
+        if drawing == nil { batch.unknownMarkActions = row.unknownActions }
+        receive(batch, from: source)
+      }
     }
   }
 
@@ -514,7 +522,7 @@ extension WhiteboardModel {
       row.shapes.enumerated().map { index, shape in
         Ghost(
           shape, who: .larry, frame: row.frame, scale: row.scale, id: WhiteboardMarks.mark(index, of: row.id),
-          hand: penInHand, seen: seen, folds: folds, lettering: lettering)
+          hand: penInHand, seen: seen, folds: folds, lettering: lettering, offers: row.offers)
       }.filter { !settled.contains($0.id) })
     // Story 919: a connector naming nothing on the board shows nothing, and is set aside as if dismissed.
     turns.larrysMarks(marks)

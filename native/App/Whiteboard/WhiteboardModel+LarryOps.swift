@@ -365,6 +365,7 @@ extension WhiteboardModel {
     // #939: his change reached ghosts of his text by name: the ones it took away go, the ones it moved show anew.
     if !plan.dismissed.isEmpty { turns.larrysTextGone(Set(plan.dismissed.map { "op-text:\($0)" })) }
     if !plan.texts.isEmpty {
+      logNewTextMarkActions(batch, texts: plan.texts)
       turns.larrysMarks(
         plan.texts.map {
           Ghost(

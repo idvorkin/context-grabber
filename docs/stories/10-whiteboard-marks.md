@@ -2028,3 +2028,47 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **And:** each further line starts at the label's left edge, a fifth more than the letters' height below the one before (the Cockpit's line height)
 - **And:** a label that fits shows on one line, as before
 - **And:** keeping it keeps the lines as they show
+
+---
+
+### User Story 1352:
+
+- **Summary:** The buttons beside Larry's reply are the ones his reply offers
+- **Status:** implemented in [f6d25eda](https://github.com/idvorkin/context-grabber/commit/f6d25eda); verified on the host (`WhiteboardMarkActionsTests`), the Mac build and the iPad simulator (`WhiteboardPaperGhostsUITests.testTheButtonsBesideHisMarkAreTheOnesHisReplyOffers`, with `testAGhostShowsOnThePaperAndKeepMakesItInk` and `testKeepAllKeepsHisWholeReplyAndOneUndoTakesItBack` unchanged). Not yet seen on the iPad
+- **Issues:** #1525
+- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply*
+
+#### Use Case:
+- **As someone** answering Larry's replies on the board
+- **I want to** see the choices his reply offers beside it
+- **so that** new choices reach my board without waiting for a new build
+
+#### Acceptance Criteria:
+- **Scenario:** A reply names its choices
+- **Given:** a reply of Larry's offers Dismiss (labelled *Not now*) and then Keep
+- **When:** I tap one of its marks
+- **Then:** beside it are *Not now* and *Keep*, in that order
+- **And:** a reply that names no choices shows Keep and Dismiss, as before
+- **And:** a text mark added by a board edit keeps its reply's choices when a later edit moves it
+- **And:** blank labels or labels that cannot fit use the board's standard action names
+
+---
+
+### User Story 1353:
+
+- **Summary:** A choice the board doesn't know is left out, never blocking Keep and Dismiss
+- **Status:** implemented in [f6d25eda](https://github.com/idvorkin/context-grabber/commit/f6d25eda); verified on the host (`WhiteboardMarkActionsTests`) and the iPad simulator (`WhiteboardPaperGhostsUITests.testTheButtonsBesideHisMarkAreTheOnesHisReplyOffers`: its qa choice is left out)
+- **Issues:** #1525
+- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply*
+
+#### Use Case:
+- **As someone** whose board may be a build behind Larry
+- **I want to** still keep or dismiss his reply when it offers a choice my build can't do
+- **so that** a new choice never leaves a mark I can't clear
+
+#### Acceptance Criteria:
+- **Scenario:** A reply offers a choice this build doesn't know
+- **Given:** a reply offers a choice this build doesn't know, and Keep
+- **When:** I tap one of its marks
+- **Then:** only Keep shows beside it, and the session log names the unknown choice
+- **And:** a reply whose choices are all unknown shows Keep and Dismiss
