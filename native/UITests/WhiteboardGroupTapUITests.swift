@@ -16,7 +16,10 @@ final class WhiteboardGroupTapUITests: XCTestCase {
   private func larryDraws(_ count: Int, _ cockpit: String) throws {
     var request = URLRequest(url: try XCTUnwrap(URL(string: cockpit + "/fake/larry-draws")))
     request.httpMethod = "POST"
-    request.httpBody = Data(#"{"count": \#(count)}"#.utf8)
+    let env = ProcessInfo.processInfo.environment
+    let shape = env["GRABBER_LARRY_SHAPE"].map { #", "shape": "\#($0)""# } ?? ""
+    let gap = env["GRABBER_LARRY_GAP"].map { #", "gap": \#($0)"# } ?? ""
+    request.httpBody = Data(#"{"count": \#(count)\#(shape)\#(gap)}"#.utf8)
     let done = expectation(description: "the fake Cockpit took it")
     URLSession.shared.dataTask(with: request) { _, response, _ in
       XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)

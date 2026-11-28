@@ -1161,7 +1161,11 @@ class Handler(BaseHTTPRequestHandler):
             if not BOARD_MESSAGES:
                 return self._json(404, {"ok": False, "error": "no board thread"})
             key = list(BOARD_MESSAGES)[-1]
-            circles = [{"kind": "circle", "cx": 40 * i, "cy": 40, "r": 20} for i in range(1, data.get("count", 0) + 1)]
+            gap = data.get("gap", 40)
+            if data.get("shape") == "square":
+                circles = [{"kind": "rect", "x": gap * i - 20, "y": 20, "w": 40, "h": 40} for i in range(1, data.get("count", 0) + 1)]
+            else:
+                circles = [{"kind": "circle", "cx": gap * i, "cy": 40, "r": 20} for i in range(1, data.get("count", 0) + 1)]
             if data.get("diagram"):
                 # Stories 1349-1351 (#1528): two boxes, each a rectangle with a label inside, and an arrow between them.
                 circles = [
