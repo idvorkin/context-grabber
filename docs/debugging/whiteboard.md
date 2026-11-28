@@ -45,7 +45,7 @@ to that event's own bullet; never join two events on one line.
   - playback_seek with board, how (tap, scrub, back, forward, voiceover), from_s, to_s and stroke (a tap's or VoiceOver's stroke, its place in the drawing)
   - playback_tap with board, hit: false and showing: a tap in playback that found no stroke near
   - playback_speed with board and speed
-  - playback_end with board, watched_s, reached_end, seeks, at_s, frames (new drawings set), slowest_draw_ms (the slowest of them, a big board's cost) and offscreen_shown (how often story 1111's label showed): Done, or the board closing
+  - playback_end with board, watched_s, reached_end, seeks, at_s, frames (new drawings set), slowest_draw_ms (the slowest of them, a big board's cost) and offscreen_shown (how often story 1111's label showed): playback closes, including when *Back* or *Done* is tapped or the board closes
 
 ## Whiteboard (stories 340–345, 347–369, 370–429, 663–665, 825, 228, 960, 962, 963, 1063, 1064, 1106)
 

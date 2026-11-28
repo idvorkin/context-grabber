@@ -84,15 +84,13 @@ on the iPad and the iPhone.
   setting a new `PKDrawing` only when the strokes begun or the part-drawn stroke's points change. The partial stroke is
   the stroke with its control points cut by `timeOffset`, its ink, transform and mask kept. `WhiteboardPlaybackHost`
   (a modifier on the board's view) lays the playback over the whole board and hides the navigation and bottom bars; the
-  real canvas resigns first responder (the tool picker hides) and takes it back on *Done* when it draws. The playback
-  canvas is a `PKCanvasView` with its drawing gesture off, opened at the board's visible rect and zoom, in the paper's
-  colour, light. Play is a button in `BoardHelpButtons`.
+  real canvas resigns first responder (the tool picker hides) and takes it back when playback ends if drawing is
+  enabled. The playback canvas is a `PKCanvasView` with its drawing gesture off, opened at the board's visible rect
+  and zoom, in the paper's colour, light. Play is a button in `BoardHelpButtons`.
 - **Session log**: `playback_start` (strokes, timed, shared, real and played seconds, build ms), `playback_seek` (how:
   tap, scrub, back, forward; from, to, the stroke), `playback_speed`, `playback_end` (seconds watched, reached the
   end, seeks). Timed against untimed strokes settles on the device whether a board's timestamps survived.
-- **Verified**: the timeline on the host and the Mac build; `WhiteboardPlaybackUITests` (three strokes, Play, the end,
-  a tap on the second stroke, the speed, Done with the board unchanged) is in the iPad simulator's whiteboard suite. The Pencil's real pace and a large board's
-  frame rate only on the iPad.
+- For playback test coverage, see `WhiteboardPlaybackUITests` in [the whiteboard suite's classes](../../TESTING.md#the-whiteboard-suites-classes).
 
 ## The paper, the ghost and the label (#1169, 2026-11-22)
 

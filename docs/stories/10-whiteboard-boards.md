@@ -1270,9 +1270,9 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 #### Acceptance Criteria:
 - **Scenario:** Leave playback on a phone
-- **Given:** a board playing back on an iPhone, its status reading *Stroke 2 of 3, paused*
+- **Given:** a board paused at stroke 2 of 3 on an iPhone
 - **When:** I look at playback
-- **Then:** *Back* shows at the left of the bar and *Done* shows at full width, and either one shows the board as it is, with nothing changed
+- **Then:** *Back* sits at the left of the bar's top row and the status shortens as needed to keep *Done* at full width. Either button returns to the same board unchanged ([story 957](#user-story-957)).
 
 ---
 

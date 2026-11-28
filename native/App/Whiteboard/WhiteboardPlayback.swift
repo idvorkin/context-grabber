@@ -17,7 +17,7 @@ extension WhiteboardModel {
     playback = WhiteboardPlaybackPlayer(model: self, controller: canvas as? PaperBoardController)
   }
 
-  /// Story 957: Done. The board shows as it is.
+  /// Story 957: Reveal the original board by removing the playback overlay.
   func endPlayback() {
     playback?.finish()
     playback = nil
@@ -184,7 +184,7 @@ final class WhiteboardPlaybackPlayer: ObservableObject {
     seeked("tap", from: from, stroke: index)
   }
 
-  /// Done, or the board closing: the ticking stops and the paper takes the tool picker back.
+  /// Stop ticking and restore the tool picker on boards that allow drawing.
   func finish() {
     ticker?.cancel()
     ticker = nil
