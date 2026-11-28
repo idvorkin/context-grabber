@@ -853,6 +853,10 @@ built; the words and the sound (options 2 and 3) wait for his choice below.
   through 0.7×, 1×, 1.25×, 1.5× and 2×, starting at 1×. At the end it stops with the whole board shown; *Play* again
   starts from the beginning. While playback shows, the board's own bar and tool picker are gone, so nothing can be
   drawn, undone, pasted or sent; a finger still pans and pinches the board.
+- **A way back that is always there** (Igor, 2026-11-27, #1553 on the iPhone: *"Needs a back button"*). On a phone's
+  narrow bar, *Done* was squeezed into a column one letter wide beside the status. *Done* now always keeps its full
+  width, and the status text gives way, shortening first. A *Back* button (a back chevron) also sits at the top left of
+  playback, where a phone's back button lives, and does the same as *Done*.
 - **Tap a stroke while playing** (one already drawn again, at the moment playback is at) and playback jumps to the
   moment it was drawn: the board as it was then, that stroke next, playing or paused as it was. A tap on faint ink not
   drawn yet jumps on to the moment it was drawn the same way. A tap on bare paper does nothing. Leaving playback (*Done*, or closing the board) shows the board as it is, with nothing changed: no save, no

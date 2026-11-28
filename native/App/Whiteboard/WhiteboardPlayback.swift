@@ -273,6 +273,15 @@ struct WhiteboardPlaybackView: View {
       WhiteboardPlaybackCanvas(player: player)
         .overlay(alignment: .top) { WhiteboardPlaybackOffScreenLabel(player: player, edge: .top) }
         .overlay(alignment: .bottom) { WhiteboardPlaybackOffScreenLabel(player: player, edge: .bottom) }
+        // Story 1369 (#1553): a way back where a phone's back button lives, as well as Done in the bar.
+        .overlay(alignment: .topLeading) {
+          Button(action: done) {
+            Label("Back", systemImage: "chevron.backward").frame(minHeight: 36)
+          }
+          .buttonStyle(.bordered)
+          .padding(12)
+          .accessibilityIdentifier("whiteboard-playback-back-top")
+        }
       bar
     }
     .background(Color(player.paperColor))
@@ -325,8 +334,11 @@ struct WhiteboardPlaybackView: View {
           .lineLimit(1)
           .accessibilityIdentifier("whiteboard-playback-status")
         Spacer(minLength: 8)
+        // Story 1369 (#1553): Done keeps its width on a phone; the status gives way first.
         Button("Done", action: done)
           .fontWeight(.semibold)
+          .fixedSize()
+          .layoutPriority(1)
           .accessibilityIdentifier("whiteboard-playback-done")
       }
       .buttonStyle(.bordered)
