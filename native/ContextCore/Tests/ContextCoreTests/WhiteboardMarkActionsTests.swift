@@ -74,7 +74,8 @@ final class WhiteboardMarkActionsTests: XCTestCase {
       WhiteboardMarks.row([
         "id": "r1", "who": "larry", "actions": ["qa", ["id": "dismiss", "label": "Not now"]],
         "ops": [
-          "board": "b1", "base_rev": 0, "list": [
+          "board": "b1", "base_rev": 0,
+          "list": [
             ["op": "add_text", "id": "t1", "x": 80, "y": 100, "text": "A label"]
           ],
         ],
