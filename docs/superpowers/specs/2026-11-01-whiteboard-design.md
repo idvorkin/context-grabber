@@ -855,8 +855,8 @@ built; the words and the sound (options 2 and 3) wait for his choice below.
   drawn, undone, pasted or sent; a finger still pans and pinches the board.
 - **A way back that is always there** (Igor, 2026-11-27, #1553 on the iPhone: *"Needs a back button"*). On a phone's
   narrow bar, *Done* was squeezed into a column one letter wide beside the status. *Done* now always keeps its full
-  width, and the status text gives way, shortening first. A *Back* button (a back chevron) also sits at the top left of
-  playback, where a phone's back button lives, and does the same as *Done*.
+  width, and the status text gives way, shortening first. A *Back* button (a back chevron) also sits at the left of
+  the bar's top row, before the time, and does the same as *Done*.
 - **Tap a stroke while playing** (one already drawn again, at the moment playback is at) and playback jumps to the
   moment it was drawn: the board as it was then, that stroke next, playing or paused as it was. A tap on faint ink not
   drawn yet jumps on to the moment it was drawn the same way. A tap on bare paper does nothing. Leaving playback (*Done*, or closing the board) shows the board as it is, with nothing changed: no save, no

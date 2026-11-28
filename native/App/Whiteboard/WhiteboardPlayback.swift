@@ -273,15 +273,6 @@ struct WhiteboardPlaybackView: View {
       WhiteboardPlaybackCanvas(player: player)
         .overlay(alignment: .top) { WhiteboardPlaybackOffScreenLabel(player: player, edge: .top) }
         .overlay(alignment: .bottom) { WhiteboardPlaybackOffScreenLabel(player: player, edge: .bottom) }
-        // Story 1369 (#1553): a way back where a phone's back button lives, as well as Done in the bar.
-        .overlay(alignment: .topLeading) {
-          Button(action: done) {
-            Label("Back", systemImage: "chevron.backward").frame(minHeight: 36)
-          }
-          .buttonStyle(.bordered)
-          .padding(12)
-          .accessibilityIdentifier("whiteboard-playback-back-top")
-        }
       bar
     }
     .background(Color(player.paperColor))
@@ -290,6 +281,14 @@ struct WhiteboardPlaybackView: View {
   private var bar: some View {
     VStack(spacing: 8) {
       HStack(spacing: 12) {
+        // Story 1369 (#1553): a way back at the bar's left, as well as Done. A button laid over the board itself
+        // didn't take the tap.
+        Button(action: done) {
+          Label("Back", systemImage: "chevron.backward").frame(minHeight: 36)
+        }
+        .buttonStyle(.bordered)
+        .fixedSize()
+        .accessibilityIdentifier("whiteboard-playback-back-top")
         Text(Self.time(player.clock.position)).monospacedDigit()
         Slider(
           value: Binding(get: { player.clock.position }, set: { player.scrub(to: $0) }),

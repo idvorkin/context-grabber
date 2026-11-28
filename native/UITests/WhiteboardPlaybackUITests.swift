@@ -128,7 +128,7 @@ final class WhiteboardPlaybackUITests: XCTestCase {
     let back = app.buttons["whiteboard-playback-back-top"]
     XCTAssertTrue(back.exists, app.debugDescription)
     XCTAssertLessThan(back.frame.midX, app.frame.midX, "Back is at the left: \(back.frame)")
-    XCTAssertLessThan(back.frame.midY, app.frame.midY, "Back is at the top: \(back.frame)")
+    XCTAssertGreaterThan(back.frame.width, back.frame.height, "Back keeps its width: \(back.frame)")
     keep(app, "playback with Back and a full-width Done")
     back.tap()
     XCTAssertTrue(send.appears(within: 5), app.debugDescription)

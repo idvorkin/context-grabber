@@ -1272,7 +1272,7 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **Scenario:** Leave playback on a phone
 - **Given:** a board playing back on an iPhone, its status reading *Stroke 2 of 3, paused*
 - **When:** I look at playback
-- **Then:** *Back* shows at the top left and *Done* shows at full width in the bar, and either one shows the board as it is, with nothing changed
+- **Then:** *Back* shows at the left of the bar and *Done* shows at full width, and either one shows the board as it is, with nothing changed
 
 ---
 
