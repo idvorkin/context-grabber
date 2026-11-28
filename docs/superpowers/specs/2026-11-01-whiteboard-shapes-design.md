@@ -39,7 +39,7 @@ suggest changes the board until Igor keeps it.
   - **Keep all keeps every mark of Larry's showing, each reply as one thing** (#942; Igor, 2026-11-17, via Larry:
     "accept the group", after keeping his four named boxes one mark at a time; Igor, 2026-11-22, bead
     context-grabber-yqau: "Keep group and Keep all become one button, Keep all"). There is one such button, **Keep all**,
-    in the note's line beside the count of marks to keep (below); beside a chosen mark there are only Keep and Dismiss, which read *Keep group* and *Dismiss group* when the mark's reply shows two or more (below).
+    in the note's line beside the count of marks to keep (below); beside a chosen mark there are only Keep and Dismiss, which read *Keep group* and *Dismiss group* when the mark's reply shows two or more (below), or the ones Larry's reply offers (*Larry chooses the buttons beside his reply*).
     One tap keeps every mark of Larry's still showing, from every reply of his that shows, where each showed, as ink in
     his colours: nothing of Igor's moves, as with one Keep, unless the marks would land on what he wrote after Larry
     looked (below). It is **one keep**: one room made for all of them and **one undo takes them all back**, named

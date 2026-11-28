@@ -122,6 +122,8 @@ public struct WhiteboardHooks: Equatable, Sendable {
   public var pencilSeen: Bool
   /// `GRABBER_WHITEBOARD_FINGER_LABEL=1`: whether a finger draws, as an element a UI test reads (stories 1152, 1153).
   public var fingerLabel: Bool
+  /// `GRABBER_WHITEBOARD_CHOOSE_MARK=1`: selects the first visible Larry mark once per board, logging `mark_chosen` with
+  /// the chooser's actions (stories 1352, 1353).
   public var chooseMark: Bool
   /// `GRABBER_WHITEBOARD_KEPT_INK_LABEL=1`: each look at kept ink's verdict and the heals it asked for, as an element a UI
   /// test reads (story 650, bead context-grabber-qko5).
