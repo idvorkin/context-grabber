@@ -3,72 +3,9 @@
   {
    "id": 1352,
    "journey": "10-whiteboard-boards.md",
-   "branch": "native/mark-actions-1525",
-   "at": 1795712668.296581,
-   "until": "2026-11-27T17:04:28Z"
-  },
-  {
-   "id": 1353,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/mark-actions-1525",
-   "at": 1795712668.296581,
-   "until": "2026-11-27T17:04:28Z"
-  },
-  {
-   "id": 1354,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/mark-actions-1525",
-   "at": 1795712668.296581,
-   "until": "2026-11-27T17:04:28Z"
-  },
-  {
-   "id": 1088,
-   "journey": "05-call.md",
-   "branch": "native/live-hr-on-calls-at59",
-   "at": 1795725990.3490272,
-   "until": "2026-11-27T20:46:30Z"
-  },
-  {
-   "id": 1089,
-   "journey": "05-call.md",
-   "branch": "native/live-hr-on-calls-at59",
-   "at": 1795725990.3490272,
-   "until": "2026-11-27T20:46:30Z"
-  },
-  {
-   "id": 1703,
-   "journey": "02-larry.md",
-   "branch": "native/live-hr-on-calls-at59",
-   "at": 1795728035.014074,
-   "until": "2026-11-27T21:20:35Z"
-  },
-  {
-   "id": 1800,
-   "journey": "05-call.md",
-   "branch": "docs/story-blocks-calling-building",
-   "at": 1795731056.309783,
-   "until": "2026-11-27T22:10:56Z"
-  },
-  {
-   "id": 1900,
-   "journey": "11-building-and-testing.md",
-   "branch": "docs/story-blocks-calling-building",
-   "at": 1795731062.984281,
-   "until": "2026-11-27T22:11:02Z"
-  },
-  {
-   "id": 1368,
-   "journey": "10-whiteboard-boards.md",
-   "branch": "native/mirror-meaning-8kh",
-   "at": 1795731607.569633,
-   "until": "2026-11-27T22:20:07Z"
-  },
-  {
-   "id": 1901,
-   "journey": "11-building-and-testing.md",
-   "branch": "native/lease-slot-guard-8w8c",
-   "at": 1795732806.772504,
-   "until": "2026-11-27T22:40:06Z"
+   "branch": "native/playback-back-1553",
+   "at": 1795898576.306819,
+   "until": "2026-11-29T20:42:56Z"
   }
  ]
 }
