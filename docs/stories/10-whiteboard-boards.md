@@ -1256,6 +1256,26 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 
 ---
 
+### User Story 1369:
+
+- **Summary:** I can always leave playback, even on the phone's narrow screen
+- **Issues:** [#1553](https://github.com/idvorkin/context-grabber/issues/1553) (Igor, 2026-11-27, on the iPhone: "Needs a back button")
+- **Status:** implemented in [bb46f2dd](https://github.com/idvorkin/context-grabber/commit/bb46f2dd); verified by `just test`, the Mac build and on the iPad simulator (rung 2, 2026-11-28, iPad Pro 11-inch (M5): `WhiteboardPlaybackUITests`, both tests, *Back* at the bar's left and *Done* wider than tall, *Back* leaving playback); the iPhone's narrow bar is the phone's to show (an iPhone draws no ink, so the UI test can't play a board there)
+- **Spec:** [Whiteboard with Claude](../superpowers/specs/2026-11-01-whiteboard-design.md), *Playing a board back, as Notability does* (*A way back that is always there*)
+
+#### Use Case:
+- **As someone** watching a board play back on my iPhone
+- **I want** a clear way back that is never squeezed out of sight
+- **so that** I can leave playback with one tap, like any other phone screen
+
+#### Acceptance Criteria:
+- **Scenario:** Leave playback on a phone
+- **Given:** a board paused at stroke 2 of 3 on an iPhone
+- **When:** I look at playback
+- **Then:** *Back* sits at the left of the bar's top row and the status shortens as needed to keep *Done* at full width. Either button returns to the same board unchanged ([story 957](#user-story-957)).
+
+---
+
 ### User Story 954:
 
 - **Summary:** In playback, a bar lets me pause, skip 10 s, scrub and change the speed

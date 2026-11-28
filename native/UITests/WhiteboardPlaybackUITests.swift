@@ -103,4 +103,35 @@ final class WhiteboardPlaybackUITests: XCTestCase {
     XCTAssertEqual(app.buttons["whiteboard-undo"].label, undo, "playback made no undo step")
     keep(app, "the board as it was")
   }
+
+  /// Story 1369 (#1553): on a phone's narrow bar Done keeps its full width (wider than tall, not squeezed into one
+  /// letter a line), and a Back button at the top left leaves playback the same way.
+  func testBackAndAFullWidthDoneLeavePlayback() {
+    let app = launch()
+    let new = app.buttons["whiteboard-new"]
+    XCTAssertTrue(new.appears(within: 20), app.debugDescription)
+    new.tap()
+    let send = app.buttons["whiteboard-send"]
+    XCTAssertTrue(send.appears(within: 10), app.debugDescription)
+    sleep(2)
+    pickPen(app)
+    stroke(app, atHeight: 0.4)
+    waitFor(send, label: "Send to Larry, 1 strokes")
+    let play = app.buttons["whiteboard-play"]
+    XCTAssertTrue(play.appears(within: 5), app.debugDescription)
+    play.tap()
+    let status = app.staticTexts["whiteboard-playback-status"]
+    XCTAssertTrue(status.appears(within: 5), app.debugDescription)
+    let done = app.buttons["whiteboard-playback-done"]
+    XCTAssertTrue(done.exists, app.debugDescription)
+    XCTAssertGreaterThan(done.frame.width, done.frame.height, "Done keeps its width: \(done.frame)")
+    let back = app.buttons["whiteboard-playback-back-top"]
+    XCTAssertTrue(back.exists, app.debugDescription)
+    XCTAssertLessThan(back.frame.midX, app.frame.midX, "Back is at the left: \(back.frame)")
+    XCTAssertGreaterThan(back.frame.width, back.frame.height, "Back keeps its width: \(back.frame)")
+    keep(app, "playback with Back and a full-width Done")
+    back.tap()
+    XCTAssertTrue(send.appears(within: 5), app.debugDescription)
+    XCTAssertFalse(status.exists)
+  }
 }

@@ -17,7 +17,7 @@ extension WhiteboardModel {
     playback = WhiteboardPlaybackPlayer(model: self, controller: canvas as? PaperBoardController)
   }
 
-  /// Story 957: Done. The board shows as it is.
+  /// Story 957: Reveal the original board by removing the playback overlay.
   func endPlayback() {
     playback?.finish()
     playback = nil
@@ -184,7 +184,7 @@ final class WhiteboardPlaybackPlayer: ObservableObject {
     seeked("tap", from: from, stroke: index)
   }
 
-  /// Done, or the board closing: the ticking stops and the paper takes the tool picker back.
+  /// Stop ticking and restore the tool picker on boards that allow drawing.
   func finish() {
     ticker?.cancel()
     ticker = nil
@@ -281,6 +281,14 @@ struct WhiteboardPlaybackView: View {
   private var bar: some View {
     VStack(spacing: 8) {
       HStack(spacing: 12) {
+        // Story 1369 (#1553): a way back at the bar's left, as well as Done. A button laid over the board itself
+        // didn't take the tap.
+        Button(action: done) {
+          Label("Back", systemImage: "chevron.backward").frame(minHeight: 36)
+        }
+        .buttonStyle(.bordered)
+        .fixedSize()
+        .accessibilityIdentifier("whiteboard-playback-back-top")
         Text(Self.time(player.clock.position)).monospacedDigit()
         Slider(
           value: Binding(get: { player.clock.position }, set: { player.scrub(to: $0) }),
@@ -325,8 +333,11 @@ struct WhiteboardPlaybackView: View {
           .lineLimit(1)
           .accessibilityIdentifier("whiteboard-playback-status")
         Spacer(minLength: 8)
+        // Story 1369 (#1553): Done keeps its width on a phone; the status gives way first.
         Button("Done", action: done)
           .fontWeight(.semibold)
+          .fixedSize()
+          .layoutPriority(1)
           .accessibilityIdentifier("whiteboard-playback-done")
       }
       .buttonStyle(.bordered)

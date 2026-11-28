@@ -853,10 +853,13 @@ built; the words and the sound (options 2 and 3) wait for his choice below.
   through 0.7×, 1×, 1.25×, 1.5× and 2×, starting at 1×. At the end it stops with the whole board shown; *Play* again
   starts from the beginning. While playback shows, the board's own bar and tool picker are gone, so nothing can be
   drawn, undone, pasted or sent; a finger still pans and pinches the board.
+- **A way back that is always there** (#1553). The *Back* button with a chevron sits at the left of the bar's top row,
+  before the elapsed time. On a narrow screen, the status text shortens as needed so *Done* keeps its full width.
+  Tapping *Back* or *Done* returns to the same board. The board stays unchanged when playback ends, even if the board
+  is closed during playback. Playback creates no save or undo step and sends nothing to Larry.
 - **Tap a stroke while playing** (one already drawn again, at the moment playback is at) and playback jumps to the
   moment it was drawn: the board as it was then, that stroke next, playing or paused as it was. A tap on faint ink not
-  drawn yet jumps on to the moment it was drawn the same way. A tap on bare paper does nothing. Leaving playback (*Done*, or closing the board) shows the board as it is, with nothing changed: no save, no
-  undo step, nothing sent to Larry.
+  drawn yet jumps on to the moment it was drawn the same way. A tap on bare paper does nothing.
 - **The paper and the ghost** (Igor, 2026-11-22, #1169 on the iPad: *"when doing playback I need to start with a
   pre-written ghost on the page and I also need to have whatever the default background is and maybe some indicator that
   I'm writing above or below on a separate page"*). Playback shows the board's paper as the board has it: its colour, its
