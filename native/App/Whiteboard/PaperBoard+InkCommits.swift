@@ -77,10 +77,8 @@ extension PaperBoardController {
     lookAtKeptInk(strokes, why: "keep")
   }
 
-  /// A kept mark's strokes into `markup`, one append each (bead context-grabber-pbvt, story 650): appended all at once,
-  /// three circles of Larry's kept by Keep all drew in part black or not at all on the iPad simulator in 17 of 152 keeps,
-  /// with PaperKit holding them purple; one append each, in the same one change and one undo, 1 of 145. `keepWay`
-  /// `batch` (the simulator's keep loop) puts them in all at once, to count that again.
+  /// The simulator can select `batch` to compare how PaperKit draws a keep when the strokes are appended together.
+  /// Both modes use a single change and undo step. See story 650 for the simulator measurements.
   static func appendKept(_ strokes: [PKStroke], to markup: inout PaperMarkup) {
     guard keepWay != .batch else {
       markup.append(contentsOf: PKDrawing(strokes: strokes))
