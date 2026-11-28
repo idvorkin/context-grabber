@@ -109,6 +109,7 @@ public enum BoardOps {
     /// Its box's size as a host that draws it measured it (the Cockpit's web board: text measuring is compiled out on
     /// WASI); nil measures it here.
     public var measured: CGSize?
+    public var markOffers: [WhiteboardMarkActions.Offer]?
 
     public init(
       id: String, x: CGFloat, y: CGFloat, text: String, font: Font = .plain, size: CGFloat = 18, color: UInt32? = nil,
@@ -206,6 +207,7 @@ public enum BoardOps {
     public var refusal: String?
     /// Story 961: let through on a newer revision than its `baseRev`, which this is.
     public var rebasedFrom: Int?
+    public var unknownMarkActions: [String] = []
 
     public init(
       key: String, source: String, board: String?, label: String, baseRev: Int?, ops: [Op], refusal: String? = nil

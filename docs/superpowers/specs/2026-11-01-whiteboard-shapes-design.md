@@ -335,22 +335,19 @@ the first clear space, which the first Keep all did).
 - The session log says what each did: how many marks were kept and how many moved, how many labels the tidy found and
   moved.
 
-### Larry chooses the buttons beside his reply (stories 1352–1354, #1525; Igor, iPad board, 2026-11-26: "let more UX be server driven choice … Keep, Dismiss, To Question/Answer (collapsible)")
+### Larry chooses the buttons beside his reply (stories 1352–1353, #1525)
 
 Beside a mark of Larry's the buttons have always been Keep and Dismiss (*Keep group* and *Dismiss group* for a reply of
 several marks). Now **the reply says which buttons it offers**, so a new choice reaches the board without a new build.
 
-- A reply can name its choices, in order, each with an optional label. The board shows a button for each choice it
-  knows, in the reply's order, with the reply's label (or its own name: *Keep* / *Keep group*, *Dismiss* / *Dismiss
-  group*). A long label shrinks to fit the buttons rather than running off them.
+- A reply can name its choices, in order, each with an optional label. The same choices apply to marks drawn on the
+  picture and to pending text added by board edits. Moving pending text keeps its original choices.
+- The board shows a button for each choice it knows, in the reply's order. Blank labels use the board's own names
+  (*Keep* or *Keep group*, *Dismiss* or *Dismiss group*). If the labels are too wide for the window, the chooser uses
+  those standard names in the same order.
 - A reply that names no choices offers Keep and Dismiss as before. A choice the board doesn't know yet is left out, and
   the session log names it (a few, cut short), so Larry can offer a choice before the build that does it reaches Igor.
   A reply whose choices are all unknown still offers Keep and Dismiss, so a mark can always be kept or dismissed.
-- What Keep and Dismiss do doesn't change. The session log records the choices each reply offered.
-- **Not built yet: *To question/answer*** (story 1354): keep the reply and fold Larry's answer under Igor's question as
-  one collapsible question node. Its first build failed review on which ink is the question, what the fold takes in,
-  the undo order and the fold on a Cockpit board; it needs its own design (bead). Until then a reply offering it shows
-  the other choices.
 
 ### His marks hold to the ink they answer, and fade when written over (stories 1180, 1181, 1269–1271; bead context-grabber-p2an; Igor, 2026-11-23, 16:55: "Anchor, and fade when written over")
 

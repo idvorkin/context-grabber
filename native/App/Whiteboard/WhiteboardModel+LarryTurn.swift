@@ -484,19 +484,16 @@ extension WhiteboardModel {
     let toShow = Set(update.marks.map(\.id))
     restoreLarrysMarks(excluding: Set(rows.map(\.id)))
     for row in rows {
-      if toShow.contains(row.id), let drawing = row.drawing {
+      let drawing = toShow.contains(row.id) ? row.drawing : nil
+      if let drawing {
         showLarrys(drawing)
-        // Story 1353: a choice this build doesn't know is left out, and named here (a few, cut short).
-        if !row.unknownActions.isEmpty {
-          log.event(
-            "whiteboard_marks",
-            [
-              "action": "mark_actions_unknown", "board": board.id, "row": row.id,
-              "unknown": WhiteboardMarkActions.logged(row.unknownActions), "count": row.unknownActions.count,
-            ])
-        }
+        logUnknownMarkActions(row.unknownActions, row: row.id)
       }
-      for (batch, source) in batches[row.id] ?? [] { receive(batch, from: source) }
+      for (incoming, source) in batches[row.id] ?? [] {
+        var batch = incoming
+        if drawing == nil { batch.unknownMarkActions = row.unknownActions }
+        receive(batch, from: source)
+      }
     }
   }
 
@@ -525,11 +522,10 @@ extension WhiteboardModel {
       row.shapes.enumerated().map { index, shape in
         Ghost(
           shape, who: .larry, frame: row.frame, scale: row.scale, id: WhiteboardMarks.mark(index, of: row.id),
-          hand: penInHand, seen: seen, folds: folds, lettering: lettering)
+          hand: penInHand, seen: seen, folds: folds, lettering: lettering, offers: row.offers)
       }.filter { !settled.contains($0.id) })
     // Story 919: a connector naming nothing on the board shows nothing, and is set aside as if dismissed.
     turns.larrysMarks(marks)
-    replyOffers[row.id] = row.offers
     history.place(row, shown: marks.map(\.id), nowhere: nowhere.map(\.id))
     marksHistory = history
     log.event(
@@ -539,7 +535,6 @@ extension WhiteboardModel {
         "picture": row.pictureID ?? "", "picture_known": seen != nil, "folds_open": folds?.steps.count ?? 0,
         "earlier_stayed": earlier.count,
         "earlier_replies": Set(earlier.compactMap { WhiteboardMarks.reply(of: $0.id) }).count,
-        "offers": row.offers.map(\.action.rawValue),
       ])
   }
 

@@ -89,28 +89,36 @@ private struct MarkChoiceButtons: View {
         let place = WhiteboardMarkChoice.place(
           mark: mark, buttons: size, in: CGRect(origin: .zero, size: geometry.size),
           avoid: model.cornerFrame.offsetBy(dx: -origin.x, dy: -origin.y))
-        HStack(spacing: 4) {
-          ForEach(offers, id: \.action) { offer in
-            Button {
-              offer.action == .keep ? model.keepChosen() : model.dismissChosen()
-            } label: {
-              Self.label(offer.title(group: group), Self.symbol(offer.action))
-            }
-            .accessibilityIdentifier(Self.identifier(offer.action))
-          }
+        ViewThatFits(in: .horizontal) {
+          buttons(offers, group: group, custom: true)
+          buttons(offers, group: group, custom: false)
         }
         .font(.subheadline.weight(.semibold))
         .buttonStyle(.bordered)
         .controlSize(.small)
         .lineLimit(1)
-        // A reply's long labels shrink to fit rather than run off the capsule (story 1352).
-        .minimumScaleFactor(0.6)
         .frame(width: place.width, height: place.height)
         .background(.regularMaterial, in: Capsule())
         // A tap between the buttons lands on the capsule, never on the paper under it.
         .contentShape(Capsule())
         .onTapGesture {}
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("whiteboard-mark-chooser")
         .position(x: place.midX, y: place.midY)
+      }
+    }
+  }
+
+  private func buttons(_ offers: [WhiteboardMarkActions.Offer], group: Bool, custom: Bool) -> some View {
+    HStack(spacing: 4) {
+      ForEach(offers, id: \.action) { offer in
+        Button {
+          offer.action == .keep ? model.keepChosen() : model.dismissChosen()
+        } label: {
+          let title = custom ? offer.title(group: group) : offer.action.title(group: group)
+          Self.label(title, Self.symbol(offer.action))
+        }
+        .accessibilityIdentifier(Self.identifier(offer.action))
       }
     }
   }

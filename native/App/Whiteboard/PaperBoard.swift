@@ -135,6 +135,7 @@ final class PaperBoardController: PaperHost, ObservableObject, PaperMarkupViewCo
   /// that took. For the iPad: the spec's "A ghost sits on the paper".
   var seat = (worst: CGFloat(0), checks: 0)
   var pressedForTests = false
+  var choseMarkForTests = false
   /// #999: the strokes the last scratch-out took, so a later change that brings them back without an Undo says so.
   var scratched: Set<String> = []
   /// The element keys of the markup `put` last set: what a fold's scratch-out wanted on the sheet (#1015).

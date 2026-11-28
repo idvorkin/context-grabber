@@ -2,15 +2,30 @@
 //  chooses the buttons beside his reply*; stories 1352, 1353, #1525).
 
 import ContextCore
-import SwiftUI
 
 extension WhiteboardModel {
-  /// The buttons beside the chosen marks, in the reply's order: Keep and Dismiss for a reply that names none, for one
-  /// this board no longer remembers, or for Claude's ghosts.
   var chosenOffers: [WhiteboardMarkActions.Offer] {
-    guard let first = chosenMarks.first, first.who == .larry, let reply = WhiteboardMarks.reply(of: first.id) else {
-      return WhiteboardMarkActions.standard
+    chosen?.offers ?? WhiteboardMarkActions.standard
+  }
+
+  func logUnknownMarkActions(_ actions: [String], row: String) {
+    guard !actions.isEmpty else { return }
+    log.event(
+      "whiteboard_marks",
+      [
+        "action": "mark_actions_unknown", "board": board.id, "row": row,
+        "unknown": WhiteboardMarkActions.logged(actions), "count": actions.count,
+      ])
+  }
+
+  func logNewTextMarkActions(_ batch: BoardOps.Batch, texts: [BoardOps.Text]) {
+    guard !batch.unknownMarkActions.isEmpty else { return }
+    let shown = Set(texts.map(\.id))
+    if batch.ops.contains(where: {
+      if case .addText(let text) = $0 { return shown.contains(text.id) }
+      return false
+    }) {
+      logUnknownMarkActions(batch.unknownMarkActions, row: batch.key)
     }
-    return replyOffers[reply] ?? WhiteboardMarkActions.standard
   }
 }

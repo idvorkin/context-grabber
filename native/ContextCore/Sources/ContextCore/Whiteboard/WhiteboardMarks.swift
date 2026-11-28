@@ -158,16 +158,6 @@ public struct WhiteboardPicture: Codable, Equatable, Sendable {
       defaults.set(Array((others + ["\(pictureID) \(ms)"]).suffix(Self.kept)), forKey: key(board))
     }
 
-    /// When the picture before `pictureID` was taken on this board: what Igor made after it is what that picture's
-    /// reply answers (story 1354). Nil for the first, or one this device doesn't remember.
-    public func before(_ pictureID: String?, board: String) -> Int64? {
-      guard let pictureID, let at = entries(board).lastIndex(where: { $0.hasPrefix("\(pictureID) ") }), at > 0 else {
-        return nil
-      }
-      let entry = entries(board)[at - 1]
-      return entry.split(separator: " ").last.flatMap { Int64($0) }
-    }
-
     /// When `pictureID` was taken on this board; nil for one this device doesn't remember.
     public func taken(_ pictureID: String?, board: String) -> Int64? {
       guard let pictureID else { return nil }
@@ -189,7 +179,7 @@ public struct WhiteboardMarks: Sendable {
     public let scale: CGFloat
     /// Larry's changes to the board on this row (stories 814–817), for `WebBoardOpSource`.
     public let ops: BoardOps.Batch?
-    /// The buttons beside this reply's marks, in its order (stories 1352–1354, #1525), and the choices it named that
+    /// The buttons beside this reply's marks, in its order (stories 1352–1353, #1525), and the choices it named that
     /// this build doesn't know.
     public let actions: [WhiteboardMarkActions.Offer]
     public let unknownActions: [String]
@@ -209,7 +199,16 @@ public struct WhiteboardMarks: Sendable {
       actions: [WhiteboardMarkActions.Offer] = WhiteboardMarkActions.standard, unknownActions: [String] = []
     ) {
       self.id = id
-      self.ops = ops
+      self.ops = ops.map { input in
+        guard actions != WhiteboardMarkActions.standard else { return input }
+        var batch = input
+        batch.ops = input.ops.map { op in
+          guard case .addText(var text) = op else { return op }
+          text.markOffers = actions
+          return .addText(text)
+        }
+        return batch
+      }
       self.actions = actions
       self.unknownActions = unknownActions
       self.text = text

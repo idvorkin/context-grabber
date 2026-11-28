@@ -17,6 +17,7 @@ POST /fake/larry-says {"count": n,
 "from": k} adds n replies of Larry's words, "Reply k: …" onwards, on the newest board thread (bead context-grabber-97s). POST /fake/larry-ops {"stale": false, "dy": 120}
 is a test's way to have his next board answer be a batch of changes instead of marks (stories 814-817): room opened
 below the middle of the picture he was sent (its frame, in board points) by dy, and a line of plain text in the gap,
+with "actions" for the choices beside that text,
 on the message's own rev (one behind it with "behind", which the board still applies, story 961; before anything the
 board remembers with "stale", which it refuses); with "kind": "connector_marks", marks instead: a
 connector by points from the end of the first stroke sent to the start of the second (story 917); with "kind": "link_reply",
@@ -495,7 +496,6 @@ def marks(key, text, shapes, actions=None):
     r = row(key, "larry", text)
     r.update(shapes=shapes, picture_id=source["picture_id"], frame=source["frame"], board=source["board"])
     if actions is not None:
-        # Stories 1352-1354 (#1525): the choices the reply offers beside its marks.
         r["actions"] = actions
     THREADS[key]["messages"].append(r)
 
@@ -699,6 +699,8 @@ def answer_board_later(key):
                 source, armed, LARRY_OPS = BOARD_MESSAGES[key], LARRY_OPS, None
                 r = row(key, "larry", "made room")
                 r.update(ops=ops_batch(source, armed), picture_id=source["picture_id"], board=source["board"])
+                if "actions" in armed:
+                    r["actions"] = armed["actions"]
                 THREADS[key]["messages"].append(r)
                 return
             frame = BOARD_MESSAGES[key]["frame"]
@@ -1185,7 +1187,7 @@ class Handler(BaseHTTPRequestHandler):
             if data.get("separate"):
                 # Story 1154: one reply per circle, so Keep beside each keeps it alone.
                 for circle in circles:
-                    marks(key, "", [circle])
+                    marks(key, "", [circle], data.get("actions"))
             else:
                 marks(key, "", circles, data.get("actions"))
         return self._json(200, {"ok": True})

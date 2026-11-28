@@ -13,7 +13,13 @@ public enum WhiteboardMarkActions {
   public enum Action: String, Codable, Equatable, Sendable, CaseIterable {
     case keep
     case dismiss
-    // To question/answer ("qa", story 1354) is not built yet: offered, it is left out as one this build doesn't know.
+
+    public func title(group: Bool) -> String {
+      switch self {
+      case .keep: return group ? "Keep group" : "Keep"
+      case .dismiss: return group ? "Dismiss group" : "Dismiss"
+      }
+    }
   }
 
   /// One button: a choice and the reply's label for it, if it gave one.
@@ -28,11 +34,10 @@ public enum WhiteboardMarkActions {
 
     /// What the button reads: the reply's label, or the board's own name (a group's for a reply of several marks).
     public func title(group: Bool) -> String {
-      if let label, !label.isEmpty { return label }
-      switch action {
-      case .keep: return group ? "Keep group" : "Keep"
-      case .dismiss: return group ? "Dismiss group" : "Dismiss"
-      }
+      let title = label?.split(whereSeparator: \.isNewline).joined(separator: " ")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      if let title, !title.isEmpty { return title }
+      return action.title(group: group)
     }
   }
 

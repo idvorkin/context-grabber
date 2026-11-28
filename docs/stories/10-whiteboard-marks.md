@@ -2049,6 +2049,8 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I tap one of its marks
 - **Then:** beside it are *Not now* and *Keep*, in that order
 - **And:** a reply that names no choices shows Keep and Dismiss, as before
+- **And:** a text mark added by a board edit keeps its reply's choices when a later edit moves it
+- **And:** blank labels or labels that cannot fit use the board's standard action names
 
 ---
 
@@ -2070,24 +2072,3 @@ Design specs: [whiteboard](../superpowers/specs/2026-11-01-whiteboard-design.md)
 - **When:** I tap one of its marks
 - **Then:** only Keep shows beside it, and the session log names the unknown choice
 - **And:** a reply whose choices are all unknown shows Keep and Dismiss
-
----
-
-### User Story 1354:
-
-- **Summary:** To question/answer folds Larry's answer under my question
-- **Status:** not built: its first build failed review (#1535's findings: which ink is the question, what the fold takes in, the undo order, the fold on a Cockpit board); needs its own design
-- **Issues:** #1525
-- **Spec:** [Whiteboard: Claude and Larry draw back](../superpowers/specs/2026-11-01-whiteboard-shapes-design.md), *Larry chooses the buttons beside his reply*
-
-#### Use Case:
-- **As someone** with several old answers of Larry's scattered over a board
-- **I want to** fold each answer under the question I wrote
-- **so that** the board stays readable and each answer is one tap away
-
-#### Acceptance Criteria:
-- **Scenario:** Folding a question and its answer
-- **Given:** a reply of Larry's that offers To question/answer, answering what I wrote since his last turn
-- **When:** I tap one of its marks, then To question/answer
-- **Then:** his reply is kept, the first line of my question becomes a header, and his answer folds under it
-- **And:** what I wrote after his answer stays out of the fold

@@ -20,7 +20,10 @@ extension PaperBoardController {
   /// The ghosts on the sheet, and a finger that taps while they show. Each shows where the ink it holds to is, faded
   /// when written over and not at all while its ink is folded away or erased (stories 1180, 1181, 1269, 1271).
   func show(_ ghosts: [Ghost]) {
-    Task { @MainActor [weak self] in self?.showChoice() }
+    Task { @MainActor [weak self] in
+      self?.chooseMarkForTests()
+      self?.showChoice()
+    }
     defer {
       lines.ghostLayers.restyle(ghosts, look: { self.model.markHolds.places[$0] })
       lines.ghostLayers.outline(model.groupOutlines)

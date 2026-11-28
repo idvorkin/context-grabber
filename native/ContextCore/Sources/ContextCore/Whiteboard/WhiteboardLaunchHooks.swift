@@ -122,6 +122,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
   public var pencilSeen: Bool
   /// `GRABBER_WHITEBOARD_FINGER_LABEL=1`: whether a finger draws, as an element a UI test reads (stories 1152, 1153).
   public var fingerLabel: Bool
+  public var chooseMark: Bool
   /// `GRABBER_WHITEBOARD_KEPT_INK_LABEL=1`: each look at kept ink's verdict and the heals it asked for, as an element a UI
   /// test reads (story 650, bead context-grabber-qko5).
   public var keptInkLabel: Bool
@@ -176,6 +177,7 @@ public struct WhiteboardHooks: Equatable, Sendable {
     listChat = env["GRABBER_WHITEBOARD_LIST_CHAT"].flatMap { $0.isEmpty ? nil : $0 }
     pencilSeen = env["GRABBER_WHITEBOARD_PENCIL"] == "seen"
     fingerLabel = env["GRABBER_WHITEBOARD_FINGER_LABEL"] == "1"
+    chooseMark = env["GRABBER_WHITEBOARD_CHOOSE_MARK"] == "1"
     keptInkLabel = env["GRABBER_WHITEBOARD_KEPT_INK_LABEL"] == "1"
     undoLookMiss = env["GRABBER_WHITEBOARD_UNDO_LOOK"] == "miss"
     panelFresh = env["GRABBER_WHITEBOARD_PANEL"] == "fresh"

@@ -21,6 +21,7 @@ struct Ghost: Identifiable, WhiteboardGhost {
   /// What it is and, for a label, its letters' height in board points: for the keep's log line (#883).
   let kind: WhiteboardTurn.Shape.Kind
   let letters: CGFloat?
+  let offers: [WhiteboardMarkActions.Offer]
   /// A text of Larry's from a batch of his changes (story 817): kept, it becomes one text under its id.
   let text: BoardOps.Text?
   /// A connector mark (story 917): kept, it becomes a connector joining its ends. Moved with the ink it holds to (story
@@ -33,10 +34,12 @@ struct Ghost: Identifiable, WhiteboardGhost {
   init(
     _ shape: WhiteboardTurn.Shape, who: WhiteboardTurn.Who, frame: CGRect, scale: CGFloat,
     id: String = UUID().uuidString, text: BoardOps.Text? = nil, hand: CGFloat? = nil, seen: Int64? = nil,
-    folds: BoardFoldMap? = nil, lettering: WhiteboardTurn.LetterStyle = .single
+    folds: BoardFoldMap? = nil, lettering: WhiteboardTurn.LetterStyle = .single,
+    offers: [WhiteboardMarkActions.Offer]? = nil
   ) {
     self.id = id
     self.seen = seen
+    self.offers = text?.markOffers ?? offers ?? WhiteboardMarkActions.standard
     // #950: a label naming no lettering takes the board's as it shows, and a text of Larry's keeps it when kept.
     self.text = text.map { text in
       var text = text

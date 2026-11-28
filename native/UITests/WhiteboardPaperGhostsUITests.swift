@@ -441,10 +441,12 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
   /// The fake Cockpit's next board answer is a batch of Larry's changes: room below the middle of the picture he got,
   /// and a line of plain text in the gap; with `behind`, on the revision before the one the picture was of (story 961),
   /// with `stale`, on one before anything the board remembers.
-  private func larryOps(_ cockpit: String, stale: Bool = false, behind: Bool = false) throws {
+  private func larryOps(_ cockpit: String, stale: Bool = false, behind: Bool = false, actions: [String]? = nil) throws {
     var request = URLRequest(url: try XCTUnwrap(URL(string: cockpit + "/fake/larry-ops")))
     request.httpMethod = "POST"
-    request.httpBody = Data(#"{"stale": \#(stale), "behind": \#(behind)}"#.utf8)
+    var body: [String: Any] = ["stale": stale, "behind": behind]
+    if let actions { body["actions"] = actions }
+    request.httpBody = try JSONSerialization.data(withJSONObject: body)
     let done = expectation(description: "the fake Cockpit took it")
     URLSession.shared.dataTask(with: request) { _, response, _ in
       XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
@@ -583,7 +585,7 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
   /// `WhiteboardMarkActionsTests`, on the host.
   func testTheButtonsBesideHisMarkAreTheOnesHisReplyOffers() throws {
     let cockpit = try cockpit()
-    let app = try openBoard(["GRABBER_WHITEBOARD_FINGER_LABEL": "1"])
+    let app = try openBoard()
     _ = try inkAboveAndBelow(app)
     try WhiteboardWordsOnlyFixture.prepare(cockpit, for: self)
     send(app).tap()
@@ -598,10 +600,37 @@ final class WhiteboardPaperGhostsUITests: XCTestCase {
     let keep = app.buttons["whiteboard-mark-keep"]
     XCTAssertTrue(keep.exists)
     XCTAssertLessThan(dismiss.frame.minX, keep.frame.minX, "in his reply's order")
-    XCTAssertFalse(app.buttons["whiteboard-mark-qa"].exists, "a choice this build doesn't know is left out")
+    assertMarkChoices(app, ["Not now", "Keep"])
     shot(app, "his reply's choices")
     dismiss.tap()
-    XCTAssertFalse(keep.waitForExistence(timeout: 2), "Not now dismissed his mark")
+    assertHisMarkWasDismissed(app)
+  }
+
+  func testAReplyWithOnlyBoardOpsChoosesItsTextMarkActions() throws {
+    let cockpit = try cockpit()
+    let app = try openBoard(["GRABBER_WHITEBOARD_CHOOSE_MARK": "1"])
+    _ = try inkAboveAndBelow(app)
+    try larryOps(cockpit, actions: ["qa", "dismiss"])
+    send(app).tap()
+    XCTAssertTrue(toKeep(app, 1).appears(within: 15), app.debugDescription)
+    let dismiss = app.buttons["whiteboard-mark-dismiss"]
+    XCTAssertTrue(dismiss.appears(within: 5), app.debugDescription)
+    assertMarkChoices(app, ["Dismiss"])
+    dismiss.tap()
+    assertHisMarkWasDismissed(app)
+  }
+
+  private func assertMarkChoices(_ app: XCUIApplication, _ titles: [String]) {
+    let chooser = app.descendants(matching: .any).matching(identifier: "whiteboard-mark-chooser").firstMatch
+    XCTAssertTrue(chooser.exists, app.debugDescription)
+    XCTAssertEqual(chooser.buttons.allElementsBoundByIndex.map(\.label).sorted(), titles.sorted())
+  }
+
+  private func assertHisMarkWasDismissed(_ app: XCUIApplication) {
+    XCTAssertTrue(toKeep(app, 1).disappears(within: 5), "the board has no pending mark")
+    XCTAssertTrue(PaperScreen.clears(app) { $0.larryGhost }, "the pending mark disappeared")
+    XCTAssertNil(PaperScreen(app).larryKept, "Dismiss added no purple ink")
+    XCTAssertEqual(send(app).label, strokes(2), "Dismiss added no strokes")
   }
 
   /// Story 1180 (bead context-grabber-p2an): Larry's mark on my lower line moves down with it when his push moves it,

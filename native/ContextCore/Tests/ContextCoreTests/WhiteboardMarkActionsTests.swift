@@ -43,7 +43,6 @@ final class WhiteboardMarkActionsTests: XCTestCase {
     XCTAssertEqual(WhiteboardMarkActions.parse(["keep", "keep", "dismiss"]).offers.map(\.action), [.keep, .dismiss])
   }
 
-  /// Story 1354's To question/answer isn't built: offered, it is one the board doesn't know.
   func testToQuestionAnswerIsNotKnownYet() {
     let offered = WhiteboardMarkActions.parse(["qa", "keep"])
     XCTAssertEqual(offered.offers.map(\.action), [.keep])
@@ -59,5 +58,40 @@ final class WhiteboardMarkActionsTests: XCTestCase {
     let row = WhiteboardMarks.row(["who": "larry", "id": "r1", "text": "", "actions": ["dismiss", "qa"]])
     XCTAssertEqual(row?.actions.map(\.action), [.dismiss])
     XCTAssertEqual(row?.unknownActions, ["qa"])
+  }
+
+  func testBlankLabelsUseStandardTitlesFromTheWireAndHistory() throws {
+    let offered = WhiteboardMarkActions.parse([["id": "dismiss", "label": " \n\t "]])
+    XCTAssertEqual(offered.offers.map { $0.title(group: false) }, ["Dismiss"])
+
+    let saved = Data(#"{"action":"keep","label":" \n\t "}"#.utf8)
+    let restored = try JSONDecoder().decode(WhiteboardMarkActions.Offer.self, from: saved)
+    XCTAssertEqual(restored.title(group: true), "Keep group")
+  }
+
+  func testTextKeepsItsReplyOfferedActionsWhenANewerBatchMovesIt() throws {
+    let row = try XCTUnwrap(
+      WhiteboardMarks.row([
+        "id": "r1", "who": "larry", "actions": ["qa", ["id": "dismiss", "label": "Not now"]],
+        "ops": [
+          "board": "b1", "base_rev": 0, "list": [
+            ["op": "add_text", "id": "t1", "x": 80, "y": 100, "text": "A label"]
+          ],
+        ],
+      ]))
+    var source = WebBoardOpSource()
+    let batch = try XCTUnwrap(source.batches(from: .rows([row])).first)
+    let landed = BoardOps.plan(batch.lettered(.single).ops, strokes: [], pages: 1)
+    let first = try XCTUnwrap(landed.texts.first)
+    XCTAssertEqual(first.markOffers?.map(\.action), [.dismiss])
+    XCTAssertEqual(first.markOffers?.map { $0.title(group: false) }, ["Not now"])
+
+    let moved = BoardOps.plan(
+      [.translateIDs(["t1"], dx: 20, dy: 10)], strokes: [], ghosts: landed.texts, pages: 1)
+    let later = try XCTUnwrap(moved.texts.first)
+    XCTAssertEqual(later.x, 100)
+    XCTAssertEqual(later.y, first.y + 10)
+    XCTAssertEqual(later.markOffers?.map(\.action), [.dismiss])
+    XCTAssertEqual(later.markOffers?.map { $0.title(group: false) }, ["Not now"])
   }
 }
